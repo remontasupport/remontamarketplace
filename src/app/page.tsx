@@ -4,6 +4,7 @@ import AboutUs from "@/components/sections/AboutUs";
 import CTA from "@/components/sections/CTA";
 import Testimonials from "@/components/sections/Testimonials";
 import Services from "@/components/sections/Services";
+import AustraliaMap from "@/components/sections/AustraliaMap";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <CTA />
       <Testimonials />
       <Services />
+      <AustraliaMap />
     </div>
   );
 }

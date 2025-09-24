@@ -16,12 +16,15 @@ const services: ServiceItem[] = [
   {
     id: 1,
     title: "Support Work",
-    content: "Hands-on personal care, daily living assistance and social support to help you stay engaged and independent.",
+    content: "Personal care, household support, and community access designed to make daily life easier and more enjoyable while building confidence and independence.",
     bulletPoints: [
-      "Assistance with daily personal hygiene",
-      "Support with grooming and dressing",
-      "Medication reminders and management",
-      "Mobility assistance and transfers"
+      "Daily Living & Personal Care",
+      "Household Tasks",
+      "Transport & Community Access",
+      "Social & Community Participation",
+      "Capacity Building & Skills",
+      "Administration & Advocacy",
+      "Complex Supports (if trained)"
     ],
     image: "/images/support-work.webp",
     imageAlt: "Support worker helping participant with personal care"
@@ -29,12 +32,12 @@ const services: ServiceItem[] = [
   {
     id: 2,
     title: "Cleaning",
-    content: "From routine tidies to deep and hazardous-grade cleans. Our pros handle kitchens, bathrooms, hoarder situations and more.",
+    content: "Comprehensive home cleaning services including general tidying, laundry, deep cleaning, and seasonal sanitising to ensure a healthy and welcoming living environment.",
     bulletPoints: [
-      "Community outings and social activities",
-      "Support accessing public transport",
-      "Assistance with recreational programs",
-      "Building social skills and connections"
+      "General Cleaning",
+      "Laundry",
+      "Deep Cleaning",
+      "Seasonal / Periodic"
     ],
     image: "/images/cleaning.webp",
     imageAlt: "Participants engaging in community activities"
@@ -42,12 +45,11 @@ const services: ServiceItem[] = [
   {
     id: 3,
     title: "Home and Yard Maintenance",
-    content: "Mowing, gardening, gutter clears, hedge trimming and general upkeep with all tools supplied for a safe, well-kept home.",
+    content: "Lawn, garden, and outdoor care to keep your spaces looking fresh, tidy, and enjoyable all year round",
     bulletPoints: [
-      "Cooking and meal preparation support",
-      "Household management assistance",
-      "Shopping and budgeting guidance",
-      "Life skills development programs"
+      "Lawn & Garden Care",
+      "Outdoor Cleaning",
+      "Waste & Seasonal Tasks"
     ],
     image: "/images/homeyard.webp",
     imageAlt: "Support worker helping with daily living activities"
@@ -57,10 +59,9 @@ const services: ServiceItem[] = [
     title: "Fitness and Rehabilitation",
     content: "Tailored exercise plans, mobility training and strength rehab delivered by qualified therapists to boost your wellbeing.",
     bulletPoints: [
-      "Behavior support and intervention",
-      "Therapy session assistance",
-      "Complex medical care coordination",
-      "Specialized equipment support"
+      "Mobility & Rehabilitation",
+      "Fitness & Health",
+      "Personal Training"
     ],
     image: "/images/fitnessRehab.webp",
     imageAlt: "Specialized support worker providing care"
@@ -72,8 +73,7 @@ const services: ServiceItem[] = [
     bulletPoints: [
       "Behavior support and intervention",
       "Therapy session assistance",
-      "Complex medical care coordination",
-      "Specialized equipment support"
+      "Complex medical care coordination"
     ],
     image: "/images/therapueticSupport.webp",
     imageAlt: "Specialized support worker providing care"
@@ -81,12 +81,13 @@ const services: ServiceItem[] = [
   {
     id: 6,
     title: "Nursing",
-    content: "Hands-on personal care, daily living assistance and social support to help you stay engaged and independent.",
+    content: "Specialised clinical care and health supports to manage complex needs, promote wellbeing, and give families peace of mind.",
     bulletPoints: [
-      "Behavior support and intervention",
-      "Therapy session assistance",
-      "Complex medical care coordination",
-      "Specialized equipment support"
+      "Clinical Care",
+      "Medication Management",
+      "Health Monitoring",
+      "Complex Disability Supports",
+      "Education & Training"
     ],
     image: "/images/nursing.webp",
     imageAlt: "Specialized support worker providing care"
@@ -94,12 +95,12 @@ const services: ServiceItem[] = [
     {
     id: 7,
     title: "Home Modifications",
-    content: "Accessible ramps, grab rails, bathroom adap­tations and small renovations designed for safety and ease of movement.",
+    content: "Specialised design and construction services, including bathroom, kitchen, and vehicle modifications, to support independence and accessibility.",
     bulletPoints: [
-      "Behavior support and intervention",
-      "Therapy session assistance",
-      "Complex medical care coordination",
-      "Specialized equipment support"
+      "Design and construction",
+      "Bathroom and kitchen modifications",
+      "Access ramps and rails",
+      "Vehicle modifications"
     ],
     image: "/images/homemodify.webp",
     imageAlt: "Specialized support worker providing care"
@@ -145,8 +146,8 @@ export default function Services() {
                   className="w-full flex items-center justify-between p-6 sm:p-8 bg-white hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="flex items-center">
-                    <div className="w-4 h-4 sm:w-10 sm:h-10 bg-[#B1C3CD] rounded-full flex items-center justify-center mr-4 sm:mr-6">
-                      <div className="w-1 h-1 sm:w-4 sm:h-4 bg-[#0C1628] rounded-full"></div>
+                    <div className="w-3 h-3 sm:w-6 sm:h-6 bg-[#B1C3CD] rounded-full flex items-center justify-center mr-4 sm:mr-6">
+                      <div className="w-1 h-1 sm:w-2 sm:h-2 bg-[#0C1628] rounded-full"></div>
                     </div>
                     <h3 className="font-cooper text-xl sm:text-2xl lg:text-3l font-normal text-[#0C1628] text-left">
                       {service.title}
@@ -173,7 +174,7 @@ export default function Services() {
                     <ul className="space-y-3">
                       {service.bulletPoints.map((point, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-2 h-2 bg-[#B1C3CD] rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <div className="w-1.5 h-1.5 bg-[#B1C3CD] rounded-full mt-2 mr-3 flex-shrink-0"></div>
                           <span className="font-sans text-base sm:text-lg text-[#0C1628]">
                             {point}
                           </span>
