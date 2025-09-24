@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Cooper BT';
+  src: url('/fonts/CooperLtBT-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cooper BT';
+  src: url('/fonts/CooperLtBT-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cooper BT';
+  src: url('/fonts/CooperLtBT-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -8,8 +32,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
+  --font-cooper: 'Cooper BT', serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +48,19 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hide Next.js development indicator */
+div[data-nextjs-toast] {
+  display: none !important;
+}
+
+/* Hide Next.js development overlay elements */
+nextjs-portal {
+  display: none !important;
+}
+
+/* Hide any floating development elements */
+div[style*="position: fixed"][style*="bottom: 16px"] {
+  display: none !important;
 }
