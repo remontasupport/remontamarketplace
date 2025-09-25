@@ -2,14 +2,14 @@ import Image from 'next/image'
 
 export default function Testimonials() {
   return (
-    <section className="bg-gray-50 py-12 sm:py-16 md:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="bg-gray-50 pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">TESTIMONIALS</span>
           </p>
-          <h2 className="font-cooper text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-normal leading-tight text-[#0C1628] mb-6 sm:mb-8">
+          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-2 sm:mb-8">
             What Our Participants Say
           </h2>
         </div>

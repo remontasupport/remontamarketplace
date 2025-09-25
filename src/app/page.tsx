@@ -1,10 +1,12 @@
 import Hero from "@/components/sections/Hero";
 import HowItWorks from "@/components/sections/HowItWorks";
 import AboutUs from "@/components/sections/AboutUs";
-import CTA from "@/components/sections/CTA";
 import Testimonials from "@/components/sections/Testimonials";
 import Services from "@/components/sections/Services";
-import AustraliaMap from "@/components/sections/AustraliaMap";
+import Pricing from "@/components/sections/Pricing";
+import FAQ from "@/components/sections/FAQ";
+import Footer from "@/components/layout/Footer";
+// import AustraliaMap from "@/components/sections/AustraliaMap";
 
 export default function Home() {
   return (
@@ -12,10 +14,12 @@ export default function Home() {
       <Hero />
       <HowItWorks />
       <AboutUs />
-      <CTA />
       <Testimonials />
       <Services />
-      <AustraliaMap />
+      {/* <AustraliaMap /> */}
+      <Pricing />
+      <FAQ />
+      <Footer />
     </div>
   );
 }

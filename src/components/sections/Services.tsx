@@ -110,22 +110,46 @@ const services: ServiceItem[] = [
 
 export default function Services() {
   const [openAccordion, setOpenAccordion] = useState<number>(1)
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
+  const [displayService, setDisplayService] = useState<ServiceItem | undefined>(services[0])
 
   const toggleAccordion = (id: number) => {
-    setOpenAccordion(openAccordion === id ? 0 : id)
+    const newId = openAccordion === id ? 0 : id
+
+    if (openAccordion !== 0 && newId !== openAccordion) {
+      // If switching from one open accordion to another, handle smooth transition
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setOpenAccordion(newId)
+        setDisplayService(services.find(service => service.id === newId))
+        setIsTransitioning(false)
+      }, 300) // Half of fade out duration
+    } else if (openAccordion !== 0 && newId === 0) {
+      // If closing accordion, fade out then remove
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setOpenAccordion(newId)
+        setDisplayService(undefined)
+        setIsTransitioning(false)
+      }, 600) // Full fade out duration
+    } else {
+      // If opening accordion from closed state
+      setOpenAccordion(newId)
+      setDisplayService(services.find(service => service.id === newId))
+    }
   }
 
-  const currentService = services.find(service => service.id === openAccordion) || services[0]
+  const currentService = displayService
 
   return (
-    <section className="bg-white py-12 sm:py-16 md:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">SERVICES</span>
           </p>
-          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-6 sm:mb-8">
+          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-2 sm:mb-8">
             This Is How We Create Transformation
           </h2>
           <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] leading-relaxed max-w-4xl mx-auto">
@@ -163,7 +187,7 @@ export default function Services() {
                 <div
                   className={`overflow-hidden transition-all duration-500 ease-out ${
                     openAccordion === service.id
-                      ? 'max-h-96 opacity-100'
+                      ? 'max-h-[800px] opacity-100'
                       : 'max-h-0 opacity-0'
                   }`}
                 >
@@ -171,6 +195,20 @@ export default function Services() {
                     <p className="font-sans text-base sm:text-lg text-[#0C1628] leading-relaxed mb-6">
                       {service.content}
                     </p>
+
+                    {/* Mobile Image - Only visible on mobile */}
+                    <div className="block lg:hidden mb-6">
+                      <div className="relative w-full h-[250px] rounded-2xl overflow-hidden shadow-lg">
+                        <Image
+                          src={service.image}
+                          alt={service.imageAlt}
+                          fill
+                          className="object-cover"
+                          priority
+                        />
+                      </div>
+                    </div>
+
                     <ul className="space-y-3">
                       {service.bulletPoints.map((point, index) => (
                         <li key={index} className="flex items-start">
@@ -187,27 +225,40 @@ export default function Services() {
             ))}
           </div>
 
-          {/* Image Section */}
-          <div className="lg:sticky lg:top-8">
-            <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg">
-              <Image
-                src={currentService.image}
-                alt={currentService.imageAlt}
-                fill
-                className="object-cover transition-all duration-500 ease-in-out"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <h4 className="font-cooper text-xl sm:text-2xl font-normal text-white mb-2">
-                  {currentService.title}
-                </h4>
-                <p className="font-sans text-sm sm:text-base text-white/90">
-                  Professional NDIS support services
-                </p>
+          {/* Image Section - Only visible on large screens when accordion is open */}
+          {currentService && (
+            <div
+              key={currentService.id}
+              className={`hidden lg:block lg:sticky lg:top-8 ${
+                isTransitioning
+                  ? 'animate-[fadeOutDown_0.6s_ease-out_forwards]'
+                  : 'opacity-0 translate-y-6 animate-[fadeInUp_0.6s_ease-out_forwards]'
+              }`}
+            >
+              <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg">
+                <Image
+                  src={currentService.image}
+                  alt={currentService.imageAlt}
+                  fill
+                  className="object-cover transition-all duration-500 ease-in-out"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className={`absolute bottom-6 left-6 right-6 ${
+                  isTransitioning
+                    ? 'animate-[fadeOutDown_0.6s_ease-out_forwards]'
+                    : 'opacity-0 translate-y-4 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]'
+                }`}>
+                  <h4 className="font-cooper text-xl sm:text-2xl font-normal text-white mb-2">
+                    {currentService.title}
+                  </h4>
+                  <p className="font-sans text-sm sm:text-base text-white/90">
+                    Professional NDIS support services
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

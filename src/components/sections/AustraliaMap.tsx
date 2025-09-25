@@ -2,14 +2,14 @@
 
 export default function AustraliaMap() {
   return (
-    <section className="bg-gray-50 py-12 sm:py-16 md:py-20 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="bg-gray-50 py-12 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-10 lg:mb-12">
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">LOCATION</span>
           </p>
-          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-6 sm:mb-8">
+          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-2 sm:mb-8">
             Find independent support workers<br />in popular regions
           </h2>
         </div>
@@ -64,7 +64,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Sydney
                   </span>
                 </div>
@@ -109,7 +109,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Melbourne
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Adelaide
                   </span>
                 </div>
@@ -199,7 +199,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Brisbane
                   </span>
                 </div>
@@ -244,7 +244,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Perth
                   </span>
                 </div>
@@ -289,7 +289,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Newcastle
                   </span>
                 </div>
@@ -334,7 +334,7 @@ export default function AustraliaMap() {
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  <span className="text-xs font-medium text-gray-800 group-hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium text-gray-800 group-hover:text-[#0C1628] transition-colors">
                     Canberra
                   </span>
                 </div>

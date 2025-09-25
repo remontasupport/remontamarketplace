@@ -89,6 +89,7 @@ const navigation = [
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [isScrolled, setIsScrolled] = useState(false)
   const headerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -104,19 +105,30 @@ export default function Header() {
     }
   }, [])
 
+  useEffect(() => {
+    function handleScroll() {
+      setIsScrolled(window.scrollY > 0)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
+
   return (
-    <header className="bg-white shadow-sm" ref={headerRef}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6  lg:px-8" aria-label="Global">
+    <header className={`sticky top-0 z-40 transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8" aria-label="Global">
         {/* Logo */}
-        <div className="flex lg:flex-1">
+        <div className="flex lg:flex-1 relative -left-4 lg:-left-0">
           <Link href="/" className="-m-1.5 p-1.5">
             <span className="sr-only">Remonta</span>
             <Image
-              className="h-16 w-auto sm:h-32 lg:h-32"
-              src="/logo/logo.svg"
+              className="h-30 w-auto sm:h-32 md:h-40 lg:h-40"
+              src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
               alt="Remonta"
-              width={1000}
-              height={20}
+              width={190}
+              height={190}
               priority
             />
           </Link>
@@ -130,7 +142,7 @@ export default function Header() {
             onClick={() => setMobileMenuOpen(true)}
           >
             <span className="sr-only">Open main menu</span>
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+            <Bars3Icon className={`h-8 w-8 md:h-10 md:w-10 transition-colors duration-300 ${isScrolled ? 'text-white' : 'text-[#0C1628]'}`} aria-hidden="true" />
           </button>
         </div>
 
@@ -140,7 +152,7 @@ export default function Header() {
             <div key={item.name} className="relative">
               {item.hasDropdown ? (
                 <button
-                  className="flex items-center gap-x-1 font-sans font-medium text-sm leading-6 text-[#0C1628] hover:text-[#B1C3CD] transition-colors"
+                  className={`flex items-center gap-x-1 font-sans font-medium text-sm leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
                   onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
                 >
                   {item.name}
@@ -149,7 +161,7 @@ export default function Header() {
               ) : (
                 <Link
                   href={item.href}
-                  className="font-sans font-medium text-sm leading-6 text-[#0C1628] hover:text-[#B1C3CD] transition-colors"
+                  className={`font-sans font-medium text-sm leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
                 >
                   {item.name}
                 </Link>
@@ -189,15 +201,14 @@ export default function Header() {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
           <Link
             href="/login"
-            className="flex items-center justify-center font-sans font-medium text-sm leading-6 text-[#0C1628] hover:text-[#B1C3CD] transition-colors border border-[#0C1628] rounded-full px-6 py-2 hover:border-[#B1C3CD]"
+            className={`flex items-center justify-center font-sans font-medium text-sm leading-6 transition-colors duration-300 rounded-full px-6 py-2 border ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]' : 'bg-[#B1C3CD] text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]'}`}
           >
             Log in
           </Link>
           <div className="relative">
             <button
-              className="flex items-center justify-center gap-x-1 rounded-full bg-[#0C1628] px-6 py-2 font-sans font-medium text-sm text-white hover:bg-[#B1C3CD] transition-colors"
-              onMouseEnter={() => setOpenDropdown('get-started')}
-              onMouseLeave={() => setOpenDropdown(null)}
+              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-white text-[#0C1628] hover:bg-[#B1C3CD] hover:text-white' : 'bg-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+              onClick={() => setOpenDropdown(openDropdown === 'get-started' ? null : 'get-started')}
             >
               Get started
               <ChevronDownIcon className="h-4 w-4 flex-none text-white" aria-hidden="true" />
@@ -206,20 +217,18 @@ export default function Header() {
             {/* Get started dropdown */}
             {openDropdown === 'get-started' && (
               <div
-                className="absolute right-0 z-10 mt-3 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                onMouseEnter={() => setOpenDropdown('get-started')}
-                onMouseLeave={() => setOpenDropdown(null)}
+                className="absolute left-0 z-10 mt-3 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
               >
                 <div className="py-1">
                   <Link
                     href="/register/client"
-                    className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#F8E8D8]"
+                    className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#B1C3CD] transition ease-in-out duration-150"
                   >
                     I need support
                   </Link>
                   <Link
                     href="/register/support-worker"
-                    className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#F8E8D8]"
+                    className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#B1C3CD] transition ease-in-out duration-150"
                   >
                     I want to provide support
                   </Link>
@@ -239,11 +248,11 @@ export default function Header() {
               <Link href="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
                 <span className="sr-only">Remonta</span>
                 <Image
-                  className="h-32 w-auto"
+                  className="h-32 w-auto sm:h-40"
                   src="/logo/logo.svg"
                   alt="Remonta"
-                  width={180}
-                  height={180}
+                  width={190}
+                  height={190}
                 />
               </Link>
               <button
@@ -252,7 +261,7 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <span className="sr-only">Close menu</span>
-                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                <XMarkIcon className="h-8 w-8 md:h-10 md:w-10" aria-hidden="true" />
               </button>
             </div>
             <div className="mt-6 flow-root">
@@ -276,7 +285,7 @@ export default function Header() {
                       ) : (
                         <Link
                           href={item.href}
-                          className="-mx-3 block rounded-lg px-3 py-2 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
+                          className="flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           {item.name}
@@ -304,7 +313,7 @@ export default function Header() {
                 <div className="py-6 space-y-4">
                   <Link
                     href="/login"
-                    className="block rounded-lg px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8] border border-[#0C1628] text-center"
+                    className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8] border border-[#0C1628] text-center"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Log in
@@ -312,14 +321,14 @@ export default function Header() {
                   <div className="space-y-2">
                     <Link
                       href="/register/client"
-                      className="block rounded-lg px-3 py-2.5 text-base font-sans font-medium leading-7 text-white bg-[#0C1628] hover:bg-[#B1C3CD] text-center"
+                      className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-white bg-[#0C1628] hover:bg-[#B1C3CD] text-center"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       I need support
                     </Link>
                     <Link
                       href="/register/support-worker"
-                      className="block rounded-lg px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] border border-[#0C1628] hover:bg-[#F8E8D8] text-center"
+                      className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] border border-[#0C1628] hover:bg-[#F8E8D8] text-center"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       I want to provide support

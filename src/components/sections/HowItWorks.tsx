@@ -20,27 +20,27 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="bg-[#EDEFF3] py-8 sm:py-12 md:py-16 lg:py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="bg-[#B1C3CD] py-12 sm:py-12 md:py-16 lg:py-20 overflow-x-hidden">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-start mb-8 sm:mb-12 md:mb-16 lg:mb-20">
           {/* Left Column - Title */}
-          <div>
+          <div className="text-center lg:text-left">
             <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
               <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">HOW IT WORKS</span>
             </p>
-            <h2 className="font-cooper text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal leading-tight text-[#0C1628]">
+            <h2 className="font-cooper text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-normal text-[#0C1628] mb-4 lg:mb-0">
               What We Look For
             </h2>
           </div>
 
           {/* Right Column - Description and CTA */}
-          <div className="lg:pt-8">
+          <div className="-mt-7 lg:-mt-0 lg:pt-10">
             <div className="sm:mb-8">
-              <p className="font-sans text-sm sm:text-base lg:text-lg text-[#0C1628] sm:mb-4">
+              <p className="font-sans text-center lg:text-left text-base lg:text-lg text-[#0C1628] sm:mb-4">
                 We partner with individuals and businesses that:
               </p>
-              <ul className="font-sans text-sm sm:text-base lg:text-lg text-[#0C1628] ml-3 sm:ml-4">
+              <ul className="font-sans text-sm sm:text-base lg:text-lg text-[#0C1628] ml-3 sm:ml-4 space-y-3 sm:space-y-4 lg:space-y-2 mt-4 lg:mt-0">
                 <li className="flex items-start">
                   <span className="text-[#0C1628] mr-2 sm:mr-3 flex-shrink-0">•</span>
                   <span>Are passionate about helping others</span>
@@ -56,14 +56,15 @@ export default function HowItWorks() {
               </ul>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+            {/* Desktop/Tablet CTA - Hidden on mobile */}
+            <div className="hidden sm:flex sm:flex-row sm:items-start gap-3 sm:gap-4 mt-8">
               <Link
                 href="/get-started"
-                className="inline-flex items-center justify-center rounded-full bg-[#0C1628] px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 lg:py-3 font-sans font-semibold text-sm sm:text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0"
+                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-8 lg:px-10 py-4 sm:py-4 lg:py-4 font-sans font-semibold text-base sm:text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0 min-w-[140px]"
               >
                 Get started
               </Link>
-              <p className="font-sans text-xs sm:text-sm text-gray-500 flex-1 leading-relaxed">
+              <p className="font-sans text-center lg:text-left text-xs sm:text-sm text-gray-500 flex-1 leading-relaxed">
                 * Don't worry - if you're just starting out, our team can guide you through what you need.
               </p>
             </div>
@@ -75,10 +76,10 @@ export default function HowItWorks() {
           {steps.map((item) => (
             <div
               key={item.step}
-              className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 lg:p-8 hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[320px]"
+              className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 lg:p-8 hover:shadow-lg transition-shadow duration-300 flex flex-col min-h-[200px] sm:min-h-[320px] lg:min-h-[320px]"
             >
               {/* Step Number */}
-              <div className="mb-4 sm:mb-6">
+              <div className="mb-3 sm:mb-6">
                 <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F8E8D8] font-cooper text-lg sm:text-xl font-normal text-[#0C1628]">
                   {item.step}
                 </span>
@@ -86,15 +87,30 @@ export default function HowItWorks() {
 
               {/* Step Content */}
               <div className="flex-grow flex flex-col">
-                <h3 className="font-cooper text-lg sm:text-xl lg:text-2xl font-normal text-[#0C1628] mb-2 sm:mb-3 lg:mb-4 min-h-[3rem] sm:min-h-[4rem] flex items-start leading-tight">
+                <h3 className="font-cooper text-lg sm:text-xl lg:text-2xl font-normal text-[#0C1628] mb-2 sm:mb-3 lg:mb-4 min-h-[2.5rem] sm:min-h-[4rem] flex items-start leading-tight">
                   {item.title}
                 </h3>
-                <p className="font-sans text-xs sm:text-sm lg:text-base text-[#0C1628] leading-relaxed flex-grow">
+                <p className="font-sans text-sm sm:text-sm lg:text-base text-[#0C1628] leading-relaxed flex-grow">
                   {item.description}
                 </p>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Mobile CTA - Only visible on mobile */}
+        <div className="sm:hidden mt-8">
+          <div className="flex flex-col gap-3 mt-8">
+            <Link
+              href="/get-started"
+              className="inline-flex mx-12 items-center justify-center rounded-full bg-[#0C1628] px-8 py-4 font-sans font-semibold text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0 min-w-[140px]"
+            >
+              Get started
+            </Link>
+            <p className="font-sans text-center text-xs text-gray-500 leading-relaxed px-4">
+              * Don't worry - if you're just starting out, our team can guide you through what you need.
+            </p>
+          </div>
         </div>
       </div>
     </section>
