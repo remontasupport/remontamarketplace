@@ -20,7 +20,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Remonta - NDIS Support Connection Platform",
+  title: "Find Support Workers for Disability and Aged Care",
   description: "Connecting NDIS participants with quality support workers across Australia",
 };
 

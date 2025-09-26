@@ -28,18 +28,23 @@ export default function Footer() {
 
           {/* Logo Section */}
           <div className="md:col-span-1">
-            <Image
-              className="h-30 w-auto sm:h-28 lg:h-32 relative -top-13 -left-3 lg:-top-13 lg:-left-2"
-              src="/logo/logo-dark.svg"
-              alt="Remonta"
-              width={250}
-              height={120}
-              priority
-            />
+            <div className="flex flex-col items-left lg:items-start">
+              <Image
+                className="h-4 w-40 sm:h-28 lg:h-32 relative -left-9 lg:-top-14 lg:-left-0"
+                src="/logo/logo-dark.svg"
+                alt="LocalAid"
+                width={250}
+                height={120}
+                priority
+              />
+              <span className="text-xs italic text-gray-300 mt-2 lg:mt-0 lg:relative lg:-top-12 lg:left-11">
+                previously Remonta
+              </span>
+            </div>
           </div>
 
           {/* Menu Section */}
-          <div className="md:col-span-1 text-left -mt-18 lg:mt-0">
+          <div className="md:col-span-1 text-left lg:mt-0">
             <h3 className="font-sans text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 uppercase tracking-wide">
               MENU
             </h3>
@@ -110,7 +115,7 @@ export default function Footer() {
                 We acknowledge the cultures of our First Nations Peoples and are thankful for the community that we share together now. We pay our respects to our First Nations Peoples and their elders/leaders, both past and present, and those who are rising up to become leaders.
               </p>
               <p className="font-sans text-sm text-white/80">
-                Remonta is a part of <span className="text-white font-medium">Attain Healthtech</span>, dedicated to helping people attain better outcomes.
+                LocalAid is a part of <span className="text-white font-medium">Attain Healthtech</span>, dedicated to helping people attain better outcomes.
               </p>
             </div>
 
@@ -150,7 +155,7 @@ export default function Footer() {
         <div className="mt-12 pt-8 border-t border-white/30">
           <div className="text-center">
             <p className="font-sans text-sm text-white/70">
-              © 2025 Remonta. All rights reserved.
+              © 2025 LocalAid. All rights reserved.
             </p>
           </div>
         </div>

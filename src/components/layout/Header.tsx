@@ -118,19 +118,24 @@ export default function Header() {
 
   return (
     <header className={`sticky top-0 z-40 transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8" aria-label="Global">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between py-4 lg:py-10 px-4 lg:px-8" aria-label="Global">
         {/* Logo */}
-        <div className="flex lg:flex-1 relative -left-4 lg:-left-0">
+        <div className="flex lg:flex-1 relative -left-2 lg:-left-0 py-4 lg:py-0">
           <Link href="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">Remonta</span>
-            <Image
-              className="h-30 w-auto sm:h-32 md:h-40 lg:h-40"
-              src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
-              alt="Remonta"
-              width={190}
-              height={190}
-              priority
-            />
+            <span className="sr-only">LocalAid</span>
+            <div className="flex flex-col items-center relative -left-7 lg:-left-0">
+              <Image
+                className="h-4 w-40 sm:h-7 md:h-8 lg:h-9"
+                src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
+                alt="LocalAid"
+                width={100}
+                height={100}
+                priority
+              />
+              <span className={`ml-5 lg:ml-9 text-xs mt-0.5 italic transition-colors duration-300 ${isScrolled ? 'text-gray-300' : 'text-gray-500'}`}>
+                previously Remonta
+              </span>
+            </div>
           </Link>
         </div>
 
@@ -248,14 +253,19 @@ export default function Header() {
           <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
               <Link href="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
-                <span className="sr-only">Remonta</span>
-                <Image
-                  className="h-32 w-auto sm:h-40"
-                  src="/logo/logo.svg"
-                  alt="Remonta"
-                  width={190}
-                  height={190}
-                />
+                <span className="sr-only">LocalAid</span>
+                <div className="flex flex-col items-center">
+                  <Image
+                    className="h-8 w-24 sm:h-10 w-4"
+                    src="/logo/logo.svg"
+                    alt="LocalAid"
+                    width={120}
+                    height={40}
+                  />
+                  <span className="text-xs mt-0.5 italic text-gray-500">
+                    previously Remonta
+                  </span>
+                </div>
               </Link>
               <button
                 type="button"
