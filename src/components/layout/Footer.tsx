@@ -37,7 +37,7 @@ export default function Footer() {
                 height={120}
                 priority
               />
-              <span className="text-xs italic text-gray-300 mt-2 lg:mt-0 lg:relative lg:-top-12 lg:left-11">
+              <span className="text-xs italic text-gray-300 mt-1 lg:-mt-12 lg:relative lg:-top-12 lg:left-11">
                 previously Remonta
               </span>
             </div>
