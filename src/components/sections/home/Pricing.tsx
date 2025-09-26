@@ -72,7 +72,7 @@ export default function Pricing() {
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex items-center gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-[#EDEFF3] rounded-full flex items-center justify-center">
                       {benefit.icon}
                     </div>
                   </div>

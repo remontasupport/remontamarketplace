@@ -113,31 +113,31 @@ export default function Services() {
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
   const [displayService, setDisplayService] = useState<ServiceItem | undefined>(services[0])
 
-  // const toggleAccordion = (id: number) => {
-  //   const newId = openAccordion === id ? 0 : id
+  const toggleAccordion = (id: number) => {
+    const newId = openAccordion === id ? 0 : id
 
-  //   if (openAccordion !== 0 && newId !== openAccordion) {
-  //     // If switching from one open accordion to another, handle smooth transition
-  //     setIsTransitioning(true)
-  //     setTimeout(() => {
-  //       setOpenAccordion(newId)
-  //       setDisplayService(services.find(service => service.id === newId))
-  //       setIsTransitioning(false)
-  //     }, 300) // Half of fade out duration
-  //   } else if (openAccordion !== 0 && newId === 0) {
-  //     // If closing accordion, fade out then remove
-  //     setIsTransitioning(true)
-  //     setTimeout(() => {
-  //       setOpenAccordion(newId)
-  //       setDisplayService(undefined)
-  //       setIsTransitioning(false)
-  //     }, 600) // Full fade out duration
-  //   } else {
-  //     // If opening accordion from closed state
-  //     setOpenAccordion(newId)
-  //     setDisplayService(services.find(service => service.id === newId))
-  //   }
-  // }
+    if (openAccordion !== 0 && newId !== openAccordion) {
+      // If switching from one open accordion to another, handle smooth transition
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setOpenAccordion(newId)
+        setDisplayService(services.find(service => service.id === newId))
+        setIsTransitioning(false)
+      }, 300) // Half of fade out duration
+    } else if (openAccordion !== 0 && newId === 0) {
+      // If closing accordion, fade out then remove
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setOpenAccordion(newId)
+        setDisplayService(undefined)
+        setIsTransitioning(false)
+      }, 600) // Full fade out duration
+    } else {
+      // If opening accordion from closed state
+      setOpenAccordion(newId)
+      setDisplayService(services.find(service => service.id === newId))
+    }
+  }
 
   const currentService = displayService
 
@@ -166,8 +166,8 @@ export default function Services() {
                 className="border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md"
               >
                 <button
-                  disabled
-                  className="w-full flex items-center justify-between p-6 sm:p-8 bg-white cursor-not-allowed transition-colors duration-200"
+                  onClick={() => toggleAccordion(service.id)}
+                  className="w-full flex items-center justify-between p-6 sm:p-8 bg-white transition-colors duration-200"
                 >
                   <div className="flex items-center">
                     <div className="w-3 h-3 sm:w-6 sm:h-6 bg-[#B1C3CD] rounded-full flex items-center justify-center mr-4 sm:mr-6">

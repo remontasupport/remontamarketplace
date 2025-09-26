@@ -36,7 +36,7 @@ export default function Hero() {
             <div className="grid grid-cols-3 gap-2 sm:gap-8">
               <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#EDEFF3] rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[#0C1628]" stroke="currentColor" fill="none" viewBox="0 0 64 64" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="32" cy="7.6" r="5.1"/>
                       <path d="M23.33,31.44l-.48-5c-.3-3.02-1.63-5.84-3.78-7.99L8.16,7.54c-1.16-1.16-1.16-3.04,0-4.2.58-.58,1.34-.87,2.1-.87s1.52.29,2.1.87l10.39,10.4c2.45,2.45,5.78,3.83,9.25,3.83,1.74,0,3.44-.35,5.01-1s3.01-1.61,4.24-2.83l10.39-10.4c1.16-1.16,3.04-1.16,4.2,0,.58.58.87,1.34.87,2.1s-.29,1.52-.87,2.1l-10.91,10.91c-2.15,2.15-3.48,4.97-3.78,7.99l-.48,5"/>
@@ -57,7 +57,7 @@ export default function Hero() {
 
               <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#EDEFF3] rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[#0C1628]" stroke="currentColor" fill="none" viewBox="0 0 64 64" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M39.14,47.26l.02-.02,10.82-9.09c.35-.3.79-.45,1.23-.45.4,0,.8.13,1.14.38.89.65,1.04,1.91.35,2.76l-8.62,10.52c-3.32,4.05-8.35,6.28-13.59,6.12-4.95-.15-9.69.5-11.85.86"/>
                       <path d="M16,46.15l1.81-1.51c1.89-1.57,4.24-2.39,6.62-2.39,1.36,0,2.73.27,4.03.82,1.48.63,3.1.9,4.72.8l4.23-.29s.1,0,.14,0c1,0,1.88.68,2.13,1.66.18.73-.03,1.48-.5,2l-.02.02c-.27.3-.64.52-1.06.62-1.92.46-5.35.87-11.01.37"/>
@@ -76,7 +76,7 @@ export default function Hero() {
 
               <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#EDEFF3] rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[#0C1628]" stroke="currentColor" fill="none" viewBox="0 0 64 64" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <g>
                         <polyline points="33.41 47.79 3.76 47.79 3.76 2.79 56.48 2.79 56.48 38.48"/>

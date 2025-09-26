@@ -20,7 +20,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="bg-[#B1C3CD] py-12 sm:py-12 md:py-16 lg:py-20 overflow-x-hidden">
+    <section className="bg-[#F8E8D8] py-12 sm:py-12 md:py-16 lg:py-20 overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-start mb-8 sm:mb-12 md:mb-16 lg:mb-20">
@@ -64,7 +64,7 @@ export default function HowItWorks() {
               >
                 Get started
               </Link>
-              <p className="font-sans text-center lg:text-left text-xs sm:text-sm text-gray-500 flex-1 leading-relaxed">
+              <p className="font-sans text-center lg:text-left text-xs sm:text-sm text-[#0C1628] flex-1 leading-relaxed">
                 * Don't worry - if you're just starting out, our team can guide you through what you need.
               </p>
             </div>
@@ -80,7 +80,7 @@ export default function HowItWorks() {
             >
               {/* Step Number */}
               <div className="mb-3 sm:mb-6">
-                <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F8E8D8] font-cooper text-lg sm:text-xl font-normal text-[#0C1628]">
+                <span className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#EDEFF3] font-cooper text-lg sm:text-xl font-normal text-[#0C1628]">
                   {item.step}
                 </span>
               </div>

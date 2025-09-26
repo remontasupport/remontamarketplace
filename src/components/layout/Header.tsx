@@ -207,14 +207,14 @@ export default function Header() {
           <Link
             
             href="/" // "/login"
-            className={`flex items-center justify-center font-sans font-medium text-sm leading-6 transition-colors duration-300 rounded-full px-6 py-2 border ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]' : 'bg-[#B1C3CD] text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]'}`}
+            className={`flex items-center justify-center font-sans font-medium text-sm leading-6 transition-colors duration-300 rounded-full px-6 py-2 border ${isScrolled ? 'bg-white text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]' : 'text-[#0C1628] hover:bg-white hover:text-[#0C1628]'}`}
           >
             Log in
           </Link>
           <div className="relative">
             <button
               disabled
-              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-white text-[#0C1628] hover:bg-[#B1C3CD] hover:text-white' : 'bg-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
               onClick={() => setOpenDropdown(openDropdown === 'get-started' ? null : 'get-started')}
             >
               Get started
