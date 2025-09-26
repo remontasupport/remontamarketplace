@@ -106,7 +106,7 @@ export default function Testimonials() {
                  David
                 </h3>
                 <p className="font-sans text-sm sm:text-base text-gray-500">
-                  Head of Marketing at Webflow
+                  NDIS Participant
                 </p>
               </div>
             </div>

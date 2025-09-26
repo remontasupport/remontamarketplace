@@ -59,7 +59,7 @@ export default function HowItWorks() {
             {/* Desktop/Tablet CTA - Hidden on mobile */}
             <div className="hidden sm:flex sm:flex-row sm:items-start gap-3 sm:gap-4 mt-8">
               <Link
-                href="/get-started"
+                href="/" // "/get-started"
                 className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-8 lg:px-10 py-4 sm:py-4 lg:py-4 font-sans font-semibold text-base sm:text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0 min-w-[140px]"
               >
                 Get started

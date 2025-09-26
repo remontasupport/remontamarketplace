@@ -19,13 +19,13 @@ export default function Hero() {
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
               <Link
-                href="/find-support"
+                href="/"
                 className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-white border border-[#0C1628] px-6 sm:px-8 py-2.5 sm:py-3 font-sans font-semibold text-sm sm:text-base text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
               >
                 Find support
               </Link>
               <Link
-                href="/become-support-worker"
+                href="/"
                 className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-6 sm:px-8 py-2.5 sm:py-3 font-sans font-semibold text-sm sm:text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200"
               >
                 Provide support

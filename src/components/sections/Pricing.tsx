@@ -14,11 +14,11 @@ export default function Pricing() {
       title: "State-based funding",
       description: "Your transactions are protected with bank-level security encryption."
     },
-    {
-      icon: <Image src="/images/home-care.svg" alt="Home Care Packages" width={25} height={25} />,
-      title: "Home Care Packages",
-      description: "All support workers are background checked and professionally verified."
-    },
+    // {
+    //   icon: <Image src="/images/home-care.svg" alt="Home Care Packages" width={25} height={25} />,
+    //   title: "Home Care Packages",
+    //   description: "All support workers are background checked and professionally verified."
+    // },
     {
       icon: <Image src="/images/insurance-based.svg" alt="Insurance-based funding" width={25} height={25} />,
       title: "Insurance-based funding",

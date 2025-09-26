@@ -21,11 +21,11 @@ const navigation = [
         description: 'Find the right workers for your participant\'s goals, easily and safely.',
         href: '/find-support/emergency'
       },
-      {
-        name: 'Home Care Providers & Coordinators',
-        description: 'Build your workforce from a national network of 13,000+ employed and skilled workers.',
-        href: '/find-support/plan-management'
-      },
+      // {
+      //   name: 'Home Care Providers & Coordinators',
+      //   description: 'Build your workforce from a national network of 13,000+ employed and skilled workers.',
+      //   href: '/find-support/plan-management'
+      // },
     ]
   },
   {
@@ -36,17 +36,17 @@ const navigation = [
       {
         name: 'Apply Now',
         description: 'Join our network of qualified support workers and start making a difference.',
-        href: '/become-support-worker/apply'
+        href: '/' // "/become-support-worker/apply"
       },
       {
         name: 'Requirements',
         description: 'Learn about the qualifications and requirements to become a support worker.',
-        href: '/become-support-worker/requirements'
+        href: '/' // "/become-support-worker/requirements"
       },
       {
         name: 'Training Resources',
         description: 'Access comprehensive training materials and professional development.',
-        href: '/become-support-worker/training'
+        href: '/' // "/become-support-worker/training"
       },
     ]
   },
@@ -58,21 +58,21 @@ const navigation = [
       {
         name: 'Partner with Us',
         description: 'Join our network of trusted providers and coordinators.',
-        href: '/coordinators-providers/partner'
+        href: '/' // "/coordinators-providers/partner"
       },
       {
         name: 'Provider Portal',
         description: 'Access your dedicated portal for managing participants and workers.',
-        href: '/coordinators-providers/portal'
+        href: '/' // "/coordinators-providers/portal"
       },
       {
         name: 'Resources',
         description: 'Tools and resources to help you deliver quality support services.',
-        href: '/coordinators-providers/resources'
+        href: '/' // "/coordinators-providers/resources"
       },
     ]
   },
-  { name: 'Pricing', href: '/pricing', hasDropdown: false },
+  { name: 'Pricing', href: '/', hasDropdown: false },
   // {
   //   name: 'More',
   //   href: '#',
@@ -200,13 +200,15 @@ export default function Header() {
         {/* Right side buttons */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
           <Link
-            href="/login"
+            
+            href="/" // "/login"
             className={`flex items-center justify-center font-sans font-medium text-sm leading-6 transition-colors duration-300 rounded-full px-6 py-2 border ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]' : 'bg-[#B1C3CD] text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]'}`}
           >
             Log in
           </Link>
           <div className="relative">
             <button
+              disabled
               className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-white text-[#0C1628] hover:bg-[#B1C3CD] hover:text-white' : 'bg-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
               onClick={() => setOpenDropdown(openDropdown === 'get-started' ? null : 'get-started')}
             >

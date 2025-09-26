@@ -113,31 +113,31 @@ export default function Services() {
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
   const [displayService, setDisplayService] = useState<ServiceItem | undefined>(services[0])
 
-  const toggleAccordion = (id: number) => {
-    const newId = openAccordion === id ? 0 : id
+  // const toggleAccordion = (id: number) => {
+  //   const newId = openAccordion === id ? 0 : id
 
-    if (openAccordion !== 0 && newId !== openAccordion) {
-      // If switching from one open accordion to another, handle smooth transition
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setOpenAccordion(newId)
-        setDisplayService(services.find(service => service.id === newId))
-        setIsTransitioning(false)
-      }, 300) // Half of fade out duration
-    } else if (openAccordion !== 0 && newId === 0) {
-      // If closing accordion, fade out then remove
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setOpenAccordion(newId)
-        setDisplayService(undefined)
-        setIsTransitioning(false)
-      }, 600) // Full fade out duration
-    } else {
-      // If opening accordion from closed state
-      setOpenAccordion(newId)
-      setDisplayService(services.find(service => service.id === newId))
-    }
-  }
+  //   if (openAccordion !== 0 && newId !== openAccordion) {
+  //     // If switching from one open accordion to another, handle smooth transition
+  //     setIsTransitioning(true)
+  //     setTimeout(() => {
+  //       setOpenAccordion(newId)
+  //       setDisplayService(services.find(service => service.id === newId))
+  //       setIsTransitioning(false)
+  //     }, 300) // Half of fade out duration
+  //   } else if (openAccordion !== 0 && newId === 0) {
+  //     // If closing accordion, fade out then remove
+  //     setIsTransitioning(true)
+  //     setTimeout(() => {
+  //       setOpenAccordion(newId)
+  //       setDisplayService(undefined)
+  //       setIsTransitioning(false)
+  //     }, 600) // Full fade out duration
+  //   } else {
+  //     // If opening accordion from closed state
+  //     setOpenAccordion(newId)
+  //     setDisplayService(services.find(service => service.id === newId))
+  //   }
+  // }
 
   const currentService = displayService
 
@@ -157,7 +157,7 @@ export default function Services() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 lg:items-start">
           {/* Accordion Section */}
           <div className="space-y-4">
             {services.map((service) => (
@@ -166,8 +166,8 @@ export default function Services() {
                 className="border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md"
               >
                 <button
-                  onClick={() => toggleAccordion(service.id)}
-                  className="w-full flex items-center justify-between p-6 sm:p-8 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  disabled
+                  className="w-full flex items-center justify-between p-6 sm:p-8 bg-white cursor-not-allowed transition-colors duration-200"
                 >
                   <div className="flex items-center">
                     <div className="w-3 h-3 sm:w-6 sm:h-6 bg-[#B1C3CD] rounded-full flex items-center justify-center mr-4 sm:mr-6">
@@ -229,13 +229,13 @@ export default function Services() {
           {currentService && (
             <div
               key={currentService.id}
-              className={`hidden lg:block lg:sticky lg:top-8 ${
+              className={`hidden lg:block ${
                 isTransitioning
                   ? 'animate-[fadeOutDown_0.6s_ease-out_forwards]'
                   : 'opacity-0 translate-y-6 animate-[fadeInUp_0.6s_ease-out_forwards]'
               }`}
             >
-              <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg">
+              <div className="relative lg:-top-6 w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg">
                 <Image
                   src={currentService.image}
                   alt={currentService.imageAlt}

@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import Image from 'next/image'
 
 const features = [
@@ -109,12 +108,12 @@ export default function AboutUs() {
               </p>
 
               <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                <Link
-                  href="/get-started"
-                  className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#B1C3CD] px-6 sm:px-8 lg:px-8 py-3 sm:py-3.5 lg:py-3.5 font-sans font-semibold text-base sm:text-base text-[#0C1628] hover:bg-white hover:text-[#0C1628] transition-colors duration-200"
+                <button
+                  disabled
+                  className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#B1C3CD] px-6 sm:px-8 lg:px-8 py-3 sm:py-3.5 lg:py-3.5 font-sans font-semibold text-base sm:text-base text-[#0C1628] transition-colors duration-200"
                 >
                   Provide Support
-                </Link>
+                </button>
               </div>
             </div>
 
