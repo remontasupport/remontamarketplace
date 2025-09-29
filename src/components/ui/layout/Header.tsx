@@ -213,7 +213,7 @@ export default function Header() {
           </Link>
           <div className="relative">
             <button
-              disabled
+              
               className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
               onClick={() => setOpenDropdown(openDropdown === 'get-started' ? null : 'get-started')}
             >
@@ -234,7 +234,7 @@ export default function Header() {
                     I need support
                   </Link>
                   <Link
-                    href="/register/support-worker"
+                    href="/registration/contractor"
                     className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#B1C3CD] transition ease-in-out duration-150"
                   >
                     I want to provide support
@@ -339,7 +339,7 @@ export default function Header() {
                       I need support
                     </Link>
                     <Link
-                      href="/register/support-worker"
+                      href="/registration/contractor"
                       className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] border border-[#0C1628] hover:bg-[#F8E8D8] text-center"
                       onClick={() => setMobileMenuOpen(false)}
                     >

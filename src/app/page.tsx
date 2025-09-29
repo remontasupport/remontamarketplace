@@ -1,12 +1,12 @@
-import Hero from "@/components/sections/home/Hero";
-import HowItWorks from "@/components/sections/home/HowItWorks";
-import AboutUs from "@/components/sections/home/AboutUs";
-import Testimonials from "@/components/sections/home/Testimonials";
-import Services from "@/components/sections/home/Services";
-import Pricing from "@/components/sections/home/Pricing";
-import FAQ from "@/components/sections/home/FAQ";
-import Footer from "@/components/layout/Footer";
-// import AustraliaMap from "@/components/sections/home/AustraliaMap";
+import Hero from "@/components/sections/landing/Hero";
+import HowItWorks from "@/components/sections/landing/HowItWorks";
+import AboutUs from "@/components/sections/landing/AboutUs";
+import Testimonials from "@/components/sections/landing/Testimonials";
+import Services from "@/components/sections/landing/Services";
+import Pricing from "@/components/sections/landing/Pricing";
+import FAQ from "@/components/sections/landing/FAQ";
+import Footer from "@/components/ui/layout/Footer";
+// import AustraliaMap from "@/components/sections/landing/AustraliaMap";
 
 export default function Home() {
   return (
