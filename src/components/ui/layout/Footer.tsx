@@ -22,7 +22,7 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="bg-[#0C1628] py-12 sm:py-16">
+    <footer className="bg-[#0C1628] sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
@@ -30,21 +30,21 @@ export default function Footer() {
           <div className="md:col-span-1">
             <div className="flex flex-col items-left lg:items-start">
               <Image
-                className="h-4 w-40 sm:h-28 lg:h-32 relative -left-9 lg:-top-14 lg:-left-0"
+                className="h-30 w-40 sm:h-28 lg:h-35 relative -left-9 lg:-top-16 lg:-left-0"
                 src="/logo/logo-dark.svg"
                 alt="LocalAid"
                 width={250}
                 height={120}
                 priority
               />
-              <span className="text-xs italic text-gray-300 mt-1 lg:-mt-12 lg:relative lg:-top-12 lg:left-11">
+              {/* <span className="text-xs italic text-gray-300 mt-1 lg:-mt-12 lg:relative lg:-top-12 lg:left-11">
                 previously Remonta
-              </span>
+              </span> */}
             </div>
           </div>
 
           {/* Menu Section */}
-          <div className="md:col-span-1 text-left lg:mt-0">
+          <div className="md:col-span-1 text-left lg:mt-0 -mt-10">
             <h3 className="font-sans text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 uppercase tracking-wide">
               MENU
             </h3>
@@ -115,7 +115,7 @@ export default function Footer() {
                 We acknowledge the cultures of our First Nations Peoples and are thankful for the community that we share together now. We pay our respects to our First Nations Peoples and their elders/leaders, both past and present, and those who are rising up to become leaders.
               </p>
               <p className="font-sans text-sm text-white/80">
-                LocalAid is a part of <span className="text-white font-medium">Attain Healthtech</span>, dedicated to helping people attain better outcomes.
+                Remonta is a part of <span className="text-white font-medium">Attain Healthtech</span>, dedicated to helping people attain better outcomes.
               </p>
             </div>
 

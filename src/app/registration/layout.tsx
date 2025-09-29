@@ -7,7 +7,7 @@ export default function RegistrationLayout({
 }) {
   return (
     <div className="min-h-screen">
-      <SimpleHeader />
+      {/* <SimpleHeader /> */}
       {children}
     </div>
   );

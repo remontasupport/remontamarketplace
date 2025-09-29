@@ -20,7 +20,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="bg-[#F8E8D8] py-12 sm:py-12 md:py-16 lg:py-20 overflow-x-hidden">
+    <section className="bg-[#EDEFF3] py-12 sm:py-12 md:py-16 lg:py-20 overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-start mb-8 sm:mb-12 md:mb-16 lg:mb-20">
@@ -59,7 +59,7 @@ export default function HowItWorks() {
             {/* Desktop/Tablet CTA - Hidden on mobile */}
             <div className="hidden sm:flex sm:flex-row sm:items-start gap-3 sm:gap-4 mt-8">
               <Link
-                href="/" // "/get-started"
+                href="/registration/contractor" // "/get-started"
                 className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-8 lg:px-10 py-4 sm:py-4 lg:py-4 font-sans font-semibold text-base sm:text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0 min-w-[140px]"
               >
                 Get started

@@ -118,23 +118,23 @@ export default function Header() {
 
   return (
     <header className={`sticky top-0 z-40 transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between py-4 lg:py-10 px-4 lg:px-8" aria-label="Global">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-10 lg:px-8" aria-label="Global">
         {/* Logo */}
-        <div className="flex lg:flex-1 relative -left-2 lg:-left-0 py-4 lg:py-0">
-          <Link href="/" className="-m-1.5 p-1.5">
+        <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
+          <Link href="/" className="-m-1.5">
             <span className="sr-only">LocalAid</span>
             <div className="flex flex-col items-center relative -left-7 lg:-left-0">
               <Image
-                className="h-4 w-40 sm:h-7 md:h-8 lg:h-9"
+                className="h-35 w-auto sm:h-10 md:h-15 lg:h-34"
                 src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
                 alt="LocalAid"
-                width={100}
-                height={100}
+                width={150}
+                height={150}
                 priority
               />
-              <span className={`ml-5 lg:ml-9 text-xs mt-0.5 italic transition-colors duration-300 ${isScrolled ? 'text-gray-300' : 'text-gray-500'}`}>
+              {/* <span className={`ml-5 lg:ml-9 text-xs mt-0.5 italic transition-colors duration-300 ${isScrolled ? 'text-gray-300' : 'text-gray-500'}`}>
                 previously Remonta
-              </span>
+              </span> */}
             </div>
           </Link>
         </div>
@@ -142,6 +142,7 @@ export default function Header() {
         {/* Mobile menu button */}
         <div className="flex lg:hidden">
           <button
+            disabled
             type="button"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-[#0C1628]"
             onClick={() => setMobileMenuOpen(true)}
@@ -157,6 +158,7 @@ export default function Header() {
             <div key={item.name} className="relative">
               {item.hasDropdown ? (
                 <button
+                  disabled
                   className={`flex items-center gap-x-1 font-sans font-medium text-sm leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
                   onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
                 >
@@ -204,25 +206,32 @@ export default function Header() {
 
         {/* Right side buttons */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-          <Link
+          {/* <Link
             
             href="/" // "/login"
             className={`flex items-center justify-center font-sans font-medium text-sm leading-6 transition-colors duration-300 rounded-full px-6 py-2 border ${isScrolled ? 'bg-white text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]' : 'text-[#0C1628] hover:bg-white hover:text-[#0C1628]'}`}
           >
             Log in
-          </Link>
+          </Link> */}
           <div className="relative">
-            <button
+            <Link
+              href="/registration/contractor"
+              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+            >
+              Contact Us
+            </Link>
+
+            {/* <button
               
               className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
               onClick={() => setOpenDropdown(openDropdown === 'get-started' ? null : 'get-started')}
             >
-              Get started
+              Contact Us
               <ChevronDownIcon className="h-4 w-4 flex-none text-white" aria-hidden="true" />
-            </button>
+            </button> */}
 
             {/* Get started dropdown */}
-            {openDropdown === 'get-started' && (
+            {/* {openDropdown === 'get-started' && (
               <div
                 className="absolute left-0 z-10 mt-3 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
               >
@@ -241,7 +250,7 @@ export default function Header() {
                   </Link>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </nav>
@@ -256,15 +265,15 @@ export default function Header() {
                 <span className="sr-only">LocalAid</span>
                 <div className="flex flex-col items-center">
                   <Image
-                    className="h-8 w-24 sm:h-10 w-4"
+                    className="h-30 w-auto sm:h-35 w-4"
                     src="/logo/logo.svg"
                     alt="LocalAid"
                     width={120}
                     height={40}
                   />
-                  <span className="text-xs mt-0.5 italic text-gray-500">
+                  {/* <span className="text-xs mt-0.5 italic text-gray-500">
                     previously Remonta
-                  </span>
+                  </span> */}
                 </div>
               </Link>
               <button
@@ -288,9 +297,8 @@ export default function Header() {
                         >
                           {item.name}
                           <ChevronDownIcon
-                            className={`h-5 w-5 flex-none transform transition-transform ${
-                              openDropdown === item.name ? 'rotate-180' : ''
-                            }`}
+                            className={`h-5 w-5 flex-none transform transition-transform ${openDropdown === item.name ? 'rotate-180' : ''
+                              }`}
                             aria-hidden="true"
                           />
                         </button>
@@ -322,7 +330,7 @@ export default function Header() {
                     </div>
                   ))}
                 </div>
-                <div className="py-6 space-y-4">
+                {/* <div className="py-6 space-y-4">
                   <Link
                     href="/login"
                     className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8] border border-[#0C1628] text-center"
@@ -346,6 +354,16 @@ export default function Header() {
                       I want to provide support
                     </Link>
                   </div>
+                </div> */}
+
+
+                <div className="relative">
+                  <Link
+                    href="/registration/contractor"
+                    className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+                  >
+                    Contact Us
+                  </Link>
                 </div>
               </div>
             </div>
