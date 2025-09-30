@@ -142,7 +142,7 @@ export default function Header() {
         {/* Mobile menu button */}
         <div className="flex lg:hidden">
           <button
-            disabled
+           
             type="button"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-[#0C1628]"
             onClick={() => setMobileMenuOpen(true)}
