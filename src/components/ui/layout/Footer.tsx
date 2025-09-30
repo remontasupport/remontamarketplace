@@ -115,7 +115,7 @@ export default function Footer() {
                 We acknowledge the cultures of our First Nations Peoples and are thankful for the community that we share together now. We pay our respects to our First Nations Peoples and their elders/leaders, both past and present, and those who are rising up to become leaders.
               </p>
               <p className="font-sans text-sm text-white/80">
-                Remonta is a part of <span className="text-white font-medium">Attain Healthtech</span>, dedicated to helping people attain better outcomes.
+                Remonta is a part of <span className="text-white font-medium">LocalAid</span>, dedicated to helping people attain better outcomes.
               </p>
             </div>
 
