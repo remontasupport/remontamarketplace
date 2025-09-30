@@ -9,24 +9,24 @@ export default function Hero() {
           {/* Left Column - Content */}
           <div className="order-2 lg:order-1">
             <h1 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-tight text-[#0C1628] mb-4 sm:mb-6">
-              Your online platform to find, book, and <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg">manage NDIS</span> and aged care support
+              Your online platform to find, book, and <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg">manage NDIS services</span>
             </h1>
 
-            <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] mb-6 sm:mb-8 leading-relaxed">
+            <p className="font-sans text-lg sm:text-xl lg:text-2xl text-[#0C1628] mb-6 sm:mb-8 leading-relaxed">
               Whether you need support or want to offer it, our platform makes the process simple and secure.
             </p>
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
               <Link
-                href="/"
-                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-white border border-[#0C1628] px-6 sm:px-8 py-2.5 sm:py-3 font-sans font-semibold text-sm sm:text-base text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
+                href="/registration/client"
+                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-white border border-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
               >
                 Find support
               </Link>
               <Link
                 href="/registration/contractor"
-                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-6 sm:px-8 py-2.5 sm:py-3 font-sans font-semibold text-sm sm:text-base text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200"
+                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200"
               >
                 Provide support
               </Link>
@@ -50,8 +50,8 @@ export default function Hero() {
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <div className="font-sans font-bold text-lg sm:text-xl text-[#0C1628] leading-tight">99%</div>
-                  <div className="font-sans text-xs sm:text-xs text-gray-600 leading-tight">Job completion rate with verified workers.</div>
+                  <div className="font-sans font-bold text-xl sm:text-2xl text-[#0C1628] leading-tight">99%</div>
+                  <div className="font-sans text-sm sm:text-base text-gray-600 leading-tight">Job completion rate with verified workers.</div>
                 </div>
               </div>
 
@@ -69,8 +69,8 @@ export default function Hero() {
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <div className="font-sans font-bold text-lg sm:text-xl text-[#0C1628] leading-tight">610,000+</div>
-                  <div className="font-sans text-xs sm:text-xs text-gray-600 leading-tight">Australian supported by the NDIS</div>
+                  <div className="font-sans font-bold text-xl sm:text-2xl text-[#0C1628] leading-tight">610,000+</div>
+                  <div className="font-sans text-sm sm:text-base text-gray-600 leading-tight">Australian supported by the NDIS</div>
                 </div>
               </div>
 
@@ -95,8 +95,8 @@ export default function Hero() {
                   </div>
                 </div>
                 <div className="flex-1 text-center sm:text-left">
-                  <div className="font-sans font-bold text-lg sm:text-xl text-[#0C1628] leading-tight">70%</div>
-                  <div className="font-sans text-xs sm:text-xs text-gray-600 leading-tight">Admin time saved.</div>
+                  <div className="font-sans font-bold text-xl sm:text-2xl text-[#0C1628] leading-tight">70%</div>
+                  <div className="font-sans text-sm sm:text-base text-gray-600 leading-tight">Admin time saved.</div>
                 </div>
               </div>
             </div>

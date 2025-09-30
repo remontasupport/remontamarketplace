@@ -10,12 +10,12 @@ export default function SimpleHeader() {
         {/* Logo */}
         <div className="flex items-center lg:py-0">
           <Link href="/" className="flex items-center">
-            <span className="sr-only">LocalAid</span>
+            <span className="sr-only">Remonta</span>
             <div className="flex flex-col items-start">
               <Image
                 className="h-8 w-auto lg:h-48"
                 src="/logo/logo.svg"
-                alt="LocalAid"
+                alt="Remonta"
                 width={160}
                 height={12}
                 priority

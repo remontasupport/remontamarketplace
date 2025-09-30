@@ -32,7 +32,7 @@ export default function Footer() {
               <Image
                 className="h-30 w-40 sm:h-28 lg:h-35 relative -left-9 lg:-top-16 lg:-left-0"
                 src="/logo/logo-dark.svg"
-                alt="LocalAid"
+                alt="Remonta"
                 width={250}
                 height={120}
                 priority
@@ -155,7 +155,7 @@ export default function Footer() {
         <div className="mt-12 pt-8 border-t border-white/30">
           <div className="text-center">
             <p className="font-sans text-sm text-white/70">
-              © 2025 LocalAid. All rights reserved.
+              © 2025 Remonta. All rights reserved.
             </p>
           </div>
         </div>

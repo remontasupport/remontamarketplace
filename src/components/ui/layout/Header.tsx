@@ -5,74 +5,33 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronDownIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
-const navigation = [
+interface NavigationItem {
+  name: string
+  href: string
+  hasDropdown: boolean
+  dropdownItems?: Array<{
+    name: string
+    href: string
+    description?: string
+  }>
+}
+
+const navigation: NavigationItem[] = [
   {
     name: 'Find support',
-    href: '/find-support',
-    hasDropdown: true,
-    dropdownItems: [
-      {
-        name: 'NDIS Provider Staffing Solutions',
-        description: 'Get direct access to a network of 13,000+ pre-vetted, screened, and trained workers.',
-        href: '/find-support/browse'
-      },
-      {
-        name: 'NDIS Support Coordination Platform',
-        description: 'Find the right workers for your participant\'s goals, easily and safely.',
-        href: '/find-support/emergency'
-      },
-      // {
-      //   name: 'Home Care Providers & Coordinators',
-      //   description: 'Build your workforce from a national network of 13,000+ employed and skilled workers.',
-      //   href: '/find-support/plan-management'
-      // },
-    ]
+    href: '/registration/client',
+    hasDropdown: false
   },
   {
     name: 'Become a support worker',
-    href: '/become-support-worker',
-    hasDropdown: true,
-    dropdownItems: [
-      {
-        name: 'Apply Now',
-        description: 'Join our network of qualified support workers and start making a difference.',
-        href: '/' // "/become-support-worker/apply"
-      },
-      {
-        name: 'Requirements',
-        description: 'Learn about the qualifications and requirements to become a support worker.',
-        href: '/' // "/become-support-worker/requirements"
-      },
-      {
-        name: 'Training Resources',
-        description: 'Access comprehensive training materials and professional development.',
-        href: '/' // "/become-support-worker/training"
-      },
-    ]
+    href: '/registration/client',
+    hasDropdown: false
   },
   {
-    name: 'Coordinators and providers',
-    href: '/coordinators-providers',
-    hasDropdown: true,
-    dropdownItems: [
-      {
-        name: 'Partner with Us',
-        description: 'Join our network of trusted providers and coordinators.',
-        href: '/' // "/coordinators-providers/partner"
-      },
-      {
-        name: 'Provider Portal',
-        description: 'Access your dedicated portal for managing participants and workers.',
-        href: '/' // "/coordinators-providers/portal"
-      },
-      {
-        name: 'Resources',
-        description: 'Tools and resources to help you deliver quality support services.',
-        href: '/' // "/coordinators-providers/resources"
-      },
-    ]
+    name: 'Services',
+    href: '#services',
+    hasDropdown: false
   },
-  { name: 'Pricing', href: '/', hasDropdown: false },
   // {
   //   name: 'More',
   //   href: '#',
@@ -82,6 +41,7 @@ const navigation = [
   //     { name: 'How It Works', href: '/how-it-works' },
   //     { name: 'Contact', href: '/contact' },
   //     { name: 'Help Center', href: '/help' },
+  //     { name: 'Pricing', href: '/pricing' },
   //   ]
   // },
 ]
@@ -122,12 +82,12 @@ export default function Header() {
         {/* Logo */}
         <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
           <Link href="/" className="-m-1.5">
-            <span className="sr-only">LocalAid</span>
+            <span className="sr-only">Remonta</span>
             <div className="flex flex-col items-center relative -left-7 lg:-left-0">
               <Image
                 className="h-35 w-auto sm:h-10 md:h-15 lg:h-34"
                 src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
-                alt="LocalAid"
+                alt="Remonta"
                 width={150}
                 height={150}
                 priority
@@ -142,7 +102,6 @@ export default function Header() {
         {/* Mobile menu button */}
         <div className="flex lg:hidden">
           <button
-           
             type="button"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-[#0C1628]"
             onClick={() => setMobileMenuOpen(true)}
@@ -159,7 +118,7 @@ export default function Header() {
               {item.hasDropdown ? (
                 <button
                   disabled
-                  className={`flex items-center gap-x-1 font-sans font-medium text-sm leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
+                  className={`flex items-center gap-x-1 font-sans font-medium text-base leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
                   onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
                 >
                   {item.name}
@@ -168,7 +127,7 @@ export default function Header() {
               ) : (
                 <Link
                   href={item.href}
-                  className={`font-sans font-medium text-sm leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
+                  className={`font-sans font-medium text-base leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
                 >
                   {item.name}
                 </Link>
@@ -190,9 +149,9 @@ export default function Header() {
                             <h3 className="font-sans font-semibold text-base text-[#0C1628] mb-2">
                               {dropdownItem.name}
                             </h3>
-                            <p className="font-sans text-sm text-gray-600 leading-relaxed">
+                            {/* <p className="font-sans text-sm text-gray-600 leading-relaxed">
                               {dropdownItem.description}
-                            </p>
+                            </p> */}
                           </div>
                         </Link>
                       ))}
@@ -262,12 +221,12 @@ export default function Header() {
           <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
               <Link href="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
-                <span className="sr-only">LocalAid</span>
+                <span className="sr-only">Remonta</span>
                 <div className="flex flex-col items-center">
                   <Image
                     className="h-30 w-auto sm:h-35 w-4"
                     src="/logo/logo.svg"
-                    alt="LocalAid"
+                    alt="Remonta"
                     width={120}
                     height={40}
                   />
@@ -292,7 +251,7 @@ export default function Header() {
                     <div key={item.name}>
                       {item.hasDropdown ? (
                         <button
-                          className="flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
+                          className="flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-lg font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
                           onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
                         >
                           {item.name}
@@ -305,7 +264,7 @@ export default function Header() {
                       ) : (
                         <Link
                           href={item.href}
-                          className="flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
+                          className="flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-lg font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           {item.name}

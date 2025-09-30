@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function Pricing() {
   const benefits = [
@@ -144,9 +145,9 @@ export default function Pricing() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-              <button className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#B1C3CD] px-8 py-4 font-sans font-semibold text-base text-[#0C1628] hover:bg-white hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0 min-w-[140px]">
+              <Link href="/registration/contractor" className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#B1C3CD] px-8 py-4 font-sans font-semibold text-base text-[#0C1628] hover:bg-white hover:text-[#0C1628] transition-colors duration-200 flex-shrink-0 min-w-[140px]">
                 Get In Touch
-              </button>
+              </Link>
               {/* <button className="inline-flex items-center justify-center rounded-full border-2 border-white px-8 py-4 font-sans font-semibold text-lg text-white hover:bg-white hover:text-[#0C1628] transition-colors duration-200 w-full sm:w-auto">
                 Learn More
               </button> */}

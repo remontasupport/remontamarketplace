@@ -3,6 +3,7 @@ import HowItWorks from "@/components/sections/landing/HowItWorks";
 import AboutUs from "@/components/sections/landing/AboutUs";
 import Testimonials from "@/components/sections/landing/Testimonials";
 import Services from "@/components/sections/landing/Services";
+import SearchSupport from "@/components/sections/landing/SearchSupport";
 import Pricing from "@/components/sections/landing/Pricing";
 import FAQ from "@/components/sections/landing/FAQ";
 import Footer from "@/components/ui/layout/Footer";
@@ -16,6 +17,7 @@ export default function Home() {
       <AboutUs />
       <Testimonials />
       <Services />
+      {/* <SearchSupport /> */}
       {/* <AustraliaMap /> */}
       <Pricing />
       <FAQ />

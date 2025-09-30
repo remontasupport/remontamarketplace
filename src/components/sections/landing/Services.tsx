@@ -142,7 +142,7 @@ export default function Services() {
   const currentService = displayService
 
   return (
-    <section className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
+    <section id="services" className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">

@@ -22,6 +22,14 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Find Support Workers for Disability and Aged Care",
   description: "Connecting NDIS participants with quality support workers across Australia",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/logo/logo-icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/logo/logo-icon.svg',
+  },
 };
 
 export default function RootLayout({
