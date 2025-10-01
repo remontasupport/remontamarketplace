@@ -24,7 +24,7 @@ const navigation: NavigationItem[] = [
   },
   {
     name: 'Become a support worker',
-    href: '/registration/client',
+    href: '/registration/worker',
     hasDropdown: false
   },
   {
