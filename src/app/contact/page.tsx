@@ -186,7 +186,7 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0C1628] text-white py-3 rounded-lg font-poppins font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors"
+                  className="w-full bg-[#0C1628] text-white py-3 rounded-full font-poppins font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors"
                 >
                   Submit
                 </button>
@@ -327,7 +327,7 @@ export default function ContactPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-[#0C1628] text-white py-3 rounded font-poppins text-md font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors"
+                className="w-full bg-[#0C1628] text-white py-3 rounded-full font-poppins text-md font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors"
               >
                 Submit
               </button>
