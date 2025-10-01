@@ -70,11 +70,26 @@ export default function Hero() {
   return (
     <section className="bg-white pt-0 pb-4 sm:py-0 lg:py-0 overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-2 pb-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start ">
           {/* Left Column - Content */}
           <div className="order-2 lg:order-1">
             <h1 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-tight text-[#0C1628] mb-4 sm:mb-6">
-              Your online platform to find, book, and <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg">manage NDIS services</span>
+              Your <span className="bg-[#F8E8D8] px-2 rounded-lg inline-block">Trusted, Ethical</span>
+              and <span className="bg-[#F8E8D8] px-2 rounded-lg inline-block mt-2">Reliable</span> NDIS
+              service provider{' '}
+              <span className="sm:hidden inline-flex items-center gap-2 align-middle">
+                <Image
+                  src="/logo/ndisLogo.svg"
+                  alt="NDIS Logo"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 inline-block"
+                />
+                <span className="inline-flex flex-col text-xs">
+                  <span className="text-[#0C1628] font-poppins whitespace-nowrap">Registered</span>
+                  <span className="text-[#0C1628] font-poppins whitespace-nowrap">NDIS provider</span>
+                </span>
+              </span>
             </h1>
 
             <p className="font-sans text-lg sm:text-xl lg:text-2xl text-[#0C1628] mb-6 sm:mb-8 leading-relaxed">
@@ -85,13 +100,13 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
               <Link
                 href="/registration/client"
-                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-white border border-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
+                className="inline-flex items-center justify-center rounded-full bg-white border border-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
               >
                 Find support
               </Link>
               <Link
-                href="/registration/contractor"
-                className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200"
+                href="/registration/worker"
+                className="inline-flex items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200"
               >
                 Provide support
               </Link>
@@ -153,12 +168,12 @@ export default function Hero() {
 
           {/* Right Column - Image */}
           <div className="order-1 lg:order-2">
-            <div className="relative mt-4 sm:mt-6 lg:mt-7">
+            <div className="relative mt-4 sm:mt-6 lg:mt-0">
               <div
                 className="aspect-[4/3] w-full overflow-hidden shadow-lg"
                 style={{
                   borderRadius: '2rem'
-                  
+
                 }}
               >
                 <Image
@@ -171,7 +186,23 @@ export default function Hero() {
                   style={{ borderRadius: '2rem' }}
                 />
               </div>
+             
             </div>
+             <div className="hidden sm:grid grid-cols-3 gap-0 sm:gap-8 mt-6 -ml-4">
+                <div className="flex justify-center items-center">
+                  <Image
+                    src="/logo/ndisLogo.svg"
+                    alt="NDIS Logo"
+                    width={150}
+                    height={100}
+                    className="w-50 h-14"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm text-[#0C1628] font-poppins whitespace-nowrap">Registered </span>
+                    <span className="text-sm text-[#0C1628] font-poppins whitespace-nowrap">NDIS provider</span>
+                  </div>
+                </div>
+              </div>
           </div>
         </div>
       </div>

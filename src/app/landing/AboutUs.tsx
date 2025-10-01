@@ -110,7 +110,7 @@ export default function AboutUs() {
 
               <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                 <Link
-                  href="/registration/contractor"
+                  href="/registration/worker"
                   className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#B1C3CD] px-6 sm:px-8 lg:px-8 py-3 sm:py-3.5 lg:py-3.5 font-sans font-semibold text-base sm:text-base text-[#0C1628] hover:bg-white transition-colors duration-200"
                 >
                   Provide Support

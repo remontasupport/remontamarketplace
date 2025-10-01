@@ -78,14 +78,14 @@ export default function Header() {
 
   return (
     <header className={`sticky top-0 z-40 transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-10 lg:px-8" aria-label="Global">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Global">
         {/* Logo */}
         <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
-          <Link href="/" className="-m-1.5">
-            <span className="sr-only">Remonta</span>
-            <div className="flex flex-col items-center relative -left-7 lg:-left-0">
+          <Link href="/" className="-m-1">
+           
+            <div className="flex flex-col items-center relative -left-0 lg:-left-0">
               <Image
-                className="h-35 w-auto sm:h-10 md:h-15 lg:h-34"
+                className="h-26 w-auto sm:h-2 md:h-15 lg:h-34"
                 src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
                 alt="Remonta"
                 width={150}
@@ -174,7 +174,7 @@ export default function Header() {
           </Link> */}
           <div className="relative">
             <Link
-              href="/registration/contractor"
+              href="/contact"
               className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
             >
               Contact Us
@@ -202,7 +202,7 @@ export default function Header() {
                     I need support
                   </Link>
                   <Link
-                    href="/registration/contractor"
+                    href="/registration/worker"
                     className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#B1C3CD] transition ease-in-out duration-150"
                   >
                     I want to provide support
@@ -218,10 +218,10 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="lg:hidden">
           <div className="fixed inset-0 z-50 bg-black bg-opacity-25" onClick={() => setMobileMenuOpen(false)} />
-          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-4 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
               <Link href="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
-                <span className="sr-only">Remonta</span>
+                
                 <div className="flex flex-col items-center">
                   <Image
                     className="h-30 w-auto sm:h-35 w-4"
@@ -306,7 +306,7 @@ export default function Header() {
                       I need support
                     </Link>
                     <Link
-                      href="/registration/contractor"
+                      href="/registration/worker"
                       className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] border border-[#0C1628] hover:bg-[#F8E8D8] text-center"
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -318,7 +318,7 @@ export default function Header() {
 
                 <div className="relative">
                   <Link
-                    href="/registration/contractor"
+                    href="/contact"
                     className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
                   >
                     Contact Us
