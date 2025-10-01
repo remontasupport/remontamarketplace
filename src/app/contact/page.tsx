@@ -58,8 +58,40 @@ export default function ContactPage() {
       <section className="relative overflow-hidden bg-[#EDEFF3] py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left Side - Form */}
-            <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl">
+            {/* Right Side - Content (First on mobile) */}
+            <div className="text-left lg:pl-8 order-1 lg:order-2">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl text-[#0C1628] mb-6 font-cooper">
+                Complaints, feedback, compliments?
+              </h2>
+
+              <p className="text-base md:text-lg text-[#0C1628] mb-8 font-poppins">
+                If you would like to submit a complaint, feedback, or a compliment, please complete this form and our team will respond as soon as possible.
+              </p>
+
+              {/* Contact Information */}
+              <div className="mt-12 flex flex-col sm:flex-row gap-6 sm:gap-8">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-6 h-6 text-[#0C1628]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                  </div>
+                  <span className="text-lg font-medium text-[#0C1628] font-poppins">contact@remontaservices.com.au</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-6 h-6 text-[#0C1628]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                    </svg>
+                  </div>
+                  <span className="text-lg font-medium text-[#0C1628] font-poppins">1300 134 153</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Left Side - Form (Second on mobile) */}
+            <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl order-2 lg:order-1">
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -159,38 +191,6 @@ export default function ContactPage() {
                   Submit
                 </button>
               </form>
-            </div>
-
-            {/* Right Side - Content */}
-            <div className="text-left lg:pl-8">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl text-[#0C1628] mb-6 font-cooper">
-                Complaints, feedback, compliments?
-              </h2>
-
-              <p className="text-base md:text-lg text-[#0C1628] mb-8 font-poppins">
-                If you would like to submit a complaint, feedback, or a compliment, please complete this form and our team will respond as soon as possible.
-              </p>
-
-              {/* Contact Information */}
-              <div className="mt-12 flex flex-col sm:flex-row gap-6 sm:gap-8">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <svg className="w-6 h-6 text-[#0C1628]" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                    </svg>
-                  </div>
-                  <span className="text-lg font-medium text-[#0C1628] font-poppins">contact@remontaservices.com.au</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <svg className="w-6 h-6 text-[#0C1628]" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                    </svg>
-                  </div>
-                  <span className="text-lg font-medium text-[#0C1628] font-poppins">1300 134 153</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
