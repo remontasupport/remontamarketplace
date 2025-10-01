@@ -1,8 +1,12 @@
 'use client'
 
+import Header from "@/components/ui/layout/Header"
+import Footer from "@/components/ui/layout/Footer"
+
 export default function ClientRegistration() {
   return (
-    <>
+    <div className="min-h-screen bg-white">
+      <Header />
       <style jsx>{`
         iframe::-webkit-scrollbar {
           display: none;
@@ -25,6 +29,7 @@ export default function ClientRegistration() {
           src='https://forms.zohopublic.com.au/remontaservices1/form/ReferralServiceRequestForm/formperma/gWcNHfxxYECG27F69e67owX2xXtXKi7qB9dGzoF2ez0'>
         </iframe>
       </div>
-    </>
+      <Footer />
+    </div>
   );
 }
