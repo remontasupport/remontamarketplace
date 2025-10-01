@@ -1,8 +1,12 @@
 'use client'
 
+import Header from "@/components/ui/layout/Header"
+import Footer from "@/components/ui/layout/Footer"
+
 export default function WorkerRegistration() {
   return (
-    <>
+    <div className="min-h-screen bg-white">
+      <Header />
       <style jsx>{`
         iframe::-webkit-scrollbar {
           display: none;
@@ -26,6 +30,7 @@ export default function WorkerRegistration() {
           src='https://forms.zohopublic.com.au/remontaservices1/form/ProfileSubmission/formperma/3FHPymU7Ch_tGMS79a3xgZgSw98Zx83NRDDxlE70MZo?zf_enablecamera=true'>
         </iframe>
       </div>
-    </>
+      <Footer />
+    </div>
   );
 }
