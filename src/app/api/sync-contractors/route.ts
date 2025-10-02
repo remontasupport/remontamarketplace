@@ -1,12 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { zohoService } from '@/lib/zoho'
+import { uploadFromUrl, generateFileName } from '@/lib/blobStorage'
 
-const prisma = new PrismaClient()
+// Helper: Parse name from Zoho contact
+function parseName(contact: any): { firstName: string; lastName: string } {
+  let firstName = contact.First_Name || contact.First_Name_1 || ''
+  let lastName = contact.Last_Name || contact.Last_Name_1 || ''
+
+  // Parse from Name field if firstName/lastName missing
+  if (!firstName && !lastName && contact.Name) {
+    if (contact.Name.includes(',')) {
+      const [last, first] = contact.Name.split(',').map((s: string) => s.trim())
+      firstName = first || 'N/A'
+      lastName = last
+    } else {
+      const parts = contact.Name.split(' ')
+      firstName = parts[0]
+      lastName = parts.slice(1).join(' ') || 'N/A'
+    }
+  }
+
+  // Handle comma in firstName field
+  if (firstName?.includes(',') && !lastName) {
+    const [first, last] = firstName.split(',').map((s: string) => s.trim())
+    firstName = first
+    lastName = last || 'N/A'
+  }
+
+  return { firstName, lastName }
+}
+
+// Helper: Parse array or string field to array
+function parseToArray(value: any): string[] {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  return value.split(',').map((s: string) => s.trim())
+}
+
+// Helper: Convert boolean field (handles arrays from Zoho)
+function parseBoolean(value: any): boolean | null {
+  if (typeof value === 'boolean') return value
+  if (Array.isArray(value)) {
+    const first = value[0]
+    if (first === 'Yes' || first === 'yes' || first === 'true') return true
+    if (first === 'No' || first === 'no' || first === 'false') return false
+  }
+  if (value === 'Yes' || value === 'yes' || value === 'true') return true
+  if (value === 'No' || value === 'no' || value === 'false') return false
+  return null
+}
+
+// Helper: Process file upload field to JSON string
+function processFileUpload(value: any): string | null {
+  if (!value || !Array.isArray(value) || value.length === 0) return null
+  return JSON.stringify(value)
+}
+
+// Helper: Upload photo to Vercel Blob
+async function uploadPhoto(contact: any): Promise<string | null> {
+  const photoSubmission = contact.Photo_Submission
+  if (!photoSubmission || !Array.isArray(photoSubmission) || photoSubmission.length === 0) {
+    return null
+  }
+
+  try {
+    const photo = photoSubmission[0]
+    if (!photo.preview_Url && !photo.download_Url) return null
+
+    const token = await (zohoService as any).getAccessToken()
+    const apiUrl = process.env.ZOHO_CRM_API_URL || 'https://www.zohoapis.com.au/crm/v2'
+    const fullUrl = `${apiUrl}/Contractors/${contact.id}/Attachments/${photo.attachment_Id}`
+    const fileName = generateFileName(photo.file_Name || 'photo.jpg', contact.id, 'profile')
+
+    return await uploadFromUrl(fullUrl, fileName, token)
+  } catch (error) {
+    return null
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Optional: Add authentication to protect this endpoint
+    // Authentication
     const authHeader = request.headers.get('authorization')
     const expectedToken = process.env.SYNC_API_SECRET
 
@@ -14,187 +89,127 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('Starting contractor sync from Zoho CRM...')
-
     // Fetch all contractor contacts from Zoho
     const zohoContacts = await zohoService.getContractorContacts()
-
-    console.log(`Found ${zohoContacts.length} contractors in Zoho CRM`)
 
     let created = 0
     let updated = 0
     let errors = 0
-
-    // Log first contact to see actual structure
-    if (zohoContacts.length > 0) {
-      console.log('Sample contact data:', JSON.stringify(zohoContacts[0], null, 2))
-    }
+    const errorMessages: string[] = []
 
     // Sync each contact to database
     for (const contact of zohoContacts) {
       try {
-        // Parse name - prioritize First_Name/Last_Name, fallback to Name field
-        let firstName = contact.First_Name || contact.First_Name_1
-        let lastName = contact.Last_Name || contact.Last_Name_1
+        // Parse name fields
+        const { firstName, lastName } = parseName(contact)
 
-        // If we have a Name field but no firstName/lastName, try to parse it
-        if (!firstName && !lastName && contact.Name) {
-          // Handle comma-separated names (e.g., "Last, First")
-          if (contact.Name.includes(',')) {
-            const parts = contact.Name.split(',').map(s => s.trim())
-            lastName = parts[0]
-            firstName = parts[1] || 'N/A'
-          } else {
-            const nameParts = contact.Name.split(' ')
-            if (nameParts.length >= 2) {
-              firstName = nameParts[0]
-              lastName = nameParts.slice(1).join(' ')
-            } else {
-              firstName = contact.Name
-              lastName = 'N/A'
-            }
-          }
-        }
-
-        // Handle partial firstName (e.g., "Angie, Bennett" stored as firstName)
-        if (firstName && firstName.includes(',') && !lastName) {
-          const parts = firstName.split(',').map(s => s.trim())
-          firstName = parts[0]
-          lastName = parts[1] || 'N/A'
-        }
-
-        // Get email (can be null)
-        const email = contact.Email || contact.Email_Address || null
-
-        // Skip only if we don't have name fields
         if (!firstName || !lastName) {
-          console.log(`Skipping contact ${contact.id} - missing required name fields (firstName: ${firstName}, lastName: ${lastName})`)
           errors++
+          errorMessages.push(`Contact ${contact.id}: Missing name fields`)
           continue
         }
 
-        // Generate a placeholder email if none exists (using Zoho ID to ensure uniqueness)
-        const finalEmail = email || `no-email-${contact.id}@placeholder.local`
+        // Get email or generate placeholder
+        const email = contact.Email || contact.Email_Address || `no-email-${contact.id}@placeholder.local`
 
-        // Parse service fields into skills array
-        const skills: string[] = []
-        if (contact.Primary_Service) skills.push(contact.Primary_Service)
-        if (contact.Secondary_Service_s) {
-          // Handle both array and string formats
-          if (Array.isArray(contact.Secondary_Service_s)) {
-            skills.push(...contact.Secondary_Service_s)
-          } else if (typeof contact.Secondary_Service_s === 'string') {
-            const secondaryServices = contact.Secondary_Service_s.split(',').map(s => s.trim())
-            skills.push(...secondaryServices)
-          }
+        // Parse skills and specializations
+        const skills = [
+          contact.Primary_Service,
+          ...parseToArray(contact.Secondary_Service_s)
+        ].filter(Boolean)
+
+        const specializations = parseToArray(contact.MISC_service)
+        const servicesOffered = parseToArray(contact.Services_Offered)
+
+        // Parse boolean field
+        const hasVehicleAccess = parseBoolean(contact.Do_you_drive_and_have_access_to_vehicle)
+
+        // Upload photo to Blob
+        const photoSubmissionUrl = await uploadPhoto(contact)
+
+        // Process file upload fields
+        const documentsUploads = processFileUpload(contact.Documents_Uploads)
+        const qualificationsUploads = processFileUpload(contact.Qualifications_Uploads)
+        const insuranceUploads = processFileUpload(contact.Insurance_Uploads)
+        const ndisWorkerCheck = processFileUpload(contact.NDIS_Worker_Check1)
+        const policeCheck = processFileUpload(contact.Police_Check_1)
+        const workingWithChildrenCheck = processFileUpload(contact.Working_With_Children_Check_1)
+        const ndisTrainingFileUpload = processFileUpload(contact.File_Upload)
+        const infectionControlTraining = processFileUpload(contact.Infection_Control_Training)
+
+        // Prepare contractor data
+        const contractorData = {
+          firstName,
+          lastName,
+          email,
+          phone: contact.Phone || contact.Phone_1 || contact.Contact_Number || null,
+          title: contact.Primary_Service || null,
+          companyName: contact.Company_Lookup || null,
+          yearsOfExperience: contact.Years_of_Experience || null,
+          skills,
+          specializations,
+          city: contact.City || contact.City_1 || null,
+          state: contact.State_Region_Province || contact.State_Region_Province_1 || contact.State || null,
+          postcode: contact.Postal_Zip_Code || contact.Postal_Zip_Code_1 || null,
+          profileImage: contact.Profile_Image || null,
+          documentsUploads,
+          qualificationsUploads,
+          insuranceUploads,
+          ndisWorkerCheck,
+          policeCheck,
+          workingWithChildrenCheck,
+          ndisTrainingFileUpload,
+          infectionControlTraining,
+          emergencyContact1: contact.Emergency_Contact_1 || null,
+          emergencyContact2: contact.Emergency_Contact_2 || null,
+          emergencyPhone1: contact.Phone_1 || null,
+          emergencyPhone2: contact.Phone_2 || null,
+          emergencyEmail2: contact.Email_2 || null,
+          emergencyEmail3: contact.Email_3 || null,
+          emergencyRelationship: contact.Relationship_to_you || null,
+          emergencyName: contact.Name || null,
+          emergencyClinicName: contact.Clinic_Name || null,
+          profileTitle: contact.Title_Role || null,
+          servicesOffered,
+          qualificationsAndCerts: contact.Qualifications_and_Certifications || null,
+          languageSpoken: contact.Language_Spoken || null,
+          hasVehicleAccess,
+          funFact: contact.A_Fun_Fact_About_Yourself || null,
+          hobbiesAndInterests: contact.Hobbies_and_or_Interests || null,
+          businessUnique: contact.What_Makes_Your_Business_Unique || null,
+          whyEnjoyWork: contact.Why_Do_You_Enjoy_Your_Work || null,
+          additionalInformation: contact.Additional_Information || null,
+          photoSubmission: photoSubmissionUrl,
+          signature2: contact.Signature_2 || null,
+          dateSigned2: contact.Date_Signed_2 ? new Date(contact.Date_Signed_2) : null,
+          lastSyncedAt: new Date(),
         }
-
-        // Parse MISC services into specializations
-        const specializations: string[] = []
-        if (contact.MISC_service) {
-          // Handle both array and string formats
-          if (Array.isArray(contact.MISC_service)) {
-            specializations.push(...contact.MISC_service)
-          } else if (typeof contact.MISC_service === 'string') {
-            const miscServices = contact.MISC_service.split(',').map(s => s.trim())
-            specializations.push(...miscServices)
-          }
-        }
-
-        // Service areas - for now empty, can be added later
-        const serviceAreas: string[] = []
 
         // Upsert contractor profile
-        const result = await prisma.contractorProfile.upsert({
-          where: {
-            zohoContactId: contact.id,
-          },
-          update: {
-            firstName,
-            lastName,
-            email: finalEmail,
-            phone: contact.Phone || contact.Phone_1 || contact.Contact_Number || null,
-            title: contact.Primary_Service || null,
-            companyName: contact.Company_Lookup || null,
-            yearsOfExperience: contact.Years_of_Experience || null,
-            skills,
-            specializations,
-            city: contact.City || contact.City_1 || null,
-            state: contact.State_Region_Province || contact.State_Region_Province_1 || contact.State || null,
-            postcode: contact.Postal_Zip_Code || contact.Postal_Zip_Code_1 || null,
-            serviceAreas,
-            rating: contact.Rating || 0,
-            reviewCount: contact.Review_Count || 0,
-            isAvailable: contact.Is_Available ?? true,
-            isVerified: contact.Is_Verified ?? false,
-            profileImage: contact.Profile_Image || null,
-            lastSyncedAt: new Date(),
-            updatedAt: new Date(),
-          },
-          create: {
-            zohoContactId: contact.id,
-            firstName,
-            lastName,
-            email: finalEmail,
-            phone: contact.Phone || contact.Phone_1 || contact.Contact_Number || null,
-            title: contact.Primary_Service || null,
-            companyName: contact.Company_Lookup || null,
-            yearsOfExperience: contact.Years_of_Experience || null,
-            skills,
-            specializations,
-            city: contact.City || contact.City_1 || null,
-            state: contact.State_Region_Province || contact.State_Region_Province_1 || contact.State || null,
-            postcode: contact.Postal_Zip_Code || contact.Postal_Zip_Code_1 || null,
-            serviceAreas,
-            rating: contact.Rating || 0,
-            reviewCount: contact.Review_Count || 0,
-            isAvailable: contact.Is_Available ?? true,
-            isVerified: contact.Is_Verified ?? false,
-            profileImage: contact.Profile_Image || null,
-            lastSyncedAt: new Date(),
-          },
-        })
-
-        // Check if it was created or updated
-        const existingProfile = await prisma.contractorProfile.findUnique({
+        await prisma.contractorProfile.upsert({
           where: { zohoContactId: contact.id },
-          select: { createdAt: true, updatedAt: true },
+          update: { ...contractorData, updatedAt: new Date() },
+          create: { ...contractorData, zohoContactId: contact.id },
         })
 
-        if (existingProfile && existingProfile.createdAt === existingProfile.updatedAt) {
-          created++
-        } else {
-          updated++
-        }
+        updated++
       } catch (error) {
-        console.error(`Error syncing contact ${contact.id}:`, {
-          contactId: contact.id,
-          firstName: contact.First_Name,
-          lastName: contact.Last_Name,
-          email: contact.Email || contact.Email_Address,
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        })
+        const errorMsg = error instanceof Error ? error.message : String(error)
         errors++
+        errorMessages.push(`Contact ${contact.id}: ${errorMsg}`)
       }
     }
 
-    console.log(`Sync completed: ${created} created, ${updated} updated, ${errors} errors`)
-
-    return NextResponse.json(
-      {
-        message: 'Contractor sync completed successfully',
-        stats: {
-          total: zohoContacts.length,
-          created,
-          updated,
-          errors,
-        },
+    return NextResponse.json({
+      message: 'Contractor sync completed successfully',
+      stats: {
+        total: zohoContacts.length,
+        synced: updated,
+        errors,
       },
-      { status: 200 }
-    )
+      ...(errors > 0 && { errorMessages: errorMessages.slice(0, 5) }),
+    })
   } catch (error) {
-    console.error('Error syncing contractors:', error)
     return NextResponse.json(
       {
         error: 'Failed to sync contractors',
@@ -202,8 +217,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -211,9 +224,6 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const totalContractors = await prisma.contractorProfile.count()
-    const availableContractors = await prisma.contractorProfile.count({
-      where: { isAvailable: true },
-    })
     const lastSynced = await prisma.contractorProfile.findFirst({
       orderBy: { lastSyncedAt: 'desc' },
       select: { lastSyncedAt: true },
@@ -221,7 +231,6 @@ export async function GET() {
 
     return NextResponse.json({
       totalContractors,
-      availableContractors,
       lastSyncedAt: lastSynced?.lastSyncedAt || null,
     })
   } catch (error) {
@@ -229,7 +238,5 @@ export async function GET() {
       { error: 'Failed to get sync status' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,53 +7,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Contractor Profile model synced from Zoho CRM
 model ContractorProfile {
-  id                String   @id @default(cuid())
-  zohoContactId     String   @unique // Zoho CRM Contact ID for syncing
-
-  // Basic Information
-  firstName         String
-  lastName          String
-  email             String   @unique
-  phone             String?
-  profileImage      String?  // URL to profile image
-
-  // Professional Information
-  title             String?  // e.g., "Electrician", "Plumber"
-  companyName       String?
-  yearsOfExperience Int?
-
-  // Skills & Services
-  skills            String[] // Array of skills/services offered
-  specializations   String[] // Specific areas of expertise
-
-  // Location
-  city              String?
-  state             String?
-  postcode          String?
-  serviceAreas      String[] // Areas they service
-
-  // Rating & Reviews
-  rating            Float?   @default(0)
-  reviewCount       Int?     @default(0)
-
-  // Availability
-  isAvailable       Boolean  @default(true)
-
-  // Verification
-  isVerified        Boolean  @default(false)
-  verifiedAt        DateTime?
-
-  // Zoho Sync
-  lastSyncedAt      DateTime @default(now())
-
-  // Timestamps
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                       String    @id @default(cuid())
+  zohoContactId            String    @unique
+  firstName                String
+  lastName                 String
+  email                    String    @unique
+  phone                    String?
+  profileImage             String?
+  title                    String?
+  companyName              String?
+  yearsOfExperience        Int?
+  skills                   String[]
+  specializations          String[]
+  city                     String?
+  state                    String?
+  postcode                 String?
+  lastSyncedAt             DateTime  @default(now())
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  emergencyClinicName      String?
+  emergencyContact1        String?
+  emergencyContact2        String?
+  emergencyEmail2          String?
+  emergencyEmail3          String?
+  emergencyName            String?
+  emergencyPhone1          String?
+  emergencyPhone2          String?
+  emergencyRelationship    String?
+  profileTitle             String?
+  qualificationsAndCerts   String?
+  servicesOffered          String[]
+  additionalInformation    String?
+  businessUnique           String?
+  dateSigned2              DateTime?
+  funFact                  String?
+  hasVehicleAccess         Boolean?
+  hobbiesAndInterests      String?
+  languageSpoken           String?
+  signature2               String?
+  whyEnjoyWork             String?
+  documentsUploads         String?
+  infectionControlTraining String?
+  insuranceUploads         String?
+  ndisTrainingFileUpload   String?
+  ndisWorkerCheck          String?
+  policeCheck              String?
+  qualificationsUploads    String?
+  workingWithChildrenCheck String?
+  photoSubmission          String?  // Vercel Blob URL
 
   @@index([email])
   @@index([zohoContactId])
-  @@index([isAvailable])
   @@index([city])
 }

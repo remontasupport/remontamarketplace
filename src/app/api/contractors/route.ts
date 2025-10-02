@@ -1,49 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
 
-    // Query parameters for filtering
     const city = searchParams.get('city')
     const skill = searchParams.get('skill')
-    const isAvailable = searchParams.get('available')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam === 'all' ? undefined : parseInt(limitParam || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Build where clause
     const where: any = {}
+    if (city) where.city = { contains: city, mode: 'insensitive' }
+    if (skill) where.skills = { has: skill }
 
-    if (city) {
-      where.city = {
-        contains: city,
-        mode: 'insensitive',
-      }
-    }
-
-    if (skill) {
-      where.skills = {
-        has: skill,
-      }
-    }
-
-    if (isAvailable !== null) {
-      where.isAvailable = isAvailable === 'true'
-    }
-
-    // Fetch contractors
     const contractors = await prisma.contractorProfile.findMany({
       where,
       take: limit,
       skip: offset,
-      orderBy: [
-        { isVerified: 'desc' },
-        { rating: 'desc' },
-        { reviewCount: 'desc' },
-      ],
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         firstName: true,
@@ -59,33 +35,56 @@ export async function GET(request: NextRequest) {
         city: true,
         state: true,
         postcode: true,
-        serviceAreas: true,
-        rating: true,
-        reviewCount: true,
-        isAvailable: true,
-        isVerified: true,
+
+        // Additional fields
+        documentsUploads: true,
+        qualificationsUploads: true,
+        insuranceUploads: true,
+        ndisWorkerCheck: true,
+        policeCheck: true,
+        workingWithChildrenCheck: true,
+        ndisTrainingFileUpload: true,
+        infectionControlTraining: true,
+        emergencyContact1: true,
+        emergencyContact2: true,
+        emergencyPhone1: true,
+        emergencyPhone2: true,
+        emergencyEmail2: true,
+        emergencyEmail3: true,
+        emergencyRelationship: true,
+        emergencyName: true,
+        emergencyClinicName: true,
+        profileTitle: true,
+        servicesOffered: true,
+        qualificationsAndCerts: true,
+        languageSpoken: true,
+        hasVehicleAccess: true,
+        funFact: true,
+        hobbiesAndInterests: true,
+        businessUnique: true,
+        whyEnjoyWork: true,
+        additionalInformation: true,
+        photoSubmission: true,
+        signature2: true,
+        dateSigned2: true,
       },
     })
 
-    // Get total count for pagination
     const total = await prisma.contractorProfile.count({ where })
 
     return NextResponse.json({
       contractors,
       pagination: {
         total,
-        limit,
+        limit: limit || total,
         offset,
-        hasMore: offset + limit < total,
+        hasMore: limit ? offset + limit < total : false,
       },
     })
   } catch (error) {
-    console.error('Error fetching contractors:', error)
     return NextResponse.json(
       { error: 'Failed to fetch contractors' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

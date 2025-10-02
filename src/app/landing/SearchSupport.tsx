@@ -17,11 +17,7 @@ interface Contractor {
   city: string | null
   state: string | null
   postcode: string | null
-  serviceAreas: string[]
-  rating: number
-  reviewCount: number
-  isAvailable: boolean
-  isVerified: boolean
+  photoSubmission: string | null // Vercel Blob URL
 }
 
 interface Worker {
@@ -46,32 +42,28 @@ export default function SearchSupport() {
     async function fetchContractors() {
       try {
         setIsLoading(true)
-        const response = await fetch('/api/contractors?limit=12&available=true')
+        // Fetch all contractors - no limit
+        const response = await fetch('/api/contractors?limit=all')
         const data = await response.json()
 
         if (data.contractors) {
           setContractors(data.contractors)
 
-          // Transform contractors to workers format
-          const transformedWorkers: Worker[] = data.contractors.map((contractor: Contractor) => ({
-            id: contractor.id,
-            name: `${contractor.firstName} ${contractor.lastName.charAt(0)}.`,
-            image: contractor.profileImage || '/images/yuliethE.webp',
-            specialties: contractor.specializations.length > 0
-              ? contractor.specializations
-              : contractor.skills.slice(0, 2),
-            badges: [
-              contractor.isVerified ? 'Verified' : '',
-              contractor.title || '',
-              contractor.yearsOfExperience ? `${contractor.yearsOfExperience}+ years` : '',
-              contractor.city || ''
-            ].filter(Boolean)
-          }))
+          // Transform contractors with photos to workers format
+          const transformedWorkers: Worker[] = data.contractors
+            .filter((c: Contractor) => c.photoSubmission)
+            .map((c: Contractor) => ({
+              id: c.id,
+              name: `${c.firstName} ${c.lastName.charAt(0)}.`,
+              image: c.photoSubmission!,
+              specialties: c.specializations.length > 0 ? c.specializations : c.skills.slice(0, 2),
+              badges: [c.title, c.yearsOfExperience && `${c.yearsOfExperience}+ years`, c.city].filter(Boolean) as string[]
+            }))
 
           setWorkers(transformedWorkers)
         }
-      } catch (error) {
-        console.error('Error fetching contractors:', error)
+      } catch {
+        // Error handled silently - show empty state
       } finally {
         setIsLoading(false)
       }
@@ -188,11 +180,11 @@ export default function SearchSupport() {
                       <div key={worker.id} className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                         {/* Worker Image */}
                         <div className="relative h-80 sm:h-96 lg:h-[450px]">
-                          <Image
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
                             src={worker.image}
                             alt={`${worker.name} - Support Worker`}
-                            fill
-                            className="object-cover"
+                            className="w-full h-full object-cover"
                           />
                           {/* Name Badge */}
                           <div className="absolute bottom-6 left-6">

@@ -62,6 +62,47 @@ interface ZohoContact {
   Is_Available?: boolean
   Is_Verified?: boolean
   Profile_Image?: string
+
+  // ID and Qualifications
+  Documents_Uploads?: string
+  Qualifications_Uploads?: string
+  Insurance_Uploads?: string
+
+  // Worker Checks
+  NDIS_Worker_Check1?: string
+  Police_Check_1?: string
+  Working_With_Children_Check_1?: string
+
+  // NDIS Mandatory Training
+  File_Upload?: string
+  Infection_Control_Training?: string
+
+  // Emergency Contact
+  Emergency_Contact_1?: string
+  Emergency_Contact_2?: string
+  Phone_1?: string
+  Phone_2?: string
+  Email_2?: string
+  Email_3?: string
+  Relationship_to_you?: string
+  Name?: string
+  Clinic_Name?: string
+
+  // Profile Submission
+  Title_Role?: string
+  Services_Offered?: string[] | string
+  Qualifications_and_Certifications?: string
+  Years_of_Experience?: number
+  Language_Spoken?: string
+  Do_you_drive_and_have_access_to_vehicle?: boolean | string | string[]
+  A_Fun_Fact_About_Yourself?: string
+  Hobbies_and_or_Interests?: string
+  What_Makes_Your_Business_Unique?: string
+  Why_Do_You_Enjoy_Your_Work?: string
+  Additional_Information?: string
+  Photo_Submission?: string
+  Signature_2?: string
+  Date_Signed_2?: string
 }
 
 interface ZohoContactsResponse {
