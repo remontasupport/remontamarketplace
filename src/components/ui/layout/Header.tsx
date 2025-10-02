@@ -83,13 +83,13 @@ export default function Header() {
         <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
           <Link href="/" className="-m-1">
            
-            <div className="flex flex-col items-center relative -left-0 lg:-left-0">
+            <div className="flex flex-col items-center relative left-2 lg:left-1 ">
               <Image
-                className="h-26 w-auto sm:h-2 md:h-15 lg:h-34"
+                className="h-25 w-35 lg:w-45 sm:h-2 md:h-15 lg:h-34"
                 src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
                 alt="Remonta"
-                width={150}
-                height={150}
+                width={15}
+                height={15}
                 priority
               />
               {/* <span className={`ml-5 lg:ml-9 text-xs mt-0.5 italic transition-colors duration-300 ${isScrolled ? 'text-gray-300' : 'text-gray-500'}`}>
@@ -175,7 +175,7 @@ export default function Header() {
           <div className="relative">
             <Link
               href="/contact"
-              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-poppins font-medium text-xl transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
             >
               Contact Us
             </Link>
@@ -224,7 +224,7 @@ export default function Header() {
                 
                 <div className="flex flex-col items-center">
                   <Image
-                    className="h-30 w-auto sm:h-35 w-4"
+                    className="h-30 w-35 sm:h-35"
                     src="/logo/logo.svg"
                     alt="Remonta"
                     width={120}
@@ -319,7 +319,7 @@ export default function Header() {
                 <div className="relative">
                   <Link
                     href="/contact"
-                    className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+                    className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-poppins font-medium text-xl transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
                   >
                     Contact Us
                   </Link>

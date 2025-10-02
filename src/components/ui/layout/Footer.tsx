@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <div className="flex flex-col items-left lg:items-start">
               <Image
-                className="h-30 w-40 sm:h-28 lg:h-35 relative -left-9 lg:-top-16 lg:-left-0"
+                className="h-30 w-35 lg:w-45 sm:h-28 lg:h-35 relative -left-1 lg:left-1 lg:-top-16"
                 src="/logo/logo-dark.svg"
                 alt="Remonta"
                 width={250}
