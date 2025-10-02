@@ -1,67 +1,86 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
+interface Contractor {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string | null
+  profileImage: string | null
+  title: string | null
+  companyName: string | null
+  yearsOfExperience: number | null
+  skills: string[]
+  specializations: string[]
+  city: string | null
+  state: string | null
+  postcode: string | null
+  serviceAreas: string[]
+  rating: number
+  reviewCount: number
+  isAvailable: boolean
+  isVerified: boolean
+}
+
 interface Worker {
-  id: number
+  id: string
   name: string
   image: string
   specialties: string[]
   badges: string[]
 }
 
-const mockWorkers: Worker[] = [
-  {
-    id: 1,
-    name: "Yulieth E",
-    image: "/images/yuliethE.webp",
-    specialties: ["Specialised supports"],
-    badges: ["Support Work"]
-  },
-  {
-    id: 2,
-    name: "Alexandra A",
-    image: "/images/alexandraA.webp",
-    specialties: ["Provides specialised supports"],
-    badges: ["Loves to laugh"]
-  },
-  {
-    id: 3,
-    name: "Angie V",
-    image: "/images/angieV.webp",
-    specialties: ["Social and everyday support"],
-    badges: ["Psychology student"]
-  },
-  {
-    id: 4,
-    name: "Vivian C",
-    image: "/images/vivianC.webp",
-    specialties: ["Health student"],
-    badges: ["Sleepover supports"]
-  },
-  {
-    id: 5,
-    name: "Sarah M",
-    image: "/images/yuliethE.webp",
-    specialties: ["Community support"],
-    badges: ["Experienced carer"]
-  },
-  {
-    id: 6,
-    name: "James K",
-    image: "/images/angieV.webp",
-    specialties: ["Personal care"],
-    badges: ["Nursing background"]
-  }
-]
-
 export default function SearchSupport() {
   const [location, setLocation] = useState('')
   const [supportType, setSupportType] = useState('All')
   const [distance, setDistance] = useState('20km')
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [contractors, setContractors] = useState<Contractor[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [workers, setWorkers] = useState<Worker[]>([])
 
-  const totalSlides = 2 // 6 workers / 3 per slide = 2 slides
+  // Fetch contractors from API
+  useEffect(() => {
+    async function fetchContractors() {
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/contractors?limit=12&available=true')
+        const data = await response.json()
+
+        if (data.contractors) {
+          setContractors(data.contractors)
+
+          // Transform contractors to workers format
+          const transformedWorkers: Worker[] = data.contractors.map((contractor: Contractor) => ({
+            id: contractor.id,
+            name: `${contractor.firstName} ${contractor.lastName.charAt(0)}.`,
+            image: contractor.profileImage || '/images/yuliethE.webp',
+            specialties: contractor.specializations.length > 0
+              ? contractor.specializations
+              : contractor.skills.slice(0, 2),
+            badges: [
+              contractor.isVerified ? 'Verified' : '',
+              contractor.title || '',
+              contractor.yearsOfExperience ? `${contractor.yearsOfExperience}+ years` : '',
+              contractor.city || ''
+            ].filter(Boolean)
+          }))
+
+          setWorkers(transformedWorkers)
+        }
+      } catch (error) {
+        console.error('Error fetching contractors:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchContractors()
+  }, [])
+
+  const totalSlides = Math.ceil(workers.length / 3)
 
   return (
     <section className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
@@ -147,15 +166,25 @@ export default function SearchSupport() {
 
         {/* Worker Cards Carousel */}
         <div className="relative">
-          <div className="overflow-hidden pb-4">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {[0, 1].map((slideIndex) => (
-                <div key={slideIndex} className="min-w-full">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 px-2">
-                    {mockWorkers.slice(slideIndex * 3, slideIndex * 3 + 3).map((worker) => (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0C1628]"></div>
+            </div>
+          ) : workers.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-gray-500 text-lg">No contractors available at the moment.</p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-hidden pb-4">
+                <div
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                >
+                  {Array.from({ length: totalSlides }).map((_, slideIndex) => (
+                    <div key={slideIndex} className="min-w-full">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 px-2">
+                        {workers.slice(slideIndex * 3, slideIndex * 3 + 3).map((worker) => (
                       <div key={worker.id} className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                         {/* Worker Image */}
                         <div className="relative h-80 sm:h-96 lg:h-[450px]">
@@ -192,15 +221,15 @@ export default function SearchSupport() {
                           ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Navigation Controls and Dot Indicators */}
-          <div className="flex items-center justify-between mt-8">
+              {/* Navigation Controls and Dot Indicators */}
+              <div className="flex items-center justify-between mt-8">
             {/* Empty spacer for alignment */}
             <div className="flex-1"></div>
 
@@ -242,6 +271,8 @@ export default function SearchSupport() {
               </button>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
     </section>

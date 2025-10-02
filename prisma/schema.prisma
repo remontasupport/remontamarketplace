@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Contractor Profile model synced from Zoho CRM
+model ContractorProfile {
+  id                String   @id @default(cuid())
+  zohoContactId     String   @unique // Zoho CRM Contact ID for syncing
+
+  // Basic Information
+  firstName         String
+  lastName          String
+  email             String   @unique
+  phone             String?
+  profileImage      String?  // URL to profile image
+
+  // Professional Information
+  title             String?  // e.g., "Electrician", "Plumber"
+  companyName       String?
+  yearsOfExperience Int?
+
+  // Skills & Services
+  skills            String[] // Array of skills/services offered
+  specializations   String[] // Specific areas of expertise
+
+  // Location
+  city              String?
+  state             String?
+  postcode          String?
+  serviceAreas      String[] // Areas they service
+
+  // Rating & Reviews
+  rating            Float?   @default(0)
+  reviewCount       Int?     @default(0)
+
+  // Availability
+  isAvailable       Boolean  @default(true)
+
+  // Verification
+  isVerified        Boolean  @default(false)
+  verifiedAt        DateTime?
+
+  // Zoho Sync
+  lastSyncedAt      DateTime @default(now())
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([email])
+  @@index([zohoContactId])
+  @@index([isAvailable])
+  @@index([city])
+}
