@@ -20,8 +20,31 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Find Support Workers for Disability and Aged Care",
+  title: "Find Support Workers for Disability",
   description: "Connecting NDIS participants with quality support workers across Australia",
+  metadataBase: new URL('https://www.remontaservices.com.au'),
+  openGraph: {
+    title: "Find Support Workers for Disability",
+    description: "Connecting NDIS participants with quality support workers across Australia",
+    url: 'https://www.remontaservices.com.au',
+    siteName: 'Remonta Services',
+    images: [
+      {
+        url: '/hero-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Remonta Services - Find Support Workers',
+      },
+    ],
+    locale: 'en_AU',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Find Support Workers for Disability",
+    description: "Connecting NDIS participants with quality support workers across Australia",
+    images: ['/hero-image.png'],
+  },
   icons: {
     icon: [
       { url: '/favicon.ico' },
