@@ -17,7 +17,7 @@ export default function LandingPage() {
       <AboutUs />
       <Testimonials />
       <Services />
-      {/* <SearchSupport /> */}
+      <SearchSupport />
       {/* <AustraliaMap /> */}
       <Pricing />
       <FAQ />
