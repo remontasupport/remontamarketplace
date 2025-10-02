@@ -180,14 +180,16 @@ export default function SearchSupport() {
                       <div key={worker.id} className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                         {/* Worker Image */}
                         <div className="relative h-80 sm:h-96 lg:h-[450px]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
                             src={worker.image}
                             alt={`${worker.name} - Support Worker`}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            priority={currentSlide === Math.floor(workers.indexOf(worker) / 3)}
                           />
                           {/* Name Badge */}
-                          <div className="absolute bottom-6 left-6">
+                          <div className="absolute bottom-6 left-6 z-10">
                             <span className="bg-[#0C1628] text-white px-4 py-2 rounded-full text-xl font-medium">
                               {worker.name}
                             </span>
