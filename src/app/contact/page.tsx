@@ -5,8 +5,290 @@ import Footer from "@/components/ui/layout/Footer"
 import Image from "next/image"
 import Link from "next/link"
 
+interface FormData {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  feedbackType: string
+  message: string
+}
+
+interface FormErrors {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+  feedbackType?: string
+  message?: string
+}
+
+interface ModalFormData {
+  supportType: string
+  email: string
+  firstName: string
+  lastName: string
+  pronouns: string
+  enquiryAbout: string
+  subject: string
+  description: string
+}
+
+interface ModalFormErrors {
+  email?: string
+  firstName?: string
+  lastName?: string
+  subject?: string
+  description?: string
+}
+
 export default function ContactPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    feedbackType: '',
+    message: '',
+  })
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+
+  // Modal form state
+  const [modalFormData, setModalFormData] = useState<ModalFormData>({
+    supportType: 'Community Support',
+    email: '',
+    firstName: '',
+    lastName: '',
+    pronouns: '',
+    enquiryAbout: '',
+    subject: '',
+    description: '',
+  })
+  const [modalErrors, setModalErrors] = useState<ModalFormErrors>({})
+  const [isModalSubmitting, setIsModalSubmitting] = useState(false)
+  const [modalSubmitStatus, setModalSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+
+  // Validate form
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required'
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required'
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Invalid email address'
+    }
+
+    // Australian phone number validation
+    // Accepts formats: 04XX XXX XXX, +61 4XX XXX XXX, 0412345678, +61412345678
+    if (formData.phone.trim()) {
+      const phoneRegex = /^(\+?61|0)[4-5]\d{8}$/
+      const cleanedPhone = formData.phone.replace(/[\s\-()]/g, '')
+
+      if (!phoneRegex.test(cleanedPhone)) {
+        newErrors.phone = 'Please enter a valid Australian mobile number'
+      }
+    }
+
+    if (!formData.feedbackType) {
+      newErrors.feedbackType = 'Please select a feedback type'
+    }
+
+    if (!formData.message.trim()) {
+      newErrors.message = 'Message is required'
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Handle input change
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+    // Clear error for this field when user starts typing
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }))
+    }
+  }
+
+  // Handle radio button change
+  const handleRadioChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, feedbackType: value }))
+    if (errors.feedbackType) {
+      setErrors((prev) => ({ ...prev, feedbackType: undefined }))
+    }
+  }
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setSubmitStatus('idle')
+
+    if (!validateForm()) {
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/send-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit feedback')
+      }
+
+      setSubmitStatus('success')
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        feedbackType: '',
+        message: '',
+      })
+
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setSubmitStatus('idle')
+      }, 5000)
+    } catch (error) {
+      console.error('Error submitting feedback:', error)
+      setSubmitStatus('error')
+
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => {
+        setSubmitStatus('idle')
+      }, 5000)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Validate modal form
+  const validateModalForm = (): boolean => {
+    const newErrors: ModalFormErrors = {}
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!modalFormData.email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!emailRegex.test(modalFormData.email)) {
+      newErrors.email = 'Invalid email address'
+    }
+
+    if (!modalFormData.firstName.trim()) {
+      newErrors.firstName = 'First name is required'
+    }
+
+    if (!modalFormData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required'
+    }
+
+    if (!modalFormData.subject.trim()) {
+      newErrors.subject = 'Subject is required'
+    }
+
+    if (!modalFormData.description.trim()) {
+      newErrors.description = 'Description is required'
+    } else if (modalFormData.description.trim().length < 10) {
+      newErrors.description = 'Description must be at least 10 characters'
+    }
+
+    setModalErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // Handle modal input change
+  const handleModalInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target
+    setModalFormData((prev) => ({ ...prev, [name]: value }))
+    // Clear error for this field when user starts typing
+    if (modalErrors[name as keyof ModalFormErrors]) {
+      setModalErrors((prev) => ({ ...prev, [name]: undefined }))
+    }
+  }
+
+  // Handle modal form submission
+  const handleModalSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setModalSubmitStatus('idle')
+
+    if (!validateModalForm()) {
+      return
+    }
+
+    setIsModalSubmitting(true)
+
+    try {
+      const response = await fetch('/api/send-contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(modalFormData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit contact form')
+      }
+
+      setModalSubmitStatus('success')
+      // Reset form
+      setModalFormData({
+        supportType: 'Community Support',
+        email: '',
+        firstName: '',
+        lastName: '',
+        pronouns: '',
+        enquiryAbout: '',
+        subject: '',
+        description: '',
+      })
+
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setModalSubmitStatus('idle')
+      }, 5000)
+    } catch (error) {
+      console.error('Error submitting contact form:', error)
+      setModalSubmitStatus('error')
+
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => {
+        setModalSubmitStatus('idle')
+      }, 5000)
+    } finally {
+      setIsModalSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -92,7 +374,7 @@ export default function ContactPage() {
 
             {/* Left Side - Form (Second on mobile) */}
             <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl order-2 lg:order-1">
-              <form className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm lg:text-lg text-[#0C1628] mb-2 font-poppins">
@@ -100,9 +382,16 @@ export default function ContactPage() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Howard"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins ${
+                        errors.firstName ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.firstName && (
+                      <p className="text-red-500 text-sm mt-1 font-poppins">{errors.firstName}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm lg:text-lg text-[#0C1628] mb-2 font-poppins">
@@ -110,9 +399,16 @@ export default function ContactPage() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Thurman"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins ${
+                        errors.lastName ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.lastName && (
+                      <p className="text-red-500 text-sm mt-1 font-poppins">{errors.lastName}</p>
+                    )}
                   </div>
                 </div>
 
@@ -123,9 +419,16 @@ export default function ContactPage() {
                     </label>
                     <input
                       type="email"
-                      placeholder="e.g. howard@gmail.com"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins ${
+                        errors.email ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.email && (
+                      <p className="text-red-500 text-sm mt-1 font-poppins">{errors.email}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm lg:text-lg text-[#0C1628] mb-2 font-poppins">
@@ -133,9 +436,17 @@ export default function ContactPage() {
                     </label>
                     <input
                       type="tel"
-                      placeholder="e.g. +1 (234) 567-8910"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 0412 345 678"
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins ${
+                        errors.phone ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.phone && (
+                      <p className="text-red-500 text-sm mt-1 font-poppins">{errors.phone}</p>
+                    )}
                   </div>
                 </div>
 
@@ -147,8 +458,10 @@ export default function ContactPage() {
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
-                        name="feedback-type"
-                        value="complaint"
+                        name="feedbackType"
+                        value="Complaint"
+                        checked={formData.feedbackType === 'Complaint'}
+                        onChange={(e) => handleRadioChange(e.target.value)}
                         className="w-4 h-4 text-[#0C1628] border-gray-300 focus:ring-[#0C1628]"
                       />
                       <span className="ml-3 text-[#0C1628] font-poppins">Complaint</span>
@@ -156,8 +469,10 @@ export default function ContactPage() {
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
-                        name="feedback-type"
-                        value="compliment"
+                        name="feedbackType"
+                        value="Compliment"
+                        checked={formData.feedbackType === 'Compliment'}
+                        onChange={(e) => handleRadioChange(e.target.value)}
                         className="w-4 h-4 text-[#0C1628] border-gray-300 focus:ring-[#0C1628]"
                       />
                       <span className="ml-3 text-[#0C1628] font-poppins">Compliment</span>
@@ -165,13 +480,18 @@ export default function ContactPage() {
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
-                        name="feedback-type"
-                        value="general-feedback"
+                        name="feedbackType"
+                        value="General Feedback"
+                        checked={formData.feedbackType === 'General Feedback'}
+                        onChange={(e) => handleRadioChange(e.target.value)}
                         className="w-4 h-4 text-[#0C1628] border-gray-300 focus:ring-[#0C1628]"
                       />
                       <span className="ml-3 text-[#0C1628] font-poppins">General Feedback</span>
                     </label>
                   </div>
+                  {errors.feedbackType && (
+                    <p className="text-red-500 text-sm mt-2 font-poppins">{errors.feedbackType}</p>
+                  )}
                 </div>
 
                 <div>
@@ -179,16 +499,65 @@ export default function ContactPage() {
                     Your message
                   </label>
                   <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0C1628] font-poppins ${
+                      errors.message ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   />
+                  {errors.message && (
+                    <p className="text-red-500 text-sm mt-1 font-poppins">{errors.message}</p>
+                  )}
                 </div>
+
+                {/* Success Message */}
+                {submitStatus === 'success' && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <h3 className="text-sm font-medium text-green-800 font-poppins">Feedback submitted successfully!</h3>
+                        <p className="text-sm text-green-700 mt-1 font-poppins">Thank you for your feedback. We'll get back to you soon.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {submitStatus === 'error' && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <h3 className="text-sm font-medium text-red-800 font-poppins">Failed to submit feedback</h3>
+                        <p className="text-sm text-red-700 mt-1 font-poppins">Please try again later or contact us directly.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0C1628] text-white py-3 rounded-full font-poppins font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#0C1628] text-white py-3 rounded-full font-poppins font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  Submit
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit'
+                  )}
                 </button>
               </form>
             </div>
@@ -219,10 +588,15 @@ export default function ContactPage() {
             </div>
 
             {/* Form */}
-            <form className="space-y-4">
+            <form onSubmit={handleModalSubmit} className="space-y-4">
               {/* Community Support Dropdown */}
               <div>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded font-poppins text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0C1628]">
+                <select
+                  name="supportType"
+                  value={modalFormData.supportType}
+                  onChange={handleModalInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                >
                   <option>Community Support</option>
                   <option>General Inquiry</option>
                   <option>Technical Support</option>
@@ -236,8 +610,16 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="email"
-                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                  name="email"
+                  value={modalFormData.email}
+                  onChange={handleModalInputChange}
+                  className={`w-full px-4 py-2 border rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628] ${
+                    modalErrors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {modalErrors.email && (
+                  <p className="text-red-500 text-xs mt-1 font-poppins">{modalErrors.email}</p>
+                )}
               </div>
 
               {/* First Name */}
@@ -247,8 +629,16 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                  name="firstName"
+                  value={modalFormData.firstName}
+                  onChange={handleModalInputChange}
+                  className={`w-full px-4 py-2 border rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628] ${
+                    modalErrors.firstName ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {modalErrors.firstName && (
+                  <p className="text-red-500 text-xs mt-1 font-poppins">{modalErrors.firstName}</p>
+                )}
               </div>
 
               {/* Last Name */}
@@ -258,19 +648,16 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                  name="lastName"
+                  value={modalFormData.lastName}
+                  onChange={handleModalInputChange}
+                  className={`w-full px-4 py-2 border rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628] ${
+                    modalErrors.lastName ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
-              </div>
-
-              {/* Pronouns */}
-              <div>
-                <label className="block text-sm font-medium text-[#0C1628] mb-1 font-poppins">
-                  Pronouns
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
-                />
+                {modalErrors.lastName && (
+                  <p className="text-red-500 text-xs mt-1 font-poppins">{modalErrors.lastName}</p>
+                )}
               </div>
 
               {/* My enquiry is about */}
@@ -278,7 +665,12 @@ export default function ContactPage() {
                 <label className="block text-sm font-medium text-[#0C1628] mb-1 font-poppins">
                   My enquiry is about:
                 </label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded font-poppins text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0C1628]">
+                <select
+                  name="enquiryAbout"
+                  value={modalFormData.enquiryAbout}
+                  onChange={handleModalInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                >
                   <option value="">-</option>
                   <option>General Question</option>
                   <option>Service Inquiry</option>
@@ -294,8 +686,16 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                  name="subject"
+                  value={modalFormData.subject}
+                  onChange={handleModalInputChange}
+                  className={`w-full px-4 py-2 border rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628] ${
+                    modalErrors.subject ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {modalErrors.subject && (
+                  <p className="text-red-500 text-xs mt-1 font-poppins">{modalErrors.subject}</p>
+                )}
               </div>
 
               {/* Description */}
@@ -304,32 +704,69 @@ export default function ContactPage() {
                   Description
                 </label>
                 <textarea
+                  name="description"
+                  value={modalFormData.description}
+                  onChange={handleModalInputChange}
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
+                  className={`w-full px-4 py-2 border rounded font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628] ${
+                    modalErrors.description ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {modalErrors.description && (
+                  <p className="text-red-500 text-xs mt-1 font-poppins">{modalErrors.description}</p>
+                )}
                 <p className="text-xs text-gray-600 mt-1 font-poppins">
                   Please enter the details of your request. A member of our support staff will respond as soon as possible.
                 </p>
               </div>
 
-              {/* Attachments */}
-              <div>
-                <label className="block text-sm font-medium text-[#0C1628] mb-1 font-poppins">
-                  Attachments
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded p-4 text-center">
-                  <p className="text-sm text-blue-600 font-poppins">
-                    <span className="underline cursor-pointer">Add file</span> or drop files here
-                  </p>
+              {/* Success Message */}
+              {modalSubmitStatus === 'success' && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h3 className="text-sm font-medium text-green-800 font-poppins">Message sent successfully!</h3>
+                      <p className="text-sm text-green-700 mt-1 font-poppins">We'll respond as soon as possible.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Error Message */}
+              {modalSubmitStatus === 'error' && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <h3 className="text-sm font-medium text-red-800 font-poppins">Failed to send message</h3>
+                      <p className="text-sm text-red-700 mt-1 font-poppins">Please try again later.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-[#0C1628] text-white py-3 rounded-full font-poppins text-md font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors"
+                disabled={isModalSubmitting}
+                className="w-full bg-[#0C1628] text-white py-3 rounded-full font-poppins text-md font-medium hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                Submit
+                {isModalSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </button>
             </form>
           </div>
