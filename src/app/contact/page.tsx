@@ -565,6 +565,176 @@ export default function ContactPage() {
         </div>
       </section>
 
+      {/* Contact Us Section */}
+      <section className="relative overflow-hidden bg-white py-12 lg:py-16">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl lg:text-6xl text-[#0C1628] text-center mb-8 lg:mb-12 font-cooper">
+            Other ways to get in touch
+          </h2>
+
+          {/* First row - 3 cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-6">
+            {/* General Enquiries Card */}
+            <div className="bg-[#EDEFF3] rounded-2xl p-4 lg:p-6 flex flex-col">
+              <div className="mb-3">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <Image
+                    src="/images/generalEnquiries.svg"
+                    alt="General Enquiries"
+                    width={64}
+                    height={64}
+                    className="w-11 h-11 lg:w-14 lg:h-14"
+                  />
+                </div>
+              </div>
+              <h3 className="text-lg lg:text-2xl font-semibold text-[#0C1628] mb-2 lg:mb-3 font-poppins">General Enquiries</h3>
+              <p className="text-sm lg:text-lg text-[#0C1628] mb-3 lg:mb-4 font-poppins flex-grow">
+                For general questions, service information, or new enquiries.
+              </p>
+              <a
+                href="mailto:contact@remontaservices.com.au"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+              >
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span className="border-b border-dashed border-[#0C1628] border-opacity-40 break-all">contact@remontaservices.com.au</span>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+
+            {/* Accounts & Billing Card */}
+            <div className="bg-[#EDEFF3] rounded-2xl p-4 lg:p-6 flex flex-col">
+              <div className="mb-3">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <Image
+                    src="/images/accountsBilling.svg"
+                    alt="Accounts & Billing"
+                    width={64}
+                    height={64}
+                    className="w-11 h-11 lg:w-14 lg:h-14"
+                  />
+                </div>
+              </div>
+              <h3 className="text-lg lg:text-2xl font-semibold text-[#0C1628] mb-2 lg:mb-3 font-poppins">Accounts & Billing</h3>
+              <p className="text-sm lg:text-lg text-[#0C1628] mb-3 lg:mb-4 font-poppins flex-grow">
+                For invoices, payments, and billing enquiries.
+              </p>
+              <a
+                href="mailto:accounts@remontaservices.com.au"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+              >
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span className="border-b border-dashed border-[#0C1628] border-opacity-40 break-all">accounts@remontaservices.com.au</span>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+
+            {/* Support Card */}
+            <div className="bg-[#EDEFF3] rounded-2xl p-4 lg:p-6 flex flex-col">
+              <div className="mb-3">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <Image
+                    src="/images/support.svg"
+                    alt="Support"
+                    width={64}
+                    height={64}
+                    className="w-11 h-11 lg:w-14 lg:h-14"
+                  />
+                </div>
+              </div>
+              <h3 className="text-lg lg:text-2xl font-semibold text-[#0C1628] mb-2 lg:mb-3 font-poppins">Support</h3>
+              <p className="text-sm lg:text-lg text-[#0C1628] mb-3 lg:mb-4 font-poppins flex-grow">
+                For help with existing services, support worker requests, or technical assistance.
+              </p>
+              <a
+                href="mailto:support@remontaservices.com.au"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+              >
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span className="border-b border-dashed border-[#0C1628] border-opacity-40 break-all">support@remontaservices.com.au</span>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Second row - 2 cards centered */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 max-w-4xl mx-auto">
+            {/* Compliance Card */}
+            <div className="bg-[#EDEFF3] rounded-2xl p-4 lg:p-6 flex flex-col">
+              <div className="mb-3">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <Image
+                    src="/images/compliance.svg"
+                    alt="Compliance"
+                    width={64}
+                    height={64}
+                    className="w-11 h-11 lg:w-14 lg:h-14"
+                  />
+                </div>
+              </div>
+              <h3 className="text-lg lg:text-2xl font-semibold text-[#0C1628] mb-2 lg:mb-3 font-poppins">Compliance</h3>
+              <p className="text-sm lg:text-lg text-[#0C1628] mb-3 lg:mb-4 font-poppins flex-grow">
+                For compliance documents, verification, and policy-related enquiries.
+              </p>
+              <a
+                href="mailto:compliance@remontaservices.com.au"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+              >
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span className="border-b border-dashed border-[#0C1628] border-opacity-40 break-all">compliance@remontaservices.com.au</span>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+
+            {/* Community Engagement Card */}
+            <div className="bg-[#EDEFF3] rounded-2xl p-4 lg:p-6 flex flex-col">
+              <div className="mb-3">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 bg-[#F8E8D8] rounded-full flex items-center justify-center">
+                  <Image
+                    src="/images/communityEngagement.svg"
+                    alt="Community Engagement"
+                    width={64}
+                    height={64}
+                    className="w-11 h-11 lg:w-14 lg:h-14"
+                  />
+                </div>
+              </div>
+              <h3 className="text-lg lg:text-2xl font-semibold text-[#0C1628] mb-2 lg:mb-3 font-poppins">Community Engagement</h3>
+              <p className="text-sm lg:text-lg text-[#0C1628] mb-3 lg:mb-4 font-poppins flex-grow">
+                For partnerships, events, and community initiatives.
+              </p>
+              <a
+                href="mailto:community@remontaservices.com.au"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+              >
+                <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <span className="border-b border-dashed border-[#0C1628] border-opacity-40 break-all">community@remontaservices.com.au</span>
+                <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform -rotate-45" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
 
       {/* Contact Form Modal */}
