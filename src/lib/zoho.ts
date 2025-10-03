@@ -56,7 +56,6 @@ interface ZohoContact {
   // Custom fields - Add any additional fields from your Zoho setup
   Title?: string
   Company?: string
-  Years_of_Experience?: number
   Skills?: string
   Specializations?: string
   Service_Areas?: string
