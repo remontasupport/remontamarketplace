@@ -50,6 +50,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const headerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -217,8 +218,8 @@ export default function Header() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden">
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-25" onClick={() => setMobileMenuOpen(false)} />
-          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-4 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-25" onClick={() => !isNavigating && setMobileMenuOpen(false)} />
+          <div className={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-4 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10 ${isNavigating ? 'hidden' : ''}`}>
             <div className="flex items-center justify-between">
               <Link href="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
                 
@@ -316,10 +317,18 @@ export default function Header() {
                 </div> */}
 
 
-                <div className="relative">
+                <div className="relative py-6">
                   <Link
                     href="/contact"
                     className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-poppins font-medium text-xl transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setIsNavigating(true)
+                      setTimeout(() => {
+                        setMobileMenuOpen(false)
+                        window.location.href = '/contact'
+                      }, 500)
+                    }}
                   >
                     Contact Us
                   </Link>
@@ -327,6 +336,16 @@ export default function Header() {
               </div>
             </div>
           </div>
+
+          {/* Loading Overlay */}
+          {isNavigating && (
+            <div className="fixed inset-0 z-[60] bg-white flex items-center justify-center">
+              <svg className="animate-spin h-12 w-12 text-[#0C1628]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+          )}
         </div>
       )}
     </header>

@@ -81,13 +81,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Determine recipient email based on feedback type
+    let recipientEmail = EMAIL_TO
+    if (sanitizedData.feedbackType === 'Complaint') {
+      recipientEmail = 'compliance@remontaservices.com.au'
+    }
+
     // Initialize Resend
     const resend = new Resend(RESEND_API_KEY)
 
     // Send email
     await resend.emails.send({
       from: `Remonta Feedback <${EMAIL_FROM}>`,
-      to: EMAIL_TO,
+      to: recipientEmail,
       replyTo: sanitizedData.email,
       subject: `New ${sanitizedData.feedbackType} from ${sanitizedData.firstName} ${sanitizedData.lastName}`,
       html: `
