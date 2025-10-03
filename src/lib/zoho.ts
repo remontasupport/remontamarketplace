@@ -17,8 +17,11 @@ interface ZohoContact {
   First_Name_1?: string
   Last_Name_1?: string
   Email?: string
+  Email_2?: string
+  Email_3?: string
   Phone?: string
   Phone_1?: string
+  Phone_2?: string
   Date_of_Birth?: string
   Email_Address?: string
 
@@ -80,12 +83,7 @@ interface ZohoContact {
   // Emergency Contact
   Emergency_Contact_1?: string
   Emergency_Contact_2?: string
-  Phone_1?: string
-  Phone_2?: string
-  Email_2?: string
-  Email_3?: string
   Relationship_to_you?: string
-  Name?: string
   Clinic_Name?: string
 
   // Profile Submission
