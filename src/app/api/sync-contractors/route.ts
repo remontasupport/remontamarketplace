@@ -116,10 +116,10 @@ export async function POST(request: NextRequest) {
         const skills = [
           contact.Primary_Service,
           ...parseToArray(contact.Secondary_Service_s)
-        ].filter(Boolean)
+        ].filter((s): s is string => Boolean(s))
 
-        const specializations = parseToArray(contact.MISC_service)
-        const servicesOffered = parseToArray(contact.Services_Offered)
+        const specializations = parseToArray(contact.MISC_service).filter((s): s is string => Boolean(s))
+        const servicesOffered = parseToArray(contact.Services_Offered).filter((s): s is string => Boolean(s))
 
         // Parse boolean field
         const hasVehicleAccess = parseBoolean(contact.Do_you_drive_and_have_access_to_vehicle)
