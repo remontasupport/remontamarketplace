@@ -18,14 +18,18 @@ interface Contractor {
   state: string | null
   postcode: string | null
   photoSubmission: string | null // Vercel Blob URL
+  profileTitle: string | null
+  qualificationsAndCerts: string | null
+  servicesOffered: string[]
 }
 
 interface Worker {
   id: string
   name: string
   image: string
-  specialties: string[]
-  badges: string[]
+  profileTitle: string | null
+  introduction: string | null
+  servicesOffered: string[]
 }
 
 export default function SearchSupport() {
@@ -42,22 +46,24 @@ export default function SearchSupport() {
     async function fetchContractors() {
       try {
         setIsLoading(true)
-        // Fetch all contractors - no limit
+        // Fetch all contractors to filter those with photos, then limit to 12
         const response = await fetch('/api/contractors?limit=all')
         const data = await response.json()
 
         if (data.contractors) {
           setContractors(data.contractors)
 
-          // Transform contractors with photos to workers format
+          // Transform contractors with photos to workers format and limit to 12
           const transformedWorkers: Worker[] = data.contractors
             .filter((c: Contractor) => c.photoSubmission)
+            .slice(0, 12)
             .map((c: Contractor) => ({
               id: c.id,
               name: `${c.firstName} ${c.lastName.charAt(0)}.`,
               image: c.photoSubmission!,
-              specialties: c.specializations.length > 0 ? c.specializations : c.skills.slice(0, 2),
-              badges: [c.title, c.yearsOfExperience && `${c.yearsOfExperience}+ years`, c.city].filter(Boolean) as string[]
+              profileTitle: c.profileTitle,
+              introduction: c.qualificationsAndCerts,
+              servicesOffered: c.servicesOffered || []
             }))
 
           setWorkers(transformedWorkers)
@@ -72,10 +78,22 @@ export default function SearchSupport() {
     fetchContractors()
   }, [])
 
+  // Scroll to carousel when coming back from worker profile
+  useEffect(() => {
+    const shouldScroll = sessionStorage.getItem('scrollToCarousel')
+    if (shouldScroll === 'true') {
+      sessionStorage.removeItem('scrollToCarousel')
+      const element = document.getElementById('find-support')
+      if (element) {
+        element.scrollIntoView({ behavior: 'instant' })
+      }
+    }
+  }, [])
+
   const totalSlides = Math.ceil(workers.length / 3)
 
   return (
-    <section className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
+    <section id="find-support" className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
@@ -188,31 +206,47 @@ export default function SearchSupport() {
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             priority={currentSlide === Math.floor(workers.indexOf(worker) / 3)}
                           />
-                          {/* Name Badge */}
-                          <div className="absolute bottom-6 left-6 z-10">
-                            <span className="bg-[#0C1628] text-white px-4 py-2 rounded-full text-xl font-medium">
-                              {worker.name}
-                            </span>
-                          </div>
                         </div>
 
                         {/* Worker Info */}
-                        <div className="p-6 space-y-4">
-                          {/* Specialties */}
-                          {worker.specialties.map((specialty, index) => (
-                            <div key={index} className="flex items-center text-base text-gray-700">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full mr-3"></div>
-                              {specialty}
-                            </div>
-                          ))}
+                        <div className="p-6 lg:p-8 space-y-4">
+                          {/* Name */}
+                          <h3 className="text-2xl lg:text-3xl font-bold text-[#0C1628] font-cooper">
+                            {worker.name}
+                          </h3>
 
-                          {/* Badges */}
-                          {worker.badges.map((badge, index) => (
-                            <div key={index} className="flex items-center text-base text-gray-700">
-                              <div className="w-2 h-2 bg-blue-600 rounded-full mr-3"></div>
-                              {badge}
+                          {/* Profile Title */}
+                          {worker.profileTitle && (
+                            <p className="text-lg lg:text-xl text-gray-700 font-poppins">
+                              {worker.profileTitle}
+                            </p>
+                          )}
+
+                          {/* Introduction */}
+                          {worker.introduction && (
+                            <p className="text-base text-gray-600 font-poppins leading-relaxed line-clamp-2">
+                              {worker.introduction}
+                            </p>
+                          )}
+
+                          {/* Services Offered */}
+                          {worker.servicesOffered && worker.servicesOffered.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {worker.servicesOffered.slice(0, 4).map((service, index) => (
+                                <span key={index} className="px-3 py-1 border border-[#0C1628] rounded-full text-sm font-poppins">
+                                  {service}
+                                </span>
+                              ))}
                             </div>
-                          ))}
+                          )}
+
+                          {/* More Details Button */}
+                          <a
+                            href={`/workers/${worker.id}`}
+                            className="block w-full bg-[#0C1628] hover:bg-[#1a2740] text-white font-poppins font-medium py-3 px-6 rounded-full transition-colors duration-200 mt-4 text-center"
+                          >
+                            More Details
+                          </a>
                         </div>
                       </div>
                         ))}

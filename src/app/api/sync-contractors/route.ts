@@ -51,10 +51,17 @@ function parseBoolean(value: any): boolean | null {
   return null
 }
 
-// Helper: Process file upload field to JSON string
+// Helper: Extract download URL from file upload field
 function processFileUpload(value: any): string | null {
   if (!value || !Array.isArray(value) || value.length === 0) return null
-  return JSON.stringify(value)
+
+  // Extract the first file's download URL
+  const firstFile = value[0]
+  if (firstFile && (firstFile.download_Url || firstFile.preview_Url)) {
+    return firstFile.download_Url || firstFile.preview_Url
+  }
+
+  return null
 }
 
 // Helper: Upload photo to Vercel Blob
