@@ -587,7 +587,7 @@ export default function ContactPage() {
               </p>
               <a
                 href="mailto:contact@remontaservices.com.au"
-                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-xs lg:text-base hover:text-[#0000FF] transition-colors group"
               >
                 <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -618,7 +618,7 @@ export default function ContactPage() {
               </p>
               <a
                 href="mailto:accounts@remontaservices.com.au"
-                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-xs lg:text-base hover:text-[#0000FF] transition-colors group"
               >
                 <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -649,7 +649,7 @@ export default function ContactPage() {
               </p>
               <a
                 href="mailto:support@remontaservices.com.au"
-                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-xs lg:text-base hover:text-[#0000FF] transition-colors group"
               >
                 <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -683,7 +683,7 @@ export default function ContactPage() {
               </p>
               <a
                 href="mailto:compliance@remontaservices.com.au"
-                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-xs lg:text-base hover:text-[#0000FF] transition-colors group"
               >
                 <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -714,7 +714,7 @@ export default function ContactPage() {
               </p>
               <a
                 href="mailto:community@remontaservices.com.au"
-                className="flex items-center gap-2 text-[#0C1628] font-poppins text-sm lg:text-base hover:text-[#0000FF] transition-colors group"
+                className="flex items-center gap-2 text-[#0C1628] font-poppins text-xs lg:text-base hover:text-[#0000FF] transition-colors group"
               >
                 <svg className="w-5 h-5 lg:w-6 lg:h-6 text-[#0C1628] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
