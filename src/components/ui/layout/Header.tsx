@@ -96,6 +96,12 @@ export default function Header() {
     }
   }, [isNavigating])
 
+  // Reusable function to handle mobile menu navigation
+  const handleMobileNavigation = (href: string) => {
+    setIsNavigating(true)
+    window.location.href = href
+  }
+
   return (
     <header className={`sticky top-0 z-40 transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Global">
@@ -240,8 +246,11 @@ export default function Header() {
           <div className="fixed inset-0 z-50 bg-black bg-opacity-25" onClick={() => setMobileMenuOpen(false)} />
           <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-4 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
-              <Link href="/" className="-m-1.5 p-1.5" onClick={() => setMobileMenuOpen(false)}>
-                
+              <button
+                className="-m-1.5 p-1.5"
+                onClick={() => handleMobileNavigation('/')}
+                disabled={isNavigating}
+              >
                 <div className="flex flex-col items-center">
                   <Image
                     className="h-30 w-35 sm:h-35"
@@ -254,7 +263,7 @@ export default function Header() {
                     previously Remonta
                   </span> */}
                 </div>
-              </Link>
+              </button>
               <button
                 type="button"
                 className="-m-2.5 rounded-md p-2.5 text-[#0C1628]"
@@ -282,27 +291,27 @@ export default function Header() {
                           />
                         </button>
                       ) : (
-                        <Link
-                          href={item.href}
+                        <button
                           className="flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-lg font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8]"
-                          onClick={() => setMobileMenuOpen(false)}
+                          onClick={() => handleMobileNavigation(item.href)}
+                          disabled={isNavigating}
                         >
                           {item.name}
-                        </Link>
+                        </button>
                       )}
 
                       {/* Mobile dropdown items */}
                       {item.hasDropdown && openDropdown === item.name && (
                         <div className="mt-2 space-y-2 pl-6">
                           {item.dropdownItems?.map((dropdownItem) => (
-                            <Link
+                            <button
                               key={dropdownItem.name}
-                              href={dropdownItem.href}
-                              className="block rounded-lg py-2 pl-3 pr-3.5 text-sm font-sans text-[#0C1628] hover:bg-[#F8E8D8]"
-                              onClick={() => setMobileMenuOpen(false)}
+                              className="block w-full text-left rounded-lg py-2 pl-3 pr-3.5 text-sm font-sans text-[#0C1628] hover:bg-[#F8E8D8]"
+                              onClick={() => handleMobileNavigation(dropdownItem.href)}
+                              disabled={isNavigating}
                             >
                               {dropdownItem.name}
-                            </Link>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -339,10 +348,7 @@ export default function Header() {
                 <div className="relative py-6">
                   <button
                     className={`w-full flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-poppins font-medium text-xl transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
-                    onClick={() => {
-                      setIsNavigating(true)
-                      window.location.href = '/contact'
-                    }}
+                    onClick={() => handleMobileNavigation('/contact')}
                     disabled={isNavigating}
                   >
                     Contact Us
