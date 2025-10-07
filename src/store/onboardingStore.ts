@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { questionSteps } from '@/lib/constants/onboardingQuestions'
+import { questionSteps } from '@/constants/onboardingQuestions'
 
 export interface OnboardingData {
   [key: string]: any

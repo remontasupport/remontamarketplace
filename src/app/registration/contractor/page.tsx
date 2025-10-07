@@ -3,184 +3,166 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { LocationDropdown } from "@/components/ui/location-dropdown";
-import { searchAustralianLocations, type AustralianLocation } from "@/lib/data/australianPostcodes";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Step1PersonalInfo } from "../../../components/forms/workerRegistration/Step1PersonalInfo";
+import { Step2AdditionalDetails } from "../../../components/forms/workerRegistration/Step2AdditionalDetails";
+import { Step3Professional } from "../../../components/forms/workerRegistration/Step3Professional";
+import { Step4Services } from "../../../components/forms/workerRegistration/Step4Services";
+import { Step5PersonalTouch } from "../../../components/forms/workerRegistration/Step5PersonalTouch";
+import { Step6Photos } from "../../../components/forms/workerRegistration/Step6Photos";
+import { Step7Verification } from "../../../components/forms/workerRegistration/Step7Verification";
+import { contractorFormSchema, type ContractorFormData, contractorFormDefaults } from "@/schema/contractorFormSchema";
+import { SERVICE_OPTIONS, TOTAL_STEPS } from "@/constants";
+import { getStepValidationFields, isValidAustralianMobile } from "@/utils/registrationUtils";
 
-// Validation schema using Zod
-const formSchema = z.object({
-  // Step 1 - Required fields
-  location: z.string().min(1, "Location is required"),
-  services: z.array(z.string()).min(1, "Please select at least one service"),
-  experience: z.string().optional(), // Optional field
-
-  // Step 2 - Optional fields
-  availability: z.string().optional(),
-  startDate: z.string().optional(),
-
-  // Step 3 - Required fields
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string()
-    .min(1, "Email address is required")
-    .email("Please enter a valid email address"),
-  mobile: z.string()
-    .min(1, "Mobile number is required")
-    .refine((mobile) => {
-      const cleanMobile = mobile.replace(/\D/g, '');
-      return (
-        (cleanMobile.length === 10 && cleanMobile.startsWith('04')) ||
-        (cleanMobile.length === 11 && cleanMobile.startsWith('614')) ||
-        (mobile.startsWith('+61') && cleanMobile.length === 11 && cleanMobile.startsWith('614'))
-      );
-    }, "Please enter a valid Australian mobile number (e.g., 04XX XXX XXX)"),
-
-  // New profile questions
-  funFact: z.string().min(1, "Fun fact is required"),
-  hobbies: z.string().min(1, "Hobbies and interests are required"),
-  uniqueService: z.string().min(1, "Please tell us what makes your service unique"),
-  whyEnjoyWork: z.string().min(1, "Please tell us why you enjoy your work"),
-  additionalInfo: z.string().optional(),
-  qualifications: z.string().min(1, "Qualifications and certificates are required"),
-  hasVehicle: z.string().min(1, "Please indicate if you have vehicle access"),
-  photos: z.array(z.any()).min(1, "Please upload at least one photo"),
-  consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
-  consentMarketing: z.boolean().optional(), // Optional consent
-});
-
-type FormData = z.infer<typeof formSchema>;
 
 export default function ContractorOnboarding() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
-  const [showGuidelines, setShowGuidelines] = useState(false);
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [sentCode, setSentCode] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [isChangingNumber, setIsChangingNumber] = useState(false);
+  const [tempMobile, setTempMobile] = useState("");
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      location: "",
-      services: [],
-      experience: "",
-      availability: "",
-      startDate: "",
-      firstName: "",
-      lastName: "",
-      email: "",
-      mobile: "",
-      funFact: "",
-      hobbies: "",
-      uniqueService: "",
-      whyEnjoyWork: "",
-      additionalInfo: "",
-      qualifications: "",
-      hasVehicle: "",
-      photos: [],
-      consentProfileShare: false,
-      consentMarketing: false,
-    },
+  const { register, control, handleSubmit, formState: { errors }, trigger, getValues, setValue, watch } = useForm<ContractorFormData>({
+    resolver: zodResolver(contractorFormSchema),
+    mode: "onChange",
+    defaultValues: contractorFormDefaults,
   });
 
-  const totalSteps = 4;
-  const progress = (currentStep / totalSteps) * 100;
+  const progress = (currentStep / TOTAL_STEPS) * 100;
 
-  // Get form values for easier access
-  const watchedValues = form.watch();
+  const watchedServices = watch("services");
+  const watchedPhotos = watch("photos");
+  const watchedMobile = watch("mobile");
+  const watchedConsentProfileShare = watch("consentProfileShare");
+  const watchedConsentMarketing = watch("consentMarketing");
+  const watchedHasVehicle = watch("hasVehicle");
 
-  // Validate required fields for current step using React Hook Form
   const validateCurrentStep = async (step: number) => {
-    const fieldsToValidate: (keyof FormData)[] = [];
-
-    if (step === 1) {
-      fieldsToValidate.push("location", "services");
-    } else if (step === 3) {
-      fieldsToValidate.push("firstName", "lastName", "email", "mobile", "funFact", "hobbies", "uniqueService", "whyEnjoyWork");
-    } else if (step === 4) {
-      fieldsToValidate.push(
-        "qualifications", "hasVehicle", "photos", "consentProfileShare"
-      );
+    if (step === 7) {
+      return isVerified;
     }
 
-    // Step 2 has no required fields, always valid
-    if (step === 2) return true;
-
-    // Trigger validation for specific fields
-    const result = await form.trigger(fieldsToValidate);
+    const fieldsToValidate = getStepValidationFields(step);
+    const result = await trigger(fieldsToValidate);
     return result;
   };
 
-  const serviceOptions = [
-    "Support Worker",
-    "Home Modifications",
-    "Cleaning Services",
-    "Home and Yard Maintenance",
-    "Therapeutic Supports",
-    "Fitness and Rehabilitation",
-    "Nursing"
-  ];
-
   const handleServiceToggle = (service: string) => {
-    const currentServices = form.getValues("services");
+    const currentServices = watchedServices || [];
     const updatedServices = currentServices.includes(service)
       ? currentServices.filter(s => s !== service)
       : [...currentServices, service];
-    form.setValue("services", updatedServices);
-    form.trigger("services"); // Validate immediately
+    setValue("services", updatedServices);
+    trigger("services");
   };
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     const validFiles = files.filter(file => {
       const isValidType = file.type.startsWith('image/');
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+      const isValidSize = file.size <= 10 * 1024 * 1024;
       return isValidType && isValidSize;
     });
 
-    const currentPhotos = form.getValues("photos");
+    const currentPhotos = watchedPhotos || [];
     const newPhotos = [...currentPhotos, ...validFiles].slice(0, 5);
-    form.setValue("photos", newPhotos);
-    form.trigger("photos"); // Validate immediately
+    setValue("photos", newPhotos);
+    trigger("photos");
   };
 
   const removePhoto = (index: number) => {
-    const currentPhotos = form.getValues("photos");
+    const currentPhotos = watchedPhotos || [];
     const updatedPhotos = currentPhotos.filter((_, i) => i !== index);
-    form.setValue("photos", updatedPhotos);
-    form.trigger("photos"); // Validate immediately
+    setValue("photos", updatedPhotos);
+    trigger("photos");
   };
 
-  const sendVerificationCode = () => {
-    // Simulate sending verification code
-    setIsCodeSent(true);
+  const sendVerificationCode = async () => {
+    const mobile = getValues("mobile");
+
+    try {
+      const response = await fetch('/api/sms/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsCodeSent(true);
+        if (data.devCode) {
+          setSentCode(data.devCode);
+          console.log('🔐 Verification code received');
+        }
+      } else {
+        console.error('SMS Error Details:', data);
+        alert(data.error || 'Failed to send verification code');
+      }
+    } catch (error) {
+      console.error('Error sending verification code:', error);
+      alert('Failed to send verification code. Please try again.');
+    }
+  };
+
+  const verifyCode = () => {
+    if (verificationCode.length !== 6) {
+      alert('Please enter a valid 6-digit code');
+      return;
+    }
+
+    if (verificationCode === sentCode) {
+      setIsVerified(true);
+      console.log('✅ Phone number verified successfully');
+    } else {
+      alert('Invalid verification code');
+    }
+  };
+
+  const handleChangeNumber = () => {
+    setIsChangingNumber(true);
+    setTempMobile(getValues("mobile"));
+  };
+
+  const handleSaveNewNumber = async () => {
+    if (isValidAustralianMobile(tempMobile)) {
+      setValue("mobile", tempMobile);
+      await trigger("mobile");
+
+      setIsChangingNumber(false);
+      setIsCodeSent(false);
+      setVerificationCode("");
+      setSentCode("");
+      setIsVerified(false);
+    } else {
+      alert("Please enter a valid Australian mobile number");
+    }
+  };
+
+  const handleCancelChangeNumber = () => {
+    setIsChangingNumber(false);
+    setTempMobile("");
+    setIsCodeSent(false);
+    setVerificationCode("");
+    setSentCode("");
   };
 
   const nextStep = async () => {
-    if (currentStep < totalSteps) {
-      // Validate required fields for current step before proceeding
+    if (currentStep < TOTAL_STEPS) {
       const isValid = await validateCurrentStep(currentStep);
       if (isValid) {
         setCurrentStep(currentStep + 1);
       } else {
-        // The Radix form components will automatically show error messages
-        console.log("Validation failed for step", currentStep);
+        const firstError = Object.values(errors)[0];
+        const errorMessage = firstError?.message || "Please fill all required fields correctly";
+        alert(`Step ${currentStep} validation failed:\n${errorMessage}`);
       }
     }
   };
@@ -191,566 +173,31 @@ export default function ContractorOnboarding() {
     }
   };
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const onSubmit = async (data: ContractorFormData) => {
+    console.log("🎯 onSubmit function called!");
+    console.log("📦 Raw data received:", data);
+
     try {
-      console.log("🚀 FORM SUBMISSION - Starting Zoho CRM Integration");
-
-      // Show loading state
-      const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-      if (submitButton) {
-        submitButton.disabled = true;
-        submitButton.textContent = 'Submitting to CRM...';
-      }
-
-      // Prepare form data for Zoho CRM API
-      const formData = new FormData();
-
-      // Add all form fields
-      formData.append('firstName', data.firstName);
-      formData.append('lastName', data.lastName);
-      formData.append('email', data.email);
-      formData.append('mobile', data.mobile);
-      formData.append('location', data.location);
-      formData.append('services', JSON.stringify(data.services));
-      formData.append('experience', data.experience || '');
-      formData.append('availability', data.availability || '');
-      formData.append('startDate', data.startDate || '');
-      formData.append('funFact', data.funFact || '');
-      formData.append('hobbies', data.hobbies || '');
-      formData.append('uniqueService', data.uniqueService || '');
-      formData.append('whyEnjoyWork', data.whyEnjoyWork || '');
-      formData.append('additionalInfo', data.additionalInfo || '');
-      formData.append('qualifications', data.qualifications);
-      formData.append('hasVehicle', data.hasVehicle);
-      formData.append('consentProfileShare', data.consentProfileShare.toString());
-      formData.append('consentMarketing', (data.consentMarketing || false).toString());
-
-      // Add photos
-      data.photos.forEach((photo, index) => {
-        formData.append(`photo_${index}`, photo);
+      console.log("🚀 FORM SUBMISSION - Complete Registration Data:");
+      console.log(JSON.stringify(data, null, 2));
+      console.log("📊 Summary:", {
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        mobile: data.mobile,
+        role: data.titleRole,
+        services: data.services,
+        photosCount: data.photos?.length || 0
       });
 
-      console.log("📤 Submitting to Zoho CRM...");
-
-      // Submit to Zoho CRM via our API
-      const response = await fetch('/api/zoho/submit-contractor', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        console.log("✅ Successfully submitted to Zoho CRM:", result);
-        alert(`✅ Registration completed successfully!\n\nYour application has been submitted to our CRM system.\nRecord ID: ${result.data.crmRecordId}\nPhotos uploaded: ${result.data.attachmentsUploaded}`);
-
-        // Redirect to success page or dashboard
-        window.location.href = "/registration/contractor/success";
-      } else {
-        throw new Error(result.error || 'Unknown error occurred');
-      }
-
+      console.log("✅ Registration completed successfully!");
+      alert("✅ Registration completed successfully!\n\nYour data has been logged to the console.");
     } catch (error) {
-      console.error("❌ Error submitting to Zoho CRM:", error);
-
-      // Show error message to user
-      alert(`❌ Submission failed: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease try again or contact support.`);
-
-      // Re-enable submit button
-      const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = 'Complete Signup';
-      }
-    }
-  });
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label className="text-xl font-poppins font-medium">Where are you located? <span className="text-red-500">*</span></Label>
-              <div className="mt-2">
-                <LocationDropdown
-                  value={watchedValues.location}
-                  onValueChange={(value) => {
-                    console.log("Form updating with value:", value);
-                    form.setValue("location", value);
-                    form.trigger("location");
-                  }}
-                  placeholder="Search postcode or suburb..."
-                  searchPlaceholder="Type to search..."
-                  emptyMessage="No locations found."
-                  onSearch={(query) => {
-                    const results = searchAustralianLocations(query);
-                    return results.map(location => ({
-                      value: location.display,
-                      label: location.display,
-                      display: location.display
-                    }));
-                  }}
-                  options={[]}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xl font-poppins font-medium">Services you want to offer <span className="text-red-500">*</span></Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {serviceOptions.map((service) => (
-                  <div key={service} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={service}
-                      checked={watchedValues.services.includes(service)}
-                      onCheckedChange={() => handleServiceToggle(service)}
-                    />
-                    <Label htmlFor={service} className="text-xl font-poppins font-normal">
-                      {service}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xl font-cooper font-normal">Years of Experience</Label>
-              <div className="mt-2">
-                <Input
-                  type="number"
-                  min="0"
-                  max="99"
-                  value={watchedValues.experience}
-                  onChange={(e) => {
-                    form.setValue("experience", e.target.value);
-                  }}
-                  placeholder="Enter years of experience"
-                  className="w-full text-xl font-poppins"
-                />
-              </div>
-            </div>
-
-
-            {showGuidelines && (
-              <Card className="bg-blue-50">
-                <CardContent className="pt-4">
-                  <p className="text-sm text-blue-800">
-                    Service rates vary by location and complexity. Typical ranges:
-                    <br />• Support Worker: $25-35/hour
-                    <br />• Home Maintenance: $30-50/hour
-                    <br />• Cleaning Services: $25-40/hour
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label className="text-xl font-poppins font-medium">How many hours per week are you available?</Label>
-              <RadioGroup
-                value={watchedValues.availability}
-                onValueChange={(value) => {
-                  form.setValue("availability", value);
-                }}
-                className="mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="1-2-hrs" id="1-2-hrs" />
-                  <Label htmlFor="1-2-hrs" className="text-xl font-poppins">1-2 hrs</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="3-4-hrs" id="3-4-hrs" />
-                  <Label htmlFor="3-4-hrs" className="text-xl font-poppins">3-4 hrs</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="more-than-5-hrs" id="more-than-5-hrs" />
-                  <Label htmlFor="more-than-5-hrs" className="text-xl font-poppins">More than 4 hrs</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div>
-              <Label htmlFor="startDate" className="text-xl font-poppins font-medium">When can you start?</Label>
-              <Select onValueChange={(value) => {
-                form.setValue("startDate", value);
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select start date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="immediately">Immediately</SelectItem>
-                  <SelectItem value="within-week">Within a week</SelectItem>
-                  <SelectItem value="within-month">Within a month</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-xl font-poppins font-medium">First Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="firstName"
-                  value={watchedValues.firstName}
-                  onChange={(e) => {
-                    form.setValue("firstName", e.target.value);
-                    form.trigger("firstName");
-                  }}
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName" className="text-xl font-poppins font-medium">Last Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="lastName"
-                  value={watchedValues.lastName}
-                  onChange={(e) => {
-                    form.setValue("lastName", e.target.value);
-                    form.trigger("lastName");
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* Email Field */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-poppins font-medium">
-                      Email Address <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage className="text-red-500 text-sm font-poppins" />
-                  </FormItem>
-                )}
-              />
-
-              {/* Mobile Field */}
-              <FormField
-                control={form.control}
-                name="mobile"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-poppins font-medium">
-                      Mobile Number <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="tel" placeholder="04XX XXX XXX" {...field} />
-                    </FormControl>
-                    <FormMessage className="text-red-500 text-sm font-poppins" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* New Profile Questions */}
-            <FormField
-              control={form.control}
-              name="funFact"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xl font-cooper font-normal">
-                    A Fun Fact About Yourself <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Share something interesting or fun about yourself..."
-                      rows={3}
-                      className="text-xl font-poppins"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm font-poppins" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="hobbies"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xl font-cooper font-normal">
-                    Hobbies and/or Interests <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Tell us about your hobbies and interests..."
-                      rows={3}
-                      className="text-xl font-poppins"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm font-poppins" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="uniqueService"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xl font-cooper font-normal">
-                    What Makes Your Service Unique? <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="What sets you apart from other service providers..."
-                      rows={3}
-                      className="text-xl font-poppins"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm font-poppins" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="whyEnjoyWork"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xl font-cooper font-normal">
-                    Why Do You Enjoy Your Work? <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Share what motivates and fulfills you in this work..."
-                      rows={3}
-                      className="text-xl font-poppins"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm font-poppins" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="additionalInfo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xl font-cooper font-normal">Additional Information</FormLabel>
-                  <p className="text-sm font-poppins text-gray-600 mt-1 mb-2">
-                    Anything else you'd like to include about yourself or your services.
-                  </p>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Share any additional information you'd like clients to know..."
-                      rows={4}
-                      className="text-xl font-poppins"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500 text-sm font-poppins" />
-                </FormItem>
-              )}
-            />
-
-            {/* <div>
-              <Label htmlFor="password" className="text-xl font-poppins font-medium">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => updateFormData("password", e.target.value)}
-              />
-            </div> */}
-
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="qualifications" className="text-xl font-cooper font-normal">Qualifications and Certificates <span className="text-red-500">*</span></Label>
-              <Textarea
-                id="qualifications"
-                placeholder="Tell us about your relevant qualifications and certificates..."
-                value={watchedValues.qualifications}
-                onChange={(e) => {
-                  form.setValue("qualifications", e.target.value);
-                  form.trigger("qualifications");
-                }}
-                rows={4}
-                className="mt-2 text-xl font-poppins"
-              />
-            </div>
-
-            <div>
-              <Label className="text-xl font-cooper font-normal">Do you drive and have access to a vehicle? <span className="text-red-500">*</span></Label>
-              <RadioGroup
-                value={watchedValues.hasVehicle}
-                onValueChange={(value) => {
-                  form.setValue("hasVehicle", value);
-                  form.trigger("hasVehicle");
-                }}
-                className="mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="yes" />
-                  <Label htmlFor="yes" className="text-xl font-poppins">Yes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="no" />
-                  <Label htmlFor="no" className="text-xl font-poppins">No</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <div>
-              <Label className="text-xl font-cooper font-normal">Photo Submission <span className="text-red-500">*</span></Label>
-              <p className="text-lg font-poppins text-gray-600 mt-2 mb-4">
-                Please attach 3-5 high-quality photos of yourself. Ensure the photo is:
-              </p>
-              <div className="space-y-2 mb-4 text-sm font-poppins text-gray-700">
-                <div className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Taken in a well-lit area</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Clear and in focus</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Candid, friendly, and genuine (avoid heavy filters or overly posed shots)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Show a bit of your personality – a smile, a laugh, or a natural moment works great</span>
-                </div>
-              </div>
-
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                  id="photo-upload"
-                />
-                <label
-                  htmlFor="photo-upload"
-                  className="cursor-pointer flex flex-col items-center gap-2"
-                >
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </div>
-                  <span className="text-lg font-poppins text-gray-700">Choose File(s)</span>
-                  <span className="text-sm font-poppins text-gray-500">Upload up to 5 photos (Max 10MB each)</span>
-                </label>
-              </div>
-
-              {watchedValues.photos.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-poppins text-gray-600 mb-2">Uploaded photos:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {watchedValues.photos.map((file: File, index: number) => (
-                      <div key={index} className="relative bg-gray-100 rounded-lg p-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-poppins truncate">{file.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => removePhoto(index)}
-                            className="ml-2 text-red-500 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-xl font-cooper font-normal">Consent to Share Profile with Clients <span className="text-red-500">*</span></Label>
-              <Card className="mt-2 p-4 border border-gray-200">
-                <p className="text-sm font-poppins text-gray-700 mb-3">
-                  By ticking this box, I consent to Remonta sharing my submitted profile information and photo(s) with potential clients.
-                </p>
-                <p className="text-sm font-poppins text-gray-700 mb-3">
-                  As part of working with <strong>Remonta</strong>, I understand and agree that my submitted profile information and photo(s) will be shared with potential clients to help them choose the right worker for their needs.
-                </p>
-                <p className="text-sm font-poppins text-gray-700 mb-4">
-                  This is a necessary requirement to be considered for work opportunities.
-                </p>
-                <div className="flex items-start space-x-2">
-                  <Checkbox
-                    id="consent-profile"
-                    checked={watchedValues.consentProfileShare}
-                    onCheckedChange={(checked) => {
-                      const isChecked = !!checked;
-                      form.setValue("consentProfileShare", isChecked);
-                      form.trigger("consentProfileShare");
-                    }}
-                  />
-                  <Label htmlFor="consent-profile" className="text-sm font-poppins">
-                    I acknowledge and consent to my profile and photo will be shared with clients for matching purposes.
-                  </Label>
-                </div>
-              </Card>
-            </div>
-
-            <div>
-              <Label className="text-xl font-cooper font-normal">Consent for Marketing and Social Media (Optional but Recommended)</Label>
-              <Card className="mt-2 p-4 border border-gray-200">
-                <p className="text-sm font-poppins text-gray-700 mb-3">
-                  By ticking this box, I consent to <strong>Remonta</strong> using my submitted profile information and photo(s) for promotional purposes, including but not limited to the company website, social media channels, and marketing materials.
-                </p>
-                <p className="text-sm font-poppins text-gray-700 mb-3">
-                  This helps promote my services to a wider audience and may result in more opportunities.
-                </p>
-                <p className="text-sm font-poppins text-gray-700 mb-4">
-                  I understand that my image and information may be <strong>publicly visible</strong> to promote Remonta's services and my own.
-                </p>
-                <div className="flex items-start space-x-2">
-                  <Checkbox
-                    id="consent-marketing"
-                    checked={watchedValues.consentMarketing}
-                    onCheckedChange={(checked) => {
-                      form.setValue("consentMarketing", !!checked);
-                      form.trigger("consentMarketing");
-                    }}
-                  />
-                  <Label htmlFor="consent-marketing" className="text-sm font-poppins">
-                    I consent to the use of my profile and photo for marketing and social media purposes.
-                  </Label>
-                </div>
-              </Card>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
+      console.error("❌ Error during submission:", error);
+      alert(`❌ Submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  // Show welcome message first
+
   if (showWelcome) {
     return (
       <div className="bg-gray-50 min-h-screen py-8">
@@ -759,11 +206,11 @@ export default function ContractorOnboarding() {
             <CardContent className="p-12 text-center space-y-6">
               <div className="space-y-6">
                 <h1 className="text-4xl text-gray-900 font-cooper">
-                  Welcome to LocalAid
+                  Welcome to Remonta
                 </h1>
                 <div className="bg-[#EDEFF3] rounded-lg p-6 text-left max-w-lg mx-auto">
                   <p className="text-lg text-[#0C1628] font-poppins font-medium mb-4">
-                    There are thousands of people on LocalAid looking for support workers just like you. Create your account today:
+                    There are thousands of people on Remonta looking for support workers just like you. Create your account today:
                   </p>
                   <ul className="space-y-3">
                     <li className="flex items-center gap-3">
@@ -809,47 +256,111 @@ export default function ContractorOnboarding() {
     );
   }
 
-  // Show registration form
+  const onError = (errors: any) => {
+    console.log("❌ Form validation errors:", errors);
+    Object.keys(errors).forEach(key => {
+      console.log(`Field: ${key}, Message: ${errors[key]?.message}, Type: ${errors[key]?.type}`);
+    });
+    alert("Please check all required fields are filled correctly.");
+  };
+
   return (
-    <Form {...form}>
-      <form onSubmit={handleSubmit} className="bg-gray-50 py-8">
-        <div className="max-w-2xl mx-auto px-4">
-          <Card>
-            <CardHeader>
-              <div className="space-y-2">
-                <Progress value={progress} className="w-full" />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {renderStep()}
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-gray-50 py-8">
+      <div className="max-w-2xl mx-auto px-4">
+        <Card>
+          <CardHeader>
+            <div className="space-y-2">
+              <Progress value={progress} className="w-full" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
+              <Step1PersonalInfo control={control} errors={errors} />
+            </div>
+            <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
+              <Step2AdditionalDetails register={register} errors={errors} currentStep={currentStep} />
+            </div>
+            <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
+              <Step3Professional register={register} control={control} errors={errors} currentStep={currentStep} />
+            </div>
+            <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
+              <Step4Services
+                register={register}
+                errors={errors}
+                watchedServices={watchedServices}
+                watchedHasVehicle={watchedHasVehicle}
+                serviceOptions={SERVICE_OPTIONS}
+                handleServiceToggle={handleServiceToggle}
+                setValue={setValue}
+                trigger={trigger}
+                currentStep={currentStep}
+              />
+            </div>
+            <div style={{ display: currentStep === 5 ? 'block' : 'none' }}>
+              <Step5PersonalTouch register={register} errors={errors} />
+            </div>
+            <div style={{ display: currentStep === 6 ? 'block' : 'none' }}>
+              <Step6Photos
+                errors={errors}
+                watchedPhotos={watchedPhotos}
+                watchedConsentProfileShare={watchedConsentProfileShare}
+                watchedConsentMarketing={watchedConsentMarketing}
+                handlePhotoUpload={handlePhotoUpload}
+                removePhoto={removePhoto}
+                setValue={setValue}
+                trigger={trigger}
+              />
+            </div>
+            <div style={{ display: currentStep === 7 ? 'block' : 'none' }}>
+              <Step7Verification
+                watchedMobile={watchedMobile}
+                isCodeSent={isCodeSent}
+                isVerified={isVerified}
+                isChangingNumber={isChangingNumber}
+                verificationCode={verificationCode}
+                tempMobile={tempMobile}
+                setVerificationCode={setVerificationCode}
+                setTempMobile={setTempMobile}
+                sendVerificationCode={sendVerificationCode}
+                verifyCode={verifyCode}
+                handleChangeNumber={handleChangeNumber}
+                handleSaveNewNumber={handleSaveNewNumber}
+                handleCancelChangeNumber={handleCancelChangeNumber}
+                setIsCodeSent={setIsCodeSent}
+                setIsVerified={setIsVerified}
+              />
+            </div>
 
-              <div className="flex justify-between pt-6">
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+
+              {currentStep === TOTAL_STEPS ? (
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={prevStep}
-                  disabled={currentStep === 1}
-                  className="flex items-center gap-2"
+                  type="submit"
+                  disabled={!isVerified}
+                  className={`flex items-center gap-2 ${!isVerified ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
+                  Complete Signup
                 </Button>
-
-                {currentStep === totalSteps ? (
-                  <Button type="submit" className="flex items-center gap-2">
-                    Complete Signup
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={nextStep} className="flex items-center gap-2">
-                    Next
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </form>
-    </Form>
+              ) : (
+                <Button type="button" onClick={nextStep} className="flex items-center gap-2">
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </form>
   );
 }

@@ -1,0 +1,87 @@
+import * as z from "zod";
+
+export const contractorFormSchema = z.object({
+  // Step 1 - Personal Information
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string()
+    .min(1, "Email address is required")
+    .email("Please enter a valid email address"),
+  mobile: z.string()
+    .min(1, "Mobile number is required")
+    .refine((mobile) => {
+      const cleanMobile = mobile.replace(/\D/g, '');
+      return (
+        (cleanMobile.length === 10 && cleanMobile.startsWith('04')) ||
+        (cleanMobile.length === 11 && cleanMobile.startsWith('614')) ||
+        (mobile.startsWith('+61') && cleanMobile.length === 11 && cleanMobile.startsWith('614'))
+      );
+    }, "Please enter a valid Australian mobile number (e.g., 04XX XXX XXX)"),
+  age: z.string().min(1, "Age is required"),
+  gender: z.string().min(1, "Please select your gender"),
+
+  // Step 2 - Additional Details
+  genderIdentity: z.string().min(1, "Gender identity is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  languages: z.string().min(1, "Languages spoken is required"),
+
+  // Step 3 - Professional Information
+  titleRole: z.string().min(1, "Title/Role is required"),
+  experience: z.string().min(1, "Years of Experience is required"),
+  introduction: z.string().min(1, "Introduction is required"),
+
+  // Step 4 - Services & Qualifications
+  services: z.array(z.string()).min(1, "Please select at least one service"),
+  qualifications: z.string().min(1, "Qualifications and certifications are required"),
+  hasVehicle: z.string().min(1, "Please indicate if you have vehicle access"),
+
+  // Step 5 - Personal Touch
+  funFact: z.string().min(1, "A fun fact about yourself is required"),
+  hobbies: z.string().min(1, "Hobbies and/or interests are required"),
+  uniqueService: z.string().min(1, "Please tell us what makes your service unique"),
+  whyEnjoyWork: z.string().min(1, "Please tell us why you enjoy your work"),
+  additionalInfo: z.string().optional(),
+
+  // Step 6 - Photos & Consent
+  photos: z.array(z.any()).min(1, "Please upload at least one photo"),
+  consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
+  consentMarketing: z.boolean().optional(),
+
+  // Optional fields
+  location: z.string().optional(),
+  availability: z.string().optional(),
+  startDate: z.string().optional(),
+});
+
+export type ContractorFormData = z.infer<typeof contractorFormSchema>;
+
+export const contractorFormDefaults = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  mobile: "",
+  age: "",
+  gender: "",
+  genderIdentity: "",
+  city: "",
+  state: "",
+  languages: "",
+  titleRole: "",
+  experience: "",
+  introduction: "",
+  location: "",
+  services: [],
+  availability: "",
+  startDate: "",
+  funFact: "",
+  hobbies: "",
+  uniqueService: "",
+  whyEnjoyWork: "",
+  additionalInfo: "",
+  qualifications: "",
+  hasVehicle: "",
+  photos: [],
+  consentProfileShare: false,
+  consentMarketing: false,
+};

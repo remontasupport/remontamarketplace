@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Search, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/tailwindUtils"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
