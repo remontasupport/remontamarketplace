@@ -38,6 +38,7 @@ interface ZohoContact {
   Postal_Zip_Code_1?: string
 
   // Contractor Information
+  Option_1?: string // Contact Type field in Zoho (e.g., "Contractor", "Client")
   Contractor_Name?: string
   Contractor_Owner?: string
   Contact_Number?: string
@@ -176,7 +177,8 @@ class ZohoService {
   }
 
   /**
-   * Fetch all contractors from Zoho CRM Contractors module
+   * Fetch all contacts from Zoho CRM Contacts module where Contact_Type is "Contractor"
+   * and using the Contractors layout with Profile Submission fields
    */
   async getContractorContacts(): Promise<ZohoContact[]> {
     const token = await this.getAccessToken()
@@ -184,9 +186,12 @@ class ZohoService {
     let page = 1
     let moreRecords = true
 
+    // Contractors layout ID
+    const contractorsLayoutId = '87697000001047516'
+
     while (moreRecords) {
       const response = await fetch(
-        `${this.apiUrl}/Contractors?page=${page}&per_page=200`,
+        `${this.apiUrl}/Contacts?page=${page}&per_page=200&layout_id=${contractorsLayoutId}`,
         {
           headers: {
             Authorization: `Zoho-oauthtoken ${token}`,
@@ -195,29 +200,34 @@ class ZohoService {
       )
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch contractors: ${response.statusText}`)
+        throw new Error(`Failed to fetch contacts: ${response.statusText}`)
       }
 
       const data: ZohoContactsResponse = await response.json()
 
       if (data.data) {
-        allContacts.push(...data.data)
+        // Filter only contacts where Option_1 (Contact Type) is "Contractor"
+        const contractorContacts = data.data.filter(
+          contact => contact.Option_1 === 'Contractor'
+        )
+        allContacts.push(...contractorContacts)
       }
 
       moreRecords = data.info?.more_records || false
       page++
     }
 
+    console.log(`Total contacts fetched: ${allContacts.length} (filtered by Option_1 = "Contractor")`)
     return allContacts
   }
 
   /**
-   * Fetch a single contractor by ID
+   * Fetch a single contact by ID from Contacts module
    */
   async getContactById(contactId: string): Promise<ZohoContact | null> {
     const token = await this.getAccessToken()
 
-    const response = await fetch(`${this.apiUrl}/Contractors/${contactId}`, {
+    const response = await fetch(`${this.apiUrl}/Contacts/${contactId}`, {
       headers: {
         Authorization: `Zoho-oauthtoken ${token}`,
       },
@@ -225,11 +235,58 @@ class ZohoService {
 
     if (!response.ok) {
       if (response.status === 404) return null
-      throw new Error(`Failed to fetch contractor: ${response.statusText}`)
+      throw new Error(`Failed to fetch contact: ${response.statusText}`)
     }
 
     const data = await response.json()
     return data.data?.[0] || null
+  }
+
+  /**
+   * Fetch attachments for a contact
+   */
+  async getContactAttachments(contactId: string): Promise<any[]> {
+    const token = await this.getAccessToken()
+
+    const response = await fetch(
+      `${this.apiUrl}/Contacts/${contactId}/Attachments`,
+      {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+      }
+    )
+
+    if (!response.ok) {
+      if (response.status === 404) return []
+      throw new Error(`Failed to fetch attachments: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.data || []
+  }
+
+  /**
+   * Download attachment file
+   */
+  async downloadAttachment(contactId: string, attachmentId: string): Promise<Buffer> {
+    const token = await this.getAccessToken()
+
+    const response = await fetch(
+      `${this.apiUrl}/Contacts/${contactId}/Attachments/${attachmentId}`,
+      {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to download attachment: ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
   }
 }
 
