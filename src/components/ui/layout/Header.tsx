@@ -113,8 +113,15 @@ export default function Header() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 " aria-label="Global">
         {/* Logo */}
         <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
-          <Link href="/" className="-m-1">
-           
+          <Link
+            href="/"
+            className="-m-1"
+            onClick={() => {
+              // Close dropdown after a brief delay to allow navigation to start
+              setTimeout(() => setOpenDropdown(null), 100);
+            }}
+          >
+
             <div className="flex flex-col items-center relative left-2 lg:left-1 ">
               <Image
                 className="h-25 w-35 lg:w-45 sm:h-2 md:h-15 lg:h-34"
@@ -160,6 +167,10 @@ export default function Header() {
                 <Link
                   href={item.href}
                   className={`font-sans font-medium text-base leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
+                  onClick={() => {
+                    // Close dropdown after a brief delay to allow navigation to start
+                    setTimeout(() => setOpenDropdown(null), 100);
+                  }}
                 >
                   {item.name}
                 </Link>
@@ -175,7 +186,7 @@ export default function Header() {
                   />
 
                   {/* Dropdown content - centered on screen */}
-                  <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[110] w-full max-w-5xl px-4 animate-in fade-in zoom-in-95 duration-300">
+                  <div className="fixed left-1/2 top-99 -translate-x-1/2 -translate-y-1/2 z-[110] w-full max-w-5xl px-4 animate-in fade-in zoom-in-95 duration-300">
                     <div className="overflow-hidden rounded-2xl shadow-2xl">
                       <div className="relative bg-white p-12">
                         <div className="grid grid-cols-3 gap-12">
@@ -267,6 +278,10 @@ export default function Header() {
             <Link
               href="/contact"
               className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-poppins font-medium text-xl transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+              onClick={() => {
+                // Close dropdown after a brief delay to allow navigation to start
+                setTimeout(() => setOpenDropdown(null), 100);
+              }}
             >
               Contact Us
             </Link>

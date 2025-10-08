@@ -122,7 +122,7 @@ export default function ServicesPage() {
                 28k+
               </h3>
               <p className="text-lg md:text-xl text-white font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
-                Active NDIS and Aged Care clients
+                Active NDIS clients
               </p>
               {/* Vertical divider - hidden on mobile, visible on md+ */}
               <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-24" style={{ backgroundColor: BRAND_COLORS.PRIMARY }}></div>
@@ -158,7 +158,7 @@ export default function ServicesPage() {
             </div>
 
             {/* Right - Map (Enlarged) */}
-            <div className="relative lg:scale-125 lg:translate-x-12 mt-15">
+            <div className="relative scale-140 sm:scale-100 lg:scale-125 lg:translate-x-12 lg:mt-15 ">
               <img
                 src="/images/australia.svg"
                 alt="Service area map"
