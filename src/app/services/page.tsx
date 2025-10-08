@@ -6,7 +6,7 @@ import Services from "@/app/landing/Services"
 import { BRAND_COLORS } from "@/lib/constants"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, Users, CheckCircle } from 'lucide-react'
+
 
 export default function ServicesPage() {
 
@@ -43,13 +43,13 @@ export default function ServicesPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link
-                  href="/registration/client"
+                  href="/registration/worker"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-8 py-3 text-white font-poppins font-medium text-base transition-colors duration-300"
                   style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = BRAND_COLORS.SECONDARY}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY}
                 >
-                  <Calendar className="w-5 h-5 sm:inline hidden" />
+                  
                   Provide Support
                 </Link>
                 <button
