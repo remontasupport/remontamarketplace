@@ -33,24 +33,25 @@ const navigation: NavigationItem[] = [
     href: '/services',
     hasDropdown: false
   },
-  {
-    name: 'More',
-    href: '#',
-    hasDropdown: true,
-    dropdownItems: [
-      { name: 'Help Centre', href: '/help', description: 'Find helpful articles, guides and answers to common queries.' },
-      { name: 'Incidents', href: '/incidents', description: 'Report an incident on Remonta.' },
-      { name: 'FAQs', href: '/faqs', description: 'Find the answers to frequently asked questions about Remonta.' },
-      { name: 'Trust and Safety', href: '/trust-safety', description: 'Explore how Remonta ensures the safety and wellbeing of our community.' },
-      { name: 'Newsroom', href: '/newsroom', description: 'Find news, helpful tips and insightful stories from the Remonta community.' },
-      { name: 'Topic Libraries', href: '/topic-libraries', description: 'Browse guides to home care packages, the NDIS, becoming a support worker on Remonta and more.' },
-      { name: 'Shop consumables', href: '/shop', description: 'Discover an affordable and convenient way to shop for your everyday support needs.' },
-      { name: 'Our story', href: '/about', description: 'Learn more about Remonta and how the company got started.' },
-      { name: 'Leadership', href: '/leadership', description: 'Meet the leadership team behind Remonta.' },
-      { name: 'Careers at Remonta', href: '/careers', description: 'Check open job listings at Remonta.' },
-      { name: 'Contact us', href: '/contact', description: 'Get in touch with us via live chat, phone or email.' },
-    ]
-  },
+  // Temporarily hidden until pages are created
+  // {
+  //   name: 'More',
+  //   href: '#',
+  //   hasDropdown: true,
+  //   dropdownItems: [
+  //     { name: 'Help Centre', href: '/help', description: 'Find helpful articles, guides and answers to common queries.' },
+  //     { name: 'Incidents', href: '/incidents', description: 'Report an incident on Remonta.' },
+  //     { name: 'FAQs', href: '/faqs', description: 'Find the answers to frequently asked questions about Remonta.' },
+  //     { name: 'Trust and Safety', href: '/trust-safety', description: 'Explore how Remonta ensures the safety and wellbeing of our community.' },
+  //     { name: 'Newsroom', href: '/newsroom', description: 'Find news, helpful tips and insightful stories from the Remonta community.' },
+  //     { name: 'Topic Libraries', href: '/topic-libraries', description: 'Browse guides to home care packages, the NDIS, becoming a support worker on Remonta and more.' },
+  //     { name: 'Shop consumables', href: '/shop', description: 'Discover an affordable and convenient way to shop for your everyday support needs.' },
+  //     { name: 'Our story', href: '/about', description: 'Learn more about Remonta and how the company got started.' },
+  //     { name: 'Leadership', href: '/leadership', description: 'Meet the leadership team behind Remonta.' },
+  //     { name: 'Careers at Remonta', href: '/careers', description: 'Check open job listings at Remonta.' },
+  //     { name: 'Contact us', href: '/contact', description: 'Get in touch with us via live chat, phone or email.' },
+  //   ]
+  // },
 ]
 
 export default function Header() {
