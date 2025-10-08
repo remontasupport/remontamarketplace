@@ -30,21 +30,27 @@ const navigation: NavigationItem[] = [
   },
   {
     name: 'Services',
-    href: '#services',
+    href: '/services',
     hasDropdown: false
   },
-  // {
-  //   name: 'More',
-  //   href: '#',
-  //   hasDropdown: true,
-  //   dropdownItems: [
-  //     { name: 'About Us', href: '/about' },
-  //     { name: 'How It Works', href: '/how-it-works' },
-  //     { name: 'Contact', href: '/contact' },
-  //     { name: 'Help Center', href: '/help' },
-  //     { name: 'Pricing', href: '/pricing' },
-  //   ]
-  // },
+  {
+    name: 'More',
+    href: '#',
+    hasDropdown: true,
+    dropdownItems: [
+      { name: 'Help Centre', href: '/help', description: 'Find helpful articles, guides and answers to common queries.' },
+      { name: 'Incidents', href: '/incidents', description: 'Report an incident on Remonta.' },
+      { name: 'FAQs', href: '/faqs', description: 'Find the answers to frequently asked questions about Remonta.' },
+      { name: 'Trust and Safety', href: '/trust-safety', description: 'Explore how Remonta ensures the safety and wellbeing of our community.' },
+      { name: 'Newsroom', href: '/newsroom', description: 'Find news, helpful tips and insightful stories from the Remonta community.' },
+      { name: 'Topic Libraries', href: '/topic-libraries', description: 'Browse guides to home care packages, the NDIS, becoming a support worker on Remonta and more.' },
+      { name: 'Shop consumables', href: '/shop', description: 'Discover an affordable and convenient way to shop for your everyday support needs.' },
+      { name: 'Our story', href: '/about', description: 'Learn more about Remonta and how the company got started.' },
+      { name: 'Leadership', href: '/leadership', description: 'Meet the leadership team behind Remonta.' },
+      { name: 'Careers at Remonta', href: '/careers', description: 'Check open job listings at Remonta.' },
+      { name: 'Contact us', href: '/contact', description: 'Get in touch with us via live chat, phone or email.' },
+    ]
+  },
 ]
 
 export default function Header() {
@@ -103,12 +109,19 @@ export default function Header() {
   }
 
   return (
-    <header className={`sticky top-0 z-40 transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Global">
+    <header className={`sticky top-0 z-[100] transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 " aria-label="Global">
         {/* Logo */}
         <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
-          <Link href="/" className="-m-1">
-           
+          <Link
+            href="/"
+            className="-m-1"
+            onClick={() => {
+              // Close dropdown after a brief delay to allow navigation to start
+              setTimeout(() => setOpenDropdown(null), 100);
+            }}
+          >
+
             <div className="flex flex-col items-center relative left-2 lg:left-1 ">
               <Image
                 className="h-25 w-35 lg:w-45 sm:h-2 md:h-15 lg:h-34"
@@ -143,7 +156,7 @@ export default function Header() {
             <div key={item.name} className="relative">
               {item.hasDropdown ? (
                 <button
-                  disabled
+                  
                   className={`flex items-center gap-x-1 font-sans font-medium text-base leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
                   onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
                 >
@@ -154,6 +167,10 @@ export default function Header() {
                 <Link
                   href={item.href}
                   className={`font-sans font-medium text-base leading-6 transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
+                  onClick={() => {
+                    // Close dropdown after a brief delay to allow navigation to start
+                    setTimeout(() => setOpenDropdown(null), 100);
+                  }}
                 >
                   {item.name}
                 </Link>
@@ -161,29 +178,88 @@ export default function Header() {
 
               {/* Dropdown menu */}
               {item.hasDropdown && openDropdown === item.name && (
-                <div className="absolute left-1/2 z-10 mt-3 w-screen max-w-lg -translate-x-1/2 transform px-2 sm:px-0">
-                  <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                    <div className="relative bg-white">
-                      {item.dropdownItems?.map((dropdownItem) => (
-                        <Link
-                          key={dropdownItem.name}
-                          href={dropdownItem.href}
-                          className="block p-6 hover:bg-[#B1C3CD] transition ease-in-out duration-150 border-b border-gray-100 last:border-b-0"
-                          onClick={() => setOpenDropdown(null)}
-                        >
+                <>
+                  {/* Semi-transparent backdrop overlay - below header */}
+                  <div
+                    className="fixed left-0 right-0 bottom-0 top-[127px] bg-gray-600/60 z-[90] transition-all duration-300"
+                    onClick={() => setOpenDropdown(null)}
+                  />
+
+                  {/* Dropdown content - centered on screen */}
+                  <div className="fixed left-1/2 top-99 -translate-x-1/2 -translate-y-1/2 z-[110] w-full max-w-5xl px-4 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="overflow-hidden rounded-2xl shadow-2xl">
+                      <div className="relative bg-white p-12">
+                        <div className="grid grid-cols-3 gap-12">
+                          {/* Help Column */}
                           <div>
-                            <h3 className="font-sans font-semibold text-base text-[#0C1628] mb-2">
-                              {dropdownItem.name}
-                            </h3>
-                            {/* <p className="font-sans text-sm text-gray-600 leading-relaxed">
-                              {dropdownItem.description}
-                            </p> */}
+                            <h3 className="font-sans font-semibold text-lg text-gray-500 mb-6">Help</h3>
+                            <div className="space-y-6">
+                              {item.dropdownItems?.slice(0, 4).map((dropdownItem) => (
+                                <Link
+                                  key={dropdownItem.name}
+                                  href={dropdownItem.href}
+                                  className="block group transition-all duration-200"
+                                  onClick={() => setOpenDropdown(null)}
+                                >
+                                  <h4 className="font-sans font-semibold text-base text-[#6B4DE6] group-hover:underline mb-1 transition-all duration-200">
+                                    {dropdownItem.name}
+                                  </h4>
+                                  <p className="font-sans text-sm text-gray-600 leading-relaxed">
+                                    {dropdownItem.description}
+                                  </p>
+                                </Link>
+                              ))}
+                            </div>
                           </div>
-                        </Link>
-                      ))}
+
+                          {/* Resources Column */}
+                          <div>
+                            <h3 className="font-sans font-semibold text-lg text-gray-500 mb-6">Resources</h3>
+                            <div className="space-y-6">
+                              {item.dropdownItems?.slice(4, 7).map((dropdownItem) => (
+                                <Link
+                                  key={dropdownItem.name}
+                                  href={dropdownItem.href}
+                                  className="block group transition-all duration-200"
+                                  onClick={() => setOpenDropdown(null)}
+                                >
+                                  <h4 className="font-sans font-semibold text-base text-[#6B4DE6] group-hover:underline mb-1 transition-all duration-200">
+                                    {dropdownItem.name}
+                                  </h4>
+                                  <p className="font-sans text-sm text-gray-600 leading-relaxed">
+                                    {dropdownItem.description}
+                                  </p>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* About us Column */}
+                          <div>
+                            <h3 className="font-sans font-semibold text-lg text-gray-500 mb-6">About us</h3>
+                            <div className="space-y-6">
+                              {item.dropdownItems?.slice(7).map((dropdownItem) => (
+                                <Link
+                                  key={dropdownItem.name}
+                                  href={dropdownItem.href}
+                                  className="block group transition-all duration-200"
+                                  onClick={() => setOpenDropdown(null)}
+                                >
+                                  <h4 className="font-sans font-semibold text-base text-[#6B4DE6] group-hover:underline mb-1 transition-all duration-200">
+                                    {dropdownItem.name}
+                                  </h4>
+                                  <p className="font-sans text-sm text-gray-600 leading-relaxed">
+                                    {dropdownItem.description}
+                                  </p>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           ))}
@@ -202,6 +278,10 @@ export default function Header() {
             <Link
               href="/contact"
               className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-poppins font-medium text-xl transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
+              onClick={() => {
+                // Close dropdown after a brief delay to allow navigation to start
+                setTimeout(() => setOpenDropdown(null), 100);
+              }}
             >
               Contact Us
             </Link>
