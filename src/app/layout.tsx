@@ -30,9 +30,9 @@ export const metadata: Metadata = {
     siteName: 'Remonta Services',
     images: [
       {
-        url: '/logo/logo-icon.svg',
-        width: 1200,
-        height: 1200,
+        url: '/logo/logo-icon-dark.png',
+        width: 500,
+        height: 500,
         alt: 'Remonta - NDIS Service Provider Australia',
       },
     ],
@@ -43,15 +43,15 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
     description: "Connecting NDIS participants with quality support workers across Australia",
-    images: ['/logo/logo-icon.svg'],
+    images: ['/logo/logo-icon-dark.png'],
   },
   icons: {
     icon: [
       { url: '/favicon.ico' },
-      { url: '/logo/logo-icon.svg', type: 'image/svg+xml' },
+      { url: '/logo/logo-icon-dark.png', type: 'image/svg+xml' },
     ],
     shortcut: '/favicon.ico',
-    apple: '/logo/logo-icon.svg',
+    apple: '/logo/logo-icon-dark.png',
   },
 };
 
