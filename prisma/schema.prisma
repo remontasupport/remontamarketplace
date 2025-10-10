@@ -16,6 +16,7 @@ model ContractorProfile {
   lastName                      String
   email                         String    @unique
   phone                         String?
+  gender                        String?   // Gender from Zoho
 
   // Location
   city                          String?

@@ -181,6 +181,7 @@ async function transformContactData(contact: any): Promise<any | null> {
 
       // Personal details
       phone: contact.Phone || contact.Phone_1 || contact.Contact_Number || null,
+      gender: contact.Gender || null,
 
       // Location
       city: contact.City || contact.City_1 || null,
@@ -242,6 +243,7 @@ async function processContractor(contact: any): Promise<ProcessedResult> {
       lastName: contractorData.lastName,
       email: contractorData.email,
       phone: contractorData.phone,
+      gender: contractorData.gender,
 
       // Location
       city: contractorData.city,

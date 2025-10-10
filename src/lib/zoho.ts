@@ -24,6 +24,7 @@ interface ZohoContact {
   Phone_2?: string
   Date_of_Birth?: string
   Email_Address?: string
+  Gender?: string
 
   // Address fields
   Street_Address?: string

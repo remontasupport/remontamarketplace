@@ -123,6 +123,7 @@ export async function GET(request: NextRequest) {
           lastName: true,
           email: true,
           phone: true,
+          gender: true,
 
           // Location (for filtering and display)
           city: true,
