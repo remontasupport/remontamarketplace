@@ -8,56 +8,47 @@ datasource db {
 }
 
 model ContractorProfile {
-  id                       String    @id @default(cuid())
-  zohoContactId            String    @unique
-  firstName                String
-  lastName                 String
-  email                    String    @unique
-  phone                    String?
-  profileImage             String?
-  title                    String?
-  companyName              String?
-  yearsOfExperience        Int?
-  skills                   String[]
-  specializations          String[]
-  city                     String?
-  state                    String?
-  postcode                 String?
-  lastSyncedAt             DateTime  @default(now())
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
-  emergencyClinicName      String?
-  emergencyContact1        String?
-  emergencyContact2        String?
-  emergencyEmail2          String?
-  emergencyEmail3          String?
-  emergencyName            String?
-  emergencyPhone1          String?
-  emergencyPhone2          String?
-  emergencyRelationship    String?
-  profileTitle             String?
-  qualificationsAndCerts   String?
-  servicesOffered          String[]
-  additionalInformation    String?
-  businessUnique           String?
-  dateSigned2              DateTime?
-  funFact                  String?
-  hasVehicleAccess         Boolean?
-  hobbiesAndInterests      String?
-  languageSpoken           String?
-  signature2               String?
-  whyEnjoyWork             String?
-  documentsUploads         String?
-  infectionControlTraining String?
-  insuranceUploads         String?
-  ndisTrainingFileUpload   String?
-  ndisWorkerCheck          String?
-  policeCheck              String?
-  qualificationsUploads    String?
-  workingWithChildrenCheck String?
-  photoSubmission          String?  // Vercel Blob URL
+  id                            String    @id @default(cuid())
+  zohoContactId                 String    @unique
+
+  // Basic Information
+  firstName                     String
+  lastName                      String
+  email                         String    @unique
+  phone                         String?
+
+  // Location
+  city                          String?
+  state                         String?
+  postalZipCode                 String?
+
+  // Professional Details
+  titleRole                     String?
+  yearsOfExperience             Int?
+  aboutYou                      String?   // Bio/description about the contractor
+
+  // Qualifications & Skills
+  qualificationsAndCertifications String?
+  languageSpoken                String?
+  hasVehicleAccess              Boolean?
+
+  // Personal Details
+  funFact                       String?
+  hobbiesAndInterests           String?
+  whatMakesBusinessUnique       String?
+  additionalInformation         String?
+
+  // Profile Image
+  profileSubmission             String?   // Vercel Blob URL
+
+  // System Fields
+  lastSyncedAt                  DateTime  @default(now())
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  deletedAt                     DateTime? // Soft delete - null means active, non-null means deleted
 
   @@index([email])
   @@index([zohoContactId])
   @@index([city])
+  @@index([deletedAt]) // Index for filtering deleted records
 }

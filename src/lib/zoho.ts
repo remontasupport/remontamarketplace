@@ -87,10 +87,11 @@ interface ZohoContact {
   Clinic_Name?: string
 
   // Profile Submission
+  About_You?: string
   Title_Role?: string
   Services_Offered?: string[] | string
   Qualifications_and_Certifications?: string
-  Years_of_Experience?: number
+  Years_of_Experience?: number | string
   Language_Spoken?: string
   Do_you_drive_and_have_access_to_vehicle?: boolean | string | string[]
   A_Fun_Fact_About_Yourself?: string
@@ -240,6 +241,60 @@ class ZohoService {
 
     const data = await response.json()
     return data.data?.[0] || null
+  }
+
+  /**
+   * Fetch recently modified contractor contacts
+   */
+  async getRecentlyModifiedContacts(since: string): Promise<ZohoContact[]> {
+    const token = await this.getAccessToken()
+
+    // Contractors layout ID
+    const contractorsLayoutId = '87697000001047516'
+
+    // Convert ISO date to Zoho format (yyyy-MM-dd'T'HH:mm:ss+/-HH:mm)
+    // Zoho expects dates in a specific format for search
+    const sinceDate = new Date(since)
+    const zohoDate = sinceDate.toISOString().replace('Z', '+00:00')
+
+    // Zoho uses Modified_Time field for tracking modifications
+    const criteria = encodeURIComponent(`(Modified_Time:greater_than:${zohoDate})`)
+    const url = `${this.apiUrl}/Contacts/search?criteria=${criteria}&layout_id=${contractorsLayoutId}&per_page=200`
+
+    console.log('[Zoho] Fetching recent contacts with URL:', url)
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Zoho-oauthtoken ${token}`,
+      },
+    })
+
+    console.log('[Zoho] Response status:', response.status, response.statusText)
+
+    if (!response.ok) {
+      if (response.status === 204) {
+        console.log('[Zoho] No recent contacts found (204)')
+        return [] // No records found
+      }
+
+      // Get error details
+      const errorText = await response.text()
+      console.error('[Zoho] Error response:', errorText)
+      throw new Error(`Failed to fetch recent contacts: ${response.statusText} - ${errorText}`)
+    }
+
+    const data: ZohoContactsResponse = await response.json()
+
+    if (!data.data) return []
+
+    // Filter only contractors
+    const contractorContacts = data.data.filter(
+      contact => contact.Option_1 === 'Contractor'
+    )
+
+    console.log(`[Zoho] Found ${contractorContacts.length} contractor contacts`)
+
+    return contractorContacts
   }
 
   /**

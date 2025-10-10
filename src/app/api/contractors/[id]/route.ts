@@ -8,8 +8,11 @@ export async function GET(
   try {
     const { id } = await params
 
-    const contractor = await prisma.contractorProfile.findUnique({
-      where: { id },
+    const contractor = await prisma.contractorProfile.findFirst({
+      where: {
+        id,
+        deletedAt: null, // Only fetch if not deleted
+      },
     })
 
     if (!contractor) {
