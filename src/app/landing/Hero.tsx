@@ -25,8 +25,8 @@ export default function Hero() {
       )
     },
     {
-      percentage: "610,000+",
-      description: "AU supported by the NDIS",
+      percentage: " 4,500+",
+      description: "Supported by Remonta",
       icon: (
         <svg className="w-6 h-6 sm:w-7 sm:h-7 text-[#0C1628]" stroke="currentColor" fill="none" viewBox="0 0 64 64" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M39.14,47.26l.02-.02,10.82-9.09c.35-.3.79-.45,1.23-.45.4,0,.8.13,1.14.38.89.65,1.04,1.91.35,2.76l-8.62,10.52c-3.32,4.05-8.35,6.28-13.59,6.12-4.95-.15-9.69.5-11.85.86"/>

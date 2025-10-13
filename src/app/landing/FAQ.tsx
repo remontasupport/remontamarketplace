@@ -143,7 +143,7 @@ export default function FAQ() {
         <div className="text-center mt-8 sm:mt-12">
           <p className="font-sans text-base sm:text-lg text-[#0C1628] mb-4">
             Didn't find the answer you are looking for?{' '}
-            <a href="#contact" className="text-[#0C1628] underline font-semibold hover:text-[#B1C3CD] transition-colors">
+            <a href="/contact" className="text-[#0C1628] underline font-semibold hover:text-[#B1C3CD] transition-colors">
               Contact our support
             </a>
           </p>
