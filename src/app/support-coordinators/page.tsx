@@ -162,7 +162,7 @@ export default function SupportCoordinatorsPage() {
           {/* Mobile - Header */}
           <div className="lg:hidden py-8 px-4 sm:px-1 order-1" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT }}>
             <h2 className="text-2xl md:text-4xl font-cooper text-center" style={{ color: BRAND_COLORS.PRIMARY }}>
-              4,000+ Participants And Growing
+              4,500+ Participants And Growing
             </h2>
           </div>
 
