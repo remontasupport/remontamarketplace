@@ -47,7 +47,7 @@ export default function SupportCoordinatorsPage() {
                 We work hand-in-hand with Support Coordinators across Australia to ensure participants receive consistent, high-quality care.
               </p>
               <Link
-                href="/contact"
+                href="/registration/support-coordinator"
                 style={{ background: BRAND_COLORS.PRIMARY }}
                 className="inline-flex items-center justify-center text-white rounded-full px-6 sm:px-8 py-2.5 sm:py-3 font-poppins font-medium text-md text-[#0C1628] hover:bg-[#F8E8D8] transition-colors duration-200 shadow-lg"
               >
@@ -235,7 +235,7 @@ You'll always know where we operate and which services are available in your par
             </p>
 
             <Link
-              href="/contact"
+              href="/registration/support-coordinator"
               className="inline-flex items-center justify-center rounded-full bg-[#B1C3CD] px-8 sm:px-10 lg:px-12 py-3 sm:py-3.5 lg:py-4 font-poppins font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-white transition-colors duration-200"
             >
               Join the Network
