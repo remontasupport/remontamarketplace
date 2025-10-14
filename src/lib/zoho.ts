@@ -14,29 +14,24 @@ interface ZohoContact {
   Name?: string
   First_Name?: string
   Last_Name?: string
-  First_Name_1?: string
-  Last_Name_1?: string
   Email?: string
   Email_2?: string
   Email_3?: string
   Phone?: string
-  Phone_1?: string
   Phone_2?: string
   Date_of_Birth?: string
-  Email_Address?: string
   Gender?: string
+  Mobile?: string
 
   // Address fields
-  Street_Address?: string
-  Street_Address_1?: string
+  Street?: string
   Address_Line_2?: string
   City?: string
-  City_1?: string
   State?: string
-  State_Region_Province?: string
-  State_Region_Province_1?: string
+  Mailing_City?: string
+  Mailing_State?: string
   Postal_Zip_Code?: string
-  Postal_Zip_Code_1?: string
+  Mailing_Zip?: string
 
   // Contractor Information
   Option_1?: string // Contact Type field in Zoho (e.g., "Contractor", "Client")
@@ -72,6 +67,9 @@ interface ZohoContact {
   Qualifications_Uploads?: string
   Insurance_Uploads?: string
 
+  // Profile Picture
+  Record_Image?: string
+
   // Worker Checks
   NDIS_Worker_Check1?: string
   Police_Check_1?: string
@@ -91,16 +89,15 @@ interface ZohoContact {
   About_You?: string
   Title_Role?: string
   Services_Offered?: string[] | string
-  Qualifications_and_Certifications?: string
+  Qualifications_Certifications?: string
   Years_of_Experience?: number | string
   Language_Spoken?: string
   Do_you_drive_and_have_access_to_vehicle?: boolean | string | string[]
-  A_Fun_Fact_About_Yourself?: string
-  Hobbies_and_or_Interests?: string
-  What_Makes_Your_Business_Unique?: string
-  Why_Do_You_Enjoy_Your_Work?: string
-  Additional_Information?: string
-  Photo_Submission?: string
+  Fun_Fact_About_Yourself?: string
+  Hobbies_Interests?: string
+  What_Makes_Your_Service_unique?: string
+  Why_Do_You_Enjoy_Your_Work1?: string
+  Additional_Info?: string
   Signature_2?: string
   Date_Signed_2?: string
 }
@@ -343,6 +340,49 @@ class ZohoService {
 
     const arrayBuffer = await response.arrayBuffer()
     return Buffer.from(arrayBuffer)
+  }
+
+  /**
+   * Download profile picture (Record_Image) for a contact
+   * This uses Zoho's /photo endpoint to get the profile picture
+   */
+  async downloadProfilePicture(contactId: string): Promise<Buffer | null> {
+    const token = await this.getAccessToken()
+
+    const response = await fetch(
+      `${this.apiUrl}/Contacts/${contactId}/photo`,
+      {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+      }
+    )
+
+    // 404 means no profile picture set
+    if (response.status === 404) {
+      return null
+    }
+
+    if (!response.ok) {
+      throw new Error(`Failed to download profile picture: ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    // Check if buffer is empty
+    if (buffer.length === 0) {
+      return null
+    }
+
+    return buffer
+  }
+
+  /**
+   * Check if contact has a profile picture
+   */
+  hasProfilePicture(contact: ZohoContact): boolean {
+    return !!contact.Record_Image
   }
 }
 

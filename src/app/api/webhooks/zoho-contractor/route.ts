@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { zohoService } from '@/lib/zoho'
-import { uploadFromUrl, generateFileName } from '@/lib/blobStorage'
+import { generateFileName } from '@/lib/blobStorage'
 
 // ============================================================================
 // CONFIGURATION
@@ -30,8 +30,8 @@ interface ZohoWebhookPayload {
  * Parse name from Zoho contact with fallback logic
  */
 function parseName(contact: any): { firstName: string; lastName: string } | null {
-  let firstName = contact.First_Name || contact.First_Name_1 || ''
-  let lastName = contact.Last_Name || contact.Last_Name_1 || ''
+  let firstName = contact.First_Name || ''
+  let lastName = contact.Last_Name || ''
 
   // Try Full_Name field if firstName/lastName missing
   if (!firstName && !lastName && contact.Full_Name) {
@@ -98,28 +98,33 @@ function parseBoolean(value: any): boolean | null {
 }
 
 /**
- * Upload profile photo to Vercel Blob with retry logic
+ * Upload profile picture (Record_Image) to Vercel Blob with retry logic
  */
-async function uploadProfilePhoto(contact: any, retries = MAX_RETRIES): Promise<string | null> {
-  const photoSubmission = contact.Photo_Submission
-  if (!photoSubmission || !Array.isArray(photoSubmission) || photoSubmission.length === 0) {
+async function uploadProfilePicture(contact: any, retries = MAX_RETRIES): Promise<string | null> {
+  // Check if contact has a profile picture
+  if (!zohoService.hasProfilePicture(contact)) {
     return null
   }
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const photo = photoSubmission[0]
-      if (!photo.preview_Url && !photo.download_Url) return null
+      // Download profile picture from Zoho
+      const imageBuffer = await zohoService.downloadProfilePicture(contact.id)
 
-      const token = await (zohoService as any).getAccessToken()
-      const apiUrl = process.env.ZOHO_CRM_API_URL || 'https://www.zohoapis.com.au/crm/v2'
-      const fullUrl = `${apiUrl}/Contacts/${contact.id}/Attachments/${photo.attachment_Id}`
-      const fileName = generateFileName(photo.file_Name || 'photo.jpg', contact.id, 'profile')
+      if (!imageBuffer) {
+        return null
+      }
 
-      return await uploadFromUrl(fullUrl, fileName, token)
+      // Generate file name
+      const { generateFileName: genFileName } = await import('@/lib/blobStorage')
+      const fileName = genFileName('profile-picture.png', contact.id, 'avatar')
+
+      // Upload to Vercel Blob
+      const { uploadToBlob } = await import('@/lib/blobStorage')
+      return await uploadToBlob(imageBuffer, fileName, 'image/png')
     } catch (error) {
       if (attempt === retries) {
-        console.error(`Failed to upload photo for contact ${contact.id} after ${retries} attempts:`, error)
+        console.error(`Failed to upload profile picture for contact ${contact.id} after ${retries} attempts:`, error)
         return null
       }
       // Exponential backoff
@@ -145,13 +150,13 @@ async function transformContactData(contact: any): Promise<any | null> {
     const { firstName, lastName } = names
 
     // Get email or generate placeholder with timestamp to ensure uniqueness
-    const email = contact.Email || contact.Email_Address || `no-email-${contact.id}-${Date.now()}@placeholder.local`
+    const email = contact.Email || `no-email-${contact.id}-${Date.now()}@placeholder.local`
 
     // Parse boolean field
     const hasVehicleAccess = parseBoolean(contact.Do_you_drive_and_have_access_to_vehicle)
 
-    // Upload profile photo to Vercel Blob (async operation with retry)
-    const profileSubmissionUrl = await uploadProfilePhoto(contact)
+    // Upload profile picture (Record_Image) to Vercel Blob (async operation with retry)
+    const profilePictureUrl = await uploadProfilePicture(contact)
 
     // Parse years of experience to integer
     let yearsOfExperience = null
@@ -171,32 +176,32 @@ async function transformContactData(contact: any): Promise<any | null> {
       email,
 
       // Personal details
-      phone: contact.Phone || contact.Phone_1 || contact.Contact_Number || null,
+      phone: contact.Phone || contact.Mobile || null,
       gender: contact.Gender || null,
 
       // Location
-      city: contact.City || contact.City_1 || null,
-      state: contact.State_Region_Province || contact.State_Region_Province_1 || contact.State || null,
-      postalZipCode: contact.Postal_Zip_Code || contact.Postal_Zip_Code_1 || null,
+      city: contact.City || contact.Mailing_City || null,
+      state: contact.State || contact.Mailing_State || null,
+      postalZipCode: contact.Postal_Zip_Code || contact.Mailing_Zip || null,
 
       // Professional Details
       titleRole: contact.Title_Role || null,
       yearsOfExperience,
 
       // Qualifications & Skills
-      qualificationsAndCertifications: contact.Qualifications_and_Certifications || null,
+      qualificationsAndCertifications: contact.Qualifications_Certifications || null,
       languageSpoken: contact.Language_Spoken || null,
       hasVehicleAccess,
 
       // Personal details
       aboutYou: contact.About_You || null,
-      funFact: contact.A_Fun_Fact_About_Yourself || null,
-      hobbiesAndInterests: contact.Hobbies_and_or_Interests || null,
-      whatMakesBusinessUnique: contact.What_Makes_Your_Business_Unique || null,
-      additionalInformation: contact.Additional_Information || null,
+      funFact: contact.Fun_Fact_About_Yourself || null,
+      hobbiesAndInterests: contact.Hobbies_Interests || null,
+      whatMakesBusinessUnique: contact.What_Makes_Your_Service_unique || null,
+      additionalInformation: contact.Additional_Info || null,
 
       // Profile Image
-      profileSubmission: profileSubmissionUrl,
+      profilePicture: profilePictureUrl,
 
       // System fields
       lastSyncedAt: new Date(),
@@ -259,7 +264,7 @@ async function processWebhookContact(contactId: string): Promise<{ success: bool
       additionalInformation: contractorData.additionalInformation,
 
       // Profile Image
-      profileSubmission: contractorData.profileSubmission,
+      profilePicture: contractorData.profilePicture,
 
       // System Fields
       lastSyncedAt: contractorData.lastSyncedAt,

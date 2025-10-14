@@ -6,79 +6,67 @@ interface Contractor {
   id: string
   firstName: string
   lastName: string
-  email: string
-  phone: string | null
-  profileImage: string | null
-  title: string | null
-  companyName: string | null
-  yearsOfExperience: number | null
-  skills: string[]
-  specializations: string[]
-  city: string | null
-  state: string | null
-  postcode: string | null
-  photoSubmission: string | null // Vercel Blob URL
-  profileTitle: string | null
-  qualificationsAndCerts: string | null
-  servicesOffered: string[]
-}
-
-interface Worker {
-  id: string
-  name: string
-  image: string
-  profileTitle: string | null
-  introduction: string | null
-  servicesOffered: string[]
+  titleRole: string | null
+  aboutYou: string | null
+  profilePicture: string | null
 }
 
 export default function SearchSupport() {
-  const [location, setLocation] = useState('')
-  const [supportType, setSupportType] = useState('All')
-  const [distance, setDistance] = useState('20km')
-  const [currentSlide, setCurrentSlide] = useState(0)
   const [contractors, setContractors] = useState<Contractor[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [workers, setWorkers] = useState<Worker[]>([])
+
+  // Search form state
+  const [location, setLocation] = useState('')
+  const [supportType, setSupportType] = useState('All')
+  const [gender, setGender] = useState('All')
+  const [distance, setDistance] = useState('5km')
 
   // Fetch contractors from API
-  useEffect(() => {
-    async function fetchContractors() {
-      try {
-        setIsLoading(true)
-        // Fetch all contractors to filter those with photos, then limit to 12
-        const response = await fetch('/api/contractors?limit=all')
-        const data = await response.json()
+  const fetchContractors = async (searchParams?: {
+    location?: string
+    supportType?: string
+    gender?: string
+  }) => {
+    try {
+      setIsLoading(true)
 
-        if (data.contractors) {
-          setContractors(data.contractors)
+      // Build query parameters
+      const params = new URLSearchParams()
+      params.append('limit', '6')
 
-          // Transform contractors with photos to workers format and limit to 12
-          const transformedWorkers: Worker[] = data.contractors
-            .filter((c: Contractor) => c.photoSubmission)
-            .slice(0, 12)
-            .map((c: Contractor) => ({
-              id: c.id,
-              name: `${c.firstName} ${c.lastName.charAt(0)}.`,
-              image: c.photoSubmission!,
-              profileTitle: c.profileTitle,
-              introduction: c.qualificationsAndCerts,
-              servicesOffered: c.servicesOffered || []
-            }))
-
-          setWorkers(transformedWorkers)
-        }
-      } catch {
-        // Error handled silently - show empty state
-      } finally {
-        setIsLoading(false)
+      // Add flexible location filter (handles "NSW 2148", "Parramatta", "2148", etc.)
+      if (searchParams?.location && searchParams.location.trim()) {
+        params.append('location', searchParams.location.trim())
       }
-    }
 
+      if (searchParams?.supportType && searchParams.supportType !== 'All') {
+        params.append('supportType', searchParams.supportType)
+      }
+
+      if (searchParams?.gender && searchParams.gender !== 'All') {
+        params.append('gender', searchParams.gender)
+      }
+
+      // Fetch data
+      const response = await fetch(`/api/contractors?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.success && data.contractors) {
+        setContractors(data.contractors)
+      }
+    } catch (error) {
+      console.error('Failed to fetch contractors:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Initial load - fetch first 6 contractors
+  useEffect(() => {
     fetchContractors()
   }, [])
 
-  // Scroll to carousel when coming back from worker profile
+  // Scroll to section when coming back from worker profile
   useEffect(() => {
     const shouldScroll = sessionStorage.getItem('scrollToCarousel')
     if (shouldScroll === 'true') {
@@ -90,7 +78,15 @@ export default function SearchSupport() {
     }
   }, [])
 
-  const totalSlides = Math.ceil(workers.length / 3)
+  // Handle search button click
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    fetchContractors({
+      location,
+      supportType,
+      gender,
+    })
+  }
 
   return (
     <section id="find-support" className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
@@ -109,9 +105,10 @@ export default function SearchSupport() {
         </div>
 
 
-        {/* <div className="bg-gray-50 rounded-2xl shadow-lg p-6 mb-12 max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-      
+        {/* Search Feature */}
+        <form onSubmit={handleSearch} className="bg-gray-50 rounded-2xl shadow-lg p-6 mb-12 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
             <div className="md:col-span-1">
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                 Suburb or postcode
@@ -121,12 +118,12 @@ export default function SearchSupport() {
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g Sydney, NSW 2000"
+                placeholder="e.g. Parramatta, NSW 2148, or NSW"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-       
+
             <div className="md:col-span-1">
               <label htmlFor="support-type" className="block text-sm font-medium text-gray-700 mb-2">
                 Type of Support
@@ -138,16 +135,45 @@ export default function SearchSupport() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="All">All</option>
-                <option value="Personal Care">Personal Care</option>
-                <option value="Community Access">Community Access</option>
-                <option value="Household Tasks">Household Tasks</option>
-                <option value="Transport">Transport</option>
-                <option value="Social Support">Social Support</option>
+                <option value="Support Worker">Support Worker</option>
+                <option value="Cleaner">Cleaner</option>
+                <option value="Gardener">Gardener</option>
+                <option value="Physiotherapist">Physiotherapist</option>
+                <option value="Occupational Therapist">Occupational Therapist</option>
+                <option value="Exercise Physiologist">Exercise Physiologist</option>
+                <option value="Psychologist">Psychologist</option>
+                <option value="Behaviour Support Practitioner">Behaviour Support Practitioner</option>
+                <option value="Social Worker">Social Worker</option>
+                <option value="Personal Trainer">Personal Trainer</option>
+                <option value="Nurse">Nurse</option>
+                <option value="Builder">Builder</option>
+                <option value="Assistive Technology Provider">Assistive Technology Provider</option>
+                <option value="Interpreter/Translator">Interpreter/Translator</option>
+                <option value="Accommodation Provider">Accommodation Provider</option>
+                <option value="Employment Support Provider">Employment Support Provider</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 
-           
+
             <div className="md:col-span-1">
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+                Gender
+              </label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="All">All</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+
+            {/* <div className="md:col-span-1">
               <label htmlFor="distance" className="block text-sm font-medium text-gray-700 mb-2">
                 Within
               </label>
@@ -163,143 +189,84 @@ export default function SearchSupport() {
                 <option value="50km">50km</option>
                 <option value="100km">100km</option>
               </select>
-            </div>
+            </div> */}
 
-           
+
             <div className="md:col-span-1">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200">
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200"
+              >
                 Search
               </button>
             </div>
           </div>
-        </div> */}
+        </form>
 
-        {/* Worker Cards Carousel */}
+        {/* Contractor Cards */}
         <div className="relative">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0C1628]"></div>
             </div>
-          ) : workers.length === 0 ? (
+          ) : contractors.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg">No contractors available at the moment.</p>
             </div>
           ) : (
-            <>
-              <div className="overflow-hidden pb-4">
-                <div
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
+              {contractors.map((contractor) => (
+                <a
+                  key={contractor.id}
+                  href={`/workers/${contractor.id}`}
+                  className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col sm:flex-row p-6 gap-6"
                 >
-                  {Array.from({ length: totalSlides }).map((_, slideIndex) => (
-                    <div key={slideIndex} className="min-w-full">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 px-2">
-                        {workers.slice(slideIndex * 3, slideIndex * 3 + 3).map((worker) => (
-                      <div key={worker.id} className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-                        {/* Worker Image */}
-                        <div className="relative h-80 sm:h-96 lg:h-[450px]">
-                          <Image
-                            src={worker.image}
-                            alt={`${worker.name} - Support Worker`}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            priority={currentSlide === Math.floor(workers.indexOf(worker) / 3)}
-                          />
-                        </div>
-
-                        {/* Worker Info */}
-                        <div className="p-6 lg:p-8 space-y-4">
-                          {/* Name */}
-                          <h3 className="text-2xl lg:text-3xl font-bold text-[#0C1628] font-cooper">
-                            {worker.name}
-                          </h3>
-
-                          {/* Profile Title */}
-                          {worker.profileTitle && (
-                            <p className="text-lg lg:text-xl text-gray-700 font-poppins">
-                              {worker.profileTitle}
-                            </p>
-                          )}
-
-                          {/* Introduction */}
-                          {worker.introduction && (
-                            <p className="text-base text-gray-600 font-poppins leading-relaxed line-clamp-2">
-                              {worker.introduction}
-                            </p>
-                          )}
-
-                          {/* Services Offered */}
-                          {worker.servicesOffered && worker.servicesOffered.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {worker.servicesOffered.slice(0, 4).map((service, index) => (
-                                <span key={index} className="px-3 py-1 border border-[#0C1628] rounded-full text-sm font-poppins">
-                                  {service}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* More Details Button */}
-                          <a
-                            href={`/workers/${worker.id}`}
-                            className="block w-full bg-[#0C1628] hover:bg-[#1a2740] text-white font-poppins font-medium py-3 px-6 rounded-full transition-colors duration-200 mt-4 text-center"
-                          >
-                            More Details
-                          </a>
-                        </div>
-                      </div>
-                        ))}
-                      </div>
+                  {/* Profile Picture */}
+                  <div className="flex-shrink-0">
+                    <div className="relative w-20 h-20 rounded-lg overflow-hidden">
+                      <Image
+                        src={contractor.profilePicture || '/images/profilePlaceHolder.png'}
+                        alt={`${contractor.firstName} ${contractor.lastName.charAt(0)}. - Support Worker`}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                        priority
+                      />
                     </div>
-                  ))}
-                </div>
-              </div>
+                    {/* Star Rating - Placeholder for now */}
+                    <div className="flex gap-1 mt-2">
+                      {[...Array(5)].map((_, i) => (
+                        <svg key={i} className="w-3 h-3 fill-orange-400" viewBox="0 0 20 20">
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Navigation Controls and Dot Indicators */}
-              <div className="flex items-center justify-between mt-8">
-            {/* Empty spacer for alignment */}
-            <div className="flex-1"></div>
+                  {/* Contractor Info */}
+                  <div className="flex-1 min-w-0">
+                    {/* Name: First Name + Last Initial */}
+                    <h3 className="text-2xl font-bold text-[#0C1628] font-cooper mb-1">
+                      {contractor.firstName} {contractor.lastName.charAt(0)}.
+                    </h3>
 
-            {/* Dot Indicators - Centered */}
-            <div className="flex justify-center gap-2 flex-1">
-              {[...Array(totalSlides)].map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentSlide ? 'bg-[#0C1628] w-8' : 'bg-gray-300'
-                  }`}
-                />
+                    {/* Title Role */}
+                    {contractor.titleRole && (
+                      <p className="text-sm text-gray-600 font-poppins mb-3">
+                        {contractor.titleRole}
+                      </p>
+                    )}
+
+                    {/* About You */}
+                    {contractor.aboutYou && (
+                      <p className="text-sm text-gray-700 font-poppins leading-relaxed line-clamp-2">
+                        {contractor.aboutYou}
+                      </p>
+                    )}
+                  </div>
+                </a>
               ))}
             </div>
-
-            {/* Navigation Buttons - Right */}
-            <div className="flex items-center gap-4 flex-1 justify-end">
-              {/* Previous Button */}
-              <button
-                onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
-                disabled={currentSlide === 0}
-                className="w-10 h-10 rounded-full border-2 border-[#0C1628] flex items-center justify-center hover:bg-[#0C1628] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              {/* Next Button */}
-              <button
-                onClick={() => setCurrentSlide(Math.min(totalSlides - 1, currentSlide + 1))}
-                disabled={currentSlide === totalSlides - 1}
-                className="w-10 h-10 rounded-full border-2 border-[#0C1628] flex items-center justify-center hover:bg-[#0C1628] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-            </>
           )}
         </div>
       </div>

@@ -21,6 +21,9 @@ const DEFAULT_OFFSET = 0
  * - offset: Number of records to skip for pagination (default: 0)
  * - city: Filter by city (case-insensitive partial match)
  * - state: Filter by state (case-insensitive partial match)
+ * - postalCode: Filter by postal/zip code (exact or partial match)
+ * - gender: Filter by gender (Male, Female, or All)
+ * - supportType: Filter by title/role (case-insensitive partial match)
  *
  * Response Format:
  * {
@@ -83,8 +86,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Parse filter parameters
+    const location = searchParams.get('location') // Combined location search
     const city = searchParams.get('city')
     const state = searchParams.get('state')
+    const postalCode = searchParams.get('postalCode')
+    const gender = searchParams.get('gender')
+    const supportType = searchParams.get('supportType')
 
     // ============================================
     // 3. BUILD DATABASE QUERY WITH FILTERS
@@ -93,14 +100,87 @@ export async function GET(request: NextRequest) {
       deletedAt: null, // Only fetch active (non-deleted) contractors
     }
 
-    // Apply city filter (case-insensitive partial match)
-    if (city && city.trim()) {
-      where.city = { contains: city.trim(), mode: 'insensitive' }
+    // Apply flexible location filter (handles "NSW 2148", "Parramatta", "2148", etc.)
+    if (location && location.trim()) {
+      const locationInput = location.trim()
+
+      // Parse the location input to extract state, city, and postal code
+      const statePattern = /\b(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\b/i
+      const postalPattern = /\b\d{4}\b/ // Australian postal codes are 4 digits
+
+      const stateMatch = locationInput.match(statePattern)
+      const postalMatch = locationInput.match(postalPattern)
+
+      // Extract city/suburb name (everything that's not state or postal code)
+      let cityPart = locationInput
+        .replace(statePattern, '')
+        .replace(postalPattern, '')
+        .trim()
+        .replace(/\s+/g, ' ') // Normalize spaces
+
+      // Build OR conditions for flexible matching
+      const locationConditions: any[] = []
+
+      // If postal code found, add it as primary search
+      if (postalMatch) {
+        locationConditions.push({
+          postalZipCode: { contains: postalMatch[0], mode: 'insensitive' }
+        })
+      }
+
+      // If state found, add it to search
+      if (stateMatch) {
+        locationConditions.push({
+          state: { contains: stateMatch[0], mode: 'insensitive' }
+        })
+      }
+
+      // If city/suburb part found, add fuzzy city search
+      if (cityPart) {
+        locationConditions.push({
+          city: { contains: cityPart, mode: 'insensitive' }
+        })
+      }
+
+      // If we couldn't parse specific parts, do a broad search across all location fields
+      if (locationConditions.length === 0) {
+        locationConditions.push(
+          { city: { contains: locationInput, mode: 'insensitive' } },
+          { state: { contains: locationInput, mode: 'insensitive' } },
+          { postalZipCode: { contains: locationInput, mode: 'insensitive' } }
+        )
+      }
+
+      // Add OR condition to match any location field
+      where.OR = locationConditions
     }
 
-    // Apply state filter (case-insensitive partial match)
-    if (state && state.trim()) {
-      where.state = { contains: state.trim(), mode: 'insensitive' }
+    // Legacy support for separate city/state/postalCode parameters
+    if (!location) {
+      // Apply city filter (case-insensitive partial match)
+      if (city && city.trim()) {
+        where.city = { contains: city.trim(), mode: 'insensitive' }
+      }
+
+      // Apply state filter (case-insensitive partial match)
+      if (state && state.trim()) {
+        where.state = { contains: state.trim(), mode: 'insensitive' }
+      }
+
+      // Apply postal code filter (partial match)
+      if (postalCode && postalCode.trim()) {
+        where.postalZipCode = { contains: postalCode.trim(), mode: 'insensitive' }
+      }
+    }
+
+    // Apply gender filter (exact match, case-insensitive)
+    if (gender && gender.trim() && gender !== 'All') {
+      where.gender = { equals: gender.trim(), mode: 'insensitive' }
+    }
+
+    // Apply support type filter (using titleRole field)
+    if (supportType && supportType.trim() && supportType !== 'All') {
+      where.titleRole = { contains: supportType.trim(), mode: 'insensitive' }
     }
 
     // ============================================
@@ -147,7 +227,7 @@ export async function GET(request: NextRequest) {
           additionalInformation: true,
 
           // Profile Image
-          profileSubmission: true,
+          profilePicture: true,
 
           // System Fields (for debugging and admin purposes)
           lastSyncedAt: true,
