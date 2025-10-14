@@ -29,6 +29,11 @@ const navigation: NavigationItem[] = [
     hasDropdown: false
   },
   {
+    name: 'For Support Coordinators',
+    href: '/support-coordinators',
+    hasDropdown: false
+  },
+  {
     name: 'Services',
     href: '/services',
     hasDropdown: false
