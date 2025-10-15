@@ -22,6 +22,8 @@ model ContractorProfile {
   city                          String?
   state                         String?
   postalZipCode                 String?
+  latitude                      Float?    // Geocoded latitude for distance calculations
+  longitude                     Float?    // Geocoded longitude for distance calculations
 
   // Professional Details
   titleRole                     String?
@@ -48,8 +50,29 @@ model ContractorProfile {
   updatedAt                     DateTime  @updatedAt
   deletedAt                     DateTime? // Soft delete - null means active, non-null means deleted
 
+  // ============================================
+  // PRODUCTION-READY INDEXES
+  // ============================================
+  // These indexes dramatically improve query performance at scale
+
   @@index([email])
   @@index([zohoContactId])
+  @@index([deletedAt]) // Index for filtering deleted records (used in all queries)
+
+  // Location indexes for search optimization
   @@index([city])
-  @@index([deletedAt]) // Index for filtering deleted records
+  @@index([state])
+  @@index([postalZipCode])
+  @@index([latitude, longitude]) // Composite index for geo-location queries
+
+  // Filter indexes for common search parameters
+  @@index([gender]) // Index for gender filtering
+  @@index([titleRole]) // Index for support type filtering
+
+  // Composite indexes for common filter combinations
+  @@index([deletedAt, city]) // Common: active contractors in a city
+  @@index([deletedAt, state]) // Common: active contractors in a state
+  @@index([deletedAt, gender]) // Common: active contractors by gender
+  @@index([deletedAt, titleRole]) // Common: active contractors by role
+  @@index([deletedAt, latitude, longitude]) // Common: active contractors with coordinates
 }

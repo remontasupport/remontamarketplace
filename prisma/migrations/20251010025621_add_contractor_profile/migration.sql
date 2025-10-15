@@ -6,11 +6,13 @@ CREATE TABLE "public"."ContractorProfile" (
     "lastName" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT,
+    "gender" TEXT,
     "city" TEXT,
     "state" TEXT,
     "postalZipCode" TEXT,
     "titleRole" TEXT,
     "yearsOfExperience" INTEGER,
+    "aboutYou" TEXT,
     "qualificationsAndCertifications" TEXT,
     "languageSpoken" TEXT,
     "hasVehicleAccess" BOOLEAN,
@@ -18,10 +20,11 @@ CREATE TABLE "public"."ContractorProfile" (
     "hobbiesAndInterests" TEXT,
     "whatMakesBusinessUnique" TEXT,
     "additionalInformation" TEXT,
-    "profileSubmission" TEXT,
+    "profilePicture" TEXT,
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
 
     CONSTRAINT "ContractorProfile_pkey" PRIMARY KEY ("id")
 );
@@ -40,3 +43,6 @@ CREATE INDEX "ContractorProfile_zohoContactId_idx" ON "public"."ContractorProfil
 
 -- CreateIndex
 CREATE INDEX "ContractorProfile_city_idx" ON "public"."ContractorProfile"("city");
+
+-- CreateIndex
+CREATE INDEX "ContractorProfile_deletedAt_idx" ON "public"."ContractorProfile"("deletedAt");

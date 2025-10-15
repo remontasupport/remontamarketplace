@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { zohoService } from '@/lib/zoho'
 import { generateFileName } from '@/lib/blobStorage'
+import { geocodeContractorAddress } from '@/lib/geocoding'
 
 // ============================================================================
 // CONFIGURATION
@@ -16,7 +17,7 @@ const RETRY_DELAY_MS = 1000
 
 interface ZohoWebhookPayload {
   module: string
-  ids: string[]
+  ids: (string | number)[] // Zoho can send IDs as numbers or strings
   operation: 'insert' | 'update' | 'delete'
   query_params?: Record<string, string>
   token?: string
@@ -158,6 +159,22 @@ async function transformContactData(contact: any): Promise<any | null> {
     // Upload profile picture (Record_Image) to Vercel Blob (async operation with retry)
     const profilePictureUrl = await uploadProfilePicture(contact)
 
+    // Geocode address to get coordinates
+    const city = contact.City || contact.Mailing_City || null
+    const state = contact.State || contact.Mailing_State || null
+    const postalZipCode = contact.Postal_Zip_Code || contact.Mailing_Zip || null
+
+    let latitude = null
+    let longitude = null
+
+    if (city || state || postalZipCode) {
+      const coords = await geocodeContractorAddress(city, state, postalZipCode)
+      if (coords) {
+        latitude = coords.latitude
+        longitude = coords.longitude
+      }
+    }
+
     // Parse years of experience to integer
     let yearsOfExperience = null
     if (contact.Years_of_Experience) {
@@ -180,9 +197,11 @@ async function transformContactData(contact: any): Promise<any | null> {
       gender: contact.Gender || null,
 
       // Location
-      city: contact.City || contact.Mailing_City || null,
-      state: contact.State || contact.Mailing_State || null,
-      postalZipCode: contact.Postal_Zip_Code || contact.Mailing_Zip || null,
+      city,
+      state,
+      postalZipCode,
+      latitude,
+      longitude,
 
       // Professional Details
       titleRole: contact.Title_Role || null,
@@ -217,10 +236,13 @@ async function transformContactData(contact: any): Promise<any | null> {
 /**
  * Process single contact from webhook
  */
-async function processWebhookContact(contactId: string): Promise<{ success: boolean; error?: string }> {
+async function processWebhookContact(contactId: string | number): Promise<{ success: boolean; error?: string }> {
   try {
+    // Convert contactId to string (Zoho can send as number or string)
+    const contactIdStr = String(contactId)
+
     // Fetch full contact details from Zoho
-    const contact = await zohoService.getContactById(contactId)
+    const contact = await zohoService.getContactById(contactIdStr)
 
     if (!contact) {
       return { success: false, error: 'Contact not found in Zoho' }
@@ -246,6 +268,8 @@ async function processWebhookContact(contactId: string): Promise<{ success: bool
       city: contractorData.city,
       state: contractorData.state,
       postalZipCode: contractorData.postalZipCode,
+      latitude: contractorData.latitude,
+      longitude: contractorData.longitude,
 
       // Professional Details
       titleRole: contractorData.titleRole,
@@ -272,7 +296,7 @@ async function processWebhookContact(contactId: string): Promise<{ success: bool
 
     // Check if record exists
     const existingRecord = await prisma.contractorProfile.findUnique({
-      where: { zohoContactId: contactId },
+      where: { zohoContactId: contactIdStr },
       select: { id: true, email: true },
     })
 
@@ -284,28 +308,28 @@ async function processWebhookContact(contactId: string): Promise<{ success: bool
       })
 
       // If email exists and belongs to a different contact, make email unique
-      if (emailExists && emailExists.zohoContactId !== contactId) {
-        dbData.email = `${dbData.email.split('@')[0]}-${contactId}@${dbData.email.split('@')[1]}`
+      if (emailExists && emailExists.zohoContactId !== contactIdStr) {
+        dbData.email = `${dbData.email.split('@')[0]}-${contactIdStr}@${dbData.email.split('@')[1]}`
       }
     }
 
     // Upsert the record
     await prisma.contractorProfile.upsert({
-      where: { zohoContactId: contactId },
+      where: { zohoContactId: contactIdStr },
       update: {
         ...dbData,
         updatedAt: new Date(),
       },
       create: {
         ...dbData,
-        zohoContactId: contactId,
+        zohoContactId: contactIdStr,
       },
     })
 
     return { success: true }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error(`Error processing webhook contact ${contactId}:`, errorMsg)
+    console.error(`Error processing webhook contact ${contactIdStr}:`, errorMsg)
     return { success: false, error: errorMsg }
   }
 }
@@ -641,20 +665,23 @@ export async function POST(request: NextRequest) {
       const deleteResults = await Promise.all(
         payload.ids.map(async (contactId) => {
           try {
+            // Convert contactId to string (Zoho sends as number, DB expects string)
+            const contactIdStr = String(contactId)
+
             // Soft delete - set deletedAt timestamp
             await prisma.contractorProfile.update({
-              where: { zohoContactId: contactId },
+              where: { zohoContactId: contactIdStr },
               data: { deletedAt: new Date() }
             })
-            return { success: true, contactId }
+            return { success: true, contactId: contactIdStr }
           } catch (error) {
             // If record doesn't exist, that's fine
             if (error instanceof Error && error.message.includes('Record to update not found')) {
-              return { success: true, contactId, note: 'Record does not exist' }
+              return { success: true, contactId: String(contactId), note: 'Record does not exist' }
             }
             return {
               success: false,
-              contactId,
+              contactId: String(contactId),
               error: error instanceof Error ? error.message : 'Unknown error'
             }
           }

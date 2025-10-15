@@ -11,6 +11,7 @@ CREATE TABLE "ContractorProfile_new" (
     "lastName" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT,
+    "gender" TEXT,
 
     -- Location
     "city" TEXT,
@@ -34,7 +35,7 @@ CREATE TABLE "ContractorProfile_new" (
     "additionalInformation" TEXT,
 
     -- Profile Image
-    "profileSubmission" TEXT,
+    "profilePicture" TEXT,
 
     -- System Fields
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -53,6 +54,7 @@ INSERT INTO "ContractorProfile_new" (
     "lastName",
     "email",
     "phone",
+    "gender",
     "city",
     "state",
     "postalZipCode",
@@ -66,7 +68,7 @@ INSERT INTO "ContractorProfile_new" (
     "hobbiesAndInterests",
     "whatMakesBusinessUnique",
     "additionalInformation",
-    "profileSubmission",
+    "profilePicture",
     "lastSyncedAt",
     "createdAt",
     "updatedAt",
@@ -79,6 +81,7 @@ SELECT
     "lastName",
     "email",
     "phone",
+    "gender",
     "city",
     "state",
     "postalZipCode",
@@ -92,7 +95,7 @@ SELECT
     "hobbiesAndInterests",
     "whatMakesBusinessUnique",
     "additionalInformation",
-    "profileSubmission",
+    "profilePicture",
     "lastSyncedAt",
     "createdAt",
     "updatedAt",
