@@ -121,6 +121,8 @@ export async function GET(request: NextRequest) {
     const andConditions: any[] = []
 
     // Apply flexible location filter (handles "NSW 2148", "Parramatta", "2148", "Queensland", etc.)
+    // Strategy: For distance-based searches (e.g., "Sydney"), we want to show ALL workers
+    // and then sort by distance. Only apply strict text filters for state/postal searches.
     if (location && location.trim()) {
       const locationInput = location.trim()
 
@@ -190,6 +192,15 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Build OR conditions for flexible matching
+      const locationConditions: any[] = []
+
+      // Strategy for location filtering:
+      // - If ONLY state is provided (e.g., "NSW", "Queensland") → Filter by state
+      // - If ONLY postal code is provided (e.g., "2148") → Filter by postal code
+      // - If city/suburb with or without state/postal (e.g., "Sydney", "Sydney 2000", "Sydney NSW")
+      //   → Don't filter, just geocode and sort by distance
+
       // Extract city/suburb name (everything that's not state or postal code)
       let cityPart = locationInput
         .replace(stateAbbrevPattern, '')
@@ -199,41 +210,29 @@ export async function GET(request: NextRequest) {
         .trim()
         .replace(/\s+/g, ' ') // Normalize spaces
 
-      // Build OR conditions for flexible matching
-      const locationConditions: any[] = []
+      // Determine if this is a pure state or postal search
+      const isPureStateSearch = normalizedState && !cityPart && !postalMatch
+      const isPurePostalSearch = postalMatch && !cityPart && !normalizedState
 
-      // If postal code found, add it as primary search
-      if (postalMatch) {
+      // ONLY apply text filters for pure state or pure postal searches
+      if (isPureStateSearch) {
+        // Pure state search: "NSW" or "Queensland"
+        locationConditions.push({
+          state: { contains: normalizedState, mode: 'insensitive' }
+        })
+      } else if (isPurePostalSearch) {
+        // Pure postal search: "2148"
         locationConditions.push({
           postalZipCode: { contains: postalMatch[0], mode: 'insensitive' }
         })
       }
+      // For all other searches (city, city+state, city+postal, etc.),
+      // don't filter - just geocode and sort by distance
 
-      // If state found, add it to search (using normalized abbreviation)
-      if (normalizedState) {
-        locationConditions.push({
-          state: { contains: normalizedState, mode: 'insensitive' }
-        })
+      // Only add location conditions if we have filters
+      if (locationConditions.length > 0) {
+        andConditions.push({ OR: locationConditions })
       }
-
-      // If city/suburb part found, add fuzzy city search
-      if (cityPart) {
-        locationConditions.push({
-          city: { contains: cityPart, mode: 'insensitive' }
-        })
-      }
-
-      // If we couldn't parse specific parts, do a broad search across all location fields
-      if (locationConditions.length === 0) {
-        locationConditions.push(
-          { city: { contains: locationInput, mode: 'insensitive' } },
-          { state: { contains: locationInput, mode: 'insensitive' } },
-          { postalZipCode: { contains: locationInput, mode: 'insensitive' } }
-        )
-      }
-
-      // Add location OR condition to AND array
-      andConditions.push({ OR: locationConditions })
     }
 
     // Legacy support for separate city/state/postalCode parameters
@@ -270,61 +269,24 @@ export async function GET(request: NextRequest) {
     }
 
     // ============================================
-    // 3.5. HANDLE DISTANCE-BASED FILTERING (PRODUCTION OPTIMIZED)
+    // 3.5. GEOCODE SEARCH LOCATION FOR DISTANCE CALCULATIONS
     // ============================================
-    let searchCoordinates: { latitude: number; longitude: number } | null = null
-    let hasBoundingBoxFilter = false
+    // Strategy:
+    // - If location is provided (e.g., "Sydney", "NSW 2000"), geocode it
+    // - Calculate distances for all workers and sort by nearest
+    // - If distance filter is set (e.g., 50km), only show workers within that radius
+    // - If distance filter is "None", show all workers sorted by distance
 
-    // If distance parameter is provided, we need to geocode the location
-    if (distance && location && location.trim()) {
+    let searchCoordinates: { latitude: number; longitude: number } | null = null
+
+    // Geocode the search location if provided (regardless of distance filter)
+    if (location && location.trim()) {
       const geocoded = await geocodeAddress(location.trim())
       if (geocoded) {
         searchCoordinates = {
           latitude: geocoded.latitude,
           longitude: geocoded.longitude,
         }
-
-        // ============================================
-        // PERFORMANCE OPTIMIZATION: Bounding Box Pre-filtering
-        // ============================================
-        // Instead of fetching ALL contractors and filtering in memory,
-        // we first filter at DATABASE level using a bounding box.
-        // This reduces the number of contractors we need to process by 90%+
-        //
-        // Example: For Sydney with 50km radius:
-        // - Without bounding box: Fetch 10,000 contractors -> Calculate 10,000 distances
-        // - With bounding box: Fetch ~500 contractors -> Calculate 500 distances
-        //
-        // Performance gain: ~20x faster!
-
-        const boundingBox = calculateBoundingBox(
-          searchCoordinates.latitude,
-          searchCoordinates.longitude,
-          distance
-        )
-
-        // IMPORTANT: We use OR condition to include:
-        // 1. Contractors within bounding box (with coordinates)
-        // 2. Contractors in same state/postcode (without coordinates)
-        // This ensures contractors in QLD 4021 show up even without geocoding
-
-        const distanceOrConditions: any[] = [
-          // Option 1: Has coordinates within bounding box
-          {
-            AND: [
-              { latitude: { gte: boundingBox.minLat, lte: boundingBox.maxLat, not: null } },
-              { longitude: { gte: boundingBox.minLon, lte: boundingBox.maxLon, not: null } }
-            ]
-          }
-        ]
-
-        // Option 2: If location matches state/postcode, include even without coordinates
-        // This is already handled by the location filter in andConditions above
-        // So we don't add bounding box as a hard requirement
-
-        // Only add bounding box if we want strict distance filtering
-        // For now, we'll fetch all matching location contractors and filter distance in memory
-        hasBoundingBoxFilter = true
       }
     }
 
@@ -386,13 +348,13 @@ export async function GET(request: NextRequest) {
     ])
 
     // ============================================
-    // 4.5. APPLY DISTANCE FILTERING AND SORTING
+    // 4.5. CALCULATE DISTANCES AND APPLY FILTERING/SORTING
     // ============================================
     let filteredContractors = contractors
 
-    if (searchCoordinates && distance) {
-      // Calculate distance for each contractor and filter
-      filteredContractors = contractors
+    if (searchCoordinates) {
+      // Calculate distance for ALL contractors with valid coordinates
+      const contractorsWithDistance = contractors
         .map((contractor) => {
           if (contractor.latitude && contractor.longitude) {
             const dist = calculateDistance(
@@ -406,10 +368,22 @@ export async function GET(request: NextRequest) {
               distance: Math.round(dist * 10) / 10, // Round to 1 decimal place
             }
           }
+          // Return null for contractors without coordinates
+          // They will be filtered out since we can't determine their distance
           return null
         })
-        .filter((c): c is NonNullable<typeof c> => c !== null && c.distance <= distance)
-        .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+        .filter((c): c is NonNullable<typeof c> => c !== null)
+
+      // If distance filter is set (e.g., 50km), filter to only show workers within that radius
+      if (distance) {
+        filteredContractors = contractorsWithDistance
+          .filter((c) => c.distance <= distance)
+          .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+      } else {
+        // No distance filter (Within = "None") - show ALL workers with coordinates sorted by distance
+        filteredContractors = contractorsWithDistance
+          .sort((a, b) => a.distance - b.distance)
+      }
     }
 
     // ============================================
