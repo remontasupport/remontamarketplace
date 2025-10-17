@@ -237,9 +237,10 @@ async function transformContactData(contact: any): Promise<any | null> {
  * Process single contact from webhook
  */
 async function processWebhookContact(contactId: string | number): Promise<{ success: boolean; error?: string }> {
+  // Convert contactId to string (Zoho can send as number or string)
+  const contactIdStr = String(contactId)
+
   try {
-    // Convert contactId to string (Zoho can send as number or string)
-    const contactIdStr = String(contactId)
 
     // Fetch full contact details from Zoho
     const contact = await zohoService.getContactById(contactIdStr)
