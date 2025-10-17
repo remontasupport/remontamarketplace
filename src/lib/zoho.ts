@@ -250,16 +250,28 @@ class ZohoService {
     // Contractors layout ID
     const contractorsLayoutId = '87697000001047516'
 
-    // Convert ISO date to Zoho format (yyyy-MM-dd'T'HH:mm:ss+/-HH:mm)
-    // Zoho expects dates in a specific format for search
+    // Convert ISO date to Zoho format (yyyy-MM-ddTHH:mm:ss+HH:mm)
+    // Zoho's search API requires a very specific date format
     const sinceDate = new Date(since)
-    const zohoDate = sinceDate.toISOString().replace('Z', '+00:00')
+
+    // Format: 2025-10-17T12:00:00+10:00
+    const year = sinceDate.getFullYear()
+    const month = String(sinceDate.getMonth() + 1).padStart(2, '0')
+    const day = String(sinceDate.getDate()).padStart(2, '0')
+    const hours = String(sinceDate.getHours()).padStart(2, '0')
+    const minutes = String(sinceDate.getMinutes()).padStart(2, '0')
+    const seconds = String(sinceDate.getSeconds()).padStart(2, '0')
+
+    // Use Australian Eastern Time offset (+10:00 or +11:00 depending on DST)
+    // For simplicity, we'll use UTC
+    const zohoDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+00:00`
 
     // Zoho uses Modified_Time field for tracking modifications
     const criteria = encodeURIComponent(`(Modified_Time:greater_than:${zohoDate})`)
     const url = `${this.apiUrl}/Contacts/search?criteria=${criteria}&layout_id=${contractorsLayoutId}&per_page=200`
 
     console.log('[Zoho] Fetching recent contacts with URL:', url)
+    console.log('[Zoho] Using date:', zohoDate)
 
     const response = await fetch(url, {
       headers: {
