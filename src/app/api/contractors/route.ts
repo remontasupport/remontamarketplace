@@ -358,7 +358,7 @@ export async function GET(request: NextRequest) {
     if (searchCoordinates) {
       // Calculate distance for ALL contractors with valid coordinates
       const contractorsWithDistance = contractors
-        .map((contractor) => {
+        .map((contractor: typeof contractors[0]) => {
           if (contractor.latitude && contractor.longitude) {
             const dist = calculateDistance(
               searchCoordinates.latitude,
