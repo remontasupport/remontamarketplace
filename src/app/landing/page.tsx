@@ -6,7 +6,6 @@ import HowItWorks from "./HowItWorks";
 import Pricing from "./Pricing";
 import Services from "./Services";
 import Testimonials from "./Testimonials";
-import SearchSupport from "./SearchSupport";
 
 
 export default function LandingPage() {
@@ -17,7 +16,6 @@ export default function LandingPage() {
       <AboutUs />
       <Testimonials />
       <Services />
-      {/* <SearchSupport /> */}
       {/* <AustraliaMap /> */}
       <Pricing />
       <FAQ />
