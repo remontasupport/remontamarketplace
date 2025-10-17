@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ContractorProfile {
+  id                            String    @id @default(cuid())
+  zohoContactId                 String    @unique
+
+  // Basic Information
+  firstName                     String
+  lastName                      String
+  email                         String    @unique
+  phone                         String?
+  gender                        String?   // Gender from Zoho
+
+  // Location
+  city                          String?
+  state                         String?
+  postalZipCode                 String?
+  latitude                      Float?    // Geocoded latitude for distance calculations
+  longitude                     Float?    // Geocoded longitude for distance calculations
+
+  // Professional Details
+  titleRole                     String?
+  yearsOfExperience             Int?
+  aboutYou                      String?   // Bio/description about the contractor
+
+  // Qualifications & Skills
+  qualificationsAndCertifications String?
+  languageSpoken                String?
+  hasVehicleAccess              Boolean?
+
+  // Personal Details
+  funFact                       String?
+  hobbiesAndInterests           String?
+  whatMakesBusinessUnique       String?
+  additionalInformation         String?
+
+  // Profile Image
+  profilePicture                String?   // Vercel Blob URL (from Zoho Record_Image/photo)
+
+  // System Fields
+  lastSyncedAt                  DateTime  @default(now())
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  deletedAt                     DateTime? // Soft delete - null means active, non-null means deleted
+
+  // ============================================
+  // PRODUCTION-READY INDEXES
+  // ============================================
+  // These indexes dramatically improve query performance at scale
+
+  @@index([email])
+  @@index([zohoContactId])
+  @@index([deletedAt]) // Index for filtering deleted records (used in all queries)
+
+  // Location indexes for search optimization
+  @@index([city])
+  @@index([state])
+  @@index([postalZipCode])
+  @@index([latitude, longitude]) // Composite index for geo-location queries
+
+  // Filter indexes for common search parameters
+  @@index([gender]) // Index for gender filtering
+  @@index([titleRole]) // Index for support type filtering
+
+  // Composite indexes for common filter combinations
+  @@index([deletedAt, city]) // Common: active contractors in a city
+  @@index([deletedAt, state]) // Common: active contractors in a state
+  @@index([deletedAt, gender]) // Common: active contractors by gender
+  @@index([deletedAt, titleRole]) // Common: active contractors by role
+  @@index([deletedAt, latitude, longitude]) // Common: active contractors with coordinates
+}
