@@ -357,8 +357,10 @@ export async function GET(request: NextRequest) {
 
     if (searchCoordinates) {
       // Calculate distance for ALL contractors with valid coordinates
+      type ContractorWithDistance = typeof contractors[0] & { distance: number }
+
       const contractorsWithDistance = contractors
-        .map((contractor: typeof contractors[0]) => {
+        .map((contractor: typeof contractors[0]): ContractorWithDistance | null => {
           if (contractor.latitude && contractor.longitude) {
             const dist = calculateDistance(
               searchCoordinates.latitude,
@@ -375,7 +377,7 @@ export async function GET(request: NextRequest) {
           // They will be filtered out since we can't determine their distance
           return null
         })
-        .filter((c): c is NonNullable<typeof c> => c !== null)
+        .filter((c): c is ContractorWithDistance => c !== null)
 
       // If distance filter is set (e.g., 50km), filter to only show workers within that radius
       if (distance) {
