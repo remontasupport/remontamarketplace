@@ -377,7 +377,7 @@ export async function GET(request: NextRequest) {
           // They will be filtered out since we can't determine their distance
           return null
         })
-        .filter((c): c is ContractorWithDistance => c !== null)
+        .filter((c: ContractorWithDistance | null): c is ContractorWithDistance => c !== null)
 
       // If distance filter is set (e.g., 50km), filter to only show workers within that radius
       if (distance) {
