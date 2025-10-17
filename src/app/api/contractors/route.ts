@@ -382,12 +382,12 @@ export async function GET(request: NextRequest) {
       // If distance filter is set (e.g., 50km), filter to only show workers within that radius
       if (distance) {
         filteredContractors = contractorsWithDistance
-          .filter((c) => c.distance <= distance)
-          .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+          .filter((c: ContractorWithDistance) => c.distance <= distance)
+          .sort((a: ContractorWithDistance, b: ContractorWithDistance) => a.distance - b.distance) // Sort by distance (closest first)
       } else {
         // No distance filter (Within = "None") - show ALL workers with coordinates sorted by distance
         filteredContractors = contractorsWithDistance
-          .sort((a, b) => a.distance - b.distance)
+          .sort((a: ContractorWithDistance, b: ContractorWithDistance) => a.distance - b.distance)
       }
     }
 
