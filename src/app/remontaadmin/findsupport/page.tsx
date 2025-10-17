@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: 'Search and manage NDIS disability workers - Admin access only',
 }
 
+// Force dynamic rendering since this page fetches contractor data
+export const dynamic = 'force-dynamic'
+
 export default function FindSupportAdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">

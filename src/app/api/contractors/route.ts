@@ -9,6 +9,9 @@ import { geocodeAddress, calculateDistance, calculateBoundingBox } from '@/lib/g
 // Supports pagination, filtering, and optimized queries
 // Designed to handle high traffic with proper caching and rate limiting
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
 // Configuration constants
 const DEFAULT_LIMIT = 10
 const MAX_LIMIT = 100 // Prevent abuse by limiting max records per request
@@ -451,6 +454,5 @@ export async function GET(request: NextRequest) {
 // ============================================
 // NEXT.JS ROUTE CONFIGURATION
 // ============================================
-// Enable ISR (Incremental Static Regeneration) for better performance
-// Revalidate every 60 seconds to keep data fresh without hitting DB every time
-export const revalidate = 60 // seconds
+// Route is configured as dynamic at the top of this file
+// This ensures proper handling of request headers for rate limiting
