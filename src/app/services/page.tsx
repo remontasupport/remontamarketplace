@@ -15,41 +15,29 @@ export default function ServicesPage() {
   
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/servicesHero-bg.png"
-            alt="Services background"
-            fill
-            className="object-cover object-right"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-50 via-gray-50/70 via-50% to-transparent"></div>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <section className="relative overflow-hidden bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 pb-1 lg:py-18">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-16 items-center">
             {/* Left Content */}
-            <div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6 font-cooper leading-tight" style={{ color: BRAND_COLORS.PRIMARY }}>
+            <div className="order-2 lg:order-1">
+              <h1 style={{ color: BRAND_COLORS.PRIMARY }} className="font-cooper text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal mb-4">
                 A Full Range of Supports, No Matter How Complex
               </h1>
 
-              <p className="text-lg md:text-xl text-gray-700 mb-8 font-poppins leading-relaxed">
-                We provide a range of in-home, community, and lifestyle supports for people with disabilities and older Australians, from everyday tasks to more complex care, all with workers employed by Remonta.
+              <p style={{ color: BRAND_COLORS.PRIMARY }} className="font-poppins text-base sm:text-lg md:text-xl leading-relaxed mb-1">
+                We provide a range of in-home, community, and lifestyle supports for people with disabilities and older Australians, from everyday tasks to more complex care.
+              </p>
+
+              <p style={{ color: BRAND_COLORS.PRIMARY }} className="font-poppins text-base sm:text-lg md:text-xl leading-relaxed mb-8">
+                All support provided by workers employed by Remonta.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link
                   href="/registration/worker"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-8 py-3 text-white font-poppins font-medium text-base transition-colors duration-300"
-                  style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = BRAND_COLORS.SECONDARY}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY}
+                  style={{ background: BRAND_COLORS.PRIMARY }}
+                  className="inline-flex items-center justify-center text-white rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-poppins font-medium text-sm sm:text-base hover:bg-[#F8E8D8] hover:text-[#0C1628] transition-colors duration-300"
                 >
-                  
                   Provide Support
                 </Link>
                 <button
@@ -59,7 +47,7 @@ export default function ServicesPage() {
                       servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                   }}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full px-8 py-3 border-2 font-poppins font-medium text-base transition-colors duration-300"
+                  className="inline-flex items-center justify-center rounded-full px-6 py-2.5 sm:px-8 sm:py-3 border-2 font-poppins font-medium text-sm sm:text-base transition-colors duration-300"
                   style={{ borderColor: BRAND_COLORS.PRIMARY, color: BRAND_COLORS.PRIMARY }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY;
@@ -75,7 +63,7 @@ export default function ServicesPage() {
               </div>
 
               {/* NDIS Logo and Text */}
-              <div className="flex items-center gap-3 justify-center sm:justify-start">
+              <div className="hidden lg:flex items-center gap-3">
                 <Image
                   src="/logo/ndisLogo.svg"
                   alt="NDIS Logo"
@@ -87,15 +75,25 @@ export default function ServicesPage() {
                   <p className="text-sm md:text-base font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                     Registered
                   </p>
-                  <p className="text-sm md:text-base font-poppins">
+                  <p className="text-sm md:text-base font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                     NDIS provider
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Right side - empty for background image */}
-            <div className="hidden lg:block"></div>
+            {/* Right Image */}
+            <div className="order-1 lg:order-2">
+              <div className="relative w-full aspect-[3/3] lg:aspect-square rounded-3xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/images/servicesHero.webp"
+                  alt="Support Services"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -142,23 +140,23 @@ export default function ServicesPage() {
       </section>
 
       {/* Service Areas Map Section */}
-      <section className="bg-gray-50 py-12 sm:py-16 md:py-20 lg:py-24">
+      <section className="bg-gray-50 py-12 sm:py-16 md:py-20 lg:py-24 overflow-hidden">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text Content */}
             <div>
-        
+
               <h2 className="font-cooper text-2xl sm:text-4xl md:text-5xl font-normal leading-tight mb-6" style={{ color: BRAND_COLORS.PRIMARY }}>
                 Providing the Same Quality Care, Wherever You Are in Australia
               </h2>
               <p className="text-base sm:text-lg mb-8 font-poppins">
-                We’re committed to providing consistent, compassionate care wherever you are in Australia. No matter the location, our team ensures every individual receives the same level of dedicated support and professionalism.
+                We're committed to providing consistent, compassionate care wherever you are in Australia. No matter the location, our team ensures every individual receives the same level of dedicated support and professionalism.
               </p>
 
             </div>
 
             {/* Right - Map (Enlarged) */}
-            <div className="relative scale-140 sm:scale-100 lg:scale-125 lg:translate-x-12 lg:mt-15 ">
+            <div className="relative sm:scale-100 lg:scale-125 lg:translate-x-12 lg:mt-15">
               <img
                 src="/images/australia.svg"
                 alt="Service area map"
@@ -176,9 +174,9 @@ export default function ServicesPage() {
       <section className="relative overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Left - Text Content with Highlight Background */}
-          <div className="py-16 lg:py-24 flex items-center" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT }}>
-            <div className="w-full pl-6 sm:pl-6 lg:pl-[calc((100vw-1280px)/2+32px)]">
-              <div className="max-w-xl pr-6 lg:pr-0">
+          <div className="py-16 lg:py-24 px-6 lg:px-8 flex items-center" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT }}>
+            <div className="w-full max-w-7xl mx-auto lg:mx-0">
+              <div className="max-w-xl">
               <h2 className="text-3xl md:text-4xl lg:text-5xl mb-6 font-cooper" style={{ color: BRAND_COLORS.PRIMARY }}>
                 Need help with specialised supports?
               </h2>

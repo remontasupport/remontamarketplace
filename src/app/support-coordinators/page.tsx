@@ -10,49 +10,44 @@ export default function SupportCoordinatorsPage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative w-full min-h-[690px] sm:min-h-screen overflow-hidden bg-white">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          {/* Mobile Image */}
-          <Image
-            src="/images/supportCoordinator.svg"
-            alt="Support Coordinator Care"
-            fill
-            className="object-cover brightness-125 contrast-110 lg:hidden"
-            style={{ objectFit: 'cover', objectPosition: 'center 10%' }}
-            priority
-          />
-          {/* Desktop Image */}
-          <Image
-            src="/images/supportCoordinator.svg"
-            alt="Support Coordinator Care"
-            fill
-            className="object-cover brightness-125 contrast-110 hidden lg:block"
-            style={{ objectFit: 'cover', objectPosition: 'right 5%' }}
-            priority
-          />
-          {/* White Gradient Overlay - More visible at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-white/100 via-white/90 lg:via-white/70 to-white/20" />
-        </div>
-
-        {/* Content Area - Bottom Left */}
-        <div className="relative z-10 min-h-[620px] sm:min-h-[650px] lg:min-h-[645px] flex items-end">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-20 lg:pb-24">
-            <div className="max-w-2xl">
-              <h1 style={{ color: BRAND_COLORS.PRIMARY }} className="font-cooper text-3xl sm:text-3xl md:text-5xl lg:text-5xl font-normal mb-4 sm:mb-6">
-                <span className="bg-[#F8E8D8] px-1 py-1 rounded-lg inline-block text-2xl lg:text-5xl leading-tight max-w-max">Trusted. Ethical. Reliable.</span>
-                <span style={{ color: BRAND_COLORS.PRIMARY }} className="block mt-1 text-2xl lg:text-5xl text-white">Partner With a Provider Who Cares as Much as You Do.</span>
+      <section className="relative overflow-hidden bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 pb-20  lg:py-18">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-16 items-center">
+            {/* Left Content */}
+            <div className="order-2 lg:order-1">
+              <h1 style={{ color: BRAND_COLORS.PRIMARY }} className="font-cooper text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal mb-6">
+                <span className="bg-[#F8E8D8] px-2 py-1 rounded-lg inline-block leading-tight">Trusted. Ethical. Reliable.</span>
+                <span className="block mt-1">Partner With a Provider Who Cares as Much as You Do.</span>
               </h1>
-              <p style={{ color: BRAND_COLORS.PRIMARY }} className="font-poppins text-md sm:text-base lg:text-xl text-white/80 leading-relaxed mb-6 sm:mb-8">
+
+              <p style={{ color: BRAND_COLORS.PRIMARY }} className="font-poppins text-base sm:text-lg md:text-xl leading-relaxed mb-4">
                 We work hand-in-hand with Support Coordinators across Australia to ensure participants receive consistent, high-quality care.
               </p>
+
+              <p style={{ color: BRAND_COLORS.PRIMARY }} className="font-poppins text-base sm:text-lg md:text-xl leading-relaxed mb-8">
+                Join our trusted network of partners today.
+              </p>
+
               <Link
                 href="/registration/support-coordinator"
                 style={{ background: BRAND_COLORS.PRIMARY }}
-                className="inline-flex items-center justify-center text-white rounded-full px-6 sm:px-8 py-2.5 sm:py-3 font-poppins font-medium text-md text-[#0C1628] hover:bg-[#F8E8D8] transition-colors duration-200 shadow-lg"
+                className="inline-flex items-center justify-center text-white rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-poppins font-medium text-sm sm:text-base hover:bg-[#F8E8D8] hover:text-[#0C1628] transition-colors duration-300"
               >
                 Join Our Support Coordinator Network
               </Link>
+            </div>
+
+            {/* Right Image */}
+            <div className="order-1 lg:order-2">
+              <div className="relative w-full aspect-[3/3] lg:aspect-square rounded-3xl overflow-hidden shadow-2xl">
+                <Image
+                  src="/images/supportCoordinator.webp"
+                  alt="Support Coordinator Care"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>
