@@ -1,12 +1,12 @@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-interface Step5PersonalTouchProps {
+interface Step6PersonalTouchProps {
   register: any;
   errors: any;
 }
 
-export function Step5PersonalTouch({ register, errors }: Step5PersonalTouchProps) {
+export function Step6PersonalTouch({ register, errors }: Step6PersonalTouchProps) {
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-poppins font-semibold">Personal Touch</h3>

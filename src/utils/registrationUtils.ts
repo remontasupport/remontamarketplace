@@ -1,17 +1,19 @@
 import { ContractorFormData } from "@/schema/contractorFormSchema";
 
-export const getStepValidationFields = (step: number): (keyof ContractorFormData)[] => {
-  const fieldMap: Record<number, (keyof ContractorFormData)[]> = {
-    1: ["location"],
-    2: ["firstName", "lastName", "email", "mobile"],
-    3: ["age", "gender", "genderIdentity", "languages"],
-    4: ["serviceProvided", "experience", "introduction"],
-    5: ["qualifications", "hasVehicle"],
-    6: ["funFact", "hobbies", "uniqueService", "whyEnjoyWork"],
-    7: ["photos", "consentProfileShare"],
-  };
+// Move fieldMap outside function to prevent recreation on every call
+const STEP_VALIDATION_FIELDS: Record<number, (keyof ContractorFormData)[]> = {
+  1: ["location"],
+  2: ["firstName", "lastName", "email", "mobile"],
+  3: ["age", "gender", "genderIdentity", "languages"],
+  4: ["services"],
+  5: ["experience", "introduction"],
+  6: ["qualifications", "hasVehicle"],
+  7: ["funFact", "hobbies", "uniqueService", "whyEnjoyWork"],
+  8: ["photos", "consentProfileShare"],
+};
 
-  return fieldMap[step] || [];
+export const getStepValidationFields = (step: number): (keyof ContractorFormData)[] => {
+  return STEP_VALIDATION_FIELDS[step] || [];
 };
 
 export const isValidAustralianMobile = (mobile: string): boolean => {

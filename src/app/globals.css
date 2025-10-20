@@ -111,6 +111,22 @@ div[style*="position: fixed"][style*="bottom: 16px"] {
   }
 }
 
+/* Slide up from bottom animation for dialog */
+@keyframes slideUpFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);

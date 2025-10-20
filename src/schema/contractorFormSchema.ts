@@ -27,24 +27,26 @@ export const contractorFormSchema = z.object({
   genderIdentity: z.string().min(1, "Gender identity is required"),
   languages: z.array(z.string()).min(1, "Please select at least one language"),
 
-  // Step 4 - Professional Information
-  serviceProvided: z.array(z.string()).min(1, "Please select at least one service"),
+  // Step 4 - Services
+  services: z.array(z.string()).min(1, "Please select at least one service"),
+  supportWorkerCategories: z.array(z.string()).optional(),
+
+  // Step 5 - Professional Information
   experience: z.string().min(1, "Years of Experience is required"),
   introduction: z.string().min(1, "Introduction is required"),
 
-  // Step 5 - Services & Qualifications (old services field kept for compatibility)
-  services: z.array(z.string()).optional(),
+  // Step 6 - Qualifications & Vehicle
   qualifications: z.string().min(1, "Qualifications and certifications are required"),
   hasVehicle: z.string().min(1, "Please indicate if you have vehicle access"),
 
-  // Step 6 - Personal Touch
+  // Step 7 - Personal Touch
   funFact: z.string().min(1, "A fun fact about yourself is required"),
   hobbies: z.string().min(1, "Hobbies and/or interests are required"),
   uniqueService: z.string().min(1, "Please tell us what makes your service unique"),
   whyEnjoyWork: z.string().min(1, "Please tell us why you enjoy your work"),
   additionalInfo: z.string().optional(),
 
-  // Step 7 - Photos & Consent
+  // Step 8 - Photos & Consent
   photos: z.array(z.any()).min(1, "Please upload at least one photo"),
   consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
   consentMarketing: z.boolean().optional(),
@@ -65,11 +67,11 @@ export const contractorFormDefaults = {
   gender: "",
   genderIdentity: "",
   languages: [],
-  serviceProvided: [],
+  services: [],
+  supportWorkerCategories: [],
   experience: "",
   introduction: "",
   location: "",
-  services: [],
   availability: "",
   startDate: "",
   funFact: "",

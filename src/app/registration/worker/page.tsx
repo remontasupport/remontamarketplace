@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -10,90 +10,119 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Step1Location } from "../../../components/forms/workerRegistration/Step1Location";
 import { Step1PersonalInfo } from "../../../components/forms/workerRegistration/Step1PersonalInfo";
 import { Step2AdditionalDetails } from "../../../components/forms/workerRegistration/Step2AdditionalDetails";
-import { Step3Professional } from "../../../components/forms/workerRegistration/Step3Professional";
-import { Step4Services } from "../../../components/forms/workerRegistration/Step4Services";
-import { Step5PersonalTouch } from "../../../components/forms/workerRegistration/Step5PersonalTouch";
-import { Step6Photos } from "../../../components/forms/workerRegistration/Step6Photos";
+import { Step3Services } from "../../../components/forms/workerRegistration/Step3Services";
+import { Step4Professional } from "../../../components/forms/workerRegistration/Step4Professional";
+import { Step5Services } from "../../../components/forms/workerRegistration/Step5Services";
+import { Step6PersonalTouch } from "../../../components/forms/workerRegistration/Step6PersonalTouch";
+import { Step7Photos } from "../../../components/forms/workerRegistration/Step7Photos";
 import { contractorFormSchema, type ContractorFormData, contractorFormDefaults } from "@/schema/contractorFormSchema";
 import { SERVICE_OPTIONS, TOTAL_STEPS } from "@/constants";
 import { getStepValidationFields } from "@/utils/registrationUtils";
-import { usePhoneVerification } from "@/hooks/usePhoneVerification";
+import { formatWorkerDataForDatabase } from "@/utils/formatWorkerData";
 
 
 export default function ContractorOnboarding() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
+  const [photoUploadError, setPhotoUploadError] = useState<string>("");
+  const [forceUpdate, setForceUpdate] = useState(0);
 
-  // Use phone verification hook
-  const phoneVerification = usePhoneVerification();
-
-  const { register, control, handleSubmit, formState: { errors }, trigger, getValues, setValue, watch } = useForm<ContractorFormData>({
+  const { register, control, handleSubmit, formState, trigger, getValues, setValue, watch, setFocus, setError, clearErrors } = useForm<ContractorFormData>({
     resolver: zodResolver(contractorFormSchema),
-    mode: "onChange",
+    mode: "all", // Validate on all events - ensures errors show from trigger()
+    reValidateMode: "onChange",
+    criteriaMode: "all",
+    shouldFocusError: true,
     defaultValues: contractorFormDefaults,
   });
 
+  // Access errors directly from formState (not destructured) to ensure reactivity
+  const errors = formState.errors;
+
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
-  const watchedServices = watch("services");
-  const watchedPhotos = watch("photos");
-  const watchedMobile = watch("mobile");
-  const watchedConsentProfileShare = watch("consentProfileShare");
-  const watchedConsentMarketing = watch("consentMarketing");
-  const watchedHasVehicle = watch("hasVehicle");
+  // Optimized: Only watch fields for the current step to reduce re-renders
+  const watchedServices = currentStep === 4 ? watch("services") : getValues("services");
+  const watchedSupportWorkerCategories = currentStep === 4 ? watch("supportWorkerCategories") : getValues("supportWorkerCategories");
+  const watchedPhotos = currentStep === 8 ? watch("photos") : getValues("photos");
+  const watchedConsentProfileShare = currentStep === 8 ? watch("consentProfileShare") : getValues("consentProfileShare");
+  const watchedConsentMarketing = currentStep === 8 ? watch("consentMarketing") : getValues("consentMarketing");
+  const watchedHasVehicle = currentStep === 6 ? watch("hasVehicle") : getValues("hasVehicle");
 
   const validateCurrentStep = async (step: number) => {
-    // Phone verification is required for Step 2
-    if (step === 2) {
-      const fieldsValid = await trigger(getStepValidationFields(step));
-      return fieldsValid && phoneVerification.isVerified;
-    }
-
     const fieldsToValidate = getStepValidationFields(step);
-    const result = await trigger(fieldsToValidate);
-    return result;
+
+    // Trigger validation for the fields in this step
+    const isValid = await trigger(fieldsToValidate, { shouldFocus: true });
+
+    // Force a re-render to display errors
+    setForceUpdate(prev => prev + 1);
+
+    console.log("Validating step:", step);
+    console.log("Fields:", fieldsToValidate);
+    console.log("Is valid:", isValid);
+    console.log("Errors:", errors);
+
+    return isValid;
   };
 
-  const handleServiceToggle = (service: string) => {
-    const currentServices = watchedServices || [];
+  const handleServiceToggle = useCallback((service: string) => {
+    const currentServices = getValues("services") || [];
     const updatedServices = currentServices.includes(service)
       ? currentServices.filter(s => s !== service)
       : [...currentServices, service];
-    setValue("services", updatedServices);
-    trigger("services");
-  };
+    setValue("services", updatedServices, { shouldValidate: true });
+  }, [setValue, getValues]);
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
+    const currentPhotos = getValues("photos") || [];
+
+    // Clear previous error
+    setPhotoUploadError("");
+
+    // Track rejected files for user feedback
+    const rejectedFiles: string[] = [];
+
+    // Allowed image formats for profile photos (security-safe raster formats only)
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
     const validFiles = files.filter(file => {
-      const isValidType = file.type.startsWith('image/');
+      const isValidType = ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase());
       const isValidSize = file.size <= 10 * 1024 * 1024;
+
+      if (!isValidType) {
+        rejectedFiles.push(`${file.name} (only JPG, PNG, and WebP allowed)`);
+      } else if (!isValidSize) {
+        rejectedFiles.push(`${file.name} (exceeds 10MB)`);
+      }
+
       return isValidType && isValidSize;
     });
 
-    const currentPhotos = watchedPhotos || [];
-    const newPhotos = [...currentPhotos, ...validFiles].slice(0, 5);
-    setValue("photos", newPhotos);
-    trigger("photos");
-  };
+    // Check if adding would exceed limit
+    const totalPhotos = currentPhotos.length + validFiles.length;
+    const photosToAdd = validFiles.slice(0, Math.max(0, 5 - currentPhotos.length));
+    const exceededLimit = totalPhotos > 5;
 
-  const removePhoto = (index: number) => {
-    const currentPhotos = watchedPhotos || [];
+    // Set error message if there are rejected files or limit exceeded
+    if (rejectedFiles.length > 0) {
+      setPhotoUploadError(`Rejected: ${rejectedFiles.join(", ")}`);
+    } else if (exceededLimit) {
+      setPhotoUploadError(`Only ${photosToAdd.length} photo(s) added. Maximum 5 photos allowed.`);
+    }
+
+    const newPhotos = [...currentPhotos, ...photosToAdd].slice(0, 5);
+    setValue("photos", newPhotos, { shouldValidate: true });
+  }, [setValue, getValues]);
+
+  const removePhoto = useCallback((index: number) => {
+    const currentPhotos = getValues("photos") || [];
     const updatedPhotos = currentPhotos.filter((_, i) => i !== index);
-    setValue("photos", updatedPhotos);
-    trigger("photos");
-  };
-
-  // Wrapper functions to integrate with form
-  const sendVerificationCode = async () => {
-    const mobile = getValues("mobile");
-    await phoneVerification.sendVerificationCode(mobile);
-  };
-
-
-  const handleSaveNewNumber = async () => {
-    await phoneVerification.handleSaveNewNumber(setValue, trigger);
-  };
+    setValue("photos", updatedPhotos, { shouldValidate: true });
+    // Clear error when removing photos
+    setPhotoUploadError("");
+  }, [setValue, getValues]);
 
   const nextStep = async () => {
     if (currentStep < TOTAL_STEPS) {
@@ -101,9 +130,16 @@ export default function ContractorOnboarding() {
       if (isValid) {
         setCurrentStep(currentStep + 1);
       } else {
-        const firstError = Object.values(errors)[0];
-        const errorMessage = firstError?.message || "Please fill all required fields correctly";
-        alert(`Step ${currentStep} validation failed:\n${errorMessage}`);
+        // Validation failed - errors are now visible via trigger()
+        console.log("Validation failed for step:", currentStep, errors);
+
+        // Scroll to first error after DOM updates
+        setTimeout(() => {
+          const firstErrorElement = document.querySelector('.text-red-500');
+          if (firstErrorElement) {
+            firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
       }
     }
   };
@@ -115,26 +151,55 @@ export default function ContractorOnboarding() {
   };
 
   const onSubmit = async (data: ContractorFormData) => {
-    console.log("🎯 onSubmit function called!");
-    console.log("📦 Raw data received:", data);
-
     try {
-      console.log("🚀 FORM SUBMISSION - Complete Registration Data:");
-      console.log(JSON.stringify(data, null, 2));
-      console.log("📊 Summary:", {
-        name: `${data.firstName} ${data.lastName}`,
-        email: data.email,
-        mobile: data.mobile,
-        role: data.titleRole,
-        services: data.services,
-        photosCount: data.photos?.length || 0
-      });
+      // Format data for database with proper structure
+      const formattedData = formatWorkerDataForDatabase(data, data.supportWorkerCategories || []);
 
-      console.log("✅ Registration completed successfully!");
-      alert("✅ Registration completed successfully!\n\nYour data has been logged to the console.");
+      console.log("\n" + "=".repeat(80));
+      console.log("🚀 WORKER REGISTRATION - FORMATTED DATA FOR DATABASE");
+      console.log("=".repeat(80));
+      console.log("\n📦 RAW FORM DATA:");
+      console.log(JSON.stringify(data, null, 2));
+      console.log("\n" + "=".repeat(80));
+      console.log("✨ FORMATTED DATABASE-READY DATA:");
+      console.log("=".repeat(80));
+      console.log(JSON.stringify(formattedData, null, 2));
+      console.log("\n" + "=".repeat(80));
+      console.log("📊 DATA SUMMARY:");
+      console.log("=".repeat(80));
+      console.log(`Name: ${formattedData.firstName} ${formattedData.lastName}`);
+      console.log(`Email: ${formattedData.email}`);
+      console.log(`Mobile: ${formattedData.mobile}`);
+      console.log(`Location: ${formattedData.location}`);
+      console.log(`Languages: ${formattedData.languages.join(", ")}`);
+      console.log(`\nServices (${formattedData.services.length}):`);
+      formattedData.services.forEach((service, idx) => {
+        console.log(`  ${idx + 1}. ${service.serviceType}`);
+        if (service.hasSubCategories && service.categories.length > 0) {
+          console.log(`     Sub-categories (${service.categories.length}):`);
+          service.categories.forEach((cat, catIdx) => {
+            console.log(`       ${catIdx + 1}. ${cat.categoryTitle} (${cat.categoryId})`);
+          });
+        }
+      });
+      console.log(`\nExperience: ${formattedData.experience} years`);
+      console.log(`Has Vehicle: ${formattedData.hasVehicle}`);
+      console.log(`Photos: ${formattedData.photos.length} uploaded`);
+      console.log(`Profile Share Consent: ${formattedData.consents.profileShare ? "✓" : "✗"}`);
+      console.log(`Marketing Consent: ${formattedData.consents.marketing ? "✓" : "✗"}`);
+      console.log(`Status: ${formattedData.status}`);
+      console.log("\n" + "=".repeat(80));
+      console.log("✅ DATA READY FOR DATABASE INSERTION!");
+      console.log("=".repeat(80) + "\n");
+
+      // TODO: Send data to backend API
+      // const response = await fetch('/api/workers/register', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(formattedData)
+      // });
     } catch (error) {
       console.error("❌ Error during submission:", error);
-      alert(`❌ Submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -202,11 +267,11 @@ export default function ContractorOnboarding() {
     Object.keys(errors).forEach(key => {
       console.log(`Field: ${key}, Message: ${errors[key]?.message}, Type: ${errors[key]?.type}`);
     });
-    alert("Please check all required fields are filled correctly.");
+    // Errors are already displayed inline in the form
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-gray-50 min-h-screen flex items-center justify-center">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-gray-50 min-h-screen py-12">
       <div className="max-w-2xl mx-auto px-4 w-full">
         <Card>
           <CardHeader>
@@ -215,55 +280,65 @@ export default function ContractorOnboarding() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
+            {/* Conditional rendering - only renders the active step */}
+            {currentStep === 1 && (
               <Step1Location control={control} errors={errors} />
-            </div>
-            <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
+            )}
+
+            {currentStep === 2 && (
               <Step1PersonalInfo
                 control={control}
                 errors={errors}
-                watchedMobile={watchedMobile}
-                isCodeSent={phoneVerification.isCodeSent}
-                isVerified={phoneVerification.isVerified}
-                isChangingNumber={phoneVerification.isChangingNumber}
-                verificationCode={phoneVerification.verificationCode}
-                tempMobile={phoneVerification.tempMobile}
-                isCodeIncorrect={phoneVerification.isCodeIncorrect}
-                setVerificationCode={phoneVerification.setVerificationCode}
-                setTempMobile={phoneVerification.setTempMobile}
-                setIsCodeIncorrect={phoneVerification.setIsCodeIncorrect}
-                setValue={setValue}
-                sendVerificationCode={sendVerificationCode}
-                verifyCode={phoneVerification.verifyCode}
-                handleChangeNumber={phoneVerification.handleChangeNumber}
-                handleSaveNewNumber={handleSaveNewNumber}
-                handleCancelChangeNumber={phoneVerification.handleCancelChangeNumber}
               />
-            </div>
-            <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
-              <Step2AdditionalDetails register={register} control={control} errors={errors} currentStep={currentStep} />
-            </div>
-            <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
-              <Step3Professional register={register} control={control} errors={errors} currentStep={currentStep} />
-            </div>
-            <div style={{ display: currentStep === 5 ? 'block' : 'none' }}>
-              <Step4Services
+            )}
+
+            {currentStep === 3 && (
+              <Step2AdditionalDetails
                 register={register}
+                control={control}
+                errors={errors}
+                currentStep={currentStep}
+              />
+            )}
+
+            {currentStep === 4 && (
+              <Step3Services
+                control={control}
                 errors={errors}
                 watchedServices={watchedServices}
-                watchedHasVehicle={watchedHasVehicle}
+                supportWorkerCategories={watchedSupportWorkerCategories}
                 serviceOptions={SERVICE_OPTIONS}
                 handleServiceToggle={handleServiceToggle}
+                setValue={setValue}
+              />
+            )}
+
+            {currentStep === 5 && (
+              <Step4Professional
+                register={register}
+                control={control}
+                errors={errors}
+                currentStep={currentStep}
+              />
+            )}
+
+            {currentStep === 6 && (
+              <Step5Services
+                register={register}
+                errors={errors}
+                watchedHasVehicle={watchedHasVehicle}
                 setValue={setValue}
                 trigger={trigger}
                 currentStep={currentStep}
               />
-            </div>
-            <div style={{ display: currentStep === 6 ? 'block' : 'none' }}>
-              <Step5PersonalTouch register={register} errors={errors} />
-            </div>
-            <div style={{ display: currentStep === 7 ? 'block' : 'none' }}>
-              <Step6Photos
+            )}
+
+            {currentStep === 7 && (
+              <Step6PersonalTouch register={register} errors={errors} />
+            )}
+
+            {currentStep === 8 && (
+              <Step7Photos
                 errors={errors}
                 watchedPhotos={watchedPhotos}
                 watchedConsentProfileShare={watchedConsentProfileShare}
@@ -272,8 +347,9 @@ export default function ContractorOnboarding() {
                 removePhoto={removePhoto}
                 setValue={setValue}
                 trigger={trigger}
+                photoUploadError={photoUploadError}
               />
-            </div>
+            )}
 
             <div className="flex justify-between pt-6">
               <Button
@@ -298,12 +374,7 @@ export default function ContractorOnboarding() {
                 <Button
                   type="button"
                   onClick={nextStep}
-                  disabled={currentStep === 2 && !phoneVerification.isVerified}
-                  className={`flex items-center gap-2 ${
-                    currentStep === 2 && !phoneVerification.isVerified
-                      ? 'opacity-50 cursor-not-allowed'
-                      : ''
-                  }`}
+                  className="flex items-center gap-2"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />

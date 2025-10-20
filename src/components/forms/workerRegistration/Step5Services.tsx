@@ -1,52 +1,26 @@
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-interface Step4ServicesProps {
+interface Step5ServicesProps {
   register: any;
   errors: any;
-  watchedServices: string[];
   watchedHasVehicle: string;
-  serviceOptions: string[];
-  handleServiceToggle: (service: string) => void;
   setValue: any;
   trigger: any;
   currentStep: number;
 }
 
-export function Step4Services({
+export function Step5Services({
   register,
   errors,
-  watchedServices,
   watchedHasVehicle,
-  serviceOptions,
-  handleServiceToggle,
   setValue,
   trigger,
   currentStep
-}: Step4ServicesProps) {
+}: Step5ServicesProps) {
   return (
     <div className="space-y-6">
-      <div>
-        <Label className="text-lg font-poppins font-medium">Services Offered <span className="text-red-500">*</span></Label>
-        <div className="grid grid-cols-2 gap-3 mt-2">
-          {serviceOptions.map((service) => (
-            <div key={service} className="flex items-center space-x-2">
-              <Checkbox
-                id={service}
-                checked={watchedServices?.includes(service) || false}
-                onCheckedChange={() => handleServiceToggle(service)}
-              />
-              <Label htmlFor={service} className="text-lg font-poppins font-normal">
-                {service}
-              </Label>
-            </div>
-          ))}
-        </div>
-        <p className="text-sm text-gray-600 font-poppins mt-2">Enumerate all the services in bullet form.</p>
-        {errors.services && <p className="text-red-500 text-sm font-poppins">{errors.services.message}</p>}
-      </div>
 
       <div>
         <Label className="text-lg font-poppins font-medium">

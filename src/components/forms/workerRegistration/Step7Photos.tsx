@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 
-interface Step6PhotosProps {
+interface Step7PhotosProps {
   errors: any;
   watchedPhotos: File[];
   watchedConsentProfileShare: boolean | undefined;
@@ -11,9 +11,10 @@ interface Step6PhotosProps {
   removePhoto: (index: number) => void;
   setValue: any;
   trigger: any;
+  photoUploadError?: string;
 }
 
-export function Step6Photos({
+const Step7PhotosComponent = function Step7Photos({
   errors,
   watchedPhotos,
   watchedConsentProfileShare,
@@ -21,8 +22,9 @@ export function Step6Photos({
   handlePhotoUpload,
   removePhoto,
   setValue,
-  trigger
-}: Step6PhotosProps) {
+  trigger,
+  photoUploadError
+}: Step7PhotosProps) {
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-poppins font-semibold">Photo Submission</h3>
@@ -30,7 +32,7 @@ export function Step6Photos({
       <div>
         <Label className="text-lg font-poppins font-medium">Photo Submission - Upload <span className="text-red-500">*</span></Label>
         <p className="text-sm font-poppins text-gray-600 mt-2 mb-4">
-          Please attach high-quality photo(s) of yourself. Ensure the photo is:
+          Please attach high-quality photo(s) of yourself (JPG, PNG, or WebP format only). Ensure the photo is:
         </p>
         <div className="space-y-2 mb-4 text-sm font-poppins text-gray-700">
           <div className="flex items-center gap-2">
@@ -55,7 +57,7 @@ export function Step6Photos({
           <input
             type="file"
             multiple
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             onChange={handlePhotoUpload}
             className="hidden"
             id="photo-upload"
@@ -72,6 +74,12 @@ export function Step6Photos({
             <span className="text-lg font-poppins text-gray-700">Choose File(s)</span>
           </label>
         </div>
+
+        {photoUploadError && (
+          <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm font-poppins text-orange-700">{photoUploadError}</p>
+          </div>
+        )}
 
         {watchedPhotos && watchedPhotos.length > 0 && (
           <div className="mt-4">
@@ -156,4 +164,7 @@ export function Step6Photos({
       </div>
     </div>
   );
-}
+};
+
+// Export without memoization - conditional rendering provides the optimization
+export const Step7Photos = Step7PhotosComponent;

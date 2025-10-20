@@ -11,7 +11,7 @@ interface Step2AdditionalDetailsProps {
   currentStep: number;
 }
 
-export function Step2AdditionalDetails({ register, control, errors, currentStep }: Step2AdditionalDetailsProps) {
+const Step2AdditionalDetailsComponent = function Step2AdditionalDetails({ register, control, errors, currentStep }: Step2AdditionalDetailsProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
@@ -90,4 +90,7 @@ export function Step2AdditionalDetails({ register, control, errors, currentStep 
       </div>
     </div>
   );
-}
+};
+
+// Export without memoization - conditional rendering provides the optimization
+export const Step2AdditionalDetails = Step2AdditionalDetailsComponent;
