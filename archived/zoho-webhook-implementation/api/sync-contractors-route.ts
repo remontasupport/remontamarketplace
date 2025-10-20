@@ -5,16 +5,6 @@ import { generateFileName } from '@/lib/blobStorage'
 import { geocodeContractorAddress } from '@/lib/geocoding'
 
 // ============================================================================
-// DEPRECATED - DO NOT USE
-// ============================================================================
-// This endpoint is DEPRECATED and has been archived.
-// Archived Date: October 20, 2025
-//
-// This Zoho sync endpoint has been replaced with direct worker signup.
-// See: archived/zoho-webhook-implementation/README.md for details
-// ============================================================================
-
-// ============================================================================
 // CONFIGURATION
 // ============================================================================
 
@@ -374,22 +364,8 @@ async function processBatch(contacts: any[]): Promise<ProcessedResult[]> {
 /**
  * POST /api/sync-contractors
  * Sync contractors from Zoho to database
- *
- * @deprecated This endpoint is archived. Use direct worker signup instead.
  */
 export async function POST(request: NextRequest) {
-  return NextResponse.json(
-    {
-      success: false,
-      error: 'ENDPOINT_DEPRECATED',
-      message: 'This Zoho sync endpoint has been deprecated and archived.',
-      deprecatedDate: '2025-10-20',
-      documentation: 'See archived/zoho-webhook-implementation/README.md',
-    },
-    { status: 410 }
-  )
-
-  /* ARCHIVED CODE
   const startTime = Date.now()
 
   try {
@@ -504,28 +480,13 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-  */
 }
 
 /**
  * GET /api/sync-contractors
  * Get sync status and statistics
- *
- * @deprecated This endpoint is archived.
  */
 export async function GET(request: NextRequest) {
-  return NextResponse.json(
-    {
-      success: false,
-      error: 'ENDPOINT_DEPRECATED',
-      message: 'This Zoho sync endpoint has been deprecated and archived.',
-      deprecatedDate: '2025-10-20',
-      documentation: 'See archived/zoho-webhook-implementation/README.md',
-    },
-    { status: 410 }
-  )
-
-  /* ARCHIVED CODE
   try {
     // Optional authentication for GET endpoint
     const authHeader = request.headers.get('authorization')
@@ -586,5 +547,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-  */
 }

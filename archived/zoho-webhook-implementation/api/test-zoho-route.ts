@@ -4,25 +4,12 @@ import { zohoService } from '@/lib/zoho'
 /**
  * GET /api/test-zoho
  * Test endpoint to verify Zoho API credentials and connectivity
- *
- * @deprecated This endpoint is archived and should not be used.
- * Archived Date: October 20, 2025
- * See: archived/zoho-webhook-implementation/README.md
+ * This helps diagnose webhook issues by testing:
+ * 1. Refresh token validity
+ * 2. API access
+ * 3. Ability to fetch contact data
  */
 export async function GET(request: NextRequest) {
-  return NextResponse.json(
-    {
-      success: false,
-      error: 'ENDPOINT_DEPRECATED',
-      message: 'This Zoho test endpoint has been deprecated and archived.',
-      deprecatedDate: '2025-10-20',
-      documentation: 'See archived/zoho-webhook-implementation/README.md',
-    },
-    { status: 410 }
-  )
-
-  /* ARCHIVED CODE
-  export async function GET_ORIGINAL(request: NextRequest) {
   const results: any = {
     timestamp: new Date().toISOString(),
     tests: [],
@@ -127,5 +114,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-  */
 }

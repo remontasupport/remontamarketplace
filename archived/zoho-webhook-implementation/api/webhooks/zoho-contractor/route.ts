@@ -5,18 +5,6 @@ import { generateFileName } from '@/lib/blobStorage'
 import { geocodeContractorAddress } from '@/lib/geocoding'
 
 // ============================================================================
-// DEPRECATED - DO NOT USE
-// ============================================================================
-// This endpoint is DEPRECATED and has been archived.
-// Archived Date: October 20, 2025
-//
-// This Zoho webhook integration has been replaced with direct worker signup.
-// See: archived/zoho-webhook-implementation/README.md for details
-//
-// This file is kept for reference only and should not be actively used.
-// ============================================================================
-
-// ============================================================================
 // CONFIGURATION
 // ============================================================================
 
@@ -354,33 +342,10 @@ async function processWebhookContact(contactId: string | number): Promise<{ succ
 /**
  * POST /api/webhooks/zoho-contractor
  * Webhook endpoint for Zoho CRM Contact updates
- *
- * @deprecated This endpoint is archived and should not be used.
- * See: archived/zoho-webhook-implementation/README.md
  */
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
-  // Return deprecation notice
-  return NextResponse.json(
-    {
-      success: false,
-      error: 'ENDPOINT_DEPRECATED',
-      message: 'This Zoho webhook endpoint has been deprecated and archived.',
-      deprecatedDate: '2025-10-20',
-      details: 'Worker data is now managed through direct signup instead of Zoho CRM integration.',
-      documentation: 'See archived/zoho-webhook-implementation/README.md for historical reference',
-    },
-    {
-      status: 410, // 410 Gone - indicates resource is no longer available
-      headers: {
-        'X-Deprecated': 'true',
-        'X-Deprecation-Date': '2025-10-20',
-      }
-    }
-  )
-
-  /* ORIGINAL CODE ARCHIVED - DO NOT USE
   try {
     // ========================================
     // 1. PARSE WEBHOOK PAYLOAD
@@ -792,30 +757,16 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-  */
 }
 
 /**
  * GET /api/webhooks/zoho-contractor
  * Health check endpoint
- *
- * @deprecated This endpoint is archived and should not be used.
  */
 export async function GET() {
-  return NextResponse.json(
-    {
-      success: false,
-      error: 'ENDPOINT_DEPRECATED',
-      message: 'This Zoho webhook endpoint has been deprecated and archived.',
-      deprecatedDate: '2025-10-20',
-      documentation: 'See archived/zoho-webhook-implementation/README.md',
-    },
-    {
-      status: 410,
-      headers: {
-        'X-Deprecated': 'true',
-        'X-Deprecation-Date': '2025-10-20',
-      }
-    }
-  )
+  return NextResponse.json({
+    success: true,
+    message: 'Zoho Contractor Webhook endpoint is running',
+    timestamp: new Date().toISOString(),
+  })
 }
