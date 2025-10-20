@@ -1,94 +1,318 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Header from "@/components/ui/layout/Header"
-import Footer from "@/components/ui/layout/Footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { BRAND_COLORS } from "@/lib/constants"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Step1Location } from "../../../components/forms/workerRegistration/Step1Location";
+import { Step1PersonalInfo } from "../../../components/forms/workerRegistration/Step1PersonalInfo";
+import { Step2AdditionalDetails } from "../../../components/forms/workerRegistration/Step2AdditionalDetails";
+import { Step3Professional } from "../../../components/forms/workerRegistration/Step3Professional";
+import { Step4Services } from "../../../components/forms/workerRegistration/Step4Services";
+import { Step5PersonalTouch } from "../../../components/forms/workerRegistration/Step5PersonalTouch";
+import { Step6Photos } from "../../../components/forms/workerRegistration/Step6Photos";
+import { contractorFormSchema, type ContractorFormData, contractorFormDefaults } from "@/schema/contractorFormSchema";
+import { SERVICE_OPTIONS, TOTAL_STEPS } from "@/constants";
+import { getStepValidationFields } from "@/utils/registrationUtils";
+import { usePhoneVerification } from "@/hooks/usePhoneVerification";
 
-export default function WorkerRegistration() {
-  const [showWelcome, setShowWelcome] = useState(true)
+
+export default function ContractorOnboarding() {
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
+
+  // Use phone verification hook
+  const phoneVerification = usePhoneVerification();
+
+  const { register, control, handleSubmit, formState: { errors }, trigger, getValues, setValue, watch } = useForm<ContractorFormData>({
+    resolver: zodResolver(contractorFormSchema),
+    mode: "onChange",
+    defaultValues: contractorFormDefaults,
+  });
+
+  const progress = (currentStep / TOTAL_STEPS) * 100;
+
+  const watchedServices = watch("services");
+  const watchedPhotos = watch("photos");
+  const watchedMobile = watch("mobile");
+  const watchedConsentProfileShare = watch("consentProfileShare");
+  const watchedConsentMarketing = watch("consentMarketing");
+  const watchedHasVehicle = watch("hasVehicle");
+
+  const validateCurrentStep = async (step: number) => {
+    // Phone verification is required for Step 2
+    if (step === 2) {
+      const fieldsValid = await trigger(getStepValidationFields(step));
+      return fieldsValid && phoneVerification.isVerified;
+    }
+
+    const fieldsToValidate = getStepValidationFields(step);
+    const result = await trigger(fieldsToValidate);
+    return result;
+  };
+
+  const handleServiceToggle = (service: string) => {
+    const currentServices = watchedServices || [];
+    const updatedServices = currentServices.includes(service)
+      ? currentServices.filter(s => s !== service)
+      : [...currentServices, service];
+    setValue("services", updatedServices);
+    trigger("services");
+  };
+
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/');
+      const isValidSize = file.size <= 10 * 1024 * 1024;
+      return isValidType && isValidSize;
+    });
+
+    const currentPhotos = watchedPhotos || [];
+    const newPhotos = [...currentPhotos, ...validFiles].slice(0, 5);
+    setValue("photos", newPhotos);
+    trigger("photos");
+  };
+
+  const removePhoto = (index: number) => {
+    const currentPhotos = watchedPhotos || [];
+    const updatedPhotos = currentPhotos.filter((_, i) => i !== index);
+    setValue("photos", updatedPhotos);
+    trigger("photos");
+  };
+
+  // Wrapper functions to integrate with form
+  const sendVerificationCode = async () => {
+    const mobile = getValues("mobile");
+    await phoneVerification.sendVerificationCode(mobile);
+  };
+
+
+  const handleSaveNewNumber = async () => {
+    await phoneVerification.handleSaveNewNumber(setValue, trigger);
+  };
+
+  const nextStep = async () => {
+    if (currentStep < TOTAL_STEPS) {
+      const isValid = await validateCurrentStep(currentStep);
+      if (isValid) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        const firstError = Object.values(errors)[0];
+        const errorMessage = firstError?.message || "Please fill all required fields correctly";
+        alert(`Step ${currentStep} validation failed:\n${errorMessage}`);
+      }
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const onSubmit = async (data: ContractorFormData) => {
+    console.log("🎯 onSubmit function called!");
+    console.log("📦 Raw data received:", data);
+
+    try {
+      console.log("🚀 FORM SUBMISSION - Complete Registration Data:");
+      console.log(JSON.stringify(data, null, 2));
+      console.log("📊 Summary:", {
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        mobile: data.mobile,
+        role: data.titleRole,
+        services: data.services,
+        photosCount: data.photos?.length || 0
+      });
+
+      console.log("✅ Registration completed successfully!");
+      alert("✅ Registration completed successfully!\n\nYour data has been logged to the console.");
+    } catch (error) {
+      console.error("❌ Error during submission:", error);
+      alert(`❌ Submission failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
 
   if (showWelcome) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <div className="bg-gray-50 min-h-screen py-8">
-          <div className="max-w-2xl mx-auto px-4">
-            <Card>
-              <CardContent className="p-12 text-center space-y-6">
-                <div className="space-y-6">
-                  <h1 className="text-4xl text-gray-900 font-cooper">
-                    Welcome to Remonta
-                  </h1>
-                  <div className="rounded-lg p-6 text-left max-w-lg mx-auto" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT }}>
-                    <p className="text-lg font-poppins mb-4" style={{ color: BRAND_COLORS.PRIMARY }}>
-                      Your profile will play a key role in connecting you with clients who are looking for high-quality services.
-                    </p>
-
-                     <p className="text-lg font-poppins mb-4" style={{ color: BRAND_COLORS.PRIMARY }}>
-                      To help clients choose you, it's essential to create a strong, professional profile that showcases your skills, experience, and commitment to excellence.
-                    </p>
-
-                  </div>
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="max-w-2xl mx-auto px-4">
+          <Card>
+            <CardContent className="p-12 text-center space-y-6">
+              <div className="space-y-6">
+                <h1 className="text-4xl text-gray-900 font-cooper">
+                  Welcome to Remonta
+                </h1>
+                <div className="bg-[#EDEFF3] rounded-lg p-6 text-left max-w-lg mx-auto">
+                  <p className="text-lg text-[#0C1628] font-poppins font-medium mb-4">
+                    There are thousands of people on Remonta looking for support workers just like you. Create your account today:
+                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-800 font-poppins">Receive paid training</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-800 font-poppins">Hireup handles your tax, super and benefits</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-gray-800 font-poppins">No experience necessary</span>
+                    </li>
+                  </ul>
                 </div>
+              </div>
 
-                <div className="pt-4">
-                  <Button
-                    onClick={() => setShowWelcome(false)}
-                    className="text-white px-8 py-3 text-lg font-poppins font-medium rounded-lg transition-colors duration-200 border-0"
-                    style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = BRAND_COLORS.SECONDARY
-                      e.currentTarget.style.color = BRAND_COLORS.PRIMARY
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY
-                      e.currentTarget.style.color = 'white'
-                    }}
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              <div className="pt-4">
+                <Button
+                  onClick={() => setShowWelcome(false)}
+                  className="bg-[#0C1628] hover:bg-[#A3DEDE] text-white px-8 py-3 text-lg font-poppins font-medium rounded-lg transition-colors duration-200 border-0"
+                >
+                  Continue
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    )
+    );
   }
 
+  const onError = (errors: any) => {
+    console.log("❌ Form validation errors:", errors);
+    Object.keys(errors).forEach(key => {
+      console.log(`Field: ${key}, Message: ${errors[key]?.message}, Type: ${errors[key]?.type}`);
+    });
+    alert("Please check all required fields are filled correctly.");
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <style jsx>{`
-        iframe::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-        iframe {
-          -ms-overflow-style: none !important;
-          scrollbar-width: none !important;
-          overflow: -moz-scrollbars-none !important;
-        }
-      `}</style>
-      <div style={{ height: '150vh', overflow: 'hidden' }}>
-        <iframe
-          aria-label='Remonta - Profile Submission'
-          frameBorder="0"
-          allow="camera;"
-          scrolling="yes"
-          style={{
-            height: '100%',
-            width: '100%',
-            border: 'none'
-          }}
-          src='https://forms.zohopublic.com.au/remontaservices1/form/ProfileSubmission/formperma/3FHPymU7Ch_tGMS79a3xgZgSw98Zx83NRDDxlE70MZo?zf_enablecamera=true'>
-        </iframe>
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="max-w-2xl mx-auto px-4 w-full">
+        <Card>
+          <CardHeader>
+            <div className="space-y-2">
+              <Progress value={progress} className="w-full" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
+              <Step1Location control={control} errors={errors} />
+            </div>
+            <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
+              <Step1PersonalInfo
+                control={control}
+                errors={errors}
+                watchedMobile={watchedMobile}
+                isCodeSent={phoneVerification.isCodeSent}
+                isVerified={phoneVerification.isVerified}
+                isChangingNumber={phoneVerification.isChangingNumber}
+                verificationCode={phoneVerification.verificationCode}
+                tempMobile={phoneVerification.tempMobile}
+                isCodeIncorrect={phoneVerification.isCodeIncorrect}
+                setVerificationCode={phoneVerification.setVerificationCode}
+                setTempMobile={phoneVerification.setTempMobile}
+                setIsCodeIncorrect={phoneVerification.setIsCodeIncorrect}
+                setValue={setValue}
+                sendVerificationCode={sendVerificationCode}
+                verifyCode={phoneVerification.verifyCode}
+                handleChangeNumber={phoneVerification.handleChangeNumber}
+                handleSaveNewNumber={handleSaveNewNumber}
+                handleCancelChangeNumber={phoneVerification.handleCancelChangeNumber}
+              />
+            </div>
+            <div style={{ display: currentStep === 3 ? 'block' : 'none' }}>
+              <Step2AdditionalDetails register={register} control={control} errors={errors} currentStep={currentStep} />
+            </div>
+            <div style={{ display: currentStep === 4 ? 'block' : 'none' }}>
+              <Step3Professional register={register} control={control} errors={errors} currentStep={currentStep} />
+            </div>
+            <div style={{ display: currentStep === 5 ? 'block' : 'none' }}>
+              <Step4Services
+                register={register}
+                errors={errors}
+                watchedServices={watchedServices}
+                watchedHasVehicle={watchedHasVehicle}
+                serviceOptions={SERVICE_OPTIONS}
+                handleServiceToggle={handleServiceToggle}
+                setValue={setValue}
+                trigger={trigger}
+                currentStep={currentStep}
+              />
+            </div>
+            <div style={{ display: currentStep === 6 ? 'block' : 'none' }}>
+              <Step5PersonalTouch register={register} errors={errors} />
+            </div>
+            <div style={{ display: currentStep === 7 ? 'block' : 'none' }}>
+              <Step6Photos
+                errors={errors}
+                watchedPhotos={watchedPhotos}
+                watchedConsentProfileShare={watchedConsentProfileShare}
+                watchedConsentMarketing={watchedConsentMarketing}
+                handlePhotoUpload={handlePhotoUpload}
+                removePhoto={removePhoto}
+                setValue={setValue}
+                trigger={trigger}
+              />
+            </div>
+
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+
+              {currentStep === TOTAL_STEPS ? (
+                <Button
+                  type="submit"
+                  className="flex items-center gap-2"
+                >
+                  Complete Signup
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={currentStep === 2 && !phoneVerification.isVerified}
+                  className={`flex items-center gap-2 ${
+                    currentStep === 2 && !phoneVerification.isVerified
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }`}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      {/* <Footer /> */}
-    </div>
+    </form>
   );
 }

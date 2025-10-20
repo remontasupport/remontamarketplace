@@ -22,7 +22,7 @@ export default function RegistrationSuccess() {
           <CardContent className="space-y-6">
             <div className="text-center">
               <p className="text-lg text-gray-600 font-poppins">
-                Thank you for joining Remonta! Your worker application has been successfully submitted to our system.
+                Thank you for joining LocalAid! Your contractor application has been successfully submitted to our system.
               </p>
             </div>
 
