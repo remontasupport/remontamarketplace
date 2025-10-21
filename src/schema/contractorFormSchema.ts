@@ -20,6 +20,18 @@ export const contractorFormSchema = z.object({
         (mobile.startsWith('+61') && cleanMobile.length === 11 && cleanMobile.startsWith('614'))
       );
     }, "Please enter a valid Australian mobile number (e.g., 04XX XXX XXX)"),
+  password: z.string()
+    .min(8, "Use 8 characters or more for your password")
+    .refine(
+      (password) => {
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasLowercase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[@!#$%^&*(),.?":{}|<>]/.test(password);
+        return hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+      },
+      "Password must include uppercase and lowercase letters, numbers and special characters (e.g. @, !, #, %, %)"
+    ),
 
   // Step 3 - Additional Details
   age: z.string().min(1, "Age is required"),
@@ -63,6 +75,7 @@ export const contractorFormDefaults = {
   lastName: "",
   email: "",
   mobile: "",
+  password: "",
   age: "",
   gender: "",
   genderIdentity: "",

@@ -1,0 +1,375 @@
+// ============================================
+// Authentication Database Schema
+// ============================================
+// This schema is for the separate auth database
+// Uses industry best practices for security and performance
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/auth-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("AUTH_DATABASE_URL")
+}
+
+// ============================================
+// CORE AUTHENTICATION MODELS
+// ============================================
+
+enum UserRole {
+  WORKER
+  CLIENT
+  COORDINATOR
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  LOCKED
+  PENDING_VERIFICATION
+}
+
+// ============================================
+// User Model - Core Authentication
+// ============================================
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String    // bcrypt hashed password (never store plain text)
+  role          UserRole
+  status        AccountStatus @default(ACTIVE)
+
+  // Password reset
+  resetPasswordToken String?   @unique
+  resetPasswordExpires DateTime?
+
+  // Security tracking
+  failedLoginAttempts Int      @default(0)
+  accountLockedUntil  DateTime?
+  lastLoginAt         DateTime?
+  lastLoginIp         String?
+
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+
+  // Profile relations (one-to-one, based on role)
+  workerProfile      WorkerProfile?
+  clientProfile      ClientProfile?
+  coordinatorProfile CoordinatorProfile?
+
+  // Audit logs
+  auditLogs     AuditLog[]
+
+  // Indexes for performance
+  @@index([email])
+  @@index([status])
+  @@index([role])
+  @@index([resetPasswordToken])
+  @@map("users")
+}
+
+// ============================================
+// NextAuth Required Models
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@index([token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// PROFILE MODELS (Role-Specific Data)
+// ============================================
+
+enum VerificationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model WorkerProfile {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal Information
+  firstName   String
+  lastName    String
+  mobile      String
+
+  // Location (with geocoded coordinates for distance search)
+  location    String
+  latitude    Float?  // Geocoded latitude for distance calculations
+  longitude   Float?  // Geocoded longitude for distance calculations
+  city        String? // Extracted city/suburb from location
+  state       String? // Extracted state from location
+  postalCode  String? // Extracted postal code from location
+
+  // Demographics
+  age         String
+  gender      String
+  genderIdentity String
+
+  // Professional Details
+  languages   String[]
+  services    String[]
+  supportWorkerCategories String[]
+  experience  String
+  introduction String  @db.Text
+
+  // Qualifications
+  qualifications String @db.Text
+  hasVehicle     String
+
+  // Personal Touch
+  funFact        String @db.Text
+  hobbies        String @db.Text
+  uniqueService  String @db.Text
+  whyEnjoyWork   String @db.Text
+  additionalInfo String? @db.Text
+
+  // Photos (stored as JSON array of URLs)
+  photos      Json?
+
+  // Consents
+  consentProfileShare Boolean @default(false)
+  consentMarketing    Boolean @default(false)
+
+  // Profile Status
+  profileCompleted Boolean @default(false)
+  isPublished      Boolean @default(false)
+
+  // ============================================
+  // VERIFICATION TRACKING (Scalable Design)
+  // ============================================
+
+  // Overall verification status
+  verificationStatus VerificationStatus @default(NOT_STARTED)
+
+  // Verification checklist (tracks what's completed)
+  verificationChecklist Json? // { "police_check": false, "wwcc": false, "ndis_screening": false, etc. }
+
+  // Documents submitted (URLs to uploaded documents)
+  submittedDocuments Json? // { "police_check": "url", "wwcc": "url", etc. }
+
+  // Verification timestamps
+  verificationSubmittedAt DateTime? // When worker submitted for verification
+  verificationReviewedAt  DateTime? // When admin reviewed
+  verificationApprovedAt  DateTime? // When approved
+  verificationRejectedAt  DateTime? // When rejected
+
+  // Rejection/Notes
+  verificationNotes String? @db.Text // Admin notes or rejection reasons
+
+  // Relations
+  verificationRequirements VerificationRequirement[]
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isPublished])
+  @@index([verificationStatus])
+  @@index([latitude, longitude]) // For distance-based searches
+  @@index([city])
+  @@index([state])
+  @@index([postalCode])
+  @@map("worker_profiles")
+}
+
+// ============================================
+// VERIFICATION REQUIREMENTS MODEL
+// Scalable design for tracking individual requirements
+// ============================================
+
+enum RequirementStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model VerificationRequirement {
+  id                String      @id @default(cuid())
+  workerProfileId   String
+  workerProfile     WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  // Requirement details
+  requirementType   String      // e.g., "police_check", "wwcc", "ndis_screening", "first_aid"
+  requirementName   String      // Human-readable name
+  isRequired        Boolean     @default(true)
+
+  // Status tracking
+  status            RequirementStatus @default(PENDING)
+
+  // Document tracking
+  documentUrl       String?     // URL to uploaded document (Vercel Blob)
+  documentUploadedAt DateTime?
+
+  // Verification tracking
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  reviewedBy        String?     // Admin user ID who reviewed
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+
+  // Expiry tracking (for documents that expire)
+  expiresAt         DateTime?
+
+  // Notes
+  notes             String?     @db.Text
+  rejectionReason   String?     @db.Text
+
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([workerProfileId])
+  @@index([status])
+  @@index([requirementType])
+  @@map("verification_requirements")
+}
+
+model ClientProfile {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal Information
+  firstName   String
+  lastName    String
+  mobile      String
+
+  // Client-specific fields (to be expanded)
+  location    String?
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("client_profiles")
+}
+
+model CoordinatorProfile {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal Information
+  firstName    String
+  lastName     String
+  mobile       String
+
+  // Coordinator-specific fields (to be expanded)
+  organization String?
+  location     String?
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@map("coordinator_profiles")
+}
+
+// ============================================
+// SECURITY & AUDIT MODELS
+// ============================================
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGE
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_SUCCESS
+  EMAIL_CHANGE
+  PROFILE_UPDATE
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  EMAIL_VERIFIED
+  ROLE_CHANGE
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String?
+  action      AuditAction
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?       // Additional context (e.g., changed fields)
+  createdAt   DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================
+// PRODUCTION OPTIMIZATIONS
+// ============================================
+
+// 1. CUID for IDs (better than UUID for PostgreSQL)
+// 2. Indexes on frequently queried fields
+// 3. Cascade deletes for data integrity
+// 4. @db.Text for long text fields (optimization)
+// 5. Timestamps for all models
+// 6. Unique constraints where needed
+// 7. Email/token indexes for fast lookups
+// 8. Audit logging for security compliance
+// 9. Account status enum for user lifecycle
+// 10. Proper foreign key relationships

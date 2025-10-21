@@ -83,3 +83,48 @@ export function generateFileName(
   const sanitized = originalName.replace(/[^a-zA-Z0-9.-]/g, '_')
   return `${contractorId}-${type}-${timestamp}-${sanitized}`
 }
+
+/**
+ * Upload worker photo to Vercel Blob
+ * Supports both contractors and workers folders
+ * @param buffer - File buffer
+ * @param fileName - File name
+ * @param contentType - MIME type
+ * @param folder - Folder name ('workers' or 'contractors')
+ * @returns Public URL of uploaded file
+ */
+export async function uploadWorkerPhoto(
+  buffer: Buffer,
+  fileName: string,
+  contentType: string,
+  folder: 'workers' | 'contractors' = 'workers'
+): Promise<string> {
+  const pathname = `${folder}/${fileName}`
+
+  const blob = await put(pathname, buffer, {
+    access: 'public',
+    contentType,
+  })
+
+  return blob.url
+}
+
+/**
+ * Validate image file for worker photos
+ * @param file - File to validate
+ * @returns Error message if invalid, null if valid
+ */
+export function validateImageFile(file: File): string | null {
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+    return `Invalid file type. Only JPG, PNG, and WebP images are allowed.`;
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return `File size exceeds 10MB limit.`;
+  }
+
+  return null;
+}

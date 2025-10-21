@@ -26,6 +26,7 @@ export default function ContractorOnboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [photoUploadError, setPhotoUploadError] = useState<string>("");
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { register, control, handleSubmit, formState, trigger, getValues, setValue, watch, setFocus, setError, clearErrors } = useForm<ContractorFormData>({
     resolver: zodResolver(contractorFormSchema),
@@ -152,54 +153,77 @@ export default function ContractorOnboarding() {
 
   const onSubmit = async (data: ContractorFormData) => {
     try {
-      // Format data for database with proper structure
-      const formattedData = formatWorkerDataForDatabase(data, data.supportWorkerCategories || []);
+      console.log("🚀 Submitting worker registration...");
+      setIsLoading(true);
 
-      console.log("\n" + "=".repeat(80));
-      console.log("🚀 WORKER REGISTRATION - FORMATTED DATA FOR DATABASE");
-      console.log("=".repeat(80));
-      console.log("\n📦 RAW FORM DATA:");
-      console.log(JSON.stringify(data, null, 2));
-      console.log("\n" + "=".repeat(80));
-      console.log("✨ FORMATTED DATABASE-READY DATA:");
-      console.log("=".repeat(80));
-      console.log(JSON.stringify(formattedData, null, 2));
-      console.log("\n" + "=".repeat(80));
-      console.log("📊 DATA SUMMARY:");
-      console.log("=".repeat(80));
-      console.log(`Name: ${formattedData.firstName} ${formattedData.lastName}`);
-      console.log(`Email: ${formattedData.email}`);
-      console.log(`Mobile: ${formattedData.mobile}`);
-      console.log(`Location: ${formattedData.location}`);
-      console.log(`Languages: ${formattedData.languages.join(", ")}`);
-      console.log(`\nServices (${formattedData.services.length}):`);
-      formattedData.services.forEach((service, idx) => {
-        console.log(`  ${idx + 1}. ${service.serviceType}`);
-        if (service.hasSubCategories && service.categories.length > 0) {
-          console.log(`     Sub-categories (${service.categories.length}):`);
-          service.categories.forEach((cat, catIdx) => {
-            console.log(`       ${catIdx + 1}. ${cat.categoryTitle} (${cat.categoryId})`);
-          });
+      // Step 1: Upload photos to Vercel Blob first (if photos exist)
+      let photoUrls: string[] = [];
+
+      if (data.photos && data.photos.length > 0) {
+        console.log(`📸 Uploading ${data.photos.length} photos...`);
+
+        const formData = new FormData();
+        formData.append('email', data.email);
+
+        // Append all photo files
+        data.photos.forEach((photo: File) => {
+          formData.append('photos', photo);
+        });
+
+        // Upload photos
+        const photoUploadResponse = await fetch('/api/upload/worker-photos', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const photoResult = await photoUploadResponse.json();
+
+        if (!photoUploadResponse.ok) {
+          console.error("❌ Photo upload failed:", photoResult.error);
+          alert(`Photo upload failed: ${photoResult.error}`);
+          setIsLoading(false);
+          return;
         }
-      });
-      console.log(`\nExperience: ${formattedData.experience} years`);
-      console.log(`Has Vehicle: ${formattedData.hasVehicle}`);
-      console.log(`Photos: ${formattedData.photos.length} uploaded`);
-      console.log(`Profile Share Consent: ${formattedData.consents.profileShare ? "✓" : "✗"}`);
-      console.log(`Marketing Consent: ${formattedData.consents.marketing ? "✓" : "✗"}`);
-      console.log(`Status: ${formattedData.status}`);
-      console.log("\n" + "=".repeat(80));
-      console.log("✅ DATA READY FOR DATABASE INSERTION!");
-      console.log("=".repeat(80) + "\n");
 
-      // TODO: Send data to backend API
-      // const response = await fetch('/api/workers/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formattedData)
-      // });
+        photoUrls = photoResult.urls;
+        console.log(`✅ Photos uploaded successfully:`, photoUrls);
+
+        if (photoResult.warnings && photoResult.warnings.length > 0) {
+          console.warn("⚠️ Photo upload warnings:", photoResult.warnings);
+        }
+      }
+
+      // Step 2: Submit registration with photo URLs
+      const registrationData = {
+        ...data,
+        photos: photoUrls, // Replace File objects with URLs
+      };
+
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registrationData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle error
+        console.error("❌ Registration failed:", result.error);
+        alert(`Registration failed: ${result.error}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // Success!
+      console.log("✅ Registration successful:", result);
+
+      // Redirect to login page
+      window.location.href = `/login?registered=true`;
     } catch (error) {
       console.error("❌ Error during submission:", error);
+      alert("An error occurred during registration. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -356,7 +380,7 @@ export default function ContractorOnboarding() {
                 type="button"
                 variant="outline"
                 onClick={prevStep}
-                disabled={currentStep === 1}
+                disabled={currentStep === 1 || isLoading}
                 className="flex items-center gap-2"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -366,9 +390,10 @@ export default function ContractorOnboarding() {
               {currentStep === TOTAL_STEPS ? (
                 <Button
                   type="submit"
+                  disabled={isLoading}
                   className="flex items-center gap-2"
                 >
-                  Complete Signup
+                  {isLoading ? "Submitting..." : "Complete Signup"}
                 </Button>
               ) : (
                 <Button
