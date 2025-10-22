@@ -12,9 +12,17 @@ import { uploadWorkerPhoto, generateFileName, validateImageFile } from '@/lib/bl
 
 export async function POST(request: Request) {
   try {
+    console.log('📸 Photo upload endpoint called');
+    console.log('📍 Environment:', process.env.NODE_ENV);
+    console.log('🔑 Blob token exists:', !!process.env.BLOB_READ_WRITE_TOKEN);
+
+    console.log('📥 Parsing form data...');
     const formData = await request.formData();
     const files = formData.getAll('photos') as File[];
     const email = formData.get('email') as string; // Worker identifier
+
+    console.log('📧 Email:', email);
+    console.log('📷 Files count:', files.length);
 
     if (!email) {
       return NextResponse.json(
@@ -109,10 +117,21 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('❌ Photo upload error:', error);
+    console.error('❌ Photo upload error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+      name: error?.name
+    });
+
     return NextResponse.json(
       {
         error: 'Failed to upload photos',
-        message: error.message,
+        message: error?.message || 'Unknown error',
+        ...(process.env.NODE_ENV === 'development' && {
+          details: error?.message,
+          stack: error?.stack
+        })
       },
       { status: 500 }
     );
