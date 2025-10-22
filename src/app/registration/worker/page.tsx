@@ -296,14 +296,14 @@ export default function ContractorOnboarding() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-gray-50 min-h-screen py-12">
-      <div className="max-w-2xl mx-auto px-4 w-full">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <Card>
-          <CardHeader>
+          <CardHeader className="px-6 sm:px-8 lg:px-12">
             <div className="space-y-2">
               <Progress value={progress} className="w-full" />
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 px-6 sm:px-8 lg:px-12 py-8">
             {/* Conditional rendering - only renders the active step */}
             {currentStep === 1 && (
               <Step1Location control={control} errors={errors} />
