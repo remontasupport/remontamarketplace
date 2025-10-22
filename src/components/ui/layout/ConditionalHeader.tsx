@@ -11,5 +11,10 @@ export default function ConditionalHeader() {
     return null
   }
 
+  // Don't render header for authentication pages
+  if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password') {
+    return null
+  }
+
   return <Header />
 }

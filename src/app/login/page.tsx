@@ -10,6 +10,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -69,9 +70,20 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-4">
+          {/* Remonta Logo */}
+          <div className="flex justify-center">
+            <Image
+              src="/logo/logo.svg"
+              alt="Remonta Logo"
+              width={180}
+              height={60}
+              priority
+              className="h-auto"
+            />
+          </div>
           <CardTitle className="text-3xl font-cooper text-gray-900 text-center">
-            Welcome back
+            Welcome Back
           </CardTitle>
           <CardDescription className="text-center font-poppins">
             Sign in to your Remonta account

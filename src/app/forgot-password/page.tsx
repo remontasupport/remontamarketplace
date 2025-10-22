@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ChevronLeft, AlertCircle, CheckCircle, Loader2, Mail } from "lucide-react";
+import { BRAND_COLORS } from "@/constants";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -111,7 +112,8 @@ export default function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-poppins font-semibold h-12 text-base"
+                  className="w-full text-white font-poppins font-semibold h-12 text-base"
+                  style={{background: BRAND_COLORS.PRIMARY}}
                 >
                   {isLoading ? (
                     <>
@@ -123,13 +125,6 @@ export default function ForgotPasswordPage() {
                   )}
                 </Button>
               </form>
-
-              {/* Help Text */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-700 font-poppins">
-                  <strong>Note:</strong> If an account exists with this email, you'll receive a password reset link shortly.
-                </p>
-              </div>
             </>
           ) : (
             <>
