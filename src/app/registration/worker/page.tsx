@@ -330,7 +330,7 @@ export default function ContractorOnboarding() {
                 control={control}
                 errors={errors}
                 watchedServices={watchedServices}
-                supportWorkerCategories={watchedSupportWorkerCategories}
+                supportWorkerCategories={watchedSupportWorkerCategories || []}
                 serviceOptions={SERVICE_OPTIONS}
                 handleServiceToggle={handleServiceToggle}
                 setValue={setValue}

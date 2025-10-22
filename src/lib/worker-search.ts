@@ -193,7 +193,7 @@ export async function searchWorkers(
 
   if (latitude !== undefined && longitude !== undefined) {
     // Calculate exact distance for each worker
-    results = workers
+    const workersWithDistance = workers
       .map((worker) => {
         if (worker.latitude === null || worker.longitude === null) {
           return null; // Skip workers without coordinates
@@ -211,20 +211,21 @@ export async function searchWorkers(
           distance,
         };
       })
-      .filter((worker): worker is WorkerSearchResult => {
+      .filter((worker) => {
         // Filter out workers without coordinates
         if (!worker) return false;
 
         // Filter by exact radius
         if (worker.distance === undefined) return false;
         return worker.distance <= radiusKm;
-      })
-      .sort((a, b) => {
-        // Sort by distance (closest first)
-        const distanceA = a.distance ?? Infinity;
-        const distanceB = b.distance ?? Infinity;
-        return distanceA - distanceB;
-      });
+      }) as WorkerSearchResult[];
+
+    results = workersWithDistance.sort((a, b) => {
+      // Sort by distance (closest first)
+      const distanceA = a.distance ?? Infinity;
+      const distanceB = b.distance ?? Infinity;
+      return distanceA - distanceB;
+    });
   }
 
   console.log(`🔍 Found ${results.length} workers within ${radiusKm}km`);

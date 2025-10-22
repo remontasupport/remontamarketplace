@@ -87,7 +87,7 @@ export async function getWorkerVerificationDetails(userId: string) {
           id: true,
           email: true,
           createdAt: true,
-          emailVerified: true,
+          status: true,
           lastLoginAt: true,
         },
       },

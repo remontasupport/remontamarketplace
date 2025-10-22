@@ -135,7 +135,13 @@ export async function POST(request: Request) {
     // GEOCODE WORKER LOCATION
     // ============================================
 
-    let geocodedLocation = {
+    let geocodedLocation: {
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
+      latitude: number | null;
+      longitude: number | null;
+    } = {
       city: null,
       state: null,
       postalCode: null,
@@ -168,7 +174,7 @@ export async function POST(request: Request) {
       data: {
         email: normalizedEmail,
         passwordHash,
-        role: UserRole.WORKER,
+        role: 'WORKER' as const,
         status: 'ACTIVE', // Active immediately
 
         // Create worker profile in same transaction
@@ -201,13 +207,13 @@ export async function POST(request: Request) {
             whyEnjoyWork,
             additionalInfo,
             // Photos: Array of Vercel Blob URLs stored as JSON
-            // Store as array if photos exist, otherwise null
-            photos: (Array.isArray(photos) && photos.length > 0) ? photos : null,
+            // Store as array if photos exist, otherwise undefined
+            photos: (Array.isArray(photos) && photos.length > 0) ? photos : undefined,
             consentProfileShare: consentProfileShare || false,
             consentMarketing: consentMarketing || false,
             profileCompleted: true, // Registration form is complete
             isPublished: false, // Not published until verified
-            verificationStatus: 'NOT_STARTED', // Awaiting document upload
+            verificationStatus: 'NOT_STARTED' as const, // Awaiting document upload
           },
         },
       },
