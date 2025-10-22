@@ -9,6 +9,8 @@
  * - Audit logging
  *
  * POST /api/auth/register
+ *
+ * Updated: 2025-10-22 - Added comprehensive logging for debugging
  */
 
 import { NextResponse } from 'next/server';
@@ -25,6 +27,11 @@ export async function POST(request: Request) {
     console.log('🚀 Registration endpoint called');
     console.log('📍 Environment:', process.env.NODE_ENV);
     console.log('🗄️ Database URL exists:', !!process.env.AUTH_DATABASE_URL || !!process.env.DATABASE_URL);
+
+    // DEBUG: Return environment info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 DEBUG MODE: Checking environment variables...');
+    }
 
     // ============================================
     // RATE LIMITING (Security: Prevent spam/bot registrations)
@@ -303,21 +310,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // In development, show detailed error for debugging
-    if (process.env.NODE_ENV === 'development') {
-      return NextResponse.json(
-        {
-          error: 'Registration failed. Please try again.',
-          details: error.message,
-          code: error.code
-        },
-        { status: 500 }
-      );
-    }
-
-    // Generic error response in production (don't expose internals)
+    // Return more detailed error info to help debug
     return NextResponse.json(
-      { error: 'Registration failed. Please try again.' },
+      {
+        error: 'Registration failed',
+        message: error?.message || 'Unknown error occurred',
+        errorCode: error?.code,
+        errorType: 'REGISTRATION_ERROR',
+        timestamp: new Date().toISOString(),
+        // Include more details in development
+        ...(process.env.NODE_ENV === 'development' && {
+          details: error?.message,
+          stack: error?.stack,
+          fullError: JSON.stringify(error, null, 2)
+        })
+      },
       { status: 500 }
     );
   }
@@ -331,12 +338,17 @@ export async function POST(request: Request) {
       name: topLevelError?.name
     });
 
+    // Always return detailed error to help debug
     return NextResponse.json(
       {
-        error: 'Registration endpoint error. Please try again.',
+        error: 'Registration endpoint error',
+        message: topLevelError?.message || 'Unknown error',
+        errorType: 'TOP_LEVEL_ERROR',
+        timestamp: new Date().toISOString(),
         ...(process.env.NODE_ENV === 'development' && {
           details: topLevelError?.message,
-          code: topLevelError?.code
+          code: topLevelError?.code,
+          stack: topLevelError?.stack
         })
       },
       { status: 500 }
