@@ -156,13 +156,6 @@ export async function POST(request: Request) {
     // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Log photo data for debugging
-    console.log('📸 Photos received:', {
-      type: Array.isArray(photos) ? 'array' : typeof photos,
-      count: Array.isArray(photos) ? photos.length : 0,
-      photos: photos,
-    });
-
     // ============================================
     // CHECK FOR DUPLICATE EMAIL
     // ============================================
