@@ -20,16 +20,31 @@ import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
 import { verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(request: Request) {
-  // ============================================
-  // RATE LIMITING (Security: Prevent spam/bot registrations)
-  // ============================================
-  const rateLimitResult = await applyRateLimit(request, strictApiRateLimit);
-  if (!rateLimitResult.success) {
-    return rateLimitResult.response;
-  }
+  try {
+    // Log that the function was called
+    console.log('🚀 Registration endpoint called');
+    console.log('📍 Environment:', process.env.NODE_ENV);
+    console.log('🗄️ Database URL exists:', !!process.env.AUTH_DATABASE_URL || !!process.env.DATABASE_URL);
+
+    // ============================================
+    // RATE LIMITING (Security: Prevent spam/bot registrations)
+    // ============================================
+    try {
+      const rateLimitResult = await applyRateLimit(request, strictApiRateLimit);
+      if (!rateLimitResult.success) {
+        console.log('⚠️ Rate limit exceeded');
+        return rateLimitResult.response;
+      }
+      console.log('✅ Rate limit check passed');
+    } catch (rateLimitError: any) {
+      console.error('❌ Rate limit error:', rateLimitError);
+      // Continue anyway - don't block registration if rate limit fails
+    }
 
   try {
+    console.log('📥 Parsing request body...');
     const body = await request.json();
+    console.log('✅ Request body parsed successfully');
 
     // Extract and validate data
     const {
@@ -303,6 +318,27 @@ export async function POST(request: Request) {
     // Generic error response in production (don't expose internals)
     return NextResponse.json(
       { error: 'Registration failed. Please try again.' },
+      { status: 500 }
+    );
+  }
+  } catch (topLevelError: any) {
+    // Catch any errors that happen before our main try-catch
+    console.error('❌ TOP LEVEL ERROR in registration endpoint:', topLevelError);
+    console.error('❌ TOP LEVEL ERROR details:', {
+      message: topLevelError?.message,
+      code: topLevelError?.code,
+      stack: topLevelError?.stack,
+      name: topLevelError?.name
+    });
+
+    return NextResponse.json(
+      {
+        error: 'Registration endpoint error. Please try again.',
+        ...(process.env.NODE_ENV === 'development' && {
+          details: topLevelError?.message,
+          code: topLevelError?.code
+        })
+      },
       { status: 500 }
     );
   }
