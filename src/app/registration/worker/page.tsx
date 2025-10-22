@@ -100,7 +100,7 @@ export default function ContractorOnboarding() {
 
       return isValidType && isValidSize;
     });
-
+    
     // Check if adding would exceed limit
     const totalPhotos = currentPhotos.length + validFiles.length;
     const photosToAdd = validFiles.slice(0, Math.max(0, 5 - currentPhotos.length));
