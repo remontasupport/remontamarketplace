@@ -14,9 +14,9 @@ interface Step2AdditionalDetailsProps {
 const Step2AdditionalDetailsComponent = function Step2AdditionalDetails({ register, control, errors, currentStep }: Step2AdditionalDetailsProps) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="text-lg font-poppins font-medium">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label className="text-base font-poppins font-semibold">
             Age <span className="text-red-500">*</span>
           </Label>
           <Controller
@@ -27,53 +27,53 @@ const Step2AdditionalDetailsComponent = function Step2AdditionalDetails({ regist
                 type="number"
                 min="18"
                 max="99"
-                className="text-lg font-poppins"
+                className="h-12 text-base font-poppins"
                 value={field.value}
                 onChange={(e) => field.onChange(e.target.value)}
                 onBlur={field.onBlur}
               />
             )}
           />
-          {errors.age && <p className="text-red-500 text-sm font-poppins">{errors.age.message}</p>}
+          {errors.age && <p className="text-red-500 text-sm font-poppins mt-1">{errors.age.message}</p>}
         </div>
 
-        <div>
-          <Label className="text-md font-poppins font-medium">
-            What sex were you assigned at birth? <span className="text-red-500">*</span>
+        <div className="space-y-2">
+          <Label className="text-base font-poppins font-semibold">
+            Sex Assigned at Birth <span className="text-red-500">*</span>
           </Label>
           <Controller
             name="gender"
             control={control}
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="text-lg font-poppins">
+                <SelectTrigger className="h-12 text-base font-poppins">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Male" className="text-lg font-poppins">Male</SelectItem>
-                  <SelectItem value="Female" className="text-lg font-poppins">Female</SelectItem>
-                  <SelectItem value="Other" className="text-lg font-poppins">Other</SelectItem>
+                  <SelectItem value="Male" className="text-base font-poppins">Male</SelectItem>
+                  <SelectItem value="Female" className="text-base font-poppins">Female</SelectItem>
+                  <SelectItem value="Other" className="text-base font-poppins">Other</SelectItem>
                 </SelectContent>
               </Select>
             )}
           />
-          {errors.gender && <p className="text-red-500 text-sm font-poppins">{errors.gender.message}</p>}
+          {errors.gender && <p className="text-red-500 text-sm font-poppins mt-1">{errors.gender.message}</p>}
         </div>
       </div>
 
-      <div>
-        <Label className="text-lg font-poppins font-medium">
-          What is your current gender identity? <span className="text-red-500">*</span>
+      <div className="space-y-2">
+        <Label className="text-base font-poppins font-semibold">
+          Current Gender Identity <span className="text-red-500">*</span>
         </Label>
         <Input
           {...register("genderIdentity")}
-          className="text-lg font-poppins"
+          className="h-12 text-base font-poppins"
         />
-        {errors.genderIdentity && <p className="text-red-500 text-sm font-poppins">{errors.genderIdentity.message}</p>}
+        {errors.genderIdentity && <p className="text-red-500 text-sm font-poppins mt-1">{errors.genderIdentity.message}</p>}
       </div>
 
-      <div>
-        <Label className="text-lg font-poppins font-medium">
+      <div className="space-y-2">
+        <Label className="text-base font-poppins font-semibold">
           Languages Spoken <span className="text-red-500">*</span>
         </Label>
         <Controller
