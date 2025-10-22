@@ -1,0 +1,4 @@
+{
+  "buildCommand": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma && next build",
+  "installCommand": "npm install && prisma generate && prisma generate --schema=prisma/auth-schema.prisma"
+}

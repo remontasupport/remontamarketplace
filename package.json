@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm run db:generate && next build",
+    "build": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma && next build",
+    "vercel-build": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma && next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "npm run db:generate",
+    "postinstall": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma",
     "db:generate": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma",
     "db:push": "prisma db push && prisma db push --schema=prisma/auth-schema.prisma",
     "db:studio": "prisma studio",
