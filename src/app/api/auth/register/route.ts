@@ -273,6 +273,12 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('❌ Registration error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      name: error.name
+    });
 
     // Handle Prisma unique constraint errors
     if (error.code === 'P2002') {
@@ -282,7 +288,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generic error response (don't expose internals)
+    // In development, show detailed error for debugging
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json(
+        {
+          error: 'Registration failed. Please try again.',
+          details: error.message,
+          code: error.code
+        },
+        { status: 500 }
+      );
+    }
+
+    // Generic error response in production (don't expose internals)
     return NextResponse.json(
       { error: 'Registration failed. Please try again.' },
       { status: 500 }
