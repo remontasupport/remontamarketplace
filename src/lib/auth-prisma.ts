@@ -11,7 +11,7 @@
  * - Singleton pattern to prevent connection exhaustion
  */
 
-import { PrismaClient as AuthPrismaClient } from '@prisma/auth-client'
+import { PrismaClient as AuthPrismaClient } from '@/generated/auth-client'
 
 // Declare global type for development hot-reload protection
 declare global {

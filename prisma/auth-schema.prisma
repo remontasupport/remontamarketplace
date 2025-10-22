@@ -6,7 +6,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  output        = "../node_modules/@prisma/auth-client"
+  output        = "../src/generated/auth-client"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
