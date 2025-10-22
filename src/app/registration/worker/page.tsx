@@ -156,53 +156,35 @@ export default function ContractorOnboarding() {
       console.log("🚀 Submitting worker registration...");
       setIsLoading(true);
 
-      // Step 1: Upload photos to Vercel Blob first (if photos exist)
-      let photoUrls: string[] = [];
+      // Create FormData for single API call (handles both photos and data)
+      const formData = new FormData();
 
-      if (data.photos && data.photos.length > 0) {
-        console.log(`📸 Uploading ${data.photos.length} photos...`);
+      // Append all text/data fields
+      Object.keys(data).forEach((key) => {
+        const value = data[key as keyof ContractorFormData];
 
-        const formData = new FormData();
-        formData.append('email', data.email);
-
-        // Append all photo files
-        data.photos.forEach((photo: File) => {
-          formData.append('photos', photo);
-        });
-
-        // Upload photos
-        const photoUploadResponse = await fetch('/api/upload/worker-photos', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const photoResult = await photoUploadResponse.json();
-
-        if (!photoUploadResponse.ok) {
-          console.error("❌ Photo upload failed:", photoResult.error);
-          alert(`Photo upload failed: ${photoResult.error}`);
-          setIsLoading(false);
-          return;
+        if (key === 'photos') {
+          // Handle photo files separately
+          if (Array.isArray(value) && value.length > 0) {
+            value.forEach((photo: File) => {
+              formData.append('photos', photo);
+            });
+          }
+        } else if (Array.isArray(value)) {
+          // Convert arrays to JSON strings
+          formData.append(key, JSON.stringify(value));
+        } else if (value !== undefined && value !== null) {
+          // Append other values as strings
+          formData.append(key, String(value));
         }
+      });
 
-        photoUrls = photoResult.urls;
-        console.log(`✅ Photos uploaded successfully:`, photoUrls);
+      console.log(`📸 Submitting registration with ${data.photos?.length || 0} photos...`);
 
-        if (photoResult.warnings && photoResult.warnings.length > 0) {
-          console.warn("⚠️ Photo upload warnings:", photoResult.warnings);
-        }
-      }
-
-      // Step 2: Submit registration with photo URLs
-      const registrationData = {
-        ...data,
-        photos: photoUrls, // Replace File objects with URLs
-      };
-
+      // Submit registration (single API call handles everything)
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registrationData),
+        body: formData, // Send as FormData (not JSON)
       });
 
       const result = await response.json();

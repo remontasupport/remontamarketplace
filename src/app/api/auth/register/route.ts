@@ -20,6 +20,7 @@ import { UserRole } from '@/types/auth';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
 import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
 import { verifyRecaptcha } from '@/lib/recaptcha';
+import { uploadWorkerPhoto, generateFileName, validateImageFile } from '@/lib/blobStorage';
 
 export async function POST(request: Request) {
   try {
@@ -50,8 +51,39 @@ export async function POST(request: Request) {
 
   try {
     console.log('📥 Parsing request body...');
-    const body = await request.json();
-    console.log('✅ Request body parsed successfully');
+
+    // Check if request is FormData (with photos) or JSON (without photos)
+    const contentType = request.headers.get('content-type') || '';
+    const isFormData = contentType.includes('multipart/form-data');
+
+    let body: any = {};
+    let photoFiles: File[] = [];
+
+    if (isFormData) {
+      // Parse FormData
+      const formData = await request.formData();
+
+      // Extract all non-file fields
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          photoFiles.push(value);
+        } else {
+          // Parse JSON fields (arrays, etc.)
+          try {
+            body[key] = JSON.parse(value as string);
+          } catch {
+            body[key] = value;
+          }
+        }
+      }
+
+      console.log('✅ FormData parsed successfully');
+      console.log('📷 Photos to upload:', photoFiles.length);
+    } else {
+      // Parse JSON
+      body = await request.json();
+      console.log('✅ JSON body parsed successfully');
+    }
 
     // Extract and validate data
     const {
@@ -84,7 +116,6 @@ export async function POST(request: Request) {
       uniqueService,
       whyEnjoyWork,
       additionalInfo,
-      photos,
       consentProfileShare,
       consentMarketing,
     } = body;
@@ -152,6 +183,56 @@ export async function POST(request: Request) {
     // ============================================
 
     const passwordHash = await hashPassword(password);
+
+    // ============================================
+    // UPLOAD PHOTOS TO VERCEL BLOB
+    // ============================================
+
+    let photoUrls: string[] = [];
+
+    if (photoFiles.length > 0) {
+      console.log(`📸 Uploading ${photoFiles.length} photos to Blob...`);
+
+      for (let i = 0; i < photoFiles.length; i++) {
+        const file = photoFiles[i];
+
+        // Validate file
+        const validationError = validateImageFile(file);
+        if (validationError) {
+          console.error(`❌ Photo ${i + 1} validation failed:`, validationError);
+          continue; // Skip invalid files
+        }
+
+        try {
+          // Convert File to Buffer
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+
+          // Generate unique filename
+          const fileName = generateFileName(
+            file.name,
+            normalizedEmail.split('@')[0],
+            'photo'
+          );
+
+          // Upload to Vercel Blob
+          const url = await uploadWorkerPhoto(
+            buffer,
+            fileName,
+            file.type,
+            'workers'
+          );
+
+          photoUrls.push(url);
+          console.log(`✅ Photo ${i + 1}/${photoFiles.length} uploaded:`, url);
+        } catch (uploadError) {
+          console.error(`❌ Failed to upload photo ${i + 1}:`, uploadError);
+          // Continue with other photos even if one fails
+        }
+      }
+
+      console.log(`✅ Uploaded ${photoUrls.length}/${photoFiles.length} photos successfully`);
+    }
 
     // ============================================
     // GEOCODE WORKER LOCATION
@@ -229,8 +310,8 @@ export async function POST(request: Request) {
             whyEnjoyWork,
             additionalInfo,
             // Photos: Array of Vercel Blob URLs stored as JSON
-            // Store as array if photos exist, otherwise undefined
-            photos: (Array.isArray(photos) && photos.length > 0) ? photos : undefined,
+            // Use uploaded photo URLs if available, otherwise undefined
+            photos: (photoUrls.length > 0) ? photoUrls : undefined,
             consentProfileShare: consentProfileShare || false,
             consentMarketing: consentMarketing || false,
             profileCompleted: true, // Registration form is complete
