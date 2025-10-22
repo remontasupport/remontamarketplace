@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma && next build",
-    "vercel-build": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma",
