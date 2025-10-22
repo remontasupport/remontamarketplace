@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import ConditionalHeader from "@/components/ui/layout/ConditionalHeader";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { ProgressProvider } from "@/contexts/ProgressContext";
+import ProgressBar from "@/components/ui/ProgressBar";
+import ApiInterceptorSetup from "@/components/ApiInterceptorSetup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -66,10 +69,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
-        <SessionProvider>
-          <ConditionalHeader />
-          {children}
-        </SessionProvider>
+        <ProgressProvider>
+          <ProgressBar />
+          <ApiInterceptorSetup />
+          <SessionProvider>
+            <ConditionalHeader />
+            {children}
+          </SessionProvider>
+        </ProgressProvider>
       </body>
     </html>
   );
