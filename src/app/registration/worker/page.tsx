@@ -239,35 +239,10 @@ export default function ContractorOnboarding() {
                   Welcome to Remonta
                 </h1>
                 <div className="bg-[#EDEFF3] rounded-lg p-6 text-left max-w-lg mx-auto">
-                  <p className="text-lg text-[#0C1628] font-poppins font-medium mb-4">
-                    There are thousands of people on Remonta looking for support workers just like you. Create your account today:
+                  <p className="text-lg text-center text-[#0C1628] font-poppins font-medium mb-4">
+                    There are thousands of people on Remonta looking for support workers just like you. Create your account today and tell us more about yourself
                   </p>
-                  <ul className="space-y-3">
-                    <li className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-800 font-poppins">Receive paid training</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-800 font-poppins">Hireup handles your tax, super and benefits</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-800 font-poppins">No experience necessary</span>
-                    </li>
-                  </ul>
+                
                 </div>
               </div>
 
