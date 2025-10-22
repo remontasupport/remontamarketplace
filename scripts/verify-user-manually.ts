@@ -30,20 +30,17 @@ async function verifyUserManually(email: string) {
       process.exit(1);
     }
 
-    if (user.emailVerified) {
-      console.log(`✅ Email already verified for: ${email}`);
-      console.log(`   Verified at: ${user.emailVerified}`);
+    if (user.status === 'ACTIVE') {
+      console.log(`✅ User already active: ${email}`);
+      console.log(`   Status: ${user.status}`);
       process.exit(0);
     }
 
-    // Manually verify the user
+    // Manually verify the user by setting status to ACTIVE
     await authPrisma.user.update({
       where: { id: user.id },
       data: {
-        emailVerified: new Date(),
         status: 'ACTIVE',
-        verificationToken: null,
-        verificationTokenExpires: null,
       },
     });
 
