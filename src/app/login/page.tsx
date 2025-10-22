@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { getRedirectPathForRole } from "@/types/auth";
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -73,14 +74,18 @@ export default function LoginPage() {
         <CardHeader className="space-y-4">
           {/* Remonta Logo */}
           <div className="flex justify-center">
+            <Link href="https://www.remontaservices.com.au/">
             <Image
               src="/logo/logo.svg"
+            
               alt="Remonta Logo"
               width={180}
               height={60}
               priority
               className="h-auto"
             />
+            </Link>
+            
           </div>
           <CardTitle className="text-3xl font-cooper text-gray-900 text-center">
             Welcome Back
