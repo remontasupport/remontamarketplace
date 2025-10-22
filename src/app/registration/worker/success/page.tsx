@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, ArrowRight, FileText, Clock, Users } from "lucide-react"
 import Link from "next/link"
 
-export default function RegistrationSuccess() {
+function RegistrationSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
@@ -123,5 +123,30 @@ export default function RegistrationSuccess() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function RegistrationSuccess() {
+  return (
+    <Suspense
+      fallback={
+        <div className="bg-gray-50 min-h-screen py-8">
+          <div className="max-w-2xl mx-auto px-4">
+            <Card>
+              <CardHeader className="text-center">
+                <div className="flex justify-center mb-4">
+                  <CheckCircle className="w-16 h-16 text-green-600" />
+                </div>
+                <CardTitle className="text-3xl font-cooper text-gray-900">
+                  Loading...
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <RegistrationSuccessContent />
+    </Suspense>
   )
 }

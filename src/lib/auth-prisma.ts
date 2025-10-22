@@ -23,6 +23,9 @@ declare global {
  * Create Prisma client with production-ready configuration
  */
 const createAuthPrismaClient = () => {
+  // Use AUTH_DATABASE_URL if set, otherwise fallback to DATABASE_URL
+  const databaseUrl = process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL;
+
   return new AuthPrismaClient({
     log: process.env.NODE_ENV === 'development'
       ? ['error', 'warn']
@@ -31,7 +34,7 @@ const createAuthPrismaClient = () => {
     // Connection pool settings for serverless environments
     datasources: {
       db: {
-        url: process.env.AUTH_DATABASE_URL,
+        url: databaseUrl,
       },
     },
   })
