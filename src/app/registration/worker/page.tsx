@@ -170,12 +170,10 @@ export default function ContractorOnboarding() {
               formData.append('photos', photo);
             });
           }
-        } else if (Array.isArray(value)) {
-          // Convert arrays to JSON strings
-          formData.append(key, JSON.stringify(value));
         } else if (value !== undefined && value !== null) {
-          // Append other values as strings
-          formData.append(key, String(value));
+          // Convert all non-file values to JSON strings
+          // This preserves types (arrays, objects, booleans, numbers, strings)
+          formData.append(key, JSON.stringify(value));
         }
       });
 

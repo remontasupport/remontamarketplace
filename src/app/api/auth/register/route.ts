@@ -68,10 +68,11 @@ export async function POST(request: Request) {
         if (value instanceof File) {
           photoFiles.push(value);
         } else {
-          // Parse JSON fields (arrays, etc.)
+          // Parse JSON fields (arrays, objects, booleans)
           try {
             body[key] = JSON.parse(value as string);
           } catch {
+            // Keep as string if JSON.parse fails
             body[key] = value;
           }
         }
