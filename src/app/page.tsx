@@ -1,11 +1,6 @@
-// import AustraliaMap from "@/components/sections/landing/AustraliaMap";
-
-import LandingPage from "./landing/page";
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <div className="min-h-screen">
-     <LandingPage/>
-    </div>
-  );
+  // Redirect to login for the app
+  redirect('/login');
 }
