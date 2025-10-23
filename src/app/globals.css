@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 
 /* Page-specific styles */
-@import "./styles/jobs.css";
+@import "./styles/provide-support.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -25,7 +25,7 @@ const navigation: NavigationItem[] = [
   },
   {
     name: 'Become an NDIS worker',
-    href: '/registration/worker',
+    href: '/provide-support',
     hasDropdown: false
   },
   {
