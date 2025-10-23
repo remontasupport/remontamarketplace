@@ -277,6 +277,102 @@ export default function JobsPage() {
         </div>
       </section>
 
+      {/* Qualifications Section */}
+      <section className="jobs-qualifications-section">
+        <div className="jobs-qualifications-container">
+          {/* Section Header */}
+          <div className="jobs-qualifications-header">
+            <h2 className="jobs-qualifications-heading">
+              What kind of support work can you offer on Remonta?
+            </h2>
+            <p className="jobs-qualifications-subheading">
+              The services you can provide to clients on Remonta depend on your qualifications and experience.
+            </p>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="jobs-qualifications-grid">
+            {/* Left Card - Qualified */}
+            <div className="jobs-qualifications-card jobs-qualifications-card-qualified">
+              <h3 className="jobs-qualifications-card-title">
+                Are you a qualified support worker?
+              </h3>
+
+              <div className="jobs-qualifications-card-content">
+                <p className="jobs-qualifications-card-subtitle">This means you are either:</p>
+                <ul className="jobs-qualifications-list">
+                  <li>A Registered or Enrolled Nurse</li>
+                  <li>An allied health professional</li>
+                  <li>A qualified personal care worker</li>
+                </ul>
+
+                <p className="jobs-qualifications-card-text">
+                  In-demand services on Remonta include nursing, personal care, psychology, occupational therapy,
+                  speech therapy, and physiotherapy. If you are qualified to provide any of these services and can
+                  supply the necessary documentation, you may be able to find work fast on the Remonta platform.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Card - Unqualified */}
+            <div className="jobs-qualifications-card jobs-qualifications-card-unqualified">
+              <h3 className="jobs-qualifications-card-title">
+                Are you a support worker without any formal qualifications?
+              </h3>
+
+              <div className="jobs-qualifications-card-content">
+                <p className="jobs-qualifications-card-subtitle">You can provide support for:</p>
+                <ul className="jobs-qualifications-list">
+                  <li>Daily living activities</li>
+                  <li>Social and community activities</li>
+                  <li>Housework, transportation, and meal preparation</li>
+                </ul>
+
+                <p className="jobs-qualifications-card-subtitle-secondary">
+                  Enhance skills for support work job opportunities
+                </p>
+
+                <p className="jobs-qualifications-card-text">
+                  Complete accredited training to increase your skills and provide additional services to your clients.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="jobs-cta-section">
+        <div className="jobs-cta-container">
+          <div className="jobs-cta-card">
+            {/* Left Side - Content */}
+            <div className="jobs-cta-content">
+              <h2 className="jobs-cta-title">
+                I'm ready to become an independent support worker on Remonta
+              </h2>
+              <p className="jobs-cta-description">
+                If you have all your documentation ready and you understand what's required of you as a support worker on Remonta, sign up below.
+              </p>
+              <Link href="/worker-registration" className="jobs-cta-button">
+                Get started
+              </Link>
+            </div>
+
+            {/* Right Side - Image */}
+            <div className="jobs-cta-image-wrapper">
+              <Image
+                src="/images/supportWorker.jpg"
+                alt="Support worker with client"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                quality={100}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   )

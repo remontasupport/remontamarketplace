@@ -202,6 +202,18 @@
   background-color: #f9fafb;
 }
 
+@media (min-width: 768px) {
+  .jobs-section {
+    padding: 4rem 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-section {
+    padding: 5rem 0;
+  }
+}
+
 .jobs-section-content {
   max-width: 72rem;
   margin: 0 auto;
@@ -465,12 +477,18 @@
 /* Benefits Section */
 .jobs-benefits-section {
   background-color: var(--brand-highlight);
-  padding: 4rem 0;
+  padding: 3rem 0;
+}
+
+@media (min-width: 768px) {
+  .jobs-benefits-section {
+    padding: 4rem 0;
+  }
 }
 
 @media (min-width: 1024px) {
   .jobs-benefits-section {
-    padding: 6rem 0;
+    padding: 5rem 0;
   }
 }
 
@@ -642,12 +660,18 @@
 /* Testimonial Section */
 .jobs-testimonial-section {
   background-color: white;
-  padding: 4rem 0;
+  padding: 3rem 0;
+}
+
+@media (min-width: 768px) {
+  .jobs-testimonial-section {
+    padding: 4rem 0;
+  }
 }
 
 @media (min-width: 1024px) {
   .jobs-testimonial-section {
-    padding: 6rem 0;
+    padding: 5rem 0;
   }
 }
 
@@ -843,5 +867,410 @@
 @media (min-width: 768px) {
   .jobs-testimonial-author {
     font-size: 1.125rem;
+  }
+}
+
+/* Qualifications Section */
+.jobs-qualifications-section {
+  background-color: white;
+  padding: 3rem 0;
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-section {
+    padding: 4rem 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-section {
+    padding: 5rem 0;
+  }
+}
+
+.jobs-qualifications-container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .jobs-qualifications-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-container {
+    padding: 0 2rem;
+  }
+}
+
+.jobs-qualifications-header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-header {
+    margin-bottom: 4rem;
+  }
+}
+
+.jobs-qualifications-heading {
+  font-family: var(--font-cooper);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--brand-primary);
+  margin-bottom: 1rem;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .jobs-qualifications-heading {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-heading {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-heading {
+    font-size: 3rem;
+    max-width: 50rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.jobs-qualifications-subheading {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--brand-primary);
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .jobs-qualifications-subheading {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-subheading {
+    font-size: 1.25rem;
+    max-width: 45rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.jobs-qualifications-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+  }
+}
+
+.jobs-qualifications-card {
+  border-radius: 2rem;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+@media (min-width: 640px) {
+  .jobs-qualifications-card {
+    padding: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-qualifications-card {
+    padding: 3.5rem;
+  }
+}
+
+.jobs-qualifications-card-qualified {
+  background-color: var(--brand-highlight);
+}
+
+.jobs-qualifications-card-unqualified {
+  background-color: var(--brand-tertiary);
+}
+
+.jobs-qualifications-card-title {
+  font-family: var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--brand-primary);
+  margin-bottom: 1.5rem;
+  min-height: 3.5rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+@media (min-width: 640px) {
+  .jobs-qualifications-card-title {
+    font-size: 1.5rem;
+    min-height: 4rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-card-title {
+    font-size: 1.65rem;
+    min-height: 4.5rem;
+  }
+}
+
+.jobs-qualifications-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.jobs-qualifications-card-subtitle {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--brand-primary);
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-card-subtitle {
+    font-size: 1.125rem;
+  }
+}
+
+.jobs-qualifications-card-subtitle-secondary {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--brand-primary);
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-card-subtitle-secondary {
+    font-size: 1.125rem;
+  }
+}
+
+.jobs-qualifications-card-text {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--brand-primary);
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-card-text {
+    font-size: 1.05rem;
+  }
+}
+
+.jobs-qualifications-list {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.jobs-qualifications-list li {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--brand-primary);
+}
+
+@media (min-width: 768px) {
+  .jobs-qualifications-list li {
+    font-size: 1.05rem;
+  }
+}
+
+/* CTA Section */
+.jobs-cta-section {
+  background-color: white;
+  padding: 3rem 0;
+}
+
+@media (min-width: 768px) {
+  .jobs-cta-section {
+    padding: 4rem 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-section {
+    padding: 5rem 0;
+  }
+}
+
+.jobs-cta-container {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .jobs-cta-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-container {
+    padding: 0 2rem;
+  }
+}
+
+.jobs-cta-card {
+  background-color: var(--brand-primary);
+  border-radius: 2rem;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-card {
+    grid-template-columns: 1fr 1fr;
+    min-height: 500px;
+  }
+}
+
+.jobs-cta-content {
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .jobs-cta-content {
+    padding: 4rem 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-content {
+    padding: 4rem 4rem;
+  }
+}
+
+.jobs-cta-title {
+  font-family: var(--font-cooper);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.3;
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .jobs-cta-title {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .jobs-cta-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-title {
+    font-size: 2.75rem;
+  }
+}
+
+.jobs-cta-description {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .jobs-cta-description {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-description {
+    font-size: 1.25rem;
+  }
+}
+
+.jobs-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: var(--brand-secondary);
+  padding: 1rem 2.5rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--brand-primary);
+  transition: all 0.3s;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+@media (min-width: 640px) {
+  .jobs-cta-button {
+    padding: 1.125rem 3rem;
+    font-size: 1.125rem;
+  }
+}
+
+.jobs-cta-button:hover {
+  background-color: white;
+  color: var(--brand-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(177, 195, 205, 0.4);
+}
+
+.jobs-cta-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
+
+@media (min-width: 640px) {
+  .jobs-cta-image-wrapper {
+    height: 400px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .jobs-cta-image-wrapper {
+    height: 100%;
+    min-height: 500px;
   }
 }
