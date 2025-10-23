@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Page-specific styles */
+@import "./styles/provide-support.css";
+
 @custom-variant dark (&:is(.dark *));
 
 html {
@@ -144,6 +147,12 @@ div[style*="position: fixed"][style*="bottom: 16px"] {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Brand Colors */
+  --brand-primary: #0C1628;
+  --brand-secondary: #B1C3CD;
+  --brand-tertiary: #F8E8D8;
+  --brand-highlight: #EDEFF3;
 }
 
 .dark {
@@ -188,3 +197,4 @@ div[style*="position: fixed"][style*="bottom: 16px"] {
     @apply bg-background text-foreground;
   }
 }
+

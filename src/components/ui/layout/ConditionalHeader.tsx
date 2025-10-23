@@ -11,5 +11,10 @@ export default function ConditionalHeader() {
     return null
   }
 
+  // Don't render header for studio pages
+  if (pathname?.startsWith('/studio')) {
+    return null
+  }
+
   return <Header />
 }
