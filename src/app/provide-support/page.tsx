@@ -65,8 +65,8 @@ export default function JobsPage() {
         </div>
       </section>
 
-      {/* Jobs Section */}
-      <section className="jobs-section">
+      {/* Jobs Section - Temporarily Hidden */}
+      {/* <section className="jobs-section">
         <div className="jobs-section-content">
           <h2 className="jobs-section-title">Explore our current open roles</h2>
 
@@ -85,7 +85,6 @@ export default function JobsPage() {
             <div className="jobs-grid">
               {jobs.map((job) => (
                 <div key={job._id} className="job-card">
-                  {/* Company Logo Placeholder */}
                   <div className="job-card-header">
                     <div className="job-card-logo">
                       <svg fill="currentColor" viewBox="0 0 20 20">
@@ -96,7 +95,7 @@ export default function JobsPage() {
                     <div className="job-card-info">
                       <div className="job-card-title-row">
                         <div>
-                          
+
                           <h3 className="job-card-title">{job.title}</h3>
                         </div>
                         <button className="job-card-bookmark">
@@ -115,14 +114,12 @@ export default function JobsPage() {
                     </div>
                   </div>
 
-                  {/* Job Type and Time Badges */}
                   <div className="job-card-badges">
                     {job.active && (
                       <span className="job-badge job-badge-active">Active</span>
                     )}
                   </div>
 
-                  {/* Meta Info */}
                   <div className="job-card-meta">
                     <div className="job-card-meta-item">
                       <span><span className="job-card-meta-label">Posted:</span> {new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -138,19 +135,16 @@ export default function JobsPage() {
                     </div>
                   </div>
 
-                  {/* Description Preview */}
                   <div className="job-card-description-section">
                     <p className="job-card-description-label">Job Description:</p>
                     <p className="job-card-description">{job.description}</p>
                   </div>
 
-                  {/* Certificates */}
                   <div className="job-card-certificates">
                     <p className="job-card-certificates-label">Required Certificates:</p>
                     <p className="job-card-certificates-text">{job.certificates}</p>
                   </div>
 
-                  {/* Apply Button */}
                   <Link href="/registration/worker">
                     <button className="job-apply-button">Apply Now</button>
                   </Link>
@@ -159,7 +153,7 @@ export default function JobsPage() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
 
       {/* Benefits Section */}
       <section className="jobs-benefits-section">
