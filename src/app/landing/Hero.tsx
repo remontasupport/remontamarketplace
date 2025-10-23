@@ -99,7 +99,7 @@ export default function Hero() {
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
               <Link
-                href="/registration/client"
+                href="/registration/user"
                 className="inline-flex items-center justify-center rounded-full bg-white border border-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
               >
                 Find support

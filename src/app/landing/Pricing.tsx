@@ -145,7 +145,7 @@ export default function Pricing() {
             </p>
 
             <div className="flex flex-col items-center justify-center">
-              <Link href="/registration/worker" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#B1C3CD] px-6 py-3 sm:px-8 sm:py-4 font-sans font-semibold text-sm sm:text-base text-[#0C1628] hover:bg-white transition-colors duration-200 w-full sm:w-auto max-w-md">
+              <Link href="/registration/user" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#B1C3CD] px-6 py-3 sm:px-8 sm:py-4 font-sans font-semibold text-sm sm:text-base text-[#0C1628] hover:bg-white transition-colors duration-200 w-full sm:w-auto max-w-md">
                 <span>Get Started</span>
               </Link>
             </div>
