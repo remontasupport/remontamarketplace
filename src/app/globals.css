@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Page-specific styles */
+@import "./styles/dashboard.css";
+
 @custom-variant dark (&:is(.dark *));
 
 html {
