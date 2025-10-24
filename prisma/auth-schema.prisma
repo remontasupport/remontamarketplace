@@ -143,6 +143,7 @@ model WorkerProfile {
 
   // Personal Information
   firstName   String
+  middleName  String?
   lastName    String
   mobile      String
 

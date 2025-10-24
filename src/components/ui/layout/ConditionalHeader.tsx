@@ -6,6 +6,11 @@ import Header from './Header'
 export default function ConditionalHeader() {
   const pathname = usePathname()
 
+  // Don't render header for dashboard pages (they have their own layout with sidebar)
+  if (pathname?.startsWith('/dashboard')) {
+    return null
+  }
+
   // Don't render header for registration pages (they have their own layout)
   if (pathname?.startsWith('/registration')) {
     return null

@@ -2,13 +2,14 @@
  * Worker Photo Upload API
  *
  * Handles photo uploads to Vercel Blob storage
- * Used during worker registration
+ * Used during worker registration and profile updates
+ * Automatically deletes old photos when replacing
  *
  * POST /api/upload/worker-photos
  */
 
 import { NextResponse } from 'next/server';
-import { uploadWorkerPhoto, generateFileName, validateImageFile } from '@/lib/blobStorage';
+import { uploadWorkerPhoto, generateFileName, validateImageFile, deleteFromBlob } from '@/lib/blobStorage';
 
 export async function POST(request: Request) {
   try {
@@ -20,9 +21,11 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const files = formData.getAll('photos') as File[];
     const email = formData.get('email') as string; // Worker identifier
+    const oldPhotoUrl = formData.get('oldPhotoUrl') as string | null; // Old photo to delete
 
     console.log('📧 Email:', email);
     console.log('📷 Files count:', files.length);
+    console.log('🗑️ Old photo URL to delete:', oldPhotoUrl);
 
     if (!email) {
       return NextResponse.json(
@@ -96,6 +99,18 @@ export async function POST(request: Request) {
         },
         { status: 500 }
       );
+    }
+
+    // Delete old photo if upload was successful and old photo URL exists
+    if (oldPhotoUrl && uploadedUrls.length > 0) {
+      try {
+        console.log('🗑️ Deleting old photo from blob storage...');
+        await deleteFromBlob(oldPhotoUrl);
+        console.log('✅ Old photo deleted successfully');
+      } catch (deleteError) {
+        console.error('⚠️ Failed to delete old photo:', deleteError);
+        // Don't fail the request if deletion fails - new photo is already uploaded
+      }
     }
 
     if (errors.length > 0) {

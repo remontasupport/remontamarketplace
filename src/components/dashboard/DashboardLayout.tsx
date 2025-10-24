@@ -3,6 +3,7 @@
 import { ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import ProfileCard from './ProfileCard'
+import SimpleDashboardHeader from './SimpleDashboardHeader'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -14,21 +15,27 @@ export default function DashboardLayout({
   showProfileCard = true
 }: DashboardLayoutProps) {
   return (
-    <div className="dashboard-container">
-      {/* Left Sidebar */}
-      <Sidebar />
+    <div className="dashboard-wrapper">
+      {/* Dashboard Header - Full Width at Top */}
+      <SimpleDashboardHeader />
 
-      {/* Main Content */}
-      <main className="dashboard-main">
-        {children}
-      </main>
+      {/* Dashboard Container - Sidebar + Content + Profile */}
+      <div className="dashboard-container">
+        {/* Left Sidebar */}
+        <Sidebar />
 
-      {/* Right Sidebar - Profile Card */}
-      {showProfileCard && (
-        <aside className="dashboard-right-sidebar">
-          <ProfileCard />
-        </aside>
-      )}
+        {/* Main Content */}
+        <main className="dashboard-main">
+          {children}
+        </main>
+
+        {/* Right Sidebar - Profile Card */}
+        {showProfileCard && (
+          <aside className="dashboard-right-sidebar">
+            <ProfileCard />
+          </aside>
+        )}
+      </div>
     </div>
   )
 }

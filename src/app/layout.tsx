@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import ConditionalHeader from "@/components/ui/layout/ConditionalHeader";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { QueryClientProvider } from "@/components/providers/QueryClientProvider";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import ProgressBar from "@/components/ui/ProgressBar";
 import ApiInterceptorSetup from "@/components/ApiInterceptorSetup";
@@ -73,8 +74,10 @@ export default function RootLayout({
           <ProgressBar />
           <ApiInterceptorSetup />
           <SessionProvider>
-            <ConditionalHeader />
-            {children}
+            <QueryClientProvider>
+              <ConditionalHeader />
+              {children}
+            </QueryClientProvider>
           </SessionProvider>
         </ProgressProvider>
       </body>
