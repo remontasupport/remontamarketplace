@@ -20,7 +20,7 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   {
     name: 'Find support',
-    href: '/registration/user',
+    href: '/find-support',
     hasDropdown: false
   },
   {
