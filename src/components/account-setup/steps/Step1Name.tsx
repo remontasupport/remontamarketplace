@@ -4,6 +4,7 @@
  */
 
 import { TextField } from "@/components/forms/fields";
+import { UserCircle } from "lucide-react";
 
 interface Step1NameProps {
   data: {
@@ -59,19 +60,7 @@ export default function Step1Name({ data, onChange, errors }: Step1NameProps) {
       <div className="info-column">
         <div className="info-box">
           <div className="info-box-icon">
-            <svg
-              className="icon-user"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+            <UserCircle className="icon-user" />
           </div>
           <h3 className="info-box-title">
             Why your legal name is important to us?
