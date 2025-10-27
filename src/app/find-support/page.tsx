@@ -180,6 +180,42 @@ export default function FindSupportPage() {
      title: 'Psychology'
     }
    ]
+  },
+  {
+   title: 'Fitness and exercise services',
+   description: 'Find support workers who can help you stay active and achieve your fitness goals through personalised exercise programs.',
+   image: '/images/fitnessSupport.jpg',
+   imageAlt: 'Fitness and exercise services',
+   services: [
+    {
+     icon: BoltIcon,
+     title: 'Personal training'
+    },
+    {
+     icon: UserGroupIcon,
+     title: 'Group fitness classes'
+    },
+    {
+     icon: HeartIcon,
+     title: 'Gym assistance'
+    },
+    {
+     icon: TruckIcon,
+     title: 'Swimming support'
+    },
+    {
+     icon: HandRaisedIcon,
+     title: 'Yoga and stretching'
+    },
+    {
+     icon: BoltIcon,
+     title: 'Sports participation'
+    },
+    {
+     icon: ArrowsUpDownIcon,
+     title: 'Balance and coordination'
+    }
+   ]
   }
  ]
 

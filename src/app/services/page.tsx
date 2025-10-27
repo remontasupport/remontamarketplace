@@ -171,59 +171,37 @@ export default function ServicesPage() {
       <Services />
 
       {/* NDIS Help Section */}
-      <section className="relative overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          {/* Left - Text Content with Highlight Background */}
-          <div className="py-16 lg:py-24 px-6 lg:px-8 flex items-center" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT }}>
-            <div className="w-full max-w-7xl mx-auto lg:mx-0">
-              <div className="max-w-xl">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl mb-6 font-cooper" style={{ color: BRAND_COLORS.PRIMARY }}>
+      <section className="jobs-cta-section">
+        <div className="jobs-cta-container">
+          <div className="jobs-cta-card">
+            {/* Left Side - Content */}
+            <div className="jobs-cta-content">
+              <h2 className="jobs-cta-title">
                 Need help with specialised supports?
               </h2>
-              <p className="text-base md:text-lg mb-4 font-poppins leading-relaxed" style={{ color: BRAND_COLORS.PRIMARY }}>
+              <p className="jobs-cta-description">
                 If you require specialised and high-intensity supports, our team is here to help—from finding and booking the right workers to managing your team.
               </p>
-              <p className="text-base md:text-lg mb-8 font-poppins leading-relaxed" style={{ color: BRAND_COLORS.PRIMARY }}>
-                Get in touch to discuss your specific needs.
-              </p>
-              <Link
-                href="/registration/client"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-full px-8 py-3 border-2 font-poppins font-medium text-base transition-colors duration-300"
-                style={{
-                  borderColor: BRAND_COLORS.PRIMARY,
-                  color: BRAND_COLORS.PRIMARY,
-                  backgroundColor: 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY;
-                  e.currentTarget.style.color = 'white';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = BRAND_COLORS.PRIMARY;
-                }}
-              >
+              <Link href="/registration/client" className="jobs-cta-button">
                 Get in Touch
               </Link>
-              </div>
             </div>
-          </div>
 
-          {/* Right - Image */}
-          <div className="relative h-[400px] lg:h-auto">
-            <Image
-              src="/images/specializeCare.png"
-              alt="Support worker helping NDIS participant"
-              fill
-              className="object-cover"
-              priority
-            />
+            {/* Right Side - Image */}
+            <div className="jobs-cta-image-wrapper">
+              <Image
+                src="/images/specializeCare.png"
+                alt="Support worker helping NDIS participant"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                quality={100}
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-     
       <Footer />
     </div>
   )
