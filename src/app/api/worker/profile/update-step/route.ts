@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
+import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
 
 /**
  * POST /api/worker/profile/update-step
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
       case 5: // Personal Info (reordered - was step 4)
         if (data.age) updateData.age = data.age;
-        if (data.gender) updateData.gender = data.gender;
+        if (data.gender) updateData.gender = data.gender.toLowerCase();
         if (data.genderIdentity) updateData.genderIdentity = data.genderIdentity;
         if (data.languages) updateData.languages = data.languages;
         break;
@@ -70,6 +71,91 @@ export async function POST(request: Request) {
 
       case 7: // Emergency Contact
         // TODO: Store emergency contact (might need separate table)
+        break;
+
+      // Services Setup Steps (100+)
+      case 101: // Services Offer
+        if (data.services) updateData.services = data.services;
+        if (data.supportWorkerCategories !== undefined) {
+          updateData.supportWorkerCategories = data.supportWorkerCategories;
+        }
+        break;
+
+      case 102: // Additional Training / Qualifications
+        // Handle selectedQualifications
+        // Create VerificationRequirement records for each selected qualification
+        if (data.selectedQualifications && Array.isArray(data.selectedQualifications)) {
+          // Get worker profile to access workerProfileId
+          const workerProfile = await authPrisma.workerProfile.findUnique({
+            where: { userId: session.user.id },
+            select: { id: true, services: true },
+          });
+
+          if (!workerProfile) {
+            throw new Error("Worker profile not found");
+          }
+
+          // Get all available qualifications for worker's services
+          const availableQualifications = getQualificationsForServices(workerProfile.services || []);
+          const availableQualificationTypes = availableQualifications.map(q => q.type);
+
+          // Get existing requirements for this worker
+          const existingRequirements = await authPrisma.verificationRequirement.findMany({
+            where: {
+              workerProfileId: workerProfile.id,
+              requirementType: {
+                in: availableQualificationTypes,
+              },
+            },
+          });
+
+          // Map existing requirements by type
+          const existingRequirementsByType = new Map(
+            existingRequirements.map(req => [req.requirementType, req])
+          );
+
+          // Delete only requirements that are NO LONGER selected
+          const requirementsToDelete = existingRequirements
+            .filter(req => !data.selectedQualifications.includes(req.requirementType))
+            .map(req => req.id);
+
+          if (requirementsToDelete.length > 0) {
+            await authPrisma.verificationRequirement.deleteMany({
+              where: {
+                id: {
+                  in: requirementsToDelete,
+                },
+              },
+            });
+            console.log(`🗑️ Deleted ${requirementsToDelete.length} deselected requirements`);
+          }
+
+          // Create new requirements ONLY for qualifications that don't exist yet
+          const requirementsToCreate = data.selectedQualifications
+            .filter((qualificationType: string) => !existingRequirementsByType.has(qualificationType))
+            .map((qualificationType: string) => {
+              const qualification = availableQualifications.find(q => q.type === qualificationType);
+              if (!qualification) return null;
+
+              return {
+                workerProfileId: workerProfile.id,
+                requirementType: qualificationType,
+                requirementName: qualification.name,
+                isRequired: false, // Worker-selected, not mandatory
+                status: "PENDING" as const,
+              };
+            })
+            .filter(Boolean);
+
+          if (requirementsToCreate.length > 0) {
+            await authPrisma.verificationRequirement.createMany({
+              data: requirementsToCreate as any[],
+            });
+            console.log(`✅ Created ${requirementsToCreate.length} new verification requirements`);
+          }
+
+          console.log(`📋 Preserved ${existingRequirements.length - requirementsToDelete.length} existing requirements with their documentUrls`);
+        }
         break;
     }
 

@@ -24,6 +24,7 @@ interface WorkerProfile {
   firstName?: string;
   middleName?: string;
   lastName?: string;
+  mobile?: string;
   photos?: string[];
   introduction?: string;
   age?: string;
@@ -34,7 +35,19 @@ interface WorkerProfile {
   city?: string;
   state?: string;
   postalCode?: string;
-  // Add other fields as needed
+  services?: string[];
+  supportWorkerCategories?: string[];
+  experience?: string;
+  qualifications?: string;
+  hasVehicle?: string;
+  funFact?: string;
+  hobbies?: string;
+  uniqueService?: string;
+  whyEnjoyWork?: string;
+  additionalInfo?: string;
+  profileCompleted?: boolean;
+  isPublished?: boolean;
+  verificationStatus?: string;
 }
 
 interface UpdateStepData {

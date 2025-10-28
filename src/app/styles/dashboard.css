@@ -1023,7 +1023,7 @@
 .account-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .form-group {
@@ -1165,8 +1165,10 @@
 }
 
 .btn-primary-brand:disabled {
-  opacity: 0.6;
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
   cursor: not-allowed;
+  opacity: 1;
 }
 
 .btn-secondary {
@@ -1216,6 +1218,7 @@
   font-weight: 600;
   color: #111827;
   margin: 0 0 0.75rem 0;
+  max-width: 25rem;
 }
 
 .info-box-text {

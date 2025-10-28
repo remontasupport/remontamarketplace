@@ -1,0 +1,222 @@
+/* Services Setup Styles */
+
+/* Brand Colors */
+:root {
+  --brand-primary: #0C1628;
+  --brand-secondary: #A3DEDE;
+}
+
+/* Services Step Container */
+.services-step-container {
+  min-height: 50vh;
+  margin-left: -2rem;
+  padding-left: 1.5rem;
+}
+
+/* Align header elements with the adjusted container */
+.form-page-container:has(.services-step-container) .form-page-header {
+  margin-left: -0.60rem;
+  padding-left: 0;
+}
+
+/* Reduce space between content and navigation */
+.form-page-container:has(.services-step-container) .step-content {
+  margin-bottom: 0rem;
+}
+
+/* Align navigation buttons with the adjusted container */
+.form-page-container:has(.services-step-container) .step-navigation {
+  margin-left: -0.60rem;
+  padding-top: 0.5rem;
+  padding-left: 0;
+}
+
+/* Override form-page-content grid for services */
+.services-step-container .form-page-content {
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Increase width of info box */
+.services-step-container .info-box {
+  max-width: 600px;
+}
+
+/* Services Form Column Background */
+.services-form-column-bg {
+
+  border-radius: 0.5rem;
+
+}
+
+/* Services List Container */
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Service Card Styles */
+.service-card-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.service-card {
+  background-color: var(--brand-primary);
+  border-radius: 1rem;
+  padding: 1rem;
+  flex: 1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s;
+}
+
+.service-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.service-card.clickable {
+  cursor: pointer;
+}
+
+.service-card-content {
+  flex: 1;
+}
+
+.service-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.service-card-title {
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.service-subcategories {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: color 0.2s;
+  text-decoration: underline;
+}
+
+.service-subcategories:hover {
+  color: white;
+}
+
+.service-upload-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.25rem;
+}
+
+.service-upload-indicator svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.service-upload-indicator span {
+  font-size: 0.875rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Delete Button (Edit Mode) */
+.service-delete-btn {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #fee2e2;
+  transition: background-color 0.2s;
+}
+
+.service-delete-btn:hover {
+  background-color: #fecaca;
+}
+
+.service-delete-btn svg {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: #dc2626;
+}
+
+/* Empty State */
+.services-empty-state {
+  text-align: center;
+  padding: 3rem 0;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 2px dashed #d1d5db;
+}
+
+.services-empty-state p {
+  color: #6b7280;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Service Buttons */
+.service-button-container {
+  margin-top: 1rem;
+}
+
+.service-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.service-btn-edit,
+.service-btn-add-more {
+  width: 100%;
+  padding: 1rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 1rem;
+  background-color: transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #374151;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+
+.service-btn-edit:hover,
+.service-btn-add-more:hover {
+  border-color: #9ca3af;
+  background-color: #f9fafb;
+}
+
+.service-btn-edit svg,
+.service-btn-add-more svg {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.service-btn-done {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--brand-primary);
+  color: white;
+  border-radius: 1rem;
+  transition: background-color 0.2s;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+}
+
+.service-btn-done:hover {
+  background-color: #1a2740;
+}

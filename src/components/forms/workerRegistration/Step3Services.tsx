@@ -67,11 +67,12 @@ const Step3ServicesComponent = function Step3Services({
   };
   return (
     <>
-      <div className="space-y-6">
+      <div className="">
         <div>
-          <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">What services can you offer?</h3>
-          <p className="text-sm text-gray-600 font-poppins mb-4">
-            You can select more than one, but make sure you have the relevant qualifications.
+          <h3 className="text-xl font-poppins font-semibold text-gray-900">What services can you offer?</h3>
+          <p className="text-sm text-gray-600 font-poppins">
+       You can select more than one, but make sure you have the relevant qualifications.
+   
           </p>
 
           <div className="space-y-4">

@@ -156,7 +156,7 @@ export default function AccountSetupPage() {
         state: parsedLocation.state || profileData.state || "",
         postalCode: parsedLocation.postalCode || profileData.postalCode || "",
         age: profileData.age || "",
-        gender: profileData.gender || "",
+        gender: profileData.gender ? profileData.gender.toLowerCase() : "",
         genderIdentity: profileData.genderIdentity || "",
         languages: profileData.languages || [],
         abn: "",

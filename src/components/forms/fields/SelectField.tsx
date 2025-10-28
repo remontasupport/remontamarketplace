@@ -10,9 +10,11 @@ interface SelectOption {
   value: string;
 }
 
-interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'> {
   label: string;
   name: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   options: SelectOption[];
   error?: string;
   helperText?: string;
@@ -23,6 +25,8 @@ interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
 export default function SelectField({
   label,
   name,
+  value,
+  onChange,
   options,
   error,
   helperText,
@@ -41,6 +45,8 @@ export default function SelectField({
       <select
         id={name}
         name={name}
+        value={value || ""}
+        onChange={onChange}
         className={`form-select ${error ? "form-input-error" : ""} ${className}`}
         aria-invalid={error ? "true" : "false"}
         aria-describedby={error ? `${name}-error` : helperText ? `${name}-helper` : undefined}

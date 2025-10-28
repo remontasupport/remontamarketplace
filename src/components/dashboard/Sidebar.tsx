@@ -12,6 +12,7 @@ import {
   DocumentTextIcon
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
+import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
 
 interface SubMenuItem {
   name: string
@@ -31,6 +32,12 @@ const accountDetailsItems = ACCOUNT_SETUP_STEPS.map(step => ({
   href: getStepUrl(step.slug)
 }))
 
+// Dynamically generate services items from centralized config
+const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
+  name: step.title,
+  href: getServicesStepUrl(step.slug)
+}))
+
 const menuSections: MenuSection[] = [
   {
     id: 'account-details',
@@ -42,10 +49,7 @@ const menuSections: MenuSection[] = [
     id: 'services',
     name: 'Your services',
     icon: HandRaisedIcon,
-    items: [
-      { name: 'Services you offer', href: '/dashboard/worker/services/offer' },
-      { name: 'Additional training', href: '/dashboard/worker/services/training' }
-    ]
+    items: servicesItems
   },
   {
     id: 'mandatory-training',
