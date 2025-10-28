@@ -52,12 +52,11 @@ const menuSections: MenuSection[] = [
     items: servicesItems
   },
   {
-    id: 'mandatory-training',
-    name: 'Mandatory training',
+    id: 'mandatory-requirements',
+    name: 'Mandatory requirements',
     icon: DocumentTextIcon,
     items: [
-      { name: 'Infection control training', href: '/dashboard/worker/training/infection-control' },
-      { name: 'Professional responsibility training', href: '/dashboard/worker/training/professional-responsibility' }
+      { name: 'Proof of identity', href: '/dashboard/worker/requirements/setup?step=proof-of-identity' }
     ]
   }
 ]
@@ -67,7 +66,7 @@ export default function Sidebar() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'account-details': false,
     'services': false,
-    'mandatory-training': false
+    'mandatory-requirements': false
   })
 
   const toggleSection = (sectionId: string) => {

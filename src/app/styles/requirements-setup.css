@@ -1,0 +1,273 @@
+/* Requirements Setup Styles */
+
+/* Brand Colors */
+:root {
+  --brand-primary: #0C1628;
+  --brand-secondary: #A3DEDE;
+  --brand-teal: #14b8a6;
+  --brand-green: #10b981;
+}
+
+/* Requirements Step Container */
+.requirements-step-container {
+  min-height: 50vh;
+  margin-left: -2rem;
+  padding-left: 1.5rem;
+}
+
+/* Align header elements with the adjusted container */
+.form-page-container:has(.requirements-step-container) .form-page-header {
+  margin-left: -0.60rem;
+  padding-left: 0;
+}
+
+/* Reduce space between content and navigation */
+.form-page-container:has(.requirements-step-container) .step-content {
+  margin-bottom: 0rem;
+}
+
+/* Align navigation buttons with the adjusted container */
+.form-page-container:has(.requirements-step-container) .step-navigation {
+  margin-left: -0.60rem;
+  padding-top: 0.5rem;
+  padding-left: 0;
+}
+
+/* Override form-page-content grid for requirements */
+.requirements-step-container .form-page-content {
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Increase width of info box */
+.requirements-step-container .info-box {
+  max-width: 600px;
+}
+
+/* Identity Documents Section */
+.identity-section {
+  margin-bottom: 1.5rem;
+}
+
+.identity-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.identity-section-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Document Selection Cards */
+.document-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.document-selection-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.document-selection-card:hover {
+  border-color: #d1d5db;
+}
+
+.document-selection-card.selected {
+  border-color: var(--brand-teal);
+  background-color: #f0fdfa;
+}
+
+.document-selection-card-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.document-selection-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.document-selection-content input[type="radio"] {
+  margin-top: 0.25rem;
+}
+
+.document-selection-info {
+  flex: 1;
+}
+
+.document-selection-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+}
+
+.document-selection-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.document-upload-actions {
+  margin-left: 1rem;
+}
+
+/* Uploaded Document Preview */
+.document-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.document-preview-image {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.document-preview-pdf {
+  width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.document-preview-pdf-icon {
+  width: 4rem;
+  height: 4rem;
+  color: #6b7280;
+}
+
+.document-preview-pdf-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Points Summary Card */
+.points-summary-card {
+  padding: 1rem;
+  border: 1px solid;
+  border-radius: 0.5rem;
+}
+
+.points-summary-card.complete {
+  background-color: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.points-summary-card.incomplete {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.points-summary-title {
+  font-size: 0.875rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.points-summary-title.complete {
+  color: #166534;
+}
+
+.points-summary-title.incomplete {
+  color: #1e40af;
+}
+
+.points-summary-title span {
+  font-weight: 600;
+}
+
+.points-summary-checklist {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.points-summary-item {
+  font-size: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+}
+
+.points-summary-item.checked {
+  color: #166534;
+}
+
+.points-summary-item.unchecked {
+  color: #6b7280;
+}
+
+.points-summary-message {
+  font-size: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+  margin-top: 0.5rem;
+}
+
+.points-summary-message.complete {
+  color: #166534;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #e5e7eb;
+  border-top-color: var(--brand-teal);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Update Button Below Preview */
+.document-update-btn {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--brand-primary);
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  border: 1px solid var(--brand-primary);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.document-update-btn:hover {
+  background-color: #1a2942;
+}
