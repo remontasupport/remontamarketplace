@@ -273,6 +273,7 @@ export async function POST(request: Request) {
         passwordHash,
         role: 'WORKER' as const,
         status: 'ACTIVE', // Active immediately
+        updatedAt: new Date(),
 
         // Create worker profile in same transaction
         workerProfile: {
@@ -311,6 +312,7 @@ export async function POST(request: Request) {
             profileCompleted: true, // Registration form is complete
             isPublished: false, // Not published until verified
             verificationStatus: 'NOT_STARTED' as const, // Awaiting document upload
+            updatedAt: new Date(),
           },
         },
       },
