@@ -9,8 +9,8 @@ datasource db {
   url      = env("AUTH_DATABASE_URL")
 }
 
-model accounts {
-  id                String  @id
+model Account {
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -22,29 +22,31 @@ model accounts {
   scope             String?
   id_token          String?
   session_state     String?
-  users             users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+  @@map("accounts")
 }
 
-model audit_logs {
-  id        String      @id
+model AuditLog {
+  id        String      @id @default(cuid())
   userId    String?
   action    AuditAction
   ipAddress String?
   userAgent String?
   metadata  Json?
   createdAt DateTime    @default(now())
-  users     users?      @relation(fields: [userId], references: [id])
+  user      User?       @relation(fields: [userId], references: [id])
 
   @@index([action])
   @@index([createdAt])
   @@index([userId])
+  @@map("audit_logs")
 }
 
-model client_profiles {
-  id        String   @id
+model ClientProfile {
+  id        String   @id @default(cuid())
   userId    String   @unique
   firstName String
   lastName  String
@@ -52,13 +54,14 @@ model client_profiles {
   location  String?
   createdAt DateTime @default(now())
   updatedAt DateTime
-  users     users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("client_profiles")
 }
 
-model coordinator_profiles {
-  id           String   @id
+model CoordinatorProfile {
+  id           String   @id @default(cuid())
   userId       String   @unique
   firstName    String
   lastName     String
@@ -67,51 +70,54 @@ model coordinator_profiles {
   location     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime
-  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("coordinator_profiles")
 }
 
-model sessions {
-  id           String   @id
+model Session {
+  id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([sessionToken])
   @@index([userId])
+  @@map("sessions")
 }
 
-model users {
-  id                   String                @id
-  email                String                @unique
+model User {
+  id                   String               @id @default(cuid())
+  email                String               @unique
   passwordHash         String
   role                 UserRole
-  status               AccountStatus         @default(ACTIVE)
-  resetPasswordToken   String?               @unique
+  status               AccountStatus        @default(ACTIVE)
+  resetPasswordToken   String?              @unique
   resetPasswordExpires DateTime?
-  failedLoginAttempts  Int                   @default(0)
+  failedLoginAttempts  Int                  @default(0)
   accountLockedUntil   DateTime?
   lastLoginAt          DateTime?
   lastLoginIp          String?
-  createdAt            DateTime              @default(now())
+  createdAt            DateTime             @default(now())
   updatedAt            DateTime
-  accounts             accounts[]
-  audit_logs           audit_logs[]
-  client_profiles      client_profiles?
-  coordinator_profiles coordinator_profiles?
-  sessions             sessions[]
-  worker_profiles      worker_profiles?
+  accounts             Account[]
+  auditLogs            AuditLog[]
+  clientProfile        ClientProfile?
+  coordinatorProfile   CoordinatorProfile?
+  sessions             Session[]
+  workerProfile        WorkerProfile?
 
   @@index([email])
   @@index([resetPasswordToken])
   @@index([role])
   @@index([status])
+  @@map("users")
 }
 
-model verification_requirements {
-  id                 String            @id
+model VerificationRequirement {
+  id                 String            @id @default(cuid())
   workerProfileId    String
   requirementType    String
   requirementName    String
@@ -130,26 +136,28 @@ model verification_requirements {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime
   documentCategory   DocumentCategory?
-  worker_profiles    worker_profiles   @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  workerProfile      WorkerProfile     @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
   @@index([documentCategory])
   @@index([requirementType])
   @@index([status])
   @@index([workerProfileId])
+  @@map("verification_requirements")
 }
 
-model verification_tokens {
+model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
   @@index([token])
+  @@map("verification_tokens")
 }
 
-model worker_profiles {
-  id                        String                      @id
-  userId                    String                      @unique
+model WorkerProfile {
+  id                        String                    @id @default(cuid())
+  userId                    String                    @unique
   firstName                 String
   lastName                  String
   mobile                    String
@@ -170,11 +178,11 @@ model worker_profiles {
   whyEnjoyWork              String
   additionalInfo            String?
   photos                    Json?
-  consentProfileShare       Boolean                     @default(false)
-  consentMarketing          Boolean                     @default(false)
-  profileCompleted          Boolean                     @default(false)
-  isPublished               Boolean                     @default(false)
-  createdAt                 DateTime                    @default(now())
+  consentProfileShare       Boolean                   @default(false)
+  consentMarketing          Boolean                   @default(false)
+  profileCompleted          Boolean                   @default(false)
+  isPublished               Boolean                   @default(false)
+  createdAt                 DateTime                  @default(now())
   updatedAt                 DateTime
   submittedDocuments        Json?
   verificationApprovedAt    DateTime?
@@ -182,7 +190,7 @@ model worker_profiles {
   verificationNotes         String?
   verificationRejectedAt    DateTime?
   verificationReviewedAt    DateTime?
-  verificationStatus        VerificationStatus          @default(NOT_STARTED)
+  verificationStatus        VerificationStatus        @default(NOT_STARTED)
   verificationSubmittedAt   DateTime?
   city                      String?
   latitude                  Float?
@@ -190,8 +198,8 @@ model worker_profiles {
   postalCode                String?
   state                     String?
   middleName                String?
-  verification_requirements verification_requirements[]
-  users                     users                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationRequirements  VerificationRequirement[]
+  user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([city])
   @@index([isPublished])
@@ -200,6 +208,7 @@ model worker_profiles {
   @@index([state])
   @@index([userId])
   @@index([verificationStatus])
+  @@map("worker_profiles")
 }
 
 enum AccountStatus {

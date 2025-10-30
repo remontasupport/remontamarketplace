@@ -1,0 +1,44 @@
+/* Account Setup Styles */
+
+/* Brand Colors */
+:root {
+  --brand-primary: #0C1628;
+  --brand-secondary: #A3DEDE;
+}
+
+/* Account Step Container - Matches Services spacing */
+.account-step-container {
+  min-height: 50vh;
+  margin-left: -2rem;
+  padding-left: 1.5rem;
+}
+
+/* Align header elements with the adjusted container */
+.form-page-container:has(.account-step-container) .form-page-header {
+  margin-left: -0.60rem;
+  padding-left: 0;
+}
+
+/* Reduce space between content and navigation */
+.form-page-container:has(.account-step-container) .step-content {
+  margin-bottom: 0rem;
+}
+
+/* Align navigation buttons with the adjusted container */
+.form-page-container:has(.account-step-container) .step-navigation {
+  margin-left: -0.60rem;
+  padding-top: 0.5rem;
+  padding-left: 0;
+}
+
+/* Override form-page-content grid for account steps */
+.account-step-container .form-page-content {
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Increase width of info box */
+.account-step-container .info-box {
+  max-width: 600px;
+}

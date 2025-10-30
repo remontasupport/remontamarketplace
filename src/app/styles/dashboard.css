@@ -967,11 +967,11 @@
 .form-page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 0rem;
+  padding: 1rem 0rem;
 }
 
 .form-page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .form-page-breadcrumb {

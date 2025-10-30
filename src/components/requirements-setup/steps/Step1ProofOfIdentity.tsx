@@ -282,9 +282,7 @@ export default function Step1ProofOfIdentity({
       {/* Left Column - Form */}
       <div className="form-column">
         <div className="account-form">
-          <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
-            Proof of Identity (100-Point Check)
-          </h3>
+         
           <p className="text-sm text-gray-600 font-poppins mb-6">
             Select and upload ONE primary document (70 points) and ONE secondary document (30 points) to meet the 100-point requirement.
           </p>
