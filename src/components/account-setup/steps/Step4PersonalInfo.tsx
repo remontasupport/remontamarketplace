@@ -12,6 +12,7 @@ interface Step4PersonalInfoProps {
     gender: string;
     genderIdentity: string;
     languages: string[];
+    hasVehicle: string;
   };
   onChange: (field: string, value: any) => void;
 }
@@ -61,6 +62,18 @@ export default function Step4PersonalInfo({
             value={data.languages.join(", ")}
             onChange={(e) => onChange("languages", e.target.value.split(", "))}
             helperText="Separate multiple languages with commas"
+          />
+
+          <SelectField
+            label="Do you have driver access?"
+            name="hasVehicle"
+            value={data.hasVehicle}
+            onChange={(e) => onChange("hasVehicle", e.target.value)}
+            options={[
+              { label: "Select...", value: "" },
+              { label: "Yes", value: "Yes" },
+              { label: "No", value: "No" },
+            ]}
           />
         </div>
       </div>

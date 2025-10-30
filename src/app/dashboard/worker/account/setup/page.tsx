@@ -85,6 +85,7 @@ interface FormData {
   gender: string;
   genderIdentity: string;
   languages: string[];
+  hasVehicle: string;
   // Step 7: ABN
   abn: string;
   // Step 8: Emergency Contact
@@ -130,6 +131,7 @@ export default function AccountSetupPage() {
     gender: "",
     genderIdentity: "",
     languages: [],
+    hasVehicle: "",
     abn: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
@@ -168,6 +170,7 @@ export default function AccountSetupPage() {
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
         genderIdentity: profileData.genderIdentity || "",
         languages: profileData.languages || [],
+        hasVehicle: profileData.hasVehicle || "",
         abn: "",
         emergencyContactName: "",
         emergencyContactPhone: "",

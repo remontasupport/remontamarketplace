@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         if (data.gender) updateData.gender = data.gender.toLowerCase();
         if (data.genderIdentity) updateData.genderIdentity = data.genderIdentity;
         if (data.languages) updateData.languages = data.languages;
+        if (data.hasVehicle) updateData.hasVehicle = data.hasVehicle;
         break;
 
       case 7: // ABN
