@@ -5,8 +5,32 @@
  * Single page with URL-based step navigation
  * Route: /dashboard/worker/requirements/setup?step=proof-of-identity
  *
- * Follows the same pattern as Account Setup and Services Setup
+ * NOTE: This page is deprecated. Proof of Identity has been moved to Account Setup.
+ * If accessed, users will be redirected to the dashboard.
  */
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+
+export default function MandatoryRequirementsSetupPage() {
+  const router = useRouter();
+
+  // Redirect to dashboard since this section is deprecated
+  useEffect(() => {
+    router.push("/dashboard/worker");
+  }, [router]);
+
+  return (
+    <DashboardLayout showProfileCard={false}>
+      <div className="form-page-container">
+        <p className="loading-text">Redirecting...</p>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+/* DEPRECATED CODE - Kept for reference
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
@@ -182,42 +206,8 @@ export default function MandatoryRequirementsSetupPage() {
     return null;
   }
 
-  return (
-    <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Mandatory requirements"
-        sectionNumber="3"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={handleSkip}
-        isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Complete" : "Next"}
-        showSkip={false}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
-            {successMessage}
-          </div>
-        )}
-
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
-            {errors.general}
-          </div>
-        )}
-
-        {/* Render current step */}
-        <CurrentStepComponent
-          data={formData}
-          onChange={handleFieldChange}
-          errors={errors}
-        />
-      </StepContainer>
-    </DashboardLayout>
-  );
+  // (Rest of deprecated code omitted for brevity)
+  // Original implementation redirected to dashboard
+  // Full code preserved in git history
 }
+*/

@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         if (data.bio) updateData.introduction = data.bio.trim();
         break;
 
-      case 4: // Address (reordered - was step 5)
+      case 4: // Address
         // Build location string from city, state, and postal code
         // Format: "City, State PostalCode" or "StreetAddress, City, State PostalCode" if street address exists
         if (data.city && data.state && data.postalCode) {
@@ -58,18 +58,23 @@ export async function POST(request: Request) {
         if (data.postalCode) updateData.postalCode = data.postalCode;
         break;
 
-      case 5: // Personal Info (reordered - was step 4)
+      case 5: // Proof of Identity
+        // This step handles its own uploads via /api/upload/identity-documents
+        // No profile updates needed here
+        break;
+
+      case 6: // Personal Info
         if (data.age) updateData.age = data.age;
         if (data.gender) updateData.gender = data.gender.toLowerCase();
         if (data.genderIdentity) updateData.genderIdentity = data.genderIdentity;
         if (data.languages) updateData.languages = data.languages;
         break;
 
-      case 6: // ABN
+      case 7: // ABN
         // TODO: Store ABN (might need separate table for sensitive data)
         break;
 
-      case 7: // Emergency Contact
+      case 8: // Emergency Contact
         // TODO: Store emergency contact (might need separate table)
         break;
 

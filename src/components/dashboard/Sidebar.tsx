@@ -8,8 +8,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   UserCircleIcon,
-  HandRaisedIcon,
-  DocumentTextIcon
+  HandRaisedIcon
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
@@ -50,14 +49,6 @@ const menuSections: MenuSection[] = [
     name: 'Your services',
     icon: HandRaisedIcon,
     items: servicesItems
-  },
-  {
-    id: 'mandatory-requirements',
-    name: 'Mandatory requirements',
-    icon: DocumentTextIcon,
-    items: [
-      { name: 'Proof of identity', href: '/dashboard/worker/requirements/setup?step=proof-of-identity' }
-    ]
   }
 ]
 
@@ -65,8 +56,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'account-details': false,
-    'services': false,
-    'mandatory-requirements': false
+    'services': false
   })
 
   const toggleSection = (sectionId: string) => {

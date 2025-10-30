@@ -1,9 +1,12 @@
 /**
  * Mandatory Requirements Setup Steps Configuration
  * Steps for workers to complete mandatory documentation and verification
+ *
+ * NOTE: This section has been deprecated. Proof of Identity has been moved
+ * to Account Setup (step 5, right after Address).
+ *
+ * This file is kept for potential future mandatory requirements.
  */
-
-import Step1ProofOfIdentity from "@/components/requirements-setup/steps/Step1ProofOfIdentity";
 
 export interface MandatoryRequirementsSetupStep {
   id: number;
@@ -14,16 +17,9 @@ export interface MandatoryRequirementsSetupStep {
 
 /**
  * Mandatory Requirements Setup Steps
- * Step 1: Proof of Identity - Upload ID documents for verification
+ * Currently empty - Proof of Identity moved to Account Setup
  */
-export const MANDATORY_REQUIREMENTS_SETUP_STEPS: MandatoryRequirementsSetupStep[] = [
-  {
-    id: 1,
-    slug: "proof-of-identity",
-    title: "Proof of identity",
-    component: Step1ProofOfIdentity,
-  },
-];
+export const MANDATORY_REQUIREMENTS_SETUP_STEPS: MandatoryRequirementsSetupStep[] = [];
 
 /**
  * Get step URL helper

@@ -73,14 +73,21 @@ interface FormData {
   city: string;
   state: string;
   postalCode: string;
-  // Step 5: Personal Info
+  // Step 5: Proof of Identity
+  identityDocuments: Array<{
+    id?: string;
+    documentType: string;
+    documentUrl: string;
+    uploadedAt: string;
+  }>;
+  // Step 6: Personal Info
   age: string;
   gender: string;
   genderIdentity: string;
   languages: string[];
-  // Step 6: ABN
+  // Step 7: ABN
   abn: string;
-  // Step 7: Emergency Contact
+  // Step 8: Emergency Contact
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelationship: string;
@@ -118,6 +125,7 @@ export default function AccountSetupPage() {
     city: "",
     state: "",
     postalCode: "",
+    identityDocuments: [],
     age: "",
     gender: "",
     genderIdentity: "",
@@ -155,6 +163,7 @@ export default function AccountSetupPage() {
         city: parsedLocation.city || profileData.city || "",
         state: parsedLocation.state || profileData.state || "",
         postalCode: parsedLocation.postalCode || profileData.postalCode || "",
+        identityDocuments: [],
         age: profileData.age || "",
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
         genderIdentity: profileData.genderIdentity || "",
@@ -241,8 +250,8 @@ export default function AccountSetupPage() {
     if (!session?.user?.id) return;
 
     try {
-      // Skip saving for step 2 (photo) since it's already saved during upload
-      if (currentStep !== 2) {
+      // Skip saving for step 2 (photo) and step 5 (proof-of-identity) since they handle their own uploads
+      if (currentStep !== 2 && currentStep !== 5) {
         // Use mutation hook - automatically invalidates cache on success
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,

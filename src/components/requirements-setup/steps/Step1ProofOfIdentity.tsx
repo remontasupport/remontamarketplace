@@ -96,7 +96,6 @@ export default function Step1ProofOfIdentity({
   const { data: session } = useSession();
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDocument>>({});
-  const [isLoadingExisting, setIsLoadingExisting] = useState(true);
 
   // Track which document type is selected for upload in each category
   const [selectedPrimaryType, setSelectedPrimaryType] = useState<string | null>(null);
@@ -143,8 +142,6 @@ export default function Step1ProofOfIdentity({
       }
     } catch (error) {
       console.error("Failed to load existing identity documents:", error);
-    } finally {
-      setIsLoadingExisting(false);
     }
   };
 
@@ -261,18 +258,6 @@ export default function Step1ProofOfIdentity({
       alert(`Delete failed: ${error.message}`);
     }
   };
-
-  if (isLoadingExisting) {
-    return (
-      <div className="form-page-content">
-        <div className="form-column">
-          <div className="account-form">
-            <p className="text-gray-600 font-poppins">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const uploadedCount = Object.keys(uploadedDocs).length;
 
