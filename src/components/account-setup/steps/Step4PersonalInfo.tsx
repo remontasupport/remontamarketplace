@@ -4,6 +4,7 @@
  */
 
 import { TextField, SelectField, NumberField } from "@/components/forms/fields";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step4PersonalInfoProps {
   data: {
@@ -20,7 +21,8 @@ export default function Step4PersonalInfo({
   onChange,
 }: Step4PersonalInfoProps) {
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
           <NumberField
@@ -72,6 +74,7 @@ export default function Step4PersonalInfo({
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }

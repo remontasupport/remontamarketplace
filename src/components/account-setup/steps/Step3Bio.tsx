@@ -4,6 +4,7 @@
  */
 
 import { TextArea } from "@/components/forms/fields";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step3BioProps {
   data: {
@@ -14,7 +15,8 @@ interface Step3BioProps {
 
 export default function Step3Bio({ data, onChange }: Step3BioProps) {
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
           <TextArea
@@ -42,6 +44,7 @@ export default function Step3Bio({ data, onChange }: Step3BioProps) {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }

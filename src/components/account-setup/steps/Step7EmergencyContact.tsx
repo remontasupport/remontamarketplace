@@ -4,6 +4,7 @@
  */
 
 import { TextField, NumberField } from "@/components/forms/fields";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step7EmergencyContactProps {
   data: {
@@ -19,7 +20,8 @@ export default function Step7EmergencyContact({
   onChange,
 }: Step7EmergencyContactProps) {
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
           <TextField
@@ -63,6 +65,7 @@ export default function Step7EmergencyContact({
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }

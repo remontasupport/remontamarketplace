@@ -4,6 +4,8 @@
  */
 
 import PhotoUpload from "@/components/forms/fields/PhotoUpload";
+import { CameraIcon } from "@heroicons/react/24/outline";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step2PhotoProps {
   data: {
@@ -22,7 +24,8 @@ export default function Step2Photo({ data, onChange, onPhotoSave, errors }: Step
   };
 
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       {/* Left Column - Photo Upload */}
       <div className="form-column">
         <div className="account-form">
@@ -44,28 +47,12 @@ export default function Step2Photo({ data, onChange, onPhotoSave, errors }: Step
       {/* Right Column - Photo Guidelines */}
       <div className="info-column">
         <div className="info-box">
-          <div className="info-box-icon">
-            <svg
-              className="icon-camera"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+          <div className="info-box-header">
+            <div className="info-box-icon">
+              <CameraIcon className="icon-camera" />
+            </div>
+            <h3 className="info-box-title">Photo guidelines</h3>
           </div>
-          <h3 className="info-box-title">Photo guidelines</h3>
           <ul className="info-box-list">
             <li>Head and shoulders</li>
             <li>Colour photo</li>
@@ -75,6 +62,7 @@ export default function Step2Photo({ data, onChange, onPhotoSave, errors }: Step
           </ul>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }

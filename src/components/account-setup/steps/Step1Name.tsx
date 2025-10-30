@@ -4,7 +4,8 @@
  */
 
 import { TextField } from "@/components/forms/fields";
-import { UserCircle } from "lucide-react";
+import { UserCircleIcon } from "@heroicons/react/24/outline";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step1NameProps {
   data: {
@@ -21,7 +22,8 @@ interface Step1NameProps {
 
 export default function Step1Name({ data, onChange, errors }: Step1NameProps) {
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       {/* Left Column - Form */}
       <div className="form-column">
         <div className="account-form">
@@ -59,12 +61,14 @@ export default function Step1Name({ data, onChange, errors }: Step1NameProps) {
       {/* Right Column - Info Box */}
       <div className="info-column">
         <div className="info-box">
-          <div className="info-box-icon">
-            <UserCircle className="icon-user" />
+          <div className="info-box-header">
+            <div className="info-box-icon">
+              <UserCircleIcon className="icon-user" />
+            </div>
+            <h3 className="info-box-title">
+              Why your legal name is important to us?
+            </h3>
           </div>
-          <h3 className="info-box-title">
-            Why your legal name is important to us?
-          </h3>
           <p className="info-box-text">
             Your legal name will be used for our verification purposes such as
             your ABN.
@@ -75,6 +79,7 @@ export default function Step1Name({ data, onChange, errors }: Step1NameProps) {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }

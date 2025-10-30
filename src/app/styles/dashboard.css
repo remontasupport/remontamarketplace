@@ -1202,13 +1202,23 @@
   max-width: 400px;
 }
 
-.info-box-icon {
-  margin-bottom: 1rem;
+.info-box-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
 }
 
-.icon-user {
-  width: 2rem;
-  height: 2rem;
+.info-box-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.5rem;
+}
+
+.icon-user,
+.icon-location,
+.icon-camera {
+  width: 1.5rem;
+  height: 1.5rem;
   color: var(--brand-primary);
 }
 
@@ -1217,7 +1227,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 0.75rem 0;
+  margin: 0;
   max-width: 25rem;
 }
 

@@ -262,7 +262,7 @@ export default function Step1ProofOfIdentity({
   const uploadedCount = Object.keys(uploadedDocs).length;
 
   return (
-    <div className="requirements-step-container">
+    <div className="account-step-container">
       <div className="form-page-content">
       {/* Left Column - Form */}
       <div className="form-column">

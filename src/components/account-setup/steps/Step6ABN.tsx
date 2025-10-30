@@ -4,6 +4,7 @@
  */
 
 import { TextField } from "@/components/forms/fields";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step6ABNProps {
   data: {
@@ -17,7 +18,8 @@ interface Step6ABNProps {
 
 export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
           <TextField
@@ -53,6 +55,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }

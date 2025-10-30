@@ -3,6 +3,9 @@
 
 /* Page-specific styles */
 @import "./styles/dashboard.css";
+@import "./styles/account-setup.css";
+@import "./styles/services-setup.css";
+@import "./styles/requirements-setup.css";
 
 @custom-variant dark (&:is(.dark *));
 

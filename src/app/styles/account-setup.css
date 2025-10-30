@@ -6,17 +6,26 @@
   --brand-secondary: #A3DEDE;
 }
 
+/* Override form-page-container when it contains account-step-container */
+.form-page-container:has(.account-step-container) {
+  margin: 0 !important;
+  padding: 1rem 0rem !important;
+  max-width: 100% !important;
+}
+
 /* Account Step Container - Matches Services spacing */
 .account-step-container {
   min-height: 50vh;
-  margin-left: -2rem;
-  padding-left: 1.5rem;
+  margin-left: -1rem !important;
+  margin-right: -1rem !important;
+  padding-left: 3rem !important;
+  padding-right: 3rem !important;
 }
 
 /* Align header elements with the adjusted container */
 .form-page-container:has(.account-step-container) .form-page-header {
-  margin-left: -0.60rem;
-  padding-left: 0;
+  margin-left: -1rem !important;
+  padding-left: 3rem !important;
 }
 
 /* Reduce space between content and navigation */
@@ -26,9 +35,9 @@
 
 /* Align navigation buttons with the adjusted container */
 .form-page-container:has(.account-step-container) .step-navigation {
-  margin-left: -0.60rem;
-  padding-top: 0.5rem;
-  padding-left: 0;
+  margin-left: -1rem !important;
+  padding-top: 0.5rem !important;
+  padding-left: 3rem !important;
 }
 
 /* Override form-page-content grid for account steps */

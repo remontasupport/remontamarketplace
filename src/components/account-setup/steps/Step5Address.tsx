@@ -5,6 +5,8 @@
  */
 
 import { TextField } from "@/components/forms/fields";
+import { MapPinIcon } from "@heroicons/react/24/outline";
+import StepContentWrapper from "../shared/StepContentWrapper";
 
 interface Step5AddressProps {
   data: {
@@ -18,7 +20,8 @@ interface Step5AddressProps {
 
 export default function Step5Address({ data, onChange }: Step5AddressProps) {
   return (
-    <div className="form-page-content">
+    <StepContentWrapper>
+      <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
           {/* Street Address (Optional) */}
@@ -59,28 +62,12 @@ export default function Step5Address({ data, onChange }: Step5AddressProps) {
 
       <div className="info-column">
         <div className="info-box">
-          <div className="info-box-icon">
-            <svg
-              className="icon-location"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+          <div className="info-box-header">
+            <div className="info-box-icon">
+              <MapPinIcon className="icon-location" />
+            </div>
+            <h3 className="info-box-title">Your Location</h3>
           </div>
-          <h3 className="info-box-title">Your Location</h3>
           <p className="info-box-text">
             Street address is optional. Please fill in your city/suburb, state, and postal code.
           </p>
@@ -89,6 +76,7 @@ export default function Step5Address({ data, onChange }: Step5AddressProps) {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </StepContentWrapper>
   );
 }
