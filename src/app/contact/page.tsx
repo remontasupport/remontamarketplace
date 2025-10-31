@@ -299,7 +299,7 @@ export default function ContactPage() {
             {/* Left Content */}
             <div className="order-2 lg:order-1">
               <h1 className="text-4xl md:text-5xl lg:text-6xl text-[#0C1628] mb-6 font-cooper">
-                Need Help
+                Need Assistance?
               </h1>
 
               <p className="text-lg md:text-xl text-[#0C1628] mb-4 font-poppins">
