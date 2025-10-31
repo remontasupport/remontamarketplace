@@ -48,45 +48,42 @@ const features = [
 
 export default function AboutUs() {
   return (
-    <section className="bg-white pt-8 pb-4 sm:py-12 md:py-16 lg:py-20 overflow-x-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
+    <section className="about-us-section">
+      <div className="about-us-container">
         {/* Header */}
-        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
-          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
-            <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">ABOUT US</span>
-          </p>
-          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal text-[#0C1628] mb-2 sm:mb-8">
+        <div className="about-us-header">
+          <div className="about-us-badge-wrapper">
+            <span className="section-badge">ABOUT US</span>
+          </div>
+          <h2 className="section-title about-us-title">
             Why choose Remonta?
           </h2>
-          <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] max-w-4xl mx-auto">
+          <p className="section-description about-us-intro">
             Remonta gives you the freedom to choose and control your support, combined with the safeguards and reliability of a NDIS-registered provider.
           </p>
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 items-stretch">
+        <div className="about-us-features-grid">
           {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-[#EDEFF3] hover:bg-[#0C1628] rounded-2xl p-6 sm:p-8 lg:p-10 text-center hover:shadow-lg transition-all duration-300 flex flex-col min-h-[280px] sm:min-h-[420px] group"
-            >
+            <div key={index} className="about-us-feature-card">
               {/* Icon */}
-              <div className="flex justify-center mb-4 sm:mb-8">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white group-hover:bg-white rounded-2xl flex items-center justify-center shadow-sm">
-                  <div className="group-hover:text-[#0C1628]">
+              <div className="about-us-icon-wrapper">
+                <div className="about-us-icon-container">
+                  <div className="about-us-icon">
                     {feature.icon}
                   </div>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="flex-grow flex flex-col">
-                <h3 className="font-cooper text-xl sm:text-2xl lg:text-2xl font-normal text-[#0C1628] group-hover:text-white mb-3 sm:mb-6 leading-tight h-[3rem] sm:h-[5rem] flex items-start justify-center">
-                  <span className="block text-center">
+              <div className="about-us-feature-content">
+                <h3 className="about-us-feature-title">
+                  <span className="about-us-feature-title-text">
                     {feature.title}
                   </span>
                 </h3>
-                <p className="font-sans text-sm sm:text-base lg:text-base text-[#0C1628] group-hover:text-white leading-relaxed flex-grow">
+                <p className="about-us-feature-description">
                   {feature.description}
                 </p>
               </div>
@@ -95,42 +92,39 @@ export default function AboutUs() {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-12 sm:mt-16 lg:mt-20">
-          <div className="bg-[#0C1628] rounded-2xl sm:rounded-3xl px-4 pt-8 pb-6 sm:px-6 sm:py-8 md:px-8 md:py-10 lg:pl-16 lg:pr-0 lg:pt-4 lg:pb-8 relative overflow-visible">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-4 items-center">
-            {/* Content Section */}
-            <div className="order-1 lg:order-1 lg:-translate-y-4 text-center lg:text-left">
-              <h2 className="font-cooper text-3xl sm:text-3xl md:text-4xl lg:text-4xl font-normal leading-tight text-white mb-4 sm:mb-6 text-center lg:text-left">
-                Ready to work with us?
-              </h2>
+        <div className="about-us-cta-section">
+          <div className="about-us-cta-container">
+            <div className="about-us-cta-grid">
+              {/* Content Section */}
+              <div className="about-us-cta-content">
+                <h2 className="about-us-cta-title">
+                  Ready to work with us?
+                </h2>
 
-              <p className="font-sans text-base sm:text-lg lg:text-lg text-white leading-relaxed mb-6 sm:mb-8 text-center lg:text-left">
-               Remonta provide tips and information to help you access experiences you love.
-              </p>
+                <p className="about-us-cta-description">
+                  Remonta provide tips and information to help you access experiences you love.
+                </p>
 
-              <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                <Link
-                  href="/registration/worker"
-                  className="inline-flex mx-12 lg:mx-0 items-center justify-center rounded-full bg-[#B1C3CD] px-6 sm:px-8 lg:px-8 py-3 sm:py-3.5 lg:py-3.5 font-sans font-semibold text-base sm:text-base text-[#0C1628] hover:bg-white transition-colors duration-200"
-                >
-                  Provide Support
-                </Link>
+                <div className="about-us-cta-button-wrapper">
+                  <Link href="/registration/worker" className="about-us-cta-button">
+                    Provide Support
+                  </Link>
+                </div>
+              </div>
+
+              {/* Image Section - Appears at bottom on mobile */}
+              <div className="about-us-cta-image-wrapper">
+                <div className="about-us-cta-image-container">
+                  <Image
+                    src="/images/cta-support-worker.png"
+                    alt="NDIS support worker helping young participant in wheelchair"
+                    fill
+                    className="about-us-cta-image"
+                    priority
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Image Section - Appears at bottom on mobile */}
-            <div className="order-2 lg:order-2 relative flex justify-center lg:justify-start">
-              <div className="relative w-full max-w-md lg:max-w-none h-[280px] sm:h-[320px] md:h-[350px] lg:w-full lg:h-[380px] translate-y-6 lg:translate-y-8 rounded-2xl overflow-hidden">
-                <Image
-                  src="/images/cta-support-worker.png"
-                  alt="NDIS support worker helping young participant in wheelchair"
-                  fill
-                  className="object-cover object-center lg:object-center lg:object-center scale-99 sm:scale-129"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
           </div>
         </div>
       </div>

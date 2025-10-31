@@ -3,6 +3,8 @@
 
 /* Page-specific styles */
 @import "./styles/provide-support.css";
+@import "./styles/how-it-works.css";
+@import "./styles/about-us.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -195,6 +197,85 @@ div[style*="position: fixed"][style*="bottom: 16px"] {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Global Typography Classes */
+
+/* Section Title (h2) - Used across landing page sections */
+.section-title {
+  font-family: var(--font-cooper);
+  font-size: 1.875rem;
+  font-weight: 400;
+  color: var(--brand-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .section-title {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .section-title {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-title {
+    font-size: 3rem;
+  }
+}
+
+/* Section Description/Paragraph */
+.section-description {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--brand-primary);
+  
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .section-description {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-description {
+    font-size: 1.25rem;
+    line-height: 1.7;
+  }
+}
+
+/* Section Badge/Tag */
+.section-badge {
+  background-color: var(--brand-tertiary);
+  padding: 0 0.5rem;
+  border-radius: 0.5rem;
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-primary);
+}
+
+@media (min-width: 640px) {
+  .section-badge {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .section-badge {
+    font-size: 1rem;
   }
 }
 
