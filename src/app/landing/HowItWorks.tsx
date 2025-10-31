@@ -18,7 +18,7 @@ const steps = [
     step: 3,
     title: 'Get It Done',
     description: 'Choose your preferred professional, schedule the work, and enjoy peace of mind knowing your project is in expert hands.',
-    image: '/images/step3.jpg', // Placeholder - replace with actual image
+    image: '/images/get-it-done.jpg', // Placeholder - replace with actual image
   },
 ]
 
