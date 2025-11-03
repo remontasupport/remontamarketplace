@@ -288,6 +288,7 @@ export default function ContactPage() {
             <p className="contact-hero-text-new">
               Call us or send us a message and we’ll be happy to help you in any way we can. One of our friendly team members will get back to you within the next business day.
             </p>
+            
           </div>
 
           <div className="contact-hero-cards">
