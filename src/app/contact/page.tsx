@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Footer from "@/components/ui/layout/Footer"
 import Image from "next/image"
+import { Phone, MessageCircle } from "lucide-react"
 import '@/app/styles/contact.css'
 
 interface FormData {
@@ -276,40 +277,49 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section with Background Image */}
-      <section className="contact-hero-section">
-        <div className="contact-hero-overlay"></div>
-        <div className="contact-hero-container">
-          <div className="contact-hero-content">
-            <h1 className="contact-hero-title">
+      {/* Hero Section with New Layout */}
+      <section className="contact-hero-section-new">
+        <div className="contact-hero-container-new">
+          <div className="contact-hero-content-new">
+            <h1 className="contact-hero-title-new">
               Need Assistance?
             </h1>
 
-            <p className="contact-hero-text">
-             Call us or send us a message and we’ll be happy to help you in any way we can. 
+            <p className="contact-hero-text-new">
+              Call us or send us a message and we’ll be happy to help you in any way we can. One of our friendly team members will get back to you within the next business day.
             </p>
+          </div>
 
-            <p className="contact-hero-subtext">
-              One of our friendly team members will get back to you within the next business day.
-            </p>
-
-            <div className="contact-hero-buttons">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="contact-button"
-              >
-                Enquire Now
-              </button>
-
-              <a
-                href="tel:1300 134 153"
-                className="contact-phone-button"
-              >
-                <svg className="contact-phone-icon" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                </svg>
+          <div className="contact-hero-cards">
+            {/* Talk to Sales Card */}
+            <div className="contact-hero-card">
+              <div className="contact-hero-card-icon">
+                <Phone size={48} strokeWidth={1.5} />
+              </div>
+              <h3 className="contact-hero-card-title">Talk to Sales</h3>
+              <p className="contact-hero-card-description">
+                Interested in our services? Just pick up the phone to chat with a member of our sales team.
+              </p>
+              <a href="tel:1300134153" className="contact-hero-phone-number">
                 1300 134 153
               </a>
+            </div>
+
+            {/* Contact Customer Support Card */}
+            <div className="contact-hero-card">
+              <div className="contact-hero-card-icon">
+                <MessageCircle size={48} strokeWidth={1.5} />
+              </div>
+              <h3 className="contact-hero-card-title">Contact Customer Support</h3>
+              <p className="contact-hero-card-description">
+                Sometimes you need a little help from your friends. Or a Remonta support rep. Don't worry... we're here for you.
+              </p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="contact-hero-support-button"
+              >
+                Contact Support
+              </button>
             </div>
           </div>
         </div>
@@ -319,7 +329,7 @@ export default function ContactPage() {
       <section className="contact-feedback-section">
         <div className="contact-section-container">
           <div className="contact-grid-container">
-            {/* Right Side - Content */}
+            {/* Left Side - Content */}
             <div className="contact-feedback-content">
               <h2 className="contact-section-title">
                 Complaints, feedback, compliments?
@@ -328,23 +338,9 @@ export default function ContactPage() {
               <p className="contact-section-text">
                 If you would like to submit a complaint, feedback, or a compliment, please complete this form and our team will respond as soon as possible.
               </p>
-
-              <div className="contact-info">
-                <p className="contact-info-text">
-                  Or call us with your concerns at:
-                </p>
-                <div className="contact-phone-info">
-                  <div>
-                    <svg className="contact-phone-icon-small" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                    </svg>
-                  </div>
-                  <span className="contact-phone-number">1300 134 153</span>
-                </div>
-              </div>
             </div>
 
-            {/* Left Side - Form */}
+            {/* Right Side - Form */}
             <div className="contact-form-card">
               <form onSubmit={handleSubmit} className="contact-form">
                 <div className="contact-form-row">

@@ -71,9 +71,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate environment variables
-    const { RESEND_API_KEY, EMAIL_FROM, EMAIL_TO } = process.env
+    const { RESEND_API_KEY, EMAIL_FROM } = process.env
 
-    if (!RESEND_API_KEY || !EMAIL_FROM || !EMAIL_TO) {
+    if (!RESEND_API_KEY || !EMAIL_FROM) {
       console.error('Missing email configuration environment variables')
       return NextResponse.json(
         { error: 'Email service is not configured properly' },
@@ -81,11 +81,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine recipient email based on feedback type
-    let recipientEmail = EMAIL_TO
-    if (sanitizedData.feedbackType === 'Complaint') {
-      recipientEmail = 'compliance@remontaservices.com.au'
-    }
+    // All feedback goes to contact email
+    const recipientEmail = 'contact@remontaservices.com.au'
 
     // Initialize Resend
     const resend = new Resend(RESEND_API_KEY)
@@ -95,7 +92,7 @@ export async function POST(request: NextRequest) {
       from: `Remonta Feedback <${EMAIL_FROM}>`,
       to: recipientEmail,
       replyTo: sanitizedData.email,
-      subject: `New ${sanitizedData.feedbackType} from ${sanitizedData.firstName} ${sanitizedData.lastName}`,
+      subject: `[${sanitizedData.feedbackType}] New feedback from ${sanitizedData.firstName} ${sanitizedData.lastName}`,
       html: `
         <!DOCTYPE html>
         <html>
