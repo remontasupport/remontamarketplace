@@ -25,6 +25,17 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
+// Email routing based on support type
+function getEmailRecipient(supportType: string): string {
+  const emailMap: Record<string, string> = {
+    'General Inquiry': 'contact@remontaservices.com.au',
+    'Community Support': 'community@remontaservices.com.au',
+    'Technical Support': 'support@remontaservices.com.au',
+  }
+
+  return emailMap[supportType] || 'contact@remontaservices.com.au'
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
@@ -81,9 +92,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate environment variables
-    const { RESEND_API_KEY, EMAIL_FROM, EMAIL_TO } = process.env
+    const { RESEND_API_KEY, EMAIL_FROM } = process.env
 
-    if (!RESEND_API_KEY || !EMAIL_FROM || !EMAIL_TO) {
+    if (!RESEND_API_KEY || !EMAIL_FROM) {
       console.error('Missing email configuration environment variables')
       return NextResponse.json(
         { error: 'Email service is not configured properly' },
@@ -91,15 +102,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get the appropriate email recipient based on support type
+    const recipientEmail = getEmailRecipient(sanitizedData.supportType)
+
     // Initialize Resend
     const resend = new Resend(RESEND_API_KEY)
 
     // Send email
     await resend.emails.send({
       from: `Remonta Contact <${EMAIL_FROM}>`,
-      to: EMAIL_TO,
+      to: recipientEmail,
       replyTo: sanitizedData.email,
-      subject: sanitizedData.subject,
+      subject: `[${sanitizedData.supportType}] ${sanitizedData.subject}`,
       html: `
         <!DOCTYPE html>
         <html>

@@ -257,9 +257,11 @@ export default function ContactPage() {
         description: '',
       })
 
+      // Close modal after showing success message briefly
       setTimeout(() => {
+        setIsModalOpen(false)
         setModalSubmitStatus('idle')
-      }, 5000)
+      }, 2000)
     } catch (error) {
       console.error('Error submitting contact form:', error)
       setModalSubmitStatus('error')
