@@ -297,9 +297,9 @@ export default function ContactPage() {
               <div className="contact-hero-card-icon">
                 <Phone size={48} strokeWidth={1.5} />
               </div>
-              <h3 className="contact-hero-card-title">Talk to Sales</h3>
+              <h3 className="contact-hero-card-title">Talk to Us</h3>
               <p className="contact-hero-card-description">
-                Interested in our services? Just pick up the phone to chat with a member of our sales team.
+                Interested in our services? Just pick up the phone to chat with a member of our team.
               </p>
               <a href="tel:1300134153" className="contact-hero-phone-number">
                 1300 134 153
