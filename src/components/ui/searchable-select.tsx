@@ -104,7 +104,6 @@ export function SearchableSelect({
                   key={`${option.value}-${index}`}
                   value={option.display || option.label}
                   onSelect={(selectedValue) => {
-                    console.log("Item selected:", selectedValue, option);
                     onValueChange?.(option.value);
                     setOpen(false);
                     setSearchQuery("");

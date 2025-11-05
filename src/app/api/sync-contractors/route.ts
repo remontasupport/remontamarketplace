@@ -389,9 +389,7 @@ export async function POST(request: NextRequest) {
     // ========================================
     // 2. FETCH DATA FROM ZOHO
     // ========================================
-    console.log('[Sync] Fetching contractors from Zoho CRM...')
     const zohoContacts = await zohoService.getContractorContacts()
-    console.log(`[Sync] Fetched ${zohoContacts.length} contacts from Zoho`)
 
     if (zohoContacts.length === 0) {
       return NextResponse.json({
@@ -427,7 +425,6 @@ export async function POST(request: NextRequest) {
     // Process in batches
     for (let i = 0; i < zohoContacts.length; i += BATCH_SIZE) {
       const batch = zohoContacts.slice(i, i + BATCH_SIZE)
-      console.log(`[Sync] Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(zohoContacts.length / BATCH_SIZE)}...`)
 
       const results = await processBatch(batch)
 
@@ -450,8 +447,6 @@ export async function POST(request: NextRequest) {
     // 4. RESPONSE
     // ========================================
     const duration = Date.now() - startTime
-
-    console.log(`[Sync] Completed in ${duration}ms - Created: ${stats.created}, Updated: ${stats.updated}, Errors: ${stats.errors}`)
 
     return NextResponse.json({
       success: true,

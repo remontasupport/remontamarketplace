@@ -82,7 +82,6 @@ export async function applyRateLimit(
 ): Promise<{ success: boolean; response?: Response }> {
   // Skip rate limiting if not configured (development mode)
   if (!limiter) {
-    console.log('[Rate Limit] Skipped - Redis not configured')
     return { success: true }
   }
 
@@ -100,8 +99,6 @@ export async function applyRateLimit(
 
     if (!success) {
       // Rate limit exceeded
-      console.log(`[Rate Limit] Blocked: ${identifier} (${remaining}/${limit} remaining)`)
-
       return {
         success: false,
         response: new Response(
@@ -121,9 +118,6 @@ export async function applyRateLimit(
         ),
       }
     }
-
-    // Rate limit OK, log for monitoring
-    console.log(`[Rate Limit] OK: ${identifier} (${remaining}/${limit} remaining)`)
 
     return { success: true }
   } catch (error) {

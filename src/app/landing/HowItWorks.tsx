@@ -74,7 +74,7 @@ export default function HowItWorks() {
 
         {/* CTA Button */}
         <div className="how-it-works-cta">
-          <Link href="/find-support" className="how-it-works-button">
+          <Link href="/registration/user" className="how-it-works-button">
             Get started with us today
           </Link>
         </div>

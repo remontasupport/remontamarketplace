@@ -360,20 +360,8 @@ export async function POST(request: NextRequest) {
     const moduleHeader = request.headers.get('module')
     const operationHeader = request.headers.get('operation')
 
-    console.log('[Webhook] Request received:', {
-      contentType,
-      hasQueryParams: Object.keys(queryParams).length > 0,
-      queryParams,
-      headers: {
-        ids: idsHeader,
-        module: moduleHeader,
-        operation: operationHeader,
-      },
-    })
-
     // Check if data is in headers first (Zoho workflow sends params as headers with merge field placeholders)
     if (idsHeader && idsHeader.includes('${') && idsHeader.includes('}')) {
-      console.log('[Webhook] Detected merge field in headers - syncing recently modified contacts')
 
       // Fetch contacts modified in the last 5 minutes
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
@@ -381,8 +369,6 @@ export async function POST(request: NextRequest) {
       try {
         // Get recently modified contacts from Zoho
         const recentContacts = await zohoService.getRecentlyModifiedContacts(fiveMinutesAgo)
-
-        console.log(`[Webhook] Found ${recentContacts.length} recently modified contacts`)
 
         // Process each contact
         const results = await Promise.all(
@@ -400,8 +386,6 @@ export async function POST(request: NextRequest) {
           .map((r, i) => `Contact ${recentContacts[i].id}: ${r.error}`)
 
         const duration = Date.now() - startTime
-
-        console.log(`[Webhook] Synced recent contacts in ${duration}ms - Success: ${stats.success}, Failed: ${stats.failed}`)
 
         return NextResponse.json({
           success: true,
@@ -427,24 +411,16 @@ export async function POST(request: NextRequest) {
     if (contentType.includes('application/x-www-form-urlencoded')) {
       try {
         formData = await request.formData()
-        console.log('[Webhook] Form data entries:', Array.from(formData.entries()))
       } catch (e) {
         // If formData() fails, try text()
-        console.log('[Webhook] FormData parsing failed, trying text()')
         bodyText = await request.text()
       }
     } else {
       bodyText = await request.text()
     }
 
-    console.log('[Webhook] Body details:', {
-      bodyText: bodyText.substring(0, 200),
-      formDataKeys: formData ? Array.from(formData.keys()) : null,
-    })
-
     // Handle empty body text - check headers, form data, or query params
     if ((!bodyText || bodyText.trim() === '') && !formData) {
-      console.log('[Webhook] Empty body - checking headers and query parameters')
 
       // Try to get params from headers first (Zoho workflow webhooks)
       let id = idsHeader
@@ -461,16 +437,12 @@ export async function POST(request: NextRequest) {
       // Check if we got a merge field placeholder instead of actual ID (fallback check)
       // Zoho sends "${Contacts.id}" when merge fields don't work in Custom Parameters
       if (id && id.includes('${') && id.includes('}')) {
-        console.log('[Webhook] Merge field not expanded - syncing recently modified contacts instead')
-
         // Fetch contacts modified in the last 5 minutes
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
         try {
           // Get recently modified contacts from Zoho
           const recentContacts = await zohoService.getRecentlyModifiedContacts(fiveMinutesAgo)
-
-          console.log(`[Webhook] Found ${recentContacts.length} recently modified contacts`)
 
           // Process each contact
           const results = await Promise.all(
@@ -488,8 +460,6 @@ export async function POST(request: NextRequest) {
             .map((r, i) => `Contact ${recentContacts[i].id}: ${r.error}`)
 
           const duration = Date.now() - startTime
-
-          console.log(`[Webhook] Synced recent contacts in ${duration}ms - Success: ${stats.success}, Failed: ${stats.failed}`)
 
           return NextResponse.json({
             success: true,
@@ -523,8 +493,6 @@ export async function POST(request: NextRequest) {
         operation: (operation as any) || 'update',
       }
 
-      console.log('[Webhook] Using query parameters:', payload)
-
       // Jump to processing
       const results = await Promise.all(
         payload.ids.map(contactId => processWebhookContact(contactId))
@@ -542,8 +510,6 @@ export async function POST(request: NextRequest) {
 
       const duration = Date.now() - startTime
 
-      console.log(`[Webhook] Completed in ${duration}ms - Success: ${stats.success}, Failed: ${stats.failed}`)
-
       return NextResponse.json({
         success: true,
         message: 'Webhook processed from query params',
@@ -559,8 +525,6 @@ export async function POST(request: NextRequest) {
 
     // Check if we have FormData
     if (formData) {
-      console.log('[Webhook] Parsing from FormData object')
-
       const idsParam = formData.get('ids')?.toString() || formData.get('id')?.toString()
       const moduleParam = formData.get('module')?.toString()
       const operationParam = formData.get('operation')?.toString() || formData.get('event')?.toString()
@@ -587,12 +551,9 @@ export async function POST(request: NextRequest) {
         ids,
         operation: (operationParam as any) || 'update',
       }
-
-      console.log('[Webhook] Parsed from FormData:', payload)
     }
     // Check if it's URL-encoded form data (Zoho sometimes sends this)
     else if (contentType.includes('application/x-www-form-urlencoded') && bodyText) {
-      console.log('[Webhook] Parsing URL-encoded form data from body text')
       const params = new URLSearchParams(bodyText)
 
       // Zoho might send data in various formats
@@ -611,13 +572,10 @@ export async function POST(request: NextRequest) {
         ids,
         operation: (operationParam as any) || 'update',
       }
-
-      console.log('[Webhook] Parsed from URL params:', payload)
     } else {
       // Try parsing as JSON
       try {
         payload = JSON.parse(bodyText)
-        console.log('[Webhook] Parsed from JSON:', payload)
       } catch (parseError) {
         console.error('[Webhook] JSON parse error:', parseError)
         console.error('[Webhook] Body that failed to parse:', bodyText)
@@ -632,12 +590,6 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-
-    console.log('[Webhook] Parsed Zoho webhook:', {
-      module: payload.module,
-      operation: payload.operation,
-      contactIds: payload.ids,
-    })
 
     // Validate module
     if (payload.module !== 'Contacts') {
@@ -661,8 +613,6 @@ export async function POST(request: NextRequest) {
 
     // Handle DELETE operation (soft delete)
     if (payload.operation === 'delete') {
-      console.log('[Webhook] Processing SOFT DELETE operation for contacts:', payload.ids)
-
       const deleteResults = await Promise.all(
         payload.ids.map(async (contactId) => {
           try {
@@ -696,7 +646,6 @@ export async function POST(request: NextRequest) {
       }
 
       const duration = Date.now() - startTime
-      console.log(`[Webhook] Soft delete completed in ${duration}ms - Success: ${deleteStats.success}, Failed: ${deleteStats.failed}`)
 
       return NextResponse.json({
         success: true,
@@ -726,8 +675,6 @@ export async function POST(request: NextRequest) {
       .map((r, i) => `Contact ${payload.ids[i]}: ${r.error}`)
 
     const duration = Date.now() - startTime
-
-    console.log(`[Webhook] Completed in ${duration}ms - Success: ${stats.success}, Failed: ${stats.failed}`)
 
     // ========================================
     // 4. RESPONSE

@@ -117,7 +117,6 @@ const CommandItem = React.forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     onSelect={(value) => {
-      console.log("CommandItem onSelect triggered:", value);
       onSelect?.(value);
     }}
     className={cn(

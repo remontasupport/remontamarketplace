@@ -216,7 +216,6 @@ class ZohoService {
       page++
     }
 
-    console.log(`Total contacts fetched: ${allContacts.length} (filtered by Option_1 = "Contractor")`)
     return allContacts
   }
 
@@ -270,20 +269,14 @@ class ZohoService {
     const criteria = encodeURIComponent(`(Modified_Time:greater_than:${zohoDate})`)
     const url = `${this.apiUrl}/Contacts/search?criteria=${criteria}&layout_id=${contractorsLayoutId}&per_page=200`
 
-    console.log('[Zoho] Fetching recent contacts with URL:', url)
-    console.log('[Zoho] Using date:', zohoDate)
-
     const response = await fetch(url, {
       headers: {
         Authorization: `Zoho-oauthtoken ${token}`,
       },
     })
 
-    console.log('[Zoho] Response status:', response.status, response.statusText)
-
     if (!response.ok) {
       if (response.status === 204) {
-        console.log('[Zoho] No recent contacts found (204)')
         return [] // No records found
       }
 
@@ -301,8 +294,6 @@ class ZohoService {
     const contractorContacts = data.data.filter(
       contact => contact.Option_1 === 'Contractor'
     )
-
-    console.log(`[Zoho] Found ${contractorContacts.length} contractor contacts`)
 
     return contractorContacts
   }
