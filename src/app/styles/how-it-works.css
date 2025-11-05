@@ -53,6 +53,16 @@
   }
 }
 
+.how-it-works-badge-wrapper {
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .how-it-works-badge-wrapper {
+    margin-bottom: 1rem;
+  }
+}
+
 /* Title uses global .section-title class */
 
 /* Steps Grid */
@@ -151,7 +161,7 @@
 
 @media (min-width: 640px) {
   .how-it-works-step-title {
-    font-size: 1.875rem;
+    font-size: 1.6rem;
     margin-bottom: 1rem;
   }
 }
@@ -194,7 +204,6 @@
   font-weight: 600;
   font-size: 1rem;
   color: white;
-  text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: all 0.2s;
   text-decoration: none;
@@ -216,5 +225,6 @@
 }
 
 .how-it-works-button:hover {
-  background-color: #357ABD;
+  background-color: white;
+  color: var(--brand-primary);
 }

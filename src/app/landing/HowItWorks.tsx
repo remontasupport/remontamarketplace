@@ -16,7 +16,7 @@ const steps = [
   },
   {
     step: 3,
-    title: 'Get It Done',
+    title: 'Service Provided',
     description: 'Choose your preferred professional, schedule the work, and enjoy peace of mind knowing your project is in expert hands.',
     image: '/images/get-it-done.jpg', // Placeholder - replace with actual image
   },
@@ -28,6 +28,9 @@ export default function HowItWorks() {
       <div className="how-it-works-container">
         {/* Title */}
         <div className="how-it-works-header">
+          <div className="how-it-works-badge-wrapper">
+            <span className="section-badge">HOW IT WORKS</span>
+          </div>
           <h2 className="section-title">
             How Easy Can Finding NDIS Support Be?
           </h2>
@@ -72,7 +75,7 @@ export default function HowItWorks() {
         {/* CTA Button */}
         <div className="how-it-works-cta">
           <Link href="/find-support" className="how-it-works-button">
-            Get started with our services today
+            Get started with us today
           </Link>
         </div>
       </div>
