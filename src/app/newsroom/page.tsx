@@ -150,9 +150,11 @@ export default function NewsroomPage() {
 
                   {/* Featured Content */}
                   <div className="featured-content">
-                    <h2 className="featured-title">
-                      {articles[0].title}
-                    </h2>
+                    <Link href={`/newsroom/${articles[0].slug.current}`}>
+                      <h2 className="featured-title clickable-title">
+                        {articles[0].title}
+                      </h2>
+                    </Link>
                     <p className="featured-excerpt">
                       {articles[0].excerpt}
                     </p>
@@ -215,9 +217,11 @@ export default function NewsroomPage() {
 
                     {/* Article Content */}
                     <div className="article-content">
-                      <h3 className="article-title">
-                        {article.title}
-                      </h3>
+                      <Link href={`/newsroom/${article.slug.current}`}>
+                        <h3 className="article-title clickable-title">
+                          {article.title}
+                        </h3>
+                      </Link>
 
                       {/* Meta Info */}
                       <div className="article-meta-small">
