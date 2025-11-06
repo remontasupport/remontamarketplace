@@ -10,9 +10,6 @@ import '../styles/newsroom.css'
 export default function NewsroomPage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitMessage, setSubmitMessage] = useState('')
 
   // Fetch articles from Sanity
   useEffect(() => {
@@ -29,88 +26,19 @@ export default function NewsroomPage() {
     fetchArticles()
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setSubmitMessage('')
-
-    try {
-      // Add your newsletter subscription logic here
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulated API call
-      setSubmitMessage('Thank you for subscribing!')
-      setEmail('')
-    } catch (error) {
-      setSubmitMessage('Something went wrong. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="newsroom-hero">
-        <div className="newsroom-hero-container">
-          <div className="newsroom-hero-content">
-            {/* Main Heading */}
-            <h1 className="newsroom-hero-title">
-              News and Stories
-            </h1>
-            <p className="newsroom-hero-description">Find news, helpful tips, platform updates, and insightful stories from the Remonta community.</p>
-
-            {/* Newsletter Subscription Card */}
-            <div className="newsletter-card-wrapper">
-              <div className="newsletter-card">
-                <div className="newsletter-header">
-                  <h2 className="newsletter-title">
-                    Subscribe Our Weekly Newsletter
-                  </h2>
-                  <p className="newsletter-description">
-                    Regular updates ensure that readers have access to fresh perspectives, making Remonta a must-read.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="newsletter-form">
-                  <div>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Email address"
-                      required
-                      className="newsletter-input"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="newsletter-button"
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
-                    {!isSubmitting && (
-                      <svg className="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    )}
-                  </button>
-
-                  {submitMessage && (
-                    <p className={`newsletter-message ${submitMessage.includes('Thank you') ? 'success' : 'error'}`}>
-                      {submitMessage}
-                    </p>
-                  )}
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Articles Section */}
       <section className="articles-section">
         <div className="articles-container">
+          {/* Page Header */}
+          <div className="newsroom-page-header">
+            <h1 className="newsroom-page-title">News and Stories</h1>
+            <p className="newsroom-page-description">
+              Find news, helpful tips, platform updates, and insightful stories from the Remonta community.
+            </p>
+          </div>
+
           {loading ? (
             <div className="loading-container">
               <p className="loading-text">Loading articles...</p>
@@ -225,6 +153,14 @@ export default function NewsroomPage() {
 
                       {/* Meta Info */}
                       <div className="article-meta-small">
+                        {article.author && (
+                          <div className="meta-item-small">
+                            <svg className="icon-small" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                            <span>{article.author}</span>
+                          </div>
+                        )}
                         <div className="meta-item-small">
                           <svg className="icon-small" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
