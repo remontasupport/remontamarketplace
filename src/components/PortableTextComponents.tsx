@@ -38,35 +38,23 @@ export const portableTextComponents: PortableTextComponents = {
     ),
   },
   list: {
-    bullet: ({ children }) => {
-      console.log('Bullet list children:', children)
-      return <ul className="list-disc mb-6 space-y-3 ml-6 pl-2">{children}</ul>
-    },
-    number: ({ children }) => {
-      console.log('Number list children:', children)
-      return <ol className="list-decimal mb-6 space-y-3 ml-6 pl-2">{children}</ol>
-    },
+    bullet: ({ children }) => <ul className="list-disc mb-6 space-y-3 ml-6 pl-2">{children}</ul>,
+    number: ({ children }) => <ol className="list-decimal mb-6 space-y-3 ml-6 pl-2">{children}</ol>,
   },
   listItem: {
-    bullet: ({ children, value }) => {
-      console.log('List item (bullet):', { children, value })
-      return (
-        <li className="text-gray-700 leading-relaxed mb-4">
-          <div className="list-item-content">{children}</div>
-        </li>
-      )
-    },
-    number: ({ children, value }) => {
-      console.log('List item (number):', { children, value })
-      return (
-        <li className="text-gray-700 leading-relaxed mb-4">
-          <div className="list-item-content">{children}</div>
-        </li>
-      )
-    },
+    bullet: ({ children }) => (
+      <li className="text-gray-700 leading-relaxed mb-4">
+        <div className="list-item-content">{children}</div>
+      </li>
+    ),
+    number: ({ children }) => (
+      <li className="text-gray-700 leading-relaxed mb-4">
+        <div className="list-item-content">{children}</div>
+      </li>
+    ),
   },
   types: {
-    image: ({ value }) => {
+    image: ({ value, index }) => {
       if (!value?.asset) {
         return null
       }
@@ -74,19 +62,22 @@ export const portableTextComponents: PortableTextComponents = {
       const imageUrl = urlFor(value.asset)
         .width(1200)
         .height(675)
-        .fit('max')
+        .fit('crop')
         .auto('format')
         .url()
 
+      // Add priority to first image (likely above the fold)
+      const isFirstImage = index === 0
+
       return (
-        <div className="my-8 rounded-lg overflow-hidden">
+        <div className="article-image-wrapper">
           <Image
             src={imageUrl}
             alt={value.alt || 'Article image'}
             width={1200}
             height={675}
-            className="w-full h-auto rounded-lg"
-            style={{ objectFit: 'cover' }}
+            priority={isFirstImage}
+            className="article-body-image"
           />
           {value.caption && (
             <p className="text-sm text-gray-600 text-center mt-2 italic">{value.caption}</p>

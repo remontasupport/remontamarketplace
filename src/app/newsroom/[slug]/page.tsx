@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { PortableText } from '@portabletext/react'
 import Footer from "@/components/ui/layout/Footer"
+import ArticleMetaTags from "@/components/ArticleMetaTags"
 import { getArticleBySlug, type Article } from "@/lib/sanity/client"
 import { portableTextComponents } from "@/components/PortableTextComponents"
 import '../../styles/article.css'
@@ -22,9 +23,6 @@ export default function ArticlePage() {
       try {
         if (slug) {
           const data = await getArticleBySlug(slug)
-          console.log('=== ARTICLE DATA ===')
-          console.log('Full article:', data)
-          console.log('Article body structure:', JSON.stringify(data?.body, null, 2))
           setArticle(data)
         }
       } catch (error) {
@@ -36,21 +34,43 @@ export default function ArticlePage() {
     fetchArticle()
   }, [slug])
 
-  const handleShare = (platform: string) => {
+  const handleShare = async (platform: string) => {
     const url = typeof window !== 'undefined' ? window.location.href : ''
     const title = article?.title || ''
+    const description = article?.excerpt || ''
 
     const shareUrls: { [key: string]: string } = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
       twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`
     }
 
     if (platform === 'copy') {
       navigator.clipboard.writeText(url)
       setCopySuccess(true)
       setTimeout(() => setCopySuccess(false), 2000)
+    } else if (platform === 'instagram') {
+      // Instagram sharing works best on mobile via Web Share API
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: title,
+            text: description,
+            url: url
+          })
+        } catch (error) {
+          // User cancelled or error occurred
+          if ((error as Error).name !== 'AbortError') {
+            // Fallback: Copy link and show instructions
+            navigator.clipboard.writeText(url)
+            alert('Link copied! Open Instagram app and paste the link in your story or post.')
+          }
+        }
+      } else {
+        // Desktop fallback: Copy link with instructions
+        navigator.clipboard.writeText(url)
+        alert('Link copied! Open Instagram app on your phone and paste the link in your story or post.')
+      }
     } else if (shareUrls[platform]) {
       window.open(shareUrls[platform], '_blank', 'width=600,height=400')
     }
@@ -83,8 +103,21 @@ export default function ArticlePage() {
     )
   }
 
+  // Get full URL for meta tags
+  const fullUrl = typeof window !== 'undefined' ? window.location.href : ''
+
   return (
     <div className="article-page">
+      {/* Dynamic Meta Tags for Social Sharing */}
+      <ArticleMetaTags
+        title={article.title}
+        description={article.excerpt || article.title}
+        imageUrl={article.imageUrl}
+        url={fullUrl}
+        author={article.author}
+        publishedAt={article.publishedAt}
+      />
+
       <div className="article-container">
         <div className="article-layout">
           {/* Main Content */}
@@ -108,6 +141,7 @@ export default function ArticlePage() {
                     width={48}
                     height={48}
                     className="object-contain"
+                    style={{ width: 'auto', height: 'auto' }}
                   />
                 </div>
                 <div className="author-info">
@@ -150,10 +184,10 @@ export default function ArticlePage() {
                   LinkedIn
                 </button>
                 <button
-                  className="share-button whatsapp"
-                  onClick={() => handleShare('whatsapp')}
+                  className="share-button instagram"
+                  onClick={() => handleShare('instagram')}
                 >
-                  WhatsApp
+                  Instagram
                 </button>
                 <button
                   className="share-button copy-link"
@@ -176,6 +210,7 @@ export default function ArticlePage() {
                     src="/images/support-hero.jpg"
                     alt="Remonta Support"
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
                     className="object-cover"
                   />
                 </div>
