@@ -438,9 +438,16 @@
   color: #0C1628;
 }
 
+@media (min-width: 768px) {
+  .article-grid .article-title {
+    font-size: 1.1rem !important;
+    
+  }
+}
+
 .featured-article .featured-title {
   font-size: 1.25rem !important;
-  line-height: 2.5rem !important;
+  line-height: 1.75rem !important;
   font-weight: 700;
   font-family: var(--font-poppins), sans-serif;
   transition: all 0.2s;

@@ -3,23 +3,34 @@
 .article-page {
   min-height: 100vh;
   background-color: white;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .article-container {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 4rem 1rem;
+  padding: 2rem 1rem;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
   .article-container {
-    padding: 4rem 1.5rem;
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .article-container {
+    padding: 5rem 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .article-container {
-    padding: 4rem 2rem;
+    padding: 5rem 2rem;
   }
 }
 
@@ -28,6 +39,9 @@
   display: grid;
   gap: 3rem;
   grid-template-columns: 1fr;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
@@ -39,24 +53,45 @@
 /* Main Content Area */
 .article-main {
   max-width: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .article-header {
   margin-bottom: 2rem;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .article-title {
-  font-size: 2.5rem;
-  line-height: 1.2;
+  font-size: 1.5rem;
+  line-height: 1.4;
   font-weight: 700;
   color: #0C1628;
   font-family: var(--font-poppins), sans-serif;
   margin-bottom: 1rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 0;
+}
+
+@media (min-width: 375px) {
+  .article-title {
+    font-size: 1.25rem;
+  }
 }
 
 @media (min-width: 768px) {
   .article-title {
     font-size: 3rem;
+    line-height: 1.3;
   }
 }
 
