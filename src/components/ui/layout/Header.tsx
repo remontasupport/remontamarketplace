@@ -38,6 +38,11 @@ const navigation: NavigationItem[] = [
     href: '/services',
     hasDropdown: false
   },
+  {
+    name: 'News',
+    href: '/newsroom',
+    hasDropdown: false
+  },
   // {
   //   name: 'More',
   //   href: '#',
