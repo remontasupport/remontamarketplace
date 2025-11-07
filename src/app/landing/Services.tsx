@@ -149,7 +149,7 @@ export default function Services() {
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">SERVICES</span>
           </p>
-          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-2 sm:mb-8">
+          <h2 className="section-title mb-2 sm:mb-8">
             This Is How We Create Transformation
           </h2>
           <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] leading-relaxed max-w-4xl mx-auto">

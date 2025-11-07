@@ -9,7 +9,7 @@ export default function Testimonials() {
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">TESTIMONIALS</span>
           </p>
-          <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-2 sm:mb-8">
+          <h2 className="section-title mb-2 sm:mb-8">
             What Our Participants Say
           </h2>
         </div>

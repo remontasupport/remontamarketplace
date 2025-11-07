@@ -31,7 +31,7 @@ export default function SupportCoordinatorsPage() {
               <Link
                 href="/registration/support-coordinator"
                 style={{ background: BRAND_COLORS.PRIMARY }}
-                className="inline-flex items-center justify-center text-white rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-poppins font-medium text-sm sm:text-base hover:bg-[#F8E8D8] hover:text-[#0C1628] transition-colors duration-300"
+                className="inline-flex items-center justify-center text-white rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-poppins font-medium text-sm sm:text-base hover:bg-[#B1C3CD] hover:text-white transition-colors duration-300"
               >
                 Join Our Support Coordinator Network
               </Link>

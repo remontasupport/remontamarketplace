@@ -4,7 +4,8 @@
 /* Page-specific styles */
 @import "./styles/provide-support.css";
 @import "./styles/how-it-works.css";
-@import "./styles/about-us.css";
+@import "./styles/landing/about-us.css";
+
 
 @custom-variant dark (&:is(.dark *));
 
