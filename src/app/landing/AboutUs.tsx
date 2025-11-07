@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import '../styles/landing/about-us.css'
+import '../styles/about-us.css'
 
 export default function AboutUs() {
   return (
@@ -25,10 +25,10 @@ export default function AboutUs() {
             {/* NDIS Logo Badge */}
             <div className="about-ndis-badge">
               <Image
-                src="/logo/ndisLogo.svg"
+                src="/images/remonta-ndis.png"
                 alt="NDIS Registered Provider"
-                width={120}
-                height={120}
+                width={500}
+                height={500}
                 className="ndis-logo"
               />
             </div>
@@ -36,10 +36,10 @@ export default function AboutUs() {
             {/* Main Image */}
             <div className="about-main-image">
               <Image
-                src="/images/about-main-image.webp"
+                src="/images/about-main-image.png"
                 alt="NDIS support workers helping participants"
                 fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+                sizes="(max-width: 1024px) 100vw, 45vw"
                 className="about-image"
                 priority
               />
@@ -62,26 +62,19 @@ export default function AboutUs() {
 
             {/* Description */}
             <p className="about-description">
-              Remonta is a fully registered NDIS provider delivering high quality support services across Australia. We meet all compliance and audit standards set by the NDIS Commission, ensuring every participant receives safe, reliable and accountable care. Our team is made up of qualified and compliant workers who hold all mandatory checks and certifications, complete required reporting, and follow strict procedures to maintain service excellence.
+              Remonta is a fully registered NDIS provider delivering high quality support services across Australia. We meet all compliance and audit standards set by the NDIS Commission, ensuring every participant receives safe, reliable and accountable care. We give you the freedom to choose and control your support, combined with the safeguards and reliability of a NDIS-registered provider :
             </p>
 
             {/* Services List */}
             <div className="about-services">
-              <h4 className="about-services-title">
-                Remonta are NDIS registered providers for the areas of:
-              </h4>
+            
               <ul className="about-services-list">
-                <li className="about-service-item">Nationally Registered NDIS Provider</li>
-                <li className="about-service-item">Qualified and Compliant Workforce</li>
-                <li className="about-service-item">Australia Wide Support Services</li>
+                <li className="about-service-item">NDIS Registered Provider</li>
+                <li className="about-service-item">Qualified & Compliant Team</li>
+                <li className="about-service-item">Australia Wide Coverage</li>
               </ul>
             </div>
-
-            {/* Additional Description */}
-            {/* <p className="about-description">
-              We pride ourselves on offering professional and personalised support, delivered consistently across every state and territory. Our commitment to quality ensures participants receive dependable care no matter where they live in Australia.
-            </p> */}
-
+            
             {/* CTA Buttons */}
             <div className="about-cta-buttons">
               <Link href="/registration/user" className="about-button about-button-primary">

@@ -219,7 +219,7 @@
    ============================================ */
 @media (min-width: 1024px) {
   .how-it-works-section {
-    padding: 6rem 2rem;
+    padding: 3rem 2rem 6rem 2rem;
   }
 
   .how-it-works-container {
@@ -274,7 +274,7 @@
    ============================================ */
 @media (min-width: 1280px) {
   .how-it-works-section {
-    padding: 7rem 2rem;
+    padding: 5.75rem 2rem 7rem 2rem;
   }
 
   .how-it-works-content {
