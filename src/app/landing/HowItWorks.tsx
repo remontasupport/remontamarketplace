@@ -1,32 +1,43 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { MagnifyingGlassIcon, UserGroupIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
+import '../styles/how-it-works.css'
 
 const steps = [
   {
     step: 1,
     title: 'Fill Out the Form',
     description: 'Tell us about your NDIS support needs. It takes just a few minutes to complete the form with your requirements and preferences.',
-    image: '/images/fill-up-form.jpg', // Placeholder - replace with actual image
+    image: '/images/fill-up-form.jpg',
+    icon: MagnifyingGlassIcon,
   },
   {
     step: 2,
     title: 'We Match You',
     description: 'Our platform connects you with verified, qualified professionals in your area who specialize in exactly what you need.',
-    image: '/images/good-match.jpg', // Placeholder - replace with actual image
+    image: '/images/good-match.jpg',
+    icon: UserGroupIcon,
   },
   {
     step: 3,
     title: 'Service Provided',
     description: 'Choose your preferred professional, schedule the work, and enjoy peace of mind knowing your project is in expert hands.',
-    image: '/images/get-it-done.jpg', // Placeholder - replace with actual image
+    image: '/images/get-it-done.jpg',
+    icon: CalendarDaysIcon,
   },
 ]
 
 export default function HowItWorks() {
+  const [activeStep, setActiveStep] = useState(1)
+  const currentStep = steps.find(s => s.step === activeStep) || steps[0]
+
   return (
     <section className="how-it-works-section">
       <div className="how-it-works-container">
-        {/* Title */}
+        {/* Header */}
         <div className="how-it-works-header">
           <div className="how-it-works-badge-wrapper">
             <span className="section-badge">HOW IT WORKS</span>
@@ -36,47 +47,47 @@ export default function HowItWorks() {
           </h2>
         </div>
 
-        {/* Steps Grid */}
-        <div className="how-it-works-grid">
-          {steps.map((item) => (
-            <div key={item.step} className="how-it-works-step">
-              {/* Image Container */}
-              <div className="how-it-works-image-wrapper">
-                {/* Placeholder background with step number */}
-                <div className="how-it-works-image-background">
-                  <div className="how-it-works-step-badge">
-                    <span className="how-it-works-step-number">
-                      {item.step}
-                    </span>
+        {/* Two Column Layout */}
+        <div className="how-it-works-content">
+          {/* Left: Steps List */}
+          <div className="how-it-works-steps-list">
+            {steps.map((item) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.step}
+                  onClick={() => setActiveStep(item.step)}
+                  className={`how-it-works-step-card ${activeStep === item.step ? 'active' : ''}`}
+                >
+                  <div className="step-card-icon">
+                    <Icon className="step-icon" />
                   </div>
-                </div>
-                {/* Uncomment when you have actual images */}
-                <Image
-                  src={item.image}
-                  alt={item.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+                  <div className="step-card-content">
+                    <h3 className="step-card-title">
+                      {item.step}. {item.title}
+                    </h3>
+                    <p className="step-card-description">
+                      {item.description}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
 
-              {/* Step Title */}
-              <h3 className="how-it-works-step-title">
-                {item.title}
-              </h3>
-
-              {/* Step Description */}
-              <p className="how-it-works-step-description">
-                {item.description}
-              </p>
+          {/* Right: Active Step Image */}
+          <div className="how-it-works-image-display">
+            <div className="image-display-wrapper">
+              <Image
+                src={currentStep.image}
+                alt={currentStep.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+                className="display-image"
+                priority
+              />
             </div>
-          ))}
-        </div>
-
-        {/* CTA Button */}
-        <div className="how-it-works-cta">
-          <Link href="/registration/user" className="how-it-works-button">
-            Get started with us today
-          </Link>
+          </div>
         </div>
       </div>
     </section>

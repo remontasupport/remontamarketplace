@@ -36,7 +36,7 @@ export default function AboutUs() {
             {/* Main Image */}
             <div className="about-main-image">
               <Image
-                src="/images/support-hero.jpg"
+                src="/images/about-main-image.webp"
                 alt="NDIS support workers helping participants"
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
@@ -84,8 +84,8 @@ export default function AboutUs() {
 
             {/* CTA Buttons */}
             <div className="about-cta-buttons">
-              <Link href="/about-us" className="about-button about-button-primary">
-                Find Out More About Remonta
+              <Link href="/registration/user" className="about-button about-button-primary">
+                 Get started with us today
                 <svg className="button-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
