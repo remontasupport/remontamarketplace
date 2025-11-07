@@ -136,7 +136,7 @@ export default function ArticlePage() {
               <div className="article-author">
                 <div className="author-logo">
                   <Image
-                    src="/images/logo_dark.webp"
+                    src="/logo/logo-icon.svg"
                     alt="Remonta Logo"
                     width={48}
                     height={48}

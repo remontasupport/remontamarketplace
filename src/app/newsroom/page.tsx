@@ -190,6 +190,41 @@ export default function NewsroomPage() {
         </div>
       </section>
 
+      {/* Contact Information Section */}
+      <section className="contact-info-section">
+        <div className="contact-info-container">
+          {/* Logo */}
+          <div className="contact-logo">
+            <Image
+              src="/logo/logo-icon.svg"
+              alt="Remonta Logo"
+              width={60}
+              height={60}
+              className="logo-image"
+            />
+          </div>
+
+          {/* Description */}
+          <div className="contact-description">
+            <p>
+              Remonta gives you the freedom to choose and control your support, combined with the safeguards and reliability of a NDIS-registered provider.
+            </p>
+          </div>
+
+          {/* Contact Details */}
+          <div className="contact-details">
+            <div className="contact-item">
+              <h3 className="contact-label">Phone</h3>
+              <p className="contact-value">1300 134 153</p>
+            </div>
+            <div className="contact-item">
+              <h3 className="contact-label">Email</h3>
+              <p className="contact-value">contact@remontaservices.com.au</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   )
