@@ -18,11 +18,20 @@
 }
 
 /* ============================================
+   Header Section (Mobile Only)
+   ============================================ */
+.about-header {
+  width: 100%;
+  order: 0;
+  text-align: center;
+}
+
+/* ============================================
    Image Column
    ============================================ */
 .about-image-column {
   width: 100%;
-  order: 2;
+  order: 1;
 }
 
 .about-image-wrapper {
@@ -72,7 +81,7 @@
    ============================================ */
 .about-content-column {
   width: 100%;
-  order: 1;
+  order: 2;
 }
 
 .about-content {
@@ -84,6 +93,11 @@
 /* Badge Wrapper - Uses global .section-badge class from globals.css */
 .about-badge-wrapper {
   margin-bottom: 0.5rem;
+}
+
+/* Desktop Header (hidden on mobile, shown on desktop) */
+.about-desktop-header {
+  display: none;
 }
 
 /* Main Title - Uses global .section-title class from globals.css */
@@ -143,6 +157,7 @@
 .about-cta-buttons {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1rem;
   margin-top: 0.5rem;
 }
@@ -152,10 +167,10 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 1rem 2rem;
+  padding: 0.875rem 1.75rem;
   border-radius: 9999px;
   font-family: var(--font-sans), sans-serif;
-  font-size: 1rem;
+  font-size: 0.938rem;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease-in-out;
@@ -221,6 +236,12 @@
   .about-cta-buttons {
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .about-button {
+    padding: 0.938rem 2rem;
+    font-size: 1rem;
   }
 }
 
@@ -238,6 +259,11 @@
     gap: 2.5rem;
   }
 
+  /* Hide mobile header on desktop */
+  .about-header {
+    display: none;
+  }
+
   .about-image-column {
     width: 45%;
     order: 1;
@@ -245,7 +271,7 @@
 
   .about-image-wrapper {
     height: 550px;
-    margin-top: 3.8rem;
+    margin-top: 2.5rem;
   }
 
   .about-content-column {
@@ -257,8 +283,18 @@
     gap: 1.25rem;
   }
 
-  .about-badge-wrapper {
+  /* Show desktop header on desktop */
+  .about-desktop-header {
+    display: block;
+  }
+
+  /* Align image with title by adding top padding to desktop header */
+  .about-desktop-header .about-badge-wrapper {
     margin-bottom: 0.5rem;
+  }
+
+  .about-desktop-header .section-title {
+    margin-bottom: 0;
   }
 
   .about-description {

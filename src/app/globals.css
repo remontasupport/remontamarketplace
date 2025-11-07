@@ -206,7 +206,7 @@ div[style*="position: fixed"][style*="bottom: 16px"] {
 /* Section Title (h2) - Used across landing page sections */
 .section-title {
   font-family: var(--font-cooper);
-  font-size: 1.875rem;
+  font-size: 1.65rem;
   font-weight: 400;
   color: var(--brand-primary);
   margin: 0;

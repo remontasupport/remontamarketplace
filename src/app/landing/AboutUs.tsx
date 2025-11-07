@@ -1,11 +1,24 @@
 import Image from 'next/image'
 import Link from 'next/link'
-
+import '../styles/landing/about-us.css'
 
 export default function AboutUs() {
   return (
     <section className="about-section" id="about">
       <div className="about-container">
+        {/* Header - Badge and Title */}
+        <div className="about-header">
+          {/* Section Badge */}
+          <div className="about-badge-wrapper">
+            <span className="section-badge">ABOUT US</span>
+          </div>
+
+          {/* Main Heading */}
+          <h2 className="section-title">
+            NDIS registered Support Services Provider
+          </h2>
+        </div>
+
         {/* Image Column */}
         <div className="about-image-column">
           <div className="about-image-wrapper">
@@ -37,15 +50,15 @@ export default function AboutUs() {
         {/* Content Column */}
         <div className="about-content-column">
           <div className="about-content">
-            {/* Section Badge */}
-            <div className="about-badge-wrapper">
-              <span className="section-badge">ABOUT US</span>
+            {/* Desktop Badge and Title (hidden on mobile) */}
+            <div className="about-desktop-header">
+              <div className="about-badge-wrapper">
+                <span className="section-badge">ABOUT US</span>
+              </div>
+              <h2 className="section-title">
+                NDIS Registered Support Services Provider
+              </h2>
             </div>
-
-            {/* Main Heading */}
-            <h2 className="section-title">
-              NDIS registered Support Services Provider
-            </h2>
 
             {/* Description */}
             <p className="about-description">
