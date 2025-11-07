@@ -10,8 +10,9 @@ import ArticleClientWrapper from "@/components/ArticleClientWrapper"
 import '../../styles/article.css'
 
 // Generate dynamic metadata for SEO and social sharing
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
 
   if (!article) {
     return {
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://remontaservices.com.au'
-  const articleUrl = `${baseUrl}/newsroom/${params.slug}`
+  const articleUrl = `${baseUrl}/newsroom/${slug}`
 
   return {
     title: `${article.title} | Remonta`,
@@ -52,8 +53,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = await getArticleBySlug(params.slug)
+export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
 
   if (!article) {
     notFound()
