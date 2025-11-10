@@ -11,7 +11,7 @@ interface Contractor {
   lastName: string
   email: string
   phone: string | null
-  profileImage: string | null
+  profilePicture: string | null
   title: string | null
   companyName: string | null
   yearsOfExperience: number | null
@@ -20,12 +20,12 @@ interface Contractor {
   city: string | null
   state: string | null
   postcode: string | null
-  photoSubmission: string | null
   profileTitle: string | null
   qualificationsAndCerts: string | null
   servicesOffered: string[]
   languageSpoken: string | null
   hasVehicleAccess: boolean | null
+  aboutYou: string | null
   funFact: string | null
   hobbiesAndInterests: string | null
   businessUnique: string | null
@@ -41,7 +41,7 @@ export default function WorkerProfile() {
 
   const handleBackClick = () => {
     sessionStorage.setItem('scrollToCarousel', 'true')
-    router.push('/')
+    router.push('/search-workers')
   }
 
   useEffect(() => {
@@ -104,14 +104,24 @@ export default function WorkerProfile() {
         {/* Header Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Profile Image */}
-          <div className="relative h-96 lg:h-[600px] rounded-3xl overflow-hidden">
-            {contractor.photoSubmission && (
+          <div className="relative h-96 lg:h-[600px] rounded-3xl overflow-hidden bg-gray-100">
+            {contractor.profilePicture ? (
               <Image
-                src={contractor.photoSubmission}
+                src={contractor.profilePicture}
                 alt={`${contractor.firstName} ${contractor.lastName}`}
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            ) : (
+              <Image
+                src="/images/profilePlaceHolder.png"
+                alt={`${contractor.firstName} ${contractor.lastName}`}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
             )}
           </div>
@@ -178,8 +188,26 @@ export default function WorkerProfile() {
 
             {/* Additional Information Sections */}
             <div className="space-y-0 mt-0">
-          {contractor.whyEnjoyWork && (
+          {contractor.aboutYou && (
             <details className="group border-b border-gray-200" open>
+              <summary className="flex items-center gap-4 py-4 cursor-pointer list-none">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-[#0C1628] transition-transform group-open:rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-[#0C1628] font-poppins">About</h3>
+              </summary>
+              <div className="pb-4 pl-14">
+                <p className="text-base text-gray-600 font-poppins leading-relaxed">
+                  {contractor.aboutYou}
+                </p>
+              </div>
+            </details>
+          )}
+
+          {contractor.whyEnjoyWork && (
+            <details className="group border-b border-gray-200">
               <summary className="flex items-center gap-4 py-4 cursor-pointer list-none">
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-[#0C1628] transition-transform group-open:rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { MapPin, Languages, Car } from 'lucide-react'
+import { MapPin, User, Car } from 'lucide-react'
 import { WorkerProfile } from '@/lib/sanity/workerProfileClient'
 import '../styles/worker-profile-modal.css'
 
@@ -91,7 +91,7 @@ export default function WorkerProfileModal({
               {/* Languages */}
               {worker.languages && worker.languages.length > 0 && (
                 <div className="worker-modal-meta-item">
-                  <Languages className="worker-modal-meta-icon" />
+                  <User className="worker-modal-meta-icon" />
                   <span className="worker-modal-meta-value">
                     {worker.languages.join(', ')}
                   </span>

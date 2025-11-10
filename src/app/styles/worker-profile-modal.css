@@ -109,8 +109,13 @@
 .worker-modal-meta-icon {
   width: 1.25rem;
   height: 1.25rem;
-  color: var(--brand-primary);
+  color: #4B5563;
   flex-shrink: 0;
+}
+
+/* Red color for location pin icon */
+.worker-modal-meta-item:first-child .worker-modal-meta-icon {
+  color: #DC2626;
 }
 
 .worker-modal-meta-value {
