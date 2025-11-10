@@ -105,7 +105,6 @@ export default defineType({
       const vehicleIcon = hasVehicle ? '🚗' : ''
       const featuredIcon = featured ? '⭐' : ''
       return {
-        title: title,
         subtitle: `${jobRole} • ${location} ${vehicleIcon} ${featuredIcon}`.trim(),
         ...selection,
       }
