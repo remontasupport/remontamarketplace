@@ -14,10 +14,10 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <Hero />
       <HowItWorks />
+      <WorkerProfiles />
       <AboutUs />
       <Testimonials />
       <Services />
-      <WorkerProfiles />
       {/* <AustraliaMap /> */}
       <Pricing />
       <FAQ />

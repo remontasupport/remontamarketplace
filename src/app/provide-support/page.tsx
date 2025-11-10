@@ -66,7 +66,7 @@ export default function JobsPage() {
       </section>
 
       {/* Jobs Section - Temporarily Hidden */}
-      {/* <section className="jobs-section">
+      <section className="jobs-section">
         <div className="jobs-section-content">
           <h2 className="jobs-section-title">Explore our current open roles</h2>
 
@@ -153,7 +153,7 @@ export default function JobsPage() {
             </div>
           )}
         </div>
-      </section> */}
+      </section>
 
       {/* Benefits Section */}
       <section className="jobs-benefits-section">

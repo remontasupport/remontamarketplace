@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation } from 'swiper/modules'
@@ -68,6 +69,9 @@ export default function WorkerProfiles() {
           <h2 className="section-title">
             Meet a few of our amazing support workers
           </h2>
+          <Link href="/search-workers" className="worker-profiles-find-more">
+            Find more
+          </Link>
         </div>
 
         {/* Swiper Container with Navigation and Gradients */}

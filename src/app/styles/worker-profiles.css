@@ -5,7 +5,7 @@
 /* Section Container */
 .worker-profiles-section {
   width: 100%;
-  padding: 3rem 1rem;
+  padding: 2rem 0;
   background-color: #FFFFFF;
 }
 
@@ -13,6 +13,7 @@
   max-width: 1440px;
   margin: 0 auto;
   position: relative;
+  padding: 0 1rem;
 }
 
 /* ============================================
@@ -20,8 +21,44 @@
    ============================================ */
 .worker-profiles-header {
   width: 100%;
-  text-align: center;
-  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.worker-profiles-header .section-title {
+  text-align: left;
+  margin: 0;
+  margin-left: 1rem;
+  max-width: 500px;
+  line-height: 1.2;
+}
+
+/* Find More Button */
+.worker-profiles-find-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--brand-primary);
+  color: white;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.3s;
+  white-space: nowrap;
+  margin-right: 1rem;
+}
+
+.worker-profiles-find-more:hover {
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Uses global .section-title from globals.css */
@@ -255,6 +292,22 @@
    Mobile Adjustments (below 640px)
    ============================================ */
 @media (max-width: 639px) {
+  .worker-profiles-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .worker-profiles-header .section-title {
+    text-align: center;
+    width: 100%;
+  }
+
+  .worker-profiles-find-more {
+    width: 100%;
+    justify-content: center;
+    margin-right: 0;
+  }
+
   .worker-profiles-gradient-left,
   .worker-profiles-gradient-right {
     width: 60px;
@@ -286,11 +339,19 @@
    ============================================ */
 @media (min-width: 640px) {
   .worker-profiles-section {
-    padding: 4rem 2rem;
+    padding: 3rem 0;
+  }
+
+  .worker-profiles-container {
+    padding: 0 2rem;
   }
 
   .worker-profiles-header {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .worker-profiles-header .section-title {
+    max-width: 600px;
   }
 
   .worker-profile-label {
@@ -315,11 +376,15 @@
    ============================================ */
 @media (min-width: 1024px) {
   .worker-profiles-section {
-    padding: 5rem 2rem;
+    padding: 3.5rem 0;
+  }
+
+  .worker-profiles-container {
+    padding: 0 2rem;
   }
 
   .worker-profiles-header {
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
   }
 
   .worker-profile-image-wrapper {
@@ -344,7 +409,11 @@
    ============================================ */
 @media (min-width: 1280px) {
   .worker-profiles-section {
-    padding: 6rem 2rem;
+    padding: 4rem 0;
+  }
+
+  .worker-profiles-container {
+    padding: 0 2rem;
   }
 
   .worker-profile-image-wrapper {
@@ -366,7 +435,8 @@
   .worker-profile-image,
   .worker-profile-arrow,
   .worker-profiles-button-prev,
-  .worker-profiles-button-next {
+  .worker-profiles-button-next,
+  .worker-profiles-find-more {
     transition: none;
   }
 
@@ -385,11 +455,20 @@
   .worker-profiles-button-next:hover {
     transform: translateY(-50%);
   }
+
+  .worker-profiles-find-more:hover {
+    transform: none;
+  }
 }
 
 /* Focus States for Keyboard Navigation */
 .worker-profile-card:focus-visible {
   outline: 3px solid #5BC0BE;
+  outline-offset: 2px;
+}
+
+.worker-profiles-find-more:focus-visible {
+  outline: 3px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
