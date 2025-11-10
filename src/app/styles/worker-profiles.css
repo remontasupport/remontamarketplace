@@ -1,0 +1,405 @@
+/* ============================================
+   Worker Profiles Section - Mobile First Design
+   ============================================ */
+
+/* Section Container */
+.worker-profiles-section {
+  width: 100%;
+  padding: 3rem 1rem;
+  background-color: #FFFFFF;
+}
+
+.worker-profiles-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+.worker-profiles-header {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* Uses global .section-title from globals.css */
+
+/* ============================================
+   Slider Wrapper with Navigation and Gradients
+   ============================================ */
+.worker-profiles-slider-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Gradient Overlays */
+.worker-profiles-gradient-left,
+.worker-profiles-gradient-right {
+  position: absolute;
+  top: 0;
+  bottom: 2rem; /* Account for swiper padding-bottom */
+  width: 120px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.worker-profiles-gradient-left {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+.worker-profiles-gradient-right {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Navigation Buttons */
+.worker-profiles-button-prev,
+.worker-profiles-button-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: var(--brand-primary);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 20;
+  pointer-events: auto;
+  flex-shrink: 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.worker-profiles-button-prev {
+  left: 1rem;
+}
+
+.worker-profiles-button-next {
+  right: 1rem;
+}
+
+.worker-profiles-button-prev:hover,
+.worker-profiles-button-next:hover {
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.worker-profiles-button-prev.swiper-button-disabled,
+.worker-profiles-button-next.swiper-button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.worker-profiles-button-prev.swiper-button-disabled:hover,
+.worker-profiles-button-next.swiper-button-disabled:hover {
+  background-color: var(--brand-primary);
+  color: white;
+  transform: translateY(-50%);
+}
+
+.worker-profiles-button-prev svg,
+.worker-profiles-button-next svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* Swiper Container */
+.worker-profiles-swiper {
+  width: 100%;
+  padding-bottom: 2rem;
+  overflow: hidden;
+}
+
+.worker-profiles-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.worker-profiles-swiper .swiper-button-next,
+.worker-profiles-swiper .swiper-button-prev {
+  display: none;
+}
+
+/* Individual Worker Card */
+.worker-profile-card {
+  background-color: #F9FAFB;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  cursor: pointer;
+}
+
+.worker-profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Image Section
+   ============================================ */
+.worker-profile-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+}
+
+.worker-profile-image {
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.3s ease;
+}
+
+.worker-profile-card:hover .worker-profile-image {
+  transform: scale(1.05);
+}
+
+/* ============================================
+   Card Content
+   ============================================ */
+.worker-profile-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Label */
+.worker-profile-label {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0C1628;
+  margin: 0;
+}
+
+/* Name with Arrow */
+.worker-profile-name {
+  font-family: var(--font-cooper);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #0C1628;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.2;
+}
+
+.worker-profile-arrow {
+  font-size: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.worker-profile-card:hover .worker-profile-arrow {
+  transform: translateX(4px);
+}
+
+/* Job Role */
+.worker-profile-role {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: #4B5563;
+  margin: 0;
+}
+
+/* Bio */
+.worker-profile-bio {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.813rem;
+  line-height: 1.5;
+  color: #4B5563;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta Information (Location, Languages, Vehicle) */
+.worker-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.worker-profile-location,
+.worker-profile-languages,
+.worker-profile-vehicle {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ============================================
+   Mobile Adjustments (below 640px)
+   ============================================ */
+@media (max-width: 639px) {
+  .worker-profiles-gradient-left,
+  .worker-profiles-gradient-right {
+    width: 60px;
+  }
+
+  .worker-profiles-button-prev,
+  .worker-profiles-button-next {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .worker-profiles-button-prev {
+    left: 0.5rem;
+  }
+
+  .worker-profiles-button-next {
+    right: 0.5rem;
+  }
+
+  .worker-profiles-button-prev svg,
+  .worker-profiles-button-next svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+/* ============================================
+   Tablet Breakpoint (640px and up)
+   ============================================ */
+@media (min-width: 640px) {
+  .worker-profiles-section {
+    padding: 4rem 2rem;
+  }
+
+  .worker-profiles-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .worker-profile-label {
+    font-size: 0.813rem;
+  }
+
+  .worker-profile-name {
+    font-size: 1.625rem;
+  }
+
+  .worker-profile-role {
+    font-size: 1rem;
+  }
+
+  .worker-profile-bio {
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================
+   Desktop Breakpoint (1024px and up)
+   ============================================ */
+@media (min-width: 1024px) {
+  .worker-profiles-section {
+    padding: 5rem 2rem;
+  }
+
+  .worker-profiles-header {
+    margin-bottom: 3rem;
+  }
+
+  .worker-profile-image-wrapper {
+    height: 320px;
+  }
+
+  .worker-profile-content {
+    padding: 1.75rem;
+  }
+
+  .worker-profile-name {
+    font-size: 1.75rem;
+  }
+
+  .worker-profile-bio {
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================
+   Large Desktop Breakpoint (1280px and up)
+   ============================================ */
+@media (min-width: 1280px) {
+  .worker-profiles-section {
+    padding: 6rem 2rem;
+  }
+
+  .worker-profile-image-wrapper {
+    height: 350px;
+  }
+
+  .worker-profile-content {
+    padding: 2rem;
+  }
+}
+
+/* ============================================
+   Accessibility & Performance
+   ============================================ */
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .worker-profile-card,
+  .worker-profile-image,
+  .worker-profile-arrow,
+  .worker-profiles-button-prev,
+  .worker-profiles-button-next {
+    transition: none;
+  }
+
+  .worker-profile-card:hover,
+  .worker-profile-card:hover .worker-profile-image,
+  .worker-profile-card:hover .worker-profile-arrow {
+    transform: none;
+  }
+
+  .worker-profiles-button-prev,
+  .worker-profiles-button-next {
+    transform: translateY(-50%);
+  }
+
+  .worker-profiles-button-prev:hover,
+  .worker-profiles-button-next:hover {
+    transform: translateY(-50%);
+  }
+}
+
+/* Focus States for Keyboard Navigation */
+.worker-profile-card:focus-visible {
+  outline: 3px solid #5BC0BE;
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .worker-profile-card {
+    border: 2px solid #0C1628;
+  }
+
+  .worker-profile-meta {
+    border-top-width: 2px;
+  }
+}

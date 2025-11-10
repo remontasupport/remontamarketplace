@@ -39,3 +39,35 @@ export const featuredArticlesQuery = `*[_type == "article" && featured == true &
   readTime,
   featured
 }`
+
+// Get featured worker profiles (for landing page)
+export const featuredWorkerProfilesQuery = `*[_type == "workerProfile" && featured == true && !(_id in path("drafts.**"))] | order(displayOrder asc) {
+  _id,
+  name,
+  slug,
+  jobRole,
+  "imageUrl": image.asset->url,
+  "imageAlt": image.alt,
+  languages,
+  location,
+  hasVehicleAccess,
+  bio,
+  featured,
+  displayOrder
+}`
+
+// Get all worker profiles
+export const workerProfilesQuery = `*[_type == "workerProfile" && !(_id in path("drafts.**"))] | order(displayOrder asc) {
+  _id,
+  name,
+  slug,
+  jobRole,
+  "imageUrl": image.asset->url,
+  "imageAlt": image.alt,
+  languages,
+  location,
+  hasVehicleAccess,
+  bio,
+  featured,
+  displayOrder
+}`
