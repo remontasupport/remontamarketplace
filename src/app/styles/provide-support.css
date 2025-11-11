@@ -215,7 +215,7 @@
 }
 
 .jobs-section-content {
-  max-width: 72rem;
+  max-width: 79rem;
   margin: 0 auto;
   padding: 0 1rem;
 }
@@ -250,6 +250,7 @@
 @media (min-width: 768px) {
   .jobs-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
   }
 }
 
@@ -257,9 +258,12 @@
   background-color: white;
   border-radius: 1rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1.75rem;
   border: 1px solid #e5e7eb;
   transition: box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .job-card:hover {
@@ -308,7 +312,7 @@
 }
 
 .job-card-title {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: #111827;
 }
@@ -329,7 +333,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: #4b5563;
   margin-bottom: 0.75rem;
 }
@@ -367,7 +371,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: #6b7280;
   margin-bottom: 1rem;
 }
@@ -393,14 +397,14 @@
 }
 
 .job-card-description-label {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: black;
   margin-bottom: 0.25rem;
   font-weight: 600;
 }
 
 .job-card-description {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: #4b5563;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -412,17 +416,18 @@
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #f3f4f6;
+  flex-grow: 1;
 }
 
 .job-card-certificates-label {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: black;
   margin-bottom: 0.25rem;
   font-weight: 600;
 }
 
 .job-card-certificates-text {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: #374151;
   display: -webkit-box;
   -webkit-line-clamp: 2;
