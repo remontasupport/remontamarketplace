@@ -81,32 +81,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Test 3: Fetch all Deals data (all stages)
+    // Test 3: Fetch Deals with "Matching" stage only
     results.tests.push({
-      name: 'Zoho Deals Access (All Stages)',
+      name: 'Zoho Deals Access (Matching Stage)',
       status: 'checking',
     })
 
     try {
-      // Fetch all deals
-      const allDeals = await zohoService.getAllDeals()
-
-      // Get unique stages
-      const stages = [...new Set(allDeals.map(deal => deal.Stage).filter(Boolean))]
-
-      // Group deals by stage
-      const dealsByStage = stages.reduce((acc, stage) => {
-        acc[stage || 'No Stage'] = allDeals.filter(deal => deal.Stage === stage).length
-        return acc
-      }, {} as Record<string, number>)
+      // Fetch only deals with "Matching" stage
+      const matchingDeals = await zohoService.getDealsByStage('Matching')
 
       results.tests[2].status = 'passed'
       results.tests[2].details = {
-        totalDeals: allDeals.length,
-        message: 'Successfully fetched all deals from Zoho',
-        uniqueStages: stages,
-        dealsByStage: dealsByStage,
-        allDeals: allDeals.map(deal => ({
+        totalMatchingDeals: matchingDeals.length,
+        message: 'Successfully fetched deals from Zoho (Matching stage only)',
+        filterApplied: 'Stage = "Matching"',
+        deals: matchingDeals.map(deal => ({
           id: deal.id,
           dealName: deal.Deal_Name,
           stage: deal.Stage,
@@ -129,6 +119,7 @@ export async function GET(request: NextRequest) {
           'API credentials incorrect',
           'Network connectivity issue',
           'Zoho API rate limit reached',
+          'Stage name might be incorrect',
         ],
       }
     }
