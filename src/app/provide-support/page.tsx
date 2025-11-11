@@ -141,7 +141,7 @@ export default function JobsPage() {
                   </div>
 
                   <div className="job-card-certificates">
-                    <p className="job-card-certificates-label">Required Certificates:</p>
+                    <p className="job-card-certificates-label">What We're Looking For:</p>
                     <p className="job-card-certificates-text">{job.certificates}</p>
                   </div>
 

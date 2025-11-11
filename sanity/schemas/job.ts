@@ -38,10 +38,10 @@ export default defineType({
     }),
     defineField({
       name: 'certificates',
-      title: 'Required Certificates',
+      title: 'What We\'re Looking For',
       type: 'text',
       rows: 5,
-      description: 'Instructions about what certificates will be needed',
+      description: 'Instructions about what qualifications and skills we are looking for',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
