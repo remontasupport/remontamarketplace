@@ -81,22 +81,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Test 3: Fetch Deals data (Primary Contact Made stage only)
+    // Test 3: Fetch all Deals data (all stages)
     results.tests.push({
-      name: 'Zoho Job Deals Access (Primary Contact Made)',
+      name: 'Zoho Deals Access (All Stages)',
       status: 'checking',
     })
 
     try {
-      // Fetch only deals with "Primary Contact Made" stage
-      const jobDeals = await zohoService.getActiveJobDeals()
+      // Fetch all deals
+      const allDeals = await zohoService.getAllDeals()
+
+      // Get unique stages
+      const stages = [...new Set(allDeals.map(deal => deal.Stage).filter(Boolean))]
+
+      // Group deals by stage
+      const dealsByStage = stages.reduce((acc, stage) => {
+        acc[stage || 'No Stage'] = allDeals.filter(deal => deal.Stage === stage).length
+        return acc
+      }, {} as Record<string, number>)
 
       results.tests[2].status = 'passed'
       results.tests[2].details = {
-        totalJobDeals: jobDeals.length,
-        message: 'Successfully fetched job deals from Zoho (Primary Contact Made stage)',
-        filterApplied: 'Stage = "Primary Contact Made"',
-        sampleDeals: jobDeals.slice(0, 5).map(deal => ({
+        totalDeals: allDeals.length,
+        message: 'Successfully fetched all deals from Zoho',
+        uniqueStages: stages,
+        dealsByStage: dealsByStage,
+        allDeals: allDeals.map(deal => ({
           id: deal.id,
           dealName: deal.Deal_Name,
           stage: deal.Stage,
@@ -109,22 +119,16 @@ export async function GET(request: NextRequest) {
           clientName: deal.Client_Name?.name,
         })),
       }
-
-      // Log first deal structure for debugging
-      if (jobDeals.length > 0) {
-        results.tests[2].details.firstDealStructure = jobDeals[0]
-      }
     } catch (error) {
       results.tests[2].status = 'failed'
       results.tests[2].error = error instanceof Error ? error.message : String(error)
       results.tests[2].details = {
-        message: 'Failed to fetch job deals from Zoho API',
+        message: 'Failed to fetch deals from Zoho API',
         possibleReasons: [
           'Deals module not accessible',
           'API credentials incorrect',
           'Network connectivity issue',
           'Zoho API rate limit reached',
-          'Stage name might be incorrect',
         ],
       }
     }
