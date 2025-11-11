@@ -112,6 +112,65 @@ interface ZohoContactsResponse {
   }
 }
 
+interface ZohoDeal {
+  id: string
+
+  // Basic Deal Information
+  Deal_Name?: string
+  Amount?: number
+  Stage?: string
+  Closing_Date?: string
+
+  // Job Listing Specific Fields
+  Job_Title?: string
+  Job_Description?: string
+  Location?: string
+  Availability?: string
+  Start_Date?: string
+  Required_Qualifications?: string
+  Certificates?: string
+  Posted_At?: string
+  Is_Active?: boolean
+
+  // Contact/Account Information
+  Contact_Name?: {
+    name: string
+    id: string
+  }
+  Account_Name?: {
+    name: string
+    id: string
+  }
+
+  // Timestamps
+  Created_Time?: string
+  Modified_Time?: string
+
+  // Owner Information
+  Owner?: {
+    name: string
+    id: string
+    email: string
+  }
+
+  // Layout Information
+  Layout?: {
+    name: string
+    id: string
+    display_label: string
+  }
+}
+
+interface ZohoDealsResponse {
+  data: ZohoDeal[]
+  info: {
+    per_page: number
+    count: number
+    page: number
+    more_records: boolean
+  }
+}
+
 class ZohoService {
   private accessToken: string | null = null
   private tokenExpiryTime: number | null = null
@@ -387,7 +446,189 @@ class ZohoService {
   hasProfilePicture(contact: ZohoContact): boolean {
     return !!contact.Record_Image
   }
+
+  /**
+   * Fetch all deals from Zoho CRM Deals module
+   * Can be used for job listings
+   */
+  async getAllDeals(): Promise<ZohoDeal[]> {
+    const token = await this.getAccessToken()
+    const allDeals: ZohoDeal[] = []
+    let page = 1
+    let moreRecords = true
+
+    while (moreRecords) {
+      const response = await fetch(
+        `${this.apiUrl}/Deals?page=${page}&per_page=200`,
+        {
+          headers: {
+            Authorization: `Zoho-oauthtoken ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch deals: ${response.statusText}`)
+      }
+
+      const data: ZohoDealsResponse = await response.json()
+
+      if (data.data) {
+        allDeals.push(...data.data)
+      }
+
+      moreRecords = data.info?.more_records || false
+      page++
+    }
+
+    return allDeals
+  }
+
+  /**
+   * Fetch active deals that can be used as job listings
+   * Filters by Stage to get only active/open positions
+   */
+  async getActiveJobDeals(): Promise<ZohoDeal[]> {
+    const token = await this.getAccessToken()
+    const allDeals: ZohoDeal[] = []
+    let page = 1
+    let moreRecords = true
+
+    // Filter by "Primary Contact Made" stage for job listings
+    const criteria = encodeURIComponent(`(Stage:equals:Primary Contact Made)`)
+
+    while (moreRecords) {
+      const url = `${this.apiUrl}/Deals/search?criteria=${criteria}&page=${page}&per_page=200`
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        if (response.status === 204) {
+          return [] // No records found
+        }
+        throw new Error(`Failed to fetch active deals: ${response.statusText}`)
+      }
+
+      const data: ZohoDealsResponse = await response.json()
+
+      if (data.data) {
+        allDeals.push(...data.data)
+      }
+
+      moreRecords = data.info?.more_records || false
+      page++
+    }
+
+    return allDeals
+  }
+
+  /**
+   * Fetch deals by specific stage
+   */
+  async getDealsByStage(stage: string): Promise<ZohoDeal[]> {
+    const token = await this.getAccessToken()
+    const allDeals: ZohoDeal[] = []
+    let page = 1
+    let moreRecords = true
+
+    const criteria = encodeURIComponent(`(Stage:equals:${stage})`)
+
+    while (moreRecords) {
+      const url = `${this.apiUrl}/Deals/search?criteria=${criteria}&page=${page}&per_page=200`
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        if (response.status === 204) {
+          return [] // No records found
+        }
+        throw new Error(`Failed to fetch deals by stage: ${response.statusText}`)
+      }
+
+      const data: ZohoDealsResponse = await response.json()
+
+      if (data.data) {
+        allDeals.push(...data.data)
+      }
+
+      moreRecords = data.info?.more_records || false
+      page++
+    }
+
+    return allDeals
+  }
+
+  /**
+   * Fetch a single deal by ID from Deals module
+   */
+  async getDealById(dealId: string): Promise<ZohoDeal | null> {
+    const token = await this.getAccessToken()
+
+    const response = await fetch(`${this.apiUrl}/Deals/${dealId}`, {
+      headers: {
+        Authorization: `Zoho-oauthtoken ${token}`,
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) return null
+      throw new Error(`Failed to fetch deal: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.data?.[0] || null
+  }
+
+  /**
+   * Fetch recently modified deals
+   */
+  async getRecentlyModifiedDeals(since: string): Promise<ZohoDeal[]> {
+    const token = await this.getAccessToken()
+
+    const sinceDate = new Date(since)
+    const year = sinceDate.getFullYear()
+    const month = String(sinceDate.getMonth() + 1).padStart(2, '0')
+    const day = String(sinceDate.getDate()).padStart(2, '0')
+    const hours = String(sinceDate.getHours()).padStart(2, '0')
+    const minutes = String(sinceDate.getMinutes()).padStart(2, '0')
+    const seconds = String(sinceDate.getSeconds()).padStart(2, '0')
+
+    const zohoDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+00:00`
+
+    const criteria = encodeURIComponent(`(Modified_Time:greater_than:${zohoDate})`)
+    const url = `${this.apiUrl}/Deals/search?criteria=${criteria}&per_page=200`
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Zoho-oauthtoken ${token}`,
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 204) {
+        return []
+      }
+
+      const errorText = await response.text()
+      console.error('[Zoho] Error response:', errorText)
+      throw new Error(`Failed to fetch recent deals: ${response.statusText} - ${errorText}`)
+    }
+
+    const data: ZohoDealsResponse = await response.json()
+    return data.data || []
+  }
 }
 
 // Export a singleton instance
 export const zohoService = new ZohoService()
+
+// Export types
+export type { ZohoContact, ZohoDeal }

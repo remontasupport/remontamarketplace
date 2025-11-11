@@ -1,0 +1,217 @@
+{
+    "timestamp": "2025-11-11T12:06:23.757Z",
+    "tests": [
+        {
+            "name": "Environment Variables",
+            "status": "passed",
+            "details": {
+                "ZOHO_ACCOUNTS_URL": "https://accounts.zoho.com.au",
+                "ZOHO_CRM_API_URL": "https://www.zohoapis.com.au/crm/v2",
+                "ZOHO_CLIENT_ID": "1000.UDZLW...",
+                "ZOHO_REFRESH_TOKEN": "1000.29624..."
+            }
+        },
+        {
+            "name": "Zoho API Access",
+            "status": "passed",
+            "details": {
+                "contactsFetched": 4,
+                "message": "Successfully authenticated and fetched contacts from Zoho",
+                "sampleContactIds": [
+                    "87697000002094033",
+                    "87697000002097026",
+                    "87697000001769010"
+                ]
+            }
+        },
+        {
+            "name": "Zoho Job Deals Access (Primary Contact Made)",
+            "status": "passed",
+            "details": {
+                "totalJobDeals": 16,
+                "message": "Successfully fetched job deals from Zoho (Primary Contact Made stage)",
+                "filterApplied": "Stage = \"Primary Contact Made\"",
+                "sampleDeals": [
+                    {
+                        "id": "87697000002109031",
+                        "dealName": "Silkstone QLD participant",
+                        "stage": "Primary Contact Made",
+                        "description": "Pending more details",
+                        "suburbs": "Silkstone",
+                        "state": "QLD",
+                        "serviceAvailed": "Support Work",
+                        "serviceRequirements": "Female",
+                        "createdTime": "2025-11-11T17:17:58+11:00",
+                        "clientName": "Kamal Kanwaljeet Kaur"
+                    },
+                    {
+                        "id": "87697000001924406",
+                        "dealName": "Frenchs Forest",
+                        "stage": "Primary Contact Made",
+                        "description": "Alicia picked up the phone so she might have fucked it for us",
+                        "suburbs": "Frenchs Forest",
+                        "state": "NSW",
+                        "serviceAvailed": "Gardening",
+                        "serviceRequirements": null,
+                        "createdTime": "2025-11-04T15:52:29+11:00",
+                        "clientName": "Michelle Care Circle 3"
+                    },
+                    {
+                        "id": "87697000001367066",
+                        "dealName": "Swansea, TAS - SW",
+                        "stage": "Primary Contact Made",
+                        "description": null,
+                        "suburbs": null,
+                        "state": null,
+                        "serviceAvailed": "Support Work",
+                        "serviceRequirements": null,
+                        "createdTime": "2025-10-01T08:41:23+10:00"
+                    },
+                    {
+                        "id": "87697000001453277",
+                        "dealName": "Antry (plenty of funding) - increase SW",
+                        "stage": "Primary Contact Made",
+                        "description": "Antry and all parties are really happy with things. \nThey want to increase hours once supports are routine.\n\nNo SWs needed currently",
+                        "suburbs": "Vaucluse",
+                        "state": "NSW",
+                        "serviceAvailed": null,
+                        "serviceRequirements": null,
+                        "createdTime": "2025-10-03T10:19:07+10:00",
+                        "clientName": "Antry Lahana"
+                    },
+                    {
+                        "id": "87697000001830165",
+                        "dealName": "Jack (Diggers Rest) - cleaning",
+                        "stage": "Primary Contact Made",
+                        "description": null,
+                        "suburbs": "Diggers Rest",
+                        "state": "VIC",
+                        "serviceAvailed": "Cleaning",
+                        "serviceRequirements": null,
+                        "createdTime": "2025-10-29T23:54:40+11:00",
+                        "clientName": "Amanda Samoa"
+                    }
+                ],
+                "firstDealStructure": {
+                    "Client_Name": {
+                        "name": "Kamal Kanwaljeet Kaur",
+                        "id": "87697000002103986"
+                    },
+                    "Owner": {
+                        "name": "Jesse Barragan",
+                        "id": "87697000000378001",
+                        "email": "jesse.b@remontaservices.com.au"
+                    },
+                    "$currency_symbol": "$",
+                    "Aggregate_Field_1": null,
+                    "$field_states": null,
+                    "Service_Availed_2": null,
+                    "Service_Availed_1": null,
+                    "Provider_2": null,
+                    "Provider_3": null,
+                    "Last_Activity_Time": "2025-11-11T17:17:59+11:00",
+                    "Provider_1": null,
+                    "Agreement_Signed_Date": null,
+                    "$state": "save",
+                    "Provider_Rate_1": null,
+                    "$process_flow": false,
+                    "Deal_Name": "Silkstone QLD participant",
+                    "Stage": "Primary Contact Made",
+                    "$locked_for_me": false,
+                    "Service_Requirements": "Female",
+                    "id": "87697000002109031",
+                    "$approved": true,
+                    "$approval": {
+                        "delegate": false,
+                        "takeover": false,
+                        "approve": false,
+                        "reject": false,
+                        "resubmit": false
+                    },
+                    "Territory": null,
+                    "Total_Per_Year": null,
+                    "Created_Time": "2025-11-11T17:17:58+11:00",
+                    "Suburbs": "Silkstone",
+                    "Cultural_Considerations": null,
+                    "$editable": true,
+                    "Participant": null,
+                    "Provider_2_Rate": null,
+                    "State": "QLD",
+                    "New_Deal_Needed": false,
+                    "Created_By": {
+                        "name": "Jesse Barragan",
+                        "id": "87697000000378001",
+                        "email": "jesse.b@remontaservices.com.au"
+                    },
+                    "$zia_owner_assignment": "owner_recommendation_unavailable",
+                    "Description": "Pending more details",
+                    "$review_process": {
+                        "approve": false,
+                        "reject": false,
+                        "resubmit": false
+                    },
+                    "Disabilities": null,
+                    "$layout_id": {
+                        "display_label": "Remonta Layout",
+                        "name": "Remonta Layout",
+                        "id": "87697000000000631"
+                    },
+                    "Required_More_Worker": false,
+                    "Closing_Date": null,
+                    "Total_Revenue": null,
+                    "Reason_For_Loss__s": null,
+                    "Record_Image": null,
+                    "Modified_By": {
+                        "name": "Jesse Barragan",
+                        "id": "87697000000378001",
+                        "email": "jesse.b@remontaservices.com.au"
+                    },
+                    "Behavioural_Concerns": null,
+                    "$review": null,
+                    "Lead_Conversion_Time": null,
+                    "Language": null,
+                    "Overall_Sales_Duration": null,
+                    "Provider_3_Rate": null,
+                    "leadchain0__Social_Lead_ID": null,
+                    "Age": null,
+                    "Relationship_to_Participant": "SC",
+                    "Modified_Time": "2025-11-11T17:17:58+11:00",
+                    "Date_of_Birth": null,
+                    "Contract_Value": null,
+                    "Probability": 0,
+                    "Next_Step": "Call Kamal if no reply to email",
+                    "Religion": null,
+                    "Sales_Probability": "Hot - 1 week",
+                    "Hobbies": null,
+                    "Total_Weekly_Profit": null,
+                    "$orchestration": false,
+                    "Sales_Cycle_Duration": null,
+                    "Layout": {
+                        "display_label": "Remonta Layout",
+                        "name": "Remonta Layout",
+                        "id": "87697000000000631"
+                    },
+                    "$in_merge": false,
+                    "Locked__s": false,
+                    "Lead_Source": "External Referral",
+                    "Tag": [],
+                    "Another_Contractor_Needed": false,
+                    "$approval_state": "approved",
+                    "Service_3_Availed": null,
+                    "Total_Amount_Paid_to_Contractor": null,
+                    "Service_Availed": "Support Work"
+                }
+            }
+        },
+        {
+            "name": "Webhook Endpoint",
+            "status": "passed",
+            "details": {
+                "url": "http://localhost:3000/api/webhooks/zoho-contractor",
+                "message": "Webhook endpoint should be accessible at this URL"
+            }
+        }
+    ],
+    "overallStatus": "PASSED",
+    "summary": "All tests passed! Zoho integration is working correctly."
+}

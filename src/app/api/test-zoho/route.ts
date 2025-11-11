@@ -81,7 +81,55 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Test 3: Verify webhook endpoint accessibility
+    // Test 3: Fetch Deals data (Primary Contact Made stage only)
+    results.tests.push({
+      name: 'Zoho Job Deals Access (Primary Contact Made)',
+      status: 'checking',
+    })
+
+    try {
+      // Fetch only deals with "Primary Contact Made" stage
+      const jobDeals = await zohoService.getActiveJobDeals()
+
+      results.tests[2].status = 'passed'
+      results.tests[2].details = {
+        totalJobDeals: jobDeals.length,
+        message: 'Successfully fetched job deals from Zoho (Primary Contact Made stage)',
+        filterApplied: 'Stage = "Primary Contact Made"',
+        sampleDeals: jobDeals.slice(0, 5).map(deal => ({
+          id: deal.id,
+          dealName: deal.Deal_Name,
+          stage: deal.Stage,
+          description: deal.Description,
+          suburbs: deal.Suburbs,
+          state: deal.State,
+          serviceAvailed: deal.Service_Availed,
+          serviceRequirements: deal.Service_Requirements,
+          createdTime: deal.Created_Time,
+          clientName: deal.Client_Name?.name,
+        })),
+      }
+
+      // Log first deal structure for debugging
+      if (jobDeals.length > 0) {
+        results.tests[2].details.firstDealStructure = jobDeals[0]
+      }
+    } catch (error) {
+      results.tests[2].status = 'failed'
+      results.tests[2].error = error instanceof Error ? error.message : String(error)
+      results.tests[2].details = {
+        message: 'Failed to fetch job deals from Zoho API',
+        possibleReasons: [
+          'Deals module not accessible',
+          'API credentials incorrect',
+          'Network connectivity issue',
+          'Zoho API rate limit reached',
+          'Stage name might be incorrect',
+        ],
+      }
+    }
+
+    // Test 4: Verify webhook endpoint accessibility
     results.tests.push({
       name: 'Webhook Endpoint',
       status: 'passed',
