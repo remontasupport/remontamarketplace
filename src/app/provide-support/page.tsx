@@ -4,19 +4,49 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from "@/components/ui/layout/Footer"
-import { getJobs, type Job } from "@/lib/sanity/jobQueries"
 import { BRAND_COLORS } from "@/lib/constants"
+
+// Job type from database
+type Job = {
+  id: string
+  zohoId: string
+  dealName: string
+  title: string | null
+  description: string | null
+  stage: string
+  suburbs: string | null
+  state: string | null
+  serviceAvailed: string | null
+  serviceRequirements: string | null
+  disabilities: string | null
+  behaviouralConcerns: string | null
+  culturalConsiderations: string | null
+  language: string | null
+  religion: string | null
+  age: string | null
+  gender: string | null
+  hobbies: string | null
+  postedAt: string | null
+  active: boolean
+  createdAt: string
+}
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch jobs from Sanity
+  // Fetch jobs from database API
   useEffect(() => {
     async function fetchJobs() {
       try {
-        const data = await getJobs()
-        setJobs(data)
+        const response = await fetch('/api/jobs')
+        const data = await response.json()
+
+        if (data.success) {
+          setJobs(data.jobs)
+        } else {
+          console.error('Error loading jobs:', data.error)
+        }
       } catch (error) {
         console.error('Error loading jobs:', error)
       } finally {
@@ -83,73 +113,88 @@ export default function JobsPage() {
             </div>
           ) : (
             <div className="jobs-grid">
-              {jobs.map((job) => (
-                <div key={job._id} className="job-card">
-                  <div className="job-card-header">
-                    <div className="job-card-logo">
-                      <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                      </svg>
-                    </div>
+              {jobs.map((job) => {
+                // Format location
+                const location = [job.suburbs, job.state].filter(Boolean).join(', ') || 'Remote'
 
-                    <div className="job-card-info">
-                      <div className="job-card-title-row">
-                        <div>
+                // Format posted date
+                const postedDate = job.postedAt
+                  ? new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-                          <h3 className="job-card-title">{job.title}</h3>
-                        </div>
-                        <button className="job-card-bookmark">
-                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <div className="job-card-location">
+                return (
+                  <div key={job.id} className="job-card">
+                    <div className="job-card-header">
+                      <div className="job-card-logo">
                         <svg fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                         </svg>
-                        <span>{job.location}</span>
+                      </div>
+
+                      <div className="job-card-info">
+                        <div className="job-card-title-row">
+                          <div>
+                            <h3 className="job-card-title">{job.title || job.dealName}</h3>
+                          </div>
+                          <button className="job-card-bookmark">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div className="job-card-location">
+                          <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          <span>{location}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="job-card-badges">
-                    {job.active && (
-                      <span className="job-badge job-badge-active">Active</span>
-                    )}
-                  </div>
-
-                  <div className="job-card-meta">
-                    <div className="job-card-meta-item">
-                      <span><span className="job-card-meta-label">Posted:</span> {new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <div className="job-card-badges">
+                      {job.active && (
+                        <span className="job-badge job-badge-active">Active</span>
+                      )}
                     </div>
-                    <div className="job-card-meta-item">
-                      <span><span className="job-card-meta-label">Start Date:</span> {new Date(job.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+
+                    <div className="job-card-meta">
+                      <div className="job-card-meta-item">
+                        <span><span className="job-card-meta-label">Posted:</span> {postedDate}</span>
+                      </div>
+                      {job.serviceAvailed && (
+                        <div className="job-card-meta-item">
+                          <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                          </svg>
+                          <span>{job.serviceAvailed}</span>
+                        </div>
+                      )}
+                      {job.age && (
+                        <div className="job-card-meta-item">
+                          <span><span className="job-card-meta-label">Age:</span> {job.age}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="job-card-meta-item">
-                      <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                      </svg>
-                      <span>{job.availability}</span>
+
+                    <div className="job-card-description-section">
+                      <p className="job-card-description-label">Job Description:</p>
+                      <p className="job-card-description">{job.description || 'No description available'}</p>
                     </div>
-                  </div>
 
-                  <div className="job-card-description-section">
-                    <p className="job-card-description-label">Job Description:</p>
-                    <p className="job-card-description">{job.description}</p>
-                  </div>
+                    <div className="job-card-certificates">
+                      <p className="job-card-certificates-label">What We're Looking For:</p>
+                      <p className="job-card-certificates-text">
+                        {job.serviceRequirements || job.disabilities || 'Requirements will be discussed during application'}
+                      </p>
+                    </div>
 
-                  <div className="job-card-certificates">
-                    <p className="job-card-certificates-label">What We're Looking For:</p>
-                    <p className="job-card-certificates-text">{job.certificates}</p>
+                    <Link href="/registration/worker">
+                      <button className="job-apply-button">Apply Now</button>
+                    </Link>
                   </div>
-
-                  <Link href="/registration/worker">
-                    <button className="job-apply-button">Apply Now</button>
-                  </Link>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

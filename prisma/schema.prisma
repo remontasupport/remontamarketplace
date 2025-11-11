@@ -76,3 +76,87 @@ model ContractorProfile {
   @@index([deletedAt, titleRole]) // Common: active contractors by role
   @@index([deletedAt, latitude, longitude]) // Common: active contractors with coordinates
 }
+
+model Job {
+  id                        String    @id @default(cuid())
+  zohoId                    String    @unique // Zoho Deal ID
+
+  // Basic Job Information
+  dealName                  String    // Deal_Name from Zoho
+  title                     String?   // Job_Title (custom field if exists)
+  description               String?   // Description from Zoho
+  stage                     String    // Current stage in Zoho (e.g., "Matching")
+
+  // Location Information
+  suburbs                   String?   // Suburbs from Zoho
+  state                     String?   // State from Zoho (QLD, NSW, etc.)
+
+  // Service Information
+  serviceAvailed            String?   // Service_Availed (e.g., "Support Work")
+  serviceRequirements       String?   // Service_Requirements (e.g., "Female")
+
+  // Additional Requirements
+  disabilities              String?   // Disabilities from Zoho
+  behaviouralConcerns       String?   // Behavioural_Concerns from Zoho
+  culturalConsiderations    String?   // Cultural_Considerations from Zoho
+  language                  String?   // Language requirements
+  religion                  String?   // Religion from Zoho
+
+  // Personal Preferences
+  age                       String?   // Age from Zoho (can be number or range like "18-30")
+  gender                    String?   // Gender preferences
+  hobbies                   String?   // Hobbies from Zoho
+
+  // Client Information (from Client_Name lookup)
+  clientName                String?   // Client name
+  clientZohoId              String?   // Client's Zoho Contact ID
+  relationshipToParticipant String?   // Relationship_to_Participant (e.g., "SC")
+
+  // Owner Information
+  ownerName                 String?   // Deal owner name
+  ownerEmail                String?   // Deal owner email
+  ownerZohoId               String?   // Deal owner Zoho ID
+
+  // Dates
+  postedAt                  DateTime? // When job was posted (Created_Time from Zoho)
+
+  // Status & Visibility
+  active                    Boolean   @default(true) // Controls frontend visibility
+
+  // Additional Fields
+  requiredMoreWorker        Boolean?  // Required_More_Worker from Zoho
+  anotherContractorNeeded   Boolean?  // Another_Contractor_Needed from Zoho
+
+  // System Fields
+  lastSyncedAt              DateTime  @default(now()) // Last sync from Zoho
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  // ============================================
+  // PRODUCTION-READY INDEXES
+  // ============================================
+
+  @@index([zohoId])
+  @@index([active]) // Most important: filter active jobs
+  @@index([stage]) // Filter by stage
+
+  // Location indexes for search
+  @@index([suburbs])
+  @@index([state])
+
+  // Service type filtering
+  @@index([serviceAvailed])
+
+  // Date-based queries
+  @@index([postedAt])
+
+  // Common filter combinations
+  @@index([active, stage]) // Active jobs in specific stage
+  @@index([active, state]) // Active jobs in specific state
+  @@index([active, suburbs]) // Active jobs in specific suburb
+  @@index([active, serviceAvailed]) // Active jobs by service type
+  @@index([active, postedAt]) // Active jobs sorted by date
+
+  // Sync management
+  @@index([lastSyncedAt]) // Track sync status
+}
