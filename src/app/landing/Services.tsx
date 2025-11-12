@@ -139,8 +139,61 @@ export default function Services() {
           </p>
         </div>
 
-        {/* Service Tabs */}
+        {/* Mobile Accordion & Desktop Tabs */}
         <div className="services-tabs-container">
+          {/* Mobile Accordion */}
+          <div className="services-mobile-accordion">
+            {services.map((service) => (
+              <div key={service.id} className="services-accordion-item">
+                <button
+                  onClick={() => handleServiceChange(service.id)}
+                  className={`services-accordion-button ${activeService === service.id ? 'active' : ''}`}
+                >
+                  <span>{service.title}</span>
+                  <svg
+                    className={`services-accordion-icon ${activeService === service.id ? 'rotate' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Expandable Content */}
+                <div className={`services-accordion-content ${activeService === service.id ? 'expanded' : ''}`}>
+                  <div className="services-accordion-inner">
+                    <p className="services-content-description">
+                      {service.content}
+                    </p>
+                    <p className="services-content-subtitle">
+                      What we offer:
+                    </p>
+                    <ul className="services-bullet-list">
+                      {service.bulletPoints.map((point, index) => (
+                        <li key={index} className="services-bullet-item">
+                          <div className="services-bullet-icon"></div>
+                          <span className="services-bullet-text">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {/* Mobile Image */}
+                    <div className="services-image-container mobile-image">
+                      <Image
+                        src={service.image}
+                        alt={service.imageAlt}
+                        fill
+                        className="services-image"
+                        priority
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Tabs Grid */}
           <div className="services-tabs-grid">
             {services.map((service) => (
               <button
@@ -154,12 +207,12 @@ export default function Services() {
           </div>
         </div>
 
-        {/* Content Section */}
+        {/* Desktop Content Section */}
         <div className="services-content-container">
           {/* Image */}
           <div
             key={`image-${activeService}`}
-            className={`services-image-container ${isTransitioning ? 'services-content-transitioning' : ''}`}
+            className={`services-image-container desktop-image ${isTransitioning ? 'services-content-transitioning' : ''}`}
           >
             <Image
               src={currentService.image}

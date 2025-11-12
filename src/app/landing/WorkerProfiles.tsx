@@ -69,7 +69,7 @@ export default function WorkerProfiles() {
           <h2 className="section-title">
             Meet a few of our amazing support workers
           </h2>
-          <Link href="/search-workers" className="worker-profiles-find-more">
+          <Link href="/search-workers" className="worker-profiles-find-more desktop-only">
             Find more
           </Link>
         </div>
@@ -180,6 +180,11 @@ export default function WorkerProfiles() {
           ))}
           </Swiper>
         </div>
+
+        {/* Find More Button (Mobile Only) */}
+        <Link href="/search-workers" className="worker-profiles-find-more mobile-only">
+          Find more
+        </Link>
 
         {/* Worker Profile Modal */}
         <WorkerProfileModal

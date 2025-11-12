@@ -16,6 +16,13 @@
   padding: 0 1rem;
 }
 
+@media (max-width: 639px) {
+  .worker-profiles-container {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 /* ============================================
    Header Section
    ============================================ */
@@ -47,11 +54,10 @@
   font-family: var(--font-sans), sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 0.5rem;
+  border-radius: 9999px;
   text-decoration: none;
   transition: all 0.3s;
   white-space: nowrap;
-  margin-right: 1rem;
 }
 
 .worker-profiles-find-more:hover {
@@ -59,6 +65,31 @@
   color: var(--brand-primary);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Desktop only button (in header) */
+.worker-profiles-find-more.desktop-only {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .worker-profiles-find-more.desktop-only {
+    display: inline-flex;
+    margin-right: 1rem;
+  }
+}
+
+/* Mobile only button (below slider) */
+.worker-profiles-find-more.mobile-only {
+  display: inline-flex;
+  align-self: center;
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .worker-profiles-find-more.mobile-only {
+    display: none;
+  }
 }
 
 /* Uses global .section-title from globals.css */
@@ -293,19 +324,20 @@
    ============================================ */
 @media (max-width: 639px) {
   .worker-profiles-header {
-    flex-direction: column;
-    align-items: flex-start;
+    margin-bottom: 1rem;
   }
 
   .worker-profiles-header .section-title {
     text-align: center;
     width: 100%;
+    margin-left: 0;
   }
 
   .worker-profiles-find-more {
-    width: 100%;
-    justify-content: center;
+    align-self: center;
     margin-right: 0;
+    margin-left: 0;
+    margin-top: 1rem;
   }
 
   .worker-profiles-gradient-left,

@@ -137,32 +137,98 @@
 
 /* Tabs Container */
 .services-tabs-container {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 @media (min-width: 640px) {
+  .services-tabs-container {
+    margin-bottom: 3rem;
+  }
+}
+
+@media (min-width: 768px) {
   .services-tabs-container {
     margin-bottom: 4rem;
   }
 }
 
+/* Mobile Accordion */
+.services-mobile-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .services-mobile-accordion {
+    display: none;
+  }
+}
+
+.services-accordion-item {
+  border: 1px solid #E5E7EB;
+  border-radius: 1rem;
+  background-color: white;
+  overflow: hidden;
+}
+
+.services-accordion-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0C1628;
+  text-align: left;
+  transition: background-color 0.3s ease;
+}
+
+.services-accordion-button.active {
+  background-color: #F9FAFB;
+}
+
+.services-accordion-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.services-accordion-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.services-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.services-accordion-content.expanded {
+  max-height: 2000px;
+}
+
+.services-accordion-inner {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+}
+
+/* Desktop Tabs Grid */
 .services-tabs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  display: none;
   max-width: 64rem;
   margin-left: auto;
   margin-right: auto;
 }
 
-@media (min-width: 640px) {
-  .services-tabs-grid {
-    gap: 1rem;
-  }
-}
-
 @media (min-width: 768px) {
   .services-tabs-grid {
+    display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 0.75rem;
   }
@@ -233,16 +299,15 @@
 
 /* Content Section */
 .services-content-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-  align-items: center;
+  display: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .services-content-container {
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
+    align-items: center;
   }
 }
 
@@ -336,6 +401,18 @@
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Image (inside accordion) */
+.services-image-container.mobile-image {
+  margin-top: 1.25rem;
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+/* Desktop Image */
+.services-image-container.desktop-image {
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.6s ease-out 0.2s forwards;
