@@ -36,17 +36,13 @@ export async function GET(request: NextRequest) {
       results.tests[0].status = 'failed'
       results.tests[0].error = `Missing environment variables: ${missingVars.join(', ')}`
       results.tests[0].details = {
-        required: requiredEnvVars,
-        missing: missingVars,
-        present: requiredEnvVars.filter(v => process.env[v]),
+        missing: missingVars.length,
+        message: 'Some required Zoho credentials are missing'
       }
     } else {
       results.tests[0].status = 'passed'
       results.tests[0].details = {
-        ZOHO_ACCOUNTS_URL: process.env.ZOHO_ACCOUNTS_URL,
-        ZOHO_CRM_API_URL: process.env.ZOHO_CRM_API_URL,
-        ZOHO_CLIENT_ID: process.env.ZOHO_CLIENT_ID?.substring(0, 10) + '...',
-        ZOHO_REFRESH_TOKEN: process.env.ZOHO_REFRESH_TOKEN?.substring(0, 10) + '...',
+        message: 'All required environment variables are configured'
       }
     }
 
@@ -64,8 +60,7 @@ export async function GET(request: NextRequest) {
       results.tests[1].status = 'passed'
       results.tests[1].details = {
         contactsFetched: recentContacts.length,
-        message: 'Successfully authenticated and fetched contacts from Zoho',
-        sampleContactIds: recentContacts.slice(0, 3).map(c => c.id),
+        message: 'Successfully authenticated and fetched contacts from Zoho'
       }
     } catch (error) {
       results.tests[1].status = 'failed'
