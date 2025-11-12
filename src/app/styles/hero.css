@@ -262,7 +262,10 @@
   color: #0C1628;
 }
 
-
+.hero-button-secondary {
+  background-color: #0C1628;
+  color: #FFFFFF;
+}
 
 
 /* ============================================
