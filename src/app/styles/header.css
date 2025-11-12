@@ -37,13 +37,13 @@
 
 @media (min-width: 1280px) {
   .header-nav {
-    padding: 1.5rem 4rem;
+    padding: 1.5rem 7.25rem;
   }
 }
 
 @media (min-width: 1920px) {
   .header-nav {
-    padding: 1.75rem 15rem;
+    padding: 1.75rem 11rem;
   }
 }
 
@@ -170,7 +170,7 @@
 
 @media (min-width: 1280px) {
   .desktop-nav {
-    gap: 2rem;
+    gap: 1.45rem;
     margin-left: 3rem;
   }
 }
