@@ -1,0 +1,221 @@
+/* ============================================
+   Stats Section - Mobile First Design
+   ============================================ */
+
+/* Section Container */
+.stats-section {
+  background-color: var(--brand-highlight);
+  padding: 3rem 0;
+}
+
+@media (min-width: 640px) {
+  .stats-section {
+    padding: 4rem 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-section {
+    padding: 5rem 0;
+  }
+}
+
+.stats-container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .stats-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-container {
+    padding: 0 2rem;
+  }
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-grid {
+    gap: 2.5rem;
+  }
+}
+
+/* Individual Stats Card */
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem 2rem;
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+@media (min-width: 1024px) {
+  .stats-card {
+    padding: 3rem 2rem;
+  }
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Icon Wrapper */
+.stats-icon-wrapper {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--brand-tertiary);
+  
+}
+
+@media (min-width: 1024px) {
+  .stats-icon-wrapper {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+}
+
+/* Icon */
+.stats-icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--brand-primary);
+  stroke-width: 2;
+}
+
+@media (min-width: 1024px) {
+  .stats-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+}
+
+/* Stats Content */
+.stats-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Percentage/Number */
+.stats-percentage {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: #0C1628;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .stats-percentage {
+    font-size: 2.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-percentage {
+    font-size: 2.5rem;
+  }
+}
+
+/* Description */
+.stats-description {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6B7280;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (min-width: 1024px) {
+  .stats-description {
+    font-size: 0.9375rem;
+  }
+}
+
+/* Bottom Heading */
+.stats-heading {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .stats-heading {
+    margin-top: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-heading {
+    margin-top: 3rem;
+  }
+}
+
+.stats-heading h2 {
+  font-family: var(--font-cooper), serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #0C1628;
+  line-height: 1.4;
+  max-width: 56rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .stats-heading h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-heading h2 {
+    font-size: 1.875rem;
+    line-height: 1.3;
+  }
+}
+
+/* ============================================
+   Accessibility & Performance
+   ============================================ */
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .stats-card {
+    transition: none;
+  }
+
+  .stats-card:hover {
+    transform: none;
+  }
+}
