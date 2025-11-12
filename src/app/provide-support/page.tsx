@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import useSWR from 'swr'
 import Footer from "@/components/ui/layout/Footer"
 import { BRAND_COLORS } from "@/lib/constants"
+import { Users, MapPin } from 'lucide-react'
 
 // Job type from database
 type Job = {
@@ -31,30 +32,26 @@ type Job = {
   createdAt: string
 }
 
+// Fetcher function for SWR
+const fetcher = async (url: string) => {
+  const response = await fetch(url)
+  const data = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to fetch jobs')
+  }
+
+  return data.jobs
+}
+
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<Job[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Fetch jobs from database API
-  useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const response = await fetch('/api/jobs')
-        const data = await response.json()
-
-        if (data.success) {
-          setJobs(data.jobs)
-        } else {
-          console.error('Error loading jobs:', data.error)
-        }
-      } catch (error) {
-        console.error('Error loading jobs:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchJobs()
-  }, [])
+  // Use SWR with caching and revalidation strategy
+  const { data: jobs, error, isLoading } = useSWR<Job[]>('/api/jobs', fetcher, {
+    dedupingInterval: 300000, // Cache for 5 minutes (300,000 ms)
+    revalidateOnFocus: true, // Revalidate when user focuses the window
+    revalidateOnReconnect: true, // Revalidate when user reconnects
+    refreshInterval: 0, // Don't auto-refresh (only manual revalidation)
+  })
 
   return (
     <div className="jobs-container">
@@ -100,11 +97,18 @@ export default function JobsPage() {
         <div className="jobs-section-content">
           <h2 className="jobs-section-title">Explore our current open roles</h2>
 
-          {loading ? (
+          {error ? (
+            <div className="jobs-error">
+              <h2 className="jobs-empty-title">Error Loading Jobs</h2>
+              <p className="jobs-empty-text">
+                There was an error loading job postings. Please try again later.
+              </p>
+            </div>
+          ) : isLoading ? (
             <div className="jobs-loading">
               <p>Loading job postings...</p>
             </div>
-          ) : jobs.length === 0 ? (
+          ) : !jobs || jobs.length === 0 ? (
             <div className="jobs-empty">
               <h2 className="jobs-empty-title">No Active Jobs</h2>
               <p className="jobs-empty-text">
@@ -126,27 +130,20 @@ export default function JobsPage() {
                   <div key={job.id} className="job-card">
                     <div className="job-card-header">
                       <div className="job-card-logo">
-                        <svg fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                        </svg>
+                        <Users size={24} />
                       </div>
 
                       <div className="job-card-info">
                         <div className="job-card-title-row">
                           <div>
-                            <h3 className="job-card-title">{job.title || job.dealName}</h3>
+                            <h3 className="job-card-title">
+                              {job.serviceAvailed || 'Support Work'} - {location}
+                            </h3>
                           </div>
-                          <button className="job-card-bookmark">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                            </svg>
-                          </button>
                         </div>
 
                         <div className="job-card-location">
-                          <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
+                          <MapPin size={20} />
                           <span>{location}</span>
                         </div>
                       </div>
@@ -162,19 +159,6 @@ export default function JobsPage() {
                       <div className="job-card-meta-item">
                         <span><span className="job-card-meta-label">Posted:</span> {postedDate}</span>
                       </div>
-                      {job.serviceAvailed && (
-                        <div className="job-card-meta-item">
-                          <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                          </svg>
-                          <span>{job.serviceAvailed}</span>
-                        </div>
-                      )}
-                      {job.age && (
-                        <div className="job-card-meta-item">
-                          <span><span className="job-card-meta-label">Age:</span> {job.age}</span>
-                        </div>
-                      )}
                     </div>
 
                     <div className="job-card-description-section">
@@ -182,12 +166,14 @@ export default function JobsPage() {
                       <p className="job-card-description">{job.description || 'No description available'}</p>
                     </div>
 
-                    <div className="job-card-certificates">
-                      <p className="job-card-certificates-label">What We're Looking For:</p>
-                      <p className="job-card-certificates-text">
-                        {job.serviceRequirements || job.disabilities || 'Requirements will be discussed during application'}
-                      </p>
-                    </div>
+                    {job.serviceRequirements && (
+                      <div className="job-card-certificates">
+                        <p className="job-card-certificates-label">What We're Looking For:</p>
+                        <p className="job-card-certificates-text">
+                          {job.serviceRequirements}
+                        </p>
+                      </div>
+                    )}
 
                     <Link href="/registration/worker">
                       <button className="job-apply-button">Apply Now</button>

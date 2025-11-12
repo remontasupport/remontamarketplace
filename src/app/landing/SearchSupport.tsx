@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import useSWR from 'swr'
 
 interface Contractor {
   id: string
@@ -12,73 +13,85 @@ interface Contractor {
   distance?: number // Distance in km (only available for distance-based searches)
 }
 
-export default function SearchSupport() {
-  const [contractors, setContractors] = useState<Contractor[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+// Fetcher function for SWR
+const fetcher = async (url: string) => {
+  const response = await fetch(url)
+  const data = await response.json()
 
-  // Search form state
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to fetch contractors')
+  }
+
+  return data.contractors
+}
+
+// Build API URL with search parameters
+function buildSearchURL(searchParams: {
+  location?: string
+  supportType?: string
+  gender?: string
+  distance?: string
+  limit?: string
+}) {
+  const params = new URLSearchParams()
+
+  // Set limit
+  params.append('limit', searchParams.limit || '6')
+
+  // Add flexible location filter
+  if (searchParams.location && searchParams.location.trim()) {
+    params.append('location', searchParams.location.trim())
+  }
+
+  if (searchParams.supportType && searchParams.supportType !== 'All') {
+    params.append('supportType', searchParams.supportType)
+  }
+
+  if (searchParams.gender && searchParams.gender !== 'All') {
+    params.append('gender', searchParams.gender)
+  }
+
+  // Add distance filter (only if location is provided and distance is not "0")
+  if (searchParams.distance && searchParams.distance !== '0' && searchParams.location && searchParams.location.trim()) {
+    params.append('distance', searchParams.distance)
+  }
+
+  return `/api/contractors?${params.toString()}`
+}
+
+export default function SearchSupport() {
+  // Search form state (for UI inputs)
   const [location, setLocation] = useState('')
   const [supportType, setSupportType] = useState('All')
   const [gender, setGender] = useState('All')
   const [distance, setDistance] = useState('0')
   const [error, setError] = useState('')
 
+  // Active search params (triggers SWR fetch when changed)
+  const [activeSearchParams, setActiveSearchParams] = useState({
+    location: '',
+    supportType: 'All',
+    gender: 'All',
+    distance: '0',
+    limit: '6' // Initial load shows 6
+  })
+
   // Show more/less state
   const [showAll, setShowAll] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  // Fetch contractors from API
-  const fetchContractors = async (searchParams?: {
-    location?: string
-    supportType?: string
-    gender?: string
-    distance?: string
-  }, isInitialLoad: boolean = false) => {
-    try {
-      setIsLoading(true)
-      setShowAll(false) // Reset to show only 6 on new search
-
-      // Build query parameters
-      const params = new URLSearchParams()
-      // On initial load, only fetch 6. On search, fetch 50 to enable "See More"
-      params.append('limit', isInitialLoad ? '6' : '50')
-
-      // Add flexible location filter (handles "NSW 2148", "Parramatta", "2148", etc.)
-      if (searchParams?.location && searchParams.location.trim()) {
-        params.append('location', searchParams.location.trim())
-      }
-
-      if (searchParams?.supportType && searchParams.supportType !== 'All') {
-        params.append('supportType', searchParams.supportType)
-      }
-
-      if (searchParams?.gender && searchParams.gender !== 'All') {
-        params.append('gender', searchParams.gender)
-      }
-
-      // Add distance filter (only if location is provided and distance is not "0" / "None")
-      if (searchParams?.distance && searchParams.distance !== '0' && searchParams.location && searchParams.location.trim()) {
-        params.append('distance', searchParams.distance)
-      }
-
-      // Fetch data
-      const response = await fetch(`/api/contractors?${params.toString()}`)
-      const data = await response.json()
-
-      if (data.success && data.contractors) {
-        setContractors(data.contractors)
-      }
-    } catch (error) {
-      console.error('Failed to fetch contractors:', error)
-    } finally {
-      setIsLoading(false)
+  // Use SWR with dynamic key based on search parameters
+  const searchURL = buildSearchURL(activeSearchParams)
+  const { data: contractors, error: fetchError, isLoading } = useSWR<Contractor[]>(
+    searchURL,
+    fetcher,
+    {
+      dedupingInterval: 300000, // Cache for 5 minutes (300,000 ms)
+      revalidateOnFocus: true, // Revalidate when user focuses the window
+      revalidateOnReconnect: true, // Revalidate when user reconnects
+      refreshInterval: 0, // Don't auto-refresh (only manual revalidation)
     }
-  }
-
-  // Initial load - fetch first 6 contractors
-  useEffect(() => {
-    fetchContractors(undefined, true) // true = initial load
-  }, [])
+  )
 
   // Scroll to section when coming back from worker profile
   useEffect(() => {
@@ -107,13 +120,16 @@ export default function SearchSupport() {
 
     // Mark that a search has been performed
     setHasSearched(true)
+    setShowAll(false) // Reset to show only 6 on new search
 
-    fetchContractors({
+    // Update active search params - this triggers SWR to fetch with new params
+    setActiveSearchParams({
       location,
       supportType,
       gender,
       distance,
-    }, false) // false = not initial load, fetch up to 50
+      limit: '50' // Search fetches up to 50 for "See More" functionality
+    })
   }
 
   return (
@@ -248,11 +264,15 @@ export default function SearchSupport() {
 
         {/* Contractor Cards */}
         <div className="relative">
-          {isLoading ? (
+          {fetchError ? (
+            <div className="text-center py-20">
+              <p className="text-red-500 text-lg">Error loading contractors. Please try again.</p>
+            </div>
+          ) : isLoading ? (
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0C1628]"></div>
             </div>
-          ) : contractors.length === 0 ? (
+          ) : !contractors || contractors.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-gray-500 text-lg">
                 {hasSearched
