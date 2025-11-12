@@ -1,7 +1,7 @@
 'use client'
 import Image from 'next/image'
 import { useState } from 'react'
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import '@/app/styles/services.css'
 
 interface ServiceItem {
   id: number
@@ -40,7 +40,7 @@ const services: ServiceItem[] = [
       "Seasonal / Periodic"
     ],
     image: "/images/cleaning.webp",
-    imageAlt: "Participants engaging in community activities"
+    imageAlt: "Professional cleaning services for NDIS participants"
   },
   {
     id: 3,
@@ -52,7 +52,7 @@ const services: ServiceItem[] = [
       "Waste & Seasonal Tasks"
     ],
     image: "/images/homeyard.webp",
-    imageAlt: "Support worker helping with daily living activities"
+    imageAlt: "Home and yard maintenance services"
   },
   {
     id: 4,
@@ -64,7 +64,7 @@ const services: ServiceItem[] = [
       "Personal Training"
     ],
     image: "/images/fitnessRehab.webp",
-    imageAlt: "Specialized support worker providing care"
+    imageAlt: "Fitness and rehabilitation support"
   },
   {
     id: 5,
@@ -76,7 +76,7 @@ const services: ServiceItem[] = [
       "Complex medical care coordination"
     ],
     image: "/images/therapueticSupport.webp",
-    imageAlt: "Specialized support worker providing care"
+    imageAlt: "Therapeutic support services"
   },
   {
     id: 6,
@@ -90,9 +90,9 @@ const services: ServiceItem[] = [
       "Education & Training"
     ],
     image: "/images/nursing.webp",
-    imageAlt: "Specialized support worker providing care"
+    imageAlt: "Nursing and clinical care services"
   },
-    {
+  {
     id: 7,
     title: "Home Modifications",
     content: "Specialised design and construction services, including bathroom, kitchen, and vehicle modifications, to support independence and accessibility.",
@@ -103,162 +103,96 @@ const services: ServiceItem[] = [
       "Vehicle modifications"
     ],
     image: "/images/homemodify.webp",
-    imageAlt: "Specialized support worker providing care"
+    imageAlt: "Home modification services"
   }
-  
 ]
 
 export default function Services() {
-  const [openAccordion, setOpenAccordion] = useState<number>(1)
+  const [activeService, setActiveService] = useState<number>(1)
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
-  const [displayService, setDisplayService] = useState<ServiceItem | undefined>(services[0])
 
-  const toggleAccordion = (id: number) => {
-    const newId = openAccordion === id ? 0 : id
+  const handleServiceChange = (id: number) => {
+    if (id === activeService) return
 
-    if (openAccordion !== 0 && newId !== openAccordion) {
-      // If switching from one open accordion to another, handle smooth transition
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setOpenAccordion(newId)
-        setDisplayService(services.find(service => service.id === newId))
-        setIsTransitioning(false)
-      }, 300) // Half of fade out duration
-    } else if (openAccordion !== 0 && newId === 0) {
-      // If closing accordion, fade out then remove
-      setIsTransitioning(true)
-      setTimeout(() => {
-        setOpenAccordion(newId)
-        setDisplayService(undefined)
-        setIsTransitioning(false)
-      }, 600) // Full fade out duration
-    } else {
-      // If opening accordion from closed state
-      setOpenAccordion(newId)
-      setDisplayService(services.find(service => service.id === newId))
-    }
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setActiveService(id)
+      setIsTransitioning(false)
+    }, 300)
   }
 
-  const currentService = displayService
+  const currentService = services.find(service => service.id === activeService) || services[0]
 
   return (
-    <section id="services" className="bg-white pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
+    <section id="services" className="services-section">
+      <div className="services-container">
         {/* Header */}
-        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
+        <div className="services-header">
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
-            <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">SERVICES</span>
+            <span className="services-badge">SERVICES</span>
           </p>
-          <h2 className="section-title mb-2 sm:mb-8">
+          <h2 className="section-title">
             This Is How We Create Transformation
           </h2>
-          <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] leading-relaxed max-w-4xl mx-auto">
+          <p className="services-description">
             We offer comprehensive NDIS support services designed to empower participants to live independently and achieve their goals.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 lg:items-start">
-          {/* Accordion Section */}
-          <div className="space-y-4">
+        {/* Service Tabs */}
+        <div className="services-tabs-container">
+          <div className="services-tabs-grid">
             {services.map((service) => (
-              <div
+              <button
                 key={service.id}
-                className="border border-gray-200 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md"
+                onClick={() => handleServiceChange(service.id)}
+                className={`services-tab ${activeService === service.id ? 'active' : ''}`}
               >
-                <button
-                  onClick={() => toggleAccordion(service.id)}
-                  className="w-full flex items-center justify-between p-6 sm:p-8 bg-white transition-colors duration-200"
-                >
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 sm:w-6 sm:h-6 bg-[#B1C3CD] rounded-full flex items-center justify-center mr-4 sm:mr-6">
-                      <div className="w-1 h-1 sm:w-2 sm:h-2 bg-[#0C1628] rounded-full"></div>
-                    </div>
-                    <h3 className="font-cooper text-xl sm:text-2xl lg:text-3l font-normal text-[#0C1628] text-left">
-                      {service.title}
-                    </h3>
-                  </div>
-                  {openAccordion === service.id ? (
-                    <ChevronUpIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#0C1628] flex-shrink-0" />
-                  ) : (
-                    <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#0C1628] flex-shrink-0" />
-                  )}
-                </button>
-
-                <div
-                  className={`overflow-hidden transition-all duration-500 ease-out ${
-                    openAccordion === service.id
-                      ? 'max-h-[800px] opacity-100'
-                      : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="p-6 sm:p-8 pt-0 bg-gray-50">
-                    <p className="font-sans text-base sm:text-lg text-[#0C1628] leading-relaxed mb-6">
-                      {service.content}
-                    </p>
-
-                    {/* Mobile Image - Only visible on mobile */}
-                    <div className="block lg:hidden mb-6">
-                      <div className="relative w-full h-[250px] rounded-2xl overflow-hidden shadow-lg">
-                        <Image
-                          src={service.image}
-                          alt={service.imageAlt}
-                          fill
-                          className="object-cover"
-                          priority
-                        />
-                      </div>
-                    </div>
-
-                    <ul className="space-y-3">
-                      {service.bulletPoints.map((point, index) => (
-                        <li key={index} className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-[#B1C3CD] rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="font-sans text-base sm:text-lg text-[#0C1628]">
-                            {point}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
+                {service.title}
+              </button>
             ))}
           </div>
+        </div>
 
-          {/* Image Section - Only visible on large screens when accordion is open */}
-          {currentService && (
-            <div
-              key={currentService.id}
-              className={`hidden lg:block ${
-                isTransitioning
-                  ? 'animate-[fadeOutDown_0.6s_ease-out_forwards]'
-                  : 'opacity-0 translate-y-6 animate-[fadeInUp_0.6s_ease-out_forwards]'
-              }`}
-            >
-              <div className="relative lg:-top-6 w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg">
-                <Image
-                  src={currentService.image}
-                  alt={currentService.imageAlt}
-                  fill
-                  className="object-cover transition-all duration-500 ease-in-out"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                <div className={`absolute bottom-6 left-6 right-6 ${
-                  isTransitioning
-                    ? 'animate-[fadeOutDown_0.6s_ease-out_forwards]'
-                    : 'opacity-0 translate-y-4 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]'
-                }`}>
-                  <h4 className="font-cooper text-xl sm:text-2xl font-normal text-white mb-2">
-                    {currentService.title}
-                  </h4>
-                  <p className="font-sans text-sm sm:text-base text-white/90">
-                    Professional NDIS support services
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+        {/* Content Section */}
+        <div className="services-content-container">
+          {/* Image */}
+          <div
+            key={`image-${activeService}`}
+            className={`services-image-container ${isTransitioning ? 'services-content-transitioning' : ''}`}
+          >
+            <Image
+              src={currentService.image}
+              alt={currentService.imageAlt}
+              fill
+              className="services-image"
+              priority
+            />
+          </div>
+
+          {/* Text Content */}
+          <div
+            key={`content-${activeService}`}
+            className={`services-content-text ${isTransitioning ? 'services-content-transitioning' : ''}`}
+          >
+            <h3 className="services-content-title">
+              {currentService.title}
+            </h3>
+            <p className="services-content-description">
+              {currentService.content}
+            </p>
+            <p className="services-content-subtitle">
+              What we offer:
+            </p>
+            <ul className="services-bullet-list">
+              {currentService.bulletPoints.map((point, index) => (
+                <li key={index} className="services-bullet-item">
+                  <div className="services-bullet-icon"></div>
+                  <span className="services-bullet-text">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>
