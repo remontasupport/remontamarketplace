@@ -136,8 +136,8 @@ export default function Header() {
                 className="logo-image"
                 src={isScrolled ? "/logo/logo-dark.svg" : "/logo/logo.svg"}
                 alt="Remonta"
-                width={15}
-                height={15}
+                width={120}
+                height={60}
                 priority
               />
               {/* <span className={`ml-5 lg:ml-9 text-xs mt-0.5 italic transition-colors duration-300 ${isScrolled ? 'text-gray-300' : 'text-gray-500'}`}>
@@ -299,7 +299,7 @@ export default function Header() {
                     src="/logo/logo.svg"
                     alt="Remonta"
                     width={120}
-                    height={40}
+                    height={60}
                   />
                   {/* <span className="text-xs mt-0.5 italic text-gray-500">
                     previously Remonta

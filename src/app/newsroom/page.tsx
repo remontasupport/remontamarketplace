@@ -200,7 +200,7 @@ export default function NewsroomPage() {
               alt="Remonta Logo"
               width={60}
               height={60}
-              className="logo-image"
+              className="contact-logo-image"
             />
           </div>
 
