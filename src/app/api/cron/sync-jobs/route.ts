@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * VERCEL CRON ENDPOINT
  *
  * This endpoint is called automatically by Vercel Cron
- * Schedule: Every 6 hours (0 *\/6 * * *)
+ * Schedule: Daily at 11:30 PM (30 23 * * *)
  *
  * Security: Vercel automatically adds Authorization header with CRON_SECRET
  *
