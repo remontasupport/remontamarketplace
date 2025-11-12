@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDownIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, Bars3Icon, XMarkIcon, PhoneIcon } from '@heroicons/react/24/outline'
 
 interface NavigationItem {
   name: string
@@ -118,9 +118,9 @@ export default function Header() {
 
   return (
     <header className={`sticky top-0 z-[100] transition-colors duration-300 ${isScrolled ? 'bg-[#0C1628]' : 'bg-white'}`} ref={headerRef}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 " aria-label="Global">
+      <nav className="mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-12 xl:px-16" aria-label="Global">
         {/* Logo */}
-        <div className="flex lg:flex-1 relative -left-2 lg:-left-0 lg:py-0">
+        <div className="flex relative -left-2 lg:-left-0 lg:py-0">
           <Link
             href="/"
             className="-m-1"
@@ -159,7 +159,7 @@ export default function Header() {
         </div>
 
         {/* Desktop navigation */}
-        <div className="hidden lg:flex lg:gap-x-8">
+        <div className="hidden lg:flex lg:gap-x-10 xl:gap-x-12 lg:ml-8 xl:ml-12">
           {navigation.map((item) => (
             <div key={item.name} className="relative">
               {item.hasDropdown ? (
@@ -224,14 +224,17 @@ export default function Header() {
         </div>
 
         {/* Right side buttons */}
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-          {/* <Link
-            
-            href="/" // "/login"
-            className={`flex items-center justify-center font-sans font-medium text-sm leading-6 transition-colors duration-300 rounded-full px-6 py-2 border ${isScrolled ? 'bg-white text-[#0C1628] border-[#B1C3CD] hover:bg-white hover:text-[#0C1628]' : 'text-[#0C1628] hover:bg-white hover:text-[#0C1628]'}`}
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-6 lg:items-center">
+          {/* Phone Number */}
+          <a
+            href="tel:1300134153"
+            className={`flex items-center gap-x-2 font-sans font-medium text-base transition-colors duration-300 ${isScrolled ? 'text-white hover:text-[#B1C3CD]' : 'text-[#0C1628] hover:text-[#B1C3CD]'}`}
           >
-            Log in
-          </Link> */}
+            <PhoneIcon className="h-5 w-5" aria-hidden="true" />
+            <span>1300 134 153</span>
+          </a>
+
+          {/* Contact Us Button */}
           <div className="relative">
             <Link
               href="/contact"
