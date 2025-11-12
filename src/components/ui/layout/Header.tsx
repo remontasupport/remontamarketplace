@@ -244,7 +244,7 @@ export default function Header() {
                 setTimeout(() => setOpenDropdown(null), 100);
               }}
             >
-              Contact Us
+              Get In Touch
             </Link>
 
             {/* <button
