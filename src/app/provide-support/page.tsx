@@ -105,8 +105,8 @@ export default function JobsPage() {
               </p>
             </div>
           ) : isLoading ? (
-            <div className="jobs-loading">
-              <p>Loading job postings...</p>
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0C1628]"></div>
             </div>
           ) : !jobs || jobs.length === 0 ? (
             <div className="jobs-empty">

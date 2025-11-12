@@ -123,7 +123,7 @@ interface ZohoDeal {
 
   // Job Listing Specific Fields
   Job_Title?: string
-  Job_Description?: string
+  Description?: string
   Location?: string
   Availability?: string
   Start_Date?: string
@@ -131,6 +131,37 @@ interface ZohoDeal {
   Certificates?: string
   Posted_At?: string
   Is_Active?: boolean
+
+  // Location Information
+  Suburbs?: string
+  State?: string
+
+  // Service Information
+  Service_Availed?: string
+  Service_Requirements?: string
+
+  // Requirements
+  Disabilities?: string
+  Behavioural_Concerns?: string
+  Cultural_Considerations?: string
+  Language?: string
+  Religion?: string
+
+  // Personal Preferences
+  Age?: string | number
+  Gender?: string
+  Hobbies?: string
+
+  // Client Information
+  Client_Name?: {
+    name: string
+    id: string
+  }
+  Relationship_to_Participant?: string
+
+  // Status
+  Required_More_Worker?: string
+  Another_Contractor_Needed?: string
 
   // Contact/Account Information
   Contact_Name?: {

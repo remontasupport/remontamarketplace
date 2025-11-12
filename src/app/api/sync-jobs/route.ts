@@ -118,6 +118,18 @@ export async function POST(request: NextRequest) {
             return String(ageValue)
           }
 
+          // Helper function to convert string to boolean
+          const parseBoolean = (value: any): boolean | null => {
+            if (value === null || value === undefined) return null
+            if (typeof value === 'boolean') return value
+            if (typeof value === 'string') {
+              const lower = value.toLowerCase().trim()
+              if (lower === 'yes' || lower === 'true' || lower === '1') return true
+              if (lower === 'no' || lower === 'false' || lower === '0') return false
+            }
+            return null
+          }
+
           const jobData = {
             zohoId: deal.id,
             dealName: deal.Deal_Name || 'Untitled Job',
@@ -160,8 +172,8 @@ export async function POST(request: NextRequest) {
 
             // Status
             active: true, // In "Matching" stage = active
-            requiredMoreWorker: deal.Required_More_Worker || null,
-            anotherContractorNeeded: deal.Another_Contractor_Needed || null,
+            requiredMoreWorker: parseBoolean(deal.Required_More_Worker),
+            anotherContractorNeeded: parseBoolean(deal.Another_Contractor_Needed),
 
             // System
             lastSyncedAt: syncTimestamp,
