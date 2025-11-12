@@ -1,0 +1,528 @@
+/* ============================================
+   Hero Section - Mobile First Design
+   ============================================ */
+
+/* Section Container */
+.hero-section {
+  background-color: #FFFFFF;
+  padding-top: 0;
+  padding-bottom: 1rem;
+  overflow-x: hidden;
+}
+
+@media (min-width: 640px) {
+  .hero-section {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-section {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.hero-container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0.5rem 1rem 1.5rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .hero-container {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-container {
+    padding: 2rem 2rem;
+  }
+}
+
+/* Grid Layout */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .hero-grid {
+    gap: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Content Column */
+.hero-content {
+  order: 2;
+}
+
+@media (min-width: 1024px) {
+  .hero-content {
+    order: 1;
+  }
+}
+
+/* Image Column */
+.hero-image-column {
+  order: 1;
+}
+
+@media (min-width: 1024px) {
+  .hero-image-column {
+    order: 2;
+  }
+}
+
+/* ============================================
+   Typography
+   ============================================ */
+
+/* Main Heading */
+.hero-title {
+  font-family: var(--font-cooper), serif;
+  font-size: 1.875rem;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #0C1628;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .hero-title {
+    font-size: 2.25rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-title {
+    font-size: 3.75rem;
+  }
+}
+
+/* Highlighted Text */
+.hero-highlight {
+  background-color: #F8E8D8;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-radius: 0.5rem;
+  display: inline-block;
+}
+
+.hero-highlight-mt {
+  margin-top: 0.5rem;
+}
+
+/* NDIS Badge (Mobile Only) */
+.hero-ndis-badge-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .hero-ndis-badge-mobile {
+    display: none;
+  }
+}
+
+.hero-ndis-logo-mobile {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-block;
+}
+
+.hero-ndis-text-mobile {
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  font-family: var(--font-sans), sans-serif;
+}
+
+.hero-ndis-text-mobile span {
+  color: #0C1628;
+  white-space: nowrap;
+}
+
+/* Description Text */
+.hero-description {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 1.125rem;
+  color: #0C1628;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .hero-description {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-description {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================
+   CTA Buttons
+   ============================================ */
+
+.hero-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .hero-buttons {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+}
+
+/* Button Base Styles */
+.hero-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  flex: 1;
+}
+
+@media (min-width: 640px) {
+  .hero-button {
+    font-size: 1rem;
+    padding: 0.875rem 2rem;
+    flex: initial;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-button {
+    font-size: 1.125rem;
+    padding: 1rem 2.5rem;
+  }
+}
+
+/* Primary Button (Find support) */
+.hero-button-primary {
+  background-color: #FFFFFF;
+  color: #0C1628;
+  border: 1px solid #0C1628;
+}
+
+.hero-button-primary:hover {
+  background-color: #F9FAFB;
+}
+
+/* Secondary Button (Provide support) */
+.hero-button-secondary {
+  background-color: #0C1628;
+  color: #FFFFFF;
+}
+
+.hero-button-secondary:hover {
+  background-color: #B1C3CD;
+  color: #0C1628;
+}
+
+/* ============================================
+   Stats Section
+   ============================================ */
+
+/* Mobile Slider */
+.hero-stats-mobile {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  height: 3.5rem;
+}
+
+@media (min-width: 640px) {
+  .hero-stats-mobile {
+    display: none;
+  }
+}
+
+.hero-stat-slide {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.5s ease;
+}
+
+.hero-stat-slide.active {
+  transform: translateX(0);
+}
+
+.hero-stat-slide.before {
+  transform: translateX(-100%);
+}
+
+.hero-stat-slide.after {
+  transform: translateX(100%);
+}
+
+.hero-stat-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hero-stat-icon-wrapper {
+  flex-shrink: 0;
+}
+
+.hero-stat-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #EDEFF3;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-stat-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-stat-percentage {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #0C1628;
+}
+
+.hero-stat-description {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 1rem;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+/* Desktop Stats Grid */
+.hero-stats-desktop {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hero-stats-desktop {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+}
+
+@media (min-width: 640px) {
+  .hero-stats-desktop {
+    gap: 2rem;
+  }
+}
+
+.hero-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .hero-stat-item {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+.hero-stat-icon-desktop {
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: #EDEFF3;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .hero-stat-icon-desktop {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+.hero-stat-info {
+  flex: 1;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .hero-stat-info {
+    text-align: left;
+  }
+}
+
+.hero-stat-percentage-desktop {
+  font-family: var(--font-sans), sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #0C1628;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .hero-stat-percentage-desktop {
+    font-size: 1.5rem;
+  }
+}
+
+.hero-stat-description-desktop {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.875rem;
+  color: #6B7280;
+  line-height: 1.4;
+}
+
+@media (min-width: 640px) {
+  .hero-stat-description-desktop {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-stat-description-desktop {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   Hero Image
+   ============================================ */
+
+.hero-image-wrapper {
+  position: relative;
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .hero-image-wrapper {
+    margin-top: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-image-wrapper {
+    margin-top: 0;
+  }
+}
+
+.hero-image-container {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 2rem;
+  position: relative;
+}
+
+.hero-image {
+  object-fit: cover;
+  object-position: center;
+  border-radius: 2rem;
+}
+
+/* NDIS Badge (Desktop Only) */
+.hero-ndis-badge-desktop {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hero-ndis-badge-desktop {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-top: 1.5rem;
+    margin-left: -1rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .hero-ndis-badge-desktop {
+    gap: 2rem;
+  }
+}
+
+.hero-ndis-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-ndis-logo-desktop {
+  width: 150px;
+  height: 56px;
+}
+
+.hero-ndis-text-desktop {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-ndis-text-desktop span {
+  font-size: 0.875rem;
+  color: #0C1628;
+  font-family: var(--font-sans), sans-serif;
+  white-space: nowrap;
+}
+
+/* ============================================
+   Accessibility & Performance
+   ============================================ */
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-stat-slide {
+    transition: none;
+  }
+
+  .hero-button {
+    transition: none;
+  }
+}
+
+/* Focus States */
+.hero-button:focus-visible {
+  outline: 3px solid #5BC0BE;
+  outline-offset: 2px;
+}

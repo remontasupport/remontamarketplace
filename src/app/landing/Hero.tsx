@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import '@/app/styles/hero.css'
 
 export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -68,74 +69,74 @@ export default function Hero() {
     return () => clearInterval(timer)
   }, [stats.length])
   return (
-    <section className="bg-white pt-0 pb-4 sm:py-0 lg:py-0 overflow-x-hidden">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-2 pb-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start ">
+    <section className="hero-section">
+      <div className="hero-container">
+        <div className="hero-grid">
           {/* Left Column - Content */}
-          <div className="order-2 lg:order-1">
-            <h1 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-tight text-[#0C1628] mb-4 sm:mb-6">
-              Your <span className="bg-[#F8E8D8] px-2 rounded-lg inline-block">Trusted, Ethical</span>
-              and <span className="bg-[#F8E8D8] px-2 rounded-lg inline-block mt-2">Reliable</span> NDIS
+          <div className="hero-content">
+            <h1 className="hero-title">
+              Your <span className="hero-highlight">Trusted, Ethical</span>
+              {' '}and <span className="hero-highlight hero-highlight-mt">Reliable</span> NDIS
               service provider{' '}
-              <span className="sm:hidden inline-flex items-center gap-2 align-middle">
+              <span className="hero-ndis-badge-mobile">
                 <Image
                   src="/logo/ndisLogo.svg"
                   alt="NDIS Logo"
                   width={40}
                   height={40}
-                  className="w-10 h-10 inline-block"
+                  className="hero-ndis-logo-mobile"
                 />
-                <span className="inline-flex flex-col text-xs">
-                  <span className="text-[#0C1628] font-poppins whitespace-nowrap">Registered</span>
-                  <span className="text-[#0C1628] font-poppins whitespace-nowrap">NDIS provider</span>
+                <span className="hero-ndis-text-mobile">
+                  <span>Registered</span>
+                  <span>NDIS provider</span>
                 </span>
               </span>
             </h1>
 
-            <p className="font-sans text-lg sm:text-xl lg:text-2xl text-[#0C1628] mb-6 sm:mb-8 leading-relaxed">
+            <p className="hero-description">
               Whether you need support or want to offer it, our platform makes the process simple and secure.
             </p>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+            <div className="hero-buttons">
               <Link
                 href="/registration/user"
-                className="inline-flex items-center justify-center rounded-full bg-white border border-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-gray-50 transition-colors duration-200"
+                className="hero-button hero-button-primary"
               >
                 Find support
               </Link>
               <Link
                 href="/registration/worker"
-                className="inline-flex items-center justify-center rounded-full bg-[#0C1628] px-8 sm:px-10 py-3 sm:py-4 font-sans font-semibold text-base sm:text-lg text-white hover:bg-[#B1C3CD] hover:text-[#0C1628] transition-colors duration-200"
+                className="hero-button hero-button-secondary"
               >
                 Provide support
               </Link>
             </div>
 
             {/* Stats - Mobile Slider */}
-            <div className="sm:hidden relative overflow-hidden h-14">
+            <div className="hero-stats-mobile">
               {stats.map((stat, index) => (
                 <div
                   key={index}
-                  className={`absolute inset-0 transition-transform duration-500 ${
+                  className={`hero-stat-slide ${
                     index === currentSlide
-                      ? 'translate-x-0'
+                      ? 'active'
                       : index < currentSlide
-                        ? '-translate-x-full'
-                        : 'translate-x-full'
+                        ? 'before'
+                        : 'after'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-[#EDEFF3] rounded-full flex items-center justify-center">
+                  <div className="hero-stat-content">
+                    <div className="hero-stat-icon-wrapper">
+                      <div className="hero-stat-icon">
                         {stat.icon}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="font-poppins font-bold text-[18px] text-[#0C1628]">
+                    <div className="hero-stat-text">
+                      <div className="hero-stat-percentage">
                         {stat.percentage}
                       </div>
-                      <div className="font-poppins text-[16px] text-gray-600 leading-snug">
+                      <div className="hero-stat-description">
                         {stat.description}
                       </div>
                     </div>
@@ -145,19 +146,19 @@ export default function Hero() {
             </div>
 
             {/* Stats - Desktop Grid */}
-            <div className="hidden sm:grid grid-cols-3 gap-0 sm:gap-8">
+            <div className="hero-stats-desktop">
               {stats.map((stat, index) => (
-                <div key={index} className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#EDEFF3] rounded-full flex items-center justify-center">
+                <div key={index} className="hero-stat-item">
+                  <div className="hero-stat-icon-wrapper">
+                    <div className="hero-stat-icon-desktop">
                       {stat.icon}
                     </div>
                   </div>
-                  <div className="flex-1 text-center sm:text-left">
-                    <div className="font-poppins font-bold text-xl sm:text-2xl text-[#0C1628] leading-tight">
+                  <div className="hero-stat-info">
+                    <div className="hero-stat-percentage-desktop">
                       {stat.percentage}
                     </div>
-                    <div className="font-poppins lg:text-[16px] sm:text-base text-gray-600 leading-snug">
+                    <div className="hero-stat-description-desktop">
                       {stat.description}
                     </div>
                   </div>
@@ -167,42 +168,34 @@ export default function Hero() {
           </div>
 
           {/* Right Column - Image */}
-          <div className="order-1 lg:order-2">
-            <div className="relative mt-4 sm:mt-6 lg:mt-0">
-              <div
-                className="aspect-[4/3] w-full overflow-hidden shadow-lg"
-                style={{
-                  borderRadius: '2rem'
-
-                }}
-              >
+          <div className="hero-image-column">
+            <div className="hero-image-wrapper">
+              <div className="hero-image-container">
                 <Image
                   src="/hero-image.png"
                   alt="Support worker embracing person with disability showing care and connection"
                   fill
-                  className="object-cover object-center"
+                  className="hero-image"
                   priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                  style={{ borderRadius: '2rem' }}
                 />
               </div>
-             
             </div>
-             <div className="hidden sm:grid grid-cols-3 gap-0 sm:gap-8 mt-6 -ml-4">
-                <div className="flex justify-center items-center">
-                  <Image
-                    src="/logo/ndisLogo.svg"
-                    alt="NDIS Logo"
-                    width={150}
-                    height={100}
-                    className="w-50 h-14"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm text-[#0C1628] font-poppins whitespace-nowrap">Registered </span>
-                    <span className="text-sm text-[#0C1628] font-poppins whitespace-nowrap">NDIS provider</span>
-                  </div>
+            <div className="hero-ndis-badge-desktop">
+              <div className="hero-ndis-content">
+                <Image
+                  src="/logo/ndisLogo.svg"
+                  alt="NDIS Logo"
+                  width={150}
+                  height={100}
+                  className="hero-ndis-logo-desktop"
+                />
+                <div className="hero-ndis-text-desktop">
+                  <span>Registered </span>
+                  <span>NDIS provider</span>
                 </div>
               </div>
+            </div>
           </div>
         </div>
       </div>
