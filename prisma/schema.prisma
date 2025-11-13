@@ -160,3 +160,20 @@ model Job {
   // Sync management
   @@index([lastSyncedAt]) // Track sync status
 }
+
+model ContractorsbyArea {
+  id              String   @id @default(cuid())
+
+  // Worker Information
+  workerName      String   // Worker's display name
+  suburbState     String   // e.g., "Sydney, NSW"
+  image           String?  // Profile image URL
+  bio             String?  // Worker's bio/description
+
+  // System Fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Indexes
+  @@index([suburbState])
+}

@@ -1,7 +1,25 @@
+'use client'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import '@/app/styles/footer.css'
 
+// Helper function to convert area name to slug
+function areaToSlug(area: string): string {
+  return area
+    .toLowerCase()
+    .replace(/,/g, '')
+    .replace(/\s+/g, '-')
+}
+
 export default function Footer() {
+  const [productItems, setProductItems] = useState([
+    { name: 'Sydney, NSW', href: '/area/sydney-nsw' },
+    { name: 'Adelaide, SA', href: '/area/adelaide-sa' },
+    { name: 'Brisbane, QLD', href: '/area/brisbane-qld' },
+    { name: 'Melbourne, VIC', href: '/area/melbourne-vic' },
+    { name: 'Perth, WA', href: '/area/perth-wa' }
+  ])
+
   const menuItems = [
     { name: 'Support Workers', href: '#' },
     { name: 'Disability Care', href: '#' },
@@ -9,19 +27,34 @@ export default function Footer() {
     { name: 'Find Support', href: '/find-support' },
   ]
 
-  const productItems = [
-    { name: 'Sydney, NSW', href: '#' },
-    { name: 'Adelaide, SA', href: '#' },
-    { name: 'Brisbane, QLD', href: '#' },
-    { name: 'Melbourne, VIC', href: '#' },
-    { name: 'Perth, WA', href: '#' }
-  ]
-
   const legalItems = [
     { name: 'Our Story', href: '#' },
     { name: 'Careers', href: '/provide-support' },
     { name: 'News', href: '/newsroom' }
   ]
+
+  // Fetch areas from API on mount
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const response = await fetch('/api/contractors-by-area')
+        const data = await response.json()
+
+        if (data.success && data.areas && data.areas.length > 0) {
+          const areas = data.areas.slice(0, 5).map((area: string) => ({
+            name: area,
+            href: `/area/${areaToSlug(area)}`
+          }))
+          setProductItems(areas)
+        }
+      } catch (error) {
+        console.error('Error fetching areas for footer:', error)
+        // Keep default hardcoded values if fetch fails
+      }
+    }
+
+    fetchAreas()
+  }, [])
 
   return (
     <footer className="footer">

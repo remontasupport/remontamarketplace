@@ -143,9 +143,17 @@ export default function SearchSupport() {
           <h2 className="font-cooper text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-normal leading-tight text-[#0C1628] mb-2 sm:mb-8">
             Search for NDIS disability workers in your area
           </h2>
-          <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] leading-relaxed max-w-4xl mx-auto">
+          <p className="font-sans text-base sm:text-lg lg:text-xl text-[#0C1628] leading-relaxed max-w-4xl mx-auto mb-6">
             Meet a few of the amazing disability support workers making a difference every day.
           </p>
+          <div className="flex justify-center">
+            <a
+              href="/registration/user"
+              className="inline-block bg-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628] text-white font-medium py-3 px-8 rounded-full transition-colors duration-200 font-sans"
+            >
+              Sign up to connect with workers near you
+            </a>
+          </div>
         </div>
 
 
