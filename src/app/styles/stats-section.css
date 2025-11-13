@@ -27,11 +27,7 @@
   padding: 0 1rem;
 }
 
-@media (min-width: 640px) {
-  .stats-container {
-    padding: 0 1.5rem;
-  }
-}
+
 
 @media (min-width: 1024px) {
   .stats-container {
