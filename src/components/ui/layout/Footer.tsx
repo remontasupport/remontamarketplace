@@ -47,7 +47,7 @@ export default function Footer() {
           {/* Menu Section */}
           <div className="footer-menu-section">
             <h3 className="footer-section-title">
-              MENU
+              HOW IT WORKS
             </h3>
             <ul className="footer-list">
               {menuItems.map((item, index) => (
@@ -66,7 +66,7 @@ export default function Footer() {
           {/* Product Section */}
           <div className="footer-product-section">
             <h3 className="footer-section-title">
-              PRODUCT
+              SUPPORT NEAR YOU
             </h3>
             <ul className="footer-list">
               {productItems.map((item, index) => (
@@ -85,7 +85,7 @@ export default function Footer() {
           {/* Legal Section */}
           <div className="footer-legal-section">
             <h3 className="footer-section-title">
-              LEGAL
+              ABOUT US
             </h3>
             <ul className="footer-list">
               {legalItems.map((item, index) => (
