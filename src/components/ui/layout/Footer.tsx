@@ -3,23 +3,24 @@ import '@/app/styles/footer.css'
 
 export default function Footer() {
   const menuItems = [
-    { name: 'Home', href: '#' },
-    { name: 'Features', href: '#' },
-    { name: 'Clients', href: '#' },
-    { name: 'Pricing', href: '#' },
-    { name: 'Sign Up', href: '#' }
+    { name: 'Support Workers', href: '#' },
+    { name: 'Disability Care', href: '#' },
+    { name: 'Provide support', href: '/provide-support' },
+    { name: 'Find Support', href: '/find-support' },
   ]
 
   const productItems = [
-    { name: 'Analytics', href: '#' },
-    { name: 'Businesses', href: '#' },
-    { name: 'Testimonials', href: '#' },
-    { name: 'Integrations', href: '#' }
+    { name: 'Sydney, NSW', href: '#' },
+    { name: 'Adelaide, SA', href: '#' },
+    { name: 'Brisbane, QLD', href: '#' },
+    { name: 'Melbourne, VIC', href: '#' },
+    { name: 'Perth, WA', href: '#' }
   ]
 
   const legalItems = [
-    { name: 'Privacy Policy', href: '#' },
-    { name: 'Terms of Use', href: '#' }
+    { name: 'Our Story', href: '#' },
+    { name: 'Careers', href: '/provide-support' },
+    { name: 'News', href: '/newsroom' }
   ]
 
   return (
