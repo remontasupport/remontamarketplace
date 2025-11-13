@@ -1,6 +1,8 @@
-/* ============================================
-   Hero Section - Mobile First Design
-   ============================================ */
+/* Hero Section Styles */
+
+/* ===================================
+   BASE STYLES
+   =================================== */
 
 /* Section Container */
 .hero-section {
@@ -10,43 +12,11 @@
   overflow-x: hidden;
 }
 
-@media (min-width: 640px) {
-  .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-}
-
 .hero-container {
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
   padding: 0.5rem 1rem 1.5rem 1rem;
-}
-
-@media (min-width: 640px) {
-  .hero-container {
-    padding: 2rem 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-container {
-    padding: 3.5rem 2rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-container {
-    padding: 4rem 1rem;
-  }
 }
 
 /* Grid Layout */
@@ -57,34 +27,9 @@
   align-items: start;
 }
 
-@media (min-width: 640px) {
-  .hero-grid {
-    gap: 3rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 /* Content Column */
 .hero-content {
   order: 2;
-}
-
-@media (min-width: 1024px) {
-  .hero-content {
-    order: 1;
-    margin-left: -4rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-content {
-    margin-left: -9rem;
-  }
 }
 
 /* Image Column */
@@ -92,24 +37,7 @@
   order: 1;
 }
 
-@media (min-width: 1024px) {
-  .hero-image-column {
-    order: 2;
-    margin-right: -4rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-image-column {
-    margin-right: -9rem;
-  }
-}
-
-/* ============================================
-   Typography
-   ============================================ */
-
-/* Main Heading */
+/* Typography */
 .hero-title {
   font-family: var(--font-cooper), serif;
   font-size: 1.875rem;
@@ -119,32 +47,6 @@
   margin-bottom: 1rem;
 }
 
-@media (min-width: 640px) {
-  .hero-title {
-    font-size: 2.25rem;
-    margin-bottom: 1.5rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .hero-title {
-    font-size: 3rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-title {
-    font-size: 3.75rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-title {
-    font-size: 4rem;
-  }
-}
-
-/* Highlighted Text */
 .hero-highlight {
   background-color: #F8E8D8;
   padding-left: 0.5rem;
@@ -157,7 +59,6 @@
   margin-top: 0.5rem;
 }
 
-/* Description Text */
 .hero-description {
   font-family: var(--font-sans), sans-serif;
   font-size: 1.125rem;
@@ -166,29 +67,7 @@
   line-height: 1.6;
 }
 
-@media (min-width: 640px) {
-  .hero-description {
-    font-size: 1.25rem;
-    margin-bottom: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-description {
-    font-size: 1.5rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-description {
-    font-size: 1.75rem;
-  }
-}
-
-/* ============================================
-   CTA Buttons
-   ============================================ */
-
+/* CTA Buttons */
 .hero-buttons {
   display: flex;
   flex-direction: row;
@@ -196,14 +75,6 @@
   margin-bottom: 1.5rem;
 }
 
-@media (min-width: 640px) {
-  .hero-buttons {
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-}
-
-/* Button Base Styles */
 .hero-button {
   display: inline-flex;
   align-items: center;
@@ -218,29 +89,6 @@
   flex: 1;
 }
 
-@media (min-width: 640px) {
-  .hero-button {
-    font-size: 1rem;
-    padding: 0.625rem 2rem;
-    flex: initial;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-button {
-    font-size: 1.125rem;
-    padding: 0.5rem 2.5rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-button {
-    font-size: 1.25rem;
-    padding: 0.7rem 3rem;
-  }
-}
-
-/* Primary Button (Find support) */
 .hero-button-primary {
   background-color: #FFFFFF;
   color: #0C1628;
@@ -251,7 +99,6 @@
   background-color: #F9FAFB;
 }
 
-/* Secondary Button (Provide support) */
 .hero-button-secondary {
   background-color: #0C1628;
   color: #FFFFFF;
@@ -262,26 +109,10 @@
   color: #0C1628;
 }
 
-
-/* ============================================
-   Hero Image
-   ============================================ */
-
+/* Hero Image */
 .hero-image-wrapper {
   position: relative;
   margin-top: 1rem;
-}
-
-@media (min-width: 640px) {
-  .hero-image-wrapper {
-    margin-top: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-image-wrapper {
-    margin-top: 0;
-  }
 }
 
 .hero-image-container {
@@ -293,29 +124,17 @@
   position: relative;
 }
 
-@media (min-width: 1920px) {
-  .hero-image-container {
-    aspect-ratio: 4 / 3.5;
-  }
-}
-
 .hero-image {
   object-fit: cover;
   object-position: center;
   border-radius: 2rem;
 }
 
-/* NDIS Badge - Below Buttons (All Screen Sizes) */
+/* NDIS Badge */
 .hero-ndis-badge-desktop {
   display: flex;
   margin-top: 1.5rem;
   margin-left: 0;
-}
-
-@media (min-width: 640px) {
-  .hero-ndis-badge-desktop {
-    margin-left: -1.7rem;
-  }
 }
 
 .hero-ndis-content {
@@ -330,38 +149,10 @@
   margin-left: -1.4rem;
 }
 
-@media (min-width: 640px) {
-  .hero-ndis-logo-desktop {
-    width: 100px;
-    height: 40px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .hero-ndis-logo-desktop {
-    width: 120px;
-    height: 60px;
-     margin-left: -0.2rem;
-  }
-}
-
-@media (min-width: 1920px) {
-  .hero-ndis-logo-desktop {
-    width: 140px;
-    height: 70px;
-  }
-}
-
 .hero-ndis-text-desktop {
   display: flex;
   flex-direction: column;
   margin-left: -0.8rem;
-}
-
-@media (min-width: 640px) {
-  .hero-ndis-text-desktop {
-    margin-left: -1.2rem;
-  }
 }
 
 .hero-ndis-text-desktop span {
@@ -372,29 +163,176 @@
   line-height: 1.3;
 }
 
+/* Focus States */
+.hero-button:focus-visible {
+  outline: 3px solid #5BC0BE;
+  outline-offset: 2px;
+}
+
+/* ===================================
+   RESPONSIVE STYLES
+   =================================== */
+
+/* Small screens (640px+) */
 @media (min-width: 640px) {
+  .hero-section {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .hero-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .hero-grid {
+    gap: 3rem;
+  }
+
+  .hero-title {
+    font-size: 2.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-description {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-buttons {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-button {
+    font-size: 1rem;
+    padding: 0.625rem 2rem;
+    flex: initial;
+  }
+
+  .hero-image-wrapper {
+    margin-top: 1.5rem;
+  }
+
+  .hero-ndis-badge-desktop {
+    margin-left: -1.7rem;
+  }
+
+  .hero-ndis-logo-desktop {
+    width: 100px;
+    height: 40px;
+  }
+
+  .hero-ndis-text-desktop {
+    margin-left: -1.2rem;
+  }
+
   .hero-ndis-text-desktop span {
     font-size: 0.75rem;
   }
 }
 
+/* Medium screens (768px+) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+}
+
+/* Large screens (1024px+) */
 @media (min-width: 1024px) {
+  .hero-section {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .hero-container {
+    padding: 3.5rem 2rem;
+  }
+
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-content {
+    order: 1;
+    margin-left: -2rem;
+  }
+
+  .hero-image-column {
+    order: 2;
+    margin-right: -4rem;
+  }
+
+  .hero-title {
+    font-size: 3.75rem;
+  }
+
+  .hero-description {
+    font-size: 1.5rem;
+  }
+
+  .hero-button {
+    font-size: 1.125rem;
+    padding: 0.5rem 2.5rem;
+  }
+
+  .hero-image-wrapper {
+    margin-top: 0;
+  }
+
+  .hero-ndis-logo-desktop {
+    width: 120px;
+    height: 60px;
+    margin-left: -0.2rem;
+  }
+
   .hero-ndis-text-desktop span {
     font-size: 1.2rem;
   }
 }
 
+/* Extra large screens (1920px+) */
 @media (min-width: 1920px) {
+  .hero-container {
+    padding: 4rem 1rem;
+  }
+
+  .hero-content {
+    margin-left: -9rem;
+  }
+
+  .hero-image-column {
+    margin-right: -9rem;
+  }
+
+  .hero-title {
+    font-size: 4rem;
+  }
+
+  .hero-description {
+    font-size: 1.75rem;
+  }
+
+  .hero-button {
+    font-size: 1.25rem;
+    padding: 0.7rem 3rem;
+  }
+
+  .hero-image-container {
+    aspect-ratio: 4 / 3.5;
+  }
+
+  .hero-ndis-logo-desktop {
+    width: 140px;
+    height: 70px;
+  }
+
   .hero-ndis-text-desktop span {
     font-size: 1.4rem;
   }
 }
 
-/* ============================================
-   Accessibility & Performance
-   ============================================ */
-
-/* Reduced Motion */
+/* Accessibility - Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .hero-stat-slide {
     transition: none;
@@ -403,10 +341,4 @@
   .hero-button {
     transition: none;
   }
-}
-
-/* Focus States */
-.hero-button:focus-visible {
-  outline: 3px solid #5BC0BE;
-  outline-offset: 2px;
 }
