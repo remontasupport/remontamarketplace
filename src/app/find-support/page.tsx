@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from "@/components/ui/layout/Footer"
+import HowItWorks from "@/components/sections/HowItWorks"
 import '@/app/styles/find-support.css'
 import '@/app/styles/provide-support.css'
 import {
@@ -36,6 +37,24 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 export default function FindSupportPage() {
+ const howItWorksSteps = [
+  {
+   number: 1,
+   title: 'Choose the services that meet your needs',
+   description: 'Select the services you want, whether it\'s help with daily care, preparing meals, getting around the community, or other supports that make life easier.'
+  },
+  {
+   number: 2,
+   title: 'Book a support worker',
+   description: 'Agree on job details with a support worker, including rates, and organise a time for the session.'
+  },
+  {
+   number: 3,
+   title: 'Manage your ongoing support',
+   description: 'Live your kind of independence knowing you\'re in charge of your support with Remonta.'
+  }
+ ]
+
  const sliderItems = [
   {
    title: 'Daily living and community support',
@@ -418,55 +437,11 @@ export default function FindSupportPage() {
    </section>
 
    {/* How Remonta Works Section */}
-   <section className="find-support-how-it-works-section">
-    <div className="find-support-how-it-works-container">
-     {/* Section Header */}
-     <div className="find-support-how-it-works-header">
-      <h2 className="find-support-how-it-works-title">
-       How Remonta works for people receiving support
-      </h2>
-      <p className="find-support-how-it-works-description">
-       If you’re a person with a disability, you have the freedom to choose who supports you and when.
-      </p>
-     </div>
-
-     {/* Cards Grid */}
-     <div className="find-support-how-it-works-grid">
-      {/* Card 1 */}
-      <div className="find-support-how-it-works-card">
-       <div className="find-support-how-it-works-number">1</div>
-       <h3 className="find-support-how-it-works-card-title">
-        Choose the services that meet your needs
-       </h3>
-       <p className="find-support-how-it-works-card-text">
-        Select the services you want, whether it’s help with daily care, preparing meals, getting around the community, or other supports that make life easier.
-       </p>
-      </div>
-
-      {/* Card 2 */}
-      <div className="find-support-how-it-works-card">
-       <div className="find-support-how-it-works-number">2</div>
-       <h3 className="find-support-how-it-works-card-title">
-        Book a support worker
-       </h3>
-       <p className="find-support-how-it-works-card-text">
-        Agree on job details with a support worker, including rates, and organise a time for the session.
-       </p>
-      </div>
-
-      {/* Card 3 */}
-      <div className="find-support-how-it-works-card">
-       <div className="find-support-how-it-works-number">3</div>
-       <h3 className="find-support-how-it-works-card-title">
-        Manage your ongoing support
-       </h3>
-       <p className="find-support-how-it-works-card-text">
-        Live your kind of independence knowing you're in charge of your support with Remonta.
-       </p>
-      </div>
-     </div>
-    </div>
-   </section>
+   <HowItWorks
+    title="How Remonta works for people receiving support"
+    subtitle="If you're a person with a disability, you have the freedom to choose who supports you and when."
+    steps={howItWorksSteps}
+   />
 
    {/* CTA Section */}
    <section className="jobs-cta-section">

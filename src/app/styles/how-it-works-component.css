@@ -1,0 +1,204 @@
+/* How It Works Component Styles */
+
+/* ===================================
+   BASE STYLES
+   =================================== */
+
+.how-it-works-section {
+  padding: 4rem 1rem;
+  background-color: var(--brand-highlight);
+}
+
+.how-it-works-container {
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+/* Header */
+.how-it-works-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.how-it-works-title {
+  font-family: var(--font-cooper, 'Cooper', serif);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--brand-primary);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.how-it-works-description {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 1.125rem;
+  color: #374151;
+  max-width: 48rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Grid */
+.how-it-works-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 2rem;
+  align-items: stretch;
+}
+
+/* Card */
+.how-it-works-card {
+  background-color: white;
+  border: 2px solid var(--brand-primary);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.how-it-works-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.how-it-works-number {
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: var(--brand-tertiary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-cooper, 'Cooper', serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--brand-primary);
+  margin-bottom: 1.5rem;
+}
+
+.how-it-works-card-title {
+  font-family: var(--font-cooper, 'Cooper', serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--brand-primary);
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  min-height: 3.9rem;
+}
+
+.how-it-works-card-text {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 1rem;
+  color: #4B5563;
+  line-height: 1.7;
+  flex-grow: 1;
+}
+
+/* ===================================
+   RESPONSIVE STYLES
+   =================================== */
+
+/* Small screens (640px+) */
+@media (min-width: 640px) {
+  .how-it-works-section {
+    padding: 5rem 1.5rem;
+  }
+
+  .how-it-works-title {
+    font-size: 2.5rem;
+  }
+}
+
+/* Medium screens (768px+) */
+@media (min-width: 768px) {
+  .how-it-works-title {
+    font-size: 3rem;
+  }
+
+  .how-it-works-description {
+    font-size: 1.25rem;
+  }
+
+  .how-it-works-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+}
+
+/* Large screens (1024px+) */
+@media (min-width: 1024px) {
+  .how-it-works-section {
+    padding: 6rem 2rem;
+  }
+
+  .how-it-works-header {
+    margin-bottom: 2rem;
+  }
+
+  .how-it-works-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+
+  .how-it-works-card {
+    padding: 2.5rem;
+  }
+
+  .how-it-works-card-title {
+    font-size: 1.75rem;
+    min-height: 4.55rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .how-it-works-card-text {
+    font-size: 1.125rem;
+  }
+}
+
+/* Extra large screens (1280px+) */
+@media (min-width: 1280px) {
+  .how-it-works-section {
+    padding: 7rem 2rem;
+  }
+
+  .how-it-works-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .how-it-works-grid {
+    gap: 3rem;
+  }
+
+  .how-it-works-card-title {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Extra extra large screens (1920px+) */
+@media (min-width: 1920px) {
+  .how-it-works-section {
+    padding: 8rem 3rem;
+  }
+
+  .how-it-works-title {
+    font-size: 3.5rem;
+  }
+
+  .how-it-works-number {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.75rem;
+  }
+
+  .how-it-works-card {
+    padding: 3rem;
+  }
+
+  .how-it-works-card-title {
+    font-size: 2rem;
+    min-height: 5.2rem;
+    margin-bottom: 0.75rem;
+  }
+}

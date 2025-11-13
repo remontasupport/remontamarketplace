@@ -3,21 +3,30 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import '@/app/styles/footer.css'
 
-// Helper function to convert area name to slug
-function areaToSlug(area: string): string {
-  return area
-    .toLowerCase()
-    .replace(/,/g, '')
-    .replace(/\s+/g, '-')
+// Helper function to convert state name to slug
+function stateToSlug(state: string): string {
+  return state.toLowerCase()
+}
+
+// Map state abbreviations to display names with cities
+const stateDisplayNames: Record<string, string> = {
+  'NSW': 'Sydney, NSW',
+  'VIC': 'Melbourne, VIC',
+  'QLD': 'Brisbane, QLD',
+  'SA': 'Adelaide, SA',
+  'WA': 'Perth, WA',
+  'ACT': 'Canberra, ACT',
+  'NT': 'Darwin, NT',
+  'TAS': 'Hobart, TAS'
 }
 
 export default function Footer() {
   const [productItems, setProductItems] = useState([
-    { name: 'Sydney, NSW', href: '/area/sydney-nsw' },
-    { name: 'Adelaide, SA', href: '/area/adelaide-sa' },
-    { name: 'Brisbane, QLD', href: '/area/brisbane-qld' },
-    { name: 'Melbourne, VIC', href: '/area/melbourne-vic' },
-    { name: 'Perth, WA', href: '/area/perth-wa' }
+    { name: 'Sydney, NSW', href: '/area/nsw' },
+    { name: 'Melbourne, VIC', href: '/area/vic' },
+    { name: 'Brisbane, QLD', href: '/area/qld' },
+    { name: 'Adelaide, SA', href: '/area/sa' },
+    { name: 'Perth, WA', href: '/area/wa' }
   ])
 
   const menuItems = [
@@ -33,27 +42,27 @@ export default function Footer() {
     { name: 'News', href: '/newsroom' }
   ]
 
-  // Fetch areas from API on mount
+  // Fetch states from API on mount
   useEffect(() => {
-    const fetchAreas = async () => {
+    const fetchStates = async () => {
       try {
         const response = await fetch('/api/contractors-by-area')
         const data = await response.json()
 
-        if (data.success && data.areas && data.areas.length > 0) {
-          const areas = data.areas.slice(0, 5).map((area: string) => ({
-            name: area,
-            href: `/area/${areaToSlug(area)}`
+        if (data.success && data.states && data.states.length > 0) {
+          const states = data.states.slice(0, 5).map((state: string) => ({
+            name: stateDisplayNames[state] || state, // Use display name with city
+            href: `/area/${stateToSlug(state)}`
           }))
-          setProductItems(areas)
+          setProductItems(states)
         }
       } catch (error) {
-        console.error('Error fetching areas for footer:', error)
+        console.error('Error fetching states for footer:', error)
         // Keep default hardcoded values if fetch fails
       }
     }
 
-    fetchAreas()
+    fetchStates()
   }, [])
 
   return (
