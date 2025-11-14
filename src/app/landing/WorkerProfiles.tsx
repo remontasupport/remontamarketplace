@@ -9,7 +9,7 @@ import { getFeaturedWorkerProfiles, WorkerProfile } from '@/lib/sanity/workerPro
 import WorkerProfileModal from './WorkerProfileModal'
 import 'swiper/css'
 import 'swiper/css/navigation'
-import '../styles/worker-profiles.css'
+import '@/styles/worker-profiles.css'
 
 // Define background colors for the cards
 const backgroundColors = [

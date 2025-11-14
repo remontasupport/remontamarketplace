@@ -2,9 +2,9 @@
 @import "tw-animate-css";
 
 /* Page-specific styles */
-@import "./styles/provide-support.css";
-@import "./styles/how-it-works.css";
-@import "./styles/about-us.css";
+@import "../styles/provide-support.css";
+@import "../styles/how-it-works.css";
+@import "../styles/about-us.css";
 
 
 @custom-variant dark (&:is(.dark *));
@@ -418,5 +418,274 @@ div[style*="position: fixed"][style*="bottom: 16px"] {
 /* White variant for scrolled/dark backgrounds */
 .link-underline-effect.scrolled::after {
   background-color: white;
+}
+
+/* ============================================
+   REUSABLE SECTION COMPONENTS
+   ============================================ */
+
+/* Standard Section Container - Used across all landing sections */
+.section-container {
+  width: 100%;
+  padding: 3rem 1rem;
+  background-color: #FFFFFF;
+}
+
+@media (min-width: 768px) {
+  .section-container {
+    padding: 4rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-container {
+    padding: 6rem 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .section-container {
+    padding: 6rem 2rem;
+  }
+}
+
+/* Content Wrapper - Centered max-width container */
+.content-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .content-wrapper {
+    gap: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content-wrapper {
+    gap: 3rem;
+  }
+}
+
+/* ============================================
+   REUSABLE BUTTON STYLES
+   ============================================ */
+
+/* Base Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 0.938rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+@media (min-width: 768px) {
+  .btn {
+    padding: 0.938rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .btn {
+    padding: 1rem 2.5rem;
+    font-size: 1.125rem;
+  }
+}
+
+/* Primary Button - Dark background */
+.btn-primary {
+  background-color: var(--brand-primary);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
+}
+
+/* Secondary Button - Light background */
+.btn-secondary {
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--brand-primary);
+  color: #FFFFFF;
+}
+
+/* Button with Arrow Icon */
+.btn-arrow {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.btn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* ============================================
+   REUSABLE CARD STYLES
+   ============================================ */
+
+/* Base Card */
+.card {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .card {
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 2rem;
+  }
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Card with border instead of shadow */
+.card-bordered {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #E5E7EB;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .card-bordered {
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card-bordered {
+    padding: 2rem;
+  }
+}
+
+/* ============================================
+   REUSABLE IMAGE CONTAINERS
+   ============================================ */
+
+/* Standard Image Container */
+.image-container {
+  position: relative;
+  width: 100%;
+  border-radius: 1rem;
+  overflow: hidden;
+  background-color: var(--brand-highlight);
+}
+
+@media (min-width: 768px) {
+  .image-container {
+    border-radius: 1.5rem;
+  }
+}
+
+.image-container img {
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.image-container:hover img {
+  transform: scale(1.05);
+}
+
+/* ============================================
+   REUSABLE LAYOUT UTILITIES
+   ============================================ */
+
+/* Two Column Grid - Common layout pattern */
+.two-column-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .two-column-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 3rem;
+  }
+}
+
+/* Center Content */
+.center-content {
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .center-content {
+    text-align: left;
+  }
+}
+
+/* ============================================
+   COMMON ACCESSIBILITY FEATURES
+   ============================================ */
+
+/* Focus States for Keyboard Navigation */
+.btn:focus-visible,
+.card:focus-visible {
+  outline: 3px solid #5BC0BE;
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .btn-primary,
+  .btn-secondary,
+  .card {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced Motion - Applied to interactive elements */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn-arrow,
+  .card,
+  .image-container img {
+    transition: none;
+    transform: none;
+  }
+
+  .btn:hover .btn-arrow {
+    transform: none;
+  }
+
+  .image-container:hover img {
+    transform: none;
+  }
 }
 

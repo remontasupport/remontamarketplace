@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Footer from "@/components/ui/layout/Footer"
-import '../../styles/article.css'
+import '@/styles/article.css'
 
 export default function NotFound() {
   return (

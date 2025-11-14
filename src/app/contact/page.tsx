@@ -4,7 +4,7 @@ import { useState } from "react"
 import Footer from "@/components/ui/layout/Footer"
 import Image from "next/image"
 import { Phone, MessageCircle } from "lucide-react"
-import '@/app/styles/contact.css'
+import '@/styles/contact.css'
 
 interface FormData {
   firstName: string

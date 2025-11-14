@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { useScrollAnimation } from '@/hooks/useScrollAnimation'
-import '@/app/styles/services.css'
+import '@/styles/services.css'
 
 interface ServiceItem {
   id: number

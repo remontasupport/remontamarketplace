@@ -7,7 +7,7 @@ import Footer from "@/components/ui/layout/Footer"
 import { getArticleBySlug, type Article } from "@/lib/sanity/client"
 import { portableTextComponents } from "@/components/PortableTextComponents"
 import ArticleClientWrapper from "@/components/ArticleClientWrapper"
-import '../../styles/article.css'
+import '@/styles/article.css'
 
 // Generate dynamic metadata for SEO and social sharing
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

@@ -169,42 +169,7 @@
   margin-top: 0.5rem;
 }
 
-.about-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.75rem;
-  border-radius: 9999px;
-  font-family: var(--font-sans), sans-serif;
-  font-size: 0.938rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease-in-out;
-  border: none;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-}
-
-.about-button-primary {
-  background-color: #0C1628;
-  color: #FFFFFF;
-}
-
-.about-button-primary:hover {
-  background-color: var(--brand-highlight);
-  color: var(--brand-primary);
-}
-
-.button-arrow {
-  width: 1.25rem;
-  height: 1.25rem;
-  transition: transform 0.2s ease-in-out;
-}
-
-.about-button:hover .button-arrow {
-  transform: translateX(4px);
-}
+/* Note: Uses global .btn and .btn-primary classes from globals.css */
 
 /* ============================================
    Tablet Breakpoint (768px and up)
@@ -243,11 +208,6 @@
     flex-direction: row;
     flex-wrap: wrap;
     align-items: flex-start;
-  }
-
-  .about-button {
-    padding: 0.938rem 2rem;
-    font-size: 1rem;
   }
 }
 
@@ -331,11 +291,6 @@
   .about-cta-buttons {
     margin-top: 0.1rem;
   }
-
-  .about-button {
-    padding: 1rem 2.5rem;
-    font-size: 1.125rem;
-  }
 }
 
 /* ============================================
@@ -367,29 +322,5 @@
    Accessibility & Performance
    ============================================ */
 
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  .about-button,
-  .button-arrow,
-  .about-button:hover .button-arrow {
-    transition: none;
-    transform: none;
-  }
-}
-
-/* Focus States for Keyboard Navigation */
-.about-button:focus-visible {
-  outline: 3px solid #5BC0BE;
-  outline-offset: 2px;
-}
-
-/* High Contrast Mode Support */
-@media (prefers-contrast: high) {
-  .about-button-primary {
-    border: 2px solid currentColor;
-  }
-
-  .about-button-secondary {
-    border: 2px solid currentColor;
-  }
-}
+/* Note: Button accessibility styles are now in globals.css */
+/* Component-specific accessibility can be added here if needed */

@@ -147,28 +147,7 @@
   margin-top: 1rem;
 }
 
-.how-it-works-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background-color: #0c1628;
-  padding: 1rem 2rem;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 1rem;
-  color: white;
-  letter-spacing: 0.05em;
-  transition: all 0.2s;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-}
-
-.how-it-works-button:hover {
-  background-color: var(--brand-highlight);
-  color: var(--brand-primary);
-}
+/* Note: Uses global .btn and .btn-primary classes from globals.css */
 
 /* ============================================
    Tablet Breakpoint (768px and up)
@@ -206,11 +185,6 @@
 
   .step-card-description {
     font-size: 0.875rem;
-  }
-
-  .how-it-works-button {
-    padding: 1.25rem 2.5rem;
-    font-size: 1.125rem;
   }
 }
 
@@ -263,10 +237,6 @@
   .step-card-description {
     font-size: 0.938rem;
   }
-
-  .how-it-works-button {
-    padding: 1.25rem 3rem;
-  }
 }
 
 /* ============================================
@@ -304,10 +274,11 @@
    Accessibility & Performance
    ============================================ */
 
+/* Note: Button accessibility styles are now in globals.css */
+
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .how-it-works-step-card,
-  .how-it-works-button,
   .display-image {
     transition: none;
     transform: none;
@@ -320,18 +291,9 @@
   outline-offset: 2px;
 }
 
-.how-it-works-button:focus-visible {
-  outline: 3px solid #5BC0BE;
-  outline-offset: 2px;
-}
-
 /* High Contrast Mode Support */
 @media (prefers-contrast: high) {
   .how-it-works-step-card {
-    border: 2px solid currentColor;
-  }
-
-  .how-it-works-button {
     border: 2px solid currentColor;
   }
 }

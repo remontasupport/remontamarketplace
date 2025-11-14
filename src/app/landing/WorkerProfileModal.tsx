@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { MapPin, User, Car } from 'lucide-react'
 import { WorkerProfile } from '@/lib/sanity/workerProfileClient'
-import '../styles/worker-profile-modal.css'
+import '@/styles/worker-profile-modal.css'
 
 interface WorkerProfileModalProps {
   worker: WorkerProfile | null

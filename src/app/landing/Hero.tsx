@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useScrollAnimation } from '@/hooks/useScrollAnimation'
-import '@/app/styles/hero.css'
+import '@/styles/hero.css'
 
 export default function Hero() {
   // Initialize scroll animations

@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import useSWR from 'swr'
 import HowItWorks from '@/components/sections/HowItWorks'
-import '@/app/styles/area.css'
+import '@/styles/area.css'
 
 interface Contractor {
   id: string

@@ -4,8 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from "@/components/ui/layout/Footer"
 import HowItWorks from "@/components/sections/HowItWorks"
-import '@/app/styles/find-support.css'
-import '@/app/styles/provide-support.css'
+import '@/styles/find-support.css'
+import '@/styles/provide-support.css'
 import {
  UserGroupIcon,
  DocumentTextIcon,

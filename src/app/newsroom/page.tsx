@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Footer from "@/components/ui/layout/Footer"
 import { getArticles, type Article } from "@/lib/sanity/client"
-import '../styles/newsroom.css'
+import '@/styles/newsroom.css'
 
 export default function NewsroomPage() {
   const [articles, setArticles] = useState<Article[]>([])

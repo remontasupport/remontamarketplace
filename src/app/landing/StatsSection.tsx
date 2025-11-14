@@ -2,7 +2,7 @@
 
 import { Award, Heart, TrendingUp } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import '@/app/styles/stats-section.css'
+import '@/styles/stats-section.css'
 
 function AnimatedCounter({ value }: { value: string }) {
   const [count, setCount] = useState(0)

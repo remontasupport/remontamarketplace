@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChevronDownIcon, Bars3Icon, XMarkIcon, PhoneIcon } from '@heroicons/react/24/outline'
-import '@/app/styles/header.css'
+import '@/styles/header.css'
 
 interface NavigationItem {
   name: string

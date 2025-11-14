@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import '@/app/styles/footer.css'
+import '@/styles/footer.css'
 
 // Helper function to convert state name to slug
 function stateToSlug(state: string): string {

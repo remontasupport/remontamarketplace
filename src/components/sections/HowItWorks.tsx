@@ -1,4 +1,4 @@
-import '@/app/styles/how-it-works-component.css'
+import '@/styles/how-it-works-component.css'
 
 interface Step {
   number: number

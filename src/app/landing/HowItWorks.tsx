@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MagnifyingGlassIcon, UserGroupIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import { useScrollAnimation } from '@/hooks/useScrollAnimation'
-import '../styles/how-it-works.css'
+import '@/styles/how-it-works.css'
 
 const steps = [
   {
