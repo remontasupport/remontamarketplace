@@ -2,8 +2,11 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 
 export default function Pricing() {
+  // Initialize scroll animations
+  useScrollAnimation()
   const benefits = [
     {
       icon: <Image src="/images/ndis-funding.svg" alt="NDIS funding" width={44} height={44} />,
@@ -42,10 +45,10 @@ export default function Pricing() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Mobile Header - Centered */}
         <div className="text-center mb-8 sm:mb-12 lg:hidden">
-          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
+          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">PRICING</span>
           </p>
-          <h2 className="section-title mb-2 sm:mb-8">
+          <h2 className="section-title mb-2 sm:mb-8 scroll-animate fade-up" data-delay="1">
             We accept different types of f﻿unding
           </h2>
         </div>
@@ -56,22 +59,22 @@ export default function Pricing() {
           <div className="order-2 lg:order-1">
             {/* Desktop Header - Only visible on large screens */}
             <div className="hidden lg:block">
-              <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
+              <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
                 <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">PRICING</span>
               </p>
-              <h2 className="section-title mb-2 sm:mb-8">
+              <h2 className="section-title mb-2 sm:mb-8 scroll-animate fade-up" data-delay="1">
                 We accept different types of f﻿unding
               </h2>
             </div>
 
-            <p className="font-sans text-base sm:text-lg text-[#0C1628] mb-6 sm:mb-8 leading-relaxed text-center lg:text-left">
+            <p className="font-sans text-base sm:text-lg text-[#0C1628] mb-6 sm:mb-8 leading-relaxed text-center lg:text-left scroll-animate fade-up" data-delay="2">
               Our rates are set, transparent and designed to be fair for everyone. Here are some of our funding options:
             </p>
 
             {/* Benefits List */}
             <div className="space-y-4 sm:space-y-5">
               {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-center gap-4">
+                <div key={index} className="flex items-center gap-4 scroll-animate fade-up" data-delay={index + 3}>
                   <div className="flex-shrink-0">
                     <div className="w-12 h-12 bg-[#EDEFF3] rounded-full flex items-center justify-center">
                       {benefit.icon}
@@ -91,7 +94,7 @@ export default function Pricing() {
           </div>
 
           {/* Right Column - Pricing Image */}
-          <div className="order-1 lg:order-2 lg:mt-16">
+          <div className="order-1 lg:order-2 lg:mt-16 scroll-animate fade-left" data-delay="2">
             <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px] rounded-2xl overflow-hidden shadow-lg bg-[#0C1628]">
               <Image
                 src="/images/pricing-image.webp"
@@ -134,7 +137,7 @@ export default function Pricing() {
         </div>
 
         {/* Second CTA Section */}
-        <div className="mt-16 sm:mt-20 lg:mt-24">
+        <div className="mt-16 sm:mt-20 lg:mt-24 scroll-animate fade-up" data-delay="3">
           <div className="bg-[#0C1628] rounded-2xl sm:rounded-3xl px-6 py-8 sm:px-8 sm:py-12 md:px-12 md:py-16 lg:px-16 lg:py-20 text-center">
             <h2 className="font-cooper text-3xl sm:text-4xl md:text-3xl lg:text-5xl font-normal leading-tight text-white mb-2 sm:mb-8">
               Ready to join Remonta?

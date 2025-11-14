@@ -1,6 +1,7 @@
 'use client'
 import Image from 'next/image'
 import { useState } from 'react'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 import '@/app/styles/services.css'
 
 interface ServiceItem {
@@ -111,6 +112,9 @@ export default function Services() {
   const [activeService, setActiveService] = useState<number>(1)
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false)
 
+  // Initialize scroll animations
+  useScrollAnimation()
+
   const handleServiceChange = (id: number) => {
     if (id === activeService) return
 
@@ -128,13 +132,13 @@ export default function Services() {
       <div className="services-container">
         {/* Header */}
         <div className="services-header">
-          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
+          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
             <span className="services-badge">SERVICES</span>
           </p>
-          <h2 className="section-title">
+          <h2 className="section-title scroll-animate fade-up" data-delay="1">
             This Is How We Create Transformation
           </h2>
-          <p className="services-description">
+          <p className="services-description scroll-animate fade-up" data-delay="2">
             We offer comprehensive NDIS support services designed to empower participants to live independently and achieve their goals.
           </p>
         </div>
@@ -142,7 +146,7 @@ export default function Services() {
         {/* Mobile Accordion & Desktop Tabs */}
         <div className="services-tabs-container">
           {/* Mobile Accordion */}
-          <div className="services-mobile-accordion">
+          <div className="services-mobile-accordion scroll-animate fade-up" data-delay="3">
             {services.map((service) => (
               <div key={service.id} className="services-accordion-item">
                 <button
@@ -194,7 +198,7 @@ export default function Services() {
           </div>
 
           {/* Desktop Tabs Grid */}
-          <div className="services-tabs-grid">
+          <div className="services-tabs-grid scroll-animate fade-up" data-delay="3">
             {services.map((service) => (
               <button
                 key={service.id}
@@ -208,7 +212,7 @@ export default function Services() {
         </div>
 
         {/* Desktop Content Section */}
-        <div className="services-content-container">
+        <div className="services-content-container scroll-animate fade-up" data-delay="4">
           {/* Image */}
           <div
             key={`image-${activeService}`}

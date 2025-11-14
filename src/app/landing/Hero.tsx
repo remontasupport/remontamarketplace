@@ -2,27 +2,31 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 import '@/app/styles/hero.css'
 
 export default function Hero() {
+  // Initialize scroll animations
+  useScrollAnimation()
+
   return (
     <section className="hero-section">
       <div className="hero-container">
         <div className="hero-grid">
           {/* Left Column - Content */}
           <div className="hero-content">
-            <h1 className="hero-title">
+            <h1 className="hero-title scroll-animate fade-up">
               Your <span className="hero-highlight">Trusted, Ethical</span>
               {' '}and <span className="hero-highlight hero-highlight-mt">Reliable</span> NDIS
               service provider
             </h1>
 
-            <p className="hero-description">
+            <p className="hero-description scroll-animate fade-up" data-delay="1">
               Whether you need support or want to offer it, our platform makes the process simple and secure.
             </p>
 
             {/* Buttons */}
-            <div className="hero-buttons">
+            <div className="hero-buttons scroll-animate fade-up" data-delay="2">
               <Link
                 href="/registration/user"
                 className="hero-button hero-button-primary"
@@ -38,7 +42,7 @@ export default function Hero() {
             </div>
 
             {/* NDIS Badge - Desktop */}
-            <div className="hero-ndis-badge-desktop">
+            <div className="hero-ndis-badge-desktop scroll-animate fade-up" data-delay="3">
               <div className="hero-ndis-content">
                 <Image
                   src="/logo/ndisLogo.svg"
@@ -57,7 +61,7 @@ export default function Hero() {
 
           {/* Right Column - Image */}
           <div className="hero-image-column">
-            <div className="hero-image-wrapper">
+            <div className="hero-image-wrapper scroll-animate fade-right" data-delay="2">
               <div className="hero-image-container">
                 <Image
                   src="/hero-image.png"

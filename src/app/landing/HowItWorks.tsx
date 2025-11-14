@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { MagnifyingGlassIcon, UserGroupIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 import '../styles/how-it-works.css'
 
 const steps = [
@@ -34,15 +35,18 @@ export default function HowItWorks() {
   const [activeStep, setActiveStep] = useState(1)
   const currentStep = steps.find(s => s.step === activeStep) || steps[0]
 
+  // Initialize scroll animations
+  useScrollAnimation()
+
   return (
     <section className="how-it-works-section">
       <div className="how-it-works-container">
         {/* Header */}
         <div className="how-it-works-header">
-          <div className="how-it-works-badge-wrapper">
+          <div className="how-it-works-badge-wrapper scroll-animate fade-up">
             <span className="section-badge">HOW IT WORKS</span>
           </div>
-          <h2 className="section-title">
+          <h2 className="section-title scroll-animate fade-up" data-delay="1">
             How Easy Can Finding NDIS Support Be?
           </h2>
         </div>
@@ -57,7 +61,8 @@ export default function HowItWorks() {
                 <button
                   key={item.step}
                   onClick={() => setActiveStep(item.step)}
-                  className={`how-it-works-step-card ${activeStep === item.step ? 'active' : ''}`}
+                  className={`how-it-works-step-card scroll-animate fade-up ${activeStep === item.step ? 'active' : ''}`}
+                  data-delay={item.step + 1}
                 >
                   <div className="step-card-icon">
                     <Icon className="step-icon" />
@@ -76,7 +81,7 @@ export default function HowItWorks() {
           </div>
 
           {/* Right: Active Step Image */}
-          <div className="how-it-works-image-display">
+          <div className="how-it-works-image-display scroll-animate fade-left" data-delay="2">
             <div className="image-display-wrapper">
               <Image
                 src={currentStep.image}

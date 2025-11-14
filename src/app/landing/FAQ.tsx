@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 
 interface FAQItem {
   question: string
@@ -14,6 +15,9 @@ interface FAQSection {
 
 export default function FAQ() {
   const [openItems, setOpenItems] = useState<{ [key: string]: boolean }>({})
+
+  // Initialize scroll animations
+  useScrollAnimation()
 
   const toggleItem = (key: string) => {
     setOpenItems(prev => ({
@@ -75,20 +79,20 @@ export default function FAQ() {
     <section className="bg-[#F8F9FA] pt-4 pb-12 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         <div className="text-center mb-8 sm:mb-12">
-          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
+          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
             <span className="bg-[#F8E8D8] px-2 py-1 rounded-lg text-[#0C1628]">FAQs</span>
           </p>
-          <h2 className="section-title mb-2 sm:mb-4">
+          <h2 className="section-title mb-2 sm:mb-4 scroll-animate fade-up" data-delay="1">
             Frequently Asked Questions
           </h2>
-          <p className="font-sans text-base sm:text-lg text-[#0C1628] leading-relaxed max-w-2xl mx-auto">
+          <p className="font-sans text-base sm:text-lg text-[#0C1628] leading-relaxed max-w-2xl mx-auto scroll-animate fade-up" data-delay="2">
             Find answers to common questions about our services and how we can support you.
           </p>
         </div>
 
         <div className="space-y-8 sm:space-y-12">
           {faqSections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div key={sectionIndex} className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm scroll-animate fade-up" data-delay={sectionIndex + 3}>
               <h3 className="font-cooper text-2xl sm:text-3xl font-normal text-[#0C1628] mb-6 sm:mb-8 text-center">
                 {section.title}
               </h3>
@@ -140,7 +144,7 @@ export default function FAQ() {
           ))}
         </div>
 
-        <div className="text-center mt-8 sm:mt-12">
+        <div className="text-center mt-8 sm:mt-12 scroll-animate fade-up" data-delay="5">
           <p className="font-sans text-base sm:text-lg text-[#0C1628] mb-4">
             Didn't find the answer you are looking for?{' '}
             <a href="/contact" className="text-[#0C1628] underline font-semibold hover:text-[#B1C3CD] transition-colors">

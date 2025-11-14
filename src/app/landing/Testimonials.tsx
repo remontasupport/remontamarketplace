@@ -1,22 +1,28 @@
+'use client'
+
 import Image from 'next/image'
+import { useScrollAnimation } from '@/hooks/useScrollAnimation'
 
 export default function Testimonials() {
+  // Initialize scroll animations
+  useScrollAnimation()
+
   return (
     <section className="bg-gray-50 pt-4 pb-4 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
-          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4">
+          <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
             <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">TESTIMONIALS</span>
           </p>
-          <h2 className="section-title mb-2 sm:mb-8">
+          <h2 className="section-title mb-2 sm:mb-8 scroll-animate fade-up" data-delay="1">
             What Our Participants Say
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-8">
           {/* Testimonial 1 */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full scroll-animate fade-up" data-delay="2">
             <div className="flex items-center mb-4 sm:mb-5 lg:mb-6">
               <div className="relative w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden mr-3 sm:mr-4 flex-shrink-0">
                 <Image
@@ -41,7 +47,7 @@ export default function Testimonials() {
           </div>
 
           {/* Testimonial 2 */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full scroll-animate fade-up" data-delay="3">
             <div className="flex items-center mb-4 sm:mb-5 lg:mb-6">
               <div className="relative w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden mr-3 sm:mr-4 flex-shrink-0">
                 <Image
@@ -66,7 +72,7 @@ export default function Testimonials() {
           </div>
 
           {/* Testimonial 3 */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full scroll-animate fade-up" data-delay="4">
             <div className="flex items-center mb-4 sm:mb-5 lg:mb-6">
               <div className="relative w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden mr-3 sm:mr-4 flex-shrink-0">
                 <Image
@@ -91,7 +97,7 @@ export default function Testimonials() {
           </div>
 
           {/* Testimonial 4 */}
-          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm border border-gray-100 flex flex-col h-full scroll-animate fade-up" data-delay="5">
             <div className="flex items-center mb-4 sm:mb-5 lg:mb-6">
               <div className="relative w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden mr-3 sm:mr-4 flex-shrink-0">
                 <Image
