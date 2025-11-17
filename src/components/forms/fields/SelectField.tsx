@@ -52,7 +52,7 @@ export default function SelectField({
         aria-describedby={error ? `${name}-error` : helperText ? `${name}-helper` : undefined}
         {...props}
       >
-        <option value="">{placeholder}</option>
+        {placeholder && <option value="">{placeholder}</option>}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

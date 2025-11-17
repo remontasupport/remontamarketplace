@@ -7,6 +7,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useIdentityDocuments, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -94,8 +96,12 @@ export default function Step1ProofOfIdentity({
   errors = {},
 }: Step1ProofOfIdentityProps) {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  // Use custom hook - handles all fetching and caching
+  const { data: documentsData, isLoading: isLoadingDocuments } = useIdentityDocuments();
+
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
-  const [uploadedDocs, setUploadedDocs] = useState<Record<string, UploadedDocument>>({});
 
   // Track which document type is selected for upload in each category
   const [selectedPrimaryType, setSelectedPrimaryType] = useState<string | null>(null);
@@ -105,45 +111,34 @@ export default function Step1ProofOfIdentity({
   const [isEditingPrimary, setIsEditingPrimary] = useState(false);
   const [isEditingSecondary, setIsEditingSecondary] = useState(false);
 
-  // Load existing identity documents on mount
+  // Convert documents array to map for easier lookup
+  const uploadedDocs: Record<string, UploadedDocument> = {};
+  documentsData?.documents?.forEach((doc: UploadedDocument) => {
+    uploadedDocs[doc.documentType] = doc;
+  });
+
+  // Set selected types based on uploaded documents
   useEffect(() => {
-    if (session?.user?.id) {
-      loadExistingDocuments();
-    }
-  }, [session?.user?.id]);
+    if (documentsData?.documents) {
+      const primaryDoc = documentsData.documents.find((doc: any) =>
+        PRIMARY_DOCUMENTS.some(pd => pd.type === doc.documentType)
+      );
+      const secondaryDoc = documentsData.documents.find((doc: any) =>
+        SECONDARY_DOCUMENTS.some(sd => sd.type === doc.documentType)
+      );
 
-  const loadExistingDocuments = async () => {
-    try {
-      const response = await fetch("/api/worker/identity-documents");
-      if (response.ok) {
-        const data = await response.json();
-
-        // Convert array to map for easier lookup
-        const docsMap: Record<string, UploadedDocument> = {};
-        data.documents.forEach((doc: UploadedDocument) => {
-          docsMap[doc.documentType] = doc;
-        });
-
-        setUploadedDocs(docsMap);
-
-        // Set selected types based on uploaded documents
-        const primaryDoc = data.documents.find((doc: any) =>
-          PRIMARY_DOCUMENTS.some(pd => pd.type === doc.documentType)
-        );
-        const secondaryDoc = data.documents.find((doc: any) =>
-          SECONDARY_DOCUMENTS.some(sd => sd.type === doc.documentType)
-        );
-
-        if (primaryDoc) setSelectedPrimaryType(primaryDoc.documentType);
-        if (secondaryDoc) setSelectedSecondaryType(secondaryDoc.documentType);
-
-        // Update parent form data
-        onChange("identityDocuments", data.documents);
+      if (primaryDoc && !selectedPrimaryType) {
+        setSelectedPrimaryType(primaryDoc.documentType);
       }
-    } catch (error) {
-      console.error("Failed to load existing identity documents:", error);
+      if (secondaryDoc && !selectedSecondaryType) {
+        setSelectedSecondaryType(secondaryDoc.documentType);
+      }
+
+      // Update parent form data
+      onChange("identityDocuments", documentsData.documents);
     }
-  };
+  }, [documentsData?.documents]);
+
 
   const handleFileUpload = async (documentType: string, file: File) => {
     if (!session?.user?.id) return;
@@ -181,22 +176,10 @@ export default function Step1ProofOfIdentity({
 
       const responseData = await response.json();
 
-      // Update uploaded documents
-      const newDoc: UploadedDocument = {
-        id: responseData.id,
-        documentType,
-        documentUrl: responseData.url,
-        uploadedAt: new Date().toISOString(),
-      };
-
-      setUploadedDocs((prev) => ({
-        ...prev,
-        [documentType]: newDoc,
-      }));
-
-      // Update parent form data
-      const updatedDocs = Object.values({ ...uploadedDocs, [documentType]: newDoc });
-      onChange("identityDocuments", updatedDocs);
+      // Invalidate cache to update all steps automatically
+      await queryClient.invalidateQueries({
+        queryKey: identityDocumentsKeys.all,
+      });
 
       // Exit edit mode after successful upload
       const isPrimary = PRIMARY_DOCUMENTS.some(d => d.type === documentType);
@@ -236,11 +219,6 @@ export default function Step1ProofOfIdentity({
         }
       }
 
-      // Remove from state
-      const newUploadedDocs = { ...uploadedDocs };
-      delete newUploadedDocs[documentType];
-      setUploadedDocs(newUploadedDocs);
-
       // Reset selection and edit mode for the category
       const isPrimary = PRIMARY_DOCUMENTS.some(d => d.type === documentType);
       if (isPrimary) {
@@ -251,8 +229,10 @@ export default function Step1ProofOfIdentity({
         setIsEditingSecondary(false);
       }
 
-      // Update parent form data
-      onChange("identityDocuments", Object.values(newUploadedDocs));
+      // Invalidate cache to update all steps automatically
+      await queryClient.invalidateQueries({
+        queryKey: identityDocumentsKeys.all,
+      });
     } catch (error: any) {
       console.error("❌ Delete failed:", error);
       alert(`Delete failed: ${error.message}`);
@@ -261,13 +241,41 @@ export default function Step1ProofOfIdentity({
 
   const uploadedCount = Object.keys(uploadedDocs).length;
 
+  // Show loading state while fetching documents
+  if (isLoadingDocuments) {
+    return (
+      <div className="account-step-container">
+        <div className="form-page-content">
+          <div className="form-column">
+            <div className="account-form">
+              <p className="text-sm text-gray-600 font-poppins mb-6">
+                Loading identity documents...
+              </p>
+              <div style={{ padding: "2rem 0" }}>
+                <div className="loading-spinner"></div>
+              </div>
+            </div>
+          </div>
+          <div className="info-column">
+            <div className="info-box">
+              <h3 className="info-box-title">100-Point Check System</h3>
+              <p className="info-box-text">
+                Identity verification is a mandatory requirement for all workers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="account-step-container">
       <div className="form-page-content">
       {/* Left Column - Form */}
       <div className="form-column">
         <div className="account-form">
-         
+
           <p className="text-sm text-gray-600 font-poppins mb-6">
             Select and upload ONE primary document (70 points) and ONE secondary document (30 points) to meet the 100-point requirement.
           </p>
@@ -320,9 +328,19 @@ export default function Step1ProofOfIdentity({
                 )}
                 <button
                   onClick={() => setIsEditingPrimary(true)}
-                  className="document-update-btn"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#0C1628",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontSize: "0.875rem",
+                    padding: "0.5rem 0",
+                    fontFamily: "var(--font-poppins)",
+                    marginTop: "0.75rem"
+                  }}
                 >
-                  Update
+                  Replace Document
                 </button>
               </div>
             ) : (
@@ -443,9 +461,19 @@ export default function Step1ProofOfIdentity({
                 )}
                 <button
                   onClick={() => setIsEditingSecondary(true)}
-                  className="document-update-btn"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#0C1628",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontSize: "0.875rem",
+                    padding: "0.5rem 0",
+                    fontFamily: "var(--font-poppins)",
+                    marginTop: "0.75rem"
+                  }}
                 >
-                  Update
+                  Replace Document
                 </button>
               </div>
             ) : (
