@@ -181,6 +181,19 @@ export async function POST(request: Request) {
 
     console.log(`✅ VerificationRequirement record saved successfully`);
 
+    // 7. Update worker's verificationStatus to PENDING_REVIEW
+    // Any document upload/update triggers re-verification by admin
+    // This applies to ALL statuses (NOT_STARTED, IN_PROGRESS, APPROVED, REJECTED)
+    const updatedWorker = await authPrisma.workerProfile.update({
+      where: { id: workerProfile.id },
+      data: {
+        verificationStatus: 'PENDING_REVIEW',
+      },
+      select: { verificationStatus: true },
+    });
+
+    console.log(`✅ Worker verification status set to PENDING_REVIEW (requires admin review)`)
+
     return NextResponse.json({
       success: true,
       url: blob.url,
