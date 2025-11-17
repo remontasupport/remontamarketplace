@@ -91,7 +91,7 @@ export default function StepContainer({
           ></div>
         </div>
         <p className="progress-text">
-          Step {currentStep} of {totalSteps} • {progressPercentage}% complete
+          Step {currentStep} of {totalSteps}
         </p>
       </div>
     </div>

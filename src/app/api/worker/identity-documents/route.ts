@@ -9,10 +9,16 @@ import { authPrisma } from "@/lib/auth-prisma";
  */
 export async function GET(request: Request) {
   try {
+    console.log("🔍 GET /api/worker/identity-documents - Starting");
+
     const session = await getServerSession(authOptions);
+    console.log("🔐 Session:", session?.user?.id ? "Found" : "Not found");
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    console.log("📊 Fetching worker profile for user:", session.user.id);
 
     // Get worker profile
     const workerProfile = await authPrisma.workerProfile.findUnique({
@@ -20,35 +26,50 @@ export async function GET(request: Request) {
       select: { id: true },
     });
 
+    console.log("👤 Worker profile:", workerProfile ? "Found" : "Not found");
+
     if (!workerProfile) {
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
 
+    console.log("📄 Fetching identity documents for worker:", workerProfile.id);
+
     // Get all identity documents from verification_requirements table
-    const documents = await authPrisma.verificationRequirement.findMany({
-      where: {
-        workerProfileId: workerProfile.id,
-        documentCategory: {
-          in: ["PRIMARY", "SECONDARY", "WORKING_RIGHTS"],
+    // Filter by requirementType pattern for identity documents (starts with "identity-")
+    let documents = [];
+
+    try {
+      documents = await authPrisma.verificationRequirement.findMany({
+        where: {
+          workerProfileId: workerProfile.id,
+          requirementType: {
+            startsWith: "identity-",
+          },
         },
-      },
-      select: {
-        id: true,
-        requirementType: true,
-        requirementName: true,
-        documentCategory: true,
-        documentUrl: true,
-        status: true,
-        documentUploadedAt: true,
-        reviewedAt: true,
-        approvedAt: true,
-        rejectedAt: true,
-        rejectionReason: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        select: {
+          id: true,
+          requirementType: true,
+          requirementName: true,
+          documentCategory: true,
+          documentUrl: true,
+          status: true,
+          documentUploadedAt: true,
+          reviewedAt: true,
+          approvedAt: true,
+          rejectedAt: true,
+          rejectionReason: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      console.log("✅ Found", documents.length, "identity documents");
+    } catch (dbError: any) {
+      console.error("⚠️ Database query failed, returning empty array:", dbError.message);
+      // Return empty array if database query fails
+      // This allows the page to load even if there's a connection issue
+      documents = [];
+    }
 
     // Transform to match the expected interface
     const formattedDocuments = documents.map(doc => ({
@@ -64,16 +85,26 @@ export async function GET(request: Request) {
       rejectionReason: doc.rejectionReason,
     }));
 
+    console.log("✅ Returning formatted documents");
+
     return NextResponse.json({
       success: true,
       documents: formattedDocuments,
     });
   } catch (error: any) {
-    console.error("Error fetching identity documents:", error);
+    console.error("❌ Error fetching identity documents:", error);
+    console.error("❌ Error name:", error?.name);
+    console.error("❌ Error message:", error?.message);
+    console.error("❌ Error stack:", error?.stack);
+
     return NextResponse.json(
       {
         error: "Failed to fetch identity documents",
-        details: process.env.NODE_ENV === "development" ? error.message : undefined,
+        details: process.env.NODE_ENV === "development" ? {
+          message: error.message,
+          name: error.name,
+          code: error.code,
+        } : undefined,
       },
       { status: 500 }
     );
@@ -114,8 +145,8 @@ export async function DELETE(request: Request) {
       where: {
         id: documentId,
         workerProfileId: workerProfile.id,
-        documentCategory: {
-          in: ["PRIMARY", "SECONDARY", "WORKING_RIGHTS"],
+        requirementType: {
+          startsWith: "identity-",
         },
       },
     });

@@ -97,52 +97,89 @@ export async function POST(request: Request) {
 
     console.log(`✅ Identity document uploaded to blob:`, blob.url);
 
-    // 6. Find or create VerificationRequirement record for identity document
-    let verificationReq = await authPrisma.verificationRequirement.findFirst({
+    // 6. Replace any existing document in the same category
+    // This ensures users can only have ONE primary doc and ONE secondary doc at a time
+    // Example: Switching from Passport to Birth Certificate will delete Passport and create Birth Certificate
+
+    // First, find any existing document in the same category (PRIMARY, SECONDARY, or WORKING_RIGHTS)
+    const existingDocInCategory = await authPrisma.verificationRequirement.findFirst({
       where: {
         workerProfileId: workerProfile.id,
-        requirementType: documentType,
         documentCategory: docConfig.category,
+        requirementType: {
+          startsWith: "identity-", // Only identity documents
+        },
       },
     });
 
-    if (!verificationReq) {
-      // Create new verification requirement for identity document
+    let verificationReq;
+
+    if (existingDocInCategory) {
+      // Check if it's the same document type (re-uploading same doc) or different (switching docs)
+      if (existingDocInCategory.requirementType === documentType) {
+        // Same document type - just update the URL
+        console.log(`🔄 Updating existing ${docConfig.category} document: ${documentType}`);
+        verificationReq = await authPrisma.verificationRequirement.update({
+          where: { id: existingDocInCategory.id },
+          data: {
+            documentUrl: blob.url,
+            documentUploadedAt: new Date(),
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            updatedAt: new Date(),
+            // Reset review fields when re-uploading
+            reviewedAt: null,
+            reviewedBy: null,
+            approvedAt: null,
+            rejectedAt: null,
+            rejectionReason: null,
+          },
+        });
+      } else {
+        // Different document type - delete old and create new
+        console.log(`🔄 Replacing ${docConfig.category} document: ${existingDocInCategory.requirementType} → ${documentType}`);
+
+        // Delete the old document
+        await authPrisma.verificationRequirement.delete({
+          where: { id: existingDocInCategory.id },
+        });
+
+        // Create new document
+        verificationReq = await authPrisma.verificationRequirement.create({
+          data: {
+            workerProfileId: workerProfile.id,
+            requirementType: documentType,
+            requirementName: docConfig.name,
+            documentCategory: docConfig.category,
+            isRequired: true, // Identity documents are mandatory
+            documentUrl: blob.url,
+            documentUploadedAt: new Date(),
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      }
+    } else {
+      // No existing document in this category - create new
+      console.log(`📝 Creating new ${docConfig.category} document: ${documentType}`);
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
           requirementType: documentType,
           requirementName: docConfig.name,
           documentCategory: docConfig.category,
-          isRequired: false, // Identity documents are not mandatory by default
+          isRequired: true, // Identity documents are mandatory
           documentUrl: blob.url,
           documentUploadedAt: new Date(),
           status: "SUBMITTED",
           submittedAt: new Date(),
           updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Update existing verification requirement
-      verificationReq = await authPrisma.verificationRequirement.update({
-        where: { id: verificationReq.id },
-        data: {
-          documentUrl: blob.url,
-          documentUploadedAt: new Date(),
-          status: "SUBMITTED",
-          submittedAt: new Date(),
-          updatedAt: new Date(),
-          // Reset review fields when re-uploading
-          reviewedAt: null,
-          reviewedBy: null,
-          approvedAt: null,
-          rejectedAt: null,
-          rejectionReason: null,
         },
       });
     }
 
-    console.log(`✅ VerificationRequirement record updated with identity document URL`);
+    console.log(`✅ VerificationRequirement record saved successfully`);
 
     return NextResponse.json({
       success: true,
