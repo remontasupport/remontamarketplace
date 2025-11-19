@@ -83,7 +83,6 @@ interface FormData {
   // Step 6: Personal Info
   age: string;
   gender: string;
-  genderIdentity: string;
   languages: string[];
   hasVehicle: string;
   // Step 7: ABN
@@ -129,7 +128,6 @@ export default function AccountSetupPage() {
     identityDocuments: [],
     age: "",
     gender: "",
-    genderIdentity: "",
     languages: [],
     hasVehicle: "",
     abn: "",
@@ -168,7 +166,6 @@ export default function AccountSetupPage() {
         identityDocuments: [],
         age: profileData.age || "",
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
-        genderIdentity: profileData.genderIdentity || "",
         languages: profileData.languages || [],
         hasVehicle: profileData.hasVehicle || "",
         abn: "",

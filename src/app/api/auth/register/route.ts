@@ -104,7 +104,6 @@ export async function POST(request: Request) {
       location,
       age,
       gender,
-      genderIdentity,
       languages,
       services,
       supportWorkerCategories,
@@ -291,7 +290,6 @@ export async function POST(request: Request) {
             // Other worker data
             age,
             gender,
-            genderIdentity,
             languages: languages || [],
             services: services || [],
             supportWorkerCategories: supportWorkerCategories || [],

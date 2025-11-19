@@ -14,7 +14,6 @@ interface Step4PersonalInfoProps {
   data: {
     age: string;
     gender: string;
-    genderIdentity: string;
     languages: string[];
     hasVehicle: string;
   };
@@ -120,16 +119,7 @@ export default function Step4PersonalInfo({
             options={[
               { label: "Male", value: "male" },
               { label: "Female", value: "female" },
-              { label: "Other", value: "other" },
             ]}
-          />
-
-          <TextField
-            label="Gender Identity"
-            name="genderIdentity"
-            value={data.genderIdentity}
-            onChange={(e) => onChange("genderIdentity", e.target.value)}
-            isOptional
           />
 
           {/* TODO: Add multi-select for languages */}

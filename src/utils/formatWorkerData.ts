@@ -18,7 +18,6 @@ interface FormattedWorkerData {
   mobile: string;
   age: string;
   gender: string;
-  genderIdentity: string;
   languages: string[];
   location: string;
 
@@ -100,7 +99,6 @@ export function formatWorkerDataForDatabase(
     mobile: formData.mobile,
     age: formData.age,
     gender: formData.gender,
-    genderIdentity: formData.genderIdentity,
     languages: formData.languages,
     location: formData.location,
 

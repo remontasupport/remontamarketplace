@@ -8,11 +8,16 @@ import SimpleDashboardHeader from './SimpleDashboardHeader'
 interface DashboardLayoutProps {
   children: ReactNode
   showProfileCard?: boolean
+  profileData?: {
+    firstName: string
+    photo: string | null
+  }
 }
 
 export default function DashboardLayout({
   children,
-  showProfileCard = true
+  showProfileCard = true,
+  profileData
 }: DashboardLayoutProps) {
   return (
     <div className="dashboard-wrapper">
@@ -32,7 +37,7 @@ export default function DashboardLayout({
         {/* Right Sidebar - Profile Card */}
         {showProfileCard && (
           <aside className="dashboard-right-sidebar">
-            <ProfileCard />
+            <ProfileCard profileData={profileData} />
           </aside>
         )}
       </div>

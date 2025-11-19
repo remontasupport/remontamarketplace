@@ -1,11 +1,14 @@
-"use client";
-
 /**
- * Worker Dashboard
+ * Worker Dashboard - Server Component
  * Protected route - only accessible to users with WORKER role
+ * Uses getServerSession for server-side authentication (PRODUCTION-READY)
  */
 
-import { useSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth.config";
+import { UserRole } from "@/types/auth";
+import { authPrisma } from "@/lib/auth-prisma";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 // News array for dashboard
@@ -23,32 +26,61 @@ const newsItems = [
   {
     id: 3,
     image: "/images/ndisForChildren.avif",
-    headline: "NDIS Changes for Children with Autism: What Does “Thriving Kids” Mean?"
+    headline: "NDIS Changes for Children with Autism: What Does \"Thriving Kids\" Mean?"
   }
 ];
 
-export default function WorkerDashboard() {
-  const { data: session, status } = useSession();
+export default async function WorkerDashboard() {
+  // Server-side session validation using getServerSession (RECOMMENDED APPROACH)
+  const session = await getServerSession(authOptions);
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="font-poppins text-gray-600">Loading...</p>
-      </div>
-    );
+  console.log("🔒 Server Component - Validating session");
+  console.log("👤 Session:", session ? "Found" : "Not found");
+
+  // Redirect to login if no session
+  if (!session || !session.user) {
+    console.log("❌ No session - redirecting to login");
+    redirect("/login");
   }
 
+  // Redirect if wrong role
+  if (session.user.role !== UserRole.WORKER) {
+    console.log("❌ Wrong role:", session.user.role, "- redirecting to unauthorized");
+    redirect("/unauthorized");
+  }
+
+  console.log("✅ Access granted - rendering dashboard");
+
+  // Fetch worker profile data from database
+  const workerProfile = await authPrisma.workerProfile.findUnique({
+    where: { userId: session.user.id },
+    select: {
+      firstName: true,
+      lastName: true,
+      photos: true,
+    },
+  });
+
+  console.log("📝 Worker Profile:", workerProfile ? "Found" : "Not found");
+
+  // At this point, we have a valid WORKER session
+  // This code only runs server-side, so it's completely secure
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      profileData={{
+        firstName: workerProfile?.firstName || 'Worker',
+        photo: workerProfile?.photos ? (Array.isArray(workerProfile.photos) ? workerProfile.photos[0] : (workerProfile.photos as any)?.[0]) : null,
+      }}
+    >
       {/* Hero Banner */}
       <div className="hero-banner">
         <div className="hero-content">
           <h2 className="hero-title">
-            Welcome to Remonta!<br />Verify Your Account Today
+            Welcome to Remonta!
           </h2>
-          <button className="hero-btn">
-            Verify →
-          </button>
+          <p className="text-white/90 text-lg font-poppins mt-4">
+            Connecting support workers with families to create meaningful, life-changing relationships.
+          </p>
         </div>
         {/* Decorative elements */}
         <div className="hero-decoration hero-decoration-1"></div>

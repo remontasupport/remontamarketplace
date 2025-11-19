@@ -20,7 +20,15 @@ export default withAuth(
     const path = req.nextUrl.pathname;
 
     console.log("🔒 Middleware - Path:", path);
+    console.log("👤 User ID:", token?.id);
     console.log("👤 User Role:", token?.role);
+    console.log("📧 User Email:", token?.email);
+
+    // Additional security: Verify token has required fields
+    if (!token || !token.id || !token.role || !token.email) {
+      console.log("❌ Invalid token - missing required fields");
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
 
     // Role-based access control for dashboard routes
     if (path.startsWith("/dashboard/worker") && token?.role !== UserRole.WORKER) {
@@ -49,9 +57,16 @@ export default withAuth(
       // This callback is called to check if the user is authorized
       // Return true to allow access, false to redirect to sign-in
       authorized: ({ token }) => {
-        // User must be authenticated (have a token)
-        return !!token;
+        // User must be authenticated and have valid token structure
+        const isValid = !!(token && token.id && token.email && token.role);
+        if (!isValid) {
+          console.log("❌ Unauthorized: Invalid or missing token");
+        }
+        return isValid;
       },
+    },
+    pages: {
+      signIn: "/login",
     },
   }
 );

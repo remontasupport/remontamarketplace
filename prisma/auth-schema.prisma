@@ -164,7 +164,6 @@ model WorkerProfile {
   location                  String
   age                       String
   gender                    String
-  genderIdentity            String
   languages                 String[]
   services                  String[]
   supportWorkerCategories   String[]

@@ -203,6 +203,45 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   /**
+   * Secure cookie configuration (PRODUCTION-READY)
+   * Prevents session hijacking and CSRF attacks
+   */
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
+      options: {
+        httpOnly: true, // Prevents JavaScript access to cookie
+        sameSite: "lax", // Prevents CSRF attacks
+        path: "/", // Cookie available on all paths
+        secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      },
+    },
+    callbackUrl: {
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      name: `${process.env.NODE_ENV === "production" ? "__Host-" : ""}next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
+
+  /**
+   * Use secure cookies in production
+   */
+  useSecureCookies: process.env.NODE_ENV === "production",
+
+  /**
    * Enable debug in development
    */
   debug: process.env.NODE_ENV === "development",

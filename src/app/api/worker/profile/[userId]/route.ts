@@ -49,7 +49,6 @@ export async function GET(
         postalCode: true,
         age: true,
         gender: true,
-        genderIdentity: true,
         languages: true,
         services: true,
         supportWorkerCategories: true,

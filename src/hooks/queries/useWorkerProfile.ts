@@ -32,7 +32,6 @@ interface WorkerProfile {
   introduction?: string;
   age?: string;
   gender?: string;
-  genderIdentity?: string;
   languages?: string[];
   location?: string;
   city?: string;

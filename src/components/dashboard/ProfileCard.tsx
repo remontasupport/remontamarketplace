@@ -2,9 +2,36 @@
 
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
+import { useState, useEffect } from 'react'
 
-export default function ProfileCard() {
+interface ProfileCardProps {
+  profileData?: {
+    firstName: string
+    photo: string | null
+  }
+}
+
+export default function ProfileCard({ profileData }: ProfileCardProps) {
   const { data: session } = useSession()
+  const [greeting, setGreeting] = useState('Good Morning')
+
+  // Determine greeting based on time of day
+  useEffect(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) {
+      setGreeting('Good Morning')
+    } else if (hour < 18) {
+      setGreeting('Good Afternoon')
+    } else {
+      setGreeting('Good Evening')
+    }
+  }, [])
+
+  // Get display name from profileData or fallback to email
+  const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
+
+  // Get profile photo URL from database or use placeholder
+  const photoUrl = profileData?.photo || '/images/profilePlaceHolder.png'
 
   return (
     <div className="profile-card">
@@ -16,13 +43,13 @@ export default function ProfileCard() {
 
       {/* Avatar */}
       <div className="profile-avatar-wrapper">
-        <div className="profile-avatar">
+        <div className="profile-avatar w-32 h-32 rounded-full overflow-hidden mx-auto">
           <Image
-            src="/images/profilePlaceHolder.png"
+            src={photoUrl}
             alt="Profile"
-            width={80}
-            height={80}
-            className="rounded-full"
+            width={128}
+            height={128}
+            className="w-full h-full object-cover"
           />
         </div>
       </div>
@@ -30,11 +57,8 @@ export default function ProfileCard() {
       {/* Greeting */}
       <div className="profile-greeting">
         <h4 className="profile-name">
-          Good Morning {session?.user?.email?.split('@')[0] || 'Worker'}
+          {greeting}, {displayName}
         </h4>
-        <p className="profile-subtitle">
-          Verify your account now!
-        </p>
       </div>
     </div>
   )

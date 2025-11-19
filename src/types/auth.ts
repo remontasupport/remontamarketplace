@@ -65,7 +65,6 @@ export type WorkerRegistrationData = RegistrationDataBase & {
   location: string;
   age: string;
   gender: string;
-  genderIdentity: string;
   languages: string[];
   services: string[];
   supportWorkerCategories?: string[];

@@ -52,24 +52,12 @@ const Step2AdditionalDetailsComponent = function Step2AdditionalDetails({ regist
                 <SelectContent>
                   <SelectItem value="Male" className="text-base font-poppins">Male</SelectItem>
                   <SelectItem value="Female" className="text-base font-poppins">Female</SelectItem>
-                  <SelectItem value="Other" className="text-base font-poppins">Other</SelectItem>
                 </SelectContent>
               </Select>
             )}
           />
           {errors.gender && <p className="text-red-500 text-sm font-poppins mt-1">{errors.gender.message}</p>}
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-base font-poppins font-semibold">
-          Current Gender Identity <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          {...register("genderIdentity")}
-          className="h-12 text-base font-poppins"
-        />
-        {errors.genderIdentity && <p className="text-red-500 text-sm font-poppins mt-1">{errors.genderIdentity.message}</p>}
       </div>
 
       <div className="space-y-2">

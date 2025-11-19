@@ -201,7 +201,6 @@ export const FORM_DEFAULT_VALUES = {
   mobile: "",
   age: "",
   gender: "",
-  genderIdentity: "",
   city: "",
   state: "",
   languages: "",

@@ -66,7 +66,6 @@ export async function POST(request: Request) {
       case 6: // Personal Info
         if (data.age) updateData.age = data.age;
         if (data.gender) updateData.gender = data.gender.toLowerCase();
-        if (data.genderIdentity) updateData.genderIdentity = data.genderIdentity;
         if (data.languages) updateData.languages = data.languages;
         if (data.hasVehicle) updateData.hasVehicle = data.hasVehicle;
         break;

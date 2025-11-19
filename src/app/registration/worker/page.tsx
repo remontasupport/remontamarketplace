@@ -198,8 +198,8 @@ export default function ContractorOnboarding() {
       // Success!
       console.log("✅ Registration successful:", result);
 
-      // Redirect to login page
-      window.location.href = `/login?registered=true`;
+      // Redirect to success page
+      window.location.href = `/registration/worker/success`;
     } catch (error) {
       console.error("❌ Error during submission:", error);
       alert("An error occurred during registration. Please try again.");
