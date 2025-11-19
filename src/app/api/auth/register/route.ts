@@ -345,6 +345,79 @@ export async function POST(request: Request) {
     });
 
     // ============================================
+    // N8N WEBHOOK - SEND TO ZOHO CRM
+    // ============================================
+
+    // Send data to n8n webhook asynchronously (fire and forget)
+    // This won't block the registration response
+    if (process.env.N8N_WEBHOOK_URL) {
+      const webhookData = {
+        // User Information
+        userId: user.id,
+        email: normalizedEmail,
+        role: user.role,
+        registeredAt: new Date().toISOString(),
+
+        // Worker Profile Data
+        firstName,
+        lastName,
+        mobile,
+        location,
+        age,
+        gender,
+        languages,
+        services,
+        supportWorkerCategories,
+        experience,
+        introduction,
+        qualifications,
+        hasVehicle,
+        funFact,
+        hobbies,
+        uniqueService,
+        whyEnjoyWork,
+        additionalInfo,
+
+        // Geocoded Location
+        city: geocodedLocation.city,
+        state: geocodedLocation.state,
+        postalCode: geocodedLocation.postalCode,
+        latitude: geocodedLocation.latitude,
+        longitude: geocodedLocation.longitude,
+
+        // Photos (URLs)
+        photos: photoUrls,
+
+        // Consent
+        consentProfileShare,
+        consentMarketing,
+
+        // Status
+        verificationStatus: 'NOT_STARTED',
+        profileCompleted: true,
+        isPublished: false,
+      };
+
+      // Send to n8n webhook (async, non-blocking)
+      fetch(process.env.N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData),
+      })
+        .then(() => {
+          console.log('✅ Data sent to n8n webhook successfully');
+        })
+        .catch((webhookError) => {
+          // Don't fail registration if webhook fails
+          console.error('⚠️ n8n webhook error (non-critical):', webhookError);
+        });
+    } else {
+      console.log('⚠️ N8N_WEBHOOK_URL not configured - skipping webhook');
+    }
+
+    // ============================================
     // SUCCESS RESPONSE
     // ============================================
 
