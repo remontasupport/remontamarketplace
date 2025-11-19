@@ -71,12 +71,10 @@ export async function POST(request: Request) {
         if (data.hasVehicle) updateData.hasVehicle = data.hasVehicle;
         break;
 
-      case 7: // ABN
-        // TODO: Store ABN (might need separate table for sensitive data)
-        break;
-
-      case 8: // Emergency Contact
-        // TODO: Store emergency contact (might need separate table)
+      case 7: // Emergency Contact
+        if (data.emergencyContactName) updateData.emergencyContactName = data.emergencyContactName.trim();
+        if (data.emergencyContactPhone) updateData.emergencyContactPhone = data.emergencyContactPhone.trim();
+        if (data.emergencyContactRelationship) updateData.emergencyContactRelationship = data.emergencyContactRelationship.trim();
         break;
 
       // Services Setup Steps (100+)

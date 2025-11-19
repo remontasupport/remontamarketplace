@@ -172,9 +172,9 @@ export default function AccountSetupPage() {
         languages: profileData.languages || [],
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
-        emergencyContactName: "",
-        emergencyContactPhone: "",
-        emergencyContactRelationship: "",
+        emergencyContactName: profileData.emergencyContactName || "",
+        emergencyContactPhone: profileData.emergencyContactPhone || "",
+        emergencyContactRelationship: profileData.emergencyContactRelationship || "",
       });
       hasInitializedFormData.current = true;
     }

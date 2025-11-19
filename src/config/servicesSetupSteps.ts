@@ -5,6 +5,7 @@
 
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
 import ServiceQualificationStep from "@/components/services-setup/steps/ServiceQualificationStep";
+import Step6ABN from "@/components/account-setup/steps/Step6ABN";
 import { getQualificationsForService, serviceHasQualifications } from "./serviceQualificationRequirements";
 
 export interface ServicesSetupStep {
@@ -28,6 +29,7 @@ const BASE_STEP: ServicesSetupStep = {
 /**
  * Generate dynamic steps based on selected services
  * Each service with qualifications gets its own step
+ * ABN is always the final step
  */
 export function generateServicesSetupSteps(selectedServices: string[]): ServicesSetupStep[] {
   const steps: ServicesSetupStep[] = [BASE_STEP];
@@ -47,6 +49,14 @@ export function generateServicesSetupSteps(selectedServices: string[]): Services
     }
   });
 
+  // Add ABN as the final step
+  steps.push({
+    id: steps.length + 1,
+    slug: "abn",
+    title: "Your ABN",
+    component: Step6ABN,
+  });
+
   return steps;
 }
 
@@ -58,6 +68,14 @@ export const getServicesStepUrl = (slug: string) =>
 
 /**
  * Default steps (when no services selected yet)
- * Just shows the base step
+ * Shows the base step and ABN
  */
-export const SERVICES_SETUP_STEPS = [BASE_STEP];
+export const SERVICES_SETUP_STEPS = [
+  BASE_STEP,
+  {
+    id: 2,
+    slug: "abn",
+    title: "Your ABN",
+    component: Step6ABN,
+  }
+];

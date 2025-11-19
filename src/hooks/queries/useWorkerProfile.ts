@@ -25,6 +25,9 @@ interface WorkerProfile {
   middleName?: string;
   lastName?: string;
   mobile?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
   photos?: string[];
   introduction?: string;
   age?: string;

@@ -9,7 +9,6 @@ import Step2Photo from "@/components/account-setup/steps/Step2Photo";
 import Step3Bio from "@/components/account-setup/steps/Step3Bio";
 import Step4PersonalInfo from "@/components/account-setup/steps/Step4PersonalInfo";
 import Step5Address from "@/components/account-setup/steps/Step5Address";
-import Step6ABN from "@/components/account-setup/steps/Step6ABN";
 import Step7EmergencyContact from "@/components/account-setup/steps/Step7EmergencyContact";
 import Step1ProofOfIdentity from "@/components/requirements-setup/steps/Step1ProofOfIdentity";
 
@@ -27,8 +26,7 @@ export const ACCOUNT_SETUP_STEPS: AccountSetupStep[] = [
   { id: 4, slug: "address", title: "Address", component: Step5Address },
   { id: 5, slug: "proof-of-identity", title: "Proof of identity", component: Step1ProofOfIdentity },
   { id: 6, slug: "personal-info", title: "Other personal info", component: Step4PersonalInfo },
-  { id: 7, slug: "abn", title: "Your ABN", component: Step6ABN },
-  { id: 8, slug: "emergency-contact", title: "Emergency contact", component: Step7EmergencyContact },
+  { id: 7, slug: "emergency-contact", title: "Emergency contact", component: Step7EmergencyContact },
 ];
 
 // Helper to get step URL
