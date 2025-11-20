@@ -28,13 +28,13 @@ export default function Hero() {
             {/* Buttons */}
             <div className="hero-buttons scroll-animate fade-up" data-delay="2">
               <Link
-                href="/registration/user"
+                href="/find-support"
                 className="hero-button hero-button-primary"
               >
                 Find support
               </Link>
               <Link
-                href="/registration/worker"
+                href="/provide-support"
                 className="hero-button hero-button-secondary"
               >
                 Provide support
