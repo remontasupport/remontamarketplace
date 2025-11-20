@@ -26,6 +26,8 @@ interface FormData {
   supportWorkerCategories: string[];
   // Step 2: Additional Training / Qualifications
   selectedQualifications: string[];
+  // Final Step: ABN
+  abn: string;
 }
 
 export default function ServicesSetupPage() {
@@ -54,6 +56,7 @@ export default function ServicesSetupPage() {
     services: [],
     supportWorkerCategories: [],
     selectedQualifications: [],
+    abn: "",
   });
 
   // Populate form data ONLY on initial load
@@ -65,6 +68,7 @@ export default function ServicesSetupPage() {
         services: profileData.services || [],
         supportWorkerCategories: profileData.supportWorkerCategories || [],
         selectedQualifications: [], // Will be loaded from VerificationRequirement table later
+        abn: profileData.abn || "",
       });
       hasInitializedFormData.current = true;
     }
@@ -127,6 +131,11 @@ export default function ServicesSetupPage() {
           newErrors.supportWorkerCategories = "Please select at least one support worker category";
         }
         break;
+      case "abn": // ABN step - optional but validate format if provided
+        if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
+          newErrors.abn = "ABN must be 11 digits";
+        }
+        break;
     }
 
     setErrors(newErrors);
@@ -148,6 +157,8 @@ export default function ServicesSetupPage() {
       // We can use a separate endpoint or reuse the existing one
       // For now, let's create a new step number range (e.g., 100+)
       const apiStep = 100 + currentStep;
+
+      console.log(`💾 Saving step ${currentStep} (API step ${apiStep}) with data:`, formData);
 
       // Use mutation hook - automatically invalidates cache on success
       await updateProfileMutation.mutateAsync({

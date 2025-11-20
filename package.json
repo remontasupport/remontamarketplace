@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "dev:fresh": "npm run db:generate && next dev --turbopack",
+    "dev": "npm run db:generate && next dev --turbopack",
+    "dev:quick": "next dev --turbopack",
     "build": "prisma generate && prisma generate --schema=prisma/auth-schema.prisma && next build",
     "start": "next start",
     "lint": "eslint",

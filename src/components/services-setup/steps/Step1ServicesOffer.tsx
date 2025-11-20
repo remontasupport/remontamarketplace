@@ -13,6 +13,7 @@ import { TrashIcon, PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outlin
 import { SupportWorkerDialog } from "@/components/forms/workerRegistration/SupportWorkerDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
+import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/services-setup.css";
 
 interface Step1ServicesOfferProps {
@@ -182,11 +183,11 @@ export default function Step1ServicesOffer({
   };
 
   return (
-    <div className="services-step-container">
+    <StepContentWrapper>
       <div className="form-page-content">
         {/* Left Column - Form */}
         <div className="form-column">
-          <div className="account-form services-form-column-bg">
+          <div className="account-form">
             <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-1">
               What services can you offer?
             </h4>
@@ -288,6 +289,6 @@ export default function Step1ServicesOffer({
         selectedCategories={data.supportWorkerCategories || []}
         onSave={handleSupportWorkerSave}
       />
-    </div>
+    </StepContentWrapper>
   );
 }

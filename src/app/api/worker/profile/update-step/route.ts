@@ -19,6 +19,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { step, data } = body;
 
+    console.log(`📥 Received step ${step} update request`);
+    console.log(`📦 Data received:`, JSON.stringify(data, null, 2));
+
     // Prepare update data based on step
     const updateData: any = {};
 
@@ -160,14 +163,31 @@ export async function POST(request: Request) {
           console.log(`📋 Preserved ${existingRequirements.length - requirementsToDelete.length} existing requirements with their documentUrls`);
         }
         break;
+
+      default:
+        // Handle any other steps
+        break;
+    }
+
+    // Handle ABN for any Services Setup step (100+)
+    // This runs for all services setup steps to ensure ABN is saved
+    if (step >= 100 && data.abn !== undefined) {
+      const trimmedAbn = data.abn.trim();
+      updateData.abn = trimmedAbn || null; // Save null if empty string
+      console.log(`💼 ABN field detected. Value: "${data.abn}" -> Saving as: ${updateData.abn === null ? 'null' : `"${updateData.abn}"`}`);
     }
 
     // Update worker profile
+    console.log(`💾 Update data to be saved:`, JSON.stringify(updateData, null, 2));
+
     if (Object.keys(updateData).length > 0) {
-      await authPrisma.workerProfile.update({
+      const result = await authPrisma.workerProfile.update({
         where: { userId: session.user.id },
         data: updateData,
       });
+      console.log(`✅ Worker profile updated successfully. ABN value:`, result.abn);
+    } else {
+      console.log(`⚠️ No data to update - updateData is empty`);
     }
 
     return NextResponse.json({

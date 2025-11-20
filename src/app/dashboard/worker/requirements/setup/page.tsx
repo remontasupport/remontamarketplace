@@ -4,33 +4,7 @@
  * Worker Mandatory Requirements Setup - Multi-Step Form
  * Single page with URL-based step navigation
  * Route: /dashboard/worker/requirements/setup?step=proof-of-identity
- *
- * NOTE: This page is deprecated. Proof of Identity has been moved to Account Setup.
- * If accessed, users will be redirected to the dashboard.
  */
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-
-export default function MandatoryRequirementsSetupPage() {
-  const router = useRouter();
-
-  // Redirect to dashboard since this section is deprecated
-  useEffect(() => {
-    router.push("/dashboard/worker");
-  }, [router]);
-
-  return (
-    <DashboardLayout showProfileCard={false}>
-      <div className="form-page-container">
-        <p className="loading-text">Redirecting...</p>
-      </div>
-    </DashboardLayout>
-  );
-}
-
-/* DEPRECATED CODE - Kept for reference
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
@@ -60,7 +34,7 @@ export default function MandatoryRequirementsSetupPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const stepSlug = searchParams.get("step") || "proof-of-identity";
+  const stepSlug = searchParams.get("step") || "worker-screening-check";
 
   // Find current step by slug
   const currentStepIndex = STEPS.findIndex((s) => s.slug === stepSlug);
@@ -88,7 +62,7 @@ export default function MandatoryRequirementsSetupPage() {
       console.log("📋 Initializing requirements form data with profile:", profileData);
 
       setFormData({
-        identityDocuments: [], // Will be loaded from IdentityDocument table
+        identityDocuments: [], // Will be loaded from VerificationRequirement table
       });
       hasInitializedFormData.current = true;
     }
@@ -116,13 +90,8 @@ export default function MandatoryRequirementsSetupPage() {
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    switch (stepSlug) {
-      case "proof-of-identity":
-        if (!formData.identityDocuments || formData.identityDocuments.length === 0) {
-          newErrors.identityDocuments = "Please upload at least one identity document";
-        }
-        break;
-    }
+    // Validation is optional for requirements
+    // Documents are uploaded via their own API endpoints
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -138,16 +107,8 @@ export default function MandatoryRequirementsSetupPage() {
     if (!session?.user?.id) return;
 
     try {
-      // Map step number to API step number
-      // Requirements setup uses step numbers 200+
-      const apiStep = 200 + currentStep;
-
-      // Use mutation hook - automatically invalidates cache on success
-      await updateProfileMutation.mutateAsync({
-        userId: session.user.id,
-        step: apiStep,
-        data: formData,
-      });
+      // Skip saving for proof-of-identity since it handles its own uploads
+      // This is similar to how photo step works in account setup
 
       // Move to next step or finish
       if (currentStep < STEPS.length) {
@@ -185,7 +146,7 @@ export default function MandatoryRequirementsSetupPage() {
   // Redirect to first step if invalid slug
   useEffect(() => {
     if (currentStepIndex < 0) {
-      router.push("/dashboard/worker/requirements/setup?step=proof-of-identity");
+      router.push("/dashboard/worker/requirements/setup?step=worker-screening-check");
     }
   }, [currentStepIndex, router]);
 
@@ -206,8 +167,42 @@ export default function MandatoryRequirementsSetupPage() {
     return null;
   }
 
-  // (Rest of deprecated code omitted for brevity)
-  // Original implementation redirected to dashboard
-  // Full code preserved in git history
+  return (
+    <DashboardLayout showProfileCard={false}>
+      <StepContainer
+        currentStep={currentStep}
+        totalSteps={STEPS.length}
+        stepTitle={currentStepData.title}
+        sectionTitle="Mandatory requirements"
+        sectionNumber="3"
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        onSkip={handleSkip}
+        isNextLoading={false}
+        nextButtonText={currentStep === STEPS.length ? "Complete Setup" : "Next"}
+        showSkip={false}
+      >
+        {/* Success Message */}
+        {successMessage && (
+          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
+            {successMessage}
+          </div>
+        )}
+
+        {/* General Error */}
+        {errors.general && (
+          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
+            {errors.general}
+          </div>
+        )}
+
+        {/* Render current step */}
+        <CurrentStepComponent
+          data={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+      </StepContainer>
+    </DashboardLayout>
+  );
 }
-*/

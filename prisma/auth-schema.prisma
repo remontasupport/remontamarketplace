@@ -197,6 +197,7 @@ model WorkerProfile {
   postalCode                String?
   state                     String?
   middleName                String?
+  abn                       String?
   verificationRequirements  VerificationRequirement[]
   user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 

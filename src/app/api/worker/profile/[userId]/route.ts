@@ -65,6 +65,7 @@ export async function GET(
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,
+        abn: true,
       },
     });
 

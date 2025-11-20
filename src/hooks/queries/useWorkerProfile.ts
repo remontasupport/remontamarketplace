@@ -50,6 +50,7 @@ interface WorkerProfile {
   profileCompleted?: boolean;
   isPublished?: boolean;
   verificationStatus?: string;
+  abn?: string;
 }
 
 interface UpdateStepData {

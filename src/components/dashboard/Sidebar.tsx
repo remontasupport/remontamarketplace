@@ -8,10 +8,12 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   UserCircleIcon,
-  HandRaisedIcon
+  HandRaisedIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
+import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
 
 interface SubMenuItem {
   name: string
@@ -37,6 +39,12 @@ const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
   href: getServicesStepUrl(step.slug)
 }))
 
+// Dynamically generate requirements items from centralized config
+const requirementsItems = MANDATORY_REQUIREMENTS_SETUP_STEPS.map(step => ({
+  name: step.title,
+  href: getRequirementsStepUrl(step.slug)
+}))
+
 const menuSections: MenuSection[] = [
   {
     id: 'account-details',
@@ -49,6 +57,12 @@ const menuSections: MenuSection[] = [
     name: 'Your services',
     icon: HandRaisedIcon,
     items: servicesItems
+  },
+  {
+    id: 'requirements',
+    name: 'Mandatory requirements',
+    icon: ClipboardDocumentCheckIcon,
+    items: requirementsItems
   }
 ]
 
@@ -56,7 +70,8 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'account-details': false,
-    'services': false
+    'services': false,
+    'requirements': false
   })
 
   const toggleSection = (sectionId: string) => {
