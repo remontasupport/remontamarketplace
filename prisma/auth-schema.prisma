@@ -161,20 +161,20 @@ model WorkerProfile {
   firstName                 String
   lastName                  String
   mobile                    String
-  location                  String
-  age                       String
-  gender                    String
+  location                  String?
+  age                       String?
+  gender                    String?
   languages                 String[]
   services                  String[]
   supportWorkerCategories   String[]
-  experience                String
-  introduction              String
-  qualifications            String
-  hasVehicle                String
-  funFact                   String
-  hobbies                   String
-  uniqueService             String
-  whyEnjoyWork              String
+  experience                String?
+  introduction              String?
+  qualifications            String?
+  hasVehicle                String?
+  funFact                   String?
+  hobbies                   String?
+  uniqueService             String?
+  whyEnjoyWork              String?
   additionalInfo            String?
   photos                    Json?
   consentProfileShare       Boolean                   @default(false)
