@@ -1,5 +1,5 @@
 'use client'
-import { useMemo } from 'react'
+import { useMemo, use } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import useSWR from 'swr'
@@ -22,9 +22,9 @@ interface ApiResponse {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 // Helper function to convert slug to state name
@@ -53,6 +53,9 @@ const fetcher = async (url: string) => {
 }
 
 export default function AreaPage({ params }: PageProps) {
+  // Unwrap the params Promise
+  const { slug } = use(params)
+
   // How It Works data
   const howItWorksSteps = [
     {
@@ -73,7 +76,7 @@ export default function AreaPage({ params }: PageProps) {
   ]
 
   // Convert slug to state name only once
-  const stateName = useMemo(() => slugToStateName(params.slug), [params.slug])
+  const stateName = useMemo(() => slugToStateName(slug), [slug])
 
   // Build API URL
   const apiUrl = `/api/contractors-by-area?state=${encodeURIComponent(stateName)}`
