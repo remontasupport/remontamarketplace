@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/generated/auth-client'
+import { Prisma } from '@/generated/auth-client'
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-interface PaginationParams {
+interface FilterParams {
   page: number
   pageSize: number
   search?: string
   sortBy: string
   sortOrder: 'asc' | 'desc'
-  status?: 'active' | 'deleted' | 'all'
+
+  // Advanced filters
+  location?: string
+  typeOfSupport?: string
+  gender?: string
+  languages?: string[]
+  age?: string
+  within?: string
 }
 
 interface PaginatedResponse {
@@ -25,6 +33,233 @@ interface PaginatedResponse {
     hasNext: boolean
     hasPrev: boolean
   }
+  appliedFilters?: Partial<FilterParams>
+}
+
+// ============================================================================
+// FILTER REGISTRY PATTERN (No If-Statements!)
+// ============================================================================
+
+type FilterBuilder = (params: FilterParams) => Prisma.WorkerProfileWhereInput | null
+
+/**
+ * Filter Registry
+ * Each filter is an independent, composable function
+ * Add new filters by adding entries to this registry
+ */
+const filterRegistry: Record<string, FilterBuilder> = {
+
+  /**
+   * Gender Filter
+   * Exact match on gender field
+   */
+  gender: (params) =>
+    params.gender && params.gender !== 'all'
+      ? { gender: params.gender }
+      : null,
+
+  /**
+   * Age Range Filter
+   * Exact match on age range string (e.g., "20-30")
+   */
+  age: (params) =>
+    params.age && params.age !== 'all'
+      ? { age: params.age }
+      : null,
+
+  /**
+   * Services/Type of Support Filter
+   * Uses PostgreSQL array contains operator
+   */
+  services: (params) =>
+    params.typeOfSupport && params.typeOfSupport !== 'all'
+      ? { services: { has: params.typeOfSupport } }
+      : null,
+
+  /**
+   * Languages Filter (Multi-select)
+   * Uses PostgreSQL array intersection
+   * Matches workers who speak ANY of the selected languages
+   */
+  languages: (params) =>
+    params.languages && params.languages.length > 0
+      ? { languages: { hasSome: params.languages } }
+      : null,
+
+  /**
+   * Text Search Filter
+   * Searches across firstName, lastName, mobile
+   */
+  textSearch: (params) =>
+    params.search
+      ? {
+          OR: [
+            { firstName: { contains: params.search, mode: 'insensitive' } },
+            { lastName: { contains: params.search, mode: 'insensitive' } },
+            { mobile: { contains: params.search } },
+          ]
+        }
+      : null,
+
+  /**
+   * Location Filter (Without Distance)
+   * Searches city or state fields
+   * Only applies when distance filter is not active
+   */
+  location: (params) =>
+    params.location && params.within === 'none'
+      ? {
+          OR: [
+            { city: { contains: params.location, mode: 'insensitive' } },
+            { state: { contains: params.location, mode: 'insensitive' } },
+          ]
+        }
+      : null,
+}
+
+// ============================================================================
+// FILTER COMPOSER
+// ============================================================================
+
+/**
+ * Builds WHERE clause from active filters
+ * Uses functional composition to merge filters dynamically
+ */
+function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput {
+  // Execute all filters and collect non-null results
+  const activeFilters = Object.values(filterRegistry)
+    .map(filterFn => filterFn(params))
+    .filter((clause): clause is NonNullable<typeof clause> => clause !== null)
+
+  // Edge case: No filters active
+  if (activeFilters.length === 0) {
+    return {}
+  }
+
+  // Merge all filters into single WHERE clause
+  return activeFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
+    // Special handling for OR clauses (textSearch, location)
+    if (filter.OR) {
+      const existingOR = acc.OR || []
+      return { ...acc, OR: [...existingOR, ...filter.OR] }
+    }
+
+    // Regular AND filters
+    return { ...acc, ...filter }
+  }, {})
+}
+
+/**
+ * Builds ORDER BY clause
+ */
+function buildOrderByClause(
+  sortBy: string,
+  sortOrder: 'asc' | 'desc'
+): Prisma.WorkerProfileOrderByWithRelationInput {
+  const validSortFields = ['createdAt', 'firstName', 'lastName', 'city', 'state']
+  const field = validSortFields.includes(sortBy) ? sortBy : 'createdAt'
+  return { [field]: sortOrder }
+}
+
+// ============================================================================
+// GEOSPATIAL UTILITIES
+// ============================================================================
+
+/**
+ * Haversine Formula
+ * Calculates great-circle distance between two points
+ */
+function haversineDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371 // Earth's radius in km
+
+  const toRad = (deg: number) => deg * (Math.PI / 180)
+
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+    Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) *
+    Math.sin(dLng / 2)
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c
+}
+
+/**
+ * Bounding Box Calculation
+ * Creates rectangular boundary around a point
+ */
+function getBoundingBox(lat: number, lng: number, radiusKm: number) {
+  const latDelta = radiusKm / 111.32
+  const lngDelta = radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))
+
+  return {
+    minLat: lat - latDelta,
+    maxLat: lat + latDelta,
+    minLng: lng - lngDelta,
+    maxLng: lng + lngDelta,
+  }
+}
+
+/**
+ * Geocode Location String
+ * Converts location to coordinates
+ */
+async function geocodeLocation(
+  location: string
+): Promise<{ lat: number; lng: number } | null> {
+  // Major Australian cities coordinates
+  const majorCities: Record<string, { lat: number; lng: number }> = {
+    'sydney': { lat: -33.8688, lng: 151.2093 },
+    'melbourne': { lat: -37.8136, lng: 144.9631 },
+    'brisbane': { lat: -27.4705, lng: 153.0260 },
+    'perth': { lat: -31.9505, lng: 115.8605 },
+    'adelaide': { lat: -34.9285, lng: 138.6007 },
+    'gold coast': { lat: -28.0167, lng: 153.4000 },
+    'newcastle': { lat: -32.9283, lng: 151.7817 },
+    'canberra': { lat: -35.2809, lng: 149.1300 },
+    'sunshine coast': { lat: -26.6500, lng: 153.0667 },
+    'wollongong': { lat: -34.4278, lng: 150.8931 },
+  }
+
+  // Extract city name from location string
+  const cityName = location.split(',')[0].trim().toLowerCase()
+
+  // Check if it's a major city
+  if (majorCities[cityName]) {
+    return majorCities[cityName]
+  }
+
+  // Try to fetch from suburbs API
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/suburbs?q=${encodeURIComponent(cityName)}`
+    )
+    const suburbs = await response.json()
+
+    if (Array.isArray(suburbs) && suburbs.length > 0) {
+      const match = suburbs[0]
+      if (match.latitude && match.longitude) {
+        return {
+          lat: match.latitude,
+          lng: match.longitude
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Geocoding error:', error)
+  }
+
+  return null
 }
 
 // ============================================================================
@@ -32,15 +267,27 @@ interface PaginatedResponse {
 // ============================================================================
 
 /**
- * Parse and validate pagination parameters from URL
+ * Parse filter parameters from URL
  */
-function parsePaginationParams(searchParams: URLSearchParams): PaginationParams {
+function parseFilterParams(searchParams: URLSearchParams): FilterParams {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10)))
   const search = searchParams.get('search') || undefined
   const sortBy = searchParams.get('sortBy') || 'createdAt'
   const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
-  const status = (searchParams.get('status') || 'active') as 'active' | 'deleted' | 'all'
+
+  // Advanced filters
+  const location = searchParams.get('location') || undefined
+  const typeOfSupport = searchParams.get('typeOfSupport') || undefined
+  const gender = searchParams.get('gender') || undefined
+  const age = searchParams.get('age') || undefined
+  const within = searchParams.get('within') || 'none'
+
+  // Parse languages (comma-separated)
+  const languagesParam = searchParams.get('languages')
+  const languages = languagesParam
+    ? languagesParam.split(',').map(l => l.trim()).filter(Boolean)
+    : []
 
   return {
     page,
@@ -48,124 +295,220 @@ function parsePaginationParams(searchParams: URLSearchParams): PaginationParams 
     search,
     sortBy,
     sortOrder,
-    status,
+    location,
+    typeOfSupport,
+    gender,
+    languages,
+    age,
+    within,
   }
 }
 
 /**
- * Build Prisma where clause based on filters
+ * Get applied filters for response
  */
-function buildWhereClause(params: PaginationParams) {
-  const where: any = {}
+function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
+  const applied: Partial<FilterParams> = {}
 
-  // Filter by status (active, deleted, or all)
-  if (params.status === 'active') {
-    where.deletedAt = null
-  } else if (params.status === 'deleted') {
-    where.deletedAt = { not: null }
+  if (params.search) applied.search = params.search
+  if (params.location) applied.location = params.location
+  if (params.typeOfSupport && params.typeOfSupport !== 'all') {
+    applied.typeOfSupport = params.typeOfSupport
   }
-  // If 'all', don't add deletedAt filter
-
-  // Search by name or email
-  if (params.search) {
-    where.OR = [
-      { firstName: { contains: params.search, mode: 'insensitive' } },
-      { lastName: { contains: params.search, mode: 'insensitive' } },
-      { email: { contains: params.search, mode: 'insensitive' } },
-      { phone: { contains: params.search, mode: 'insensitive' } },
-    ]
+  if (params.gender && params.gender !== 'all') {
+    applied.gender = params.gender
+  }
+  if (params.languages && params.languages.length > 0) {
+    applied.languages = params.languages
+  }
+  if (params.age && params.age !== 'all') {
+    applied.age = params.age
+  }
+  if (params.within && params.within !== 'none') {
+    applied.within = params.within
   }
 
-  return where
-}
-
-/**
- * Build Prisma orderBy clause
- */
-function buildOrderByClause(params: PaginationParams) {
-  const validSortFields = ['createdAt', 'firstName', 'lastName', 'email', 'city', 'state']
-  const sortField = validSortFields.includes(params.sortBy) ? params.sortBy : 'createdAt'
-
-  return { [sortField]: params.sortOrder }
+  return applied
 }
 
 // ============================================================================
-// API ROUTE HANDLERS
+// MAIN QUERY FUNCTIONS
+// ============================================================================
+
+/**
+ * Standard search (no distance filtering)
+ */
+async function searchStandard(params: FilterParams): Promise<PaginatedResponse> {
+  const where = buildWhereClause(params)
+  const orderBy = buildOrderByClause(params.sortBy, params.sortOrder)
+  const skip = (params.page - 1) * params.pageSize
+
+  // Execute count and data query in parallel for performance
+  const [total, workers] = await Promise.all([
+    prisma.workerProfile.count({ where }),
+    prisma.workerProfile.findMany({
+      where,
+      orderBy,
+      skip,
+      take: params.pageSize,
+      select: {
+        id: true,
+        userId: true,
+        firstName: true,
+        lastName: true,
+        mobile: true,
+        gender: true,
+        age: true,
+        languages: true,
+        services: true,
+        city: true,
+        state: true,
+        postalCode: true,
+        latitude: true,
+        longitude: true,
+        experience: true,
+        introduction: true,
+        photos: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    })
+  ])
+
+  const totalPages = Math.ceil(total / params.pageSize)
+
+  return {
+    success: true,
+    data: workers,
+    pagination: {
+      total,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages,
+      hasNext: params.page < totalPages,
+      hasPrev: params.page > 1,
+    },
+    appliedFilters: getAppliedFilters(params),
+  }
+}
+
+/**
+ * Search with distance filtering
+ * Uses bounding box + Haversine for accuracy and performance
+ */
+async function searchWithDistance(params: FilterParams): Promise<PaginatedResponse> {
+  // Geocode the search location
+  const coords = await geocodeLocation(params.location!)
+
+  if (!coords) {
+    // Fallback to standard search if geocoding fails
+    console.warn('Geocoding failed for:', params.location)
+    return searchStandard({ ...params, within: 'none' })
+  }
+
+  const radiusKm = parseInt(params.within!)
+  const bbox = getBoundingBox(coords.lat, coords.lng, radiusKm)
+
+  // Build base WHERE clause (all non-distance filters)
+  const where = buildWhereClause(params)
+
+  // Add bounding box filter (uses indexed lat/lng fields)
+  where.latitude = { gte: bbox.minLat, lte: bbox.maxLat }
+  where.longitude = { gte: bbox.minLng, lte: bbox.maxLng }
+
+  // Ensure lat/lng are not null
+  where.AND = [
+    { latitude: { not: null } },
+    { longitude: { not: null } }
+  ]
+
+  // Fetch candidates from database (pre-filtered by bounding box)
+  const candidates = await prisma.workerProfile.findMany({
+    where,
+    select: {
+      id: true,
+      userId: true,
+      firstName: true,
+      lastName: true,
+      mobile: true,
+      gender: true,
+      age: true,
+      languages: true,
+      services: true,
+      city: true,
+      state: true,
+      postalCode: true,
+      latitude: true,
+      longitude: true,
+      experience: true,
+      introduction: true,
+      photos: true,
+      createdAt: true,
+      updatedAt: true,
+    }
+  })
+
+  // Calculate exact distance and filter
+  const workersWithDistance = candidates
+    .map(worker => ({
+      ...worker,
+      distance: haversineDistance(
+        coords.lat,
+        coords.lng,
+        worker.latitude!,
+        worker.longitude!
+      )
+    }))
+    .filter(worker => worker.distance <= radiusKm)
+    .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+
+  // Apply pagination to filtered results
+  const skip = (params.page - 1) * params.pageSize
+  const paginatedWorkers = workersWithDistance.slice(skip, skip + params.pageSize)
+
+  const totalPages = Math.ceil(workersWithDistance.length / params.pageSize)
+
+  return {
+    success: true,
+    data: paginatedWorkers,
+    pagination: {
+      total: workersWithDistance.length,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages,
+      hasNext: params.page < totalPages,
+      hasPrev: params.page > 1,
+    },
+    appliedFilters: getAppliedFilters(params),
+  }
+}
+
+// ============================================================================
+// API ROUTE HANDLER
 // ============================================================================
 
 /**
  * GET /api/admin/contractors
- * Fetch paginated list of contractor profiles
+ * Search workers with advanced filtering
  */
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
   try {
-    // ========================================
-    // 1. PARSE PARAMETERS
-    // ========================================
+    // Parse filter parameters
     const searchParams = request.nextUrl.searchParams
-    const params = parsePaginationParams(searchParams)
+    const params = parseFilterParams(searchParams)
 
-    // ========================================
-    // 2. BUILD QUERIES
-    // ========================================
-    const where = buildWhereClause(params)
-    const orderBy = buildOrderByClause(params)
+    // Determine if distance filtering is needed
+    const hasDistanceFilter =
+      params.location &&
+      params.within !== 'none' &&
+      params.within !== undefined
 
-    // ========================================
-    // 3. FETCH DATA (Parallel: count + data)
-    // ========================================
-    const [total, contractors] = await Promise.all([
-      // Count total records matching filters
-      prisma.contractorProfile.count({ where }),
-
-      // Fetch paginated data
-      prisma.contractorProfile.findMany({
-        where,
-        select: {
-          id: true,
-          zohoContactId: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          phone: true,
-          city: true,
-          state: true,
-          postalZipCode: true,
-          titleRole: true,
-          yearsOfExperience: true,
-          profilePicture: true,
-          createdAt: true,
-          updatedAt: true,
-          lastSyncedAt: true,
-          deletedAt: true,
-        },
-        skip: (params.page - 1) * params.pageSize,
-        take: params.pageSize,
-        orderBy,
-      }),
-    ])
-
-    // ========================================
-    // 4. BUILD RESPONSE
-    // ========================================
-    const totalPages = Math.ceil(total / params.pageSize)
-    const hasNext = params.page < totalPages
-    const hasPrev = params.page > 1
-
-    const response: PaginatedResponse = {
-      success: true,
-      data: contractors,
-      pagination: {
-        total,
-        page: params.page,
-        pageSize: params.pageSize,
-        totalPages,
-        hasNext,
-        hasPrev,
-      },
-    }
+    // Execute appropriate search strategy
+    const response = hasDistanceFilter
+      ? await searchWithDistance(params)
+      : await searchStandard(params)
 
     const duration = Date.now() - startTime
 
@@ -174,16 +517,17 @@ export async function GET(request: NextRequest) {
         'X-Response-Time': `${duration}ms`,
       },
     })
+
   } catch (error) {
     const duration = Date.now() - startTime
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    console.error('[Admin API] Error fetching contractors:', errorMsg)
+    console.error('[Admin API] Error fetching workers:', errorMsg)
 
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to fetch contractors',
+        error: 'Failed to fetch workers',
         message: errorMsg,
       },
       {

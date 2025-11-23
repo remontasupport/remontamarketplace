@@ -9,21 +9,25 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 
 interface Contractor {
   id: string
-  zohoContactId: string
+  userId: string
   firstName: string
   lastName: string
-  email: string
-  phone: string | null
+  mobile: string | null
+  gender: string | null
+  age: string | null
+  languages: string[]
+  services: string[]
   city: string | null
   state: string | null
-  postalZipCode: string | null
-  titleRole: string | null
-  yearsOfExperience: number | null
-  profilePicture: string | null
+  postalCode: string | null
+  latitude: number | null
+  longitude: number | null
+  experience: string | null
+  introduction: string | null
+  photos: string[]
   createdAt: string
   updatedAt: string
-  lastSyncedAt: string
-  deletedAt: string | null
+  distance?: number // Only present when distance filtering is active
 }
 
 interface PaginatedResponse {
@@ -45,7 +49,14 @@ interface ContractorsFilters {
   search: string
   sortBy: string
   sortOrder: 'asc' | 'desc'
-  status: 'active' | 'deleted' | 'all'
+
+  // Advanced filters
+  location: string
+  typeOfSupport: string
+  gender: string
+  languages: string[]
+  age: string
+  within: string
 }
 
 // ============================================================================
@@ -58,11 +69,36 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
     pageSize: filters.pageSize.toString(),
     sortBy: filters.sortBy,
     sortOrder: filters.sortOrder,
-    status: filters.status,
   })
 
+  // Text search
   if (filters.search) {
     params.append('search', filters.search)
+  }
+
+  // Advanced filters - only add if they have values
+  if (filters.location) {
+    params.append('location', filters.location)
+  }
+
+  if (filters.typeOfSupport && filters.typeOfSupport !== 'all') {
+    params.append('typeOfSupport', filters.typeOfSupport)
+  }
+
+  if (filters.gender && filters.gender !== 'all') {
+    params.append('gender', filters.gender)
+  }
+
+  if (filters.languages && filters.languages.length > 0) {
+    params.append('languages', filters.languages.join(','))
+  }
+
+  if (filters.age && filters.age !== 'all') {
+    params.append('age', filters.age)
+  }
+
+  if (filters.within && filters.within !== 'none') {
+    params.append('within', filters.within)
   }
 
   const response = await fetch(`/api/admin/contractors?${params.toString()}`)
@@ -79,27 +115,23 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 // ============================================================================
 
 export default function AdminDashboard() {
-  // State for filters
+  // State for filters (unified state)
   const [filters, setFilters] = useState<ContractorsFilters>({
     page: 1,
     pageSize: 20,
     search: '',
     sortBy: 'createdAt',
     sortOrder: 'desc',
-    status: 'active',
-  })
-
-  const [searchInput, setSearchInput] = useState('')
-
-  // Advanced filter states
-  const [advancedFilters, setAdvancedFilters] = useState({
+    // Advanced filters
     location: '',
     typeOfSupport: 'all',
     gender: 'all',
-    within: 'none',
-    languages: [] as string[], // Changed to array for multi-select
+    languages: [],
     age: 'all',
+    within: 'none',
   })
+
+  const [searchInput, setSearchInput] = useState('')
 
   // Suburb autocomplete states
   const [suburbSearch, setSuburbSearch] = useState('')
@@ -213,10 +245,6 @@ export default function AdminDashboard() {
 
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }))
-  }
-
-  const handleStatusChange = (status: 'active' | 'deleted' | 'all') => {
-    setFilters(prev => ({ ...prev, status, page: 1 }))
   }
 
   const handleSort = (sortBy: string) => {
@@ -339,7 +367,7 @@ export default function AdminDashboard() {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by name, email, or phone..."
+                placeholder="Search by name or mobile..."
                 className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
               <button
@@ -387,7 +415,7 @@ export default function AdminDashboard() {
                             isSuburbSelectedRef.current = true
                             setShowSuburbDropdown(false)
                             setSuburbs([])
-                            setAdvancedFilters(prev => ({ ...prev, location: selectedValue }))
+                            setFilters(prev => ({ ...prev, location: selectedValue, page: 1 }))
                             setSuburbSearch(selectedValue)
                           }}
                         >
@@ -407,8 +435,8 @@ export default function AdminDashboard() {
                   Type of Support
                 </label>
                 <select
-                  value={advancedFilters.typeOfSupport}
-                  onChange={(e) => setAdvancedFilters(prev => ({ ...prev, typeOfSupport: e.target.value }))}
+                  value={filters.typeOfSupport}
+                  onChange={(e) => setFilters(prev => ({ ...prev, typeOfSupport: e.target.value, page: 1 }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -428,8 +456,8 @@ export default function AdminDashboard() {
                   Gender
                 </label>
                 <select
-                  value={advancedFilters.gender}
-                  onChange={(e) => setAdvancedFilters(prev => ({ ...prev, gender: e.target.value }))}
+                  value={filters.gender}
+                  onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value, page: 1 }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -444,8 +472,8 @@ export default function AdminDashboard() {
                   Within
                 </label>
                 <select
-                  value={advancedFilters.within}
-                  onChange={(e) => setAdvancedFilters(prev => ({ ...prev, within: e.target.value }))}
+                  value={filters.within}
+                  onChange={(e) => setFilters(prev => ({ ...prev, within: e.target.value, page: 1 }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="none">None</option>
@@ -460,8 +488,8 @@ export default function AdminDashboard() {
               <div className="flex flex-col justify-end">
                 <button
                   onClick={() => {
-                    // TODO: Apply advanced filters
-                    console.log('Advanced filters:', advancedFilters)
+                    // Reset to first page when applying filters
+                    setFilters(prev => ({ ...prev, page: 1 }))
                   }}
                   className="rounded-md bg-gray-900 px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 h-[42px]"
                 >
@@ -483,11 +511,11 @@ export default function AdminDashboard() {
                     onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
                     className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
                   >
-                    {advancedFilters.languages.length === 0 ? (
+                    {filters.languages.length === 0 ? (
                       <span className="text-gray-400">All languages</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
-                        {advancedFilters.languages.map((lang) => (
+                        {filters.languages.map((lang) => (
                           <span
                             key={lang}
                             className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
@@ -497,9 +525,10 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setAdvancedFilters(prev => ({
+                                setFilters(prev => ({
                                   ...prev,
-                                  languages: prev.languages.filter(l => l !== lang)
+                                  languages: prev.languages.filter(l => l !== lang),
+                                  page: 1
                                 }))
                               }}
                               className="hover:text-indigo-600"
@@ -534,23 +563,24 @@ export default function AdminDashboard() {
                             key={language}
                             type="button"
                             onClick={() => {
-                              const isSelected = advancedFilters.languages.includes(language)
-                              setAdvancedFilters(prev => ({
+                              const isSelected = filters.languages.includes(language)
+                              setFilters(prev => ({
                                 ...prev,
                                 languages: isSelected
                                   ? prev.languages.filter(l => l !== language)
-                                  : [...prev.languages, language]
+                                  : [...prev.languages, language],
+                                page: 1
                               }))
                             }}
                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                              advancedFilters.languages.includes(language)
+                              filters.languages.includes(language)
                                 ? 'bg-indigo-50 text-indigo-700 font-medium'
                                 : ''
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span>{language}</span>
-                              {advancedFilters.languages.includes(language) && (
+                              {filters.languages.includes(language) && (
                                 <span className="text-indigo-600">✓</span>
                               )}
                             </div>
@@ -573,8 +603,8 @@ export default function AdminDashboard() {
                   Age
                 </label>
                 <select
-                  value={advancedFilters.age}
-                  onChange={(e) => setAdvancedFilters(prev => ({ ...prev, age: e.target.value }))}
+                  value={filters.age}
+                  onChange={(e) => setFilters(prev => ({ ...prev, age: e.target.value, page: 1 }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -628,14 +658,8 @@ export default function AdminDashboard() {
                     >
                       Name {filters.sortBy === 'firstName' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th
-                      onClick={() => handleSort('email')}
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hover:bg-gray-100"
-                    >
-                      Email {filters.sortBy === 'email' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
-                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
+                      Mobile
                     </th>
                     <th
                       onClick={() => handleSort('city')}
@@ -644,16 +668,19 @@ export default function AdminDashboard() {
                       Location {filters.sortBy === 'city' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Title/Role
+                      Gender
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Age
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Services
                     </th>
                     <th
                       onClick={() => handleSort('createdAt')}
                       className="cursor-pointer px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hover:bg-gray-100"
                     >
                       Created {filters.sortBy === 'createdAt' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
                     </th>
                   </tr>
                 </thead>
@@ -670,10 +697,10 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
-                              {contractor.profilePicture ? (
+                              {contractor.photos && contractor.photos.length > 0 ? (
                                 <img
                                   className="h-10 w-10 rounded-full object-cover"
-                                  src={contractor.profilePicture}
+                                  src={contractor.photos[0]}
                                   alt=""
                                 />
                               ) : (
@@ -689,14 +716,16 @@ export default function AdminDashboard() {
                               <div className="text-sm font-medium text-gray-900">
                                 {contractor.firstName} {contractor.lastName}
                               </div>
+                              {contractor.distance && (
+                                <div className="text-xs text-gray-500">
+                                  {contractor.distance.toFixed(1)} km away
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{contractor.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{contractor.phone || '-'}</div>
+                          <div className="text-sm text-gray-900">{contractor.mobile || '-'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
@@ -706,21 +735,36 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{contractor.titleRole || '-'}</div>
+                          <div className="text-sm text-gray-900 capitalize">{contractor.gender || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{contractor.age || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {contractor.services && contractor.services.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {contractor.services.slice(0, 2).map((service, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                                  >
+                                    {service}
+                                  </span>
+                                ))}
+                                {contractor.services.length > 2 && (
+                                  <span className="text-xs text-gray-500">
+                                    +{contractor.services.length - 2} more
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(contractor.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {contractor.deletedAt ? (
-                            <span className="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
-                              Deleted
-                            </span>
-                          ) : (
-                            <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
-                              Active
-                            </span>
-                          )}
                         </td>
                       </tr>
                     ))
