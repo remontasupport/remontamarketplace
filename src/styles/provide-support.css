@@ -254,6 +254,113 @@
   }
 }
 
+/* Jobs Slider Container */
+.jobs-slider-container {
+  position: relative;
+  padding: 0 5rem;
+}
+
+@media (max-width: 768px) {
+  .jobs-slider-container {
+    padding: 0 4rem;
+  }
+}
+
+/* Swiper Wrapper */
+.jobs-swiper {
+  padding: 1rem 0;
+}
+
+.jobs-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.jobs-swiper .swiper-slide {
+  height: auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.jobs-swiper .swiper-slide .job-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom Navigation Buttons */
+.jobs-swiper-button-prev,
+.jobs-swiper-button-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--brand-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.jobs-swiper-button-prev:hover,
+.jobs-swiper-button-next:hover {
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.jobs-swiper-button-prev.swiper-button-disabled,
+.jobs-swiper-button-next.swiper-button-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.jobs-swiper-button-prev {
+  left: -1rem;
+}
+
+.jobs-swiper-button-next {
+  right: -1rem;
+}
+
+@media (max-width: 768px) {
+  .jobs-swiper-button-prev {
+    left: -0.5rem;
+  }
+
+  .jobs-swiper-button-next {
+    right: -0.5rem;
+  }
+}
+
+.jobs-swiper-button-prev svg,
+.jobs-swiper-button-next svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 768px) {
+  .jobs-swiper-button-prev,
+  .jobs-swiper-button-next {
+    width: 40px;
+    height: 40px;
+  }
+
+  .jobs-swiper-button-prev svg,
+  .jobs-swiper-button-next svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .job-card {
   background-color: white;
   border-radius: 1rem;
@@ -487,7 +594,7 @@
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #f3f4f6;
-  flex-grow: 1;
+  flex: 1;
 }
 
 .job-card-certificates-label {
