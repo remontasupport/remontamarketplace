@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/generated/auth-client'
+import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { Prisma } from '@/generated/auth-client'
 
 // ============================================================================
@@ -37,6 +37,34 @@ interface PaginatedResponse {
 }
 
 // ============================================================================
+// HELPER FUNCTIONS FOR DATA NORMALIZATION
+// ============================================================================
+
+/**
+ * Normalizes string to Title Case (e.g., "hello world" -> "Hello World")
+ * Use for: Gender, Languages, etc.
+ */
+function toTitleCase(str: string): string {
+  return str
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/**
+ * Maps frontend service names (kebab-case) to database format (Title Case)
+ */
+const SERVICE_NAME_MAP: Record<string, string> = {
+  'support-worker': 'Support Worker',
+  'therapeutic-supports': 'Therapeutic Supports',
+  'home-modifications': 'Home Modifications',
+  'fitness-rehabilitation': 'Fitness and Rehabilitation',
+  'cleaning-services': 'Cleaning Services',
+  'nursing-services': 'Nursing Services',
+  'home-yard-maintenance': 'Home and Yard Maintenance',
+};
+
+// ============================================================================
 // FILTER REGISTRY PATTERN (No If-Statements!)
 // ============================================================================
 
@@ -46,17 +74,26 @@ type FilterBuilder = (params: FilterParams) => Prisma.WorkerProfileWhereInput | 
  * Filter Registry
  * Each filter is an independent, composable function
  * Add new filters by adding entries to this registry
+ *
+ * DATABASE FORMAT CONVENTIONS:
+ * - Gender: Title Case ("Male", "Female")
+ * - Services: Title Case with spaces ("Support Worker", "Home Modifications")
+ * - Languages: Title Case ("English", "Mandarin", "Spanish")
+ * - Age: Integer (18, 25, 45, etc.)
+ * - Text fields: Case-insensitive searches using `mode: 'insensitive'`
+ *
+ * IMPORTANT: Always normalize input to match database format to avoid mismatches!
  */
 const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Gender Filter
-   * Exact match on gender field
+   * Normalizes to Title Case to match database format (Male/Female)
    */
-  gender: (params) =>
-    params.gender && params.gender !== 'all'
-      ? { gender: params.gender }
-      : null,
+  gender: (params) => {
+    if (!params.gender || params.gender === 'all') return null;
+    return { gender: toTitleCase(params.gender) };
+  },
 
   /**
    * Age Range Filter
@@ -87,21 +124,29 @@ const filterRegistry: Record<string, FilterBuilder> = {
   /**
    * Services/Type of Support Filter
    * Uses PostgreSQL array contains operator
+   * Maps kebab-case to Title Case format in database
    */
-  services: (params) =>
-    params.typeOfSupport && params.typeOfSupport !== 'all'
-      ? { services: { has: params.typeOfSupport } }
-      : null,
+  services: (params) => {
+    if (!params.typeOfSupport || params.typeOfSupport === 'all') return null;
+
+    const dbServiceName = SERVICE_NAME_MAP[params.typeOfSupport] || params.typeOfSupport;
+
+    return { services: { has: dbServiceName } };
+  },
 
   /**
    * Languages Filter (Multi-select)
    * Uses PostgreSQL array intersection
    * Matches workers who speak ANY of the selected languages
+   * Normalizes to Title Case to match database format (e.g., "English", "Mandarin")
    */
-  languages: (params) =>
-    params.languages && params.languages.length > 0
-      ? { languages: { hasSome: params.languages } }
-      : null,
+  languages: (params) => {
+    if (!params.languages || params.languages.length === 0) return null;
+
+    const normalizedLanguages = params.languages.map(toTitleCase);
+
+    return { languages: { hasSome: normalizedLanguages } };
+  },
 
   /**
    * Text Search Filter
@@ -153,15 +198,36 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
     return {}
   }
 
-  // Merge all filters into single WHERE clause
-  return activeFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
-    // Special handling for OR clauses (textSearch, location)
-    if (filter.OR) {
-      const existingOR = acc.OR || []
-      return { ...acc, OR: [...existingOR, ...filter.OR] }
+  // Separate OR filters from AND filters
+  const orFilters = activeFilters.filter(f => f.OR)
+  const andFilters = activeFilters.filter(f => !f.OR)
+
+  // If we have multiple OR filters, wrap each in AND
+  if (orFilters.length > 0) {
+    const andConditions = orFilters.map(f => ({ OR: f.OR }))
+
+    // Merge with regular AND filters
+    const mergedAndFilters = andFilters.reduce((acc, filter) => {
+      return { ...acc, ...filter }
+    }, {})
+
+    // Combine everything
+    let result
+    if (Object.keys(mergedAndFilters).length > 0) {
+      result = {
+        AND: [...andConditions, mergedAndFilters]
+      }
+    } else {
+      result = orFilters.length === 1
+        ? orFilters[0]
+        : { AND: andConditions }
     }
 
-    // Regular AND filters
+    return result
+  }
+
+  // No OR filters, just merge AND filters
+  return andFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
     return { ...acc, ...filter }
   }, {})
 }
