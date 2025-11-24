@@ -16,7 +16,7 @@ interface FormattedWorkerData {
   lastName: string;
   email: string;
   mobile: string;
-  age: string;
+  age: number;
   gender: string;
   languages: string[];
   location: string;

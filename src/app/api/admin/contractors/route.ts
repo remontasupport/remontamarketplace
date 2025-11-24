@@ -60,12 +60,29 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Age Range Filter
-   * Exact match on age range string (e.g., "20-30")
+   * Converts age range string (e.g., "20-30") to integer range query
    */
-  age: (params) =>
-    params.age && params.age !== 'all'
-      ? { age: params.age }
-      : null,
+  age: (params) => {
+    if (!params.age || params.age === 'all') return null;
+
+    // Parse age range
+    if (params.age === '60+') {
+      return { age: { gte: 60 } };
+    }
+
+    const match = params.age.match(/^(\d+)-(\d+)$/);
+    if (match) {
+      const [, min, max] = match;
+      return {
+        age: {
+          gte: parseInt(min, 10),
+          lte: parseInt(max, 10)
+        }
+      };
+    }
+
+    return null;
+  },
 
   /**
    * Services/Type of Support Filter

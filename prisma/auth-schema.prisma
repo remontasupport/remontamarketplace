@@ -162,7 +162,7 @@ model WorkerProfile {
   lastName                  String
   mobile                    String
   location                  String?
-  age                       String?
+  age                       Int?
   gender                    String?
   languages                 String[]
   services                  String[]

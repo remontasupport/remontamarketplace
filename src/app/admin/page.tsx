@@ -14,7 +14,7 @@ interface Contractor {
   lastName: string
   mobile: string | null
   gender: string | null
-  age: string | null
+  age: number | null
   languages: string[]
   services: string[]
   city: string | null

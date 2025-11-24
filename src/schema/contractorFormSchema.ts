@@ -34,7 +34,7 @@ export const contractorFormSchema = z.object({
     ),
 
   // Step 3 - Additional Details
-  age: z.string().min(1, "Age is required"),
+  age: z.number().min(18, "You must be at least 18 years old").max(120, "Please enter a valid age"),
   gender: z.string().min(1, "Please select your gender"),
   languages: z.array(z.string()).min(1, "Please select at least one language"),
 
@@ -75,7 +75,7 @@ export const contractorFormDefaults = {
   email: "",
   mobile: "",
   password: "",
-  age: "",
+  age: 18,
   gender: "",
   languages: [],
   services: [],

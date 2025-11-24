@@ -63,7 +63,7 @@ export type RegistrationDataBase = {
 export type WorkerRegistrationData = RegistrationDataBase & {
   role: UserRole.WORKER;
   location: string;
-  age: string;
+  age: number;
   gender: string;
   languages: string[];
   services: string[];

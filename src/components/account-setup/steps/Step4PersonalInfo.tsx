@@ -12,7 +12,7 @@ import { useDriverLicense, identityDocumentsKeys } from "@/hooks/queries/useIden
 
 interface Step4PersonalInfoProps {
   data: {
-    age: string;
+    age: number | string;
     gender: string;
     languages: string[];
     hasVehicle: string;
@@ -106,9 +106,12 @@ export default function Step4PersonalInfo({
             label="Age"
             name="age"
             value={data.age}
-            onChange={(e) => onChange("age", e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              onChange("age", value === '' ? '' : parseInt(value, 10));
+            }}
             min={18}
-            max={100}
+            max={120}
           />
 
           <SelectField
