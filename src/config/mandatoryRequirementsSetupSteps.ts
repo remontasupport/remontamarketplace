@@ -8,6 +8,7 @@ import Step2PoliceCheck from "@/components/requirements-setup/steps/Step2PoliceC
 import Step3WorkingWithChildren from "@/components/requirements-setup/steps/Step3WorkingWithChildren";
 import Step4NDISTraining from "@/components/requirements-setup/steps/Step4NDISTraining";
 import Step5InfectionControl from "@/components/requirements-setup/steps/Step5InfectionControl";
+import Step6OtherRequirements from "@/components/requirements-setup/steps/Step6OtherRequirements";
 
 export interface MandatoryRequirementsSetupStep {
   id: number;
@@ -49,6 +50,12 @@ export const MANDATORY_REQUIREMENTS_SETUP_STEPS: MandatoryRequirementsSetupStep[
     slug: "infection-control",
     title: "Infection control",
     component: Step5InfectionControl,
+  },
+  {
+    id: 6,
+    slug: "other-requirements",
+    title: "Other requirements",
+    component: Step6OtherRequirements,
   },
 ];
 
