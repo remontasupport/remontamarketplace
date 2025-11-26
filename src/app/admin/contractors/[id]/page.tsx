@@ -5,8 +5,9 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3 } from 'lucide-react'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import WorkerProfilePDF from '@/components/pdf/WorkerProfilePDF'
+import ImageCropModal from '@/components/modals/ImageCropModal'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import './contractor-profile.css'
 
 interface WorkerProfile {
@@ -51,6 +52,10 @@ export default function WorkerDetailPage() {
 
   // Master edit mode state
   const [isEditMode, setIsEditMode] = useState<boolean>(false)
+
+  // Image crop state
+  const [showCropModal, setShowCropModal] = useState<boolean>(false)
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string>('')
 
   // Editable fields state (not saved to database)
   const [editableLanguages, setEditableLanguages] = useState<string>('')
@@ -166,6 +171,21 @@ export default function WorkerDetailPage() {
     setServicesItems(newItems)
   }
 
+  // Image crop handlers
+  const handlePhotoDoubleClick = useCallback(() => {
+    if (isEditMode && mainPhoto) {
+      setShowCropModal(true)
+    }
+  }, [isEditMode, mainPhoto])
+
+  const handleCropComplete = useCallback((croppedUrl: string) => {
+    setCroppedImageUrl(croppedUrl)
+  }, [])
+
+  const handleCloseCropModal = useCallback(() => {
+    setShowCropModal(false)
+  }, [])
+
   // Quote values
   const hobbies = editableHobbies || worker.hobbies || ''
   const uniqueService = editableUniqueService || worker.uniqueService || ''
@@ -225,10 +245,22 @@ export default function WorkerDetailPage() {
           <div className="photo-background-tertiary"></div>
 
           {/* CIRCULAR PHOTO - Centered in Left Column */}
-          <div className="profile-photo-circle">
+          <div
+            className="profile-photo-circle"
+            onDoubleClick={handlePhotoDoubleClick}
+            style={{
+              cursor: isEditMode && mainPhoto ? 'pointer' : 'default',
+              transition: 'transform 0.2s'
+            }}
+            title={isEditMode && mainPhoto ? 'Double-click to crop image' : ''}
+          >
             <div className="profile-photo-inner">
               {mainPhoto ? (
-                <img src={mainPhoto} alt={`${worker.firstName} ${worker.lastName}`} />
+                <img
+                  src={croppedImageUrl || mainPhoto}
+                  alt={`${worker.firstName} ${worker.lastName}`}
+                  style={{ objectFit: 'cover' }}
+                />
               ) : (
                 <div className="profile-photo-placeholder">{initials}</div>
               )}
@@ -631,6 +663,15 @@ export default function WorkerDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Image Crop Modal */}
+        {showCropModal && mainPhoto && (
+          <ImageCropModal
+            imageUrl={mainPhoto}
+            onClose={handleCloseCropModal}
+            onCropComplete={handleCropComplete}
+          />
+        )}
       </div>
     </div>
   )
