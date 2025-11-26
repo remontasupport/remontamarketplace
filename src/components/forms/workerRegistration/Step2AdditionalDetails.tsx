@@ -26,10 +26,13 @@ const Step2AdditionalDetailsComponent = function Step2AdditionalDetails({ regist
               <Input
                 type="number"
                 min="18"
-                max="99"
+                max="120"
                 className="h-12 text-base font-poppins"
                 value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  field.onChange(value === '' ? '' : parseInt(value, 10));
+                }}
                 onBlur={field.onBlur}
               />
             )}

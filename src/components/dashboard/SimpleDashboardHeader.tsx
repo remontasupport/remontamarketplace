@@ -2,19 +2,29 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import { PhoneIcon } from '@heroicons/react/24/outline'
 
 export default function SimpleDashboardHeader() {
+  const { data: session } = useSession()
+
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' })
+  }
+
+  // Determine dashboard home based on user role
+  const getDashboardHome = () => {
+    if (!session?.user?.role) return '/dashboard/worker' // Default fallback
+
+    const role = session.user.role.toLowerCase()
+    return `/dashboard/${role}`
   }
 
   return (
     <header className="simple-dashboard-header">
       {/* Logo */}
       <div className="simple-header-logo">
-        <Link href="/">
+        <Link href={getDashboardHome()}>
           <Image
             src="/logo/logo.svg"
             alt="Remonta"

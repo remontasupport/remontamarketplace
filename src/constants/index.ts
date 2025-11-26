@@ -199,7 +199,7 @@ export const FORM_DEFAULT_VALUES = {
   lastName: "",
   email: "",
   mobile: "",
-  age: "",
+  age: 18,
   gender: "",
   city: "",
   state: "",

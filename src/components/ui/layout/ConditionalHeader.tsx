@@ -16,6 +16,11 @@ export default function ConditionalHeader() {
     return null
   }
 
+  // Don't render header for admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+
   // Don't render header for authentication pages
   if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password') {
     return null
