@@ -196,32 +196,38 @@ for (let i = 0; i < dataLines.length; i++) {
   services,
   photos,
   "hasVehicle",
-  location
+  location,
+  "whyEnjoyWork",
+  "createdAt",
+  "updatedAt"
 ) VALUES (
   ${escapeSQLString(id)},
-  ${escapeSQLString(id)},
+  NULL,
   ${escapeSQLString(firstName)},
   ${escapeSQLString(lastName)},
-  ${escapeSQLString(phone)},
+  ${phone && phone.trim() !== '' ? escapeSQLString(phone) : 'NULL'},
   ${gender && gender.trim() !== '' ? escapeSQLString(gender) : 'NULL'},
   NULL,
-  ${yearsOfExperience && yearsOfExperience.trim() !== '' ? yearsOfExperience : 0},
+  ${yearsOfExperience && yearsOfExperience.trim() !== '' ? yearsOfExperience : 'NULL'},
   ${aboutYou && aboutYou.trim() !== '' ? escapeSQLString(aboutYou) : 'NULL'},
   ${qualificationsAndCertifications && qualificationsAndCertifications.trim() !== '' ? escapeSQLString(qualificationsAndCertifications) : 'NULL'},
   ${funFact && funFact.trim() !== '' ? escapeSQLString(funFact) : 'NULL'},
   ${hobbiesAndInterests && hobbiesAndInterests.trim() !== '' ? escapeSQLString(hobbiesAndInterests) : 'NULL'},
   ${whatMakesBusinessUnique && whatMakesBusinessUnique.trim() !== '' ? escapeSQLString(whatMakesBusinessUnique) : 'NULL'},
   ${additionalInformation && additionalInformation.trim() !== '' ? escapeSQLString(additionalInformation) : 'NULL'},
-  ${escapeSQLString(city)},
-  ${escapeSQLString(postalZipCode)},
-  ${escapeSQLString(state)},
+  ${city && city.trim() !== '' ? escapeSQLString(city) : 'NULL'},
+  ${postalZipCode && postalZipCode.trim() !== '' ? escapeSQLString(postalZipCode) : 'NULL'},
+  ${state && state.trim() !== '' ? escapeSQLString(state) : 'NULL'},
   ${latitude && latitude.trim() !== '' ? latitude : 'NULL'},
   ${longitude && longitude.trim() !== '' ? longitude : 'NULL'},
   ${transformLanguages(languageSpoken)},
   ${transformServices(titleRole)},
   ${transformPhotos(profilePicture)},
   ${transformHasVehicle(hasVehicleAccess)},
-  ${transformLocation(city, state, postalZipCode)}
+  ${transformLocation(city, state, postalZipCode)},
+  NULL,
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
 );`;
 
   sqlStatements.push(sql);
