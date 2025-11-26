@@ -2,12 +2,12 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3 } from 'lucide-react'
+import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import WorkerProfilePDF from '@/components/pdf/WorkerProfilePDF'
 import ImageCropModal from '@/components/modals/ImageCropModal'
 import Image from 'next/image'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import './contractor-profile.css'
 
 interface WorkerProfile {
@@ -56,6 +56,7 @@ export default function WorkerDetailPage() {
   // Image crop state
   const [showCropModal, setShowCropModal] = useState<boolean>(false)
   const [croppedImageUrl, setCroppedImageUrl] = useState<string>('')
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>('')
 
   // Editable fields state (not saved to database)
   const [editableLanguages, setEditableLanguages] = useState<string>('')
@@ -69,9 +70,9 @@ export default function WorkerDetailPage() {
   const [editableWhyEnjoy, setEditableWhyEnjoy] = useState<string>('')
   const [editableIntroduction, setEditableIntroduction] = useState<string>('')
 
-  // Initialize experience items when data loads
-  const initializeExperienceItems = () => {
-    if (experienceItems.length === 0 && data?.data) {
+  // Initialize experience and services items when data loads
+  useEffect(() => {
+    if (data?.data && experienceItems.length === 0) {
       const items: string[] = []
       if (data.data.qualifications) {
         items.push(data.data.qualifications)
@@ -79,11 +80,10 @@ export default function WorkerDetailPage() {
       items.push(`${data.data.experience || '2 years'} of professional support work`)
       setExperienceItems(items)
     }
-  }
+  }, [data?.data, experienceItems.length])
 
-  // Initialize services items when data loads
-  const initializeServicesItems = () => {
-    if (servicesItems.length === 0 && data?.data) {
+  useEffect(() => {
+    if (data?.data && servicesItems.length === 0) {
       const items: string[] = data.data.services && data.data.services.length > 0
         ? data.data.services
         : [
@@ -95,7 +95,58 @@ export default function WorkerDetailPage() {
           ]
       setServicesItems(items)
     }
-  }
+  }, [data?.data, servicesItems.length])
+
+  // Image crop handlers (must be before early returns)
+  const handlePhotoDoubleClick = useCallback(() => {
+    const currentPhoto = selectedImageUrl || data?.data?.photos?.[0]
+    if (isEditMode && currentPhoto) {
+      setShowCropModal(true)
+    }
+  }, [isEditMode, selectedImageUrl, data?.data?.photos])
+
+  const handleCropComplete = useCallback((croppedUrl: string) => {
+    setCroppedImageUrl(croppedUrl)
+  }, [])
+
+  const handleCloseCropModal = useCallback(() => {
+    setShowCropModal(false)
+  }, [])
+
+  // Handle image file selection
+  const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file')
+      return
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+    if (file.size > maxSize) {
+      alert('Image size must be less than 10MB')
+      return
+    }
+
+    // Read and preview the file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const imageUrl = e.target?.result as string
+      setSelectedImageUrl(imageUrl)
+      setCroppedImageUrl('') // Reset cropped image when new image is selected
+    }
+    reader.onerror = () => {
+      alert('Failed to read image file')
+    }
+    reader.readAsDataURL(file)
+
+    // Reset the input so the same file can be selected again
+    event.target.value = ''
+  }, [])
 
   if (isLoading) {
     return (
@@ -135,10 +186,6 @@ export default function WorkerDetailPage() {
   const vehicle = editableVehicle || worker.hasVehicle || 'Yes'
   const location = editableLocation || worker.location || ''
 
-  // Initialize experience and services items
-  initializeExperienceItems()
-  initializeServicesItems()
-
   // Functions for experience items
   const updateExperienceItem = (index: number, value: string) => {
     const newItems = [...experienceItems]
@@ -170,21 +217,6 @@ export default function WorkerDetailPage() {
     const newItems = servicesItems.filter((_, i) => i !== index)
     setServicesItems(newItems)
   }
-
-  // Image crop handlers
-  const handlePhotoDoubleClick = useCallback(() => {
-    if (isEditMode && mainPhoto) {
-      setShowCropModal(true)
-    }
-  }, [isEditMode, mainPhoto])
-
-  const handleCropComplete = useCallback((croppedUrl: string) => {
-    setCroppedImageUrl(croppedUrl)
-  }, [])
-
-  const handleCloseCropModal = useCallback(() => {
-    setShowCropModal(false)
-  }, [])
 
   // Quote values
   const hobbies = editableHobbies || worker.hobbies || ''
@@ -249,15 +281,15 @@ export default function WorkerDetailPage() {
             className="profile-photo-circle"
             onDoubleClick={handlePhotoDoubleClick}
             style={{
-              cursor: isEditMode && mainPhoto ? 'pointer' : 'default',
+              cursor: isEditMode && (selectedImageUrl || mainPhoto) ? 'pointer' : 'default',
               transition: 'transform 0.2s'
             }}
-            title={isEditMode && mainPhoto ? 'Double-click to crop image' : ''}
+            title={isEditMode && (selectedImageUrl || mainPhoto) ? 'Double-click to crop image' : ''}
           >
             <div className="profile-photo-inner">
-              {mainPhoto ? (
+              {(selectedImageUrl || croppedImageUrl || mainPhoto) ? (
                 <img
-                  src={croppedImageUrl || mainPhoto}
+                  src={croppedImageUrl || selectedImageUrl || mainPhoto}
                   alt={`${worker.firstName} ${worker.lastName}`}
                   style={{ objectFit: 'cover' }}
                 />
@@ -265,6 +297,24 @@ export default function WorkerDetailPage() {
                 <div className="profile-photo-placeholder">{initials}</div>
               )}
             </div>
+
+            {/* Change Photo Button - Only visible in edit mode */}
+            {isEditMode && (
+              <div className="photo-change-overlay">
+                <input
+                  type="file"
+                  id="photo-upload"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  aria-label="Upload new photo"
+                />
+                <label htmlFor="photo-upload" className="photo-change-button">
+                  <Upload className="w-4 h-4" />
+                  <span>Change Photo</span>
+                </label>
+              </div>
+            )}
           </div>
 
           <div className="profile-content">
@@ -476,8 +526,8 @@ export default function WorkerDetailPage() {
                 <Image
                   src="/logo/logo-dark.svg"
                   alt="Remonta"
-                  width={150}
-                  height={40}
+                  width={180}
+                  height={48}
                   priority
                 />
               </div>
@@ -665,9 +715,9 @@ export default function WorkerDetailPage() {
         </div>
 
         {/* Image Crop Modal */}
-        {showCropModal && mainPhoto && (
+        {showCropModal && (selectedImageUrl || mainPhoto) && (
           <ImageCropModal
-            imageUrl={mainPhoto}
+            imageUrl={selectedImageUrl || mainPhoto || ''}
             onClose={handleCloseCropModal}
             onCropComplete={handleCropComplete}
           />

@@ -7,10 +7,10 @@ import { authPrisma as prisma } from '@/lib/auth-prisma'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const workerId = params.id
+    const { id: workerId } = await params
 
     if (!workerId) {
       return NextResponse.json(
