@@ -3,8 +3,6 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
-import { PDFDownloadLink } from '@react-pdf/renderer'
-import WorkerProfilePDF from '@/components/pdf/WorkerProfilePDF'
 import ImageCropModal from '@/components/modals/ImageCropModal'
 import Image from 'next/image'
 import { useState, useCallback, useEffect } from 'react'
@@ -80,7 +78,8 @@ export default function WorkerDetailPage() {
       items.push(`${data.data.experience || '2 years'} of professional support work`)
       setExperienceItems(items)
     }
-  }, [data?.data, experienceItems.length])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.data])
 
   useEffect(() => {
     if (data?.data && servicesItems.length === 0) {
@@ -95,7 +94,8 @@ export default function WorkerDetailPage() {
           ]
       setServicesItems(items)
     }
-  }, [data?.data, servicesItems.length])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.data])
 
   // Image crop handlers (must be before early returns)
   const handlePhotoDoubleClick = useCallback(() => {
@@ -112,6 +112,34 @@ export default function WorkerDetailPage() {
   const handleCloseCropModal = useCallback(() => {
     setShowCropModal(false)
   }, [])
+
+  // Handle PDF download
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
+  const handleDownloadPDF = useCallback(async () => {
+    try {
+      setIsDownloadingPDF(true)
+      const response = await fetch(`/api/admin/contractors/${workerId}/pdf`)
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF')
+      }
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      alert('Failed to download PDF. Please try again.')
+    } finally {
+      setIsDownloadingPDF(false)
+    }
+  }, [workerId, data?.data?.firstName, data?.data?.lastName])
 
   // Handle image file selection
   const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,26 +276,23 @@ export default function WorkerDetailPage() {
             </button>
 
             {/* Download PDF Button */}
-            <PDFDownloadLink
-              document={<WorkerProfilePDF worker={worker} />}
-              fileName={`${worker.firstName}_${worker.lastName}_Profile.pdf`}
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isDownloadingPDF}
+              className="download-pdf-button"
             >
-              {({ loading }) => (
-                <button className="download-pdf-button">
-                  {loading ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
-                      <span>Generating PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-5 h-5" />
-                      <span>Download PDF Profile</span>
-                    </>
-                  )}
-                </button>
+              {isDownloadingPDF ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                  <span>Generating PDF...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  <span>Download PDF Profile</span>
+                </>
               )}
-            </PDFDownloadLink>
+            </button>
           </div>
         </div>
 

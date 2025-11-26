@@ -94,6 +94,12 @@
   box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
 }
 
+.download-pdf-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ============================================================================
    PROFILE CARD - Two Column Canva Design
    ============================================================================ */
