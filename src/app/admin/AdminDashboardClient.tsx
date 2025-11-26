@@ -112,6 +112,35 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 }
 
 // ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Convert distance in kilometers to travel time
+ * Uses average driving speed in urban/suburban areas (40 km/h)
+ * @param distanceKm - Distance in kilometers
+ * @returns Formatted time string (e.g., "3 mins. away", "1 hr. 15 mins. away")
+ */
+function formatTravelTime(distanceKm: number): string {
+  const AVERAGE_SPEED_KMH = 40; // Average urban driving speed
+  const hours = distanceKm / AVERAGE_SPEED_KMH;
+  const totalMinutes = Math.round(hours * 60);
+
+  if (totalMinutes < 1) {
+    return "< 1 min. away";
+  } else if (totalMinutes < 60) {
+    return `${totalMinutes} mins. away`;
+  } else {
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (mins === 0) {
+      return `${hrs} hr${hrs > 1 ? 's' : ''}. away`;
+    }
+    return `${hrs} hr${hrs > 1 ? 's' : ''}. ${mins} mins. away`;
+  }
+}
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -300,16 +329,7 @@ export default function AdminDashboard() {
             Next
           </button>
         </div>
-        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">{(page - 1) * filters.pageSize + 1}</span> to{' '}
-              <span className="font-medium">
-                {Math.min(page * filters.pageSize, data.pagination.total)}
-              </span>{' '}
-              of <span className="font-medium">{data.pagination.total}</span> results
-            </p>
-          </div>
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-center">
           <div>
             <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
               <button
@@ -638,7 +658,7 @@ export default function AdminDashboard() {
                   })
                   setSearchInput('')
                   setSuburbSearch('')
-                  setSelectedLanguages([])
+                  setLanguageSearch('')
                 }}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
@@ -681,6 +701,17 @@ export default function AdminDashboard() {
               <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-600 animate-pulse"></div>
             )}
 
+            {/* Pagination Info at Top */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{(data.pagination.page - 1) * filters.pageSize + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(data.pagination.page * filters.pageSize, data.pagination.total)}
+                </span>{' '}
+                of <span className="font-medium">{data.pagination.total}</span> results
+              </p>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -692,7 +723,7 @@ export default function AdminDashboard() {
                       Name {filters.sortBy === 'firstName' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Mobile
+                      Distance
                     </th>
                     <th
                       onClick={() => handleSort('city')}
@@ -709,18 +740,12 @@ export default function AdminDashboard() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Services
                     </th>
-                    <th
-                      onClick={() => handleSort('createdAt')}
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hover:bg-gray-100"
-                    >
-                      Created {filters.sortBy === 'createdAt' && (filters.sortOrder === 'asc' ? '↑' : '↓')}
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {data.data.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
                         No contractors found
                       </td>
                     </tr>
@@ -752,16 +777,23 @@ export default function AdminDashboard() {
                               <div className="text-sm font-medium text-gray-900">
                                 {contractor.firstName} {contractor.lastName}
                               </div>
-                              {contractor.distance && (
-                                <div className="text-xs text-gray-500">
-                                  {contractor.distance.toFixed(1)} km away
-                                </div>
-                              )}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{contractor.mobile || '-'}</div>
+                          <div className="text-sm text-gray-900">
+                            {contractor.distance ? (
+                              <span className="inline-flex items-center gap-1">
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {formatTravelTime(contractor.distance)}
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
@@ -798,9 +830,6 @@ export default function AdminDashboard() {
                               '-'
                             )}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(contractor.createdAt).toLocaleDateString()}
                         </td>
                       </tr>
                     ))

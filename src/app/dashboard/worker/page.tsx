@@ -11,6 +11,10 @@ import { UserRole } from "@/types/auth";
 import { authPrisma } from "@/lib/auth-prisma";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
+// Disable caching for this page - CRITICAL for security
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // News array for dashboard
 const newsItems = [
   {

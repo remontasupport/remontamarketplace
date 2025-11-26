@@ -211,25 +211,27 @@ export const authOptions: NextAuthOptions = {
       name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true, // Prevents JavaScript access to cookie
-        sameSite: "lax", // Prevents CSRF attacks
+        sameSite: "strict", // Strict prevents CSRF attacks - changed from "lax"
         path: "/", // Cookie available on all paths
         secure: process.env.NODE_ENV === "production", // HTTPS only in production
+        domain: process.env.NODE_ENV === "production" ? process.env.NEXTAUTH_URL?.replace(/https?:\/\//, '').split(':')[0] : undefined,
       },
     },
     callbackUrl: {
       name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.callback-url`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: "strict",
         path: "/",
         secure: process.env.NODE_ENV === "production",
+        domain: process.env.NODE_ENV === "production" ? process.env.NEXTAUTH_URL?.replace(/https?:\/\//, '').split(':')[0] : undefined,
       },
     },
     csrfToken: {
       name: `${process.env.NODE_ENV === "production" ? "__Host-" : ""}next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: "strict",
         path: "/",
         secure: process.env.NODE_ENV === "production",
       },
