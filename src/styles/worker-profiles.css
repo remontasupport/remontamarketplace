@@ -29,7 +29,7 @@
 .worker-profiles-header {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
@@ -37,9 +37,8 @@
 }
 
 .worker-profiles-header .section-title {
-  text-align: left;
+  text-align: center;
   margin: 0;
-  margin-left: 1rem;
   max-width: 500px;
   line-height: 1.2;
 }

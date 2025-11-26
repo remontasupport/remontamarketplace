@@ -69,9 +69,9 @@ export default function WorkerProfiles() {
           <h2 className="section-title">
             Meet a few of our amazing support workers
           </h2>
-          <Link href="/search-workers" className="worker-profiles-find-more desktop-only">
+          {/* <Link href="/search-workers" className="worker-profiles-find-more desktop-only">
             Find more
-          </Link>
+          </Link> */}
         </div>
 
         {/* Swiper Container with Navigation and Gradients */}
@@ -182,9 +182,9 @@ export default function WorkerProfiles() {
         </div>
 
         {/* Find More Button (Mobile Only) */}
-        <Link href="/search-workers" className="worker-profiles-find-more mobile-only">
+        {/* <Link href="/search-workers" className="worker-profiles-find-more mobile-only">
           Find more
-        </Link>
+        </Link> */}
 
         {/* Worker Profile Modal */}
         <WorkerProfileModal
