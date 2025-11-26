@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
 import ImageCropModal from '@/components/modals/ImageCropModal'
-import Image from 'next/image'
+import NextImage from 'next/image'
 import { useState, useCallback, useEffect } from 'react'
 import './contractor-profile.css'
 
@@ -113,33 +113,88 @@ export default function WorkerDetailPage() {
     setShowCropModal(false)
   }, [])
 
-  // Handle PDF download
+  // Handle PDF download using html2canvas + jspdf
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
   const handleDownloadPDF = useCallback(async () => {
     try {
       setIsDownloadingPDF(true)
-      const response = await fetch(`/api/admin/contractors/${workerId}/pdf`)
 
-      if (!response.ok) {
-        throw new Error('Failed to generate PDF')
+      // Wait a bit for any pending renders
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Dynamically import libraries
+      const { toPng } = await import('html-to-image')
+      const { jsPDF } = await import('jspdf')
+
+      // Get the profile card element
+      const element = document.querySelector('.profile-card') as HTMLElement
+      if (!element) {
+        console.error('Profile card element not found')
+        throw new Error('Profile card not found')
       }
 
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      // Temporarily hide the "Change Photo" button for PDF
+      const changePhotoOverlay = document.querySelector('.photo-change-overlay') as HTMLElement
+      const originalDisplay = changePhotoOverlay?.style.display
+      if (changePhotoOverlay) {
+        changePhotoOverlay.style.display = 'none'
+      }
+
+      console.log('Starting PDF generation...')
+
+      // Generate PNG from HTML
+      const dataUrl = await toPng(element, {
+        quality: 1.0,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      })
+
+      console.log('Image generated successfully')
+
+      // Restore the change photo button
+      if (changePhotoOverlay) {
+        changePhotoOverlay.style.display = originalDisplay || ''
+      }
+
+      // Get image dimensions using browser's native Image constructor
+      const img = window.document.createElement('img')
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = dataUrl
+      })
+
+      // Calculate PDF dimensions (A4 size)
+      const imgWidth = 210 // A4 width in mm
+      const imgHeight = (img.height * imgWidth) / img.width
+
+      console.log('Creating PDF:', imgWidth, 'x', imgHeight, 'mm')
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      })
+
+      // Add image to PDF
+      pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST')
+
+      // Download PDF
+      const fileName = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.pdf`
+      console.log('Saving PDF:', fileName)
+      pdf.save(fileName)
+
+      console.log('PDF generated successfully')
     } catch (error) {
-      console.error('Error downloading PDF:', error)
-      alert('Failed to download PDF. Please try again.')
+      console.error('Error generating PDF:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Failed to generate PDF: ${errorMsg}\n\nPlease check the console for details.`)
     } finally {
       setIsDownloadingPDF(false)
     }
-  }, [workerId, data?.data?.firstName, data?.data?.lastName])
+  }, [data?.data?.firstName, data?.data?.lastName])
 
   // Handle image file selection
   const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -548,7 +603,7 @@ export default function WorkerDetailPage() {
             <div className="profile-right-column">
               {/* REMONTA LOGO */}
               <div className="remonta-logo">
-                <Image
+                <NextImage
                   src="/logo/logo-dark.svg"
                   alt="Remonta"
                   width={180}
