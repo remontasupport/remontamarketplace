@@ -38,6 +38,8 @@ export async function GET(
         photos: true,
         location: true,
         age: true,
+        languages: true,
+        services: true,
       }
     })
 
