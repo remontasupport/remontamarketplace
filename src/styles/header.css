@@ -760,24 +760,24 @@
 @media (min-width: 2560px) {
   .header-nav {
     padding: 2rem 15rem;
-    
+
   }
 
   .nav-link,
 .nav-dropdown-button {
-  font-size: 1.9rem;
+  font-size: 1.1rem;
   line-height: 1.5rem;
   position: relative;
   padding-bottom: 0.25rem;
 }
 
 .phone-link {
-  font-size: 1.9rem;
+  font-size: 1.1rem;
 }
 
 .contact-button {
-  font-size: 2rem;
- 
+  font-size: 1.15rem;
+
 }
 
   .logo-container {
