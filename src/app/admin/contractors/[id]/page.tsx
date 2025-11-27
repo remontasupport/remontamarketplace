@@ -113,7 +113,7 @@ export default function WorkerDetailPage() {
     setShowCropModal(false)
   }, [])
 
-  // Handle PDF download using html2canvas + jspdf
+  // Handle PDF download - optimized client-side generation
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
   const handleDownloadPDF = useCallback(async () => {
     try {
@@ -140,23 +140,33 @@ export default function WorkerDetailPage() {
         changePhotoOverlay.style.display = 'none'
       }
 
+      // Store original styles
+      const originalBoxShadow = element.style.boxShadow
+      const originalBorderRadius = element.style.borderRadius
+
+      // Remove visual effects for cleaner PDF
+      element.style.boxShadow = 'none'
+      element.style.borderRadius = '0'
+
       console.log('Starting PDF generation...')
 
-      // Generate PNG from HTML
+      // Generate PNG from HTML with high quality
       const dataUrl = await toPng(element, {
         quality: 1.0,
-        pixelRatio: 2,
+        pixelRatio: 3,
         backgroundColor: '#ffffff',
       })
 
       console.log('Image generated successfully')
 
-      // Restore the change photo button
+      // Restore original styles
+      element.style.boxShadow = originalBoxShadow
+      element.style.borderRadius = originalBorderRadius
       if (changePhotoOverlay) {
         changePhotoOverlay.style.display = originalDisplay || ''
       }
 
-      // Get image dimensions using browser's native Image constructor
+      // Get image dimensions
       const img = window.document.createElement('img')
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve()
@@ -164,13 +174,7 @@ export default function WorkerDetailPage() {
         img.src = dataUrl
       })
 
-      // Calculate PDF dimensions (A4 size)
-      const imgWidth = 210 // A4 width in mm
-      const imgHeight = (img.height * imgWidth) / img.width
-
-      console.log('Creating PDF:', imgWidth, 'x', imgHeight, 'mm')
-
-      // Create PDF
+      // Create PDF with A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -178,8 +182,12 @@ export default function WorkerDetailPage() {
         compress: true
       })
 
-      // Add image to PDF
-      pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST')
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+
+      // Since we adjusted the card to A4 ratio, it should fit perfectly
+      // Fill the entire page
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST')
 
       // Download PDF
       const fileName = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.pdf`
