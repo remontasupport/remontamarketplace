@@ -9,7 +9,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { TrashIcon, PlusIcon, ArrowUpTrayIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
@@ -30,6 +30,7 @@ interface Step1ServicesOfferProps {
 interface ServiceCardProps {
   service: string;
   supportWorkerCategories: string[];
+  categoryData: any; // Full category data from database
   onRemove: (service: string) => void;
   onEditCategories: () => void;
   isEditMode: boolean;
@@ -38,12 +39,24 @@ interface ServiceCardProps {
 function ServiceCard({
   service,
   supportWorkerCategories,
+  categoryData,
   onRemove,
   onEditCategories,
   isEditMode,
 }: ServiceCardProps) {
   const router = useRouter();
   const hasQualifications = serviceHasQualifications(service);
+
+  // Get subcategories for this category
+  const subcategoryIds = categoryData?.subcategories?.length > 0
+    ? supportWorkerCategories.filter(id =>
+        categoryData.subcategories.some((sub: any) => sub.id === id)
+      )
+    : [];
+
+  const subcategoryNames = subcategoryIds
+    .map(id => categoryData?.subcategories.find((sub: any) => sub.id === id)?.name)
+    .filter(Boolean);
 
   const handleCardClick = () => {
     if (hasQualifications && !isEditMode) {
@@ -56,30 +69,44 @@ function ServiceCard({
   return (
     <div className="service-card-wrapper">
       <div
-        className={`service-card ${hasQualifications && !isEditMode ? "clickable" : ""}`}
+        className={`service-card ${hasQualifications && !isEditMode ? "clickable" : ""} ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""}`}
         onClick={handleCardClick}
+        style={{ backgroundColor: 'white' }}
       >
-        <div className="service-card-content">
-          <div className="service-card-header">
+        <div className="service-card-content flex flex-col h-full">
+          <div className="service-card-header flex-grow">
             <h4 className="service-card-title">
               {service}
             </h4>
-            {service === "Support Worker" && supportWorkerCategories && supportWorkerCategories.length > 0 && (
-              <p
-                className="service-subcategories"
+            {hasQualifications && (
+              <div className="service-upload-indicator mt-2">
+                <ArrowUpTrayIcon />
+                <span>Upload Qualifications/Certs</span>
+              </div>
+            )}
+          </div>
+
+          {/* Subcategories at the bottom */}
+          {subcategoryNames.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <ul className="space-y-2">
+                {subcategoryNames.map((name, idx) => (
+                  <li key={idx} className="text-sm font-poppins flex items-start" style={{ color: '#0C1628' }}>
+                    <span className="mr-2 text-teal-600">•</span>
+                    <span>{name}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="text-xs text-teal-600 font-poppins mt-3 hover:underline font-semibold"
                 onClick={(e) => {
                   e.stopPropagation();
                   onEditCategories();
                 }}
               >
-                {supportWorkerCategories.length} {supportWorkerCategories.length === 1 ? 'Subcategory' : 'Subcategories'}
-              </p>
-            )}
-          </div>
-          {hasQualifications && (
-            <div className="service-upload-indicator">
-              <ArrowUpTrayIcon />
-              <span>Upload Qualifications/Certs</span>
+                Edit services
+              </button>
             </div>
           )}
         </div>
@@ -104,9 +131,13 @@ export default function Step1ServicesOffer({
   onSaveServices,
 }: Step1ServicesOfferProps) {
   const [showAddServiceDialog, setShowAddServiceDialog] = useState(false);
-  const [showSupportWorkerDialog, setShowSupportWorkerDialog] = useState(false);
+  const [showSubcategoriesDialog, setShowSubcategoriesDialog] = useState(false);
+  const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Fetch categories from database
+  const { data: categories } = useCategories();
 
   const handleAddServices = async (newServices: string[]) => {
     const currentServices = data.services || [];
@@ -127,23 +158,35 @@ export default function Step1ServicesOffer({
       }
     }
 
-    // Check if Support Worker was added
-    if (newServices.includes("Support Worker")) {
-      // Open Support Worker categories dialog
-      setShowSupportWorkerDialog(true);
+    // Check if any newly added service has subcategories
+    for (const serviceTitle of newServices) {
+      const category = categories?.find(cat => cat.name === serviceTitle);
+      if (category && category.subcategories.length > 0) {
+        // Open subcategories dialog for the first service with subcategories
+        setSelectedCategoryForEdit(category);
+        setShowSubcategoriesDialog(true);
+        break; // Only show dialog for the first one
+      }
     }
   };
 
   const handleRemoveService = async (serviceTitle: string) => {
     const currentServices = data.services || [];
     const updatedServices = currentServices.filter((s) => s !== serviceTitle);
-    const updatedCategories = serviceTitle === "Support Worker" ? [] : data.supportWorkerCategories || [];
+
+    // Find category to remove its subcategories
+    const category = categories?.find(cat => cat.name === serviceTitle);
+    let updatedCategories = data.supportWorkerCategories || [];
+
+    if (category && category.subcategories.length > 0) {
+      // Remove subcategories for this service
+      const subcategoryIds = category.subcategories.map((sub: any) => sub.id);
+      updatedCategories = updatedCategories.filter(id => !subcategoryIds.includes(id));
+    }
 
     // Update local state
     onChange("services", updatedServices);
-    if (serviceTitle === "Support Worker") {
-      onChange("supportWorkerCategories", []);
-    }
+    onChange("supportWorkerCategories", updatedCategories);
 
     // Auto-save to database
     if (onSaveServices) {
@@ -158,20 +201,30 @@ export default function Step1ServicesOffer({
     }
   };
 
-  const handleSupportWorkerSave = async (categories: string[]) => {
-    onChange("supportWorkerCategories", categories);
+  const handleSubcategoriesSave = async (subcategoryIds: string[]) => {
+    if (!selectedCategoryForEdit) return;
 
-    // If no categories selected, remove Support Worker
-    if (categories.length === 0) {
-      handleRemoveService("Support Worker");
+    // Get current subcategories and remove old ones for this category
+    const currentSubcategories = data.supportWorkerCategories || [];
+    const categorySubcategoryIds = selectedCategoryForEdit.subcategories.map((sub: any) => sub.id);
+    const otherSubcategories = currentSubcategories.filter(id => !categorySubcategoryIds.includes(id));
+
+    // Combine with new selections
+    const updatedCategories = [...otherSubcategories, ...subcategoryIds];
+
+    onChange("supportWorkerCategories", updatedCategories);
+
+    // If no subcategories selected, remove the service
+    if (subcategoryIds.length === 0) {
+      handleRemoveService(selectedCategoryForEdit.name);
     } else {
       // Auto-save categories to database
       if (onSaveServices) {
         setIsSaving(true);
         try {
-          await onSaveServices(data.services || [], categories);
+          await onSaveServices(data.services || [], updatedCategories);
         } catch (error) {
-          console.error("Failed to save support worker categories:", error);
+          console.error("Failed to save subcategories:", error);
         } finally {
           setIsSaving(false);
         }
@@ -179,8 +232,12 @@ export default function Step1ServicesOffer({
     }
   };
 
-  const handleEditCategories = () => {
-    setShowSupportWorkerDialog(true);
+  const handleEditCategories = (serviceTitle: string) => {
+    const category = categories?.find(cat => cat.name === serviceTitle);
+    if (category) {
+      setSelectedCategoryForEdit(category);
+      setShowSubcategoriesDialog(true);
+    }
   };
 
   return (
@@ -199,16 +256,20 @@ export default function Step1ServicesOffer({
             {/* Service Cards */}
             <div className="services-list">
               {data.services && data.services.length > 0 ? (
-                data.services.map((service) => (
-                  <ServiceCard
-                    key={service}
-                    service={service}
-                    supportWorkerCategories={data.supportWorkerCategories}
-                    onRemove={handleRemoveService}
-                    onEditCategories={handleEditCategories}
-                    isEditMode={isEditMode}
-                  />
-                ))
+                data.services.map((service) => {
+                  const categoryData = categories?.find(cat => cat.name === service);
+                  return (
+                    <ServiceCard
+                      key={service}
+                      service={service}
+                      supportWorkerCategories={data.supportWorkerCategories}
+                      categoryData={categoryData}
+                      onRemove={handleRemoveService}
+                      onEditCategories={() => handleEditCategories(service)}
+                      isEditMode={isEditMode}
+                    />
+                  );
+                })
               ) : (
                 <div className="services-empty-state">
                   <p>
@@ -283,13 +344,21 @@ export default function Step1ServicesOffer({
         onAdd={handleAddServices}
       />
 
-      {/* Support Worker Categories Dialog */}
-      <SupportWorkerDialog
-        open={showSupportWorkerDialog}
-        onOpenChange={setShowSupportWorkerDialog}
-        selectedCategories={data.supportWorkerCategories || []}
-        onSave={handleSupportWorkerSave}
-      />
+      {/* Subcategories Dialog - Generic for all categories */}
+      {selectedCategoryForEdit && (
+        <CategorySubcategoriesDialog
+          open={showSubcategoriesDialog}
+          onOpenChange={setShowSubcategoriesDialog}
+          categoryName={selectedCategoryForEdit.name}
+          subcategories={selectedCategoryForEdit.subcategories}
+          selectedSubcategories={
+            data.supportWorkerCategories.filter(id =>
+              selectedCategoryForEdit.subcategories.some((sub: any) => sub.id === id)
+            ) || []
+          }
+          onSave={handleSubcategoriesSave}
+        />
+      )}
     </StepContentWrapper>
   );
 }
