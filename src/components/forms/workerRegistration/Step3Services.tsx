@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SupportWorkerDialog } from "./SupportWorkerDialog";
+import { CategorySubcategoriesDialog } from "./CategorySubcategoriesDialog";
 import { UseFormSetValue } from "react-hook-form";
 import { ContractorFormData } from "@/schema/contractorFormSchema";
+import { Category } from "@/hooks/queries/useCategories";
 
 interface ServiceOption {
   id: string;
@@ -20,6 +21,7 @@ interface Step3ServicesProps {
   watchedServices: string[];
   supportWorkerCategories: string[];
   serviceOptions: ServiceOption[];
+  categories?: Category[]; // Full category data from database
   handleServiceToggle: (service: string) => void;
   setValue: UseFormSetValue<ContractorFormData>;
 }
@@ -30,50 +32,104 @@ const Step3ServicesComponent = function Step3Services({
   watchedServices,
   supportWorkerCategories,
   serviceOptions,
+  categories,
   handleServiceToggle,
   setValue,
 }: Step3ServicesProps) {
-  const [showSupportWorkerDialog, setShowSupportWorkerDialog] = useState(false);
+  const [showSubcategoriesDialog, setShowSubcategoriesDialog] = useState(false);
+  const [selectedCategoryForDialog, setSelectedCategoryForDialog] = useState<Category | null>(null);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<Record<string, string[]>>({});
 
   const handleCheckboxChange = (service: ServiceOption) => {
-    if (service.hasSubServices && service.id === "support-worker") {
-      // If checking Support Worker, open the dialog
+    // Find the full category data from database
+    const category = categories?.find(cat => cat.id === service.id);
+
+    if (service.hasSubServices && category && category.subcategories.length > 0) {
+      // If checking a category with subcategories, open the dialog
       if (!watchedServices?.includes(service.title)) {
-        setShowSupportWorkerDialog(true);
+        setSelectedCategoryForDialog(category);
+        setShowSubcategoriesDialog(true);
       } else {
-        // If unchecking, remove it
+        // If unchecking, remove it and clear subcategories for this category
         handleServiceToggle(service.title);
-        setValue("supportWorkerCategories", [], { shouldDirty: true });
+
+        setSelectedSubcategories(prev => {
+          const updated = { ...prev };
+          delete updated[service.id];
+
+          // Update supportWorkerCategories with ALL remaining subcategories
+          const allRemainingSubcategories = Object.values(updated).flat();
+          setValue("supportWorkerCategories", allRemainingSubcategories, {
+            shouldDirty: true,
+            shouldValidate: true
+          });
+
+          return updated;
+        });
       }
     } else {
-      // For other services, toggle normally
+      // For services without subcategories, toggle normally
       handleServiceToggle(service.title);
     }
   };
 
-  const handleSupportWorkerSave = (categories: string[]) => {
-    // Update form state with selected categories
-    setValue("supportWorkerCategories", categories, {
+  const handleSubcategoriesSave = (subcategoryIds: string[]) => {
+    if (!selectedCategoryForDialog) return;
+
+    const categoryId = selectedCategoryForDialog.id;
+    const categoryTitle = selectedCategoryForDialog.name;
+
+    // Update subcategories state
+    const updatedSubcategories = {
+      ...selectedSubcategories,
+      [categoryId]: subcategoryIds
+    };
+    setSelectedSubcategories(updatedSubcategories);
+
+    // Combine ALL subcategories from ALL categories into supportWorkerCategories
+    // This ensures all subcategory selections are saved to the database
+    const allSubcategories = Object.values(updatedSubcategories).flat();
+    setValue("supportWorkerCategories", allSubcategories, {
       shouldValidate: true,
       shouldDirty: true
     });
 
-    // Only add "Support Worker" if at least one category is selected
-    if (categories.length > 0 && !watchedServices?.includes("Support Worker")) {
-      handleServiceToggle("Support Worker");
-    } else if (categories.length === 0 && watchedServices?.includes("Support Worker")) {
-      handleServiceToggle("Support Worker");
+    // Only add the service if at least one subcategory is selected
+    if (subcategoryIds.length > 0 && !watchedServices?.includes(categoryTitle)) {
+      handleServiceToggle(categoryTitle);
+    } else if (subcategoryIds.length === 0 && watchedServices?.includes(categoryTitle)) {
+      handleServiceToggle(categoryTitle);
     }
+  };
+
+  // Get selected subcategories for the current dialog
+  const getSelectedSubcategoriesForDialog = () => {
+    if (!selectedCategoryForDialog) return [];
+
+    // First, check if we have them in local state (user just selected)
+    if (selectedSubcategories[selectedCategoryForDialog.id]) {
+      return selectedSubcategories[selectedCategoryForDialog.id];
+    }
+
+    // Otherwise, filter from supportWorkerCategories (form data from database/previous step)
+    // This handles the case when user navigates back to this step
+    const categorySubcategoryIds = selectedCategoryForDialog.subcategories.map(s => s.id);
+    const selectedFromForm = (supportWorkerCategories || []).filter(
+      id => categorySubcategoryIds.includes(id)
+    );
+
+    return selectedFromForm;
   };
   return (
     <>
       <div className="">
         <div>
-          <h3 className="text-xl font-poppins font-semibold text-gray-900">What services can you offer?</h3>
-          <p className="text-sm text-gray-600 font-poppins">
-       You can select more than one, but make sure you have the relevant qualifications.
-   
-          </p>
+          <div className="mb-6">
+            <h3 className="text-xl font-poppins font-semibold text-gray-900">What services can you offer?</h3>
+            <p className="text-sm text-gray-600 font-poppins">
+              You can select more than one, but make sure you have the relevant qualifications.
+            </p>
+          </div>
 
           <div className="space-y-4">
             {serviceOptions.map((service) => (
@@ -98,11 +154,30 @@ const Step3ServicesComponent = function Step3Services({
                     <p className="text-sm text-gray-600 font-poppins mt-1 leading-relaxed">
                       {service.description}
                     </p>
-                    {service.id === "support-worker" && supportWorkerCategories.length > 0 && (
-                      <div className="mt-2 text-sm text-teal-700 font-poppins">
-                        Selected: {supportWorkerCategories.length} {supportWorkerCategories.length === 1 ? 'category' : 'categories'}
-                      </div>
-                    )}
+                    {/* Show selected subcategories count */}
+                    {service.hasSubServices && (() => {
+                      // Get count from local state first, or calculate from form data
+                      let count = 0;
+
+                      if (selectedSubcategories[service.id]) {
+                        count = selectedSubcategories[service.id].length;
+                      } else {
+                        // Calculate from supportWorkerCategories by matching with category's subcategories
+                        const category = categories?.find(cat => cat.id === service.id);
+                        if (category) {
+                          const categorySubcategoryIds = category.subcategories.map(s => s.id);
+                          count = (supportWorkerCategories || []).filter(
+                            id => categorySubcategoryIds.includes(id)
+                          ).length;
+                        }
+                      }
+
+                      return count > 0 && (
+                        <div className="mt-2 text-sm text-teal-700 font-poppins">
+                          Selected: {count} {count === 1 ? 'service' : 'services'}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -113,12 +188,16 @@ const Step3ServicesComponent = function Step3Services({
         </div>
       </div>
 
-      <SupportWorkerDialog
-        open={showSupportWorkerDialog}
-        onOpenChange={setShowSupportWorkerDialog}
-        selectedCategories={supportWorkerCategories}
-        onSave={handleSupportWorkerSave}
-      />
+      {selectedCategoryForDialog && (
+        <CategorySubcategoriesDialog
+          open={showSubcategoriesDialog}
+          onOpenChange={setShowSubcategoriesDialog}
+          categoryName={selectedCategoryForDialog.name}
+          subcategories={selectedCategoryForDialog.subcategories}
+          selectedSubcategories={getSelectedSubcategoriesForDialog()}
+          onSave={handleSubcategoriesSave}
+        />
+      )}
     </>
   );
 };

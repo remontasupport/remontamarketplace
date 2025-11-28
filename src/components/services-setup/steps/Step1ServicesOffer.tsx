@@ -9,10 +9,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { TrashIcon, PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
-import { SupportWorkerDialog } from "@/components/forms/workerRegistration/SupportWorkerDialog";
+import { TrashIcon, PlusIcon, ArrowUpTrayIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
+import { useCategories } from "@/hooks/queries/useCategories";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/services-setup.css";
 

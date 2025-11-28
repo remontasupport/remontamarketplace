@@ -19,6 +19,7 @@ import { contractorFormSchema, type ContractorFormData, contractorFormDefaults }
 import { SERVICE_OPTIONS, TOTAL_STEPS } from "@/constants";
 import { getStepValidationFields } from "@/utils/registrationUtils";
 import { formatWorkerDataForDatabase } from "@/utils/formatWorkerData";
+import { useCategories, transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
 
 
 export default function ContractorOnboarding() {
@@ -28,6 +29,33 @@ export default function ContractorOnboarding() {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string>("");
+
+  // Fetch categories from database with caching
+  const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
+
+  // Transform categories to service options format (memoized to prevent re-renders)
+  const serviceOptions = useMemo(() => {
+    if (!categories) return SERVICE_OPTIONS; // Fallback to hardcoded while loading
+
+    const transformed = transformCategoriesToServiceOptions(categories);
+
+    // Sort to put priority categories at the top
+    const priorityOrder = ['support-worker', 'support-worker-high-intensity', 'therapeutic-supports'];
+
+    return transformed.sort((a, b) => {
+      const aIndex = priorityOrder.indexOf(a.id);
+      const bIndex = priorityOrder.indexOf(b.id);
+
+      // If both are priority, maintain their priority order
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      // If only a is priority, put it first
+      if (aIndex !== -1) return -1;
+      // If only b is priority, put it first
+      if (bIndex !== -1) return 1;
+      // Otherwise, maintain original order
+      return 0;
+    });
+  }, [categories]);
 
   const { register, control, handleSubmit, formState, trigger, getValues, setValue, watch, setFocus, setError, clearErrors } = useForm<ContractorFormData>({
     resolver: zodResolver(contractorFormSchema),
@@ -335,15 +363,34 @@ export default function ContractorOnboarding() {
             )}
 
             {currentStep === 4 && (
-              <Step3Services
-                control={control}
-                errors={errors}
-                watchedServices={watchedServices}
-                supportWorkerCategories={watchedSupportWorkerCategories || []}
-                serviceOptions={SERVICE_OPTIONS}
-                handleServiceToggle={handleServiceToggle}
-                setValue={setValue}
-              />
+              <>
+                {categoriesLoading && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 font-poppins">Loading service categories...</p>
+                  </div>
+                )}
+
+                {categoriesError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-600 text-sm font-poppins">
+                      Failed to load service categories. Please refresh the page or try again later.
+                    </p>
+                  </div>
+                )}
+
+                {!categoriesLoading && !categoriesError && (
+                  <Step3Services
+                    control={control}
+                    errors={errors}
+                    watchedServices={watchedServices}
+                    supportWorkerCategories={watchedSupportWorkerCategories || []}
+                    serviceOptions={serviceOptions}
+                    categories={categories}
+                    handleServiceToggle={handleServiceToggle}
+                    setValue={setValue}
+                  />
+                )}
+              </>
             )}
 
             {currentStep === 5 && (
