@@ -27,6 +27,7 @@ export default function ContractorOnboarding() {
   const [photoUploadError, setPhotoUploadError] = useState<string>("");
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailExistsError, setEmailExistsError] = useState<string>("");
 
   const { register, control, handleSubmit, formState, trigger, getValues, setValue, watch, setFocus, setError, clearErrors } = useForm<ContractorFormData>({
     resolver: zodResolver(contractorFormSchema),
@@ -129,6 +130,48 @@ export default function ContractorOnboarding() {
     if (currentStep < TOTAL_STEPS) {
       const isValid = await validateCurrentStep(currentStep);
       if (isValid) {
+        // Step 2 is the personal info step with email field
+        if (currentStep === 2) {
+          // Clear previous email error
+          setEmailExistsError("");
+
+          // Check if email already exists in database
+          const email = getValues("email");
+
+          if (email) {
+            try {
+              const response = await fetch('/api/auth/check-email', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+              });
+
+              const result = await response.json();
+
+              if (result.exists) {
+                // Email already exists - show error and don't proceed
+                setEmailExistsError("An account with this email already exists. Please use a different email or log in to your existing account.");
+
+                // Scroll to the error message
+                setTimeout(() => {
+                  const errorElement = document.querySelector('.email-exists-error');
+                  if (errorElement) {
+                    errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }, 100);
+
+                return; // Don't proceed to next step
+              }
+            } catch (error) {
+              console.error("Error checking email:", error);
+              // Continue anyway if the check fails (network error, etc.)
+            }
+          }
+        }
+
+        // Proceed to next step
         setCurrentStep(currentStep + 1);
       } else {
         // Validation failed - errors are now visible via trigger()
@@ -147,6 +190,10 @@ export default function ContractorOnboarding() {
 
   const prevStep = () => {
     if (currentStep > 1) {
+      // Clear email error when going back from step 3
+      if (currentStep === 3) {
+        setEmailExistsError("");
+      }
       setCurrentStep(currentStep - 1);
     }
   };
@@ -265,10 +312,17 @@ export default function ContractorOnboarding() {
             )}
 
             {currentStep === 2 && (
-              <Step1PersonalInfo
-                control={control}
-                errors={errors}
-              />
+              <>
+                <Step1PersonalInfo
+                  control={control}
+                  errors={errors}
+                />
+                {emailExistsError && (
+                  <div className="email-exists-error bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                    <p className="text-red-600 text-sm font-poppins">{emailExistsError}</p>
+                  </div>
+                )}
+              </>
             )}
 
             {currentStep === 3 && (

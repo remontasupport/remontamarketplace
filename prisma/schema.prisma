@@ -9,71 +9,106 @@ datasource db {
 }
 
 model ContractorProfile {
-  id                            String    @id @default(cuid())
-  zohoContactId                 String    @unique
-
-  // Basic Information
-  firstName                     String
-  lastName                      String
-  email                         String    @unique
-  phone                         String?
-  gender                        String?   // Gender from Zoho
-
-  // Location
-  city                          String?
-  state                         String?
-  postalZipCode                 String?
-  latitude                      Float?    // Geocoded latitude for distance calculations
-  longitude                     Float?    // Geocoded longitude for distance calculations
-
-  // Professional Details
-  titleRole                     String?
-  yearsOfExperience             Int?
-  aboutYou                      String?   // Bio/description about the contractor
-
-  // Qualifications & Skills
+  id                              String    @id @default(cuid())
+  zohoContactId                   String    @unique
+  firstName                       String
+  lastName                        String
+  email                           String    @unique
+  phone                           String?
+  gender                          String?
+  city                            String?
+  state                           String?
+  postalZipCode                   String?
+  latitude                        Float?
+  longitude                       Float?
+  titleRole                       String?
+  yearsOfExperience               Int?
+  aboutYou                        String?
   qualificationsAndCertifications String?
-  languageSpoken                String?
-  hasVehicleAccess              Boolean?
-
-  // Personal Details
-  funFact                       String?
-  hobbiesAndInterests           String?
-  whatMakesBusinessUnique       String?
-  additionalInformation         String?
-
-  // Profile Image
-  profilePicture                String?   // Vercel Blob URL (from Zoho Record_Image/photo)
-
-  // System Fields
-  lastSyncedAt                  DateTime  @default(now())
-  createdAt                     DateTime  @default(now())
-  updatedAt                     DateTime  @updatedAt
-  deletedAt                     DateTime? // Soft delete - null means active, non-null means deleted
-
-  // ============================================
-  // PRODUCTION-READY INDEXES
-  // ============================================
-  // These indexes dramatically improve query performance at scale
+  languageSpoken                  String?
+  hasVehicleAccess                Boolean?
+  funFact                         String?
+  hobbiesAndInterests             String?
+  whatMakesBusinessUnique         String?
+  additionalInformation           String?
+  profilePicture                  String?
+  lastSyncedAt                    DateTime  @default(now())
+  createdAt                       DateTime  @default(now())
+  updatedAt                       DateTime  @updatedAt
+  deletedAt                       DateTime?
 
   @@index([email])
   @@index([zohoContactId])
-  @@index([deletedAt]) // Index for filtering deleted records (used in all queries)
-
-  // Location indexes for search optimization
+  @@index([deletedAt])
   @@index([city])
   @@index([state])
   @@index([postalZipCode])
-  @@index([latitude, longitude]) // Composite index for geo-location queries
+  @@index([latitude, longitude])
+  @@index([gender])
+  @@index([titleRole])
+  @@index([deletedAt, city])
+  @@index([deletedAt, state])
+  @@index([deletedAt, gender])
+  @@index([deletedAt, titleRole])
+  @@index([deletedAt, latitude, longitude])
+}
 
-  // Filter indexes for common search parameters
-  @@index([gender]) // Index for gender filtering
-  @@index([titleRole]) // Index for support type filtering
+model ContractorsbyArea {
+  id          String   @id
+  workerName  String
+  suburbState String
+  image       String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
 
-  // Composite indexes for common filter combinations
-  @@index([deletedAt, city]) // Common: active contractors in a city
-  @@index([deletedAt, state]) // Common: active contractors in a state
-  @@index([deletedAt, gender]) // Common: active contractors by gender
-  @@index([deletedAt, titleRole]) // Common: active contractors by role
-  @@index([deletedAt, latitude, longitude]) // Common: active contractors with coordinates
+  @@index([suburbState])
+}
+
+model Job {
+  id                        String    @id
+  zohoId                    String    @unique
+  dealName                  String
+  title                     String?
+  description               String?
+  stage                     String
+  suburbs                   String?
+  state                     String?
+  serviceAvailed            String?
+  serviceRequirements       String?
+  disabilities              String?
+  behaviouralConcerns       String?
+  culturalConsiderations    String?
+  language                  String?
+  religion                  String?
+  age                       String?
+  gender                    String?
+  hobbies                   String?
+  clientName                String?
+  clientZohoId              String?
+  relationshipToParticipant String?
+  ownerName                 String?
+  ownerEmail                String?
+  ownerZohoId               String?
+  postedAt                  DateTime?
+  active                    Boolean   @default(true)
+  requiredMoreWorker        Boolean?
+  anotherContractorNeeded   Boolean?
+  lastSyncedAt              DateTime  @default(now())
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime
+
+  @@index([active])
+  @@index([active, postedAt])
+  @@index([active, serviceAvailed])
+  @@index([active, stage])
+  @@index([active, state])
+  @@index([active, suburbs])
+  @@index([lastSyncedAt])
+  @@index([postedAt])
+  @@index([serviceAvailed])
+  @@index([stage])
+  @@index([state])
+  @@index([suburbs])
+  @@index([zohoId])
 }
