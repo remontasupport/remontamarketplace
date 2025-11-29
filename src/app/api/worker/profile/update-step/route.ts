@@ -81,9 +81,90 @@ export async function POST(request: Request) {
 
       // Services Setup Steps (100+)
       case 101: // Services Offer
-        if (data.services) updateData.services = data.services;
-        if (data.supportWorkerCategories !== undefined) {
-          updateData.supportWorkerCategories = data.supportWorkerCategories;
+        // DO NOT save to arrays anymore - use WorkerService table only
+        // Legacy arrays are kept for backward compatibility (read-only)
+
+        // Save to WorkerService table (normalized approach)
+        if (data.services) {
+          const workerProfile = await authPrisma.workerProfile.findUnique({
+            where: { userId: session.user.id },
+            select: { id: true },
+          });
+
+          if (!workerProfile) {
+            throw new Error("Worker profile not found");
+          }
+
+          // Get all categories from database to map subcategories to their parent categories
+          const categories = await authPrisma.category.findMany({
+            include: {
+              subcategories: true,
+            },
+          });
+
+          // Build a map: subcategoryId -> categoryId
+          const subcategoryToCategory = new Map();
+          categories.forEach(category => {
+            category.subcategories.forEach((sub: any) => {
+              subcategoryToCategory.set(sub.id, category);
+            });
+          });
+
+          // Delete existing WorkerService records
+          await authPrisma.workerService.deleteMany({
+            where: { workerProfileId: workerProfile.id },
+          });
+
+          // Create new WorkerService records
+          const workerServiceRecords = [];
+          const subcategoryIds = data.supportWorkerCategories || [];
+
+          for (const serviceName of data.services) {
+            // Find category by name
+            const category = categories.find(c => c.name === serviceName);
+            if (!category) continue;
+
+            const categoryId = category.id;
+
+            // Find subcategories that belong to this category
+            const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
+              const parentCategory = subcategoryToCategory.get(subId);
+              return parentCategory?.id === categoryId;
+            });
+
+            if (relevantSubcategoryIds.length > 0) {
+              // Service has subcategories - create one record per subcategory
+              for (const subcategoryId of relevantSubcategoryIds) {
+                const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
+                if (subcategory) {
+                  workerServiceRecords.push({
+                    workerProfileId: workerProfile.id,
+                    categoryId,
+                    categoryName: serviceName,
+                    subcategoryId,
+                    subcategoryName: subcategory.name,
+                  });
+                }
+              }
+            } else {
+              // Service has no subcategories - create one record without subcategory
+              workerServiceRecords.push({
+                workerProfileId: workerProfile.id,
+                categoryId,
+                categoryName: serviceName,
+                subcategoryId: null,
+                subcategoryName: null,
+              });
+            }
+          }
+
+          if (workerServiceRecords.length > 0) {
+            await authPrisma.workerService.createMany({
+              data: workerServiceRecords,
+              skipDuplicates: true,
+            });
+            console.log(`✅ Created ${workerServiceRecords.length} WorkerService records`);
+          }
         }
         break;
 

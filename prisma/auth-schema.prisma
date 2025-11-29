@@ -199,6 +199,7 @@ model WorkerProfile {
   middleName                String?
   abn                       String?
   verificationRequirements  VerificationRequirement[]
+  workerServices            WorkerService[]
   user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([city])
@@ -209,6 +210,114 @@ model WorkerProfile {
   @@index([userId])
   @@index([verificationStatus])
   @@map("worker_profiles")
+}
+
+// Stores all individual document definitions (e.g., "Police Check", "First Aid & CPR")
+model Document {
+  id            String   @id // e.g., "identity-points-100"
+  name          String   // e.g., "100 Points of ID"
+  category      String   // e.g., "IDENTITY", "BUSINESS", "COMPLIANCE"
+  description   String   @db.Text
+  hasExpiration Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  categoryDocuments      CategoryDocument[]
+  subcategoryDocuments   SubcategoryDocument[]
+
+  @@index([category])
+}
+
+// Stores main service categories (e.g., "Support Worker", "Therapeutic Supports")
+model Category {
+  id                    String   @id // e.g., "support-worker"
+  name                  String   // e.g., "Support Worker"
+  requiresQualification Boolean  @default(false)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  subcategories         Subcategory[]
+  documents             CategoryDocument[]
+}
+
+// Stores subcategories under a main category (e.g., "Personal care", "Art Therapist")
+model Subcategory {
+  id                   String   @id // e.g., "personal-care"
+  categoryId           String
+  name                 String   // e.g., "Personal care (showering, toileting...)"
+  requiresRegistration String?  // e.g., "AHPRA" or null
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  category             Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  additionalDocuments  SubcategoryDocument[]
+
+  @@index([categoryId])
+}
+
+// Join table linking categories to their required/optional/conditional documents
+model CategoryDocument {
+  id            String   @id @default(cuid())
+  categoryId    String
+  documentId    String
+
+  documentType  String   // "REQUIRED" | "OPTIONAL" | "CONDITIONAL"
+
+  // For conditional documents (e.g., transport docs required if providesTransport=true)
+  conditionKey   String?  // e.g., "providesTransport"
+  requiredIfTrue Boolean? // true if required when condition is true
+
+  createdAt     DateTime @default(now())
+
+  // Relations
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, documentId, documentType, conditionKey])
+  @@index([categoryId])
+  @@index([documentId])
+}
+
+// Join table for subcategory-specific additional documents (e.g., AHPRA for OT)
+model SubcategoryDocument {
+  id            String      @id @default(cuid())
+  subcategoryId String
+  documentId    String
+
+  createdAt     DateTime    @default(now())
+
+  // Relations
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  document      Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([subcategoryId, documentId])
+  @@index([subcategoryId])
+  @@index([documentId])
+}
+
+model WorkerService {
+  id              String        @id @default(cuid())
+  workerProfileId String
+  categoryId      String        // e.g., "support-worker", "therapeutic-supports"
+  categoryName    String        // e.g., "Support Worker", "Therapeutic Supports"
+  subcategoryId   String?       // e.g., "personal-care", "occupational-therapist" (nullable)
+  subcategoryName String?       // e.g., "Personal care", "Occupational Therapist" (nullable)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workerProfileId, categoryId, subcategoryId])
+  @@index([workerProfileId])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@map("worker_services")
 }
 
 enum AccountStatus {

@@ -24,10 +24,22 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const servicesParam = searchParams.get("services");
 
-    // 3. Get worker profile to access their services and subcategories
+    // 3. Get worker profile and their services
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
-      select: { id: true, services: true, supportWorkerCategories: true },
+      select: {
+        id: true,
+        services: true,
+        supportWorkerCategories: true,
+        workerServices: {
+          select: {
+            categoryId: true,
+            categoryName: true,
+            subcategoryId: true,
+            subcategoryName: true,
+          },
+        },
+      },
     });
 
     if (!workerProfile) {
@@ -35,8 +47,10 @@ export async function GET(request: Request) {
     }
 
     console.log("👤 Worker profile:", {
-      services: workerProfile.services,
-      supportWorkerCategories: workerProfile.supportWorkerCategories,
+      hasWorkerServices: workerProfile.workerServices.length > 0,
+      workerServicesCount: workerProfile.workerServices.length,
+      legacyServices: workerProfile.services,
+      legacySubcategories: workerProfile.supportWorkerCategories,
     });
 
     // 4. Determine which services to fetch requirements for
@@ -45,10 +59,20 @@ export async function GET(request: Request) {
     if (servicesParam) {
       // Use services from parameter
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (workerProfile.workerServices.length > 0) {
+      // NEW APPROACH: Use WorkerService table (normalized data)
+      console.log("✅ Using new WorkerService table");
+
+      servicesToFetch = workerProfile.workerServices.map(ws => {
+        if (ws.subcategoryName) {
+          return `${ws.categoryName}:${ws.subcategoryName}`;
+        } else {
+          return ws.categoryName;
+        }
+      });
     } else {
-      // Combine worker's services with their subcategories
-      // E.g., services: ["Therapeutic Supports"], supportWorkerCategories: ["Counsellor", "Occupational Therapist"]
-      // Result: ["Therapeutic Supports:Counsellor", "Therapeutic Supports:Occupational Therapist"]
+      // FALLBACK: Use old services/supportWorkerCategories arrays
+      console.log("⚠️  Falling back to legacy services arrays");
 
       const services = workerProfile.services || [];
       const subcategories = workerProfile.supportWorkerCategories || [];
@@ -160,12 +184,12 @@ export async function GET(request: Request) {
     const allRequirements: any[] = [];
 
     for (const category of categories) {
-      // Find if this category has a specific subcategory requested
-      const requestedService = parsedServices.find(
+      // Find ALL services requested for this category (not just the first one!)
+      const requestedServicesForCategory = parsedServices.filter(
         s => s.categoryId === category.id || s.categoryName === category.name
       );
 
-      // Add category-level documents (always include these)
+      // Add category-level documents (always include these, only once per category)
       for (const catDoc of category.documents) {
         allRequirements.push({
           id: catDoc.document.id,
@@ -181,17 +205,26 @@ export async function GET(request: Request) {
       }
 
       // Add subcategory-level documents
-      // If a specific subcategory was requested, only include that one
-      // Otherwise, include all subcategories
       console.log(`\n🔍 Processing category: ${category.name}`);
-      console.log(`   Requested service:`, requestedService);
-      console.log(`   Has subcategoryId?`, !!requestedService?.subcategoryId);
-      console.log(`   Subcategory to match:`, requestedService?.subcategoryId, requestedService?.subcategoryName);
+      console.log(`   Requested services for this category:`, requestedServicesForCategory);
+
+      // Collect all requested subcategory IDs
+      const requestedSubcategoryIds = requestedServicesForCategory
+        .filter(s => s.subcategoryId)
+        .map(s => s.subcategoryId);
+
+      const requestedSubcategoryNames = requestedServicesForCategory
+        .filter(s => s.subcategoryName)
+        .map(s => s.subcategoryName);
+
+      console.log(`   Requested subcategory IDs:`, requestedSubcategoryIds);
       console.log(`   Available subcategories:`, category.subcategories.map(s => ({ id: s.id, name: s.name })));
 
-      const subcategoriesToInclude = requestedService?.subcategoryId
+      // If specific subcategories were requested, only include those
+      // Otherwise, include all subcategories
+      const subcategoriesToInclude = requestedSubcategoryIds.length > 0
         ? category.subcategories.filter(
-            sub => sub.id === requestedService.subcategoryId || sub.name === requestedService.subcategoryName
+            sub => requestedSubcategoryIds.includes(sub.id) || requestedSubcategoryNames.includes(sub.name)
           )
         : category.subcategories;
 
