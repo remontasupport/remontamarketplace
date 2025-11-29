@@ -1,11 +1,33 @@
 /**
  * NextAuth Type Extensions
- * Extends NextAuth default types to include our custom fields (role)
+ * Extends NextAuth default types to include our custom fields (role, requirements)
  */
 
 import { UserRole } from "./auth";
 import { DefaultSession, DefaultUser } from "next-auth";
 import { JWT, DefaultJWT } from "next-auth/jwt";
+
+export interface WorkerRequirement {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  hasExpiration: boolean;
+  documentType: string; // REQUIRED, OPTIONAL, CONDITIONAL
+  serviceCategory: string;
+  subcategory?: string;
+  conditionKey?: string | null;
+  requiredIfTrue?: boolean | null;
+}
+
+export interface GroupedRequirements {
+  baseCompliance: WorkerRequirement[];
+  trainings: WorkerRequirement[];
+  qualifications: WorkerRequirement[];
+  insurance: WorkerRequirement[];
+  transport: WorkerRequirement[];
+  all: WorkerRequirement[];
+}
 
 declare module "next-auth" {
   /**

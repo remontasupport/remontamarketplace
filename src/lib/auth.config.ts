@@ -147,12 +147,14 @@ export const authOptions: NextAuthOptions = {
     /**
      * JWT Callback
      * Called whenever a JWT is created or updated
-     * Adds role and id to the token
+     * Adds role and id to the token (keep it small for cookie size limits)
      */
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        // Do NOT store requirements in JWT - they make the session cookie too large
+        // Requirements should be fetched via API: /api/worker/requirements
       }
       return token;
     },
@@ -166,6 +168,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        // Requirements are fetched via API, not stored in session
       }
       return session;
     },

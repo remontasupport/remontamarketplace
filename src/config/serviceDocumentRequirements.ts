@@ -25,7 +25,7 @@ export function getServiceDocumentRequirements(
   const normalizedSubcategory = subcategoryId?.toLowerCase().trim();
 
   // Support Worker - only optional docs
-  if (normalizedService === "support worker" && !normalizedSubcategory?.includes("high-intensity")) {
+  if (normalizedService === "support worker") {
     return [
       {
         type: "qualification-certificate",
@@ -34,16 +34,23 @@ export function getServiceDocumentRequirements(
         category: "QUALIFICATION",
         required: false, // Optional
       },
+      {
+        type: "other-training",
+        name: "Other Training",
+        description: "Any other relevant training certificates (e.g., First Aid, CPR, specialized care training)",
+        category: "TRAINING",
+        required: false, // Optional
+      },
     ];
   }
 
   // Support Worker (High Intensity)
-  if (normalizedService === "support worker" && normalizedSubcategory?.includes("high-intensity")) {
+  if (normalizedService === "support worker (high intensity)") {
     return [
       {
         type: "qualification-certificate",
         name: "Highest Relevant Qualification Certificate",
-        description: "Your highest qualification relevant to support work",
+        description: "Your highest qualification relevant to support work (e.g., Certificate III in Individual Support)",
         category: "QUALIFICATION",
         required: true, // Required for high intensity
       },
@@ -65,6 +72,13 @@ export function getServiceDocumentRequirements(
         type: "behaviour-support-training",
         name: "Behaviour Support Training",
         description: "Certificate for behaviour support training",
+        category: "TRAINING",
+        required: false, // Optional
+      },
+      {
+        type: "other-training",
+        name: "Other Training",
+        description: "Any other relevant training certificates (e.g., First Aid, CPR, specialized care training)",
         category: "TRAINING",
         required: false, // Optional
       },

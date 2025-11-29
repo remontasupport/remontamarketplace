@@ -237,6 +237,7 @@ enum DocumentCategory {
   PRIMARY
   SECONDARY
   WORKING_RIGHTS
+  SERVICE_QUALIFICATION
 }
 
 enum RequirementStatus {

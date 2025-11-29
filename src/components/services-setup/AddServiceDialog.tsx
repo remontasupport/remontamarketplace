@@ -1,16 +1,17 @@
 /**
  * Add Service Dialog
  * Modal dialog for selecting services to add
+ * Fetches services dynamically from database
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { SERVICE_OPTIONS } from "@/constants";
+import { useCategories } from "@/hooks/queries/useCategories";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -26,6 +27,33 @@ export function AddServiceDialog({
   onAdd
 }: AddServiceDialogProps) {
   const [tempSelected, setTempSelected] = useState<string[]>([]);
+
+  // Fetch categories from database
+  const { data: categories, isLoading } = useCategories();
+
+  // Transform categories to service options with priority ordering
+  const serviceOptions = useMemo(() => {
+    if (!categories) return [];
+
+    const transformed = categories.map((category: any) => ({
+      id: category.id,
+      title: category.name,
+      description: `Provide ${category.name.toLowerCase()} services`,
+    }));
+
+    // Priority order: Support Worker, Support Worker (High Intensity), Therapeutic Supports first
+    const priorityOrder = ['support-worker', 'support-worker-high-intensity', 'therapeutic-supports'];
+
+    return transformed.sort((a: any, b: any) => {
+      const aIndex = priorityOrder.indexOf(a.id);
+      const bIndex = priorityOrder.indexOf(b.id);
+
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.title.localeCompare(b.title);
+    });
+  }, [categories]);
 
   useEffect(() => {
     if (open) {
@@ -52,7 +80,7 @@ export function AddServiceDialog({
   };
 
   // Filter out already selected services
-  const availableServices = SERVICE_OPTIONS.filter(
+  const availableServices = serviceOptions.filter(
     service => !selectedServices.includes(service.title)
   );
 
@@ -69,7 +97,11 @@ export function AddServiceDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {availableServices.length === 0 ? (
+          {isLoading ? (
+            <p className="text-center text-gray-500 font-poppins py-8">
+              Loading services...
+            </p>
+          ) : availableServices.length === 0 ? (
             <p className="text-center text-gray-500 font-poppins py-8">
               You've already added all available services
             </p>

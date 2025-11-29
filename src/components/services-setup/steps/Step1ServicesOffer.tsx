@@ -15,7 +15,6 @@ import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistrati
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { ServiceDocumentsDialog } from "@/components/services-setup/ServiceDocumentsDialog";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
-import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
 import { useCategories } from "@/hooks/queries/useCategories";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
@@ -188,9 +187,10 @@ export default function Step1ServicesOffer({
     }
 
     // Check if any newly added service has subcategories
+    // Auto-open subcategories dialog (like in signup process)
     for (const serviceTitle of newServices) {
-      const category = categories?.find(cat => cat.name === serviceTitle);
-      if (category && category.subcategories.length > 0) {
+      const category = categories?.find((cat: any) => cat.name === serviceTitle);
+      if (category && Array.isArray(category.subcategories) && category.subcategories.length > 0) {
         // Open subcategories dialog for the first service with subcategories
         setSelectedCategoryForEdit(category);
         setShowSubcategoriesDialog(true);
@@ -382,9 +382,76 @@ export default function Step1ServicesOffer({
     return documentMap;
   };
 
-  // Get requirements and uploaded docs for the selected service
+  // Get requirements from database (categories data)
+  // NOTE: Only fetching OPTIONAL and CONDITIONAL documents here
+  // REQUIRED documents will be handled in the mandatory requirements section (future implementation)
+  const getServiceRequirementsFromDB = (serviceTitle: string) => {
+    if (!categories) return [];
+
+    const category = categories.find((cat: any) => cat.name === serviceTitle);
+    if (!category) return [];
+
+    const requirements: any[] = [];
+
+    // Get category-level OPTIONAL documents
+    if (category.documents?.optional) {
+      category.documents.optional.forEach((doc: any) => {
+        requirements.push({
+          type: doc.id,
+          name: doc.name,
+          description: doc.description,
+          category: doc.category,
+          required: false,
+        });
+      });
+    }
+
+    // Get category-level CONDITIONAL documents
+    if (category.documents?.conditional) {
+      category.documents.conditional.forEach((item: any) => {
+        requirements.push({
+          type: item.document.id,
+          name: item.document.name,
+          description: item.document.description,
+          category: item.document.category,
+          required: false, // Conditional documents are optional in this context
+          condition: item.condition,
+          requiredIf: item.requiredIf,
+        });
+      });
+    }
+
+    // Get subcategory-level additional documents if any subcategories are selected
+    if (category.subcategories && category.subcategories.length > 0) {
+      const selectedSubcategoryIds = category.subcategories
+        .map((sub: any) => sub.id)
+        .filter((id: string) => data.supportWorkerCategories.includes(id));
+
+      selectedSubcategoryIds.forEach((subId: string) => {
+        const subcategory = category.subcategories.find((sub: any) => sub.id === subId);
+        if (subcategory?.additionalDocuments && Array.isArray(subcategory.additionalDocuments)) {
+          subcategory.additionalDocuments.forEach((doc: any) => {
+            // Check if document already exists in requirements
+            const exists = requirements.find(r => r.type === doc.id);
+            if (!exists) {
+              requirements.push({
+                type: doc.id,
+                name: doc.name,
+                description: doc.description,
+                category: doc.category,
+                required: false, // Subcategory additional documents are optional
+              });
+            }
+          });
+        }
+      });
+    }
+
+    return requirements;
+  };
+
   const selectedServiceRequirements = selectedServiceForUpload
-    ? getServiceDocumentRequirements(selectedServiceForUpload)
+    ? getServiceRequirementsFromDB(selectedServiceForUpload)
     : [];
 
   const uploadedDocuments = selectedServiceForUpload
