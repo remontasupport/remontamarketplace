@@ -26,7 +26,6 @@ export interface GroupedRequirements {
   qualifications: WorkerRequirement[];
   insurance: WorkerRequirement[];
   transport: WorkerRequirement[];
-  all: WorkerRequirement[];
 }
 
 declare module "next-auth" {

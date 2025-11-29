@@ -24,15 +24,20 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const servicesParam = searchParams.get("services");
 
-    // 3. Get worker profile to access their services
+    // 3. Get worker profile to access their services and subcategories
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
-      select: { id: true, services: true },
+      select: { id: true, services: true, supportWorkerCategories: true },
     });
 
     if (!workerProfile) {
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
+
+    console.log("👤 Worker profile:", {
+      services: workerProfile.services,
+      supportWorkerCategories: workerProfile.supportWorkerCategories,
+    });
 
     // 4. Determine which services to fetch requirements for
     let servicesToFetch: string[] = [];
@@ -41,9 +46,43 @@ export async function GET(request: Request) {
       // Use services from parameter
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
     } else {
-      // Use worker's own services
-      servicesToFetch = workerProfile.services || [];
+      // Combine worker's services with their subcategories
+      // E.g., services: ["Therapeutic Supports"], supportWorkerCategories: ["Counsellor", "Occupational Therapist"]
+      // Result: ["Therapeutic Supports:Counsellor", "Therapeutic Supports:Occupational Therapist"]
+
+      const services = workerProfile.services || [];
+      const subcategories = workerProfile.supportWorkerCategories || [];
+
+      servicesToFetch = [];
+
+      // Handle each service
+      for (const service of services) {
+        // Check if this service has subcategories
+        if (subcategories && subcategories.length > 0) {
+          // If the service is "Therapeutic Supports" or similar, combine with each subcategory
+          // Otherwise, just use the service name
+          const needsSubcategories = service === "Therapeutic Supports" ||
+                                     service === "Support Worker (High Intensity)";
+
+          if (needsSubcategories) {
+            // Add service:subcategory for each subcategory
+            for (const subcategory of subcategories) {
+              if (subcategory && subcategory.trim()) {
+                servicesToFetch.push(`${service}:${subcategory}`);
+              }
+            }
+          } else {
+            // Just add the service without subcategory
+            servicesToFetch.push(service);
+          }
+        } else {
+          // No subcategories, just add the service
+          servicesToFetch.push(service);
+        }
+      }
     }
+
+    console.log("🎯 Combined services to fetch:", servicesToFetch);
 
     if (servicesToFetch.length === 0) {
       return NextResponse.json({
@@ -55,13 +94,14 @@ export async function GET(request: Request) {
           qualifications: [],
           insurance: [],
           transport: [],
-          all: [],
         },
       });
     }
 
     // Parse services to separate category and subcategory
     // Format: "Category Name" or "Category Name:Subcategory Name"
+    console.log("🔍 Raw services to fetch:", servicesToFetch);
+
     const parsedServices = servicesToFetch.map(service => {
       const [categoryName, subcategoryName] = service.split(':').map(s => s.trim());
       return {
@@ -72,7 +112,7 @@ export async function GET(request: Request) {
       };
     });
 
-    console.log("📋 Parsed services:", parsedServices);
+    console.log("📋 Parsed services:", JSON.stringify(parsedServices, null, 2));
 
     // 5. Fetch categories and their required documents from main database
     const categoryIds = parsedServices.map(s => s.categoryId);
@@ -143,13 +183,19 @@ export async function GET(request: Request) {
       // Add subcategory-level documents
       // If a specific subcategory was requested, only include that one
       // Otherwise, include all subcategories
+      console.log(`\n🔍 Processing category: ${category.name}`);
+      console.log(`   Requested service:`, requestedService);
+      console.log(`   Has subcategoryId?`, !!requestedService?.subcategoryId);
+      console.log(`   Subcategory to match:`, requestedService?.subcategoryId, requestedService?.subcategoryName);
+      console.log(`   Available subcategories:`, category.subcategories.map(s => ({ id: s.id, name: s.name })));
+
       const subcategoriesToInclude = requestedService?.subcategoryId
         ? category.subcategories.filter(
             sub => sub.id === requestedService.subcategoryId || sub.name === requestedService.subcategoryName
           )
         : category.subcategories;
 
-      console.log(`📂 Category: ${category.name}, Subcategories to include:`, subcategoriesToInclude.map(s => s.name));
+      console.log(`   ✅ Subcategories to include:`, subcategoriesToInclude.map(s => s.name));
 
       for (const subcategory of subcategoriesToInclude) {
         for (const subDoc of subcategory.additionalDocuments) {
@@ -201,7 +247,6 @@ export async function GET(request: Request) {
         qualifications,
         insurance,
         transport,
-        all: allRequirements,
       },
     });
   } catch (error: any) {
