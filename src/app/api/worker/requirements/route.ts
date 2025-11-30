@@ -246,28 +246,53 @@ export async function GET(request: Request) {
       }
     }
 
-    // 7. Group requirements by type
-    const baseCompliance = allRequirements.filter(
-      req => req.category === 'IDENTITY' ||
-             req.category === 'BUSINESS' ||
-             req.category === 'COMPLIANCE'
+    // 7. Group requirements by type and DEDUPLICATE by document ID
+    // Helper function to deduplicate requirements by ID
+    const deduplicateById = (requirements: any[]) => {
+      const seen = new Map();
+      const unique: any[] = [];
+
+      for (const req of requirements) {
+        if (!seen.has(req.id)) {
+          seen.set(req.id, true);
+          unique.push(req);
+        }
+      }
+
+      return unique;
+    };
+
+    const baseCompliance = deduplicateById(
+      allRequirements.filter(
+        req => req.category === 'IDENTITY' ||
+               req.category === 'BUSINESS' ||
+               req.category === 'COMPLIANCE'
+      )
     );
 
-    const trainings = allRequirements.filter(
-      req => req.category === 'TRAINING'
+    const trainings = deduplicateById(
+      allRequirements.filter(
+        req => req.category === 'TRAINING'
+      )
     );
 
-    const qualifications = allRequirements.filter(
-      req => req.category === 'QUALIFICATION' ||
-             req.category === 'REGISTRATION'
+    const qualifications = deduplicateById(
+      allRequirements.filter(
+        req => req.category === 'QUALIFICATION' ||
+               req.category === 'REGISTRATION'
+      )
     );
 
-    const insurance = allRequirements.filter(
-      req => req.category === 'INSURANCE'
+    const insurance = deduplicateById(
+      allRequirements.filter(
+        req => req.category === 'INSURANCE'
+      )
     );
 
-    const transport = allRequirements.filter(
-      req => req.category === 'TRANSPORT'
+    const transport = deduplicateById(
+      allRequirements.filter(
+        req => req.category === 'TRANSPORT'
+      )
     );
 
     return NextResponse.json({
