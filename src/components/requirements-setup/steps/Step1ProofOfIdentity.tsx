@@ -8,7 +8,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useIdentityDocuments, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
+import { useIdentityDocuments, useDriverLicense, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -98,24 +98,148 @@ export default function Step1ProofOfIdentity({
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
-  // Use custom hook - handles all fetching and caching
+  // ===== HOOKS =====
+  // Use custom hooks - handles all fetching and caching
   const { data: documentsData, isLoading: isLoadingDocuments } = useIdentityDocuments();
+  const { driverLicense, hasDriverLicense } = useDriverLicense();
 
+  // ===== STATE =====
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
-
-  // Track which document type is selected for upload in each category
   const [selectedPrimaryType, setSelectedPrimaryType] = useState<string | null>(null);
   const [selectedSecondaryType, setSelectedSecondaryType] = useState<string | null>(null);
-
-  // Track edit mode for uploaded documents
   const [isEditingPrimary, setIsEditingPrimary] = useState(false);
   const [isEditingSecondary, setIsEditingSecondary] = useState(false);
+  const [allowChangeSecondary, setAllowChangeSecondary] = useState(false);
+  const [hasAutoCopied, setHasAutoCopied] = useState(false); // Track if we've already auto-copied
+  const [userHasChosenDifferentDoc, setUserHasChosenDifferentDoc] = useState(false); // Track if user manually chose different doc
 
+  // ===== DERIVED STATE =====
   // Convert documents array to map for easier lookup
   const uploadedDocs: Record<string, UploadedDocument> = {};
   documentsData?.documents?.forEach((doc: UploadedDocument) => {
     uploadedDocs[doc.documentType] = doc;
   });
+
+  // Check if driver's license exists in 100 Points ID
+  const hasDriverLicenseIn100Points = !!uploadedDocs["identity-drivers-license"];
+
+  // Check if driver's license from Other Personal Info exists but not yet copied to 100 Points
+  const hasUncopiedDriverLicense = hasDriverLicense && !hasDriverLicenseIn100Points;
+
+  // Debug logging
+  console.log("🔍 Debug State:", {
+    hasDriverLicense,
+    hasDriverLicenseIn100Points,
+    hasUncopiedDriverLicense,
+    selectedSecondaryType,
+    uploadedDocTypes: Object.keys(uploadedDocs),
+  });
+
+  // Auto-copy driver's license from Other Personal Info to 100 Points ID
+  // IMPORTANT: Only run ONCE and ONLY if user hasn't manually chosen a different document
+  useEffect(() => {
+    const autoCopyDriverLicense = async () => {
+      // Don't auto-copy if:
+      // 1. We've already auto-copied before
+      // 2. User has manually chosen a different secondary document
+      // 3. Driver's license from vehicle doesn't exist
+      // 4. Driver's license reference already exists in 100 Points
+      if (hasAutoCopied || userHasChosenDifferentDoc || !hasUncopiedDriverLicense || !driverLicense) {
+        return;
+      }
+
+      console.log("🚗 Creating reference to driver's license from Other Personal Info (first time only)");
+
+      try {
+        // Create a reference document pointing to the same file (no re-upload)
+        const response = await fetch("/api/worker/identity-documents/copy-reference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceDocumentType: "driver-license-vehicle",
+            targetDocumentType: "identity-drivers-license",
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create document reference");
+        }
+
+        // Invalidate cache to refresh and show the referenced document
+        await queryClient.invalidateQueries({
+          queryKey: identityDocumentsKeys.all,
+        });
+
+        // Auto-select the driver's license
+        setSelectedSecondaryType("identity-drivers-license");
+
+        // Mark that we've auto-copied (prevent future auto-copies)
+        setHasAutoCopied(true);
+
+        console.log("✅ Driver's license reference created and selected successfully");
+      } catch (error: any) {
+        console.error("❌ Failed to create license reference:", error);
+      }
+    };
+
+    autoCopyDriverLicense();
+  }, [hasUncopiedDriverLicense, driverLicense, queryClient, hasAutoCopied, userHasChosenDifferentDoc]);
+
+  // Auto-select driver's license if it exists in 100 Points ID
+  useEffect(() => {
+    if (hasDriverLicenseIn100Points && !selectedSecondaryType) {
+      console.log("🚗 Auto-selecting existing driver's license in 100 Points ID");
+      setSelectedSecondaryType("identity-drivers-license");
+      // Mark as auto-copied since it already exists
+      setHasAutoCopied(true);
+    }
+  }, [hasDriverLicenseIn100Points, selectedSecondaryType]);
+
+  // Detect if user has already chosen a different secondary document (on page load)
+  useEffect(() => {
+    if (documentsData?.documents) {
+      const hasNonDriverSecondaryDoc = documentsData.documents.some((doc: UploadedDocument) =>
+        SECONDARY_DOCUMENTS.some(sd =>
+          sd.type === doc.documentType &&
+          doc.documentType !== "identity-drivers-license"
+        )
+      );
+
+      if (hasNonDriverSecondaryDoc) {
+        console.log("📋 User has already uploaded a non-driver's-license secondary document");
+        setUserHasChosenDifferentDoc(true);
+      }
+    }
+  }, [documentsData?.documents]);
+
+  // ===== EVENT HANDLERS =====
+  // Handle selecting secondary document
+  const handleSecondaryDocumentSelection = async (documentType: string) => {
+    setSelectedSecondaryType(documentType);
+
+    // Track if user manually chose a different document (not driver's license)
+    if (documentType !== "identity-drivers-license") {
+      console.log("👤 User manually selected a different secondary document:", documentType);
+      setUserHasChosenDifferentDoc(true);
+    } else {
+      // User went back to driver's license
+      console.log("👤 User selected driver's license");
+      setUserHasChosenDifferentDoc(false);
+    }
+  };
+
+  // Handle replace secondary document - enable other cards
+  const handleReplaceSecondary = () => {
+    console.log("🔄 Replace document clicked - enabling other cards");
+    setAllowChangeSecondary(true);
+    setIsEditingSecondary(true);
+
+    // When user clicks replace, they're making a manual choice
+    // This prevents auto-copy from running again
+    if (selectedSecondaryType === "identity-drivers-license") {
+      console.log("👤 User is replacing auto-selected driver's license");
+    }
+  };
 
   // Set selected types based on uploaded documents
   useEffect(() => {
@@ -130,7 +254,8 @@ export default function Step1ProofOfIdentity({
       if (primaryDoc && !selectedPrimaryType) {
         setSelectedPrimaryType(primaryDoc.documentType);
       }
-      if (secondaryDoc && !selectedSecondaryType) {
+      if (secondaryDoc) {
+        // Always update to ensure driver's license is selected when auto-copied
         setSelectedSecondaryType(secondaryDoc.documentType);
       }
 
@@ -362,6 +487,10 @@ export default function Step1ProofOfIdentity({
                             type="radio"
                             checked={isSelected}
                             onChange={() => setSelectedPrimaryType(docType.type)}
+                            style={{
+                              accentColor: isSelected ? "#3b82f6" : undefined,
+                              cursor: "pointer",
+                            }}
                           />
                           <div className="document-selection-info">
                             <Label className="document-selection-title">
@@ -460,7 +589,7 @@ export default function Step1ProofOfIdentity({
                   />
                 )}
                 <button
-                  onClick={() => setIsEditingSecondary(true)}
+                  onClick={handleReplaceSecondary}
                   style={{
                     background: "none",
                     border: "none",
@@ -483,18 +612,44 @@ export default function Step1ProofOfIdentity({
                   const isSelected = selectedSecondaryType === docType.type;
                   const isUploading = uploadingFiles.has(docType.type);
 
+                  // Disable if driver's license exists and this is NOT the driver's license
+                  // UNLESS user clicked "Replace Document" (allowChangeSecondary is true)
+                  const isDisabled = hasDriverLicenseIn100Points &&
+                                     docType.type !== "identity-drivers-license" &&
+                                     !allowChangeSecondary;
+
+                  // Debug log for driver's license
+                  if (docType.type === "identity-drivers-license") {
+                    console.log("🎯 Driver's License Card:", {
+                      docType: docType.type,
+                      selectedSecondaryType,
+                      isSelected,
+                      isDisabled,
+                      hasDriverLicenseIn100Points,
+                    });
+                  }
+
                   return (
                     <div
                       key={docType.type}
-                      className={`document-selection-card ${isSelected ? "selected" : ""}`}
-                      onClick={() => !isSelected && setSelectedSecondaryType(docType.type)}
+                      className={`document-selection-card ${isSelected ? "selected" : ""} ${isDisabled ? "disabled" : ""}`}
+                      onClick={() => !isSelected && !isDisabled && handleSecondaryDocumentSelection(docType.type)}
+                      style={{
+                        opacity: isDisabled ? 0.5 : 1,
+                        cursor: isDisabled ? "not-allowed" : "pointer",
+                      }}
                     >
                       <div className="document-selection-card-inner">
                         <div className="document-selection-content">
                           <input
                             type="radio"
                             checked={isSelected}
-                            onChange={() => setSelectedSecondaryType(docType.type)}
+                            onChange={() => handleSecondaryDocumentSelection(docType.type)}
+                            disabled={isDisabled}
+                            style={{
+                              accentColor: isSelected ? "#3b82f6" : undefined,
+                              cursor: isDisabled ? "not-allowed" : "pointer",
+                            }}
                           />
                           <div className="document-selection-info">
                             <Label className="document-selection-title">
@@ -506,7 +661,8 @@ export default function Step1ProofOfIdentity({
                           </div>
                         </div>
 
-                        {isSelected && (
+                        {/* Only show upload button if NOT driver's license from Other Personal Info */}
+                        {isSelected && !(docType.type === "identity-drivers-license" && hasDriverLicense) && (
                           <div className="document-upload-actions">
                             <input
                               type="file"

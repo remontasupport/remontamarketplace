@@ -252,11 +252,53 @@ export default function AccountSetupPage() {
     try {
       // Skip saving for step 2 (photo) and step 5 (proof-of-identity) since they handle their own uploads
       if (currentStep !== 2 && currentStep !== 5) {
+        // Only send relevant fields for each step to avoid overwriting other fields
+        let dataToSend: any = {};
+
+        switch (currentStep) {
+          case 1: // Name
+            dataToSend = {
+              firstName: formData.firstName,
+              middleName: formData.middleName,
+              lastName: formData.lastName,
+            };
+            break;
+          case 3: // Bio
+            dataToSend = { bio: formData.bio };
+            break;
+          case 4: // Address
+            dataToSend = {
+              streetAddress: formData.streetAddress,
+              city: formData.city,
+              state: formData.state,
+              postalCode: formData.postalCode,
+            };
+            break;
+          case 6: // Personal Info
+            dataToSend = {
+              age: formData.age,
+              gender: formData.gender,
+              languages: formData.languages,
+              hasVehicle: formData.hasVehicle,
+            };
+            break;
+          case 7: // Emergency Contact
+            dataToSend = {
+              emergencyContactName: formData.emergencyContactName,
+              emergencyContactPhone: formData.emergencyContactPhone,
+              emergencyContactRelationship: formData.emergencyContactRelationship,
+            };
+            break;
+          default:
+            // For any other step, send the entire formData (fallback)
+            dataToSend = formData;
+        }
+
         // Use mutation hook - automatically invalidates cache on success
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
-          data: formData,
+          data: dataToSend,
         });
       }
 

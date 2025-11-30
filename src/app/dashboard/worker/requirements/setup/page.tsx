@@ -1,21 +1,21 @@
 "use client";
 
 /**
- * Worker Mandatory Requirements Setup - Multi-Step Form
+ * Worker Compliance Setup - Multi-Step Form (Dynamic)
  * Single page with URL-based step navigation
- * Route: /dashboard/worker/requirements/setup?step=proof-of-identity
+ * Steps are generated dynamically from API requirements
+ * Route: /dashboard/worker/requirements/setup?step=identity-point-100
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
+import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
-
-// Use centralized step configuration
-const STEPS = MANDATORY_REQUIREMENTS_SETUP_STEPS;
 
 // Form data interface
 interface UploadedDocument {
@@ -28,16 +28,33 @@ interface UploadedDocument {
 interface FormData {
   // Step 1: Proof of Identity
   identityDocuments: UploadedDocument[];
+  // ABN field
+  abn: string;
 }
 
 export default function MandatoryRequirementsSetupPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const stepSlug = searchParams.get("step") || "worker-screening-check";
+  const stepSlug = searchParams.get("step");
+
+  // Fetch worker requirements to generate dynamic steps
+  const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements();
+
+  // Generate dynamic compliance steps from API data
+  const dynamicSteps = useMemo(() => {
+    return generateComplianceSteps(requirementsData);
+  }, [requirementsData]);
+
+  // Use dynamic steps if available, otherwise fallback to static
+  const STEPS = dynamicSteps.length > 0 ? dynamicSteps : MANDATORY_REQUIREMENTS_SETUP_STEPS;
+
+  // Determine the default step slug
+  const defaultStepSlug = STEPS.length > 0 ? STEPS[0].slug : "worker-screening-check";
+  const currentStepSlug = stepSlug || defaultStepSlug;
 
   // Find current step by slug
-  const currentStepIndex = STEPS.findIndex((s) => s.slug === stepSlug);
+  const currentStepIndex = getStepIndex(STEPS, currentStepSlug);
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
   const currentStepData = STEPS[currentStep - 1];
 
@@ -54,6 +71,7 @@ export default function MandatoryRequirementsSetupPage() {
   // Form data state
   const [formData, setFormData] = useState<FormData>({
     identityDocuments: [],
+    abn: "",
   });
 
   // Populate form data ONLY on initial load
@@ -63,6 +81,7 @@ export default function MandatoryRequirementsSetupPage() {
 
       setFormData({
         identityDocuments: [], // Will be loaded from VerificationRequirement table
+        abn: profileData.abn || "",
       });
       hasInitializedFormData.current = true;
     }
@@ -107,8 +126,23 @@ export default function MandatoryRequirementsSetupPage() {
     if (!session?.user?.id) return;
 
     try {
-      // Skip saving for proof-of-identity since it handles its own uploads
-      // This is similar to how photo step works in account setup
+      // Determine if this step needs to save data to the database
+      const needsSaving = currentStepData?.documentId === "abn-contractor";
+
+      if (needsSaving) {
+        console.log("💾 Saving ABN to database:", formData.abn);
+
+        // Save ABN to WorkerProfile table
+        await updateProfileMutation.mutateAsync({
+          userId: session.user.id,
+          step: currentStep,
+          data: {
+            abn: formData.abn,
+          },
+        });
+
+        console.log("✅ ABN saved successfully");
+      }
 
       // Move to next step or finish
       if (currentStep < STEPS.length) {
@@ -116,7 +150,7 @@ export default function MandatoryRequirementsSetupPage() {
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
         // Last step completed
-        setSuccessMessage("Mandatory requirements setup completed!");
+        setSuccessMessage("Compliance setup completed!");
         setTimeout(() => {
           router.push("/dashboard/worker");
         }, 2000);
@@ -145,16 +179,16 @@ export default function MandatoryRequirementsSetupPage() {
 
   // Redirect to first step if invalid slug
   useEffect(() => {
-    if (currentStepIndex < 0) {
-      router.push("/dashboard/worker/requirements/setup?step=worker-screening-check");
+    if (currentStepIndex < 0 && STEPS.length > 0) {
+      router.push(`/dashboard/worker/requirements/setup?step=${STEPS[0].slug}`);
     }
-  }, [currentStepIndex, router]);
+  }, [currentStepIndex, router, STEPS]);
 
-  if (status === "loading" || isLoadingProfile) {
+  if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
     return (
       <DashboardLayout showProfileCard={false}>
         <div className="form-page-container">
-          <p className="loading-text">Loading...</p>
+          <p className="loading-text">Loading compliance requirements...</p>
         </div>
       </DashboardLayout>
     );
@@ -173,12 +207,12 @@ export default function MandatoryRequirementsSetupPage() {
         currentStep={currentStep}
         totalSteps={STEPS.length}
         stepTitle={currentStepData.title}
-        sectionTitle="Mandatory requirements"
+        sectionTitle="Compliance"
         sectionNumber="3"
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={handleSkip}
-        isNextLoading={false}
+        isNextLoading={updateProfileMutation.isPending}
         nextButtonText={currentStep === STEPS.length ? "Complete Setup" : "Next"}
         showSkip={false}
       >
@@ -201,6 +235,9 @@ export default function MandatoryRequirementsSetupPage() {
           data={formData}
           onChange={handleFieldChange}
           errors={errors}
+          // Pass additional props for dynamic components
+          requirement={currentStepData?.requirement}
+          apiEndpoint={currentStepData?.apiEndpoint}
         />
       </StepContainer>
     </DashboardLayout>

@@ -63,7 +63,7 @@ export function useIdentityDocuments() {
 }
 
 /**
- * Hook to check if driver's license exists and get its details
+ * Hook to check if driver's license exists (for vehicle access) and get its details
  *
  * Returns:
  * - driverLicense: The document object if exists
@@ -73,8 +73,9 @@ export function useIdentityDocuments() {
 export function useDriverLicense() {
   const { data, isLoading, error } = useIdentityDocuments();
 
+  // Check for driver's license uploaded in "Other Personal Info" (vehicle access)
   const driverLicense = data?.documents?.find(
-    (doc) => doc.documentType === 'identity-drivers-license'
+    (doc) => doc.documentType === 'driver-license-vehicle'
   );
 
   return {

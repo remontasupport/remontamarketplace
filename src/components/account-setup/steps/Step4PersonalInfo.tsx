@@ -55,7 +55,8 @@ export default function Step4PersonalInfo({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("documentType", "identity-drivers-license");
+      // Use a different document type for vehicle/driver access verification
+      formData.append("documentType", "driver-license-vehicle");
 
       // Reuse the identity documents API
       const response = await fetch("/api/upload/identity-documents", {

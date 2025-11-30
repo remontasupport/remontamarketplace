@@ -250,12 +250,26 @@ export async function POST(request: Request) {
         break;
     }
 
-    // Handle ABN for any Services Setup step (100+)
-    // This runs for all services setup steps to ensure ABN is saved
-    if (step >= 100 && data.abn !== undefined) {
+    // Handle ABN from ANY step (Compliance section or Services Setup)
+    // This runs for all steps to ensure ABN is saved
+    // WARNING: Only save ABN if it's explicitly provided with a value
+    // Do NOT save empty ABN from unrelated steps (prevents accidental data loss)
+    if (data.abn !== undefined) {
       const trimmedAbn = data.abn.trim();
-      updateData.abn = trimmedAbn || null; // Save null if empty string
-      console.log(`💼 ABN field detected. Value: "${data.abn}" -> Saving as: ${updateData.abn === null ? 'null' : `"${updateData.abn}"`}`);
+
+      // Only save if ABN has a value OR if we're explicitly on an ABN step
+      // This prevents accidental deletion of ABN from other steps
+      if (trimmedAbn) {
+        updateData.abn = trimmedAbn;
+        console.log(`💼 ABN field detected with value. Saving: "${updateData.abn}"`);
+      } else if (step >= 100 && (step === 103 || data.abn === "")) {
+        // Only allow clearing ABN if we're on Services Setup ABN step (103)
+        // or if ABN is explicitly sent as empty string
+        updateData.abn = null;
+        console.log(`💼 ABN field cleared (step ${step}). Saving as: null`);
+      } else {
+        console.log(`⚠️ SAFEGUARD: Ignoring empty ABN from step ${step} to prevent accidental data loss`);
+      }
     }
 
     // Update worker profile

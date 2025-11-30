@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -14,6 +14,8 @@ import {
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
+import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
+import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
 
 interface SubMenuItem {
   name: string
@@ -39,39 +41,56 @@ const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
   href: getServicesStepUrl(step.slug)
 }))
 
-// Dynamically generate requirements items from centralized config
-const requirementsItems = MANDATORY_REQUIREMENTS_SETUP_STEPS.map(step => ({
-  name: step.title,
-  href: getRequirementsStepUrl(step.slug)
-}))
-
-const menuSections: MenuSection[] = [
-  {
-    id: 'account-details',
-    name: 'Account details',
-    icon: UserCircleIcon,
-    items: accountDetailsItems
-  },
-  {
-    id: 'services',
-    name: 'Your services',
-    icon: HandRaisedIcon,
-    items: servicesItems
-  },
-  {
-    id: 'requirements',
-    name: 'Mandatory requirements',
-    icon: ClipboardDocumentCheckIcon,
-    items: requirementsItems
-  }
-]
-
 export default function Sidebar() {
+  // Fetch worker requirements to generate dynamic compliance items
+  const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
+
+  // Generate dynamic compliance steps from API data
+  const dynamicComplianceSteps = useMemo(() => {
+    return generateComplianceSteps(requirementsData)
+  }, [requirementsData])
+
+  // Generate requirements items dynamically from API or fallback to static
+  const requirementsItems = useMemo(() => {
+    if (dynamicComplianceSteps.length > 0) {
+      // Use dynamic steps from API
+      return dynamicComplianceSteps.map(step => ({
+        name: step.title,
+        href: getComplianceStepUrl(step.slug)
+      }))
+    }
+    // Fallback to static steps if API data not available yet
+    return MANDATORY_REQUIREMENTS_SETUP_STEPS.map(step => ({
+      name: step.title,
+      href: getRequirementsStepUrl(step.slug)
+    }))
+  }, [dynamicComplianceSteps])
+
+  const menuSections: MenuSection[] = [
+    {
+      id: 'account-details',
+      name: 'Account details',
+      icon: UserCircleIcon,
+      items: accountDetailsItems
+    },
+    {
+      id: 'requirements',
+      name: 'Compliance',
+      icon: ClipboardDocumentCheckIcon,
+      items: requirementsItems
+    },
+    {
+      id: 'services',
+      name: 'Your services',
+      icon: HandRaisedIcon,
+      items: servicesItems
+    }
+  ]
   const pathname = usePathname()
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'account-details': false,
-    'services': false,
-    'requirements': false
+    'requirements': false,
+    'services': false
   })
 
   const toggleSection = (sectionId: string) => {

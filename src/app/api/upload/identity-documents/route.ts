@@ -26,6 +26,8 @@ const DOCUMENT_CONFIG: Record<string, { category: "PRIMARY" | "SECONDARY" | "WOR
   "identity-utility-bill": { category: "SECONDARY", name: "Utility Bill" },
   "identity-bank-statement": { category: "SECONDARY", name: "Bank Statement" },
   "identity-working-rights": { category: "WORKING_RIGHTS", name: "Proof of Working Rights" },
+  // Driver's license for vehicle access (uploaded in Other Personal Info) - separate from 100 Points ID
+  "driver-license-vehicle": { category: "SECONDARY", name: "Driver's License (Vehicle Access)" },
 };
 
 export async function POST(request: Request) {
@@ -100,17 +102,35 @@ export async function POST(request: Request) {
     // 6. Replace any existing document in the same category
     // This ensures users can only have ONE primary doc and ONE secondary doc at a time
     // Example: Switching from Passport to Birth Certificate will delete Passport and create Birth Certificate
+    //
+    // IMPORTANT: driver-license-vehicle is separate from identity-drivers-license
+    // - driver-license-vehicle: uploaded in "Other Personal Info" (preserved)
+    // - identity-drivers-license: used in "100 Points ID" (can be replaced)
 
-    // First, find any existing document in the same category (PRIMARY, SECONDARY, or WORKING_RIGHTS)
-    const existingDocInCategory = await authPrisma.verificationRequirement.findFirst({
-      where: {
-        workerProfileId: workerProfile.id,
-        documentCategory: docConfig.category,
-        requirementType: {
-          startsWith: "identity-", // Only identity documents
+    let existingDocInCategory;
+
+    // Special handling for driver-license-vehicle
+    if (documentType === "driver-license-vehicle") {
+      // For vehicle license, only look for existing driver-license-vehicle document
+      existingDocInCategory = await authPrisma.verificationRequirement.findFirst({
+        where: {
+          workerProfileId: workerProfile.id,
+          requirementType: "driver-license-vehicle",
         },
-      },
-    });
+      });
+    } else {
+      // For identity-* documents, only look for existing identity-* documents
+      // This prevents replacing driver-license-vehicle when user selects a different secondary ID
+      existingDocInCategory = await authPrisma.verificationRequirement.findFirst({
+        where: {
+          workerProfileId: workerProfile.id,
+          documentCategory: docConfig.category,
+          requirementType: {
+            startsWith: "identity-", // Only look for identity-* documents
+          },
+        },
+      });
+    }
 
     let verificationReq;
 

@@ -35,16 +35,23 @@ export async function GET(request: Request) {
     console.log("📄 Fetching identity documents for worker:", workerProfile.id);
 
     // Get all identity documents from verification_requirements table
-    // Filter by requirementType pattern for identity documents (starts with "identity-")
+    // Filter by requirementType pattern for identity documents
     let documents = [];
 
     try {
       documents = await authPrisma.verificationRequirement.findMany({
         where: {
           workerProfileId: workerProfile.id,
-          requirementType: {
-            startsWith: "identity-",
-          },
+          OR: [
+            {
+              requirementType: {
+                startsWith: "identity-",
+              },
+            },
+            {
+              requirementType: "driver-license-vehicle",
+            },
+          ],
         },
         select: {
           id: true,
@@ -145,9 +152,16 @@ export async function DELETE(request: Request) {
       where: {
         id: documentId,
         workerProfileId: workerProfile.id,
-        requirementType: {
-          startsWith: "identity-",
-        },
+        OR: [
+          {
+            requirementType: {
+              startsWith: "identity-",
+            },
+          },
+          {
+            requirementType: "driver-license-vehicle",
+          },
+        ],
       },
     });
 

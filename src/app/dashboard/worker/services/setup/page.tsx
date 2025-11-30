@@ -26,8 +26,6 @@ interface FormData {
   supportWorkerCategories: string[];
   // Step 2: Additional Training / Qualifications
   selectedQualifications: string[];
-  // Final Step: ABN
-  abn: string;
 }
 
 export default function ServicesSetupPage() {
@@ -56,7 +54,6 @@ export default function ServicesSetupPage() {
     services: [],
     supportWorkerCategories: [],
     selectedQualifications: [],
-    abn: "",
   });
 
   // Populate form data ONLY on initial load
@@ -68,7 +65,6 @@ export default function ServicesSetupPage() {
         services: profileData.services || [],
         supportWorkerCategories: profileData.supportWorkerCategories || [],
         selectedQualifications: [], // Will be loaded from VerificationRequirement table later
-        abn: profileData.abn || "",
       });
       hasInitializedFormData.current = true;
     }
@@ -131,11 +127,7 @@ export default function ServicesSetupPage() {
           newErrors.supportWorkerCategories = "Please select at least one support worker category";
         }
         break;
-      case "abn": // ABN step - optional but validate format if provided
-        if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
-          newErrors.abn = "ABN must be 11 digits";
-        }
-        break;
+      // No other validation needed - ABN moved to Compliance
     }
 
     setErrors(newErrors);
@@ -158,13 +150,33 @@ export default function ServicesSetupPage() {
       // For now, let's create a new step number range (e.g., 100+)
       const apiStep = 100 + currentStep;
 
-      console.log(`💾 Saving step ${currentStep} (API step ${apiStep}) with data:`, formData);
+      // Only send relevant fields for each step to avoid overwriting other fields
+      let dataToSend: any = {};
+
+      switch (stepSlug) {
+        case "services-offer":
+          dataToSend = {
+            services: formData.services,
+            supportWorkerCategories: formData.supportWorkerCategories,
+          };
+          break;
+        case "additional-training":
+          dataToSend = {
+            selectedQualifications: formData.selectedQualifications,
+          };
+          break;
+        default:
+          // For any other step, send the entire formData (fallback)
+          dataToSend = formData;
+      }
+
+      console.log(`💾 Saving step ${currentStep} (API step ${apiStep}) with data:`, dataToSend);
 
       // Use mutation hook - automatically invalidates cache on success
       await updateProfileMutation.mutateAsync({
         userId: session.user.id,
         step: apiStep,
-        data: formData,
+        data: dataToSend,
       });
 
       // Move to next step or finish

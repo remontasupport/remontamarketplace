@@ -17,6 +17,18 @@ interface Step6ABNProps {
 }
 
 export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
+  // Handle ABN input - only allow numbers and spaces
+  const handleABNChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Remove any non-numeric characters except spaces
+    const cleaned = value.replace(/[^\d\s]/g, '');
+    // Limit to 11 digits (plus spaces)
+    const digits = cleaned.replace(/\s/g, '');
+    if (digits.length <= 11) {
+      onChange("abn", cleaned);
+    }
+  };
+
   return (
     <StepContentWrapper>
       <div className="form-page-content">
@@ -26,10 +38,12 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
             label="ABN (Australian Business Number)"
             name="abn"
             value={data.abn}
-            onChange={(e) => onChange("abn", e.target.value)}
+            onChange={handleABNChange}
             error={errors?.abn}
             placeholder="12 345 678 901"
             helperText="Enter your 11-digit ABN"
+            type="text"
+            inputMode="numeric"
           />
         </div>
       </div>
