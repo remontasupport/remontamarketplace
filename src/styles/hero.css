@@ -6,35 +6,132 @@
 
 /* Section Container */
 .hero-section {
-  background-color: #FFFFFF;
-  padding-top: 0;
-  padding-bottom: 1rem;
-  overflow-x: hidden;
+  position: relative;
+  min-height: 600px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+/* Background Image */
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero-background-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-background-image {
+  object-fit: cover;
+  object-position: center;
+  animation-duration: 9s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.hero-slide-1 {
+  animation-name: fadeSlide1;
+}
+
+.hero-slide-2 {
+  animation-name: fadeSlide2;
+}
+
+.hero-slide-3 {
+  animation-name: fadeSlide3;
+}
+
+@keyframes fadeSlide1 {
+  0% {
+    opacity: 1;
+  }
+  28% {
+    opacity: 1;
+  }
+  33% {
+    opacity: 0;
+  }
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeSlide2 {
+  0% {
+    opacity: 0;
+  }
+  28% {
+    opacity: 0;
+  }
+  33% {
+    opacity: 1;
+  }
+  61% {
+    opacity: 1;
+  }
+  67% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeSlide3 {
+  0% {
+    opacity: 0;
+  }
+  61% {
+    opacity: 0;
+  }
+  67% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Overlay for better text readability */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 60%, transparent 100%);
+  z-index: 1;
 }
 
 .hero-container {
-  max-width: 80rem;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0.5rem 1rem 1.5rem 1rem;
-}
-
-/* Grid Layout */
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-  align-items: start;
+  position: relative;
+  z-index: 2;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 3rem 1.5rem;
+  width: 100%;
 }
 
 /* Content Column */
 .hero-content {
-  order: 2;
-}
-
-/* Image Column */
-.hero-image-column {
-  order: 1;
+  max-width: 600px;
 }
 
 /* Typography */
@@ -49,6 +146,7 @@
 
 .hero-highlight {
   background-color: #F8E8D8;
+  color: #0C1628;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
   border-radius: 0.5rem;
@@ -109,27 +207,6 @@
   color: #0C1628;
 }
 
-/* Hero Image */
-.hero-image-wrapper {
-  position: relative;
-  margin-top: 1rem;
-}
-
-.hero-image-container {
-  aspect-ratio: 4 / 3;
-  width: 100%;
-  overflow: hidden;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-radius: 2rem;
-  position: relative;
-}
-
-.hero-image {
-  object-fit: cover;
-  object-position: center;
-  border-radius: 2rem;
-}
-
 /* NDIS Badge */
 .hero-ndis-badge-desktop {
   display: flex;
@@ -176,16 +253,15 @@
 /* sm: Small tablets & Phablets (640px - 767px) */
 @media (min-width: 640px) and (max-width: 767px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
+    min-height: 650px;
   }
 
   .hero-container {
-    padding: 2rem 1.5rem;
+    padding: 3rem 2rem;
   }
 
-  .hero-grid {
-    gap: 2.5rem;
+  .hero-content {
+    max-width: 500px;
   }
 
   .hero-title {
@@ -209,10 +285,6 @@
     flex: initial;
   }
 
-  .hero-image-wrapper {
-    margin-top: 1.5rem;
-  }
-
   .hero-ndis-badge-desktop {
     margin-left: -1.7rem;
   }
@@ -234,16 +306,15 @@
 /* md: Tablets & Small Laptops Portrait (768px - 1023px) */
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
+    min-height: 700px;
   }
 
   .hero-container {
-    padding: 2.5rem 1rem;
+    padding: 4rem 2.5rem;
   }
 
-  .hero-grid {
-    gap: 3rem;
+  .hero-content {
+    max-width: 550px;
   }
 
   .hero-title {
@@ -267,10 +338,6 @@
     flex: initial;
   }
 
-  .hero-image-wrapper {
-    margin-top: 1.5rem;
-  }
-
   .hero-ndis-badge-desktop {
     margin-left: -1.7rem;
   }
@@ -292,27 +359,17 @@
 /* lg: Small Laptops 13-14" (1024px - 1279px) */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
+    min-height: 750px;
   }
 
   .hero-container {
-    padding: 3rem 2rem;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
+    padding: 5rem 2rem 5rem 0;
+    margin-left: 1rem;
   }
 
   .hero-content {
-    order: 1;
-    margin-left: -1rem;
-  }
-
-  .hero-image-column {
-    order: 2;
-    margin-right: -3rem;
+    max-width: 650px;
+    margin-left: 0;
   }
 
   .hero-title {
@@ -326,10 +383,6 @@
   .hero-button {
     font-size: 1.1rem;
     padding: 0.5rem 2.25rem;
-  }
-
-  .hero-image-wrapper {
-    margin-top: 0;
   }
 
   .hero-ndis-logo-desktop {
@@ -346,28 +399,16 @@
 /* xl: Medium Laptops 15" (1280px - 1535px) */
 @media (min-width: 1280px) and (max-width: 1535px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
-    
+    min-height: 800px;
   }
 
   .hero-container {
-    padding: 3.25rem 2rem;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 3.5rem;
+    padding: 5rem 3.5rem 5rem 3.5rem;
   }
 
   .hero-content {
-    order: 1;
-    margin-left: -1.5rem;
-  }
-
-  .hero-image-column {
-    order: 2;
-    margin-right: -1.35rem;
+    max-width: 700px;
+    margin-left: 0;
   }
 
   .hero-title {
@@ -379,16 +420,10 @@
   }
 
   .hero-button {
-    font-size: 1.125rem;
-    padding: 0.5rem 2.5rem;
-  }
-
-  .hero-image-wrapper {
-    margin-top: 0;
-  }
-
-  .hero-image-container {
-    aspect-ratio: 4 / 3.2;
+    font-size: 1.15rem;
+    padding: 0.5rem 1.95rem;
+    flex: 0 0 auto;
+    width: auto;
   }
 
   .hero-ndis-logo-desktop {
@@ -400,40 +435,21 @@
   .hero-ndis-text-desktop span {
     font-size: 1.15rem;
   }
-   .hero-button {
-    font-size: 1.15rem;
-    padding: 0.5rem 1.95rem;
-    flex: 0 0 auto;
-    width: auto;
-    
-  }
 }
 
 /* 2xl: Large Laptops 16-17" (1536px - 1919px) */
 @media (min-width: 1536px) and (max-width: 1919px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
-    
+    min-height: 850px;
   }
 
   .hero-container {
-    padding: 3.5rem 2rem;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
+    padding: 5.5rem 7.5rem 5.5rem 7.5rem;
   }
 
   .hero-content {
-    order: 1;
-    margin-left: -2rem;
-  }
-
-  .hero-image-column {
-    order: 2;
-    margin-right: -2.0rem;
+    max-width: 750px;
+    margin-left: 0;
   }
 
   .hero-title {
@@ -446,18 +462,9 @@
 
   .hero-button {
     font-size: 1.15rem;
-    padding: 0.5rem 1.95rem;
+    padding: 0.5rem 1.5rem;
     flex: 0 0 auto;
     width: auto;
-    
-  }
-
-  .hero-image-wrapper {
-    margin-top: 0;
-  }
-
-  .hero-image-container {
-    aspect-ratio: 4 / 3.3;
   }
 
   .hero-ndis-logo-desktop {
@@ -474,27 +481,16 @@
 /* 3xl: Full HD Desktops & Large Screens (1920px - 2559px) */
 @media (min-width: 1920px) and (max-width: 2559px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
+    min-height: 900px;
   }
 
   .hero-container {
-    padding: 4rem 1rem;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 4.5rem;
+    padding: 6rem 11rem 6rem 11rem;
   }
 
   .hero-content {
-    order: 1;
-    margin-left: -6rem;
-  }
-
-  .hero-image-column {
-    order: 2;
-    margin-right: -6rem;
+    max-width: 850px;
+    margin-left: 0;
   }
 
   .hero-title {
@@ -507,15 +503,9 @@
 
   .hero-button {
     font-size: 1.25rem;
-    padding: 0.7rem 3rem;
-  }
-
-  .hero-image-wrapper {
-    margin-top: 0;
-  }
-
-  .hero-image-container {
-    aspect-ratio: 4 / 3.5;
+    padding: 0.7rem 2rem;
+    flex: 0 0 auto;
+    width: auto;
   }
 
   .hero-ndis-logo-desktop {
@@ -532,28 +522,16 @@
 /* 4xl: 2K, 4K & Ultra-wide Monitors (2560px+) */
 @media (min-width: 2560px) {
   .hero-section {
-    padding-top: 0;
-    padding-bottom: 0;
-    
+    min-height: 1000px;
   }
 
   .hero-container {
-    padding: 5rem 2rem;
-  }
-
-  .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 5rem;
+    padding: 7rem 15rem 7rem 15rem;
   }
 
   .hero-content {
-    order: 1;
-    margin-left: -8rem;
-  }
-
-  .hero-image-column {
-    order: 2;
-    margin-right: -8rem;
+    max-width: 950px;
+    margin-left: 0;
   }
 
   .hero-title {
@@ -566,15 +544,9 @@
 
   .hero-button {
     font-size: 1.375rem;
-    padding: 0.8rem 3.5rem;
-  }
-
-  .hero-image-wrapper {
-    margin-top: 0;
-  }
-
-  .hero-image-container {
-    aspect-ratio: 4 / 3.5;
+    padding: 0.8rem 2.5rem;
+    flex: 0 0 auto;
+    width: auto;
   }
 
   .hero-ndis-logo-desktop {
@@ -600,5 +572,21 @@
 
   .hero-button {
     transition: none;
+  }
+
+  .hero-background-image {
+    animation: none;
+  }
+
+  .hero-slide-1 {
+    opacity: 1;
+  }
+
+  .hero-slide-2 {
+    opacity: 0;
+  }
+
+  .hero-slide-3 {
+    opacity: 0;
   }
 }
