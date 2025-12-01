@@ -370,7 +370,7 @@
   }
 
   .hero-container {
-    padding: 5rem 2rem 5rem 0;
+    padding: 3rem 2rem 5rem 0;
     margin-left: 1rem;
   }
 
@@ -381,10 +381,12 @@
 
   .hero-title {
     font-size: 3.25rem;
+    margin-bottom: 0.75rem;
   }
 
   .hero-description {
     font-size: 1.4rem;
+    margin-bottom: 1.25rem;
   }
 
   .hero-button {
@@ -410,7 +412,7 @@
   }
 
   .hero-container {
-    padding: 5rem 3.5rem 5rem 3.5rem;
+    padding: 3rem 3.5rem 5rem 3.5rem;
   }
 
   .hero-content {
@@ -420,10 +422,12 @@
 
   .hero-title {
     font-size: 3.5rem;
+    margin-bottom: 0.75rem;
   }
 
   .hero-description {
     font-size: 1.45rem;
+    margin-bottom: 1.25rem;
   }
 
   .hero-button {
@@ -451,7 +455,7 @@
   }
 
   .hero-container {
-    padding: 5.5rem 7.5rem 5.5rem 7.5rem;
+    padding: 0.5rem 7.5rem 5.5rem 7.5rem;
   }
 
   .hero-content {
@@ -461,10 +465,12 @@
 
   .hero-title {
     font-size: 3.75rem;
+    margin-bottom: 0.75rem;
   }
 
   .hero-description {
     font-size: 1.5rem;
+    margin-bottom: 1.25rem;
   }
 
   .hero-button {
@@ -492,7 +498,7 @@
   }
 
   .hero-container {
-    padding: 6rem 11rem 6rem 11rem;
+    padding: 4rem 11rem 6rem 11rem;
   }
 
   .hero-content {
@@ -502,10 +508,12 @@
 
   .hero-title {
     font-size: 4rem;
+    margin-bottom: 0.75rem;
   }
 
   .hero-description {
     font-size: 1.75rem;
+    margin-bottom: 1.25rem;
   }
 
   .hero-button {
@@ -533,7 +541,7 @@
   }
 
   .hero-container {
-    padding: 7rem 15rem 7rem 15rem;
+    padding: 4rem 15rem 7rem 15rem;
   }
 
   .hero-content {
@@ -543,10 +551,12 @@
 
   .hero-title {
     font-size: 4.5rem;
+    margin-bottom: 0.75rem;
   }
 
   .hero-description {
     font-size: 2rem;
+    margin-bottom: 1.25rem;
   }
 
   .hero-button {
