@@ -1,6 +1,40 @@
 /**
- * Step 1: Proof of Identity
+ * Step 1: Proof of Identity - 100 Points ID System
  * Upload identity documents for verification
+ *
+ * **DOCUMENT HANDLING SYSTEM**
+ *
+ * Driver's License Priority System:
+ *   Priority 1: identity-drivers-license (uploaded in this 100 Points ID step)
+ *   Priority 2: driver-license-vehicle (uploaded in Other Personal Info step)
+ *
+ *   Behavior:
+ *   - If driver's license exists from Other Personal Info → Shows that one automatically
+ *   - If no driver's license exists → Allows upload in this step (creates identity-drivers-license)
+ *   - If uploaded in BOTH steps → Priority to the one uploaded in 100 Points ID
+ *   - Shows note "✓ Driver's License as a secondary" when using Other Personal Info version
+ *   - Documents are NEVER modified or deleted
+ *
+ * Other Documents (Medicare Card, Bank Statement, Utility Bill):
+ *   - Each document type has its own database entry
+ *   - Uploading Medicare creates "identity-medicare-card" entry
+ *   - Uploading Bank Statement creates "identity-bank-statement" entry
+ *   - All documents are preserved in database (NEVER deleted)
+ *   - User can switch between documents without losing any uploads
+ *
+ * Complete Flow Examples:
+ *   ✅ Scenario 1: Upload in Other Personal Info first
+ *      - Upload driver's license in Other Personal Info → Creates driver-license-vehicle
+ *      - Go to 100 Points ID → Shows driver-license-vehicle automatically
+ *
+ *   ✅ Scenario 2: Forgot to upload in Other Personal Info
+ *      - Go to 100 Points ID → Select driver's license → Upload button shows
+ *      - Upload driver's license → Creates identity-drivers-license
+ *
+ *   ✅ Scenario 3: Switch to other documents
+ *      - Upload Medicare → Creates identity-medicare-card entry (driver's license remains)
+ *      - Switch to Bank Statement → Upload → Creates identity-bank-statement (all docs remain)
+ *      - Switch back to Driver's License → Shows correct version based on priority
  */
 
 "use client";
@@ -109,8 +143,6 @@ export default function Step1ProofOfIdentity({
   const [selectedSecondaryType, setSelectedSecondaryType] = useState<string | null>(null);
   const [isEditingPrimary, setIsEditingPrimary] = useState(false);
   const [isEditingSecondary, setIsEditingSecondary] = useState(false);
-  const [allowChangeSecondary, setAllowChangeSecondary] = useState(false);
-  const [hasAutoCopied, setHasAutoCopied] = useState(false); // Track if we've already auto-copied
   const [userHasChosenDifferentDoc, setUserHasChosenDifferentDoc] = useState(false); // Track if user manually chose different doc
 
   // ===== DERIVED STATE =====
@@ -120,80 +152,51 @@ export default function Step1ProofOfIdentity({
     uploadedDocs[doc.documentType] = doc;
   });
 
-  // Check if driver's license exists in 100 Points ID
-  const hasDriverLicenseIn100Points = !!uploadedDocs["identity-drivers-license"];
+  // **DOCUMENT SELECTION LOGIC WITH PRIORITY**
+  // For Driver's License:
+  //   Priority 1: identity-drivers-license (uploaded in 100 Points ID)
+  //   Priority 2: driver-license-vehicle (uploaded in Other Personal Info)
+  // For Other Documents: Use their specific database entries
+  const getDocumentToDisplay = (documentType: string): UploadedDocument | null => {
+    if (documentType === "identity-drivers-license") {
+      // Priority 1: Check if uploaded specifically in 100 Points ID
+      if (uploadedDocs["identity-drivers-license"]) {
+        console.log("📄 Using driver's license from 100 Points ID");
+        return uploadedDocs["identity-drivers-license"];
+      }
+      // Priority 2: Fall back to Other Personal Info
+      if (driverLicense) {
+        console.log("📄 Using driver's license from Other Personal Info");
+        return driverLicense;
+      }
+      // Neither exists - return null to allow upload
+      return null;
+    } else {
+      // For other documents, use their specific database entry
+      if (uploadedDocs[documentType]) {
+        console.log(`📄 Using ${documentType} from database`);
+        return uploadedDocs[documentType];
+      }
+      return null;
+    }
+  };
 
-  // Check if driver's license from Other Personal Info exists but not yet copied to 100 Points
-  const hasUncopiedDriverLicense = hasDriverLicense && !hasDriverLicenseIn100Points;
+  const hasAnyDriverLicense = !!(uploadedDocs["identity-drivers-license"] || driverLicense);
 
   // Debug logging
   console.log("🔍 Debug State:", {
     hasDriverLicense,
-    hasDriverLicenseIn100Points,
-    hasUncopiedDriverLicense,
     selectedSecondaryType,
     uploadedDocTypes: Object.keys(uploadedDocs),
   });
 
-  // Auto-copy driver's license from Other Personal Info to 100 Points ID
-  // IMPORTANT: Only run ONCE and ONLY if user hasn't manually chosen a different document
+  // Auto-select driver's license if available (using priority system)
   useEffect(() => {
-    const autoCopyDriverLicense = async () => {
-      // Don't auto-copy if:
-      // 1. We've already auto-copied before
-      // 2. User has manually chosen a different secondary document
-      // 3. Driver's license from vehicle doesn't exist
-      // 4. Driver's license reference already exists in 100 Points
-      if (hasAutoCopied || userHasChosenDifferentDoc || !hasUncopiedDriverLicense || !driverLicense) {
-        return;
-      }
-
-      console.log("🚗 Creating reference to driver's license from Other Personal Info (first time only)");
-
-      try {
-        // Create a reference document pointing to the same file (no re-upload)
-        const response = await fetch("/api/worker/identity-documents/copy-reference", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sourceDocumentType: "driver-license-vehicle",
-            targetDocumentType: "identity-drivers-license",
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create document reference");
-        }
-
-        // Invalidate cache to refresh and show the referenced document
-        await queryClient.invalidateQueries({
-          queryKey: identityDocumentsKeys.all,
-        });
-
-        // Auto-select the driver's license
-        setSelectedSecondaryType("identity-drivers-license");
-
-        // Mark that we've auto-copied (prevent future auto-copies)
-        setHasAutoCopied(true);
-
-        console.log("✅ Driver's license reference created and selected successfully");
-      } catch (error: any) {
-        console.error("❌ Failed to create license reference:", error);
-      }
-    };
-
-    autoCopyDriverLicense();
-  }, [hasUncopiedDriverLicense, driverLicense, queryClient, hasAutoCopied, userHasChosenDifferentDoc]);
-
-  // Auto-select driver's license if it exists in 100 Points ID
-  useEffect(() => {
-    if (hasDriverLicenseIn100Points && !selectedSecondaryType) {
-      console.log("🚗 Auto-selecting existing driver's license in 100 Points ID");
+    if (hasAnyDriverLicense && !selectedSecondaryType && !userHasChosenDifferentDoc) {
+      console.log("🚗 Auto-selecting driver's license (priority system)");
       setSelectedSecondaryType("identity-drivers-license");
-      // Mark as auto-copied since it already exists
-      setHasAutoCopied(true);
     }
-  }, [hasDriverLicenseIn100Points, selectedSecondaryType]);
+  }, [hasAnyDriverLicense, selectedSecondaryType, userHasChosenDifferentDoc]);
 
   // Detect if user has already chosen a different secondary document (on page load)
   useEffect(() => {
@@ -217,6 +220,19 @@ export default function Step1ProofOfIdentity({
   const handleSecondaryDocumentSelection = async (documentType: string) => {
     setSelectedSecondaryType(documentType);
 
+    // Check if the selected document exists
+    const documentExists = getDocumentToDisplay(documentType);
+
+    // If document exists, exit edit mode to show preview
+    // If document doesn't exist, stay in edit mode to allow upload
+    if (documentExists) {
+      console.log(`✅ Document ${documentType} exists - showing preview`);
+      setIsEditingSecondary(false);
+    } else {
+      console.log(`⚠️ Document ${documentType} doesn't exist - staying in edit mode for upload`);
+      setIsEditingSecondary(true);
+    }
+
     // Track if user manually chose a different document (not driver's license)
     if (documentType !== "identity-drivers-license") {
       console.log("👤 User manually selected a different secondary document:", documentType);
@@ -231,13 +247,11 @@ export default function Step1ProofOfIdentity({
   // Handle replace secondary document - enable other cards
   const handleReplaceSecondary = () => {
     console.log("🔄 Replace document clicked - enabling other cards");
-    setAllowChangeSecondary(true);
     setIsEditingSecondary(true);
 
     // When user clicks replace, they're making a manual choice
-    // This prevents auto-copy from running again
     if (selectedSecondaryType === "identity-drivers-license") {
-      console.log("👤 User is replacing auto-selected driver's license");
+      console.log("👤 User is replacing driver's license");
     }
   };
 
@@ -563,60 +577,83 @@ export default function Step1ProofOfIdentity({
             )}
 
             {/* Check if any secondary document is already uploaded */}
-            {selectedSecondaryType && uploadedDocs[selectedSecondaryType] && !isEditingSecondary ? (
-              // Show uploaded document preview
-              <div className="document-preview-container">
-                {isPdfDocument(uploadedDocs[selectedSecondaryType].documentUrl) ? (
-                  <div className="document-preview-pdf">
-                    <DocumentIcon className="document-preview-pdf-icon" />
-                    <p className="document-preview-pdf-text">
-                      {SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
+            {selectedSecondaryType && (() => {
+              // Get the correct document to display based on selection
+              const documentToShow = getDocumentToDisplay(selectedSecondaryType);
+
+              // Determine the source of the driver's license
+              const isFromOtherPersonalInfo = selectedSecondaryType === "identity-drivers-license" &&
+                                               !uploadedDocs["identity-drivers-license"] &&
+                                               !!driverLicense;
+
+              // Only show preview if we have a document and not in edit mode
+              if (!documentToShow || isEditingSecondary) {
+                return null;
+              }
+
+              return (
+                <div className="document-preview-container">
+                  {isPdfDocument(documentToShow.documentUrl) ? (
+                    <div className="document-preview-pdf">
+                      <DocumentIcon className="document-preview-pdf-icon" />
+                      <p className="document-preview-pdf-text">
+                        {SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
+                      </p>
+                      <a
+                        href={documentToShow.documentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                      >
+                        View PDF
+                      </a>
+                    </div>
+                  ) : (
+                    <img
+                      src={documentToShow.documentUrl}
+                      alt={SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
+                      className="document-preview-image"
+                    />
+                  )}
+                  {/* Show note if using driver's license from Other Personal Info */}
+                  {isFromOtherPersonalInfo && (
+                    <p className="text-sm text-gray-700 font-poppins mt-2" style={{ fontWeight: 500 }}>
+                      ✓ Driver's License as a secondary
                     </p>
-                    <a
-                      href={uploadedDocs[selectedSecondaryType].documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
-                    >
-                      View PDF
-                    </a>
-                  </div>
-                ) : (
-                  <img
-                    src={uploadedDocs[selectedSecondaryType].documentUrl}
-                    alt={SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
-                    className="document-preview-image"
-                  />
-                )}
-                <button
-                  onClick={handleReplaceSecondary}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#0C1628",
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                    fontSize: "0.875rem",
-                    padding: "0.5rem 0",
-                    fontFamily: "var(--font-poppins)",
-                    marginTop: "0.75rem"
-                  }}
-                >
-                  Replace Document
-                </button>
-              </div>
-            ) : (
+                  )}
+                  <button
+                    onClick={handleReplaceSecondary}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#0C1628",
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      fontSize: "0.875rem",
+                      padding: "0.5rem 0",
+                      fontFamily: "var(--font-poppins)",
+                      marginTop: "0.75rem"
+                    }}
+                  >
+                    Replace Document
+                  </button>
+                </div>
+              );
+            })()}
+
+            {/* Show document selection if no document or in edit mode */}
+            {(!selectedSecondaryType || isEditingSecondary || !getDocumentToDisplay(selectedSecondaryType || "")) && (
               // Show document type selection
               <div className="document-selection-list">
                 {SECONDARY_DOCUMENTS.map((docType) => {
                   const isSelected = selectedSecondaryType === docType.type;
                   const isUploading = uploadingFiles.has(docType.type);
 
-                  // Disable if driver's license exists and this is NOT the driver's license
-                  // UNLESS user clicked "Replace Document" (allowChangeSecondary is true)
-                  const isDisabled = hasDriverLicenseIn100Points &&
+                  // Disable if any driver's license exists (using priority system) and this is NOT the driver's license
+                  // UNLESS user is in edit mode
+                  const isDisabled = hasAnyDriverLicense &&
                                      docType.type !== "identity-drivers-license" &&
-                                     !allowChangeSecondary;
+                                     !isEditingSecondary;
 
                   // Debug log for driver's license
                   if (docType.type === "identity-drivers-license") {
@@ -625,7 +662,8 @@ export default function Step1ProofOfIdentity({
                       selectedSecondaryType,
                       isSelected,
                       isDisabled,
-                      hasDriverLicenseIn100Points,
+                      hasAnyDriverLicense,
+                      driverLicenseAvailable: driverLicense ? "Yes" : "No",
                     });
                   }
 
@@ -661,8 +699,8 @@ export default function Step1ProofOfIdentity({
                           </div>
                         </div>
 
-                        {/* Only show upload button if NOT driver's license from Other Personal Info */}
-                        {isSelected && !(docType.type === "identity-drivers-license" && hasDriverLicense) && (
+                        {/* Show upload button for all documents (including driver's license if not exists) */}
+                        {isSelected && (
                           <div className="document-upload-actions">
                             <input
                               type="file"
@@ -709,10 +747,13 @@ export default function Step1ProofOfIdentity({
             )}
           </div>
 
-          {uploadedCount > 0 && (() => {
+          {(() => {
             // Calculate total points (one primary + one secondary = 100 points)
             const hasPrimary = selectedPrimaryType && uploadedDocs[selectedPrimaryType];
-            const hasSecondary = selectedSecondaryType && uploadedDocs[selectedSecondaryType];
+
+            // Check for secondary document using the display logic
+            const hasSecondary = selectedSecondaryType && !!getDocumentToDisplay(selectedSecondaryType);
+
             const isComplete = hasPrimary && hasSecondary;
 
             return isComplete ? (

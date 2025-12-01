@@ -99,90 +99,47 @@ export async function POST(request: Request) {
 
     console.log(`✅ Identity document uploaded to blob:`, blob.url);
 
-    // 6. Replace any existing document in the same category
-    // This ensures users can only have ONE primary doc and ONE secondary doc at a time
-    // Example: Switching from Passport to Birth Certificate will delete Passport and create Birth Certificate
+    // 6. Check if this exact document type already exists
+    // If YES: Update the existing entry (user is re-uploading same document)
+    // If NO: Create a new entry (user is uploading a different document)
     //
-    // IMPORTANT: driver-license-vehicle is separate from identity-drivers-license
-    // - driver-license-vehicle: uploaded in "Other Personal Info" (preserved)
-    // - identity-drivers-license: used in "100 Points ID" (can be replaced)
+    // **IMPORTANT: NEVER DELETE DOCUMENTS**
+    // - All uploaded documents are preserved in the database
+    // - Each document type has its own entry
+    // - driver-license-vehicle (Other Personal Info) stays separate from identity-* documents
+    // - Frontend handles which document to display for 100 Points ID
 
-    let existingDocInCategory;
-
-    // Special handling for driver-license-vehicle
-    if (documentType === "driver-license-vehicle") {
-      // For vehicle license, only look for existing driver-license-vehicle document
-      existingDocInCategory = await authPrisma.verificationRequirement.findFirst({
-        where: {
-          workerProfileId: workerProfile.id,
-          requirementType: "driver-license-vehicle",
-        },
-      });
-    } else {
-      // For identity-* documents, only look for existing identity-* documents
-      // This prevents replacing driver-license-vehicle when user selects a different secondary ID
-      existingDocInCategory = await authPrisma.verificationRequirement.findFirst({
-        where: {
-          workerProfileId: workerProfile.id,
-          documentCategory: docConfig.category,
-          requirementType: {
-            startsWith: "identity-", // Only look for identity-* documents
-          },
-        },
-      });
-    }
+    const existingDocOfSameType = await authPrisma.verificationRequirement.findFirst({
+      where: {
+        workerProfileId: workerProfile.id,
+        requirementType: documentType, // Look for exact same type
+      },
+    });
 
     let verificationReq;
 
-    if (existingDocInCategory) {
-      // Check if it's the same document type (re-uploading same doc) or different (switching docs)
-      if (existingDocInCategory.requirementType === documentType) {
-        // Same document type - just update the URL
-        console.log(`🔄 Updating existing ${docConfig.category} document: ${documentType}`);
-        verificationReq = await authPrisma.verificationRequirement.update({
-          where: { id: existingDocInCategory.id },
-          data: {
-            documentUrl: blob.url,
-            documentUploadedAt: new Date(),
-            status: "SUBMITTED",
-            submittedAt: new Date(),
-            updatedAt: new Date(),
-            // Reset review fields when re-uploading
-            reviewedAt: null,
-            reviewedBy: null,
-            approvedAt: null,
-            rejectedAt: null,
-            rejectionReason: null,
-          },
-        });
-      } else {
-        // Different document type - delete old and create new
-        console.log(`🔄 Replacing ${docConfig.category} document: ${existingDocInCategory.requirementType} → ${documentType}`);
-
-        // Delete the old document
-        await authPrisma.verificationRequirement.delete({
-          where: { id: existingDocInCategory.id },
-        });
-
-        // Create new document
-        verificationReq = await authPrisma.verificationRequirement.create({
-          data: {
-            workerProfileId: workerProfile.id,
-            requirementType: documentType,
-            requirementName: docConfig.name,
-            documentCategory: docConfig.category,
-            isRequired: true, // Identity documents are mandatory
-            documentUrl: blob.url,
-            documentUploadedAt: new Date(),
-            status: "SUBMITTED",
-            submittedAt: new Date(),
-            updatedAt: new Date(),
-          },
-        });
-      }
+    if (existingDocOfSameType) {
+      // Same document type already exists - update it with new file
+      console.log(`🔄 Updating existing document: ${documentType}`);
+      verificationReq = await authPrisma.verificationRequirement.update({
+        where: { id: existingDocOfSameType.id },
+        data: {
+          documentUrl: blob.url,
+          documentUploadedAt: new Date(),
+          status: "SUBMITTED",
+          submittedAt: new Date(),
+          updatedAt: new Date(),
+          // Reset review fields when re-uploading
+          reviewedAt: null,
+          reviewedBy: null,
+          approvedAt: null,
+          rejectedAt: null,
+          rejectionReason: null,
+        },
+      });
     } else {
-      // No existing document in this category - create new
-      console.log(`📝 Creating new ${docConfig.category} document: ${documentType}`);
+      // No existing document of this type - create new entry
+      console.log(`📝 Creating new document: ${documentType}`);
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,

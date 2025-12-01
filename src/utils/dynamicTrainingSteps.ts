@@ -1,8 +1,8 @@
 /**
- * Dynamic Compliance Steps Generator
+ * Dynamic Training Steps Generator
  *
- * Generates compliance steps dynamically from API requirements data
- * Maps requirements to components and creates step configuration
+ * Generates training steps dynamically from API requirements data
+ * Maps training requirements to components and creates step configuration
  */
 
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/config/complianceDocumentMapping";
 import GenericComplianceDocument from "@/components/requirements-setup/steps/GenericComplianceDocument";
 
-export interface DynamicComplianceStep {
+export interface DynamicTrainingStep {
   id: number;
   slug: string;
   title: string;
@@ -26,27 +26,27 @@ export interface DynamicComplianceStep {
 }
 
 /**
- * Generate compliance steps from base compliance requirements
+ * Generate training steps from trainings array in requirements
  *
  * @param requirements - Worker requirements data from API
- * @returns Array of dynamic compliance steps
+ * @returns Array of dynamic training steps
  */
-export function generateComplianceSteps(
+export function generateTrainingSteps(
   requirements: WorkerRequirements | undefined
-): DynamicComplianceStep[] {
-  if (!requirements?.requirements?.baseCompliance) {
+): DynamicTrainingStep[] {
+  if (!requirements?.requirements?.trainings) {
     return [];
   }
 
-  const { baseCompliance } = requirements.requirements;
+  const { trainings } = requirements.requirements;
 
-  // Generate steps from base compliance requirements
-  const steps: DynamicComplianceStep[] = baseCompliance.map((req, index) => {
-    // Check if there's a custom component for this document
+  // Generate steps from trainings
+  const steps: DynamicTrainingStep[] = trainings.map((req, index) => {
+    // Check if there's a custom component for this training
     const customMapping = getComponentForDocument(req.id);
 
     // Log for debugging
-    console.log(`🔍 Mapping document: "${req.id}" (${req.name})`);
+    console.log(`🎓 Mapping training: "${req.id}" (${req.name})`);
     console.log(`   Found custom component: ${!!customMapping}`);
     if (customMapping) {
       console.log(`   ✅ Using custom component: ${customMapping.component.name}`);
@@ -58,7 +58,7 @@ export function generateComplianceSteps(
     const component = customMapping?.component || GenericComplianceDocument;
     const apiEndpoint = customMapping?.apiEndpoint || "/api/worker/compliance-documents";
 
-    // Generate slug from document ID (lowercase, replace spaces with hyphens)
+    // Generate slug from document ID
     const slug = req.id;
 
     return {
@@ -76,37 +76,37 @@ export function generateComplianceSteps(
 }
 
 /**
- * Get step URL helper for dynamic compliance steps
+ * Get step URL helper for dynamic training steps
  *
  * @param slug - The step slug
  * @returns The URL for the step
  */
-export const getComplianceStepUrl = (slug: string) =>
-  `/dashboard/worker/requirements/setup?step=${slug}`;
+export const getTrainingStepUrl = (slug: string) =>
+  `/dashboard/worker/trainings/setup?step=${slug}`;
 
 /**
  * Find step by slug in dynamic steps array
  *
- * @param steps - Array of dynamic compliance steps
+ * @param steps - Array of dynamic training steps
  * @param slug - The slug to search for
  * @returns The step if found, undefined otherwise
  */
 export function findStepBySlug(
-  steps: DynamicComplianceStep[],
+  steps: DynamicTrainingStep[],
   slug: string
-): DynamicComplianceStep | undefined {
+): DynamicTrainingStep | undefined {
   return steps.find((step) => step.slug === slug);
 }
 
 /**
  * Get step index by slug
  *
- * @param steps - Array of dynamic compliance steps
+ * @param steps - Array of dynamic training steps
  * @param slug - The slug to search for
  * @returns The zero-based index, or -1 if not found
  */
 export function getStepIndex(
-  steps: DynamicComplianceStep[],
+  steps: DynamicTrainingStep[],
   slug: string
 ): number {
   return steps.findIndex((step) => step.slug === slug);

@@ -9,13 +9,15 @@ import {
   ChevronUpIcon,
   UserCircleIcon,
   HandRaisedIcon,
-  ClipboardDocumentCheckIcon
+  ClipboardDocumentCheckIcon,
+  AcademicCapIcon
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
+import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
 
 interface SubMenuItem {
   name: string
@@ -50,6 +52,11 @@ export default function Sidebar() {
     return generateComplianceSteps(requirementsData)
   }, [requirementsData])
 
+  // Generate dynamic training steps from API data
+  const dynamicTrainingSteps = useMemo(() => {
+    return generateTrainingSteps(requirementsData)
+  }, [requirementsData])
+
   // Generate requirements items dynamically from API or fallback to static
   const requirementsItems = useMemo(() => {
     if (dynamicComplianceSteps.length > 0) {
@@ -66,6 +73,17 @@ export default function Sidebar() {
     }))
   }, [dynamicComplianceSteps])
 
+  // Generate trainings items dynamically from API
+  const trainingsItems = useMemo(() => {
+    if (dynamicTrainingSteps.length > 0) {
+      return dynamicTrainingSteps.map(step => ({
+        name: step.title,
+        href: getTrainingStepUrl(step.slug)
+      }))
+    }
+    return []
+  }, [dynamicTrainingSteps])
+
   const menuSections: MenuSection[] = [
     {
       id: 'account-details',
@@ -80,6 +98,12 @@ export default function Sidebar() {
       items: requirementsItems
     },
     {
+      id: 'trainings',
+      name: 'Trainings',
+      icon: AcademicCapIcon,
+      items: trainingsItems
+    },
+    {
       id: 'services',
       name: 'Your services',
       icon: HandRaisedIcon,
@@ -90,6 +114,7 @@ export default function Sidebar() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'account-details': false,
     'requirements': false,
+    'trainings': false,
     'services': false
   })
 

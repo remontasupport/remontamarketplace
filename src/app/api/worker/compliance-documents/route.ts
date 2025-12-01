@@ -20,7 +20,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
 
 /**
- * GET - Fetch compliance document by type
+ * GET - Fetch all compliance documents by type
  */
 export async function GET(request: Request) {
   try {
@@ -46,8 +46,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
 
-    // Find document
-    const document = await authPrisma.verificationRequirement.findFirst({
+    // Find ALL documents of this type
+    const documents = await authPrisma.verificationRequirement.findMany({
       where: {
         workerProfileId: workerProfile.id,
         requirementType: documentType,
@@ -59,25 +59,24 @@ export async function GET(request: Request) {
         documentUploadedAt: true,
         expiresAt: true,
       },
-    });
-
-    if (!document) {
-      return NextResponse.json({ document: null });
-    }
-
-    return NextResponse.json({
-      document: {
-        id: document.id,
-        documentType: document.requirementType,
-        documentUrl: document.documentUrl,
-        uploadedAt: document.documentUploadedAt,
-        expiryDate: document.expiresAt, // Map expiresAt to expiryDate for frontend
+      orderBy: {
+        documentUploadedAt: 'desc',
       },
     });
+
+    return NextResponse.json({
+      documents: documents.map(doc => ({
+        id: doc.id,
+        documentType: doc.requirementType,
+        documentUrl: doc.documentUrl,
+        uploadedAt: doc.documentUploadedAt,
+        expiryDate: doc.expiresAt, // Map expiresAt to expiryDate for frontend
+      })),
+    });
   } catch (error: any) {
-    console.error("Error fetching compliance document:", error);
+    console.error("Error fetching compliance documents:", error);
     return NextResponse.json(
-      { error: "Failed to fetch document" },
+      { error: "Failed to fetch documents" },
       { status: 500 }
     );
   }
@@ -149,54 +148,22 @@ export async function POST(request: Request) {
 
     console.log(`✅ Compliance document uploaded to blob:`, blob.url);
 
-    // 6. Check if document already exists
-    const existingDoc = await authPrisma.verificationRequirement.findFirst({
-      where: {
+    // 6. Always create a new document (support multiple documents per type)
+    console.log(`📝 Creating new document: ${documentType}`);
+    const verificationReq = await authPrisma.verificationRequirement.create({
+      data: {
         workerProfileId: workerProfile.id,
         requirementType: documentType,
+        requirementName: documentType, // Will be overridden by frontend display name
+        documentUrl: blob.url,
+        documentUploadedAt: new Date(),
+        expiresAt: expiryDate ? new Date(expiryDate) : null,
+        status: "SUBMITTED",
+        submittedAt: new Date(),
+        updatedAt: new Date(),
+        isRequired: false, // Generic documents are typically optional
       },
     });
-
-    let verificationReq;
-
-    if (existingDoc) {
-      // Update existing document
-      console.log(`🔄 Updating existing document: ${documentType}`);
-      verificationReq = await authPrisma.verificationRequirement.update({
-        where: { id: existingDoc.id },
-        data: {
-          documentUrl: blob.url,
-          documentUploadedAt: new Date(),
-          expiresAt: expiryDate ? new Date(expiryDate) : null,
-          status: "SUBMITTED",
-          submittedAt: new Date(),
-          updatedAt: new Date(),
-          // Reset review fields when re-uploading
-          reviewedAt: null,
-          reviewedBy: null,
-          approvedAt: null,
-          rejectedAt: null,
-          rejectionReason: null,
-        },
-      });
-    } else {
-      // Create new document
-      console.log(`📝 Creating new document: ${documentType}`);
-      verificationReq = await authPrisma.verificationRequirement.create({
-        data: {
-          workerProfileId: workerProfile.id,
-          requirementType: documentType,
-          requirementName: documentType, // Will be overridden by frontend display name
-          documentUrl: blob.url,
-          documentUploadedAt: new Date(),
-          expiresAt: expiryDate ? new Date(expiryDate) : null,
-          status: "SUBMITTED",
-          submittedAt: new Date(),
-          updatedAt: new Date(),
-          isRequired: false, // Generic documents are typically optional
-        },
-      });
-    }
 
     console.log(`✅ Document saved successfully`);
 
