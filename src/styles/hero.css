@@ -33,10 +33,17 @@
 
 .hero-background-image {
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   animation-duration: 9s;
   animation-iteration-count: infinite;
   animation-timing-function: ease-in-out;
+}
+
+/* Mobile positioning - center faces properly */
+@media (max-width: 767px) {
+  .hero-background-image {
+    object-position: 60% center;
+  }
 }
 
 .hero-slide-1 {
