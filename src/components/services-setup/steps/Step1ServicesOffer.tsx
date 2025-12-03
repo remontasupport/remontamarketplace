@@ -13,6 +13,7 @@ import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistrati
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { useCategories } from "@/hooks/queries/useCategories";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
+import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/services-setup.css";
 
 interface Step1ServicesOfferProps {
@@ -75,8 +76,8 @@ function ServiceCard({
             </h4>
           </div>
 
-          {/* Subcategories at the bottom */}
-          {subcategoryNames.length > 0 && (
+          {/* Subcategories section */}
+          {subcategoryNames.length > 0 ? (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <ul className="space-y-2">
                 {subcategoryNames.map((name, idx) => (
@@ -91,12 +92,28 @@ function ServiceCard({
                 className="text-xs text-teal-600 font-poppins mt-3 hover:underline font-semibold"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEditCategories();
+                  onCardClick(service);
                 }}
               >
-                Edit services
+                Upload Supporting Documents
               </button>
             </div>
+          ) : (
+            /* Upload link for services without subcategories */
+            !isEditMode && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  className="text-xs text-teal-600 font-poppins hover:underline font-semibold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCardClick(service);
+                  }}
+                >
+                  Upload Supporting Documents
+                </button>
+              </div>
+            )
           )}
         </div>
       </div>
@@ -232,8 +249,8 @@ export default function Step1ServicesOffer({
   };
 
   const handleCardClick = (serviceTitle: string) => {
-    // Convert service title to slug (e.g., "Support Worker" -> "support-worker")
-    const serviceSlug = serviceTitle.toLowerCase().replace(/\s+/g, "-");
+    // Convert service title to slug using utility function
+    const serviceSlug = serviceNameToSlug(serviceTitle);
     router.push(`/dashboard/worker/services/${serviceSlug}/documents`);
   };
 
@@ -320,7 +337,8 @@ export default function Step1ServicesOffer({
               the right support worker for their needs.
             </p>
             <p className="info-box-text mt-3">
-              Click on any service card to upload required documents and certificates for that service.
+              Click "Upload Supporting Documents" on any service card to upload required
+              certificates and qualifications for that service.
             </p>
             <p className="info-box-text mt-3">
               If you add "Support Worker", you'll be able to choose specific subcategories

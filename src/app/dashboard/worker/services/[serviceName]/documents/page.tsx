@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import { useQueryClient } from "@tanstack/react-query";
+import { slugToServiceName } from "@/utils/serviceSlugMapping";
 
 interface Requirement {
   id: string;
@@ -34,12 +35,9 @@ export default function ServiceDocumentsPage() {
   const params = useParams();
   const queryClient = useQueryClient();
 
-  // Decode service name from URL (e.g., "support-worker" -> "Support Worker")
+  // Decode service name from URL using utility function
   const serviceSlug = params.serviceName as string;
-  const serviceName = serviceSlug
-    .split("-")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  const serviceName = slugToServiceName(serviceSlug);
 
   // State for requirements from API
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -58,6 +56,7 @@ export default function ServiceDocumentsPage() {
   const fetchRequirements = async () => {
     setIsLoadingRequirements(true);
     try {
+      console.log("🔍 Fetching requirements for service:", serviceName);
       const response = await fetch(`/api/worker/requirements?serviceName=${encodeURIComponent(serviceName)}`);
       if (response.ok) {
         const data = await response.json();
@@ -65,6 +64,8 @@ export default function ServiceDocumentsPage() {
 
         // Use the qualifications array from the response
         const qualifications = data.requirements?.qualifications || [];
+        console.log("📋 Qualifications count:", qualifications.length);
+        console.log("📋 Qualification IDs:", qualifications.map((q: any) => q.id));
         setRequirements(qualifications);
       } else {
         console.error("Failed to fetch requirements:", response.statusText);
