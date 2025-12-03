@@ -4,6 +4,7 @@
  */
 
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
+import Step2OtherDocuments from "@/components/services-setup/steps/Step2OtherDocuments";
 import ServiceQualificationStep from "@/components/services-setup/steps/ServiceQualificationStep";
 import { getQualificationsForService, serviceHasQualifications } from "./serviceQualificationRequirements";
 
@@ -16,13 +17,20 @@ export interface ServicesSetupStep {
 }
 
 /**
- * Base step - always shown
+ * Base steps - always shown
  */
 const BASE_STEP: ServicesSetupStep = {
   id: 1,
   slug: "services-offer",
-  title: "Services you offer",
+  title: "Your Services",
   component: Step1ServicesOffer,
+};
+
+const OTHER_DOCUMENTS_STEP: ServicesSetupStep = {
+  id: 2,
+  slug: "other-documents",
+  title: "Other Documents",
+  component: Step2OtherDocuments,
 };
 
 /**
@@ -31,7 +39,7 @@ const BASE_STEP: ServicesSetupStep = {
  * NOTE: ABN has been moved to Compliance section
  */
 export function generateServicesSetupSteps(selectedServices: string[]): ServicesSetupStep[] {
-  const steps: ServicesSetupStep[] = [BASE_STEP];
+  const steps: ServicesSetupStep[] = [BASE_STEP, OTHER_DOCUMENTS_STEP];
 
   // For each selected service, add a qualification step if needed
   selectedServices.forEach((serviceTitle, index) => {
@@ -59,6 +67,6 @@ export const getServicesStepUrl = (slug: string) =>
 
 /**
  * Default steps (when no services selected yet)
- * Shows only the base step (ABN moved to Compliance)
+ * Shows base steps: Your Services and Other Documents
  */
-export const SERVICES_SETUP_STEPS = [BASE_STEP];
+export const SERVICES_SETUP_STEPS = [BASE_STEP, OTHER_DOCUMENTS_STEP];
