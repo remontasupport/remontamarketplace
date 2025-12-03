@@ -32,7 +32,7 @@ export async function GET(
       );
     }
 
-    // 3. Fetch worker profile
+    // 3. Fetch worker profile with workerServices
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: {
         userId: userId,
@@ -66,6 +66,14 @@ export async function GET(
         isPublished: true,
         verificationStatus: true,
         abn: true,
+        workerServices: {
+          select: {
+            categoryId: true,
+            categoryName: true,
+            subcategoryId: true,
+            subcategoryName: true,
+          },
+        },
       },
     });
 
@@ -76,7 +84,41 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(workerProfile);
+    // Transform workerServices data to match the legacy format
+    // This ensures backward compatibility with existing components
+    let services: string[] = [];
+    let supportWorkerCategories: string[] = [];
+
+    if (workerProfile.workerServices && workerProfile.workerServices.length > 0) {
+      // Use new WorkerService table data
+      console.log("✅ Using WorkerService table data");
+
+      // Extract unique category names for services
+      const categoryNames = new Set<string>();
+      const subcategoryIds = new Set<string>();
+
+      workerProfile.workerServices.forEach((ws) => {
+        categoryNames.add(ws.categoryName);
+        if (ws.subcategoryId) {
+          subcategoryIds.add(ws.subcategoryId);
+        }
+      });
+
+      services = Array.from(categoryNames);
+      supportWorkerCategories = Array.from(subcategoryIds);
+    } else {
+      // Fallback to legacy arrays if workerServices is empty
+      console.log("⚠️  Falling back to legacy services arrays");
+      services = workerProfile.services || [];
+      supportWorkerCategories = workerProfile.supportWorkerCategories || [];
+    }
+
+    // Return profile data with transformed services
+    return NextResponse.json({
+      ...workerProfile,
+      services,
+      supportWorkerCategories,
+    });
 
   } catch (error: any) {
     console.error("Error fetching worker profile:", error);

@@ -7,16 +7,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { TrashIcon, PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
-import { ServiceDocumentsDialog } from "@/components/services-setup/ServiceDocumentsDialog";
-import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
 import { useCategories } from "@/hooks/queries/useCategories";
-import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/services-setup.css";
 
@@ -36,7 +30,6 @@ interface ServiceCardProps {
   categoryData: any; // Full category data from database
   onRemove: (service: string) => void;
   onEditCategories: () => void;
-  onUploadClick: (service: string) => void;
   isEditMode: boolean;
 }
 
@@ -46,12 +39,8 @@ function ServiceCard({
   categoryData,
   onRemove,
   onEditCategories,
-  onUploadClick,
   isEditMode,
 }: ServiceCardProps) {
-  const router = useRouter();
-  const hasQualifications = serviceHasQualifications(service);
-
   // Get subcategories for this category
   const subcategoryIds = categoryData?.subcategories?.length > 0
     ? supportWorkerCategories.filter(id =>
@@ -63,45 +52,17 @@ function ServiceCard({
     .map(id => categoryData?.subcategories.find((sub: any) => sub.id === id)?.name)
     .filter(Boolean);
 
-  const handleCardClick = () => {
-    if (hasQualifications && !isEditMode) {
-      // Redirect to qualifications page with service as query param
-      const serviceSlug = service.toLowerCase().replace(/\s+/g, "-");
-      router.push(`/dashboard/worker/services/qualifications?service=${serviceSlug}`);
-    }
-  };
-
   return (
     <div className="service-card-wrapper">
       <div
-        className={`service-card ${hasQualifications && !isEditMode ? "clickable" : ""} ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""}`}
-        onClick={handleCardClick}
+        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""}`}
         style={{ backgroundColor: 'white' }}
       >
         <div className="service-card-content flex flex-col h-full">
           <div className="service-card-header flex-grow">
-            <div className="flex items-center justify-between gap-6">
-              <h4 className="service-card-title flex-1" style={{ color: '#0C1628' }}>
-                {service}
-              </h4>
-              <button
-                type="button"
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-poppins font-medium text-white bg-[#0C1628] hover:bg-[#1a2740] rounded-md transition-colors flex-shrink-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUploadClick(service);
-                }}
-              >
-                <ArrowUpTrayIcon className="w-4 h-4" />
-                Upload
-              </button>
-            </div>
-            {hasQualifications && (
-              <div className="service-upload-indicator mt-2">
-                <ArrowUpTrayIcon />
-                <span>Upload Qualifications/Certs</span>
-              </div>
-            )}
+            <h4 className="service-card-title" style={{ color: '#0C1628' }}>
+              {service}
+            </h4>
           </div>
 
           {/* Subcategories at the bottom */}
@@ -154,18 +115,8 @@ export default function Step1ServicesOffer({
   const [isSaving, setIsSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Upload dialog state
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [selectedServiceForUpload, setSelectedServiceForUpload] = useState<string | null>(null);
-  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
-
-  const queryClient = useQueryClient();
-
   // Fetch categories from database
   const { data: categories } = useCategories();
-
-  // Fetch service documents
-  const { data: serviceDocumentsData } = useServiceDocuments();
 
   const handleAddServices = async (newServices: string[]) => {
     const currentServices = data.services || [];
@@ -269,195 +220,6 @@ export default function Step1ServicesOffer({
     }
   };
 
-  const handleUploadClick = (serviceTitle: string) => {
-    setSelectedServiceForUpload(serviceTitle);
-    setShowUploadDialog(true);
-  };
-
-  const handleDocumentUpload = async (documentType: string, file: File) => {
-    if (!selectedServiceForUpload) return;
-
-    setUploadingFiles(prev => new Set(prev).add(documentType));
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", documentType);
-      formData.append("serviceName", selectedServiceForUpload);
-
-      // If the service has subcategories, we might need to get the selected subcategory
-      // For now, we'll upload at the service level
-      const category = categories?.find(cat => cat.name === selectedServiceForUpload);
-      if (category?.subcategories && category.subcategories.length > 0) {
-        // Get selected subcategories for this service
-        const subcategoryIds = category.subcategories
-          .map((sub: any) => sub.id)
-          .filter((id: string) => data.supportWorkerCategories.includes(id));
-
-        // If there's only one subcategory, use it
-        if (subcategoryIds.length === 1) {
-          formData.append("subcategoryId", subcategoryIds[0]);
-        }
-      }
-
-      const response = await fetch("/api/upload/service-documents", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Upload failed");
-      }
-
-      const data = await response.json();
-      console.log("✅ Document uploaded:", data);
-
-      // Invalidate service documents cache
-      queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
-    } catch (error) {
-      console.error("❌ Upload error:", error);
-      alert(error instanceof Error ? error.message : "Failed to upload document");
-    } finally {
-      setUploadingFiles(prev => {
-        const updated = new Set(prev);
-        updated.delete(documentType);
-        return updated;
-      });
-    }
-  };
-
-  const handleDocumentDelete = async (documentType: string) => {
-    if (!selectedServiceForUpload) return;
-
-    try {
-      // Find the document to delete
-      const uploadedDocuments = getUploadedDocumentsForService(selectedServiceForUpload);
-      const documentToDelete = uploadedDocuments[documentType];
-
-      if (!documentToDelete) {
-        console.error("Document not found");
-        return;
-      }
-
-      const response = await fetch(`/api/worker/service-documents?id=${documentToDelete.id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
-
-      console.log("✅ Document deleted");
-
-      // Invalidate service documents cache
-      queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
-    } catch (error) {
-      console.error("❌ Delete error:", error);
-      alert("Failed to delete document");
-    }
-  };
-
-  // Helper to get uploaded documents for a specific service
-  const getUploadedDocumentsForService = (serviceTitle: string) => {
-    if (!serviceDocumentsData?.documents) return {};
-
-    const category = categories?.find(cat => cat.name === serviceTitle);
-    const documentMap: Record<string, any> = {};
-
-    serviceDocumentsData.documents.forEach((doc: any) => {
-      // Parse requirementType format: "ServiceName:documentType" or "ServiceName:subcategoryId:documentType"
-      const parts = doc.documentType.split(":");
-
-      if (parts.length >= 2) {
-        const docServiceName = parts[0];
-        const docType = parts[parts.length - 1]; // Last part is always documentType
-
-        if (docServiceName === serviceTitle) {
-          documentMap[docType] = doc;
-        }
-      }
-    });
-
-    return documentMap;
-  };
-
-  // Get requirements from database (categories data)
-  // NOTE: Only fetching OPTIONAL and CONDITIONAL documents here
-  // REQUIRED documents will be handled in the mandatory requirements section (future implementation)
-  const getServiceRequirementsFromDB = (serviceTitle: string) => {
-    if (!categories) return [];
-
-    const category = categories.find((cat: any) => cat.name === serviceTitle);
-    if (!category) return [];
-
-    const requirements: any[] = [];
-
-    // Get category-level OPTIONAL documents
-    if (category.documents?.optional) {
-      category.documents.optional.forEach((doc: any) => {
-        requirements.push({
-          type: doc.id,
-          name: doc.name,
-          description: doc.description,
-          category: doc.category,
-          required: false,
-        });
-      });
-    }
-
-    // Get category-level CONDITIONAL documents
-    if (category.documents?.conditional) {
-      category.documents.conditional.forEach((item: any) => {
-        requirements.push({
-          type: item.document.id,
-          name: item.document.name,
-          description: item.document.description,
-          category: item.document.category,
-          required: false, // Conditional documents are optional in this context
-          condition: item.condition,
-          requiredIf: item.requiredIf,
-        });
-      });
-    }
-
-    // Get subcategory-level additional documents if any subcategories are selected
-    if (category.subcategories && category.subcategories.length > 0) {
-      const selectedSubcategoryIds = category.subcategories
-        .map((sub: any) => sub.id)
-        .filter((id: string) => data.supportWorkerCategories.includes(id));
-
-      selectedSubcategoryIds.forEach((subId: string) => {
-        const subcategory = category.subcategories.find((sub: any) => sub.id === subId);
-        if (subcategory?.additionalDocuments && Array.isArray(subcategory.additionalDocuments)) {
-          subcategory.additionalDocuments.forEach((doc: any) => {
-            // Check if document already exists in requirements
-            const exists = requirements.find(r => r.type === doc.id);
-            if (!exists) {
-              requirements.push({
-                type: doc.id,
-                name: doc.name,
-                description: doc.description,
-                category: doc.category,
-                required: false, // Subcategory additional documents are optional
-              });
-            }
-          });
-        }
-      });
-    }
-
-    return requirements;
-  };
-
-  const selectedServiceRequirements = selectedServiceForUpload
-    ? getServiceRequirementsFromDB(selectedServiceForUpload)
-    : [];
-
-  const uploadedDocuments = selectedServiceForUpload
-    ? getUploadedDocumentsForService(selectedServiceForUpload)
-    : {};
-
   return (
     <StepContentWrapper>
       <div className="form-page-content">
@@ -484,7 +246,6 @@ export default function Step1ServicesOffer({
                       categoryData={categoryData}
                       onRemove={handleRemoveService}
                       onEditCategories={() => handleEditCategories(service)}
-                      onUploadClick={handleUploadClick}
                       isEditMode={isEditMode}
                     />
                   );
@@ -541,15 +302,11 @@ export default function Step1ServicesOffer({
               the right support worker for their needs.
             </p>
             <p className="info-box-text mt-3">
-              If a service requires qualifications, you'll see an "Upload" button. Click
-              the service card to upload your certificates.
-            </p>
-            <p className="info-box-text mt-3">
               If you add "Support Worker", you'll be able to choose specific subcategories
               of support you can offer.
             </p>
             <p className="info-box-text mt-3">
-              You can remove any service by clicking the trash icon on the card.
+              You can remove any service by clicking the trash icon on the card when in edit mode.
             </p>
           </div>
         </div>
@@ -576,20 +333,6 @@ export default function Step1ServicesOffer({
             ) || []
           }
           onSave={handleSubcategoriesSave}
-        />
-      )}
-
-      {/* Service Documents Upload Dialog */}
-      {selectedServiceForUpload && (
-        <ServiceDocumentsDialog
-          open={showUploadDialog}
-          onOpenChange={setShowUploadDialog}
-          serviceName={selectedServiceForUpload}
-          requirements={selectedServiceRequirements}
-          uploadedDocuments={uploadedDocuments}
-          onUpload={handleDocumentUpload}
-          onDelete={handleDocumentDelete}
-          uploadingFiles={uploadingFiles}
         />
       )}
     </StepContentWrapper>
