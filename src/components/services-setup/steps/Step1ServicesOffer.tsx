@@ -7,6 +7,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
@@ -30,6 +31,7 @@ interface ServiceCardProps {
   categoryData: any; // Full category data from database
   onRemove: (service: string) => void;
   onEditCategories: () => void;
+  onCardClick: (service: string) => void;
   isEditMode: boolean;
 }
 
@@ -39,6 +41,7 @@ function ServiceCard({
   categoryData,
   onRemove,
   onEditCategories,
+  onCardClick,
   isEditMode,
 }: ServiceCardProps) {
   // Get subcategories for this category
@@ -52,11 +55,18 @@ function ServiceCard({
     .map(id => categoryData?.subcategories.find((sub: any) => sub.id === id)?.name)
     .filter(Boolean);
 
+  const handleCardClick = () => {
+    if (!isEditMode) {
+      onCardClick(service);
+    }
+  };
+
   return (
     <div className="service-card-wrapper">
       <div
-        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""}`}
+        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""} ${!isEditMode ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
         style={{ backgroundColor: 'white' }}
+        onClick={handleCardClick}
       >
         <div className="service-card-content flex flex-col h-full">
           <div className="service-card-header flex-grow">
@@ -109,6 +119,7 @@ export default function Step1ServicesOffer({
   onChange,
   onSaveServices,
 }: Step1ServicesOfferProps) {
+  const router = useRouter();
   const [showAddServiceDialog, setShowAddServiceDialog] = useState(false);
   const [showSubcategoriesDialog, setShowSubcategoriesDialog] = useState(false);
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState<any>(null);
@@ -220,6 +231,12 @@ export default function Step1ServicesOffer({
     }
   };
 
+  const handleCardClick = (serviceTitle: string) => {
+    // Convert service title to slug (e.g., "Support Worker" -> "support-worker")
+    const serviceSlug = serviceTitle.toLowerCase().replace(/\s+/g, "-");
+    router.push(`/dashboard/worker/services/${serviceSlug}/documents`);
+  };
+
   return (
     <StepContentWrapper>
       <div className="form-page-content">
@@ -246,6 +263,7 @@ export default function Step1ServicesOffer({
                       categoryData={categoryData}
                       onRemove={handleRemoveService}
                       onEditCategories={() => handleEditCategories(service)}
+                      onCardClick={handleCardClick}
                       isEditMode={isEditMode}
                     />
                   );
@@ -300,6 +318,9 @@ export default function Step1ServicesOffer({
             <p className="info-box-text">
               Add all the services you're qualified to provide. This helps clients find
               the right support worker for their needs.
+            </p>
+            <p className="info-box-text mt-3">
+              Click on any service card to upload required documents and certificates for that service.
             </p>
             <p className="info-box-text mt-3">
               If you add "Support Worker", you'll be able to choose specific subcategories

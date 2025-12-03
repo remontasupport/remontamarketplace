@@ -4,6 +4,7 @@
  *
  * GET /api/worker/requirements - Fetch requirements for worker's services
  * GET /api/worker/requirements?services=service1,service2 - Fetch requirements for specific services
+ * GET /api/worker/requirements?serviceName=ServiceName - Fetch requirements for a specific service with its subcategories
  */
 
 import { NextResponse } from "next/server";
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
     // 2. Get query parameters
     const { searchParams } = new URL(request.url);
     const servicesParam = searchParams.get("services");
+    const serviceNameParam = searchParams.get("serviceName");
 
     // 3. Get worker profile and their services
     const workerProfile = await authPrisma.workerProfile.findUnique({
@@ -56,7 +58,46 @@ export async function GET(request: Request) {
     // 4. Determine which services to fetch requirements for
     let servicesToFetch: string[] = [];
 
-    if (servicesParam) {
+    if (serviceNameParam) {
+      // Use specific serviceName parameter - filter for this service and its subcategories
+      console.log("🎯 Filtering for specific service:", serviceNameParam);
+
+      if (workerProfile.workerServices.length > 0) {
+        // Filter WorkerService entries for this specific service
+        servicesToFetch = workerProfile.workerServices
+          .filter(ws => ws.categoryName === serviceNameParam)
+          .map(ws => {
+            if (ws.subcategoryName) {
+              return `${ws.categoryName}:${ws.subcategoryName}`;
+            } else {
+              return ws.categoryName;
+            }
+          });
+      } else {
+        // Fallback: use legacy arrays, filter for this service
+        const services = workerProfile.services || [];
+        const subcategories = workerProfile.supportWorkerCategories || [];
+
+        if (services.includes(serviceNameParam)) {
+          // This service is selected
+          const needsSubcategories = serviceNameParam === "Therapeutic Supports" ||
+                                     serviceNameParam === "Support Worker (High Intensity)" ||
+                                     serviceNameParam === "Support Worker";
+
+          if (needsSubcategories && subcategories.length > 0) {
+            // Add service:subcategory combinations
+            for (const subcategory of subcategories) {
+              if (subcategory && subcategory.trim()) {
+                servicesToFetch.push(`${serviceNameParam}:${subcategory}`);
+              }
+            }
+          } else {
+            // Just add the service
+            servicesToFetch.push(serviceNameParam);
+          }
+        }
+      }
+    } else if (servicesParam) {
       // Use services from parameter
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
     } else if (workerProfile.workerServices.length > 0) {

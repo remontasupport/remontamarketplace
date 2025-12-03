@@ -6,10 +6,10 @@
  */
 
 export interface ServiceDocumentRequirement {
-  type: string; // e.g., "manual-handling-training"
+  type: string; // e.g., "manual-handling-training", "ahpra-registration", etc.
   name: string; // Display name
   description: string;
-  category: "TRAINING" | "QUALIFICATION" | "INSURANCE";
+  category: "TRAINING" | "QUALIFICATION" | "INSURANCE" | "REGISTRATION";
   required: boolean; // true = required, false = optional
 }
 
@@ -105,7 +105,7 @@ export function getServiceDocumentRequirements(
         type: "ahpra-registration",
         name: "AHPRA Registration",
         description: "Current AHPRA registration certificate",
-        category: "QUALIFICATION",
+        category: "REGISTRATION",
         required: true,
       },
       {
@@ -125,7 +125,7 @@ export function getServiceDocumentRequirements(
         type: "professional-association-membership",
         name: "Professional Association Membership",
         description: "Fitness Australia or equivalent membership certificate",
-        category: "QUALIFICATION",
+        category: "REGISTRATION",
         required: true,
       },
       {
@@ -138,9 +138,98 @@ export function getServiceDocumentRequirements(
     ];
   }
 
-  // Therapeutic Supports subcategories
-  if (normalizedService === "therapeutic supports" && normalizedSubcategory) {
-    return getTherapeuticDocumentRequirements(normalizedSubcategory);
+  // Therapeutic Supports - Show base requirements (even without subcategory selected)
+  if (normalizedService === "therapeutic supports") {
+    if (normalizedSubcategory) {
+      // If specific subcategory is selected, show its specific requirements
+      return getTherapeuticDocumentRequirements(normalizedSubcategory);
+    } else {
+      // Show general therapeutic supports requirements
+      return [
+        {
+          type: "professional-association-membership",
+          name: "Professional Association Membership",
+          description: "Relevant professional association membership (or AHPRA for regulated professions)",
+          category: "REGISTRATION",
+          required: true,
+        },
+        {
+          type: "qualification-certificate",
+          name: "Highest Relevant Qualification Certificate",
+          description: "Your qualification in your therapeutic field (e.g., degree, diploma in OT, Physio, Psychology, etc.)",
+          category: "QUALIFICATION",
+          required: true,
+        },
+        {
+          type: "professional-indemnity-insurance",
+          name: "Professional Indemnity Insurance",
+          description: "Current professional indemnity insurance certificate",
+          category: "INSURANCE",
+          required: true,
+        },
+      ];
+    }
+  }
+
+  // Home Modifications - Requires qualifications
+  if (normalizedService === "home modifications") {
+    return [
+      {
+        type: "qualification-certificate",
+        name: "Relevant Trade Qualification Certificate",
+        description: "Your trade qualification (e.g., Building, Carpentry, Occupational Therapy for assessments)",
+        category: "QUALIFICATION",
+        required: true,
+      },
+      {
+        type: "trade-licence",
+        name: "Trade Licence / Certification",
+        description: "Current trade licence or builder's licence",
+        category: "QUALIFICATION",
+        required: true,
+      },
+      {
+        type: "public-liability-insurance",
+        name: "Public Liability Insurance",
+        description: "Public liability insurance with minimum $10M coverage",
+        category: "INSURANCE",
+        required: true,
+      },
+    ];
+  }
+
+  // Fitness and Rehabilitation - Requires qualifications
+  if (normalizedService === "fitness and rehabilitation") {
+    return [
+      {
+        type: "professional-association-membership",
+        name: "Professional Association Membership",
+        description: "Fitness Australia, Exercise & Sports Science Australia (ESSA), or equivalent membership",
+        category: "REGISTRATION",
+        required: true,
+      },
+      {
+        type: "qualification-certificate",
+        name: "Fitness/Exercise Science Qualification",
+        description: "Certificate III/IV in Fitness, Exercise Science degree, or Exercise Physiology qualification",
+        category: "QUALIFICATION",
+        required: true,
+      },
+      {
+        type: "first-aid-cpr",
+        name: "First Aid & CPR Certificate",
+        description: "Current First Aid and CPR certification",
+        category: "TRAINING",
+        required: true,
+      },
+      {
+        type: "public-liability-insurance",
+        name: "Public Liability Insurance",
+        description: "Public liability insurance with minimum $10M coverage",
+        category: "INSURANCE",
+        required: false, // Optional
+      },
+    ];
   }
 
   // Default: no specific documents
@@ -170,7 +259,7 @@ function getTherapeuticDocumentRequirements(subcategoryId: string): ServiceDocum
       type: "ahpra-registration",
       name: "AHPRA Registration",
       description: "Current AHPRA registration certificate",
-      category: "QUALIFICATION",
+      category: "REGISTRATION",
       required: true,
     });
   } else {
@@ -179,7 +268,7 @@ function getTherapeuticDocumentRequirements(subcategoryId: string): ServiceDocum
       type: "professional-association-membership",
       name: "Professional Association Membership",
       description: "Relevant professional association membership certificate",
-      category: "QUALIFICATION",
+      category: "REGISTRATION",
       required: true,
     });
   }
