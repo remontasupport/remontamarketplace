@@ -20,6 +20,11 @@ interface FilterParams {
   languages?: string[]
   age?: string
   within?: string
+
+  // Document filters (NEW)
+  documentCategories?: string[]
+  documentStatuses?: string[]
+  requirementTypes?: string[]
 }
 
 interface PaginatedResponse {
@@ -183,6 +188,62 @@ const filterRegistry: Record<string, FilterBuilder> = {
           ]
         }
       : null,
+
+  /**
+   * Document Categories Filter (Multi-select)
+   * Filters workers who have documents in specific categories
+   * Uses indexed relation for fast queries
+   */
+  documentCategories: (params) => {
+    if (!params.documentCategories || params.documentCategories.length === 0) return null;
+
+    return {
+      verificationRequirements: {
+        some: {
+          documentCategory: {
+            in: params.documentCategories as any[]
+          }
+        }
+      }
+    };
+  },
+
+  /**
+   * Document Statuses Filter (Multi-select)
+   * Filters workers who have documents with specific statuses
+   * Uses indexed status field for performance
+   */
+  documentStatuses: (params) => {
+    if (!params.documentStatuses || params.documentStatuses.length === 0) return null;
+
+    return {
+      verificationRequirements: {
+        some: {
+          status: {
+            in: params.documentStatuses as any[]
+          }
+        }
+      }
+    };
+  },
+
+  /**
+   * Requirement Types Filter (Multi-select)
+   * Filters workers who have specific document names (from Document table)
+   */
+  requirementTypes: (params) => {
+    if (!params.requirementTypes || params.requirementTypes.length === 0) return null;
+
+    return {
+      verificationRequirements: {
+        some: {
+          requirementName: {
+            in: params.requirementTypes
+          }
+        }
+      }
+    };
+  },
 }
 
 // ============================================================================
@@ -388,6 +449,22 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     ? languagesParam.split(',').map(l => l.trim()).filter(Boolean)
     : []
 
+  // Parse document filters (NEW - comma-separated arrays)
+  const documentCategoriesParam = searchParams.get('documentCategories')
+  const documentCategories = documentCategoriesParam
+    ? documentCategoriesParam.split(',').map(c => c.trim()).filter(Boolean)
+    : []
+
+  const documentStatusesParam = searchParams.get('documentStatuses')
+  const documentStatuses = documentStatusesParam
+    ? documentStatusesParam.split(',').map(s => s.trim()).filter(Boolean)
+    : []
+
+  const requirementTypesParam = searchParams.get('requirementTypes')
+  const requirementTypes = requirementTypesParam
+    ? requirementTypesParam.split(',').map(t => t.trim()).filter(Boolean)
+    : []
+
   return {
     page,
     pageSize,
@@ -400,6 +477,9 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     languages,
     age,
     within,
+    documentCategories,
+    documentStatuses,
+    requirementTypes,
   }
 }
 
@@ -425,6 +505,15 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   }
   if (params.within && params.within !== 'none') {
     applied.within = params.within
+  }
+  if (params.documentCategories && params.documentCategories.length > 0) {
+    applied.documentCategories = params.documentCategories
+  }
+  if (params.documentStatuses && params.documentStatuses.length > 0) {
+    applied.documentStatuses = params.documentStatuses
+  }
+  if (params.requirementTypes && params.requirementTypes.length > 0) {
+    applied.requirementTypes = params.requirementTypes
   }
 
   return applied

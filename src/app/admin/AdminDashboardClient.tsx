@@ -58,6 +58,11 @@ interface ContractorsFilters {
   languages: string[]
   age: string
   within: string
+
+  // Document filters (NEW)
+  documentCategories: string[]
+  documentStatuses: string[]
+  requirementTypes: string[]
 }
 
 // ============================================================================
@@ -100,6 +105,19 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 
   if (filters.within && filters.within !== 'none') {
     params.append('within', filters.within)
+  }
+
+  // Document filters (NEW)
+  if (filters.documentCategories && filters.documentCategories.length > 0) {
+    params.append('documentCategories', filters.documentCategories.join(','))
+  }
+
+  if (filters.documentStatuses && filters.documentStatuses.length > 0) {
+    params.append('documentStatuses', filters.documentStatuses.join(','))
+  }
+
+  if (filters.requirementTypes && filters.requirementTypes.length > 0) {
+    params.append('requirementTypes', filters.requirementTypes.join(','))
   }
 
   const response = await fetch(`/api/admin/contractors?${params.toString()}`)
@@ -161,9 +179,24 @@ export default function AdminDashboard() {
     languages: [],
     age: 'all',
     within: 'none',
+    // Document filters
+    documentCategories: [],
+    documentStatuses: [],
+    requirementTypes: [],
   })
 
   const [searchInput, setSearchInput] = useState('')
+
+  // Document filter options (fetched from API)
+  const [filterOptions, setFilterOptions] = useState<any>(null)
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true)
+
+  // Pending document filters (not applied yet)
+  const [pendingDocFilters, setPendingDocFilters] = useState({
+    documentCategories: [] as string[],
+    documentStatuses: [] as string[],
+    requirementTypes: [] as string[],
+  })
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -197,6 +230,25 @@ export default function AdminDashboard() {
   const filteredLanguages = AVAILABLE_LANGUAGES.filter(lang =>
     lang.toLowerCase().includes(languageSearch.toLowerCase())
   )
+
+  // Fetch document filter options on mount
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const response = await fetch('/api/admin/filters')
+        const result = await response.json()
+        if (result.success) {
+          setFilterOptions(result.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch filter options:', error)
+      } finally {
+        setIsLoadingFilters(false)
+      }
+    }
+
+    fetchFilterOptions()
+  }, [])
 
   // Close suburb dropdown when clicking outside
   useEffect(() => {
@@ -648,8 +700,114 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Document Filters Section */}
+            {!isLoadingFilters && filterOptions && (
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Document Filters</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Document Statuses */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Document Status
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={pendingDocFilters.documentStatuses.length === 0}
+                          onChange={() => setPendingDocFilters(prev => ({ ...prev, documentStatuses: [] }))}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 text-sm text-gray-700 font-medium">All</span>
+                      </label>
+                      {filterOptions.documentStatuses.map((status: any) => (
+                        <label key={status.value} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={pendingDocFilters.documentStatuses.includes(status.value)}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked
+                              setPendingDocFilters(prev => ({
+                                ...prev,
+                                documentStatuses: isChecked
+                                  ? [...prev.documentStatuses, status.value]
+                                  : prev.documentStatuses.filter(s => s !== status.value)
+                              }))
+                            }}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">{status.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Requirement Types */}
+                  {filterOptions.requirementTypes.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Requirement Types
+                      </label>
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={pendingDocFilters.requirementTypes.length === 0}
+                            onChange={() => setPendingDocFilters(prev => ({ ...prev, requirementTypes: [] }))}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700 font-medium">All</span>
+                        </label>
+                        {filterOptions.requirementTypes.map((type: any) => (
+                          <label key={type.value} className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={pendingDocFilters.requirementTypes.includes(type.value)}
+                              onChange={(e) => {
+                                const isChecked = e.target.checked
+                                setPendingDocFilters(prev => ({
+                                  ...prev,
+                                  requirementTypes: isChecked
+                                    ? [...prev.requirementTypes, type.value]
+                                    : prev.requirementTypes.filter(t => t !== type.value)
+                                }))
+                              }}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                            <span className="ml-2 text-sm text-gray-700">{type.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Apply Document Filters Button */}
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setFilters(prev => ({
+                        ...prev,
+                        documentCategories: pendingDocFilters.documentCategories,
+                        documentStatuses: pendingDocFilters.documentStatuses,
+                        requirementTypes: pendingDocFilters.requirementTypes,
+                        page: 1
+                      }))
+                    }}
+                    className="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Apply Document Filters
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Clear Filters Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-end mt-4">
               <button
                 onClick={() => {
                   setFilters({
@@ -664,6 +822,14 @@ export default function AdminDashboard() {
                     languages: [],
                     age: 'all',
                     within: 'none',
+                    documentCategories: [],
+                    documentStatuses: [],
+                    requirementTypes: [],
+                  })
+                  setPendingDocFilters({
+                    documentCategories: [],
+                    documentStatuses: [],
+                    requirementTypes: [],
                   })
                   setSearchInput('')
                   setSuburbSearch('')
@@ -674,7 +840,7 @@ export default function AdminDashboard() {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Clear Filters
+                Clear All Filters
               </button>
             </div>
           </div>
