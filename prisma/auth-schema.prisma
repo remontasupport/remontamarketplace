@@ -140,8 +140,12 @@ model VerificationRequirement {
 
   @@index([documentCategory])
   @@index([requirementType])
+  @@index([requirementName])
   @@index([status])
   @@index([workerProfileId])
+  @@index([workerProfileId, requirementType])
+  @@index([workerProfileId, requirementName])
+  @@index([workerProfileId, status])
   @@map("verification_requirements")
 }
 

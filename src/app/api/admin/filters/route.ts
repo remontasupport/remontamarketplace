@@ -34,15 +34,29 @@ export async function GET(request: NextRequest) {
         distinct: ['status'],
       }),
 
-      // Get requirement types from Document table (excluding identity and business docs)
+      // Get requirement types from Document table (master list of all possible documents)
+      // Exclude identity documents and contractor documents (those are handled separately)
       prisma.document.findMany({
         where: {
-          name: {
-            notIn: ['100 Points of ID', 'ABN', 'abn (contractor)']
+          id: {
+            notIn: [
+              'identity-points-100',
+              'identity-passport',
+              'identity-birth-certificate',
+              'identity-drivers-license',
+              'identity-medicare-card',
+              'identity-utility-bill',
+              'identity-bank-statement',
+              'business-abn',
+              'abn',
+              'abn-contractor'
+            ]
           }
         },
         select: {
-          name: true
+          id: true,
+          name: true,
+          category: true
         },
         orderBy: {
           name: 'asc'
@@ -102,12 +116,14 @@ export async function GET(request: NextRequest) {
           label: status.charAt(0) + status.slice(1).toLowerCase(), // Format: APPROVED -> Approved
         })),
 
-      // Requirement Types (from Document table)
+      // Requirement Types (from Document table - master list)
+      // value = Document.id (used for querying requirementType)
+      // label = Document.name (shown in the dropdown)
       requirementTypes: requirementTypes
-        .map(r => r.name)
-        .map(name => ({
-          value: name,
-          label: name,
+        .map(doc => ({
+          value: doc.id,        // e.g., "driver-license-vehicle"
+          label: doc.name,      // e.g., "Driver's License"
+          category: doc.category
         })),
 
       // Document Submission Filters (dynamic counts)
