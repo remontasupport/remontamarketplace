@@ -40,7 +40,11 @@ export async function GET(
         location: true,
         age: true,
         languages: true,
-        services: true,
+        workerServices: {
+          select: {
+            categoryName: true,
+          }
+        },
       }
     })
 
@@ -51,9 +55,20 @@ export async function GET(
       )
     }
 
+    // Transform workerServices to legacy services array format
+    const uniqueCategories = new Set<string>();
+    worker.workerServices.forEach(ws => uniqueCategories.add(ws.categoryName));
+    const services = Array.from(uniqueCategories);
+
+    const workerData = {
+      ...worker,
+      services,
+      workerServices: undefined,
+    };
+
     // Generate PDF stream
     const pdfStream = await renderToStream(
-      React.createElement(WorkerProfilePDF, { worker })
+      React.createElement(WorkerProfilePDF, { worker: workerData })
     )
 
     // Convert React stream to Node stream for Next.js

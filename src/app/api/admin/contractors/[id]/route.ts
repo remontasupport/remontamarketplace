@@ -39,7 +39,11 @@ export async function GET(
         location: true,
         age: true,
         languages: true,
-        services: true,
+        workerServices: {
+          select: {
+            categoryName: true,
+          }
+        },
       }
     })
 
@@ -50,9 +54,18 @@ export async function GET(
       )
     }
 
+    // Transform workerServices to legacy services array format
+    const uniqueCategories = new Set<string>();
+    worker.workerServices.forEach(ws => uniqueCategories.add(ws.categoryName));
+    const services = Array.from(uniqueCategories);
+
     return NextResponse.json({
       success: true,
-      data: worker
+      data: {
+        ...worker,
+        services,
+        workerServices: undefined, // Remove from response
+      }
     })
 
   } catch (error) {

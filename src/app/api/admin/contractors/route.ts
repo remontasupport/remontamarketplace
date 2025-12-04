@@ -123,7 +123,7 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Services/Type of Support Filter
-   * Uses PostgreSQL array contains operator
+   * Queries the WorkerService relation table (optimized with indexes)
    * Maps kebab-case to Title Case format in database
    */
   services: (params) => {
@@ -131,7 +131,13 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
     const dbServiceName = SERVICE_NAME_MAP[params.typeOfSupport] || params.typeOfSupport;
 
-    return { services: { has: dbServiceName } };
+    return {
+      workerServices: {
+        some: {
+          categoryName: dbServiceName
+        }
+      }
+    };
   },
 
   /**
@@ -350,6 +356,16 @@ async function geocodeLocation(
 // ============================================================================
 
 /**
+ * Transform WorkerService records to legacy services array format
+ * Extracts unique category names for backward compatibility
+ */
+function transformWorkerServices(workerServices: Array<{ categoryName: string }>): string[] {
+  const uniqueCategories = new Set<string>();
+  workerServices.forEach(ws => uniqueCategories.add(ws.categoryName));
+  return Array.from(uniqueCategories);
+}
+
+/**
  * Parse filter parameters from URL
  */
 function parseFilterParams(searchParams: URLSearchParams): FilterParams {
@@ -443,7 +459,11 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
         gender: true,
         age: true,
         languages: true,
-        services: true,
+        workerServices: {
+          select: {
+            categoryName: true,
+          }
+        },
         city: true,
         state: true,
         postalCode: true,
@@ -458,11 +478,18 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
     })
   ])
 
+  // Transform workerServices to legacy services array format for backward compatibility
+  const workersWithServices = workers.map(worker => ({
+    ...worker,
+    services: transformWorkerServices(worker.workerServices),
+    workerServices: undefined, // Remove from response
+  }))
+
   const totalPages = Math.ceil(total / params.pageSize)
 
   return {
     success: true,
-    data: workers,
+    data: workersWithServices,
     pagination: {
       total,
       page: params.page,
@@ -517,7 +544,11 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
       gender: true,
       age: true,
       languages: true,
-      services: true,
+      workerServices: {
+        select: {
+          categoryName: true,
+        }
+      },
       city: true,
       state: true,
       postalCode: true,
@@ -535,6 +566,8 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
   const workersWithDistance = candidates
     .map(worker => ({
       ...worker,
+      services: transformWorkerServices(worker.workerServices),
+      workerServices: undefined, // Remove from response
       distance: haversineDistance(
         coords.lat,
         coords.lng,
