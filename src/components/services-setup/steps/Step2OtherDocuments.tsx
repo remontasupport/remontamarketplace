@@ -3,6 +3,18 @@
 /**
  * Step 2: Other Documents
  * Displays insurance and transport documents from the API
+ *
+ * **DRIVER'S LICENSE HANDLING:**
+ * This component automatically fetches and displays the Driver's License if it exists
+ * from other steps, following a priority system:
+ *   Priority 1: identity-drivers-license (uploaded in 100 Points ID step)
+ *   Priority 2: driver-license-vehicle (uploaded in Other Personal Info step)
+ *
+ * If a driver's license exists from these steps, it will:
+ *   - Automatically display in the Transport Documents section
+ *   - Show a note indicating where it came from
+ *   - Disable the upload button (since it's already uploaded)
+ *   - Hide the delete button (can only be deleted from original step)
  */
 
 import { useState, useEffect } from "react";
@@ -12,6 +24,7 @@ import StepContentWrapper from "@/components/account-setup/shared/StepContentWra
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
+import { useIdentityDocuments, useDriverLicense } from "@/hooks/queries/useIdentityDocuments";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Step2OtherDocumentsProps {
@@ -42,6 +55,10 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
   // Fetch existing uploaded documents
   const { data: serviceDocumentsData, isLoading: isLoadingDocuments } = useServiceDocuments();
+
+  // Fetch identity documents to check for existing driver's license
+  const { data: identityDocumentsData, isLoading: isLoadingIdentityDocuments } = useIdentityDocuments();
+  const { driverLicense, hasDriverLicense } = useDriverLicense();
 
   // State for file handling
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
@@ -86,7 +103,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     }
   };
 
-  const isLoading = isLoadingRequirements || isLoadingDocuments;
+  const isLoading = isLoadingRequirements || isLoadingDocuments || isLoadingIdentityDocuments;
 
   // Get uploaded documents map
   const getUploadedDocumentsMap = () => {
@@ -106,6 +123,40 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
   };
 
   const uploadedDocuments = getUploadedDocumentsMap();
+
+  // Get driver's license with priority system
+  // Priority 1: identity-drivers-license (uploaded in 100 Points ID step)
+  // Priority 2: driver-license-vehicle (uploaded in Other Personal Info step)
+  const getDriverLicenseDocument = () => {
+    // Convert identity documents to map for easier lookup
+    const identityDocs: Record<string, any> = {};
+    identityDocumentsData?.documents?.forEach((doc: any) => {
+      identityDocs[doc.documentType] = doc;
+    });
+
+    // Priority 1: Check if uploaded in 100 Points ID
+    if (identityDocs["identity-drivers-license"]) {
+      console.log("📄 Using driver's license from 100 Points ID");
+      return {
+        document: identityDocs["identity-drivers-license"],
+        source: "100-points-id" as const,
+      };
+    }
+
+    // Priority 2: Check if uploaded in Other Personal Info
+    if (driverLicense) {
+      console.log("📄 Using driver's license from Other Personal Info");
+      return {
+        document: driverLicense,
+        source: "other-personal-info" as const,
+      };
+    }
+
+    // No driver's license found
+    return null;
+  };
+
+  const driverLicenseInfo = getDriverLicenseDocument();
 
   const handleFileSelect = (documentId: string, file: File | null) => {
     if (!file) {
@@ -222,10 +273,25 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     const isRequired = documentType === "REQUIRED";
     const isConditional = documentType === "CONDITIONAL";
     const isOptional = documentType === "OPTIONAL";
-    const isUploaded = !!uploadedDocuments[id];
+
+    // Check if this is a driver's license document
+    const isDriverLicense = id === "driver-license" || id === "drivers-license" || name.toLowerCase().includes("driver");
+
+    // For driver's license, check if it exists from identity documents
+    let isUploaded = !!uploadedDocuments[id];
+    let uploadedDoc = uploadedDocuments[id];
+    let driverLicenseSource: string | null = null;
+
+    if (isDriverLicense && driverLicenseInfo) {
+      isUploaded = true;
+      uploadedDoc = driverLicenseInfo.document;
+      driverLicenseSource = driverLicenseInfo.source === "100-points-id"
+        ? "100 Points of ID"
+        : "Other Personal Info";
+    }
+
     const isUploading = uploadingFiles.has(id);
     const selectedFile = selectedFiles[id];
-    const uploadedDoc = uploadedDocuments[id];
 
     return (
       <div key={id} className="border border-gray-200 rounded-lg p-6 bg-white hover:border-gray-300 transition-colors">
@@ -269,22 +335,31 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
                   <p className="text-xs text-gray-500 mt-2">
                     Uploaded {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}
                   </p>
+                  {/* Show note if driver's license is from another step */}
+                  {driverLicenseSource && (
+                    <p className="text-sm text-green-700 font-poppins mt-1" style={{ fontWeight: 500 }}>
+                      ✓ Using Driver's License from {driverLicenseSource}
+                    </p>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(id)}
-                  className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-red-50 transition-colors"
-                  title="Remove document"
-                >
-                  <XCircleIcon className="w-6 h-6" />
-                </button>
+                {/* Only show delete button if this is NOT a driver's license from identity documents */}
+                {!driverLicenseSource && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(id)}
+                    className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-red-50 transition-colors"
+                    title="Remove document"
+                  >
+                    <XCircleIcon className="w-6 h-6" />
+                  </button>
+                )}
               </div>
             )}
           </div>
 
-          {/* Upload button/controls */}
+          {/* Upload button/controls - Hide if driver's license exists from another step */}
           <div className="flex-shrink-0">
-            {!isUploaded && (
+            {!isUploaded && !driverLicenseSource && (
               <div className="flex flex-col gap-3 min-w-[200px]">
                 <input
                   type="file"

@@ -165,6 +165,10 @@ export default function AdminDashboard() {
 
   const [searchInput, setSearchInput] = useState('')
 
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
+
   // Suburb autocomplete states
   const [suburbSearch, setSuburbSearch] = useState('')
   const [suburbs, setSuburbs] = useState<any[]>([])
@@ -286,6 +290,11 @@ export default function AdminDashboard() {
       sortOrder: prev.sortBy === sortBy && prev.sortOrder === 'asc' ? 'desc' : 'asc',
       page: 1,
     }))
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedContractor(null)
   }
 
   // ========================================
@@ -753,7 +762,10 @@ export default function AdminDashboard() {
                     data.data.map((contractor) => (
                       <tr
                         key={contractor.id}
-                        onClick={() => router.push(`/admin/contractors/${contractor.id}`)}
+                        onClick={() => {
+                          setSelectedContractor(contractor)
+                          setIsModalOpen(true)
+                        }}
                         className="hover:bg-gray-50 cursor-pointer transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -843,6 +855,108 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Modal for contractor actions */}
+      {isModalOpen && selectedContractor && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={closeModal}
+          ></div>
+
+          {/* Modal */}
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div
+              className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Contractor Info */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  {selectedContractor.photos && selectedContractor.photos.length > 0 ? (
+                    <img
+                      className="h-16 w-16 rounded-full object-cover"
+                      src={selectedContractor.photos[0]}
+                      alt=""
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500 font-medium text-lg">
+                        {selectedContractor.firstName?.[0]}
+                        {selectedContractor.lastName?.[0]}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {selectedContractor.firstName} {selectedContractor.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {selectedContractor.city && selectedContractor.state
+                        ? `${selectedContractor.city}, ${selectedContractor.state}`
+                        : selectedContractor.city || selectedContractor.state || 'Location not specified'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Services badges */}
+                {selectedContractor.services && selectedContractor.services.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedContractor.services.map((service, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    router.push(`/admin/contractors/${selectedContractor.id}`)
+                    closeModal()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+
+                <button
+                  onClick={() => {
+                    router.push(`/admin/contractors/${selectedContractor.id}/compliance`)
+                    closeModal()
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Show Compliance
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
