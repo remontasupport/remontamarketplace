@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useCategories } from '@/hooks/queries/useCategories'
 
 interface Contractor {
   id: string
@@ -15,6 +16,9 @@ interface Contractor {
 export default function SearchSupport() {
   const [contractors, setContractors] = useState<Contractor[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch categories from database
+  const { data: categories, isLoading: isCategoriesLoading } = useCategories()
 
   // Search form state
   const [location, setLocation] = useState('')
@@ -168,25 +172,18 @@ export default function SearchSupport() {
                 value={supportType}
                 onChange={(e) => setSupportType(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isCategoriesLoading}
               >
                 <option value="All">All</option>
-                <option value="Support Worker">Support Worker</option>
-                <option value="Cleaner">Cleaner</option>
-                <option value="Gardener">Gardener</option>
-                <option value="Physiotherapist">Physiotherapist</option>
-                <option value="Occupational Therapist">Occupational Therapist</option>
-                <option value="Exercise Physiologist">Exercise Physiologist</option>
-                <option value="Psychologist">Psychologist</option>
-                <option value="Behaviour Support Practitioner">Behaviour Support Practitioner</option>
-                <option value="Social Worker">Social Worker</option>
-                <option value="Personal Trainer">Personal Trainer</option>
-                <option value="Nurse">Nurse</option>
-                <option value="Builder">Builder</option>
-                <option value="Assistive Technology Provider">Assistive Technology Provider</option>
-                <option value="Interpreter/Translator">Interpreter/Translator</option>
-                <option value="Accommodation Provider">Accommodation Provider</option>
-                <option value="Employment Support Provider">Employment Support Provider</option>
-                <option value="Other">Other</option>
+                {isCategoriesLoading ? (
+                  <option disabled>Loading services...</option>
+                ) : (
+                  categories?.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

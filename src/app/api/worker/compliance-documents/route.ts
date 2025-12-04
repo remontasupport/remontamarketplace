@@ -97,6 +97,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const documentType = formData.get("documentType") as string;
+    const requirementName = formData.get("requirementName") as string | null;
     const expiryDate = formData.get("expiryDate") as string | null;
 
     if (!file) {
@@ -154,7 +155,7 @@ export async function POST(request: Request) {
       data: {
         workerProfileId: workerProfile.id,
         requirementType: documentType,
-        requirementName: documentType, // Will be overridden by frontend display name
+        requirementName: requirementName || documentType,
         documentUrl: blob.url,
         documentUploadedAt: new Date(),
         expiresAt: expiryDate ? new Date(expiryDate) : null,

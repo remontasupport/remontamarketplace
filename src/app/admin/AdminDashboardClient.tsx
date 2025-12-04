@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
+import { useCategories } from '@/hooks/queries/useCategories'
 
 // ============================================================================
 // TYPES
@@ -164,6 +165,9 @@ function formatTravelTime(distanceKm: number): string {
 
 export default function AdminDashboard() {
   const router = useRouter()
+
+  // Fetch categories from database
+  const { data: categories, isLoading: isCategoriesLoading } = useCategories()
 
   // State for filters (unified state)
   const [filters, setFilters] = useState<ContractorsFilters>({
@@ -522,15 +526,18 @@ export default function AdminDashboard() {
                   value={filters.typeOfSupport}
                   onChange={(e) => setFilters(prev => ({ ...prev, typeOfSupport: e.target.value, page: 1 }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                  disabled={isCategoriesLoading}
                 >
                   <option value="all">All</option>
-                  <option value="support-worker">Support Worker</option>
-                  <option value="therapeutic-supports">Therapeutic Supports</option>
-                  <option value="home-modifications">Home Modifications</option>
-                  <option value="fitness-rehabilitation">Fitness and Rehabilitation</option>
-                  <option value="cleaning-services">Cleaning Services</option>
-                  <option value="nursing-services">Nursing Services</option>
-                  <option value="home-yard-maintenance">Home and Yard Maintenance</option>
+                  {isCategoriesLoading ? (
+                    <option disabled>Loading services...</option>
+                  ) : (
+                    categories?.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 

@@ -35,6 +35,13 @@ interface UploadedDocument {
   expiryDate?: string;
 }
 
+interface SingleDocument {
+  id: string;
+  documentUrl: string;
+  uploadedAt: string;
+  expiryDate?: string;
+}
+
 // Helper to check if document is a PDF
 const isPdfDocument = (url: string) => {
   return url.toLowerCase().endsWith(".pdf") || url.includes(".pdf?");
@@ -49,31 +56,49 @@ export default function GenericComplianceDocument({
 }: GenericComplianceDocumentProps) {
   const { data: session } = useSession();
 
-  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+  const [uploadedDocument, setUploadedDocument] = useState<SingleDocument | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [expiryDate, setExpiryDate] = useState("");
 
   const documentType = requirement?.id || "generic-document";
   const hasExpiration = requirement?.hasExpiration ?? false;
 
-  // Fetch uploaded documents on mount
+  // Fetch uploaded document on mount and when documentType changes
   useEffect(() => {
     if (session?.user?.id && documentType) {
-      fetchUploadedDocuments();
+      // Set loading state and clear previous document
+      setIsLoading(true);
+      setUploadedDocument(null);
+      setExpiryDate("");
+
+      fetchUploadedDocument();
+    } else if (session && !session.user?.id) {
+      // Session exists but no user ID - not loading
+      setIsLoading(false);
     }
   }, [session?.user?.id, documentType]);
 
-  const fetchUploadedDocuments = async () => {
+  const fetchUploadedDocument = async () => {
     try {
       const response = await fetch(`${apiEndpoint}?documentType=${documentType}`);
       if (response.ok) {
         const data = await response.json();
-        if (data.documents) {
-          setUploadedDocuments(data.documents);
+        if (data.documents && data.documents.length > 0) {
+          // Only keep the most recent document
+          const mostRecent = data.documents[0];
+          setUploadedDocument({
+            id: mostRecent.id,
+            documentUrl: mostRecent.documentUrl,
+            uploadedAt: mostRecent.uploadedAt,
+            expiryDate: mostRecent.expiryDate,
+          });
         }
       }
     } catch (error) {
-      console.error("Error fetching documents:", error);
+      console.error("Error fetching document:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -100,6 +125,9 @@ export default function GenericComplianceDocument({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("documentType", documentType);
+      if (requirement?.name) {
+        formData.append("requirementName", requirement.name);
+      }
       if (hasExpiration && expiryDate) {
         formData.append("expiryDate", expiryDate);
       }
@@ -116,10 +144,11 @@ export default function GenericComplianceDocument({
 
       const responseData = await response.json();
 
-      // Refresh the uploaded documents list
-      await fetchUploadedDocuments();
+      // Refresh the uploaded document
+      setIsLoading(true);
+      await fetchUploadedDocument();
 
-      // Clear expiry date for next upload
+      // Clear expiry date
       setExpiryDate("");
 
       console.log("✅ Document uploaded successfully:", responseData.url);
@@ -131,14 +160,16 @@ export default function GenericComplianceDocument({
     }
   };
 
-  const handleFileDelete = async (documentId: string) => {
+  const handleFileDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
     if (!window.confirm("Are you sure you want to remove this document?")) {
       return;
     }
 
     try {
       const response = await fetch(
-        `${apiEndpoint}?id=${documentId}`,
+        `${apiEndpoint}?id=${uploadedDocument.id}`,
         {
           method: "DELETE",
         }
@@ -148,8 +179,9 @@ export default function GenericComplianceDocument({
         throw new Error("Failed to delete document");
       }
 
-      // Refresh the uploaded documents list
-      await fetchUploadedDocuments();
+      // Clear the uploaded document immediately for instant feedback
+      setUploadedDocument(null);
+      setIsLoading(false);
 
       console.log("✅ Document deleted successfully");
     } catch (error: any) {
@@ -192,140 +224,148 @@ export default function GenericComplianceDocument({
         </div>
       )}
 
-      {/* Show uploaded documents list */}
-      {uploadedDocuments.length > 0 && (
+      {/* Loading State */}
+      {isLoading ? (
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
-            Uploaded Documents ({uploadedDocuments.length})
-          </h4>
-          <div className="space-y-4">
-            {uploadedDocuments.map((document) => (
-              <div
-                key={document.id}
-                className="document-preview-container"
-                style={{ marginBottom: "1rem" }}
-              >
-                {isPdfDocument(document.documentUrl) ? (
-                  <div className="document-preview-pdf">
-                    <DocumentIcon className="document-preview-pdf-icon" />
-                    <p className="document-preview-pdf-text">
-                      {requirement?.name || "Document"}
-                    </p>
-                    <a
-                      href={document.documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
-                    >
-                      View PDF
-                    </a>
-                  </div>
-                ) : (
-                  <img
-                    src={document.documentUrl}
-                    alt={requirement?.name || "Document"}
-                    className="document-preview-image"
-                  />
-                )}
-
-                <div className="mt-3" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div>
-                    {document.expiryDate && (
-                      <p className="text-sm text-gray-700 font-poppins" style={{ margin: 0 }}>
-                        <strong>Expiry Date:</strong>{" "}
-                        {new Date(document.expiryDate).toLocaleDateString()}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 font-poppins" style={{ marginTop: "0.25rem" }}>
-                      Uploaded: {new Date(document.uploadedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleFileDelete(document.id!)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#dc2626",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      padding: "0",
-                      fontFamily: "var(--font-poppins)",
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
+            <div className="document-preview-container">
+              <div className="h-48 bg-gray-200 rounded"></div>
+              <div className="mt-3 space-y-2">
+                <div className="h-3 bg-gray-200 rounded w-48"></div>
+                <div className="h-3 bg-gray-200 rounded w-32"></div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
-      )}
+      ) : uploadedDocument ? (
+        /* Show uploaded document */
+        <div className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
+            Uploaded Document
+          </h4>
+          <div className="document-preview-container">
+            {isPdfDocument(uploadedDocument.documentUrl) ? (
+              <div className="document-preview-pdf">
+                <DocumentIcon className="document-preview-pdf-icon" />
+                <p className="document-preview-pdf-text">
+                  {requirement?.name || "Document"}
+                </p>
+                <a
+                  href={uploadedDocument.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                >
+                  View PDF
+                </a>
+              </div>
+            ) : (
+              <img
+                src={uploadedDocument.documentUrl}
+                alt={requirement?.name || "Document"}
+                className="document-preview-image"
+              />
+            )}
 
-      {/* Upload new document section */}
-      <div className="upload-section" style={{ marginTop: uploadedDocuments.length > 0 ? "2rem" : "0" }}>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
-          {uploadedDocuments.length > 0 ? "Add Another Document" : "Upload Document"}
-        </h4>
+            <div className="mt-3" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                {uploadedDocument.expiryDate && (
+                  <p className="text-sm text-gray-700 font-poppins" style={{ margin: 0 }}>
+                    <strong>Expiry Date:</strong>{" "}
+                    {new Date(uploadedDocument.expiryDate).toLocaleDateString()}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 font-poppins" style={{ marginTop: "0.25rem" }}>
+                  Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+                </p>
+              </div>
 
-        {/* Expiry Date Input (only show for first upload) */}
-        {hasExpiration && uploadedDocuments.length === 0 && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Expiry Date
-            </label>
-            <input
-              type="date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-              style={{ maxWidth: "300px" }}
-              required={hasExpiration}
-            />
+              <button
+                onClick={handleFileDelete}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#dc2626",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  padding: "0",
+                  fontFamily: "var(--font-poppins)",
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* File Upload */}
-        <input
-          type="file"
-          id={`file-${documentType}`}
-          accept="image/jpeg,image/jpg,image/png,application/pdf"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              handleFileUpload(file);
-            }
-            e.target.value = "";
-          }}
-          className="hidden"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            if (hasExpiration && uploadedDocuments.length === 0 && !expiryDate) {
-              alert("Please enter the expiry date first");
-              return;
-            }
-            document.getElementById(`file-${documentType}`)?.click();
-          }}
-          disabled={isUploading}
-        >
-          {isUploading ? (
-            <>
-              <span className="loading-spinner"></span>
-              Uploading...
-            </>
-          ) : (
-            <>
-              <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
+        </div>
+      ) : (
+        <>
+          {/* Upload document section - Only show if no document uploaded */}
+          <div className="upload-section">
+            <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
               Upload Document
-            </>
-          )}
-        </Button>
-      </div>
+            </h4>
+
+            {/* Expiry Date Input */}
+            {hasExpiration && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Expiry Date
+                </label>
+                <input
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  style={{ maxWidth: "300px" }}
+                  required={hasExpiration}
+                />
+              </div>
+            )}
+
+            {/* File Upload */}
+            <input
+              type="file"
+              id={`file-${documentType}`}
+              accept="image/jpeg,image/jpg,image/png,application/pdf"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleFileUpload(file);
+                }
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (hasExpiration && !expiryDate) {
+                  alert("Please enter the expiry date first");
+                  return;
+                }
+                document.getElementById(`file-${documentType}`)?.click();
+              }}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <span className="loading-spinner"></span>
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
+                  Upload Document
+                </>
+              )}
+            </Button>
+          </div>
+        </>
+      )}
     </StepContentWrapper>
   );
 }
