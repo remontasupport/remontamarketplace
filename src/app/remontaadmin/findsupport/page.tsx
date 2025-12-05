@@ -15,4 +15,4 @@ export default function FindSupportAdminPage() {
       <SearchSupport />
     </div>
   )
-}
+};
