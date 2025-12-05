@@ -1,5 +1,9 @@
 // import { Metadata } from 'next'
+
 // import SearchSupport from '@/app/landing/SearchSupport'
+
+// import SearchSupport from '@/components/SearchSupport'
+
 
 // export const metadata: Metadata = {
 //   title: 'Find Support - Admin | Remonta Services',
@@ -15,4 +19,8 @@
 //       <SearchSupport />
 //     </div>
 //   )
+
 // }
+
+// };
+
