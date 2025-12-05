@@ -17,6 +17,7 @@ import {
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/requirements-setup.css";
 import { RequirementDocument } from "@/hooks/queries/useWorkerRequirements";
+import Loader from "@/components/ui/Loader";
 
 interface GenericComplianceDocumentProps {
   data: any;
@@ -352,10 +353,7 @@ export default function GenericComplianceDocument({
               disabled={isUploading}
             >
               {isUploading ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Uploading...
-                </>
+                <Loader size="sm" />
               ) : (
                 <>
                   <ArrowUpTrayIcon className="w-4 h-4 mr-2" />

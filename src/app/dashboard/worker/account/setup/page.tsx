@@ -20,6 +20,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { ACCOUNT_SETUP_STEPS } from "@/config/accountSetupSteps";
+import Loader from "@/components/ui/Loader";
 
 // Helper function to parse location string
 // Format: "Street Address, City/Suburb, State PostalCode" or "City/Suburb, State PostalCode"
@@ -345,8 +346,8 @@ export default function AccountSetupPage() {
   if (status === "loading" || isLoadingProfile) {
     return (
       <DashboardLayout showProfileCard={false}>
-        <div className="form-page-container">
-          <p className="loading-text">Loading...</p>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
         </div>
       </DashboardLayout>
     );

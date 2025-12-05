@@ -15,6 +15,7 @@ import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateTrainingSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicTrainingSteps";
+import Loader from "@/components/ui/Loader";
 
 // Form data interface
 interface UploadedDocument {
@@ -126,7 +127,7 @@ export default function TrainingsSetupPage() {
         router.push(`/dashboard/worker/trainings/setup?step=${nextStepSlug}`);
       } else {
         // Last step completed
-        setSuccessMessage("Trainings setup completed!");
+        setSuccessMessage("Thank you for submitting your documents. Someone from our team will review them shortly");
         setTimeout(() => {
           router.push("/dashboard/worker");
         }, 2000);
@@ -163,8 +164,8 @@ export default function TrainingsSetupPage() {
   if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
     return (
       <DashboardLayout showProfileCard={false}>
-        <div className="form-page-container">
-          <p className="loading-text">Loading trainings...</p>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
         </div>
       </DashboardLayout>
     );
@@ -200,14 +201,14 @@ export default function TrainingsSetupPage() {
       >
         {/* Success Message */}
         {successMessage && (
-          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
+          <div className="form-success-message">
             {successMessage}
           </div>
         )}
 
         {/* General Error */}
         {errors.general && (
-          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
+          <div className="form-error-message">
             {errors.general}
           </div>
         )}

@@ -15,6 +15,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
+import Loader from "@/components/ui/Loader";
 
 // Use centralized step configuration
 const STEPS = SERVICES_SETUP_STEPS;
@@ -222,8 +223,8 @@ export default function ServicesSetupPage() {
   if (status === "loading" || isLoadingProfile) {
     return (
       <DashboardLayout showProfileCard={false}>
-        <div className="form-page-container">
-          <p className="loading-text">Loading...</p>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
         </div>
       </DashboardLayout>
     );

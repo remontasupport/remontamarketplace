@@ -16,6 +16,7 @@ import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorke
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
+import Loader from "@/components/ui/Loader";
 
 // Form data interface
 interface UploadedDocument {
@@ -187,8 +188,8 @@ export default function MandatoryRequirementsSetupPage() {
   if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
     return (
       <DashboardLayout showProfileCard={false}>
-        <div className="form-page-container">
-          <p className="loading-text">Loading compliance requirements...</p>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
         </div>
       </DashboardLayout>
     );

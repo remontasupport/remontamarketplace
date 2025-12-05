@@ -18,6 +18,12 @@
  *   - If NO: Allow upload new driver's license → Creates driver-license-vehicle with new file
  *
  * This prevents duplicate uploads and provides a seamless user experience regardless of upload order.
+ *
+ * **STATE PERSISTENCE**
+ *
+ * User decisions (accept/decline) are persisted in sessionStorage to survive page refreshes.
+ * This ensures the modal doesn't re-appear after the user has already made a choice.
+ * Storage is cleared when: user changes to "No", uploads a document, or completes setup.
  */
 
 import { useState, useEffect } from "react";
@@ -26,6 +32,34 @@ import { useQueryClient } from "@tanstack/react-query";
 import { TextField, SelectField, NumberField } from "@/components/forms/fields";
 import StepContentWrapper from "../shared/StepContentWrapper";
 import { useDriverLicense, useIdentityDocuments, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
+import Loader from "@/components/ui/Loader";
+
+// Storage keys for persisting user decisions
+const STORAGE_KEYS = {
+  DECLINED: 'driverLicense_declined',
+  ACCEPTED: 'driverLicense_accepted',
+} as const;
+
+// Helper functions for sessionStorage (SSR-safe)
+const getStorageValue = (key: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  return sessionStorage.getItem(key) === 'true';
+};
+
+const setStorageValue = (key: string, value: boolean) => {
+  if (typeof window === 'undefined') return;
+  if (value) {
+    sessionStorage.setItem(key, 'true');
+  } else {
+    sessionStorage.removeItem(key);
+  }
+};
+
+const clearDriverLicenseStorage = () => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(STORAGE_KEYS.DECLINED);
+  sessionStorage.removeItem(STORAGE_KEYS.ACCEPTED);
+};
 
 interface Step4PersonalInfoProps {
   data: {
@@ -46,8 +80,15 @@ export default function Step4PersonalInfo({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [userDeclinedUseExisting, setUserDeclinedUseExisting] = useState(false);
-  const [userAcceptedUseExisting, setUserAcceptedUseExisting] = useState(false);
+
+  // Persistent state using sessionStorage (survives page refreshes)
+  const [userDeclinedUseExisting, setUserDeclinedUseExisting] = useState(() =>
+    getStorageValue(STORAGE_KEYS.DECLINED)
+  );
+
+  const [userAcceptedUseExisting, setUserAcceptedUseExisting] = useState(() =>
+    getStorageValue(STORAGE_KEYS.ACCEPTED)
+  );
 
   // Use custom hooks - handles all fetching and caching
   const { driverLicense, isLoading: isCheckingDocument, hasDriverLicense } = useDriverLicense();
@@ -76,6 +117,7 @@ export default function Step4PersonalInfo({
       setUserDeclinedUseExisting(false);
       setUserAcceptedUseExisting(false);
       setShowConfirmDialog(false);
+      clearDriverLicenseStorage();
       return;
     }
 
@@ -83,12 +125,13 @@ export default function Step4PersonalInfo({
       data.hasVehicle === "Yes" &&
       has100PointsDriverLicense &&
       !hasDriverLicense && // Don't show if already has driver-license-vehicle
-      !userDeclinedUseExisting // Don't show if user already declined
+      !userDeclinedUseExisting && // Don't show if user already declined
+      !userAcceptedUseExisting // Don't show if user already accepted
     ) {
       console.log("🔔 User has driver's license from 100 Points ID - showing confirmation dialog");
       setShowConfirmDialog(true);
     }
-  }, [data.hasVehicle, has100PointsDriverLicense, hasDriverLicense, userDeclinedUseExisting]);
+  }, [data.hasVehicle, has100PointsDriverLicense, hasDriverLicense, userDeclinedUseExisting, userAcceptedUseExisting]);
 
   // Handle user accepting to use existing driver's license from 100 Points ID
   const handleUseExistingLicense = () => {
@@ -99,6 +142,10 @@ export default function Step4PersonalInfo({
     setUserAcceptedUseExisting(true);
     setShowConfirmDialog(false);
 
+    // Persist decision to sessionStorage (survives page refreshes)
+    setStorageValue(STORAGE_KEYS.ACCEPTED, true);
+    setStorageValue(STORAGE_KEYS.DECLINED, false);
+
     console.log("✅ User accepted to use existing driver's license from 100 Points ID (no new entry created)");
   };
 
@@ -106,6 +153,11 @@ export default function Step4PersonalInfo({
   const handleDeclineExisting = () => {
     setShowConfirmDialog(false);
     setUserDeclinedUseExisting(true);
+
+    // Persist decision to sessionStorage (survives page refreshes)
+    setStorageValue(STORAGE_KEYS.DECLINED, true);
+    setStorageValue(STORAGE_KEYS.ACCEPTED, false);
+
     console.log("👤 User declined to use existing license - showing upload option");
   };
 
@@ -152,6 +204,9 @@ export default function Step4PersonalInfo({
       await queryClient.invalidateQueries({
         queryKey: identityDocumentsKeys.all,
       });
+
+      // Clear sessionStorage since user has now uploaded their own document
+      clearDriverLicenseStorage();
 
       console.log("✅ Driver's license uploaded successfully");
     } catch (error: any) {
@@ -308,9 +363,7 @@ export default function Step4PersonalInfo({
               {isCheckingDocument ? (
                 // Loading state while checking for existing document
                 <div style={{ padding: "1rem 0" }}>
-                  <p style={{ color: "#6b7280", fontSize: "0.875rem" }}>
-                    Checking for existing driver's license...
-                  </p>
+                  <Loader size="sm" />
                 </div>
               ) : hasAnyLicense ? (
                 // Document exists (either uploaded here or from 100 Points ID)
@@ -378,9 +431,9 @@ export default function Step4PersonalInfo({
                     </p>
                   )}
                   {isUploading && (
-                    <p style={{ color: "#6b7280", fontSize: "0.875rem", marginTop: "0.5rem" }}>
-                      Uploading...
-                    </p>
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <Loader size="sm" />
+                    </div>
                   )}
                 </div>
               ) : (
@@ -407,7 +460,7 @@ export default function Step4PersonalInfo({
                     className="btn-primary-brand"
                     style={{ maxWidth: "300px", cursor: "pointer" }}
                   >
-                    {isUploading ? "Uploading..." : "Upload Photo"}
+                    {isUploading ? <Loader size="sm" /> : "Upload Photo"}
                   </button>
                   {uploadError && (
                     <p style={{ color: "#dc2626", fontSize: "0.875rem", marginTop: "0.5rem" }}>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -18,6 +18,16 @@ import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/co
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
+
+// Route-to-section mapping
+
+const getSectionFromPath = (path: string): string | null => {
+  if (path.includes('/account/')) return 'account-details';
+  if (path.includes('/requirements/')) return 'requirements';
+  if (path.includes('/trainings/')) return 'trainings';
+  if (path.includes('/services/')) return 'services';
+  return null;
+};
 
 interface SubMenuItem {
   name: string
@@ -110,20 +120,53 @@ export default function Sidebar() {
       items: servicesItems
     }
   ]
-  const pathname = usePathname()
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    'account-details': false,
-    'requirements': false,
-    'trainings': false,
-    'services': false
-  })
+  const pathname = usePathname();
+  const previousSectionRef = useRef<string | null>(getSectionFromPath(pathname));
+  const [shouldTransition, setShouldTransition] = useState(false);
 
+  // State: Only current section open based on route
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const currentSection = getSectionFromPath(pathname);
+    return {
+      'account-details': currentSection === 'account-details',
+      'requirements': currentSection === 'requirements',
+      'trainings': currentSection === 'trainings',
+      'services': currentSection === 'services',
+    };
+  });
+
+  // Auto-expand current section and collapse others on route change
+  useEffect(() => {
+    const currentSection = getSectionFromPath(pathname);
+    if (currentSection) {
+      // Check if section actually changed
+      const sectionChanged = previousSectionRef.current !== currentSection;
+
+      if (sectionChanged) {
+        // Enable transitions only when section changes
+        setShouldTransition(true);
+        previousSectionRef.current = currentSection;
+
+        // Close all sections, open only current
+        setOpenSections({
+          'account-details': currentSection === 'account-details',
+          'requirements': currentSection === 'requirements',
+          'trainings': currentSection === 'trainings',
+          'services': currentSection === 'services',
+        });
+
+        // Disable transitions after animation completes
+        setTimeout(() => setShouldTransition(false), 500);
+      }
+    }
+  }, [pathname]);
+
+  // Manual toggle (no persistence - navigation controls state)
   const toggleSection = (sectionId: string) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId]
-    }))
-  }
+    setShouldTransition(true);
+    setOpenSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+    setTimeout(() => setShouldTransition(false), 500);
+  };
 
   return (
     <aside className="dashboard-sidebar">
@@ -168,25 +211,23 @@ export default function Sidebar() {
                 )}
               </button>
 
-              {isOpen && (
-                <ul className="nav-dropdown-list">
-                  {section.items.map((item) => {
-                    const isActive = pathname === item.href
+              <ul className={`nav-dropdown-list ${isOpen ? 'open' : 'closed'} ${!shouldTransition ? 'no-transition' : ''}`}>
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href
 
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={`nav-dropdown-item ${isActive ? 'active' : ''}`}
-                        >
-                          <span className="nav-dropdown-bullet"></span>
-                          <span>{item.name}</span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`nav-dropdown-item ${isActive ? 'active' : ''}`}
+                      >
+                        <span className="nav-dropdown-bullet"></span>
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           )
         })}

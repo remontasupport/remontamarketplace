@@ -195,6 +195,71 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s ease-in-out,
+              transform 0.4s ease-in-out;
+}
+
+.nav-dropdown-list.open {
+  max-height: 1000px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.nav-dropdown-list.closed {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+.nav-dropdown-list.no-transition {
+  transition: none !important;
+}
+
+/* ============================================
+   LOADER / SPINNER
+   ============================================ */
+
+.loader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-spinner {
+  border: 2px solid rgba(13, 148, 136, 0.2);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loader-sm .loader-spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.loader-md .loader-spinner {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+}
+
+.loader-lg .loader-spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .nav-dropdown-item {
@@ -1099,6 +1164,11 @@
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 500;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  margin-left: 43px;
+  max-width: fit-content;
+  box-sizing: border-box;
 }
 
 .form-success-message {
@@ -1110,6 +1180,11 @@
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 500;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  margin-left: 32px;
+  max-width: fit-content;
+  box-sizing: border-box;
 }
 
 /* Form Actions */
