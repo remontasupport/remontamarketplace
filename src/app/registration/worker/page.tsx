@@ -90,11 +90,6 @@ export default function ContractorOnboarding() {
     // Force a re-render to display errors
     setForceUpdate(prev => prev + 1);
 
-    console.log("Validating step:", step);
-    console.log("Fields:", fieldsToValidate);
-    console.log("Is valid:", isValid);
-    console.log("Errors:", errors);
-
     return isValid;
   };
 
@@ -155,10 +150,8 @@ export default function ContractorOnboarding() {
 
       // Store the Blob URL (not the file)
       setValue("photos", [result.url], { shouldValidate: true });
-      console.log('✅ Photo uploaded successfully:', result.url);
 
     } catch (error: any) {
-      console.error('❌ Photo upload failed:', error);
       setPhotoUploadError(`Failed to upload photo: ${error.message}`);
       setValue("photos", [], { shouldValidate: true });
     } finally {
@@ -212,7 +205,6 @@ export default function ContractorOnboarding() {
                 return; // Don't proceed to next step
               }
             } catch (error) {
-              console.error("Error checking email:", error);
               // Continue anyway if the check fails (network error, etc.)
             }
           }
@@ -222,8 +214,6 @@ export default function ContractorOnboarding() {
         setCurrentStep(currentStep + 1);
       } else {
         // Validation failed - errors are now visible via trigger()
-        console.log("Validation failed for step:", currentStep, errors);
-
         // Scroll to first error after DOM updates
         setTimeout(() => {
           const firstErrorElement = document.querySelector('.text-red-500');
@@ -247,10 +237,7 @@ export default function ContractorOnboarding() {
 
   const onSubmit = async (data: ContractorFormData) => {
     try {
-      console.log("🚀 Submitting worker registration...");
       setIsLoading(true);
-
-      console.log(`📸 Submitting registration with photo URL: ${data.photos?.[0] || 'none'}`);
 
       // Submit registration (photos are already uploaded - just sending URLs)
       const response = await fetch('/api/auth/register', {
@@ -265,19 +252,14 @@ export default function ContractorOnboarding() {
 
       if (!response.ok) {
         // Handle error
-        console.error("❌ Registration failed:", result.error);
         alert(`Registration failed: ${result.error}`);
         setIsLoading(false);
         return;
       }
 
-      // Success!
-      console.log("✅ Registration successful:", result);
-
       // Redirect to success page
       window.location.href = `/registration/worker/success`;
     } catch (error) {
-      console.error("❌ Error during submission:", error);
       alert("An error occurred during registration. Please try again.");
       setIsLoading(false);
     }
@@ -318,10 +300,6 @@ export default function ContractorOnboarding() {
   }
 
   const onError = (errors: any) => {
-    console.log("❌ Form validation errors:", errors);
-    Object.keys(errors).forEach(key => {
-      console.log(`Field: ${key}, Message: ${errors[key]?.message}, Type: ${errors[key]?.type}`);
-    });
     // Errors are already displayed inline in the form
   };
 

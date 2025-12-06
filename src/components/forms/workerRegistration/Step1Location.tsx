@@ -44,7 +44,6 @@ export function Step1Location({ control, errors }: Step1LocationProps) {
     const fetchSuburbs = async () => {
       // Don't fetch if user just selected an item
       if (isSelectedRef.current) {
-        console.log('Skipping API call - item was selected');
         isSelectedRef.current = false;
         return;
       }
@@ -57,23 +56,17 @@ export function Step1Location({ control, errors }: Step1LocationProps) {
 
       setIsLoading(true);
       try {
-        console.log('Fetching suburbs for:', searchQuery);
         const response = await fetch(`/api/suburbs?q=${encodeURIComponent(searchQuery)}`);
         const data = await response.json();
-
-        console.log('API Response:', data);
 
         if (Array.isArray(data) && data.length > 0) {
           setSuburbs(data);
           setShowDropdown(true);
-          console.log('Found suburbs:', data.length);
         } else {
           setSuburbs([]);
           setShowDropdown(false);
-          console.log('No suburbs found');
         }
       } catch (error) {
-        console.error('Error fetching suburbs:', error);
         setSuburbs([]);
         setShowDropdown(false);
       } finally {
@@ -130,7 +123,6 @@ export function Step1Location({ control, errors }: Step1LocationProps) {
                             const selectedValue = `${suburb.name}, ${suburb.state.abbreviation} ${suburb.postcode}`;
                             // Set ref flag synchronously BEFORE updating search query
                             isSelectedRef.current = true;
-                            console.log('Selected:', selectedValue);
                             setShowDropdown(false);
                             setSuburbs([]);
                             field.onChange(selectedValue);
