@@ -1,3 +1,9 @@
 {
-  "buildCommand": "npx prisma generate && npx prisma generate --schema=prisma/auth-schema.prisma && next build"
+  "buildCommand": "npx prisma generate && npx prisma generate --schema=prisma/auth-schema.prisma && next build",
+  "crons": [
+    {
+      "path": "/api/workers/process-registrations",
+      "schedule": "* * * * *"
+    }
+  ]
 }

@@ -20,6 +20,7 @@ import { SERVICE_OPTIONS, TOTAL_STEPS } from "@/constants";
 import { getStepValidationFields } from "@/utils/registrationUtils";
 import { formatWorkerDataForDatabase } from "@/utils/formatWorkerData";
 import { useCategories, transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
+import { fetchWithRetry } from "@/utils/apiRetry";
 
 
 export default function ContractorOnboarding() {
@@ -31,6 +32,8 @@ export default function ContractorOnboarding() {
   const [emailExistsError, setEmailExistsError] = useState<string>("");
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadedPhotoName, setUploadedPhotoName] = useState<string>("");
+  const [registrationJobId, setRegistrationJobId] = useState<string | null>(null);
+  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'queued' | 'processing' | 'completed' | 'failed'>('idle');
 
   // Fetch categories from database with caching
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
@@ -180,12 +183,16 @@ export default function ContractorOnboarding() {
 
           if (email) {
             try {
-              const response = await fetch('/api/auth/check-email', {
+              // Use retry logic for email check (handles temporary failures)
+              const response = await fetchWithRetry('/api/auth/check-email', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ email }),
+              }, {
+                maxRetries: 2, // Fewer retries for email check
+                initialDelay: 500,
               });
 
               const result = await response.json();
@@ -235,17 +242,66 @@ export default function ContractorOnboarding() {
     }
   };
 
+  // Poll registration job status
+  useEffect(() => {
+    if (!registrationJobId || registrationStatus === 'completed' || registrationStatus === 'failed') {
+      return;
+    }
+
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/auth/registration-status/${registrationJobId}`);
+        const result = await response.json();
+
+        if (response.ok) {
+          const status = result.status;
+
+          if (status === 'completed') {
+            setRegistrationStatus('completed');
+            setIsLoading(false);
+            // Redirect to success page after brief delay
+            setTimeout(() => {
+              window.location.href = `/registration/worker/success`;
+            }, 1000);
+          } else if (status === 'failed') {
+            setRegistrationStatus('failed');
+            setIsLoading(false);
+            alert('Registration failed. Please try again or contact support.');
+          } else if (status === 'retrying') {
+            setRegistrationStatus('processing');
+          }
+        }
+      } catch (error) {
+        // Continue polling on error
+      }
+    };
+
+    // Poll every 2 seconds
+    const intervalId = setInterval(checkStatus, 2000);
+
+    // Initial check
+    checkStatus();
+
+    return () => clearInterval(intervalId);
+  }, [registrationJobId, registrationStatus]);
+
   const onSubmit = async (data: ContractorFormData) => {
     try {
       setIsLoading(true);
+      setRegistrationStatus('queued');
 
-      // Submit registration (photos are already uploaded - just sending URLs)
-      const response = await fetch('/api/auth/register', {
+      // Submit registration to async queue (handles 1000+ concurrent submissions)
+      // User gets instant response - processing happens in background
+      const response = await fetchWithRetry('/api/auth/register-async', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
+      }, {
+        maxRetries: 3,
+        initialDelay: 1000,
+        maxDelay: 5000,
       });
 
       const result = await response.json();
@@ -254,14 +310,21 @@ export default function ContractorOnboarding() {
         // Handle error
         alert(`Registration failed: ${result.error}`);
         setIsLoading(false);
+        setRegistrationStatus('failed');
         return;
       }
 
-      // Redirect to success page
-      window.location.href = `/registration/worker/success`;
-    } catch (error) {
-      alert("An error occurred during registration. Please try again.");
+      // Job queued successfully - start polling for status
+      setRegistrationJobId(result.jobId);
+      setRegistrationStatus('processing');
+
+      // Note: isLoading will be set to false when job completes (in useEffect)
+    } catch (error: any) {
+      // Show user-friendly error message
+      const errorMessage = error?.message || "An error occurred during registration. Please try again.";
+      alert(errorMessage);
       setIsLoading(false);
+      setRegistrationStatus('failed');
     }
   };
 
@@ -430,7 +493,11 @@ export default function ContractorOnboarding() {
                   disabled={isLoading}
                   className="flex items-center gap-2"
                 >
-                  {isLoading ? "Submitting..." : "Complete Signup"}
+                  {registrationStatus === 'queued' && "Queuing registration..."}
+                  {registrationStatus === 'processing' && "Processing registration..."}
+                  {registrationStatus === 'completed' && "✓ Registration complete!"}
+                  {registrationStatus === 'failed' && "Registration failed"}
+                  {registrationStatus === 'idle' && "Complete Signup"}
                 </Button>
               ) : (
                 <Button
