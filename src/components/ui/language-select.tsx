@@ -95,7 +95,7 @@ export function LanguageSelect({ value = [], onChange, error }: LanguageSelectPr
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
+          <div className="absolute z-50 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-hidden">
             {/* Search Input */}
             <div className="p-3 border-b border-gray-200">
               <div className="relative">

@@ -106,53 +106,40 @@ export default function ContractorOnboarding() {
 
   const handlePhotoUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    const currentPhotos = getValues("photos") || [];
 
     // Clear previous error
     setPhotoUploadError("");
 
-    // Track rejected files for user feedback
-    const rejectedFiles: string[] = [];
+    if (files.length === 0) return;
+
+    // Only take the first file (single photo upload)
+    const file = files[0];
 
     // Allowed image formats for profile photos (security-safe raster formats only)
     const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
-    const validFiles = files.filter(file => {
-      const isValidType = ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase());
-      const isValidSize = file.size <= 10 * 1024 * 1024;
+    const isValidType = ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase());
+    const isValidSize = file.size <= 10 * 1024 * 1024;
 
-      if (!isValidType) {
-        rejectedFiles.push(`${file.name} (only JPG, PNG, and WebP allowed)`);
-      } else if (!isValidSize) {
-        rejectedFiles.push(`${file.name} (exceeds 10MB)`);
-      }
-
-      return isValidType && isValidSize;
-    });
-    
-    // Check if adding would exceed limit
-    const totalPhotos = currentPhotos.length + validFiles.length;
-    const photosToAdd = validFiles.slice(0, Math.max(0, 5 - currentPhotos.length));
-    const exceededLimit = totalPhotos > 5;
-
-    // Set error message if there are rejected files or limit exceeded
-    if (rejectedFiles.length > 0) {
-      setPhotoUploadError(`Rejected: ${rejectedFiles.join(", ")}`);
-    } else if (exceededLimit) {
-      setPhotoUploadError(`Only ${photosToAdd.length} photo(s) added. Maximum 5 photos allowed.`);
+    if (!isValidType) {
+      setPhotoUploadError(`${file.name} - Only JPG, PNG, and WebP images are allowed`);
+      return;
     }
 
-    const newPhotos = [...currentPhotos, ...photosToAdd].slice(0, 5);
-    setValue("photos", newPhotos, { shouldValidate: true });
-  }, [setValue, getValues]);
+    if (!isValidSize) {
+      setPhotoUploadError(`${file.name} - File exceeds 10MB limit`);
+      return;
+    }
 
-  const removePhoto = useCallback((index: number) => {
-    const currentPhotos = getValues("photos") || [];
-    const updatedPhotos = currentPhotos.filter((_, i) => i !== index);
-    setValue("photos", updatedPhotos, { shouldValidate: true });
-    // Clear error when removing photos
+    // Replace existing photo with new one (single photo only)
+    setValue("photos", [file], { shouldValidate: true });
+  }, [setValue]);
+
+  const removePhoto = useCallback(() => {
+    setValue("photos", [], { shouldValidate: true });
+    // Clear error when removing photo
     setPhotoUploadError("");
-  }, [setValue, getValues]);
+  }, [setValue]);
 
   const nextStep = async () => {
     if (currentStep < TOTAL_STEPS) {
@@ -333,7 +320,7 @@ export default function ContractorOnboarding() {
               <Progress value={progress} className="w-full" />
             </div>
           </CardHeader>
-          <CardContent className="space-y-6 px-6 sm:px-8 lg:px-12 py-8">
+          <CardContent className="space-y-6 px-6 sm:px-8 lg:px-12 py-8 pb-12">
             {/* Conditional rendering - only renders the active step */}
             {currentStep === 1 && (
               <Step1Location control={control} errors={errors} />

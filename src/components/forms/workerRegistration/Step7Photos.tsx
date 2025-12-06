@@ -32,7 +32,7 @@ const Step7PhotosComponent = function Step7Photos({
       <div>
         <Label className="text-lg font-poppins font-medium">Photo Submission - Upload <span className="text-red-500">*</span></Label>
         <p className="text-sm font-poppins text-gray-600 mt-2 mb-4">
-          Please attach high-quality photo(s) of yourself (JPG, PNG, or WebP format only). Ensure the photo is:
+          Please attach one high-quality photo of yourself (JPG, PNG, or WebP format only). Ensure the photo is:
         </p>
         <div className="space-y-2 mb-4 text-sm font-poppins text-gray-700">
           <div className="flex items-center gap-2">
@@ -56,7 +56,6 @@ const Step7PhotosComponent = function Step7Photos({
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
           <input
             type="file"
-            multiple
             accept="image/jpeg,image/jpg,image/png,image/webp"
             onChange={handlePhotoUpload}
             className="hidden"
@@ -71,7 +70,7 @@ const Step7PhotosComponent = function Step7Photos({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
             </div>
-            <span className="text-lg font-poppins text-gray-700">Choose File(s)</span>
+            <span className="text-lg font-poppins text-gray-700">Choose File</span>
           </label>
         </div>
 
@@ -83,22 +82,18 @@ const Step7PhotosComponent = function Step7Photos({
 
         {watchedPhotos && watchedPhotos.length > 0 && (
           <div className="mt-4">
-            <p className="text-sm font-poppins text-gray-600 mb-2">Uploaded photos:</p>
-            <div className="grid grid-cols-2 gap-2">
-              {watchedPhotos.map((file: File, index: number) => (
-                <div key={index} className="relative bg-gray-100 rounded-lg p-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-poppins truncate">{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(index)}
-                      className="ml-2 text-red-500 hover:text-red-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <p className="text-sm font-poppins text-gray-600 mb-2">Uploaded photo:</p>
+            <div className="relative bg-gray-100 rounded-lg p-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-poppins truncate">{watchedPhotos[0].name}</span>
+                <button
+                  type="button"
+                  onClick={() => removePhoto(0)}
+                  className="ml-2 text-red-500 hover:text-red-700"
+                >
+                  ×
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -109,10 +104,10 @@ const Step7PhotosComponent = function Step7Photos({
         <Label className="text-lg font-poppins font-medium">Consent to Share Profile with Clients <span className="text-red-500">*</span></Label>
         <Card className="mt-2 p-4 border border-gray-200">
           <p className="text-sm font-poppins text-gray-700 mb-3">
-            By ticking this box, I consent to <strong>Remonta</strong> sharing my submitted profile information and photo(s) with potential clients.
+            By ticking this box, I consent to <strong>Remonta</strong> sharing my submitted profile information and photo with potential clients.
           </p>
           <p className="text-sm font-poppins text-gray-700 mb-3">
-            As part of working with <strong>Remonta</strong>, I understand and agree that my submitted profile information and photo(s) will be shared with potential clients to help them choose the right worker for their needs.
+            As part of working with <strong>Remonta</strong>, I understand and agree that my submitted profile information and photo will be shared with potential clients to help them choose the right worker for their needs.
           </p>
           <p className="text-sm font-poppins text-gray-700 mb-4">
             This is a necessary requirement to be considered for work opportunities.
@@ -139,7 +134,7 @@ const Step7PhotosComponent = function Step7Photos({
         <Label className="text-lg font-poppins font-medium">Consent for Marketing and Social Media (Optional but Recommended)</Label>
         <Card className="mt-2 p-4 border border-gray-200">
           <p className="text-sm font-poppins text-gray-700 mb-3">
-            By ticking this box, I consent to <strong>Remonta</strong> using my submitted profile information and photo(s) for promotional purposes, including but not limited to the company website, social media channels, and marketing materials.
+            By ticking this box, I consent to <strong>Remonta</strong> using my submitted profile information and photo for promotional purposes, including but not limited to the company website, social media channels, and marketing materials.
           </p>
           <p className="text-sm font-poppins text-gray-700 mb-3">
             This helps promote my services to a wider audience and may result in more opportunities.
