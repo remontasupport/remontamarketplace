@@ -12,6 +12,8 @@
  */
 
 import PgBoss from 'pg-boss';
+import { authPrisma } from './auth-prisma';
+import { randomUUID } from 'crypto';
 
 // Queue configuration
 const QUEUE_CONFIG = {
@@ -21,6 +23,16 @@ const QUEUE_CONFIG = {
   // Performance tuning for high concurrency
   max: 10, // Max database connections for queue
 
+  // Schema management - IMPORTANT for fixing null return issue
+  schema: 'pgboss', // Explicitly set schema name
+
+  // Clock skew tolerance - CRITICAL FIX for null return issue
+  // Set to maximum allowed value to minimize clock checks
+  clockMonitorIntervalMinutes: 10, // Check every 10 minutes (max allowed)
+
+  // Archive settings - prevent jobs from expiring due to clock skew
+  archiveCompletedAfterSeconds: 60 * 60 * 24, // Keep completed jobs for 24 hours
+
   // Monitoring
   monitorStateIntervalSeconds: 60, // Check queue health every 60s
 };
@@ -29,40 +41,51 @@ const QUEUE_CONFIG = {
 let bossInstance: PgBoss | null = null;
 
 /**
+ * Get database time to avoid clock skew issues
+ */
+async function getDatabaseTime(): Promise<Date> {
+  try {
+    const result = await authPrisma.$queryRaw<any[]>`SELECT NOW() as db_time`;
+    return new Date(result[0].db_time);
+  } catch (error) {
+    console.warn('⚠️ Could not get database time, using local time:', error);
+    return new Date();
+  }
+}
+
+/**
  * Get or create PgBoss instance
  */
 export async function getQueueInstance(): Promise<PgBoss> {
   if (bossInstance) {
-    console.log('♻️ Reusing existing queue instance');
     return bossInstance;
   }
 
-  console.log('🔧 Creating new queue instance...');
-  console.log('🔗 Database URL exists:', !!(process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL));
-
   bossInstance = new PgBoss(QUEUE_CONFIG);
 
-  // Handle errors with detailed logging
+  // Handle errors
   bossInstance.on('error', (error) => {
-    console.error('❌ pg-boss error event:', error);
-    console.error('Error type:', error.name);
-    console.error('Error message:', error.message);
-  });
-
-  // Monitor state changes
-  bossInstance.on('monitor-states', (stats) => {
-    console.log('📊 Queue stats:', stats);
+    console.error('pg-boss error:', error);
   });
 
   // Start the queue manager
-  console.log('⚙️ Starting queue manager...');
-
   try {
     await bossInstance.start();
-    console.log('✅ Queue service started successfully');
+
+    // Set database timezone to UTC to fix clock skew issues
+    try {
+      const db = (bossInstance as any).db;
+      if (db && db.pool) {
+        await db.executeSql('SET TIME ZONE \'UTC\'');
+      }
+    } catch (tzError) {
+      // Ignore timezone errors
+    }
+
+    // Wait for schema initialization to complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
   } catch (startError: any) {
-    console.error('❌ Failed to start pg-boss:', startError);
-    bossInstance = null; // Clear failed instance
+    bossInstance = null;
     throw startError;
   }
 
@@ -75,8 +98,7 @@ export async function getQueueInstance(): Promise<PgBoss> {
 export async function stopQueue(): Promise<void> {
   if (bossInstance) {
     await bossInstance.stop();
-    bossInstance = null; // Clear singleton so it can be recreated
-    console.log('✅ Queue service stopped');
+    bossInstance = null;
   }
 }
 
@@ -139,7 +161,8 @@ export const JOB_TYPES = {
 // ============================================
 
 /**
- * Add worker registration job to queue
+ * Add worker registration job to queue (direct DB insertion)
+ * FALLBACK: Due to clock skew issues, we insert directly into pgboss.job table
  *
  * @param data - Worker registration data
  * @returns Job ID
@@ -148,51 +171,67 @@ export async function queueWorkerRegistration(
   data: WorkerRegistrationJobData
 ): Promise<string> {
   try {
-    const boss = await getQueueInstance();
+    // Get database time to avoid clock skew
+    const dbTime = await getDatabaseTime();
 
-    console.log('📤 Attempting to queue registration for:', data.email);
+    // Generate UUID for job ID
+    const jobId = randomUUID();
 
-    // Send job to queue (removed singletonKey which was causing null returns)
-    const jobId = await boss.send(
-      JOB_TYPES.WORKER_REGISTRATION,
-      data,
-      {
-        // Job options
-        retryLimit: 3,
-        retryDelay: 60,
-        retryBackoff: true,
-        expireIn: '1 day', // Jobs expire after 1 day if not completed
-        priority: 0, // Priority (higher = processed first)
-      }
-    );
+    // Direct database insertion - bypasses pg-boss.send() to avoid clock skew issues
+    await authPrisma.$executeRaw`
+      INSERT INTO pgboss.job (
+        id,
+        name,
+        data,
+        state,
+        retry_limit,
+        retry_delay,
+        retry_backoff,
+        start_after,
+        created_on,
+        keep_until,
+        priority
+      )
+      VALUES (
+        ${jobId}::uuid,
+        ${JOB_TYPES.WORKER_REGISTRATION},
+        ${JSON.stringify(data)}::jsonb,
+        'created',
+        3,
+        60,
+        true,
+        NOW(),
+        NOW(),
+        NOW() + INTERVAL '72 hours',
+        0
+      )
+    `;
 
-    if (!jobId) {
-      console.error('❌ boss.send() returned null/undefined');
-      console.error('❌ This usually means pg-boss had an internal error');
-      throw new Error('Failed to queue worker registration - boss.send returned null. Check database connection.');
-    }
-
-    console.log('✅ Job queued successfully:', jobId);
     return jobId;
 
   } catch (error: any) {
-    console.error('❌ Error in queueWorkerRegistration:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      code: error.code,
-      name: error.name,
-    });
+    console.error('Error queueing registration:', error);
     throw error;
   }
 }
 
 /**
- * Get job status
+ * Get job status (direct DB query to avoid pg-boss issues)
  */
 export async function getJobStatus(jobId: string): Promise<any> {
-  const boss = await getQueueInstance();
-  return await boss.getJobById(jobId);
+  try {
+    const result = await authPrisma.$queryRawUnsafe<any[]>(`
+      SELECT id, name, state, priority, retry_limit, retry_count,
+             start_after, started_on, created_on, completed_on, keep_until
+      FROM pgboss.job
+      WHERE id = '${jobId}'
+      LIMIT 1
+    `);
+
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    return null;
+  }
 }
 
 /**

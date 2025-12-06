@@ -33,7 +33,7 @@ export default function ContractorOnboarding() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [uploadedPhotoName, setUploadedPhotoName] = useState<string>("");
   const [registrationJobId, setRegistrationJobId] = useState<string | null>(null);
-  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'queued' | 'processing' | 'completed' | 'failed'>('idle');
+  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'processing' | 'completed'>('idle');
 
   // Fetch categories from database with caching
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
@@ -244,7 +244,7 @@ export default function ContractorOnboarding() {
 
   // Poll registration job status
   useEffect(() => {
-    if (!registrationJobId || registrationStatus === 'completed' || registrationStatus === 'failed') {
+    if (!registrationJobId || registrationStatus === 'completed') {
       return;
     }
 
@@ -262,14 +262,12 @@ export default function ContractorOnboarding() {
             // Redirect to success page after brief delay
             setTimeout(() => {
               window.location.href = `/registration/worker/success`;
-            }, 1000);
+            }, 500);
           } else if (status === 'failed') {
-            setRegistrationStatus('failed');
             setIsLoading(false);
             alert('Registration failed. Please try again or contact support.');
-          } else if (status === 'retrying') {
-            setRegistrationStatus('processing');
           }
+          // Continue polling for other statuses (processing, retrying, etc.)
         }
       } catch (error) {
         // Continue polling on error
@@ -288,10 +286,9 @@ export default function ContractorOnboarding() {
   const onSubmit = async (data: ContractorFormData) => {
     try {
       setIsLoading(true);
-      setRegistrationStatus('queued');
 
       // Submit registration to async queue (handles 1000+ concurrent submissions)
-      // User gets instant response - processing happens in background
+      // Queue processes automatically - user will be redirected when complete
       const response = await fetchWithRetry('/api/auth/register-async', {
         method: 'POST',
         headers: {
@@ -310,11 +307,10 @@ export default function ContractorOnboarding() {
         // Handle error
         alert(`Registration failed: ${result.error}`);
         setIsLoading(false);
-        setRegistrationStatus('failed');
         return;
       }
 
-      // Job queued successfully - start polling for status
+      // Job queued successfully - start polling for completion
       setRegistrationJobId(result.jobId);
       setRegistrationStatus('processing');
 
@@ -324,7 +320,6 @@ export default function ContractorOnboarding() {
       const errorMessage = error?.message || "An error occurred during registration. Please try again.";
       alert(errorMessage);
       setIsLoading(false);
-      setRegistrationStatus('failed');
     }
   };
 
@@ -493,11 +488,9 @@ export default function ContractorOnboarding() {
                   disabled={isLoading}
                   className="flex items-center gap-2"
                 >
-                  {registrationStatus === 'queued' && "Queuing registration..."}
-                  {registrationStatus === 'processing' && "Processing registration..."}
+                  {isLoading && registrationStatus !== 'completed' && "Submitting..."}
                   {registrationStatus === 'completed' && "✓ Registration complete!"}
-                  {registrationStatus === 'failed' && "Registration failed"}
-                  {registrationStatus === 'idle' && "Complete Signup"}
+                  {!isLoading && registrationStatus === 'idle' && "Complete Signup"}
                 </Button>
               ) : (
                 <Button

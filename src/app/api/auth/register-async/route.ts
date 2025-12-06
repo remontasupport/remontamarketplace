@@ -17,6 +17,7 @@ import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
 import { verifyRecaptcha } from '@/lib/recaptcha';
 import { queueWorkerRegistration, type WorkerRegistrationJobData } from '@/lib/queue';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
+import { triggerQueueProcessing } from '@/lib/queueTrigger';
 
 export async function POST(request: Request) {
   try {
@@ -107,7 +108,6 @@ export async function POST(request: Request) {
         geocodedLocation = await geocodeWorkerLocation(location);
       } catch (geocodeError) {
         // Will be geocoded in background worker if it fails here
-        console.error('⚠️ Geocoding failed (will retry in background):', geocodeError);
       }
     }
 
@@ -144,6 +144,15 @@ export async function POST(request: Request) {
     const jobId = await queueWorkerRegistration(jobData);
 
     // ============================================
+    // TRIGGER AUTOMATIC PROCESSING
+    // ============================================
+    // Trigger processor in background (debounced, singleton pattern)
+    // Safe for high concurrency - only one processor runs at a time
+    triggerQueueProcessing().catch(() => {
+      // Non-critical - Vercel cron will pick it up anyway
+    });
+
+    // ============================================
     // INSTANT RESPONSE TO USER
     // ============================================
     return NextResponse.json(
@@ -155,8 +164,6 @@ export async function POST(request: Request) {
       { status: 202 } // 202 Accepted - Processing asynchronously
     );
   } catch (error: any) {
-    console.error('❌ Registration queue error:', error);
-
     return NextResponse.json(
       {
         error: 'Failed to submit registration',

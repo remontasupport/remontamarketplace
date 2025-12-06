@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server';
 import { getQueueInstance, JOB_TYPES, type WorkerRegistrationJobData } from '@/lib/queue';
 import { processWorkerRegistration } from '@/lib/workers/workerRegistrationProcessor';
+import { authPrisma } from '@/lib/auth-prisma';
 
 /**
  * Verify authorization for background workers
@@ -27,6 +28,52 @@ function verifyAuthorization(request: Request): boolean {
   return authHeader === expectedAuth;
 }
 
+const BATCH_SIZE = 20;
+const CONCURRENCY = 10;
+
+async function processJobBatch(jobs: any[]) {
+  const results = [];
+
+  for (let i = 0; i < jobs.length; i += CONCURRENCY) {
+    const batch = jobs.slice(i, i + CONCURRENCY);
+
+    const batchResults = await Promise.all(
+      batch.map(async (job) => {
+        try {
+          const jobData = JSON.parse(job.data_json);
+          const result = await processWorkerRegistration(jobData);
+
+          if (result.success) {
+            await authPrisma.$executeRaw`
+              UPDATE pgboss.job
+              SET state = 'completed', completed_on = NOW()
+              WHERE id = ${job.id}::uuid
+            `;
+            return { jobId: job.id, status: 'completed', userId: result.userId };
+          } else {
+            throw new Error(result.error || 'Processing failed');
+          }
+        } catch (error: any) {
+          const newRetryCount = (job.retry_count || 0) + 1;
+          const newState = newRetryCount >= 3 ? 'failed' : 'retry';
+
+          await authPrisma.$executeRaw`
+            UPDATE pgboss.job
+            SET state = ${newState}, retry_count = ${newRetryCount}
+            WHERE id = ${job.id}::uuid
+          `;
+
+          return { jobId: job.id, status: newState, error: error.message };
+        }
+      })
+    );
+
+    results.push(...batchResults);
+  }
+
+  return results;
+}
+
 export async function GET(request: Request) {
   try {
     // ============================================
@@ -40,42 +87,45 @@ export async function GET(request: Request) {
     }
 
     // ============================================
-    // PROCESS QUEUE
+    // PROCESS QUEUE (OPTIMIZED FOR HIGH CONCURRENCY)
     // ============================================
-    const boss = await getQueueInstance();
 
-    // Register worker to process registration jobs
-    // Process up to 5 jobs concurrently
-    await boss.work(
-      JOB_TYPES.WORKER_REGISTRATION,
-      { teamSize: 5, teamConcurrency: 5 },
-      async (job: { data: WorkerRegistrationJobData; id: string }) => {
-        console.log(`🔄 Processing registration job ${job.id} for email: ${job.data.email}`);
+    // ATOMIC JOB LOCKING - Prevents race conditions
+    const lockedJobs = await authPrisma.$queryRawUnsafe<any[]>(`
+      WITH locked AS (
+        SELECT id
+        FROM pgboss.job
+        WHERE name = 'worker-registration'
+          AND state IN ('created', 'retry')
+        ORDER BY created_on ASC
+        LIMIT ${BATCH_SIZE}
+        FOR UPDATE SKIP LOCKED
+      )
+      UPDATE pgboss.job
+      SET state = 'active', started_on = NOW()
+      FROM locked
+      WHERE pgboss.job.id = locked.id
+      RETURNING pgboss.job.id, pgboss.job.data::text as data_json,
+                pgboss.job.retry_count
+    `);
 
-        const result = await processWorkerRegistration(job.data);
+    if (lockedJobs.length === 0) {
+      return NextResponse.json({
+        success: true,
+        processed: 0,
+        message: 'No pending jobs',
+      });
+    }
 
-        if (!result.success) {
-          // Job will be retried automatically (up to 3 times)
-          throw new Error(result.error || 'Registration processing failed');
-        }
-
-        console.log(`✅ Registration completed for user ${result.userId}`);
-
-        return result;
-      }
-    );
-
-    // Keep worker running for 50 seconds (Vercel function timeout is 60s)
-    // In production, this should be a long-running process or triggered by cron
-    await new Promise((resolve) => setTimeout(resolve, 50000));
+    // Process jobs in parallel
+    const results = await processJobBatch(lockedJobs);
 
     return NextResponse.json({
       success: true,
-      message: 'Worker completed processing cycle',
+      processed: results.length,
+      results: results,
     });
   } catch (error: any) {
-    console.error('❌ Worker error:', error);
-
     return NextResponse.json(
       {
         error: 'Worker processing failed',
