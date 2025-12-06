@@ -118,6 +118,7 @@ export async function POST(request: Request) {
       additionalInfo,
       consentProfileShare,
       consentMarketing,
+      photos, // Photo URLs (already uploaded to Blob)
     } = body;
 
     // ============================================
@@ -178,12 +179,18 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
 
     // ============================================
-    // UPLOAD PHOTOS TO VERCEL BLOB
+    // HANDLE PHOTOS (Already uploaded or upload now)
     // ============================================
 
     let photoUrls: string[] = [];
 
-    if (photoFiles.length > 0) {
+    // Check if photos are already uploaded (URLs provided in JSON body)
+    if (photos && Array.isArray(photos) && photos.length > 0 && typeof photos[0] === 'string') {
+      // Photos are already uploaded - use the URLs directly
+      photoUrls = photos;
+      console.log(`✅ Using pre-uploaded photo URLs: ${photoUrls.length} photo(s)`);
+    } else if (photoFiles.length > 0) {
+      // Legacy support: Photos sent as files - upload them now
       console.log(`📸 Uploading ${photoFiles.length} photos to Blob...`);
 
       for (let i = 0; i < photoFiles.length; i++) {

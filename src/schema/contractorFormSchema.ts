@@ -58,7 +58,7 @@ export const contractorFormSchema = z.object({
   additionalInfo: z.string().optional(),
 
   // Step 8 - Photos & Consent
-  photos: z.array(z.any()).length(1, "Please upload exactly one photo"),
+  photos: z.array(z.string().url()).length(1, "Please upload exactly one photo"),
   consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
   consentMarketing: z.boolean().optional(),
 

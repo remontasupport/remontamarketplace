@@ -29,6 +29,8 @@ export default function ContractorOnboarding() {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string>("");
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadedPhotoName, setUploadedPhotoName] = useState<string>("");
 
   // Fetch categories from database with caching
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
@@ -104,7 +106,7 @@ export default function ContractorOnboarding() {
     setValue("services", updatedServices, { shouldValidate: true });
   }, [setValue, getValues]);
 
-  const handlePhotoUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
 
     // Clear previous error
@@ -131,14 +133,44 @@ export default function ContractorOnboarding() {
       return;
     }
 
-    // Replace existing photo with new one (single photo only)
-    setValue("photos", [file], { shouldValidate: true });
-  }, [setValue]);
+    // Upload photo immediately to Blob storage
+    setIsUploadingPhoto(true);
+    setUploadedPhotoName(file.name);
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('email', getValues('email') || '');
+
+      const response = await fetch('/api/upload/worker-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      // Store the Blob URL (not the file)
+      setValue("photos", [result.url], { shouldValidate: true });
+      console.log('✅ Photo uploaded successfully:', result.url);
+
+    } catch (error: any) {
+      console.error('❌ Photo upload failed:', error);
+      setPhotoUploadError(`Failed to upload photo: ${error.message}`);
+      setValue("photos", [], { shouldValidate: true });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  }, [setValue, getValues]);
 
   const removePhoto = useCallback(() => {
     setValue("photos", [], { shouldValidate: true });
     // Clear error when removing photo
     setPhotoUploadError("");
+    setUploadedPhotoName("");
   }, [setValue]);
 
   const nextStep = async () => {
@@ -218,33 +250,15 @@ export default function ContractorOnboarding() {
       console.log("🚀 Submitting worker registration...");
       setIsLoading(true);
 
-      // Create FormData for single API call (handles both photos and data)
-      const formData = new FormData();
+      console.log(`📸 Submitting registration with photo URL: ${data.photos?.[0] || 'none'}`);
 
-      // Append all text/data fields
-      Object.keys(data).forEach((key) => {
-        const value = data[key as keyof ContractorFormData];
-
-        if (key === 'photos') {
-          // Handle photo files separately
-          if (Array.isArray(value) && value.length > 0) {
-            value.forEach((photo: File) => {
-              formData.append('photos', photo);
-            });
-          }
-        } else if (value !== undefined && value !== null) {
-          // Convert all non-file values to JSON strings
-          // This preserves types (arrays, objects, booleans, numbers, strings)
-          formData.append(key, JSON.stringify(value));
-        }
-      });
-
-      console.log(`📸 Submitting registration with ${data.photos?.length || 0} photos...`);
-
-      // Submit registration (single API call handles everything)
+      // Submit registration (photos are already uploaded - just sending URLs)
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        body: formData, // Send as FormData (not JSON)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
 
       const result = await response.json();
@@ -415,6 +429,8 @@ export default function ContractorOnboarding() {
                 setValue={setValue}
                 trigger={trigger}
                 photoUploadError={photoUploadError}
+                isUploadingPhoto={isUploadingPhoto}
+                uploadedPhotoName={uploadedPhotoName}
               />
             )}
 

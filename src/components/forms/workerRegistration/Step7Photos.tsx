@@ -4,14 +4,16 @@ import { Card } from "@/components/ui/card";
 
 interface Step7PhotosProps {
   errors: any;
-  watchedPhotos: File[];
+  watchedPhotos: string[];
   watchedConsentProfileShare: boolean | undefined;
   watchedConsentMarketing: boolean | undefined;
   handlePhotoUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  removePhoto: (index: number) => void;
+  removePhoto: () => void;
   setValue: any;
   trigger: any;
   photoUploadError?: string;
+  isUploadingPhoto?: boolean;
+  uploadedPhotoName?: string;
 }
 
 const Step7PhotosComponent = function Step7Photos({
@@ -23,7 +25,9 @@ const Step7PhotosComponent = function Step7Photos({
   removePhoto,
   setValue,
   trigger,
-  photoUploadError
+  photoUploadError,
+  isUploadingPhoto,
+  uploadedPhotoName
 }: Step7PhotosProps) {
   return (
     <div className="space-y-6">
@@ -80,16 +84,32 @@ const Step7PhotosComponent = function Step7Photos({
           </div>
         )}
 
-        {watchedPhotos && watchedPhotos.length > 0 && (
+        {isUploadingPhoto && (
+          <div className="mt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                <span className="text-sm font-poppins text-blue-700">Uploading {uploadedPhotoName}...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isUploadingPhoto && watchedPhotos && watchedPhotos.length > 0 && (
           <div className="mt-4">
             <p className="text-sm font-poppins text-gray-600 mb-2">Uploaded photo:</p>
-            <div className="relative bg-gray-100 rounded-lg p-2">
+            <div className="relative bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-poppins truncate">{watchedPhotos[0].name}</span>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm font-poppins text-green-700">{uploadedPhotoName || 'Photo uploaded successfully'}</span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => removePhoto(0)}
-                  className="ml-2 text-red-500 hover:text-red-700"
+                  onClick={removePhoto}
+                  className="ml-2 text-red-500 hover:text-red-700 font-bold"
                 >
                   ×
                 </button>
