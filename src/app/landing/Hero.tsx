@@ -11,66 +11,77 @@ export default function Hero() {
 
   return (
     <section className="hero-section">
+      {/* Background Image Slider */}
+      <div className="hero-background">
+        <div className="hero-background-slider">
+          <Image
+            src="/hero-image.png"
+            alt="Support worker embracing person with disability showing care and connection"
+            fill
+            className="hero-background-image hero-slide-1"
+            priority
+            sizes="100vw"
+          />
+          <Image
+            src="/hero-image-2.png"
+            alt="NDIS support and care services"
+            fill
+            className="hero-background-image hero-slide-2"
+            sizes="100vw"
+          />
+          <Image
+            src="/hero-image-3.png"
+            alt="Quality NDIS care and support"
+            fill
+            className="hero-background-image hero-slide-3"
+            sizes="100vw"
+          />
+        </div>
+        <div className="hero-overlay"></div>
+      </div>
+
+      {/* Content */}
       <div className="hero-container">
-        <div className="hero-grid">
-          {/* Left Column - Content */}
-          <div className="hero-content">
-            <h1 className="hero-title scroll-animate fade-up">
-              Your <span className="hero-highlight">Trusted, Ethical</span>
-              {' '}and <span className="hero-highlight hero-highlight-mt">Reliable</span> NDIS
-              service provider
-            </h1>
+        <div className="hero-content">
+          <h1 className="hero-title scroll-animate fade-up">
+            Your <span className="hero-highlight">Trusted, Ethical</span>
+            {' '}and <span className="hero-highlight hero-highlight-mt">Reliable</span> NDIS
+            service provider
+          </h1>
 
-            <p className="hero-description scroll-animate fade-up" data-delay="1">
-              Whether you need support or want to offer it, our platform makes the process simple and secure.
-            </p>
+          <p className="hero-description scroll-animate fade-up" data-delay="1">
+            Whether you need support or want to offer it, our platform makes the process simple and secure.
+          </p>
 
-            {/* Buttons */}
-            <div className="hero-buttons scroll-animate fade-up" data-delay="2">
-              <Link
-                href="/find-support"
-                className="hero-button hero-button-primary"
-              >
-                Find support
-              </Link>
-              <Link
-                href="/provide-support"
-                className="hero-button hero-button-secondary"
-              >
-                Provide support
-              </Link>
-            </div>
-
-            {/* NDIS Badge - Desktop */}
-            <div className="hero-ndis-badge-desktop scroll-animate fade-up" data-delay="3">
-              <div className="hero-ndis-content">
-                <Image
-                  src="/logo/ndisLogo.svg"
-                  alt="NDIS Logo"
-                  width={150}
-                  height={100}
-                  className="hero-ndis-logo-desktop"
-                />
-                <div className="hero-ndis-text-desktop">
-                  <span>Registered </span>
-                  <span>NDIS provider</span>
-                </div>
-              </div>
-            </div>
+          {/* Buttons */}
+          <div className="hero-buttons scroll-animate fade-up" data-delay="2">
+            <Link
+              href="/find-support"
+              className="hero-button hero-button-primary"
+            >
+              Find support
+            </Link>
+            <Link
+              href="/provide-support"
+              className="hero-button hero-button-secondary"
+            >
+              Provide support
+            </Link>
           </div>
 
-          {/* Right Column - Image */}
-          <div className="hero-image-column">
-            <div className="hero-image-wrapper scroll-animate fade-right" data-delay="2">
-              <div className="hero-image-container">
-                <Image
-                  src="/hero-image.png"
-                  alt="Support worker embracing person with disability showing care and connection"
-                  fill
-                  className="hero-image"
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-                />
+          {/* NDIS Badge - Desktop */}
+          <div className="hero-ndis-badge-desktop scroll-animate fade-up" data-delay="3">
+            <div className="hero-ndis-content">
+              <Image
+                src="/logo/ndisLogo.svg"
+                alt="NDIS Logo"
+                width={150}
+                height={100}
+                className="hero-ndis-logo-desktop"
+              />
+              <div className="hero-ndis-text-desktop">
+                <span>Registered </span>
+                <span>NDIS provider</span>
               </div>
             </div>
           </div>

@@ -75,11 +75,21 @@ const services: ServiceItem[] = [
     title: "Therapeutic Support",
     content: "One-on-one counselling, behavioural strategies and skill-building sessions to help you reach your personal goals.",
     bulletPoints: [
-      "Behavior support and intervention",
-      "Therapy session assistance",
-      "Complex medical care coordination"
+      "Allied Health Therapies:",
+      "Occupational Therapy (OT)",
+      "Physiotherapy",
+      "Psychology",
+      "Speech Pathology",
+      "Exercise Physiology",
+      "Dietetics",
+      "Podiatry",
+      "Audiology",
+      "Orthoptics",
+      "Social Work (Clinical Social Work)",
+      "Counselling"
+   
     ],
-    image: "/images/therapueticSupport.webp",
+    image: "/images/therapueticSupport.jpg",
     imageAlt: "Therapeutic support services"
   },
   {
@@ -87,13 +97,21 @@ const services: ServiceItem[] = [
     title: "Nursing",
     content: "Specialised clinical care and health supports to manage complex needs, promote wellbeing, and give families peace of mind.",
     bulletPoints: [
-      "Clinical Care",
-      "Medication Management",
-      "Health Monitoring",
-      "Complex Disability Supports",
-      "Education & Training"
+      "Registered Nursing",
+      "Enrolled Nursing",
+      "Complex bowel care",
+      "Enteral feeding",
+      "Diabetes management",
+      "Wound care",
+      "Catheter care",
+      "Stoma care",
+      "Medication management",
+      "Seizure management",
+      "Tracheostomy care",
+      "Ventilation support",
+      "Clinical assessments & health monitoring"
     ],
-    image: "/images/nursing.webp",
+    image: "/images/nursing.jpg",
     imageAlt: "Nursing and clinical care services"
   },
   {

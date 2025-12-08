@@ -41,41 +41,23 @@
   width: 100%;
 }
 
-/* Step Card */
+/* Step Card - DEFAULT STATE (INACTIVE) */
 .how-it-works-step-card {
   display: flex;
   align-items: flex-start;
   gap: 0.875rem;
   padding: 1.25rem;
-  background-color: #EDEFF3;
+  background-color: #F8E8D8 !important;
   border-radius: 1rem;
   border: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
   text-align: left;
   width: 100%;
+  opacity: 1 !important;
 }
 
-.how-it-works-step-card:hover {
-  background-color: #D5D9E0;
-  transform: translateY(-2px);
-}
-
-.how-it-works-step-card.active {
-  background-color: #0C1628;
-  color: #FFFFFF;
-}
-
-.how-it-works-step-card.active .step-card-title,
-.how-it-works-step-card.active .step-card-description {
-  color: #FFFFFF;
-}
-
-.how-it-works-step-card.active .step-icon {
-  color: var(--brand-primary);
-}
-
-/* Step Card Icon */
+/* Step Card Icon - DEFAULT */
 .step-card-icon {
   flex-shrink: 0;
   width: 40px;
@@ -83,22 +65,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FFFFFF;
+  background-color: #FFFFFF !important;
   border-radius: 50%;
   padding: 0.625rem;
-}
-
-.how-it-works-step-card.active .step-card-icon {
-  background-color: var(--brand-tertiary);
 }
 
 .step-icon {
   width: 100%;
   height: 100%;
-  color: #0C1628;
+  color: #0C1628 !important;
 }
 
-/* Step Card Content */
+/* Step Card Content - DEFAULT */
 .step-card-content {
   flex: 1;
 }
@@ -107,17 +85,39 @@
   font-family: var(--font-cooper), serif;
   font-size: 1.125rem;
   font-weight: 400;
-  color: #0C1628;
   margin: 0 0 0.375rem 0;
   line-height: 1.3;
+  color: #0C1628 !important;
 }
 
 .step-card-description {
   font-family: var(--font-poppins), sans-serif;
   font-size: 0.813rem;
   line-height: 1.5;
-  color: #0C1628;
   margin: 0;
+  color: #0C1628 !important;
+}
+
+/* ACTIVE STATE - OVERRIDE ALL */
+.how-it-works-step-card.active {
+  background-color: #0C1628 !important;
+  opacity: 1 !important;
+}
+
+.how-it-works-step-card.active .step-card-icon {
+  background-color: #FFFFFF !important;
+}
+
+.how-it-works-step-card.active .step-icon {
+  color: #0C1628 !important;
+}
+
+.how-it-works-step-card.active .step-card-title {
+  color: #FFFFFF !important;
+}
+
+.how-it-works-step-card.active .step-card-description {
+  color: #FFFFFF !important;
 }
 
 /* Image Display (Right Column) */

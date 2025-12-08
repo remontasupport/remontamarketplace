@@ -701,7 +701,7 @@
   }
 
   .phone-link {
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .contact-button {
@@ -709,7 +709,7 @@
   font-size: 1rem;
 }
 
-  
+
 }
 
 /* 3xl: Full HD Desktops & Large Screens (1920px - 2559px) */
@@ -751,6 +751,10 @@
     align-items: center;
   }
 
+  .phone-link {
+    font-size: 1.1rem;
+  }
+
   .mobile-menu-panel {
     display: none;
   }
@@ -772,11 +776,11 @@
 }
 
 .phone-link {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .contact-button {
-  font-size: 1.15rem;
+  font-size: 2rem;
 
 }
 
