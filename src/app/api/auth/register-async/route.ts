@@ -1,13 +1,12 @@
 /**
  * Async Worker Registration API Endpoint
  *
- * Queue-based registration that handles 1000+ concurrent submissions
+ * Immediate processing registration that handles concurrent submissions
  *
  * Flow:
- * 1. User submits form → Instant response (202 Accepted)
- * 2. Job queued in database
- * 3. Background worker processes queue
- * 4. User receives confirmation email when complete
+ * 1. User submits form
+ * 2. Process registration immediately
+ * 3. Return success/error response
  *
  * POST /api/auth/register-async
  */
@@ -15,9 +14,9 @@
 import { NextResponse } from 'next/server';
 import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
 import { verifyRecaptcha } from '@/lib/recaptcha';
-import { queueWorkerRegistration, type WorkerRegistrationJobData } from '@/lib/queue';
+import { processWorkerRegistration } from '@/lib/workers/workerRegistrationProcessor';
+import type { WorkerRegistrationJobData } from '@/lib/queue';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
-import { triggerQueueProcessing } from '@/lib/queueTrigger';
 
 export async function POST(request: Request) {
   try {
@@ -112,7 +111,7 @@ export async function POST(request: Request) {
     }
 
     // ============================================
-    // QUEUE REGISTRATION JOB
+    // PROCESS REGISTRATION IMMEDIATELY
     // ============================================
     const jobData: WorkerRegistrationJobData = {
       email: normalizedEmail,
@@ -141,27 +140,26 @@ export async function POST(request: Request) {
       geocodedLocation,
     };
 
-    const jobId = await queueWorkerRegistration(jobData);
+    // Process registration immediately (no queue)
+    const result = await processWorkerRegistration(jobData);
+
+    if (!result.success) {
+      throw new Error(result.error || 'Registration failed');
+    }
 
     // ============================================
-    // TRIGGER AUTOMATIC PROCESSING
-    // ============================================
-    // Trigger processor in background (debounced, singleton pattern)
-    // Safe for high concurrency - only one processor runs at a time
-    triggerQueueProcessing().catch(() => {
-      // Non-critical - Vercel cron will pick it up anyway
-    });
-
-    // ============================================
-    // INSTANT RESPONSE TO USER
+    // SUCCESS RESPONSE TO USER
     // ============================================
     return NextResponse.json(
       {
         success: true,
-        message: 'Registration received! We are processing your account. You will receive a confirmation email shortly.',
-        jobId, // Can be used to check status later
+        message: 'Registration successful! Please check your email to verify your account.',
+        user: {
+          id: result.userId,
+          email: normalizedEmail,
+        },
       },
-      { status: 202 } // 202 Accepted - Processing asynchronously
+      { status: 201 } // 201 Created
     );
   } catch (error: any) {
     return NextResponse.json(
