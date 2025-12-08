@@ -377,7 +377,7 @@ export default function WorkerDetailPage() {
             <div className="profile-photo-inner">
               {(selectedImageUrl || croppedImageUrl || mainPhoto) ? (
                 <img
-                  src={croppedImageUrl || selectedImageUrl || mainPhoto}
+                  src={croppedImageUrl || selectedImageUrl || mainPhoto || ''}
                   alt={`${worker.firstName} ${worker.lastName}`}
                   style={{ objectFit: 'cover' }}
                 />

@@ -98,6 +98,7 @@ export async function POST(request: Request) {
           documentUrl: blob.url,
           documentUploadedAt: new Date(),
           submittedAt: new Date(),
+          updatedAt: new Date(),
         },
       });
     } else {

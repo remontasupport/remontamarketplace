@@ -64,11 +64,12 @@ export async function GET(
       ...worker,
       services,
       workerServices: undefined,
+      photos: Array.isArray(worker.photos) ? worker.photos as string[] : undefined,
     };
 
     // Generate PDF stream
     const pdfStream = await renderToStream(
-      React.createElement(WorkerProfilePDF, { worker: workerData })
+      React.createElement(WorkerProfilePDF, { worker: workerData }) as any
     )
 
     // Convert React stream to Node stream for Next.js

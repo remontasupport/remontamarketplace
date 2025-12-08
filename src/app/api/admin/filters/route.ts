@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       // Document Categories (from database enum)
       documentCategories: documentCategories
         .map(d => d.documentCategory)
-        .filter((cat): cat is string => cat !== null)
+        .filter((cat): cat is NonNullable<typeof cat> => cat !== null)
         .map(cat => ({
           value: cat,
           label: cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), // Format: WORKING_RIGHTS -> Working Rights

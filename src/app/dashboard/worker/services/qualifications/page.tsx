@@ -6,7 +6,7 @@
  * Route: /dashboard/worker/services/qualifications?service={service-slug}
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftIcon, DocumentTextIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
@@ -23,7 +23,7 @@ interface UploadedDocument {
   uploadedAt: string;
 }
 
-export default function ServiceQualificationsPage() {
+function ServiceQualificationsContent() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -439,5 +439,19 @@ export default function ServiceQualificationsPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function ServiceQualificationsPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout showProfileCard={false}>
+        <div className="max-w-4xl mx-auto p-6">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </DashboardLayout>
+    }>
+      <ServiceQualificationsContent />
+    </Suspense>
   );
 }
