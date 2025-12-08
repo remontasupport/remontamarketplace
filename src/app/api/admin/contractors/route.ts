@@ -26,7 +26,6 @@ interface FilterParams {
   documentStatuses?: string[]
   requirementTypes?: string[]
 }
-
 interface PaginatedResponse {
   success: boolean
   data: any[]
