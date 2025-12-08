@@ -19,13 +19,16 @@ const services: ServiceItem[] = [
     title: "Support Work",
     content: "Personal care, household support, and community access designed to make daily life easier and more enjoyable while building confidence and independence.",
     bulletPoints: [
-      "Daily Living & Personal Care",
-      "Household Tasks",
-      "Transport & Community Access",
+      "Personal Care",
+      "Daily Living Assistance",
       "Social & Community Participation",
-      "Capacity Building & Skills",
-      "Administration & Advocacy",
-      "Complex Supports (if trained)"
+      "Transport & Community Access",
+      "Life Skills & Capacity Building",
+      "Medication Prompting",
+      "Household Assistance (light tasks)",
+      "Companionship",
+      "Appointment Support",
+      "Routine Support"
     ],
     image: "/images/support-work.webp",
     imageAlt: "Support worker helping participant with personal care"
@@ -105,6 +108,22 @@ const services: ServiceItem[] = [
     ],
     image: "/images/homemodify.webp",
     imageAlt: "Home modification services"
+  },
+  {
+    id: 8,
+    title: "Complex Support Work",
+    content: "Specialized high-level support services for participants with complex needs, delivered by highly trained professionals to ensure safety, wellbeing, and quality of life.",
+    bulletPoints: [
+      "Diabetes Support",
+      "Epilepsy Support",
+      "Mental Health Support",
+      "Behaviour Support (non-restrictive)",
+      "High Personal Care Needs",
+      "Manual Handling & Hoist Support",
+      "Mealtime Assistance (non-enteral)"
+    ],
+    image: "/images/complex-support.webp",
+    imageAlt: "Complex support work services"
   }
 ]
 
