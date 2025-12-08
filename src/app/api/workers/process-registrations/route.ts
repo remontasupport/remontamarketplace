@@ -14,6 +14,10 @@ import { getQueueInstance, JOB_TYPES, type WorkerRegistrationJobData } from '@/l
 import { processWorkerRegistration } from '@/lib/workers/workerRegistrationProcessor';
 import { authPrisma } from '@/lib/auth-prisma';
 
+// Force dynamic rendering - prevents static optimization during build
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * Verify authorization for background workers
  * Prevents unauthorized access to worker endpoints
