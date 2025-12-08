@@ -36,9 +36,18 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Find user in database
+          // Find user in database - optimized to select only needed fields
           const user = await authPrisma.user.findUnique({
             where: { email: credentials.email.toLowerCase() },
+            select: {
+              id: true,
+              email: true,
+              passwordHash: true,
+              role: true,
+              status: true,
+              failedLoginAttempts: true,
+              accountLockedUntil: true,
+            },
           });
 
           if (!user || !user.passwordHash) {
@@ -95,14 +104,17 @@ export const authOptions: NextAuthOptions = {
             },
           });
 
-          // Log successful login (audit)
-          await authPrisma.auditLog.create({
+          // Log successful login (audit) - async, non-blocking
+          // Fire-and-forget: Don't block login response for audit logging
+          authPrisma.auditLog.create({
             data: {
               userId: user.id,
               action: "LOGIN_SUCCESS",
               // ipAddress: You can add IP tracking here
               // userAgent: You can add user agent here
             },
+          }).catch(() => {
+            // Ignore audit log errors silently
           });
 
           // Return user data for session
@@ -113,27 +125,31 @@ export const authOptions: NextAuthOptions = {
             name: `${user.email.split("@")[0]}`,
           };
         } catch (error) {
-          // Log failed login attempt (audit)
+          // Log failed login attempt (audit) - async, non-blocking
           if (credentials.email) {
-            const user = await authPrisma.user.findUnique({
+            // Fire-and-forget: Don't block login response for audit logging
+            authPrisma.user.findUnique({
               where: { email: credentials.email.toLowerCase() },
-            });
-
-            if (user) {
-              await authPrisma.auditLog.create({
-                data: {
-                  userId: user.id,
-                  action: "LOGIN_FAILED",
-                  // ipAddress: You can add IP tracking here
-                  // userAgent: You can add user agent here
-                },
-              }).catch(() => {
-                // Ignore audit log errors
+              select: { id: true },
+            }).then((user) => {
+              if (user) {
+                authPrisma.auditLog.create({
+                  data: {
+                    userId: user.id,
+                    action: "LOGIN_FAILED",
+                    // ipAddress: You can add IP tracking here
+                    // userAgent: You can add user agent here
+                  },
+                }).catch(() => {
+                  // Ignore audit log errors silently
                 });
-            }
+              }
+            }).catch(() => {
+              // Ignore lookup errors silently
+            });
           }
 
-          // Re-throw the error
+          // Re-throw the error immediately without waiting for audit log
           throw error;
         }
       },

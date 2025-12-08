@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Loader from "@/components/ui/Loader";
 
 interface Article {
   _id: string;
@@ -19,11 +20,21 @@ interface Article {
 
 interface NewsSliderProps {
   articles: Article[];
+  isLoading?: boolean;
 }
 
-export default function NewsSlider({ articles }: NewsSliderProps) {
+export default function NewsSlider({ articles, isLoading = false }: NewsSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsPerPage = 6;
+
+  // Show loading state (same as training steps)
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <Loader size="lg" />
+      </div>
+    );
+  }
 
   // Calculate total pages
   const totalPages = Math.ceil(articles.length / itemsPerPage);

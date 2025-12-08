@@ -38,7 +38,6 @@ export default function ProfileCard({ profileData }: ProfileCardProps) {
       {/* Header */}
       <div className="profile-card-header">
         <h3 className="profile-card-title">Your Profile</h3>
-        <button className="profile-menu-btn">⋮</button>
       </div>
 
       {/* Avatar */}
