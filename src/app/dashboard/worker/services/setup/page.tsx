@@ -8,7 +8,7 @@
  * Follows the same pattern as Account Setup
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -29,7 +29,7 @@ interface FormData {
   selectedQualifications: string[];
 }
 
-export default function ServicesSetupPage() {
+function ServicesSetupContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -275,5 +275,20 @@ export default function ServicesSetupPage() {
         />
       </StepContainer>
     </DashboardLayout>
+  );
+}
+
+// Wrap the component in Suspense to handle useSearchParams()
+export default function ServicesSetupPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout showProfileCard={false}>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
+        </div>
+      </DashboardLayout>
+    }>
+      <ServicesSetupContent />
+    </Suspense>
   );
 }

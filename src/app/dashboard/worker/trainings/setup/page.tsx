@@ -7,7 +7,7 @@
  * Route: /dashboard/worker/trainings/setup?step=training-slug
  */
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -29,7 +29,7 @@ interface FormData {
   trainingDocuments: UploadedDocument[];
 }
 
-export default function TrainingsSetupPage() {
+function TrainingsSetupContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -224,5 +224,20 @@ export default function TrainingsSetupPage() {
         />
       </StepContainer>
     </DashboardLayout>
+  );
+}
+
+// Wrap the component in Suspense to handle useSearchParams()
+export default function TrainingsSetupPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout showProfileCard={false}>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
+        </div>
+      </DashboardLayout>
+    }>
+      <TrainingsSetupContent />
+    </Suspense>
   );
 }
