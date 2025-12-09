@@ -39,9 +39,13 @@ const services: ServiceItem[] = [
     content: "Comprehensive home cleaning services including general tidying, laundry, deep cleaning, and seasonal sanitising to ensure a healthy and welcoming living environment.",
     bulletPoints: [
       "General Cleaning",
-      "Laundry",
       "Deep Cleaning",
-      "Seasonal / Periodic"
+      "Laundry & Linen",
+      "One-Off / Spring Cleaning",
+      "Bathroom & Kitchen Cleaning",
+      "Decluttering & Organising",
+      "Hoarding Support Cleaning",
+      "Mould & Hygiene Cleaning"
     ],
     image: "/images/cleaning.webp",
     imageAlt: "Professional cleaning services for NDIS participants"
@@ -51,9 +55,15 @@ const services: ServiceItem[] = [
     title: "Home and Yard Maintenance",
     content: "Lawn, garden, and outdoor care to keep your spaces looking fresh, tidy, and enjoyable all year round",
     bulletPoints: [
-      "Lawn & Garden Care",
+      "Lawn Mowing",
+      "Garden Care",
+      "Hedge Trimming",
+      "Green Waste Removal",
+      "Gutter Cleaning",
+      "Pressure Washing",
       "Outdoor Cleaning",
-      "Waste & Seasonal Tasks"
+      "Seasonal Tasks",
+      "Minor Non-Structural Repairs"
     ],
     image: "/images/homeyard.webp",
     imageAlt: "Home and yard maintenance services"
@@ -63,9 +73,12 @@ const services: ServiceItem[] = [
     title: "Fitness and Rehabilitation",
     content: "Tailored exercise plans, mobility training and strength rehab delivered by qualified therapists to boost your wellbeing.",
     bulletPoints: [
+      "Strength & Conditioning",
       "Mobility & Rehabilitation",
-      "Fitness & Health",
-      "Personal Training"
+      "Injury Recovery Support",
+      "Personal Training",
+      "Falls Prevention",
+      "Health & Fitness Coaching"
     ],
     image: "/images/fitnessRehab.webp",
     imageAlt: "Fitness and rehabilitation support"
@@ -97,19 +110,17 @@ const services: ServiceItem[] = [
     title: "Nursing",
     content: "Specialised clinical care and health supports to manage complex needs, promote wellbeing, and give families peace of mind.",
     bulletPoints: [
-      "Registered Nursing",
-      "Enrolled Nursing",
-      "Complex bowel care",
-      "Enteral feeding",
-      "Diabetes management",
-      "Wound care",
-      "Catheter care",
-      "Stoma care",
-      "Medication management",
-      "Seizure management",
-      "Tracheostomy care",
-      "Ventilation support",
-      "Clinical assessments & health monitoring"
+      "Medication Management",
+      "Wound Care",
+      "Catheter & Stoma Care",
+      "Diabetes Management",
+      "Enteral Feeding (PEG/PEJ)",
+      "Tracheostomy Care",
+      "Ventilation Support",
+      "Bowel Care",
+      "Seizure Management",
+      "Health Monitoring",
+      "Nursing Assessments"
     ],
     image: "/images/nursing.jpg",
     imageAlt: "Nursing and clinical care services"
@@ -119,10 +130,13 @@ const services: ServiceItem[] = [
     title: "Home Modifications",
     content: "Specialised design and construction services, including bathroom, kitchen, and vehicle modifications, to support independence and accessibility.",
     bulletPoints: [
-      "Design and construction",
-      "Bathroom and kitchen modifications",
-      "Access ramps and rails",
-      "Vehicle modifications"
+      "Bathroom Modifications",
+      "Kitchen Modifications",
+      "Ramps & Rails",
+      "Grab Rails",
+      "Doorway Widening",
+      "Minor & Major Modifications",
+      "Accessibility Improvements"
     ],
     image: "/images/homemodify.webp",
     imageAlt: "Home modification services"
@@ -140,7 +154,7 @@ const services: ServiceItem[] = [
       "Manual Handling & Hoist Support",
       "Mealtime Assistance (non-enteral)"
     ],
-    image: "/images/complex-support.webp",
+    image: "/images/complex-support.jpg",
     imageAlt: "Complex support work services"
   }
 ]
