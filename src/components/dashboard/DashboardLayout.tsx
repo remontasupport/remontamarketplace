@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import Sidebar from './Sidebar'
 import ProfileCard from './ProfileCard'
 import SimpleDashboardHeader from './SimpleDashboardHeader'
@@ -19,15 +19,28 @@ export default function DashboardLayout({
   showProfileCard = true,
   profileData
 }: DashboardLayoutProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
+  }
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false)
+  }
+
   return (
     <div className="dashboard-wrapper">
       {/* Dashboard Header - Full Width at Top */}
-      <SimpleDashboardHeader />
+      <SimpleDashboardHeader onMenuToggle={toggleMobileMenu} />
 
       {/* Dashboard Container - Sidebar + Content + Profile */}
       <div className="dashboard-container">
         {/* Left Sidebar */}
-        <Sidebar />
+        <Sidebar
+          isMobileOpen={isMobileMenuOpen}
+          onClose={closeMobileMenu}
+        />
 
         {/* Main Content */}
         <main className="dashboard-main">
@@ -41,6 +54,14 @@ export default function DashboardLayout({
           </aside>
         )}
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="mobile-menu-overlay"
+          onClick={closeMobileMenu}
+        />
+      )}
     </div>
   )
 }

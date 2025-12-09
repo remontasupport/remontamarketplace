@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   HomeIcon,
@@ -53,7 +54,12 @@ const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
   href: getServicesStepUrl(step.slug)
 }))
 
-export default function Sidebar() {
+interface SidebarProps {
+  isMobileOpen?: boolean
+  onClose?: () => void
+}
+
+export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps = {}) {
   // Fetch worker requirements to generate dynamic compliance items
   const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
 
@@ -168,8 +174,29 @@ export default function Sidebar() {
     setTimeout(() => setShouldTransition(false), 500);
   };
 
+  // Handle link click on mobile - close menu
+  const handleLinkClick = () => {
+    if (onClose) {
+      onClose()
+    }
+  }
+
   return (
-    <aside className="dashboard-sidebar">
+    <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
+      {/* Logo - Only visible on mobile */}
+      <div className="sidebar-logo-mobile">
+        <Link href="/dashboard/worker" onClick={handleLinkClick}>
+          <Image
+            src="/logo/logo.svg"
+            alt="Remonta"
+            width={140}
+            height={40}
+            priority
+            className="sidebar-logo-img"
+          />
+        </Link>
+      </div>
+
       {/* Navigation */}
       <nav className="sidebar-nav">
         {/* Overview Section */}
@@ -180,6 +207,7 @@ export default function Sidebar() {
               <Link
                 href="/dashboard/worker"
                 className={`nav-item ${pathname === '/dashboard/worker' ? 'active' : ''}`}
+                onClick={handleLinkClick}
               >
                 <HomeIcon className="nav-icon" />
                 <span>Dashboard</span>
@@ -220,6 +248,7 @@ export default function Sidebar() {
                       <Link
                         href={item.href}
                         className={`nav-dropdown-item ${isActive ? 'active' : ''}`}
+                        onClick={handleLinkClick}
                       >
                         <span className="nav-dropdown-bullet"></span>
                         <span>{item.name}</span>
