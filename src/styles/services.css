@@ -190,7 +190,12 @@
 }
 
 .services-accordion-button.active {
-  background-color: #F9FAFB;
+  background-color: #0C1628;
+  color: #FFFFFF;
+}
+
+.services-accordion-button.active .services-accordion-icon {
+  color: #FFFFFF;
 }
 
 .services-accordion-icon {
@@ -287,9 +292,9 @@
 }
 
 .services-tab.active {
-  background-color: #B1C3CD;
-  color: #0C1628;
-  border-color: #B1C3CD;
+  background-color: #0C1628;
+  color: #FFFFFF;
+  border-color: #0C1628;
 }
 
 /* Content Section */

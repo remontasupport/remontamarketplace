@@ -39,6 +39,8 @@
   flex-direction: column;
   gap: 0.875rem;
   width: 100%;
+  position: relative;
+  isolation: isolate;
 }
 
 /* Step Card - DEFAULT STATE (INACTIVE) */
@@ -55,6 +57,9 @@
   text-align: left;
   width: 100%;
   opacity: 1 !important;
+  position: relative;
+  z-index: 1;
+  transform: none !important;
 }
 
 /* Step Card Icon - DEFAULT */
@@ -102,6 +107,7 @@
 .how-it-works-step-card.active {
   background-color: #0C1628 !important;
   opacity: 1 !important;
+  z-index: 1;
 }
 
 .how-it-works-step-card.active .step-card-icon {

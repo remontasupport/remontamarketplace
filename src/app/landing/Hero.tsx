@@ -44,13 +44,11 @@ export default function Hero() {
       <div className="hero-container">
         <div className="hero-content">
           <h1 className="hero-title scroll-animate fade-up">
-            Your <span className="hero-highlight">Trusted, Ethical</span>
-            {' '}and <span className="hero-highlight hero-highlight-mt">Reliable</span> NDIS
-            service provider
+            Your Trusted, Ethical and Reliable NDIS service provider
           </h1>
 
           <p className="hero-description scroll-animate fade-up" data-delay="1">
-            Whether you need support or want to offer it, our platform makes the process simple and secure.
+           With the right partner by your side, your NDIS journey gets a whole lot easier.
           </p>
 
           {/* Buttons */}

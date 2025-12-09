@@ -138,7 +138,7 @@ const services: ServiceItem[] = [
       "Minor & Major Modifications",
       "Accessibility Improvements"
     ],
-    image: "/images/homemodify.webp",
+    image: "/images/homemodify.jpg",
     imageAlt: "Home modification services"
   },
   {
