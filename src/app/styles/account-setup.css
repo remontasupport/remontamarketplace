@@ -13,6 +13,7 @@
   max-width: 100% !important;
 }
 
+
 /* Account Step Container - Matches Services spacing */
 .account-step-container {
   min-height: 50vh;
@@ -50,4 +51,95 @@
 /* Increase width of info box */
 .account-step-container .info-box {
   max-width: 600px;
+}
+
+/* Mobile Optimization for Account Setup Steps - NUCLEAR APPROACH */
+@media (max-width: 768px) {
+  /* FORCE full viewport width for all account step elements */
+  .account-step-container,
+  .account-step-container .form-page-content,
+  .account-step-container .form-column,
+  .account-step-container .info-column,
+  .account-step-container .info-box,
+  .account-step-container .account-form {
+    max-width: none !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Account step container - true full width */
+  .account-step-container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  /* Override desktop header alignment - match with content */
+  .form-page-container:has(.account-step-container) .form-page-header {
+    margin-left: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Override desktop navigation alignment - match with content */
+  .form-page-container:has(.account-step-container) .step-navigation {
+    margin-left: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Form page content - full width with breathing room */
+  .account-step-container .form-page-content {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 1rem !important;
+    gap: 1rem !important;
+  }
+
+  /* Form and info columns - full width within padded parent */
+  .account-step-container .form-column,
+  .account-step-container .info-column {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Info box - full width within column */
+  .account-step-container .info-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem !important;
+  }
+
+  /* Account form - full width */
+  .account-step-container .account-form {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-page-container:has(.account-step-container) .form-page-header {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .form-page-container:has(.account-step-container) .step-navigation {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .account-step-container .form-page-content {
+    padding: 0 0.875rem !important;
+  }
+
+  .account-step-container .form-column,
+  .account-step-container .info-column {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .account-step-container .info-box {
+    padding: 0.875rem !important;
+  }
 }
