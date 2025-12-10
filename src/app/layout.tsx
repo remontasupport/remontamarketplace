@@ -80,6 +80,44 @@ export default function RootLayout({
     }
   }
 
+  // BreadcrumbList schema for main navigation
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Find Support",
+        "item": `${siteUrl}/find-support`
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Provide Support",
+        "item": `${siteUrl}/provide-support`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Services",
+        "item": `${siteUrl}/services`
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Contact Us",
+        "item": `${siteUrl}/contact`
+      },
+      {
+        "@type": "ListItem",
+        "position": 5,
+        "name": "Newsroom",
+        "item": `${siteUrl}/newsroom`
+      }
+    ]
+  }
+
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -187,6 +225,10 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(sitelinksSearchBoxSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
         />
       </head>
       <body

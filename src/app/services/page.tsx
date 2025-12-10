@@ -108,12 +108,12 @@ export default function ServicesPage() {
       {/* Statistics Section */}
       <section className="relative overflow-hidden py-12 lg:py-16" style={{ backgroundColor: BRAND_COLORS.TERTIARY }}>
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12" data-nosnippet>
             {/* Stat 1 */}
             <div className="text-center relative">
-              <h3 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
+              <div className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                 25M+
-              </h3>
+              </div>
               <p className="text-lg md:text-xl font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                 Care hours delivered
               </p>
@@ -123,9 +123,9 @@ export default function ServicesPage() {
 
             {/* Stat 2 */}
             <div className="text-center relative">
-              <h3 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
+              <div className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                 28k+
-              </h3>
+              </div>
               <p className="text-lg md:text-xl text-white font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                 Active NDIS clients
               </p>
@@ -135,9 +135,9 @@ export default function ServicesPage() {
 
             {/* Stat 3 */}
             <div className="text-center">
-              <h3 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
+              <div className="text-5xl md:text-6xl lg:text-7xl font-bold mb-3 font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                 21k+
-              </h3>
+              </div>
               <p className="text-lg md:text-xl text-white font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
                 Active support workers
               </p>

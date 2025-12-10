@@ -97,7 +97,7 @@ export default function AreaPage({ params }: PageProps) {
     <section className="area-page">
       <div className="area-container">
         {/* Header */}
-        <div className="area-header">
+        <div className="area-header" data-nosnippet>
           <h1 className="area-title">
             {workerCount} local support workers in {state}
           </h1>
