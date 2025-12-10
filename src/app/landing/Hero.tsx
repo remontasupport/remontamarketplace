@@ -39,12 +39,6 @@ export default function Hero() {
         </div>
         <div className="hero-overlay"></div>
       </div>
-      
-      <div>
-        <div>
-          
-        </div>
-      </div>
 
       {/* Content */}
       <div className="hero-container">
