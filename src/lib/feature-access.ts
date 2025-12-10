@@ -57,7 +57,7 @@ export async function canAccessFeature(
   const requiredLevel = FEATURE_REQUIREMENTS[featureName];
 
   if (!requiredLevel) {
-    console.warn(`⚠️ Unknown feature: ${featureName}`);
+   
     return false;
   }
 

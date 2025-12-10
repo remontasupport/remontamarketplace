@@ -18,15 +18,14 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
 
 export async function POST(request: Request) {
-  console.log("🎯 Working with children check upload API called");
 
   try {
     // 1. Authentication
     const session = await getServerSession(authOptions);
-    console.log("👤 Session user ID:", session?.user?.id);
+   
 
     if (!session?.user?.id) {
-      console.error("❌ No session - unauthorized");
+      
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -35,24 +34,22 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File;
     const documentType = formData.get("documentType") as string;
 
-    console.log("📦 Received file:", file?.name, file?.type, file?.size);
-    console.log("📋 Document type:", documentType);
-
+   
     if (!file) {
-      console.error("❌ No file in request");
+   
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     if (documentType !== "working-with-children") {
-      console.error("❌ Invalid document type:", documentType);
+      
       return NextResponse.json({ error: "Invalid document type" }, { status: 400 });
     }
 
     // 3. Validate file
-    console.log("🔍 Validating file type and size...");
+  
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      console.error("❌ Invalid file type:", file.type);
+     
       return NextResponse.json(
         { error: "Invalid file type. Only PDF, JPG, and PNG are allowed." },
         { status: 400 }
@@ -60,31 +57,26 @@ export async function POST(request: Request) {
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      console.error("❌ File too large:", file.size);
+  
       return NextResponse.json(
         { error: "File too large. Maximum size is 10MB." },
         { status: 400 }
       );
     }
 
-    console.log("✅ File validation passed");
-
     // 4. Get worker profile
-    console.log("🔍 Finding worker profile...");
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
       select: { id: true },
     });
 
     if (!workerProfile) {
-      console.error("❌ Worker profile not found");
+      
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
-
-    console.log("✅ Worker profile found:", workerProfile.id);
-
+ 
     // 5. Upload to Vercel Blob
-    console.log("☁️ Uploading to Vercel Blob...");
+ 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -92,18 +84,15 @@ export async function POST(request: Request) {
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const blobPath = `working-with-children/${session.user.id}/${timestamp}-${sanitizedFileName}`;
 
-    console.log("📤 Blob path:", blobPath);
-
     const blob = await put(blobPath, buffer, {
       access: "public",
       contentType: file.type,
       addRandomSuffix: false,
     });
 
-    console.log(`✅ Working with children check uploaded to blob:`, blob.url);
 
     // 6. Check if WWC document already exists
-    console.log("🔍 Checking for existing working with children document...");
+
     const existingDoc = await authPrisma.verificationRequirement.findFirst({
       where: {
         workerProfileId: workerProfile.id,
@@ -111,13 +100,13 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("📋 Existing document:", existingDoc ? `Found (ID: ${existingDoc.id})` : "Not found");
+  
 
     let verificationReq;
 
     if (existingDoc) {
       // Update existing document
-      console.log(`🔄 Updating existing working with children document`);
+    
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDoc.id },
         data: {
@@ -134,10 +123,10 @@ export async function POST(request: Request) {
           rejectionReason: null,
         },
       });
-      console.log("✅ Document updated successfully");
+
     } else {
       // Create new document - IMPORTANT: Include updatedAt field
-      console.log(`✨ Creating new working with children document`);
+    
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
@@ -151,10 +140,10 @@ export async function POST(request: Request) {
           updatedAt: new Date(), // ✅ Include updatedAt to avoid Prisma error
         },
       });
-      console.log("✅ Document created successfully");
+ 
     }
 
-    console.log("🎉 Returning success response");
+   
     return NextResponse.json({
       success: true,
       id: verificationReq.id,
@@ -163,8 +152,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
-    console.error("❌ Working with children check upload error:", error);
-    console.error("❌ Error stack:", error.stack);
+   
     return NextResponse.json(
       {
         error: "Upload failed",

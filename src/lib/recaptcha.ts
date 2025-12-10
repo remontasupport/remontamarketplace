@@ -40,7 +40,7 @@ export async function verifyRecaptcha(
 
   // Skip verification in development if not configured
   if (!secretKey) {
-    console.warn('[reCAPTCHA] Secret key not configured - skipping verification (development only)');
+  
     return { success: true, score: 1.0 };
   }
 
@@ -62,7 +62,7 @@ export async function verifyRecaptcha(
     const data: RecaptchaResponse = await response.json();
 
     if (!data.success) {
-      console.error('[reCAPTCHA] Verification failed:', data['error-codes']);
+     
       return {
         success: false,
         score: 0,
@@ -72,10 +72,7 @@ export async function verifyRecaptcha(
 
     // Check if action matches (prevents token reuse for different actions)
     if (data.action !== expectedAction) {
-      console.error('[reCAPTCHA] Action mismatch:', {
-        expected: expectedAction,
-        received: data.action,
-      });
+   
       return {
         success: false,
         score: data.score,
@@ -90,10 +87,7 @@ export async function verifyRecaptcha(
     const threshold = 0.5;
 
     if (data.score < threshold) {
-      console.warn('[reCAPTCHA] Low score detected:', {
-        score: data.score,
-        threshold,
-      });
+   
       return {
         success: false,
         score: data.score,
@@ -101,15 +95,12 @@ export async function verifyRecaptcha(
       };
     }
 
-    console.log('[reCAPTCHA] Verification successful:', {
-      score: data.score,
-      action: data.action,
-    });
+
 
     return { success: true, score: data.score };
 
   } catch (error) {
-    console.error('[reCAPTCHA] Verification error:', error);
+   
 
     // In production, you might want to fail closed (reject the request)
     // In development, fail open (allow the request)

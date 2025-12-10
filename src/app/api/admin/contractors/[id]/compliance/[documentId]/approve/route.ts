@@ -82,7 +82,6 @@ export async function POST(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    console.error('[Approve API] Error approving document:', errorMsg)
 
     return NextResponse.json(
       {

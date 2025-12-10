@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       photoUrl: requirement?.documentUrl || null,
     });
   } catch (error: any) {
-    console.error("❌ Failed to fetch vehicle photo:", error);
+
     return NextResponse.json(
       { error: "Failed to fetch vehicle photo", details: error.message },
       { status: 500 }
@@ -76,14 +76,14 @@ export async function DELETE(request: Request) {
       },
     });
 
-    console.log(`✅ Vehicle photo requirement deleted`);
+
 
     return NextResponse.json({
       success: true,
       message: "Vehicle photo removed successfully",
     });
   } catch (error: any) {
-    console.error("❌ Failed to remove vehicle photo:", error);
+    
     return NextResponse.json(
       { error: "Failed to remove vehicle photo", details: error.message },
       { status: 500 }

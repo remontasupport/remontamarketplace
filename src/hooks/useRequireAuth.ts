@@ -42,7 +42,6 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   // SECURITY: Redirect to login if not authenticated
   useEffect(() => {
     if (redirectOnUnauthenticated && isUnauthenticated) {
-      console.warn("🚨 SECURITY: Unauthenticated access attempt. Redirecting to login...");
       router.push(redirectTo);
     }
   }, [isUnauthenticated, redirectOnUnauthenticated, redirectTo, router]);

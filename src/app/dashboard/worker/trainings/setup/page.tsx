@@ -73,8 +73,6 @@ function TrainingsSetupContent() {
   // Populate form data ONLY on initial load
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
-      console.log("📋 Initializing trainings form data with profile:", profileData);
-
       setFormData({
         trainingDocuments: [], // Will be loaded from VerificationRequirement table
       });
@@ -84,8 +82,6 @@ function TrainingsSetupContent() {
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
-    console.log(`📝 Field changed: ${field} =`, value);
-
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -133,7 +129,6 @@ function TrainingsSetupContent() {
         }, 2000);
       }
     } catch (error) {
-      console.error("Error saving step:", error);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };

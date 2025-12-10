@@ -50,14 +50,13 @@ export function usePhoneVerification(): UsePhoneVerificationReturn {
         setIsCodeSent(true);
         if (data.devCode) {
           setSentCode(data.devCode);
-          console.log('🔐 Verification code received');
         }
       } else {
-        console.error('SMS Error Details:', data);
+       
         alert(data.error || 'Failed to send verification code');
       }
     } catch (error) {
-      console.error('Error sending verification code:', error);
+    
       alert('Failed to send verification code. Please try again.');
     }
   };
@@ -71,10 +70,10 @@ export function usePhoneVerification(): UsePhoneVerificationReturn {
     if (verificationCode === sentCode) {
       setIsVerified(true);
       setIsCodeIncorrect(false);
-      console.log('✅ Phone number verified successfully');
+     
     } else {
       setIsCodeIncorrect(true);
-      console.log('❌ Incorrect verification code');
+      
     }
   };
 

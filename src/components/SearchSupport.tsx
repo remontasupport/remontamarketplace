@@ -73,7 +73,7 @@ export default function SearchSupport() {
         setContractors(data.contractors)
       }
     } catch (error) {
-      console.error('Failed to fetch contractors:', error)
+     
     } finally {
       setIsLoading(false)
     }

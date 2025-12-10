@@ -19,12 +19,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { sourceDocumentType, targetDocumentType } = body;
 
-    console.log("📋 Copy document reference request:", {
-      sourceDocumentType,
-      targetDocumentType,
-      userId: session.user.id,
-    });
-
     // Get worker profile
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
@@ -53,12 +47,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("📄 Found source document:", {
-      id: sourceDocument.id,
-      type: sourceDocument.requirementType,
-      url: sourceDocument.documentUrl,
-    });
-
     // Check if target document already exists
     const existingTargetDocument = await authPrisma.verificationRequirement.findFirst({
       where: {
@@ -68,7 +56,7 @@ export async function POST(request: Request) {
     });
 
     if (existingTargetDocument) {
-      console.log("⚠️ Target document already exists, updating it");
+    
       // Update existing document with the same URL
       const updatedDocument = await authPrisma.verificationRequirement.update({
         where: { id: existingTargetDocument.id },
@@ -80,8 +68,6 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         },
       });
-
-      console.log("✅ Updated existing target document:", updatedDocument.id);
 
       return NextResponse.json({
         success: true,
@@ -106,7 +92,6 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("✅ Created new target document reference:", newDocument.id);
 
     return NextResponse.json({
       success: true,
@@ -114,7 +99,6 @@ export async function POST(request: Request) {
       document: newDocument,
     });
   } catch (error: any) {
-    console.error("❌ Error copying document reference:", error);
     return NextResponse.json(
       {
         error: "Failed to copy document reference",

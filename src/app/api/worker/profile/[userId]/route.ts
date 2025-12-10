@@ -91,7 +91,7 @@ export async function GET(
 
     if (workerProfile.workerServices && workerProfile.workerServices.length > 0) {
       // Use new WorkerService table data
-      console.log("✅ Using WorkerService table data");
+    
 
       // Extract unique category names for services
       const categoryNames = new Set<string>();
@@ -108,7 +108,7 @@ export async function GET(
       supportWorkerCategories = Array.from(subcategoryIds);
     } else {
       // Fallback to legacy arrays if workerServices is empty
-      console.log("⚠️  Falling back to legacy services arrays");
+    
       services = workerProfile.services || [];
       supportWorkerCategories = workerProfile.supportWorkerCategories || [];
     }
@@ -121,7 +121,7 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error("Error fetching worker profile:", error);
+   
 
     return NextResponse.json(
       {

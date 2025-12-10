@@ -105,7 +105,7 @@ export async function geocodeAddress(
     const apiKey = process.env.GEOMAP_API
 
     if (!apiKey) {
-      console.error('GEOMAP_API environment variable is not set')
+
       return null
     }
 
@@ -132,10 +132,10 @@ export async function geocodeAddress(
       return geocodeResult
     }
 
-    console.warn(`Geocoding failed for address: ${address}`, data.status)
+ 
     return null
   } catch (error) {
-    console.error('Error geocoding address:', error)
+
     return null
   }
 }

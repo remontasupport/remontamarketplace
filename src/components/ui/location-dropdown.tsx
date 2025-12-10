@@ -58,27 +58,27 @@ export function LocationDropdown({
   }, [searchQuery, options, onSearch]);
 
   const selectedOption = React.useMemo(() => {
-    console.log("Finding selected option for value:", value);
+    
     if (onSearch && value) {
       // Extract the suburb name from the value to search for it
       // Value format is like "Altona, VIC 3018"
       const suburbName = value.split(',')[0].trim();
-      console.log("Searching for suburb:", suburbName);
+     
       const searchResults = onSearch(suburbName);
-      console.log("Search results for suburb:", searchResults);
+     
       const found = searchResults.find((option) => option.value === value);
-      console.log("Found selected option:", found);
+      
       return found;
     }
     const found = options.find((option) => option.value === value);
-    console.log("Found selected option from options:", found);
+
     return found;
   }, [value, options, onSearch]);
 
   const handleItemClick = (option: LocationOption, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    console.log("Location clicked:", option);
+    
     onValueChange?.(option.value);
     setOpen(false);
     setSearchQuery("");

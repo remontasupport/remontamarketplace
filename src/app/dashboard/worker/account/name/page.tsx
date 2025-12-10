@@ -37,7 +37,6 @@ export default function YourNamePage() {
             });
           }
         } catch (err) {
-          console.error("Error fetching profile:", err);
           setError("Failed to load profile data");
         } finally {
           setIsLoading(false);
@@ -95,7 +94,6 @@ export default function YourNamePage() {
         setError(data.error || "Failed to save your name");
       }
     } catch (err) {
-      console.error("Error saving name:", err);
       setError("An error occurred while saving. Please try again.");
     } finally {
       setIsSaving(false);

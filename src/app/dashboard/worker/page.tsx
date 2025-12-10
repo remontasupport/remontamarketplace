@@ -128,7 +128,6 @@ async function fetchNewsArticles(): Promise<Article[]> {
     );
 
     if (!response.ok) {
-      console.error('Failed to fetch articles:', response.status, response.statusText);
       return FALLBACK_ARTICLES;
     }
 
@@ -136,13 +135,11 @@ async function fetchNewsArticles(): Promise<Article[]> {
 
     // Validate the response
     if (!data.articles || !Array.isArray(data.articles)) {
-      console.error('Invalid articles data structure');
       return FALLBACK_ARTICLES;
     }
 
     return data.articles.length > 0 ? data.articles : FALLBACK_ARTICLES;
   } catch (error) {
-    console.error('Error fetching articles:', error);
     // Return fallback articles to ensure the page always has content
     return FALLBACK_ARTICLES;
   }
@@ -152,22 +149,15 @@ export default async function WorkerDashboard() {
   // Server-side session validation using getServerSession (RECOMMENDED APPROACH)
   const session = await getServerSession(authOptions);
 
-  console.log("🔒 Server Component - Validating session");
-  console.log("👤 Session:", session ? "Found" : "Not found");
-
   // Redirect to login if no session
   if (!session || !session.user) {
-    console.log("❌ No session - redirecting to login");
     redirect("/login");
   }
 
   // Redirect if wrong role
   if (session.user.role !== UserRole.WORKER) {
-    console.log("❌ Wrong role:", session.user.role, "- redirecting to unauthorized");
     redirect("/unauthorized");
   }
-
-  console.log("✅ Access granted - rendering dashboard");
 
   // Fetch worker profile data from database
   const workerProfile = await authPrisma.workerProfile.findUnique({
@@ -179,11 +169,8 @@ export default async function WorkerDashboard() {
     },
   });
 
-  console.log("📝 Worker Profile:", workerProfile ? "Found" : "Not found");
-
   // Fetch news articles from API
   const newsArticles = await fetchNewsArticles();
-  console.log("📰 News Articles:", newsArticles.length, "articles fetched");
 
   // At this point, we have a valid WORKER session
   // This code only runs server-side, so it's completely secure

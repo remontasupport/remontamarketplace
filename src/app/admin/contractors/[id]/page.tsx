@@ -129,7 +129,7 @@ export default function WorkerDetailPage() {
       // Get the profile card element
       const element = document.querySelector('.profile-card') as HTMLElement
       if (!element) {
-        console.error('Profile card element not found')
+       
         throw new Error('Profile card not found')
       }
 
@@ -148,7 +148,7 @@ export default function WorkerDetailPage() {
       element.style.boxShadow = 'none'
       element.style.borderRadius = '0'
 
-      console.log('Starting PDF generation...')
+ 
 
       // Generate PNG from HTML with high quality
       const dataUrl = await toPng(element, {
@@ -157,7 +157,6 @@ export default function WorkerDetailPage() {
         backgroundColor: '#ffffff',
       })
 
-      console.log('Image generated successfully')
 
       // Restore original styles
       element.style.boxShadow = originalBoxShadow
@@ -191,12 +190,12 @@ export default function WorkerDetailPage() {
 
       // Download PDF
       const fileName = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.pdf`
-      console.log('Saving PDF:', fileName)
+    
       pdf.save(fileName)
 
-      console.log('PDF generated successfully')
+     
     } catch (error) {
-      console.error('Error generating PDF:', error)
+     
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
       alert(`Failed to generate PDF: ${errorMsg}\n\nPlease check the console for details.`)
     } finally {

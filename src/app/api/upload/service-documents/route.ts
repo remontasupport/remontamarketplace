@@ -80,8 +80,6 @@ export async function POST(request: Request) {
       addRandomSuffix: false,
     });
 
-    console.log(`✅ Service document uploaded to blob:`, blob.url);
-
     // 6. Create unique identifier for this document (service + subcategory + documentType)
     const uniqueRequirementType = subcategoryId
       ? `${serviceName}:${subcategoryId}:${documentType}`
@@ -99,7 +97,7 @@ export async function POST(request: Request) {
 
     if (existingDoc) {
       // Update existing document
-      console.log(`🔄 Updating existing service document: ${uniqueRequirementType}`);
+    
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDoc.id },
         data: {
@@ -118,7 +116,7 @@ export async function POST(request: Request) {
       });
     } else {
       // Create new document
-      console.log(`📝 Creating new service document: ${uniqueRequirementType}`);
+ 
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
@@ -137,7 +135,7 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log(`✅ VerificationRequirement record saved successfully`);
+ 
 
     // 7. Update worker's verificationStatus to PENDING_REVIEW
     await authPrisma.workerProfile.update({
@@ -147,7 +145,7 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(`✅ Worker verification status set to PENDING_REVIEW`);
+  
 
     return NextResponse.json({
       success: true,
@@ -155,7 +153,7 @@ export async function POST(request: Request) {
       id: verificationReq.id,
     });
   } catch (error: any) {
-    console.error("❌ Service document upload error:", error);
+  
     return NextResponse.json(
       {
         error: "Failed to upload service document",

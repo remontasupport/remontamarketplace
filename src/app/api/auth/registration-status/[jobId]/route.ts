@@ -57,7 +57,7 @@ export async function GET(
       updatedAt: job.completedon || job.startedon,
     });
   } catch (error: any) {
-    console.error('❌ Error checking job status:', error);
+  
 
     return NextResponse.json(
       { error: 'Failed to check registration status' },

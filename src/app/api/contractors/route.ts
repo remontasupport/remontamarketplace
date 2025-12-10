@@ -432,12 +432,10 @@ export async function GET(request: NextRequest) {
     // ============================================
     // 7. ERROR HANDLING
     // ============================================
-    console.error('[API Error] Failed to fetch contractors:', error)
+
 
     // Log additional details for debugging (remove in production if too verbose)
     if (error instanceof Error) {
-      console.error('[API Error] Message:', error.message)
-      console.error('[API Error] Stack:', error.stack)
     }
 
     // Return generic error to client (don't expose internal details)

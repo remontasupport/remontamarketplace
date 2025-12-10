@@ -78,8 +78,6 @@ function MandatoryRequirementsSetupContent() {
   // Populate form data ONLY on initial load
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
-      console.log("📋 Initializing requirements form data with profile:", profileData);
-
       setFormData({
         identityDocuments: [], // Will be loaded from VerificationRequirement table
         abn: profileData.abn || "",
@@ -90,8 +88,6 @@ function MandatoryRequirementsSetupContent() {
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
-    console.log(`📝 Field changed: ${field} =`, value);
-
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -131,8 +127,6 @@ function MandatoryRequirementsSetupContent() {
       const needsSaving = currentStepData?.documentId === "abn-contractor";
 
       if (needsSaving) {
-        console.log("💾 Saving ABN to database:", formData.abn);
-
         // Save ABN to WorkerProfile table
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
@@ -141,8 +135,6 @@ function MandatoryRequirementsSetupContent() {
             abn: formData.abn,
           },
         });
-
-        console.log("✅ ABN saved successfully");
       }
 
       // Move to next step or finish
@@ -157,7 +149,6 @@ function MandatoryRequirementsSetupContent() {
         }, 2000);
       }
     } catch (error) {
-      console.error("Error saving step:", error);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };

@@ -245,7 +245,7 @@ export default function AdminDashboard() {
           setFilterOptions(result.data)
         }
       } catch (error) {
-        console.error('Failed to fetch filter options:', error)
+       
       } finally {
         setIsLoadingFilters(false)
       }
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
           setShowSuburbDropdown(false)
         }
       } catch (error) {
-        console.error('Error fetching suburbs:', error)
+      
         setSuburbs([])
         setShowSuburbDropdown(false)
       } finally {

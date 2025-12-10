@@ -134,18 +134,12 @@ function AccountSetupContent() {
   // Prevents form reset when TanStack Query refetches after mutations
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
-      console.log("📋 Initializing form data with profile:", profileData);
-      console.log("📸 Photo from database:", profileData.photos);
-
       const photoUrl = Array.isArray(profileData.photos)
         ? profileData.photos[0]
         : (profileData.photos as any)?.[0] || null;
 
-      console.log("📸 Extracted photo URL:", photoUrl);
-
       // Parse location string to extract street address, city, state, and postal code
       const parsedLocation = parseLocation(profileData.location || "");
-      console.log("📍 Parsed location:", parsedLocation);
 
       setFormData({
         firstName: profileData.firstName || "",
@@ -170,8 +164,6 @@ function AccountSetupContent() {
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
-    console.log(`📝 Field changed: ${field} =`, value);
-
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -190,18 +182,13 @@ function AccountSetupContent() {
   const handlePhotoSave = async (photoUrl: string) => {
     if (!session?.user?.id) return;
 
-    console.log("💾 Saving photo to database:", photoUrl);
-
     try {
       await updateProfileMutation.mutateAsync({
         userId: session.user.id,
         step: 2, // Photo step
         data: { photo: photoUrl },
       });
-
-      console.log("✅ Photo saved to database successfully");
     } catch (error) {
-      console.error("❌ Failed to save photo to database:", error);
       throw error; // Re-throw so PhotoUpload component can handle it
     }
   };
@@ -298,7 +285,6 @@ function AccountSetupContent() {
         }, 2000);
       }
     } catch (error) {
-      console.error("Error saving step:", error);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };

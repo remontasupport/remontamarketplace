@@ -110,7 +110,6 @@ export async function POST(request: Request) {
       // Don't fail if audit log fails
     });
 
-    console.log('✅ Password reset successful for user:', user.email);
 
     // ============================================
     // SUCCESS RESPONSE
@@ -122,7 +121,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('❌ Reset password error:', error);
+    
     return NextResponse.json(
       { error: 'Failed to reset password. Please try again.' },
       { status: 500 }

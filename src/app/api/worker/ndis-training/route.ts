@@ -55,7 +55,6 @@ export async function GET() {
     });
 
   } catch (error: any) {
-    console.error("❌ Error fetching NDIS training:", error);
     return NextResponse.json(
       {
         error: "Failed to fetch NDIS training",

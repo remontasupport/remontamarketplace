@@ -79,7 +79,6 @@ export async function GET(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    console.error('[Compliance API] Error fetching documents:', errorMsg)
 
     return NextResponse.json(
       {

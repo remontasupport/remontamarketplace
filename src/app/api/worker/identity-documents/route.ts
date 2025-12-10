@@ -9,16 +9,16 @@ import { authPrisma } from "@/lib/auth-prisma";
  */
 export async function GET(request: Request) {
   try {
-    console.log("🔍 GET /api/worker/identity-documents - Starting");
+
 
     const session = await getServerSession(authOptions);
-    console.log("🔐 Session:", session?.user?.id ? "Found" : "Not found");
+   
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("📊 Fetching worker profile for user:", session.user.id);
+   
 
     // Get worker profile
     const workerProfile = await authPrisma.workerProfile.findUnique({
@@ -26,17 +26,17 @@ export async function GET(request: Request) {
       select: { id: true },
     });
 
-    console.log("👤 Worker profile:", workerProfile ? "Found" : "Not found");
+    
 
     if (!workerProfile) {
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
 
-    console.log("📄 Fetching identity documents for worker:", workerProfile.id);
+  
 
     // Get all identity documents from verification_requirements table
     // Filter by requirementType pattern for identity documents
-    let documents = [];
+    let documents:any = [];
 
     try {
       documents = await authPrisma.verificationRequirement.findMany({
@@ -70,9 +70,9 @@ export async function GET(request: Request) {
           createdAt: "desc",
         },
       });
-      console.log("✅ Found", documents.length, "identity documents");
+    
     } catch (dbError: any) {
-      console.error("⚠️ Database query failed, returning empty array:", dbError.message);
+     
       // Return empty array if database query fails
       // This allows the page to load even if there's a connection issue
       documents = [];
@@ -92,17 +92,13 @@ export async function GET(request: Request) {
       rejectionReason: doc.rejectionReason,
     }));
 
-    console.log("✅ Returning formatted documents");
 
     return NextResponse.json({
       success: true,
       documents: formattedDocuments,
     });
   } catch (error: any) {
-    console.error("❌ Error fetching identity documents:", error);
-    console.error("❌ Error name:", error?.name);
-    console.error("❌ Error message:", error?.message);
-    console.error("❌ Error stack:", error?.stack);
+   
 
     return NextResponse.json(
       {
@@ -186,7 +182,7 @@ export async function DELETE(request: Request) {
       message: "Document deleted successfully",
     });
   } catch (error: any) {
-    console.error("Error deleting identity document:", error);
+ 
     return NextResponse.json(
       {
         error: "Failed to delete identity document",

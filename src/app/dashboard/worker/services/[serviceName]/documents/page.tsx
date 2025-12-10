@@ -56,23 +56,22 @@ export default function ServiceDocumentsPage() {
   const fetchRequirements = async () => {
     setIsLoadingRequirements(true);
     try {
-      console.log("🔍 Fetching requirements for service:", serviceName);
+     
       const response = await fetch(`/api/worker/requirements?serviceName=${encodeURIComponent(serviceName)}`);
       if (response.ok) {
         const data = await response.json();
-        console.log("📋 Requirements API response:", data);
+      
 
         // Use the qualifications array from the response
         const qualifications = data.requirements?.qualifications || [];
-        console.log("📋 Qualifications count:", qualifications.length);
-        console.log("📋 Qualification IDs:", qualifications.map((q: any) => q.id));
+      
         setRequirements(qualifications);
       } else {
-        console.error("Failed to fetch requirements:", response.statusText);
+ 
         setRequirements([]);
       }
     } catch (error) {
-      console.error("Error fetching requirements:", error);
+     
       setRequirements([]);
     } finally {
       setIsLoadingRequirements(false);
@@ -167,7 +166,7 @@ export default function ServiceDocumentsPage() {
       }
 
       const data = await response.json();
-      console.log("✅ Document uploaded:", data);
+
 
       // Clear selected file after upload
       setSelectedFiles(prev => {
@@ -179,7 +178,7 @@ export default function ServiceDocumentsPage() {
       // Invalidate service documents cache to refetch
       queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
     } catch (error) {
-      console.error("❌ Upload error:", error);
+     
       alert(error instanceof Error ? error.message : "Failed to upload document");
     } finally {
       setUploadingFiles(prev => {
@@ -198,7 +197,7 @@ export default function ServiceDocumentsPage() {
     try {
       const documentToDelete = uploadedDocuments[documentId];
       if (!documentToDelete) {
-        console.error("Document not found");
+       
         return;
       }
 
@@ -210,12 +209,12 @@ export default function ServiceDocumentsPage() {
         throw new Error("Failed to delete document");
       }
 
-      console.log("✅ Document deleted");
+    
 
       // Invalidate service documents cache
       queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
     } catch (error) {
-      console.error("❌ Delete error:", error);
+    
       alert("Failed to delete document");
     }
   };

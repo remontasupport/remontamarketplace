@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       addRandomSuffix: false,
     });
 
-    console.log(`✅ Certificate uploaded to blob:`, blob.url);
+
 
     // 6. Find or create VerificationRequirement
     let requirement = await authPrisma.verificationRequirement.findFirst({
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log(`✅ VerificationRequirement updated with document URL`);
+
 
     return NextResponse.json({
       success: true,
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       requirementId: requirement.id,
     });
   } catch (error: any) {
-    console.error('❌ Certificate upload error:', error);
+
     return NextResponse.json(
       {
         error: 'Failed to upload certificate',

@@ -74,28 +74,25 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
   const fetchRequirements = async () => {
     setIsLoadingRequirements(true);
     try {
-      console.log("🔍 Fetching requirements for other documents");
+     
       const response = await fetch(`/api/worker/requirements`);
       if (response.ok) {
         const data = await response.json();
-        console.log("📋 Requirements API response:", data);
+       
 
         // Extract insurance and transport documents
         const insurance = data.requirements?.insurance || [];
         const transport = data.requirements?.transport || [];
 
-        console.log("📋 Insurance documents:", insurance.length);
-        console.log("📋 Transport documents:", transport.length);
-
         setInsuranceDocuments(insurance);
         setTransportDocuments(transport);
       } else {
-        console.error("Failed to fetch requirements:", response.statusText);
+      
         setInsuranceDocuments([]);
         setTransportDocuments([]);
       }
     } catch (error) {
-      console.error("Error fetching requirements:", error);
+     
       setInsuranceDocuments([]);
       setTransportDocuments([]);
     } finally {
@@ -136,7 +133,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
     // Priority 1: Check if uploaded in 100 Points ID
     if (identityDocs["identity-drivers-license"]) {
-      console.log("📄 Using driver's license from 100 Points ID");
+     
       return {
         document: identityDocs["identity-drivers-license"],
         source: "100-points-id" as const,
@@ -145,7 +142,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
     // Priority 2: Check if uploaded in Other Personal Info
     if (driverLicense) {
-      console.log("📄 Using driver's license from Other Personal Info");
+      
       return {
         document: driverLicense,
         source: "other-personal-info" as const,
@@ -211,7 +208,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
       }
 
       const responseData = await response.json();
-      console.log("✅ Document uploaded:", responseData);
+     
 
       // Clear selected file after upload
       setSelectedFiles(prev => {
@@ -223,7 +220,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
       // Invalidate service documents cache to refetch
       queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
     } catch (error) {
-      console.error("❌ Upload error:", error);
+     
       alert(error instanceof Error ? error.message : "Failed to upload document");
     } finally {
       setUploadingFiles(prev => {
@@ -242,7 +239,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     try {
       const documentToDelete = uploadedDocuments[documentId];
       if (!documentToDelete) {
-        console.error("Document not found");
+       
         return;
       }
 
@@ -254,12 +251,12 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
         throw new Error("Failed to delete document");
       }
 
-      console.log("✅ Document deleted");
+     
 
       // Invalidate service documents cache
       queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
     } catch (error) {
-      console.error("❌ Delete error:", error);
+     
       alert("Failed to delete document");
     }
   };

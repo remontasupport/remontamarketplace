@@ -19,25 +19,21 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    console.log("🔒 Middleware - Path:", path);
-    console.log("👤 User ID:", token?.id);
-    console.log("👤 User Role:", token?.role);
-    console.log("📧 User Email:", token?.email);
 
     // Additional security: Verify token has required fields
     if (!token || !token.id || !token.role || !token.email) {
-      console.log("❌ Invalid token - missing required fields");
+ 
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
     // Role-based access control for dashboard routes
     if (path.startsWith("/dashboard/worker") && token?.role !== UserRole.WORKER) {
-      console.log("❌ Access denied: WORKER role required");
+    
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
     if (path.startsWith("/dashboard/client") && token?.role !== UserRole.CLIENT) {
-      console.log("❌ Access denied: CLIENT role required");
+      
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
@@ -45,11 +41,11 @@ export default withAuth(
       path.startsWith("/dashboard/coordinator") &&
       token?.role !== UserRole.COORDINATOR
     ) {
-      console.log("❌ Access denied: COORDINATOR role required");
+    
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
-    console.log("✅ Access granted");
+  
     return NextResponse.next();
   },
   {
@@ -60,7 +56,7 @@ export default withAuth(
         // User must be authenticated and have valid token structure
         const isValid = !!(token && token.id && token.email && token.role);
         if (!isValid) {
-          console.log("❌ Unauthorized: Invalid or missing token");
+         
         }
         return isValid;
       },

@@ -68,7 +68,6 @@ export async function GET(request: Request) {
     });
 
   } catch (error) {
-    console.error('❌ Error fetching verification data:', error);
     return NextResponse.json(
       { error: 'Failed to fetch verification data' },
       { status: 500 }
@@ -162,7 +161,6 @@ export async function POST(request: Request) {
     }
 
   } catch (error) {
-    console.error('❌ Error updating verification status:', error);
     return NextResponse.json(
       { error: 'Failed to update verification status' },
       { status: 500 }

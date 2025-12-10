@@ -94,15 +94,14 @@ export async function sendVerificationEmail(
     });
 
     if (error) {
-      console.error('❌ Resend API error:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
+    
       throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
     }
 
-    console.log('✅ Verification email sent to:', email);
+   
     return data;
   } catch (error) {
-    console.error('Error in sendVerificationEmail:', error);
+  
     throw error;
   }
 }
@@ -177,14 +176,14 @@ export async function sendPasswordResetEmail(
     });
 
     if (error) {
-      console.error('Error sending password reset email:', error);
+    
       throw new Error('Failed to send password reset email');
     }
 
-    console.log('✅ Password reset email sent to:', email);
+  
     return data;
   } catch (error) {
-    console.error('Error in sendPasswordResetEmail:', error);
+  
     throw error;
   }
 }
@@ -250,15 +249,15 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
     });
 
     if (error) {
-      console.error('Error sending welcome email:', error);
+    
       // Don't throw - welcome email is not critical
       return null;
     }
 
-    console.log('✅ Welcome email sent to:', email);
+  
     return data;
   } catch (error) {
-    console.error('Error in sendWelcomeEmail:', error);
+   
     // Don't throw - welcome email is not critical
     return null;
   }

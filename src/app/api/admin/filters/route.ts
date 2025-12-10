@@ -167,7 +167,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    console.error('[Filters API] Error fetching filter options:', errorMsg)
 
     return NextResponse.json(
       {

@@ -161,12 +161,12 @@ export default function Step1ProofOfIdentity({
     if (documentType === "identity-drivers-license") {
       // Priority 1: Check if uploaded specifically in 100 Points ID
       if (uploadedDocs["identity-drivers-license"]) {
-        console.log("📄 Using driver's license from 100 Points ID");
+
         return uploadedDocs["identity-drivers-license"];
       }
       // Priority 2: Fall back to Other Personal Info
       if (driverLicense) {
-        console.log("📄 Using driver's license from Other Personal Info");
+       
         return driverLicense;
       }
       // Neither exists - return null to allow upload
@@ -174,7 +174,7 @@ export default function Step1ProofOfIdentity({
     } else {
       // For other documents, use their specific database entry
       if (uploadedDocs[documentType]) {
-        console.log(`📄 Using ${documentType} from database`);
+ 
         return uploadedDocs[documentType];
       }
       return null;
@@ -183,17 +183,11 @@ export default function Step1ProofOfIdentity({
 
   const hasAnyDriverLicense = !!(uploadedDocs["identity-drivers-license"] || driverLicense);
 
-  // Debug logging
-  console.log("🔍 Debug State:", {
-    hasDriverLicense,
-    selectedSecondaryType,
-    uploadedDocTypes: Object.keys(uploadedDocs),
-  });
 
   // Auto-select driver's license if available (using priority system)
   useEffect(() => {
     if (hasAnyDriverLicense && !selectedSecondaryType && !userHasChosenDifferentDoc) {
-      console.log("🚗 Auto-selecting driver's license (priority system)");
+    
       setSelectedSecondaryType("identity-drivers-license");
     }
   }, [hasAnyDriverLicense, selectedSecondaryType, userHasChosenDifferentDoc]);
@@ -209,7 +203,7 @@ export default function Step1ProofOfIdentity({
       );
 
       if (hasNonDriverSecondaryDoc) {
-        console.log("📋 User has already uploaded a non-driver's-license secondary document");
+     
         setUserHasChosenDifferentDoc(true);
       }
     }
@@ -226,32 +220,32 @@ export default function Step1ProofOfIdentity({
     // If document exists, exit edit mode to show preview
     // If document doesn't exist, stay in edit mode to allow upload
     if (documentExists) {
-      console.log(`✅ Document ${documentType} exists - showing preview`);
+    
       setIsEditingSecondary(false);
     } else {
-      console.log(`⚠️ Document ${documentType} doesn't exist - staying in edit mode for upload`);
+    
       setIsEditingSecondary(true);
     }
 
     // Track if user manually chose a different document (not driver's license)
     if (documentType !== "identity-drivers-license") {
-      console.log("👤 User manually selected a different secondary document:", documentType);
+    
       setUserHasChosenDifferentDoc(true);
     } else {
       // User went back to driver's license
-      console.log("👤 User selected driver's license");
+
       setUserHasChosenDifferentDoc(false);
     }
   };
 
   // Handle replace secondary document - enable other cards
   const handleReplaceSecondary = () => {
-    console.log("🔄 Replace document clicked - enabling other cards");
+ 
     setIsEditingSecondary(true);
 
     // When user clicks replace, they're making a manual choice
     if (selectedSecondaryType === "identity-drivers-license") {
-      console.log("👤 User is replacing driver's license");
+    
     }
   };
 
@@ -328,9 +322,8 @@ export default function Step1ProofOfIdentity({
         setIsEditingSecondary(false);
       }
 
-      console.log("✅ Identity document uploaded successfully:", responseData.url);
     } catch (error: any) {
-      console.error("❌ Upload failed:", error);
+   
       alert(`Upload failed: ${error.message}`);
     } finally {
       setUploadingFiles((prev) => {
@@ -373,7 +366,7 @@ export default function Step1ProofOfIdentity({
         queryKey: identityDocumentsKeys.all,
       });
     } catch (error: any) {
-      console.error("❌ Delete failed:", error);
+    
       alert(`Delete failed: ${error.message}`);
     }
   };
@@ -657,14 +650,7 @@ export default function Step1ProofOfIdentity({
 
                   // Debug log for driver's license
                   if (docType.type === "identity-drivers-license") {
-                    console.log("🎯 Driver's License Card:", {
-                      docType: docType.type,
-                      selectedSecondaryType,
-                      isSelected,
-                      isDisabled,
-                      hasAnyDriverLicense,
-                      driverLicenseAvailable: driverLicense ? "Yes" : "No",
-                    });
+                   
                   }
 
                   return (

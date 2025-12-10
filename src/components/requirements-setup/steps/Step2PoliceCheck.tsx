@@ -101,27 +101,23 @@ export default function Step2PoliceCheck({
         }
       }
     } catch (error) {
-      console.error("Failed to fetch police check document:", error);
+    
     }
   };
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
-      console.error("❌ No session user ID");
+   
       alert("Session expired. Please refresh the page.");
       return;
     }
 
-    console.log("📁 File selected:", {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    });
+
 
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      console.error("❌ Invalid file type:", file.type);
+     
       alert("Please upload a JPG, PNG, or PDF file");
       return;
     }
@@ -129,7 +125,7 @@ export default function Step2PoliceCheck({
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      console.error("❌ File too large:", file.size);
+    
       alert("File size must be less than 10MB");
       return;
     }
@@ -137,27 +133,22 @@ export default function Step2PoliceCheck({
     setIsUploading(true);
 
     try {
-      console.log("📤 Starting upload to /api/upload/police-check");
+     
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("documentType", "police-check");
 
-      console.log("📦 FormData prepared with:", {
-        file: file.name,
-        documentType: "police-check",
-      });
-
+  
       const response = await fetch("/api/upload/police-check", {
         method: "POST",
         body: formData,
       });
 
-      console.log("📡 Response status:", response.status);
-
+    
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ Server error response:", errorText);
+    
 
         let error;
         try {
@@ -170,7 +161,7 @@ export default function Step2PoliceCheck({
       }
 
       const responseData = await response.json();
-      console.log("✅ Upload successful:", responseData);
+   
 
       // Update uploaded document state
       setUploadedDocument({
@@ -183,9 +174,9 @@ export default function Step2PoliceCheck({
       // Exit edit mode
       setIsEditMode(false);
 
-      console.log("✅ Police Check uploaded successfully:", responseData.url);
+
     } catch (error: any) {
-      console.error("❌ Upload failed:", error);
+     
       alert(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);

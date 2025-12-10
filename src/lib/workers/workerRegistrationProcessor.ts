@@ -82,7 +82,7 @@ export async function processWorkerRegistration(
       try {
         geocodedLocation = await geocodeWorkerLocation(location);
       } catch (geocodeError) {
-        console.error('⚠️ Geocoding failed (non-critical):', geocodeError);
+       
         // Continue anyway - worker can still register
       }
     }
@@ -211,7 +211,7 @@ export async function processWorkerRegistration(
           });
         }
       } catch (error) {
-        console.error('❌ Failed to create WorkerService records:', error);
+        
         // Don't fail registration
       }
     }
@@ -231,7 +231,7 @@ export async function processWorkerRegistration(
         },
       })
       .catch((error) => {
-        console.error('Audit log error:', error);
+   
       });
 
     // ============================================
@@ -281,7 +281,7 @@ export async function processWorkerRegistration(
         },
         body: JSON.stringify(webhookData),
       }).catch((webhookError) => {
-        console.error('⚠️ n8n webhook error (non-critical):', webhookError);
+       
       });
     }
 
@@ -290,7 +290,7 @@ export async function processWorkerRegistration(
       userId: user.id,
     };
   } catch (error: any) {
-    console.error('❌ Worker registration processing failed:', error);
+    
     return {
       success: false,
       error: error.message || 'Unknown error',

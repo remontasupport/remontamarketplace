@@ -41,7 +41,6 @@ export async function POST(request: Request) {
     );
 
   } catch (error: any) {
-    console.error('❌ Error checking email:', error);
 
     return NextResponse.json(
       { error: 'Failed to check email availability' },

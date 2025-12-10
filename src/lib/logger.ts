@@ -53,16 +53,16 @@ class Logger {
 
   debug(message: string, context?: LogContext) {
     if (this.isDevelopment) {
-      console.debug(this.formatLog(LogLevel.DEBUG, message, context))
+      
     }
   }
 
   info(message: string, context?: LogContext) {
-    console.info(this.formatLog(LogLevel.INFO, message, context))
+   
   }
 
   warn(message: string, context?: LogContext) {
-    console.warn(this.formatLog(LogLevel.WARN, message, context))
+   
   }
 
   error(message: string, error?: Error, context?: LogContext) {
@@ -74,7 +74,7 @@ class Logger {
         stack: this.isDevelopment ? error.stack : undefined,
       } : undefined,
     }
-    console.error(this.formatLog(LogLevel.ERROR, message, errorContext))
+  
   }
 
   /**

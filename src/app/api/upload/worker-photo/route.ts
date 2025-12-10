@@ -12,7 +12,7 @@ import { uploadWorkerPhoto, generateFileName, validateImageFile } from '@/lib/bl
 
 export async function POST(request: Request) {
   try {
-    console.log('📸 Photo pre-upload endpoint called');
+
 
     // Parse FormData
     const formData = await request.formData();
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`📸 Uploading photo: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+  
 
     // Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       'workers'
     );
 
-    console.log(`✅ Photo uploaded successfully: ${url}`);
+   
 
     return NextResponse.json(
       {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     );
 
   } catch (error: any) {
-    console.error('❌ Photo upload error:', error);
+    
 
     return NextResponse.json(
       {

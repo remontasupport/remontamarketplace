@@ -75,7 +75,7 @@ export default function CompliancePage() {
       }
     } catch (err) {
       setError('Failed to load compliance data')
-      console.error('Error fetching compliance data:', err)
+    
     } finally {
       setIsLoading(false)
     }
@@ -107,7 +107,7 @@ export default function CompliancePage() {
       }
     } catch (err) {
       alert('Failed to approve document')
-      console.error('Error approving document:', err)
+     
     } finally {
       setIsSubmitting(false)
     }
@@ -149,7 +149,7 @@ export default function CompliancePage() {
       }
     } catch (err) {
       alert('Failed to reject document')
-      console.error('Error rejecting document:', err)
+      
     } finally {
       setIsSubmitting(false)
     }
@@ -177,7 +177,7 @@ export default function CompliancePage() {
       }
     } catch (err) {
       alert('Failed to reset document')
-      console.error('Error resetting document:', err)
+     
     } finally {
       setIsSubmitting(false)
     }

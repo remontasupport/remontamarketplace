@@ -160,8 +160,6 @@ export async function approveWorkerVerification(
     },
   });
 
-  console.log('✅ Worker verification approved:', worker.userId);
-
   return worker;
 }
 
@@ -224,7 +222,6 @@ export async function rejectWorkerVerification(
     },
   });
 
-  console.log('❌ Worker verification rejected:', worker.userId);
 
   return worker;
 }
@@ -305,7 +302,6 @@ export async function submitForVerification(userId: string) {
     },
   });
 
-  console.log('📝 Worker submitted for verification:', userId);
 
   return worker;
 }

@@ -243,10 +243,6 @@ const filterRegistry: Record<string, FilterBuilder> = {
    */
   requirementTypes: (params) => {
     if (!params.requirementTypes || params.requirementTypes.length === 0) return null;
-
-    // Debug logging
-    console.log('🔍 [Filter Debug] Requirement Types filter active:', params.requirementTypes);
-
     // For single document, use simple query (fastest)
     if (params.requirementTypes.length === 1) {
       return {
@@ -320,8 +316,6 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
 
   // Debug logging for WHERE clause
   if (activeFilters.length > 0) {
-    console.log('🔧 [WHERE Clause Debug] Active filters count:', activeFilters.length);
-    console.log('🔧 [WHERE Clause Debug] Filter details:', JSON.stringify(activeFilters, null, 2));
   }
 
   // Edge case: No filters active
@@ -353,20 +347,13 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
         ? orFilters[0]
         : { AND: andConditions }
     }
-
-    // Final debug log
-    console.log('🎯 [WHERE Clause Final] Generated WHERE clause:', JSON.stringify(result, null, 2));
-
-    return result
+    return result;
   }
 
   // No OR filters, just merge AND filters
   const result = andFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
     return { ...acc, ...filter }
   }, {})
-
-  // Final debug log
-  console.log('🎯 [WHERE Clause Final] Generated WHERE clause:', JSON.stringify(result, null, 2));
 
   return result
 }
@@ -478,7 +465,7 @@ async function geocodeLocation(
       }
     }
   } catch (error) {
-    console.error('Geocoding error:', error)
+   
   }
 
   return null
@@ -607,7 +594,6 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
   // Log active filters for debugging
   const appliedFilters = getAppliedFilters(params)
   if (Object.keys(appliedFilters).length > 0) {
-    console.log('🔍 [Query] Active filters:', JSON.stringify(appliedFilters, null, 2))
   }
 
   // Execute count and data query in parallel for performance
@@ -647,8 +633,6 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
   ])
 
   const queryDuration = Date.now() - queryStartTime
-  console.log(`⚡ [Query Performance] Standard search completed in ${queryDuration}ms | Results: ${total} | Page: ${params.page}`)
-
   // Transform workerServices to legacy services array format for backward compatibility
   const workersWithServices = workers.map(worker => ({
     ...worker,
@@ -683,7 +667,6 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
 
   if (!coords) {
     // Fallback to standard search if geocoding fails
-    console.warn('Geocoding failed for:', params.location)
     return searchStandard({ ...params, within: 'none' })
   }
 
@@ -808,8 +791,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const duration = Date.now() - startTime
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-
-    console.error('[Admin API] Error fetching workers:', errorMsg)
 
     return NextResponse.json(
       {

@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       })),
     });
   } catch (error: any) {
-    console.error("Error fetching compliance documents:", error);
+  
     return NextResponse.json(
       { error: "Failed to fetch documents" },
       { status: 500 }
@@ -147,10 +147,10 @@ export async function POST(request: Request) {
       addRandomSuffix: false,
     });
 
-    console.log(`✅ Compliance document uploaded to blob:`, blob.url);
+  
 
     // 6. Always create a new document (support multiple documents per type)
-    console.log(`📝 Creating new document: ${documentType}`);
+
     const verificationReq = await authPrisma.verificationRequirement.create({
       data: {
         workerProfileId: workerProfile.id,
@@ -166,7 +166,6 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(`✅ Document saved successfully`);
 
     // 7. Update worker's verificationStatus to PENDING_REVIEW
     await authPrisma.workerProfile.update({
@@ -182,7 +181,7 @@ export async function POST(request: Request) {
       id: verificationReq.id,
     });
   } catch (error: any) {
-    console.error("❌ Compliance document upload error:", error);
+
     return NextResponse.json(
       {
         error: "Failed to upload document",
@@ -250,7 +249,7 @@ export async function DELETE(request: Request) {
       message: "Document deleted successfully",
     });
   } catch (error: any) {
-    console.error("Error deleting compliance document:", error);
+
     return NextResponse.json(
       {
         error: "Failed to delete document",

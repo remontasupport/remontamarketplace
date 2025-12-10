@@ -92,7 +92,6 @@ export async function GET(
 
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[PDF Generation API] Error:', errorMsg)
 
     return NextResponse.json(
       {

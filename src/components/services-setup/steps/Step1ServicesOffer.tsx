@@ -159,7 +159,6 @@ export default function Step1ServicesOffer({
       try {
         await onSaveServices(updatedServices, data.supportWorkerCategories || []);
       } catch (error) {
-        console.error("Failed to save services:", error);
       } finally {
         setIsSaving(false);
       }
@@ -202,7 +201,7 @@ export default function Step1ServicesOffer({
       try {
         await onSaveServices(updatedServices, updatedCategories);
       } catch (error) {
-        console.error("Failed to save services:", error);
+       
       } finally {
         setIsSaving(false);
       }
@@ -232,7 +231,7 @@ export default function Step1ServicesOffer({
         try {
           await onSaveServices(data.services || [], updatedCategories);
         } catch (error) {
-          console.error("Failed to save subcategories:", error);
+         
         } finally {
           setIsSaving(false);
         }

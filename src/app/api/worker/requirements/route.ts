@@ -48,19 +48,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
 
-    console.log("👤 Worker profile:", {
-      hasWorkerServices: workerProfile.workerServices.length > 0,
-      workerServicesCount: workerProfile.workerServices.length,
-      legacyServices: workerProfile.services,
-      legacySubcategories: workerProfile.supportWorkerCategories,
-    });
-
     // 4. Determine which services to fetch requirements for
     let servicesToFetch: string[] = [];
 
     if (serviceNameParam) {
       // Use specific serviceName parameter - filter for this service and its subcategories
-      console.log("🎯 Filtering for specific service:", serviceNameParam);
+     
 
       if (workerProfile.workerServices.length > 0) {
         // Filter WorkerService entries for this specific service
@@ -102,7 +95,7 @@ export async function GET(request: Request) {
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
     } else if (workerProfile.workerServices.length > 0) {
       // NEW APPROACH: Use WorkerService table (normalized data)
-      console.log("✅ Using new WorkerService table");
+ 
 
       servicesToFetch = workerProfile.workerServices.map(ws => {
         if (ws.subcategoryName) {
@@ -113,7 +106,7 @@ export async function GET(request: Request) {
       });
     } else {
       // FALLBACK: Use old services/supportWorkerCategories arrays
-      console.log("⚠️  Falling back to legacy services arrays");
+    
 
       const services = workerProfile.services || [];
       const subcategories = workerProfile.supportWorkerCategories || [];
@@ -147,7 +140,6 @@ export async function GET(request: Request) {
       }
     }
 
-    console.log("🎯 Combined services to fetch:", servicesToFetch);
 
     if (servicesToFetch.length === 0) {
       return NextResponse.json({
@@ -165,7 +157,7 @@ export async function GET(request: Request) {
 
     // Parse services to separate category and subcategory
     // Format: "Category Name" or "Category Name:Subcategory Name"
-    console.log("🔍 Raw services to fetch:", servicesToFetch);
+
 
     const parsedServices = servicesToFetch.map(service => {
       const [categoryName, subcategoryName] = service.split(':').map(s => s.trim());
@@ -177,13 +169,13 @@ export async function GET(request: Request) {
       };
     });
 
-    console.log("📋 Parsed services:", JSON.stringify(parsedServices, null, 2));
+   
 
     // 5. Fetch categories and their required documents from main database
     const categoryIds = parsedServices.map(s => s.categoryId);
     const categoryNames = parsedServices.map(s => s.categoryName);
 
-    console.log("🔍 Searching for category IDs:", categoryIds);
+    
 
     const categories = await prisma.category.findMany({
       where: {
@@ -218,8 +210,7 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log("📦 Found categories:", categories.length);
-    console.log("📋 Category names found:", categories.map(c => c.name));
+
 
     // 6. Process and categorize requirements
     const allRequirements: any[] = [];
@@ -245,9 +236,7 @@ export async function GET(request: Request) {
         });
       }
 
-      // Add subcategory-level documents
-      console.log(`\n🔍 Processing category: ${category.name}`);
-      console.log(`   Requested services for this category:`, requestedServicesForCategory);
+    
 
       // Collect all requested subcategory IDs
       const requestedSubcategoryIds = requestedServicesForCategory
@@ -258,8 +247,6 @@ export async function GET(request: Request) {
         .filter(s => s.subcategoryName)
         .map(s => s.subcategoryName);
 
-      console.log(`   Requested subcategory IDs:`, requestedSubcategoryIds);
-      console.log(`   Available subcategories:`, category.subcategories.map(s => ({ id: s.id, name: s.name })));
 
       // If specific subcategories were requested, only include those
       // Otherwise, include all subcategories
@@ -269,7 +256,7 @@ export async function GET(request: Request) {
           )
         : category.subcategories;
 
-      console.log(`   ✅ Subcategories to include:`, subcategoriesToInclude.map(s => s.name));
+   
 
       for (const subcategory of subcategoriesToInclude) {
         for (const subDoc of subcategory.additionalDocuments) {
@@ -349,7 +336,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
-    console.error("❌ Error fetching requirements:", error);
+  
     return NextResponse.json(
       {
         error: "Failed to fetch requirements",

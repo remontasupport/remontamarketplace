@@ -97,8 +97,6 @@ export async function POST(request: Request) {
       addRandomSuffix: false,
     });
 
-    console.log(`✅ Identity document uploaded to blob:`, blob.url);
-
     // 6. Check if this exact document type already exists
     // If YES: Update the existing entry (user is re-uploading same document)
     // If NO: Create a new entry (user is uploading a different document)
@@ -120,7 +118,7 @@ export async function POST(request: Request) {
 
     if (existingDocOfSameType) {
       // Same document type already exists - update it with new file
-      console.log(`🔄 Updating existing document: ${documentType}`);
+    
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDocOfSameType.id },
         data: {
@@ -139,7 +137,7 @@ export async function POST(request: Request) {
       });
     } else {
       // No existing document of this type - create new entry
-      console.log(`📝 Creating new document: ${documentType}`);
+    
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
@@ -156,7 +154,7 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log(`✅ VerificationRequirement record saved successfully`);
+
 
     // 7. Update worker's verificationStatus to PENDING_REVIEW
     // Any document upload/update triggers re-verification by admin
@@ -169,7 +167,7 @@ export async function POST(request: Request) {
       select: { verificationStatus: true },
     });
 
-    console.log(`✅ Worker verification status set to PENDING_REVIEW (requires admin review)`)
+  
 
     return NextResponse.json({
       success: true,
@@ -177,7 +175,7 @@ export async function POST(request: Request) {
       id: verificationReq.id,
     });
   } catch (error: any) {
-    console.error("❌ Identity document upload error:", error);
+
     return NextResponse.json(
       {
         error: "Failed to upload identity document",

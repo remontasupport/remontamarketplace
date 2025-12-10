@@ -45,13 +45,11 @@ export function generateTrainingSteps(
     // Check if there's a custom component for this training
     const customMapping = getComponentForDocument(req.id);
 
-    // Log for debugging
-    console.log(`🎓 Mapping training: "${req.id}" (${req.name})`);
-    console.log(`   Found custom component: ${!!customMapping}`);
+   
     if (customMapping) {
-      console.log(`   ✅ Using custom component: ${customMapping.component.name}`);
+     
     } else {
-      console.log(`   ⚠️  Using GenericComplianceDocument`);
+    
     }
 
     // Use custom component if available, otherwise use generic component

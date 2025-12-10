@@ -57,7 +57,7 @@ function VerifyEmailContent() {
         setMessage(result.error || "Verification failed. Please try again.");
       }
     } catch (error) {
-      console.error("Verification error:", error);
+
       setState("error");
       setMessage("An error occurred during verification. Please try again.");
     }

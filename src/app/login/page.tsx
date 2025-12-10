@@ -54,7 +54,7 @@ export default function LoginPage() {
       if (session?.user?.role) {
         // Redirect based on role
         const redirectPath = getRedirectPathForRole(session.user.role);
-        console.log("✅ Login successful! Redirecting to:", redirectPath);
+
         router.push(redirectPath);
         router.refresh();
       } else {
@@ -62,7 +62,7 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("Login error:", error);
+
       setError("An error occurred during login");
       setIsLoading(false);
     }

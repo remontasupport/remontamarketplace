@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      console.error('PostcodeAPI error:', response.status, response.statusText);
+
       return NextResponse.json({ error: 'Failed to fetch suburbs' }, { status: response.status });
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // Return the data (limit to 10 results)
     return NextResponse.json(Array.isArray(data) ? data.slice(0, 10) : []);
   } catch (error) {
-    console.error('Error fetching suburbs:', error);
+   
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

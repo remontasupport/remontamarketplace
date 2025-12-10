@@ -55,7 +55,7 @@ export async function GET() {
     });
 
   } catch (error: any) {
-    console.error("❌ Error fetching working with children check:", error);
+   
     return NextResponse.json(
       {
         error: "Failed to fetch working with children check",

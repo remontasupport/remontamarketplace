@@ -33,11 +33,10 @@ export default function PhotoUpload({
   // Update preview when currentPhoto prop changes (e.g., when data is fetched from DB)
   // This ensures the photo displays after page refresh
   useEffect(() => {
-    console.log("📸 PhotoUpload: currentPhoto changed to:", currentPhoto);
-    console.log("📸 PhotoUpload: current previewUrl:", previewUrl);
+   
 
     if (currentPhoto) {
-      console.log("📸 PhotoUpload: Setting previewUrl to:", currentPhoto);
+     
       setPreviewUrl(currentPhoto);
     }
   }, [currentPhoto]);
@@ -111,7 +110,7 @@ export default function PhotoUpload({
         throw new Error("No URL returned from upload");
       }
     } catch (uploadError: any) {
-      console.error("Upload error:", uploadError);
+
       setUploadError(uploadError.message || "Failed to upload photo");
       setPreviewUrl(null);
       onPhotoChange(null);

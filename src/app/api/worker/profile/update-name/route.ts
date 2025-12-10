@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
-    console.error("Error updating name:", error);
+   
 
     return NextResponse.json(
       {
@@ -100,7 +100,7 @@ async function checkMiddleNameColumnExists(): Promise<boolean> {
 
     return result.length > 0;
   } catch (error) {
-    console.error("Error checking column existence:", error);
+  
     return false;
   }
 }
@@ -118,15 +118,15 @@ async function addMiddleNameColumn(): Promise<void> {
       ADD COLUMN "middleName" TEXT
     `;
 
-    console.log("✅ middleName column added successfully");
+
   } catch (error: any) {
     // Check if column already exists (race condition)
     if (error.code === "42701") {
-      console.log("ℹ️  middleName column already exists");
+     
       return;
     }
 
-    console.error("Error adding middleName column:", error);
+  
     throw error;
   }
 }

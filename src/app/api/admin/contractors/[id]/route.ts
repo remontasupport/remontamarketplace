@@ -71,8 +71,6 @@ export async function GET(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    console.error('[Admin API] Error fetching worker:', errorMsg)
-
     return NextResponse.json(
       {
         success: false,

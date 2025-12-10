@@ -86,7 +86,7 @@ function ServiceQualificationsContent() {
         }
       }
     } catch (error) {
-      console.error("Failed to load existing requirements:", error);
+   
     } finally {
       setIsLoading(false);
     }
@@ -137,9 +137,9 @@ function ServiceQualificationsContent() {
         },
       }));
 
-      console.log("✅ Certificate uploaded successfully:", data.url);
+   
     } catch (error: any) {
-      console.error("❌ Upload failed:", error);
+    
       alert(`Upload failed: ${error.message}`);
     } finally {
       // Remove from uploading set
@@ -199,7 +199,7 @@ function ServiceQualificationsContent() {
       // Success - redirect back
       router.push("/dashboard/worker/services/setup?step=services-offer");
     } catch (error) {
-      console.error("Error saving qualifications:", error);
+     
       setErrorMessage("Failed to save qualifications. Please try again.");
     } finally {
       setIsSaving(false);

@@ -58,9 +58,9 @@ export async function DELETE(
     if (document.documentUrl) {
       try {
         await del(document.documentUrl);
-        console.log("✅ Document deleted from blob storage:", document.documentUrl);
+       
       } catch (blobError) {
-        console.error("⚠️ Failed to delete from blob storage:", blobError);
+       
         // Continue with database deletion even if blob deletion fails
       }
     }
@@ -70,7 +70,7 @@ export async function DELETE(
       where: { id: documentId },
     });
 
-    console.log("✅ Document deleted from database:", documentId);
+   
 
     return NextResponse.json({
       success: true,
@@ -78,7 +78,7 @@ export async function DELETE(
     });
 
   } catch (error: any) {
-    console.error("❌ Error deleting document:", error);
+
     return NextResponse.json(
       {
         error: "Failed to delete document",

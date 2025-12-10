@@ -13,20 +13,10 @@ import { uploadWorkerPhoto, generateFileName, validateImageFile, deleteFromBlob 
 
 export async function POST(request: Request) {
   try {
-    console.log('📸 Photo upload endpoint called');
-    console.log('📍 Environment:', process.env.NODE_ENV);
-    console.log('🔑 Blob token exists:', !!process.env.BLOB_READ_WRITE_TOKEN);
-
-    console.log('📥 Parsing form data...');
     const formData = await request.formData();
     const files = formData.getAll('photos') as File[];
     const email = formData.get('email') as string; // Worker identifier
     const oldPhotoUrl = formData.get('oldPhotoUrl') as string | null; // Old photo to delete
-
-    console.log('📧 Email:', email);
-    console.log('📷 Files count:', files.length);
-    console.log('🗑️ Old photo URL to delete:', oldPhotoUrl);
-
     if (!email) {
       return NextResponse.json(
         { error: 'Email is required for photo upload' },
@@ -83,9 +73,9 @@ export async function POST(request: Request) {
         );
 
         uploadedUrls.push(url);
-        console.log(`✅ Photo ${i + 1} uploaded:`, url);
+  
       } catch (uploadError) {
-        console.error(`❌ Failed to upload photo ${i + 1}:`, uploadError);
+       
         errors.push(`Photo ${i + 1}: Upload failed`);
       }
     }
@@ -104,11 +94,11 @@ export async function POST(request: Request) {
     // Delete old photo if upload was successful and old photo URL exists
     if (oldPhotoUrl && uploadedUrls.length > 0) {
       try {
-        console.log('🗑️ Deleting old photo from blob storage...');
+       
         await deleteFromBlob(oldPhotoUrl);
-        console.log('✅ Old photo deleted successfully');
+       
       } catch (deleteError) {
-        console.error('⚠️ Failed to delete old photo:', deleteError);
+        
         // Don't fail the request if deletion fails - new photo is already uploaded
       }
     }
@@ -131,14 +121,7 @@ export async function POST(request: Request) {
       urls: uploadedUrls,
     });
   } catch (error: any) {
-    console.error('❌ Photo upload error:', error);
-    console.error('❌ Photo upload error details:', {
-      message: error?.message,
-      code: error?.code,
-      stack: error?.stack,
-      name: error?.name
-    });
-
+  
     return NextResponse.json(
       {
         error: 'Failed to upload photos',

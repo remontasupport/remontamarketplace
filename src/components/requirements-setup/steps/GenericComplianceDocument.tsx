@@ -97,7 +97,7 @@ export default function GenericComplianceDocument({
         }
       }
     } catch (error) {
-      console.error("Error fetching document:", error);
+    
     } finally {
       setIsLoading(false);
     }
@@ -152,9 +152,9 @@ export default function GenericComplianceDocument({
       // Clear expiry date
       setExpiryDate("");
 
-      console.log("✅ Document uploaded successfully:", responseData.url);
+      
     } catch (error: any) {
-      console.error("❌ Upload failed:", error);
+
       alert(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
@@ -184,9 +184,9 @@ export default function GenericComplianceDocument({
       setUploadedDocument(null);
       setIsLoading(false);
 
-      console.log("✅ Document deleted successfully");
+    
     } catch (error: any) {
-      console.error("❌ Delete failed:", error);
+
       alert(`Delete failed: ${error.message}`);
     }
   };

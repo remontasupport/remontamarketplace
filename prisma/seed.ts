@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import categoriesData from '../categories.json';
+
 
 // Use AUTH_DATABASE_URL for seeding categories on authentication branch
 const prisma = new PrismaClient({
@@ -31,10 +31,10 @@ function expandDocumentRefs(docs: string[], documentSets: any): string[] {
 }
 
 async function main() {
-  console.log('🌱 Starting seed...');
+
 
   // Clear existing data (in reverse order of dependencies)
-  console.log('🗑️  Clearing existing data...');
+  
   await prisma.subcategoryDocument.deleteMany();
   await prisma.categoryDocument.deleteMany();
   await prisma.subcategory.deleteMany();
@@ -42,7 +42,7 @@ async function main() {
   await prisma.document.deleteMany();
 
   // 1. Seed Documents
-  console.log('📄 Seeding documents...');
+
   const documents = Object.values(categoriesData.documents);
   for (const doc of documents) {
     await prisma.document.create({
@@ -135,7 +135,7 @@ async function main() {
 
     // 3. Seed Subcategories
     if (category.subcategories && category.subcategories.length > 0) {
-      console.log(`  📁 Seeding ${category.subcategories.length} subcategories for ${category.name}...`);
+      
 
       for (const subcat of category.subcategories) {
         await prisma.subcategory.create({
@@ -162,8 +162,7 @@ async function main() {
     }
   }
 
-  console.log(`✅ Created ${categoriesData.categories.length} categories`);
-  console.log('🎉 Seed completed successfully!');
+
 }
 
 main()

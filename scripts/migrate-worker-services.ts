@@ -10,7 +10,7 @@
 import { authPrisma } from '../src/lib/auth-prisma';
 
 async function migrateWorkerServices() {
-  console.log('🚀 Starting worker services migration...\n');
+ 
 
   try {
     // 1. Fetch all worker profiles with services
@@ -23,7 +23,6 @@ async function migrateWorkerServices() {
       },
     });
 
-    console.log(`📊 Found ${workerProfiles.length} worker profiles to migrate\n`);
 
     let totalServicesCreated = 0;
     let profilesProcessed = 0;
@@ -34,13 +33,9 @@ async function migrateWorkerServices() {
       const subcategories = profile.supportWorkerCategories || [];
 
       if (services.length === 0) {
-        console.log(`⏭️  Skipping profile ${profile.id} (no services)`);
+        
         continue;
       }
-
-      console.log(`\n👤 Processing profile: ${profile.id}`);
-      console.log(`   Services: ${services.join(', ')}`);
-      console.log(`   Subcategories: ${subcategories.join(', ')}`);
 
       const workerServiceRecords = [];
 
@@ -88,22 +83,18 @@ async function migrateWorkerServices() {
             skipDuplicates: true, // Skip if already exists
           });
 
-          console.log(`   ✅ Created ${workerServiceRecords.length} WorkerService records`);
+         
           totalServicesCreated += workerServiceRecords.length;
           profilesProcessed++;
         } catch (error: any) {
-          console.error(`   ❌ Error creating WorkerService records:`, error.message);
+        
         }
       }
     }
 
-    console.log('\n\n📈 Migration Summary:');
-    console.log(`   Profiles processed: ${profilesProcessed}`);
-    console.log(`   WorkerService records created: ${totalServicesCreated}`);
-    console.log('\n✅ Migration completed successfully!');
-
+  
   } catch (error) {
-    console.error('\n❌ Migration failed:', error);
+    
     throw error;
   } finally {
     await authPrisma.$disconnect();
@@ -116,6 +107,6 @@ migrateWorkerServices()
     process.exit(0);
   })
   .catch((error) => {
-    console.error(error);
+  
     process.exit(1);
   });

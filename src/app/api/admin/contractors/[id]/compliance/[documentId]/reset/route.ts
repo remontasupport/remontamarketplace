@@ -73,7 +73,6 @@ export async function POST(
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    console.error('[Reset API] Error resetting document:', errorMsg)
 
     return NextResponse.json(
       {

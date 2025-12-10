@@ -55,7 +55,7 @@ export async function GET() {
     });
 
   } catch (error: any) {
-    console.error("❌ Error fetching infection control training:", error);
+
     return NextResponse.json(
       {
         error: "Failed to fetch infection control training",

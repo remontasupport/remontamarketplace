@@ -11,8 +11,6 @@ import { authPrisma } from '../src/lib/auth-prisma';
 
 async function verifyUserManually(email: string) {
   try {
-    console.log(`🔍 Looking for user: ${email}`);
-
     const user = await authPrisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
       include: {
@@ -26,13 +24,12 @@ async function verifyUserManually(email: string) {
     });
 
     if (!user) {
-      console.error(`❌ User not found: ${email}`);
+     
       process.exit(1);
     }
 
     if (user.status === 'ACTIVE') {
-      console.log(`✅ User already active: ${email}`);
-      console.log(`   Status: ${user.status}`);
+      
       process.exit(0);
     }
 
@@ -56,15 +53,11 @@ async function verifyUserManually(email: string) {
       },
     });
 
-    console.log(`✅ Email manually verified for: ${email}`);
-    console.log(`   User: ${user.workerProfile?.firstName} ${user.workerProfile?.lastName}`);
-    console.log(`   Role: ${user.role}`);
-    console.log(`   Status: ACTIVE`);
-    console.log(`\n🎉 User can now log in!`);
+   
 
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error);
+ 
     process.exit(1);
   }
 }
@@ -73,8 +66,7 @@ async function verifyUserManually(email: string) {
 const email = process.argv[2];
 
 if (!email) {
-  console.error('❌ Please provide an email address');
-  console.log('Usage: npx tsx scripts/verify-user-manually.ts your@email.com');
+
   process.exit(1);
 }
 

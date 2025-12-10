@@ -48,7 +48,6 @@ export async function POST(request: Request) {
     // Security: Don't reveal if user exists or not
     // Always return success to prevent user enumeration
     if (!user) {
-      console.log(`⚠️ Password reset requested for non-existent email: ${normalizedEmail}`);
 
       // Still return success (security best practice)
       return NextResponse.json({
@@ -85,9 +84,7 @@ export async function POST(request: Request) {
 
     try {
       await sendPasswordResetEmail(normalizedEmail, resetToken, firstName);
-      console.log('✅ Password reset email sent to:', normalizedEmail);
     } catch (emailError) {
-      console.error('❌ Error sending password reset email:', emailError);
 
       // Don't fail the request if email fails (user won't know)
       // Admin can check logs and manually reset if needed
@@ -114,16 +111,6 @@ export async function POST(request: Request) {
     // ============================================
 
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
-
-    console.log('\n==============================================');
-    console.log('🔑 PASSWORD RESET LINK FOR TESTING');
-    console.log('==============================================');
-    console.log(`Email: ${normalizedEmail}`);
-    console.log(`Reset URL: ${resetUrl}`);
-    console.log(`Token: ${resetToken}`);
-    console.log(`Expires: ${resetExpires.toLocaleString()}`);
-    console.log('==============================================\n');
-
     // ============================================
     // SUCCESS RESPONSE
     // ============================================
@@ -134,7 +121,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('❌ Forgot password error:', error);
+   
     return NextResponse.json(
       { error: 'Failed to process password reset. Please try again.' },
       { status: 500 }

@@ -36,8 +36,6 @@ export async function POST(request: Request) {
       addRandomSuffix: false,
     });
 
-    console.log(`✅ Vehicle photo uploaded to blob:`, blob.url);
-
     // Get worker profile
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
@@ -86,14 +84,13 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log(`✅ Vehicle photo saved to verification_requirements`);
-
+   
     return NextResponse.json({
       success: true,
       photoUrl: blob.url,
     });
   } catch (error: any) {
-    console.error("❌ Vehicle photo upload error:", error);
+ 
     return NextResponse.json(
       { error: "Failed to upload vehicle photo", details: error.message },
       { status: 500 }

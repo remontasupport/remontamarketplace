@@ -48,7 +48,7 @@ export async function GET() {
       })),
     });
   } catch (error: any) {
-    console.error("❌ Error fetching service documents:", error);
+   
     return NextResponse.json(
       { error: "Failed to fetch service documents" },
       { status: 500 }
@@ -97,11 +97,9 @@ export async function DELETE(request: Request) {
       where: { id: documentId },
     });
 
-    console.log(`✅ Service document deleted: ${documentId}`);
-
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("❌ Error deleting service document:", error);
+  
     return NextResponse.json(
       { error: "Failed to delete service document" },
       { status: 500 }

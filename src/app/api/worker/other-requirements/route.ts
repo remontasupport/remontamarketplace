@@ -62,7 +62,6 @@ export async function GET() {
     return NextResponse.json({ documents });
 
   } catch (error: any) {
-    console.error("❌ Error fetching other requirements:", error);
     return NextResponse.json(
       {
         error: "Failed to fetch other requirements",

@@ -24,14 +24,8 @@ import { uploadWorkerPhoto, generateFileName, validateImageFile } from '@/lib/bl
 
 export async function POST(request: Request) {
   try {
-    // Log that the function was called
-    console.log('🚀 Registration endpoint called');
-    console.log('📍 Environment:', process.env.NODE_ENV);
-    console.log('🗄️ Database URL exists:', !!process.env.AUTH_DATABASE_URL || !!process.env.DATABASE_URL);
-
     // DEBUG: Return environment info in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 DEBUG MODE: Checking environment variables...');
     }
 
     // ============================================
@@ -40,17 +34,17 @@ export async function POST(request: Request) {
     try {
       const rateLimitResult = await applyRateLimit(request, strictApiRateLimit);
       if (!rateLimitResult.success) {
-        console.log('⚠️ Rate limit exceeded');
+       
         return rateLimitResult.response;
       }
-      console.log('✅ Rate limit check passed');
+     
     } catch (rateLimitError: any) {
-      console.error('❌ Rate limit error:', rateLimitError);
+
       // Continue anyway - don't block registration if rate limit fails
     }
 
   try {
-    console.log('📥 Parsing request body...');
+    
 
     // Check if request is FormData (with photos) or JSON (without photos)
     const contentType = request.headers.get('content-type') || '';
@@ -78,12 +72,10 @@ export async function POST(request: Request) {
         }
       }
 
-      console.log('✅ FormData parsed successfully');
-      console.log('📷 Photos to upload:', photoFiles.length);
     } else {
       // Parse JSON
       body = await request.json();
-      console.log('✅ JSON body parsed successfully');
+    
     }
 
     // Extract and validate data
@@ -133,7 +125,7 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      console.log('✅ reCAPTCHA verified:', { score: recaptchaResult.score });
+  
     }
 
     // ============================================
@@ -173,10 +165,10 @@ export async function POST(request: Request) {
     if (photos && Array.isArray(photos) && photos.length > 0 && typeof photos[0] === 'string') {
       // Photos are already uploaded - use the URLs directly
       photoUrls = photos;
-      console.log(`✅ Using pre-uploaded photo URLs: ${photoUrls.length} photo(s)`);
+     
     } else if (photoFiles.length > 0) {
       // Legacy support: Photos sent as files - upload them now
-      console.log(`📸 Uploading ${photoFiles.length} photos to Blob...`);
+   
 
       for (let i = 0; i < photoFiles.length; i++) {
         const file = photoFiles[i];
@@ -184,7 +176,7 @@ export async function POST(request: Request) {
         // Validate file
         const validationError = validateImageFile(file);
         if (validationError) {
-          console.error(`❌ Photo ${i + 1} validation failed:`, validationError);
+        
           continue; // Skip invalid files
         }
 
@@ -209,14 +201,14 @@ export async function POST(request: Request) {
           );
 
           photoUrls.push(url);
-          console.log(`✅ Photo ${i + 1}/${photoFiles.length} uploaded:`, url);
+         
         } catch (uploadError) {
-          console.error(`❌ Failed to upload photo ${i + 1}:`, uploadError);
+         
           // Continue with other photos even if one fails
         }
       }
 
-      console.log(`✅ Uploaded ${photoUrls.length}/${photoFiles.length} photos successfully`);
+     
     }
 
     // ============================================
@@ -240,15 +232,8 @@ export async function POST(request: Request) {
     if (location) {
       try {
         geocodedLocation = await geocodeWorkerLocation(location);
-        console.log('✅ Location geocoded:', {
-          location,
-          latitude: geocodedLocation.latitude,
-          longitude: geocodedLocation.longitude,
-          city: geocodedLocation.city,
-          state: geocodedLocation.state,
-        });
       } catch (geocodeError) {
-        console.error('⚠️ Geocoding failed:', geocodeError);
+       
         // Don't fail registration if geocoding fails
         // Worker can still register, just won't have coordinates initially
       }
@@ -329,11 +314,7 @@ export async function POST(request: Request) {
     }
 
     // Verify photos were saved
-    console.log('✅ Worker created with photos:', {
-      workerId: user.workerProfile?.id,
-      photosInDb: user.workerProfile?.photos,
-      photoCount: Array.isArray(user.workerProfile?.photos) ? user.workerProfile.photos.length : 0,
-    });
+   
 
     // ============================================
     // CREATE WORKER SERVICE RECORDS (Normalized)
@@ -403,11 +384,11 @@ export async function POST(request: Request) {
             data: workerServiceRecords,
             skipDuplicates: true,
           });
-          console.log(`✅ Created ${workerServiceRecords.length} WorkerService records during registration`);
+       
         }
       } catch (error) {
         // Don't fail registration if WorkerService creation fails
-        console.error('❌ Failed to create WorkerService records:', error);
+       
       }
     }
 
@@ -426,7 +407,7 @@ export async function POST(request: Request) {
       },
     }).catch((error) => {
       // Don't fail if audit log fails
-      console.error('Audit log error:', error);
+    
     });
 
     // ============================================
@@ -492,25 +473,21 @@ export async function POST(request: Request) {
         body: JSON.stringify(webhookData),
       })
         .then(() => {
-          console.log('✅ Data sent to n8n webhook successfully');
+         
         })
         .catch((webhookError) => {
           // Don't fail registration if webhook fails
-          console.error('⚠️ n8n webhook error (non-critical):', webhookError);
+        
         });
     } else {
-      console.log('⚠️ N8N_WEBHOOK_URL not configured - skipping webhook');
+      
     }
 
     // ============================================
     // SUCCESS RESPONSE
     // ============================================
 
-    console.log('✅ Worker registered successfully:', {
-      userId: user.id,
-      email: normalizedEmail,
-      role: user.role,
-    });
+   
 
     return NextResponse.json(
       {
@@ -527,13 +504,7 @@ export async function POST(request: Request) {
     );
 
   } catch (error: any) {
-    console.error('❌ Registration error:', error);
-    console.error('❌ Error details:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-      name: error.name
-    });
+  
 
     // Handle Prisma unique constraint errors
     if (error.code === 'P2002') {
@@ -563,13 +534,6 @@ export async function POST(request: Request) {
   }
   } catch (topLevelError: any) {
     // Catch any errors that happen before our main try-catch
-    console.error('❌ TOP LEVEL ERROR in registration endpoint:', topLevelError);
-    console.error('❌ TOP LEVEL ERROR details:', {
-      message: topLevelError?.message,
-      code: topLevelError?.code,
-      stack: topLevelError?.stack,
-      name: topLevelError?.name
-    });
 
     // Always return detailed error to help debug
     return NextResponse.json(

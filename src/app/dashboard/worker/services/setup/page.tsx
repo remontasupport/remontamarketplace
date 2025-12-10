@@ -60,8 +60,6 @@ function ServicesSetupContent() {
   // Populate form data ONLY on initial load
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
-      console.log("📋 Initializing services form data with profile:", profileData);
-
       setFormData({
         services: profileData.services || [],
         supportWorkerCategories: profileData.supportWorkerCategories || [],
@@ -73,8 +71,6 @@ function ServicesSetupContent() {
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
-    console.log(`📝 Field changed: ${field} =`, value);
-
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -93,8 +89,6 @@ function ServicesSetupContent() {
   const handleSaveServices = async (services: string[], supportWorkerCategories: string[]) => {
     if (!session?.user?.id) return;
 
-    console.log("💾 Auto-saving services to database:", { services, supportWorkerCategories });
-
     try {
       await updateProfileMutation.mutateAsync({
         userId: session.user.id,
@@ -104,9 +98,7 @@ function ServicesSetupContent() {
           supportWorkerCategories,
         },
       });
-      console.log("✅ Services auto-saved successfully");
     } catch (error) {
-      console.error("❌ Failed to auto-save services:", error);
       throw error; // Re-throw so component can handle it
     }
   };
@@ -171,8 +163,6 @@ function ServicesSetupContent() {
           dataToSend = formData;
       }
 
-      console.log(`💾 Saving step ${currentStep} (API step ${apiStep}) with data:`, dataToSend);
-
       // Use mutation hook - automatically invalidates cache on success
       await updateProfileMutation.mutateAsync({
         userId: session.user.id,
@@ -192,7 +182,6 @@ function ServicesSetupContent() {
         }, 2000);
       }
     } catch (error) {
-      console.error("Error saving step:", error);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };

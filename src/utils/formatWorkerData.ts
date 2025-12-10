@@ -144,7 +144,6 @@ export const databaseExamples = {
   saveToMongoDB: async (formattedData: FormattedWorkerData) => {
     // const result = await db.collection('workers').insertOne(formattedData);
     // return result.insertedId;
-    console.log("MongoDB Data:", JSON.stringify(formattedData, null, 2));
   },
 
   // PostgreSQL example (with separate tables)
@@ -154,7 +153,7 @@ export const databaseExamples = {
     //   INSERT INTO worker_services (worker_id, service_type, has_sub_categories)
     // For support worker categories:
     //   INSERT INTO worker_support_categories (worker_id, category_id, category_title)
-    console.log("PostgreSQL Data:", JSON.stringify(formattedData, null, 2));
+   
   },
 
   // Prisma example
@@ -170,6 +169,6 @@ export const databaseExamples = {
     //     }
     //   }
     // });
-    console.log("Prisma Data:", JSON.stringify(formattedData, null, 2));
+   
   },
 };

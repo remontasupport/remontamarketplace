@@ -128,7 +128,7 @@ export default function Step4PersonalInfo({
       !userDeclinedUseExisting && // Don't show if user already declined
       !userAcceptedUseExisting // Don't show if user already accepted
     ) {
-      console.log("🔔 User has driver's license from 100 Points ID - showing confirmation dialog");
+   
       setShowConfirmDialog(true);
     }
   }, [data.hasVehicle, has100PointsDriverLicense, hasDriverLicense, userDeclinedUseExisting, userAcceptedUseExisting]);
@@ -146,7 +146,7 @@ export default function Step4PersonalInfo({
     setStorageValue(STORAGE_KEYS.ACCEPTED, true);
     setStorageValue(STORAGE_KEYS.DECLINED, false);
 
-    console.log("✅ User accepted to use existing driver's license from 100 Points ID (no new entry created)");
+   
   };
 
   // Handle user declining to use existing and wanting to upload new one
@@ -158,7 +158,7 @@ export default function Step4PersonalInfo({
     setStorageValue(STORAGE_KEYS.DECLINED, true);
     setStorageValue(STORAGE_KEYS.ACCEPTED, false);
 
-    console.log("👤 User declined to use existing license - showing upload option");
+
   };
 
   const handleVehiclePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,10 +207,9 @@ export default function Step4PersonalInfo({
 
       // Clear sessionStorage since user has now uploaded their own document
       clearDriverLicenseStorage();
-
-      console.log("✅ Driver's license uploaded successfully");
+  
     } catch (error: any) {
-      console.error("Upload error:", error);
+    
       setUploadError(error.message || "Failed to upload photo. Please try again.");
     } finally {
       setIsUploading(false);

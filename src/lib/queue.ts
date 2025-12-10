@@ -48,7 +48,7 @@ async function getDatabaseTime(): Promise<Date> {
     const result = await authPrisma.$queryRaw<any[]>`SELECT NOW() as db_time`;
     return new Date(result[0].db_time);
   } catch (error) {
-    console.warn('⚠️ Could not get database time, using local time:', error);
+   
     return new Date();
   }
 }
@@ -65,7 +65,7 @@ export async function getQueueInstance(): Promise<PgBoss> {
 
   // Handle errors
   bossInstance.on('error', (error) => {
-    console.error('pg-boss error:', error);
+
   });
 
   // Start the queue manager
@@ -210,7 +210,7 @@ export async function queueWorkerRegistration(
     return jobId;
 
   } catch (error: any) {
-    console.error('Error queueing registration:', error);
+
     throw error;
   }
 }

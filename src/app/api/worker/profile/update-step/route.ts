@@ -19,9 +19,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { step, data } = body;
 
-    console.log(`📥 Received step ${step} update request`);
-    console.log(`📦 Data received:`, JSON.stringify(data, null, 2));
-
     // Prepare update data based on step
     const updateData: any = {};
 
@@ -163,7 +160,7 @@ export async function POST(request: Request) {
               data: workerServiceRecords,
               skipDuplicates: true,
             });
-            console.log(`✅ Created ${workerServiceRecords.length} WorkerService records`);
+           
           }
         }
         break;
@@ -214,7 +211,7 @@ export async function POST(request: Request) {
                 },
               },
             });
-            console.log(`🗑️ Deleted ${requirementsToDelete.length} deselected requirements`);
+           
           }
 
           // Create new requirements ONLY for qualifications that don't exist yet
@@ -238,10 +235,10 @@ export async function POST(request: Request) {
             await authPrisma.verificationRequirement.createMany({
               data: requirementsToCreate as any[],
             });
-            console.log(`✅ Created ${requirementsToCreate.length} new verification requirements`);
+            
           }
 
-          console.log(`📋 Preserved ${existingRequirements.length - requirementsToDelete.length} existing requirements with their documentUrls`);
+          
         }
         break;
 
@@ -261,28 +258,28 @@ export async function POST(request: Request) {
       // This prevents accidental deletion of ABN from other steps
       if (trimmedAbn) {
         updateData.abn = trimmedAbn;
-        console.log(`💼 ABN field detected with value. Saving: "${updateData.abn}"`);
+      
       } else if (step >= 100 && (step === 103 || data.abn === "")) {
         // Only allow clearing ABN if we're on Services Setup ABN step (103)
         // or if ABN is explicitly sent as empty string
         updateData.abn = null;
-        console.log(`💼 ABN field cleared (step ${step}). Saving as: null`);
+        
       } else {
-        console.log(`⚠️ SAFEGUARD: Ignoring empty ABN from step ${step} to prevent accidental data loss`);
+        
       }
     }
 
     // Update worker profile
-    console.log(`💾 Update data to be saved:`, JSON.stringify(updateData, null, 2));
+   
 
     if (Object.keys(updateData).length > 0) {
       const result = await authPrisma.workerProfile.update({
         where: { userId: session.user.id },
         data: updateData,
       });
-      console.log(`✅ Worker profile updated successfully. ABN value:`, result.abn);
+     
     } else {
-      console.log(`⚠️ No data to update - updateData is empty`);
+      
     }
 
     return NextResponse.json({
@@ -290,7 +287,7 @@ export async function POST(request: Request) {
       message: `Step ${step} saved successfully`,
     });
   } catch (error: any) {
-    console.error("Error updating step:", error);
+   
     return NextResponse.json(
       {
         error: "Failed to save step",

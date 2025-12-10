@@ -227,9 +227,6 @@ export async function searchWorkers(
       return distanceA - distanceB;
     });
   }
-
-  console.log(`🔍 Found ${results.length} workers within ${radiusKm}km`);
-
   return results;
 }
 

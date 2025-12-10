@@ -110,7 +110,7 @@ function ResetPasswordContent() {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("Reset password error:", error);
+
       setError("An error occurred. Please try again.");
       setIsLoading(false);
     }
