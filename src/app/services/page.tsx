@@ -1,12 +1,38 @@
-'use client'
-
-
+import { Metadata } from 'next'
 import Footer from "@/components/ui/layout/Footer"
 import Services from "@/app/landing/Services"
 import { BRAND_COLORS } from "@/lib/constants"
 import Image from "next/image"
 import Link from "next/link"
+import ScrollToServicesButton from "@/components/ui/ScrollToServicesButton"
 
+export const metadata: Metadata = {
+  title: 'NDIS Support Services Australia | Remonta Support Services',
+  description: 'Comprehensive NDIS support services including personal care, cleaning, home maintenance, fitness, therapeutic support, nursing, and home modifications across Australia.',
+  keywords: ['NDIS services', 'disability support', 'personal care', 'therapeutic support', 'nursing services', 'home modifications', 'NDIS provider Australia'],
+  openGraph: {
+    title: 'NDIS Support Services Australia | Remonta',
+    description: 'Full range of in-home, community, and lifestyle supports for people with disabilities. From everyday tasks to complex care.',
+    url: 'https://www.remontaservices.com.au/services',
+    siteName: 'Remonta Services',
+    images: [
+      {
+        url: '/images/servicesHero.webp',
+        width: 1200,
+        height: 630,
+        alt: 'Remonta NDIS Support Services',
+      },
+    ],
+    locale: 'en_AU',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NDIS Support Services Australia | Remonta',
+    description: 'Full range of in-home, community, and lifestyle supports for people with disabilities.',
+    images: ['/images/servicesHero.webp'],
+  },
+}
 
 export default function ServicesPage() {
 
@@ -40,26 +66,7 @@ export default function ServicesPage() {
                 >
                   Provide Support
                 </Link>
-                <button
-                  onClick={() => {
-                    const servicesSection = document.getElementById('services');
-                    if (servicesSection) {
-                      servicesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
-                  className="inline-flex items-center justify-center rounded-full px-6 py-2.5 sm:px-8 sm:py-3 border-2 font-poppins font-medium text-sm sm:text-base transition-colors duration-300"
-                  style={{ borderColor: BRAND_COLORS.PRIMARY, color: BRAND_COLORS.PRIMARY }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = BRAND_COLORS.PRIMARY;
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = BRAND_COLORS.PRIMARY;
-                  }}
-                >
-                  View our services
-                </button>
+                <ScrollToServicesButton />
               </div>
 
               {/* NDIS Logo and Text */}

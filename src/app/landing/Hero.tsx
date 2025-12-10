@@ -48,7 +48,7 @@ export default function Hero() {
           </h1>
 
           <p className="hero-description scroll-animate fade-up" data-delay="1">
-           With the right partner by your side, your NDIS journey gets a whole lot easier.
+           We are proud to be a registered NDIS disability and aged care provider helping people who need assistance make meaningful connections with the highest quality carers in their local area.
           </p>
 
           {/* Buttons */}

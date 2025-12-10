@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useScrollAnimation } from '@/hooks/useScrollAnimation'
+import { generateFAQSchema } from '@/lib/schema/faq-schema'
 
 interface FAQItem {
   question: string
@@ -75,8 +76,20 @@ export default function FAQ() {
     }
   ]
 
+  // Flatten all FAQ items for schema generation
+  const allFAQItems = useMemo(() =>
+    faqSections.flatMap(section => section.items),
+    [faqSections]
+  )
+
+  const faqSchema = useMemo(() => generateFAQSchema(allFAQItems), [allFAQItems])
+
   return (
     <section className="bg-[#F8F9FA] pt-4 pb-12 sm:py-16 md:py-20 lg:py-24 overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-4 sm:py-0">
         <div className="text-center mb-8 sm:mb-12">
           <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
