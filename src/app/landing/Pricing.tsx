@@ -58,13 +58,13 @@ export default function Pricing() {
           {/* Left Column - Benefits */}
           <div className="order-2 lg:order-1">
             {/* Desktop Header - Only visible on large screens */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:block" aria-hidden="true">
               <p className="font-sans text-xs sm:text-sm md:text-base font-medium uppercase tracking-wide mb-3 sm:mb-4 scroll-animate fade-up">
                 <span className="bg-[#F8E8D8] px-2 py-0 rounded-lg text-[#0C1628]">PRICING</span>
               </p>
-              <h2 className="section-title mb-2 sm:mb-8 scroll-animate fade-up" data-delay="1">
+              <div className="section-title mb-2 sm:mb-8 scroll-animate fade-up" data-delay="1">
                 We accept different types of f﻿unding
-              </h2>
+              </div>
             </div>
 
             <p className="font-sans text-base sm:text-lg text-[#0C1628] mb-6 sm:mb-8 leading-relaxed text-center lg:text-left scroll-animate fade-up" data-delay="2">

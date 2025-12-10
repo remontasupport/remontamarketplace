@@ -146,7 +146,7 @@ export default function FindSupportPage() {
 
       {/* Right Column - Testimonial Card */}
       <div className="find-support-testimonial-card">
-       <h3 className="find-support-testimonial-name">SARAH MITCHELL</h3>
+       <div className="find-support-testimonial-name">SARAH MITCHELL</div>
        <p className="find-support-testimonial-role">NDIS PARTICIPANT</p>
 
        {/* Star Rating */}

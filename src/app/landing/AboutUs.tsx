@@ -57,13 +57,13 @@ export default function AboutUs() {
         <div className="about-content-column">
           <div className="about-content">
             {/* Desktop Badge and Title (hidden on mobile) */}
-            <div className="about-desktop-header scroll-animate fade-up">
+            <div className="about-desktop-header scroll-animate fade-up" aria-hidden="true">
               <div className="about-badge-wrapper">
                 <span className="section-badge">ABOUT US</span>
               </div>
-              <h2 className="section-title">
+              <div className="section-title">
                 NDIS Registered Support Services Provider
-              </h2>
+              </div>
             </div>
 
             {/* Description */}

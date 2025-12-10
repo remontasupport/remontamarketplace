@@ -78,7 +78,7 @@ export default function WorkerProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <h1 className="text-2xl font-cooper text-[#0C1628] mb-4">Worker not found</h1>
+          <h2 className="text-2xl font-cooper text-[#0C1628] mb-4">Worker not found</h2>
           <a href="/" className="text-[#0C1628] hover:underline font-poppins">
             Return to home
           </a>

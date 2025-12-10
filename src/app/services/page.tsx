@@ -189,7 +189,7 @@ export default function ServicesPage() {
               <p className="jobs-cta-description">
                 If you require specialised and high-intensity supports, our team is here to help—from finding and booking the right workers to managing your team.
               </p>
-              <Link href="/registration/client" className="jobs-cta-button">
+              <Link href="/registration/user" className="jobs-cta-button">
                 Get in Touch
               </Link>
             </div>

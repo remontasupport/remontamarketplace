@@ -114,7 +114,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <aside className="article-sidebar">
             <div className="article-sidebar-sticky">
               <div className="sidebar-card">
-                <h3 className="sidebar-title">New to Remonta?</h3>
+                <div className="sidebar-title">New to Remonta?</div>
 
                 <div className="sidebar-image">
                   <Image

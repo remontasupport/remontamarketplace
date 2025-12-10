@@ -297,7 +297,7 @@ export default function ContactPage() {
               <div className="contact-hero-card-icon">
                 <Phone size={48} strokeWidth={1.5} />
               </div>
-              <h3 className="contact-hero-card-title">Talk to our friendly team</h3>
+              <h2 className="contact-hero-card-title">Talk to our friendly team</h2>
               <p className="contact-hero-card-description">
                 Interested in our services? Just pick up the phone to chat with a member of our team.
               </p>
@@ -311,7 +311,7 @@ export default function ContactPage() {
               <div className="contact-hero-card-icon">
                 <MessageCircle size={48} strokeWidth={1.5} />
               </div>
-              <h3 className="contact-hero-card-title">Contact Customer Support</h3>
+              <h2 className="contact-hero-card-title">Contact Customer Support</h2>
               <p className="contact-hero-card-description">
                 Sometimes you need a little help from your friends. Or a Remonta support rep. Don't worry... we're here for you.
               </p>
