@@ -67,7 +67,7 @@ const sliderItems = [
   },
   {
     title: 'Nursing',
-    description: 'Our qualified nurses offer professional and specialised care tailored to your or your loved one's needs.',
+    description: 'Our qualified nurses offer professional and specialised care tailored to your or your loved one\'s needs.',
     image: '/images/nursing.jpg',
     imageAlt: 'Nursing services',
     services: [

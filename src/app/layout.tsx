@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
   description: "Connecting NDIS participants with quality support workers across Australia",
   metadataBase: new URL('https://www.remontaservices.com.au'),
+  verification: {
+    google: 'pkvtMiFCtvuWhEd32fXDKjtML0IybbTSGZontVmXDCE',
+  },
   openGraph: {
     title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
     description: "Connecting NDIS participants with quality support workers across Australia",
