@@ -220,6 +220,7 @@ function ServicesSetupContent() {
     }
   }, [currentStepIndex, router]);
 
+  // Authentication is handled by layout - no need to check here
   if (status === "loading" || isLoadingProfile) {
     return (
       <DashboardLayout showProfileCard={false}>

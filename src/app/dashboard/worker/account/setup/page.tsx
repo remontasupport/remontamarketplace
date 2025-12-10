@@ -88,10 +88,6 @@ interface FormData {
   hasVehicle: string;
   // Step 7: ABN
   abn: string;
-  // Step 8: Emergency Contact
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  emergencyContactRelationship: string;
 }
 
 function AccountSetupContent() {
@@ -132,9 +128,6 @@ function AccountSetupContent() {
     languages: [],
     hasVehicle: "",
     abn: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    emergencyContactRelationship: "",
   });
 
   // Populate form data ONLY on initial load
@@ -170,9 +163,6 @@ function AccountSetupContent() {
         languages: profileData.languages || [],
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
-        emergencyContactName: profileData.emergencyContactName || "",
-        emergencyContactPhone: profileData.emergencyContactPhone || "",
-        emergencyContactRelationship: profileData.emergencyContactRelationship || "",
       });
       hasInitializedFormData.current = true;
     }
@@ -281,13 +271,6 @@ function AccountSetupContent() {
               gender: formData.gender,
               languages: formData.languages,
               hasVehicle: formData.hasVehicle,
-            };
-            break;
-          case 7: // Emergency Contact
-            dataToSend = {
-              emergencyContactName: formData.emergencyContactName,
-              emergencyContactPhone: formData.emergencyContactPhone,
-              emergencyContactRelationship: formData.emergencyContactRelationship,
             };
             break;
           default:

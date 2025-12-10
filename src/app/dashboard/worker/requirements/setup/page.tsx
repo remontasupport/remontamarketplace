@@ -185,6 +185,7 @@ function MandatoryRequirementsSetupContent() {
     }
   }, [currentStepIndex, router, STEPS]);
 
+  // Authentication is handled by layout - no need to check here
   if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
     return (
       <DashboardLayout showProfileCard={false}>

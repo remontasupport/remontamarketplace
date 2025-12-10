@@ -319,15 +319,6 @@ export default function Step3WorkingWithChildren({
                   </p>
                 </div>
               )}
-
-              {/* Success Message */}
-              {uploadedDocument && !isEditMode && (
-                <div className="points-summary-card complete mt-4">
-                  <p className="points-summary-message complete">
-                    Thank you for submitting your Working With Children Check. Our team will carefully review and verify your document.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>

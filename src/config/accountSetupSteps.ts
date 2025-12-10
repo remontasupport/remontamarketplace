@@ -9,7 +9,6 @@ import Step2Photo from "@/components/account-setup/steps/Step2Photo";
 import Step3Bio from "@/components/account-setup/steps/Step3Bio";
 import Step4PersonalInfo from "@/components/account-setup/steps/Step4PersonalInfo";
 import Step5Address from "@/components/account-setup/steps/Step5Address";
-import Step7EmergencyContact from "@/components/account-setup/steps/Step7EmergencyContact";
 
 export interface AccountSetupStep {
   id: number;
@@ -24,7 +23,6 @@ export const ACCOUNT_SETUP_STEPS: AccountSetupStep[] = [
   { id: 3, slug: "bio", title: "Your bio", component: Step3Bio },
   { id: 4, slug: "address", title: "Address", component: Step5Address },
   { id: 5, slug: "personal-info", title: "Other personal info", component: Step4PersonalInfo },
-  { id: 6, slug: "emergency-contact", title: "Emergency contact", component: Step7EmergencyContact },
 ];
 
 // Helper to get step URL
