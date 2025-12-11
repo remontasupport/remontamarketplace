@@ -287,8 +287,7 @@ export default function ContractorOnboarding() {
     try {
       setIsLoading(true);
 
-      // Submit registration to async queue (handles 1000+ concurrent submissions)
-      // Queue processes automatically - user will be redirected when complete
+      // Submit registration (processes immediately)
       const response = await fetchWithRetry('/api/auth/register-async', {
         method: 'POST',
         headers: {
@@ -310,11 +309,9 @@ export default function ContractorOnboarding() {
         return;
       }
 
-      // Job queued successfully - start polling for completion
-      setRegistrationJobId(result.jobId);
-      setRegistrationStatus('processing');
-
-      // Note: isLoading will be set to false when job completes (in useEffect)
+      // Registration successful - redirect to success page
+      setRegistrationStatus('completed');
+      window.location.href = `/registration/worker/success`;
     } catch (error: any) {
       // Show user-friendly error message
       const errorMessage = error?.message || "An error occurred during registration. Please try again.";

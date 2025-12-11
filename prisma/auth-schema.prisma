@@ -113,6 +113,11 @@ model User {
   @@index([resetPasswordToken])
   @@index([role])
   @@index([status])
+
+  // NEW INDEXES FOR PERFORMANCE
+  @@index([accountLockedUntil])  // Login flow checks account lock status
+  @@index([createdAt])            // Admin queries for user registration date
+
   @@map("users")
 }
 
@@ -206,6 +211,7 @@ model WorkerProfile {
   workerServices            WorkerService[]
   user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Single-column indexes for basic filtering
   @@index([city])
   @@index([isPublished])
   @@index([latitude, longitude])
@@ -213,6 +219,24 @@ model WorkerProfile {
   @@index([state])
   @@index([userId])
   @@index([verificationStatus])
+
+  // NEW INDEXES FOR ADMIN DASHBOARD PERFORMANCE
+  @@index([gender])           // Admin dashboard gender filter
+  @@index([age])              // Admin dashboard age range filter
+  @@index([firstName])        // Admin dashboard text search
+  @@index([lastName])         // Admin dashboard text search
+  @@index([mobile])           // Admin dashboard text search
+
+  // GIN index for array field (PostgreSQL-specific for fast array queries)
+  // This enables fast queries like: WHERE 'English' = ANY(languages)
+  @@index([languages], type: Gin)
+
+  // Compound indexes for common filter combinations
+  @@index([isPublished, city])              // Published workers in a city
+  @@index([isPublished, gender])            // Published workers by gender
+  @@index([isPublished, verificationStatus]) // Published workers by verification
+  @@index([createdAt])                       // Sort by registration date
+
   @@map("worker_profiles")
 }
 
@@ -321,6 +345,11 @@ model WorkerService {
   @@index([workerProfileId])
   @@index([categoryId])
   @@index([subcategoryId])
+
+  // NEW INDEXES FOR PERFORMANCE
+  @@index([categoryName])                // Filter by service name (admin dashboard)
+  @@index([workerProfileId, categoryName]) // Compound index for worker's services
+
   @@map("worker_services")
 }
 

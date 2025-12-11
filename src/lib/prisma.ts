@@ -1,23 +1,61 @@
+/**
+ * Main Prisma Client with Connection Pooling
+ *
+ * PRODUCTION-READY CONNECTION POOLING:
+ * - Uses Neon's connection pooler (see -pooler in DATABASE_URL)
+ * - Singleton pattern prevents connection exhaustion
+ * - Optimized for serverless/Next.js API routes
+ */
+
 import { PrismaClient } from '@prisma/client'
 
-// PrismaClient is attached to the `global` object in development to prevent
-// exhausting your database connection limit.
-// Learn more: https://pris.ly/d/help/next-js-best-practices
+// Declare global type for development hot-reload protection
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined
+}
 
-// Use AUTH_DATABASE_URL since all data (including Categories/Documents) is in the auth branch
-const globalForPrisma = global as unknown as { prisma: PrismaClient }
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
+/**
+ * Connection Pool Configuration for Neon
+ *
+ * Best Practices:
+ * - Use Neon's pooler URL (already in .env with -pooler)
+ * - Don't add duplicate params (already in .env)
+ * - Use singleton pattern (prevents multiple instances)
+ */
+const createPrismaClient = () => {
+  return new PrismaClient({
     datasources: {
       db: {
         url: process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL,
       },
     },
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development'
+      ? ['query', 'error', 'warn']  // Enable query logging in dev for debugging
+      : ['error'],
   })
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+/**
+ * Main Database Client
+ *
+ * Uses singleton pattern to prevent creating multiple instances
+ * In development, stores in global to survive hot-reloads
+ * In production, creates fresh instance
+ */
+export const prisma = global.prisma || createPrismaClient()
+
+// In development, store in global to survive hot-reloads
+if (process.env.NODE_ENV !== 'production') {
+  global.prisma = prisma
+}
+
+/**
+ * Graceful shutdown helper
+ * Call this when your application shuts down
+ */
+export async function disconnectPrisma() {
+  await prisma.$disconnect()
+}
 
 export default prisma

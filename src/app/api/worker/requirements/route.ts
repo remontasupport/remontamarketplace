@@ -215,11 +215,19 @@ export async function GET(request: Request) {
     // 6. Process and categorize requirements
     const allRequirements: any[] = [];
 
+    // OPTIMIZATION: Build HashMap of categoryId -> services (O(n) upfront, then O(1) lookups)
+    const categoryServicesMap = new Map<string, typeof parsedServices>();
+    for (const service of parsedServices) {
+      const key = service.categoryId;
+      if (!categoryServicesMap.has(key)) {
+        categoryServicesMap.set(key, []);
+      }
+      categoryServicesMap.get(key)!.push(service);
+    }
+
     for (const category of categories) {
-      // Find ALL services requested for this category (not just the first one!)
-      const requestedServicesForCategory = parsedServices.filter(
-        s => s.categoryId === category.id || s.categoryName === category.name
-      );
+      // O(1) lookup instead of O(n) filter
+      const requestedServicesForCategory = categoryServicesMap.get(category.id) || [];
 
       // Add category-level documents (always include these, only once per category)
       for (const catDoc of category.documents) {
@@ -275,53 +283,47 @@ export async function GET(request: Request) {
     }
 
     // 7. Group requirements by type and DEDUPLICATE by document ID
-    // Helper function to deduplicate requirements by ID
-    const deduplicateById = (requirements: any[]) => {
-      const seen = new Map();
-      const unique: any[] = [];
+    // OPTIMIZED: Single-pass grouping using HashMap (O(n) instead of O(5n))
+    const groupedRequirements = new Map<string, Map<string, any>>();
 
-      for (const req of requirements) {
-        if (!seen.has(req.id)) {
-          seen.set(req.id, true);
-          unique.push(req);
+    // Map category to group name for O(1) lookup (instead of array.includes)
+    const categoryToGroup = new Map<string, string>([
+      ['IDENTITY', 'baseCompliance'],
+      ['BUSINESS', 'baseCompliance'],
+      ['COMPLIANCE', 'baseCompliance'],
+      ['TRAINING', 'trainings'],
+      ['QUALIFICATION', 'qualifications'],
+      ['REGISTRATION', 'qualifications'],
+      ['INSURANCE', 'insurance'],
+      ['TRANSPORT', 'transport'],
+    ]);
+
+    // Single pass through all requirements (O(n))
+    for (const req of allRequirements) {
+      // O(1) lookup instead of O(n) array.includes()
+      const groupName = categoryToGroup.get(req.category);
+
+      if (groupName) {
+        // Initialize group if needed
+        if (!groupedRequirements.has(groupName)) {
+          groupedRequirements.set(groupName, new Map());
+        }
+
+        const group = groupedRequirements.get(groupName)!;
+
+        // Deduplicate by ID using Map (O(1) lookup)
+        if (!group.has(req.id)) {
+          group.set(req.id, req);
         }
       }
+    }
 
-      return unique;
-    };
-
-    const baseCompliance = deduplicateById(
-      allRequirements.filter(
-        req => req.category === 'IDENTITY' ||
-               req.category === 'BUSINESS' ||
-               req.category === 'COMPLIANCE'
-      )
-    );
-
-    const trainings = deduplicateById(
-      allRequirements.filter(
-        req => req.category === 'TRAINING'
-      )
-    );
-
-    const qualifications = deduplicateById(
-      allRequirements.filter(
-        req => req.category === 'QUALIFICATION' ||
-               req.category === 'REGISTRATION'
-      )
-    );
-
-    const insurance = deduplicateById(
-      allRequirements.filter(
-        req => req.category === 'INSURANCE'
-      )
-    );
-
-    const transport = deduplicateById(
-      allRequirements.filter(
-        req => req.category === 'TRANSPORT'
-      )
-    );
+    // Convert Maps to Arrays for response
+    const baseCompliance = Array.from(groupedRequirements.get('baseCompliance')?.values() || []);
+    const trainings = Array.from(groupedRequirements.get('trainings')?.values() || []);
+    const qualifications = Array.from(groupedRequirements.get('qualifications')?.values() || []);
+    const insurance = Array.from(groupedRequirements.get('insurance')?.values() || []);
+    const transport = Array.from(groupedRequirements.get('transport')?.values() || []);
 
     return NextResponse.json({
       success: true,

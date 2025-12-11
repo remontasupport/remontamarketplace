@@ -67,25 +67,17 @@ export async function processWorkerRegistration(
     const passwordHash = await hashPassword(password);
 
     // ============================================
-    // GEOCODE LOCATION
+    // GEOCODE LOCATION - SKIP FOR NOW (will do in background)
     // ============================================
-    let geocodedLocation = preGeocodedLocation || {
+    // OPTIMIZATION: Create profile with NULL coordinates first
+    // Update coordinates asynchronously in background (doesn't block response)
+    const geocodedLocation = preGeocodedLocation || {
       city: null,
       state: null,
       postalCode: null,
       latitude: null,
       longitude: null,
     };
-
-    // Only geocode if not already done
-    if (location && !preGeocodedLocation) {
-      try {
-        geocodedLocation = await geocodeWorkerLocation(location);
-      } catch (geocodeError) {
-       
-        // Continue anyway - worker can still register
-      }
-    }
 
     // ============================================
     // CREATE USER + WORKER PROFILE (TRANSACTION)
@@ -148,81 +140,117 @@ export async function processWorkerRegistration(
     }
 
     // ============================================
-    // CREATE WORKER SERVICE RECORDS
+    // RETURN IMMEDIATELY - User doesn't need to wait!
     // ============================================
-    if (user.workerProfile && services && services.length > 0) {
-      try {
-        const categories = await authPrisma.category.findMany({
-          include: {
-            subcategories: true,
-          },
-        });
+    // User + Profile created successfully → Return userId now
+    // Background operations will complete asynchronously
 
-        const subcategoryToCategory = new Map();
-        categories.forEach((category) => {
-          category.subcategories.forEach((sub: any) => {
-            subcategoryToCategory.set(sub.id, category);
+    const userId = user.id;
+    const workerProfileId = user.workerProfile!.id;
+
+    // ============================================
+    // ASYNC BACKGROUND OPERATIONS (Fire-and-forget)
+    // ============================================
+    // These operations run in the background WITHOUT blocking the response
+    // User gets immediate feedback while we handle the rest
+
+    // ASYNC: Geocode location and update profile
+    if (location) {
+      (async () => {
+        try {
+          const geocoded = await geocodeWorkerLocation(location);
+
+          // Update worker profile with geocoded coordinates
+          await authPrisma.workerProfile.update({
+            where: { id: workerProfileId },
+            data: {
+              city: geocoded.city,
+              state: geocoded.state,
+              postalCode: geocoded.postalCode,
+              latitude: geocoded.latitude,
+              longitude: geocoded.longitude,
+            },
           });
-        });
-
-        const workerServiceRecords = [];
-        const subcategoryIds = supportWorkerCategories || [];
-
-        for (const serviceName of services) {
-          const category = categories.find((c) => c.name === serviceName);
-          if (!category) continue;
-
-          const categoryId = category.id;
-          const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
-            const parentCategory = subcategoryToCategory.get(subId);
-            return parentCategory?.id === categoryId;
-          });
-
-          if (relevantSubcategoryIds.length > 0) {
-            for (const subcategoryId of relevantSubcategoryIds) {
-              const subcategory = category.subcategories.find(
-                (sub: any) => sub.id === subcategoryId
-              );
-              if (subcategory) {
-                workerServiceRecords.push({
-                  workerProfileId: user.workerProfile.id,
-                  categoryId,
-                  categoryName: serviceName,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                });
-              }
-            }
-          } else {
-            workerServiceRecords.push({
-              workerProfileId: user.workerProfile.id,
-              categoryId,
-              categoryName: serviceName,
-              subcategoryId: null,
-              subcategoryName: null,
-            });
-          }
+        } catch (error) {
+          // Silently fail - coordinates not critical for registration
         }
-
-        if (workerServiceRecords.length > 0) {
-          await authPrisma.workerService.createMany({
-            data: workerServiceRecords,
-            skipDuplicates: true,
-          });
-        }
-      } catch (error) {
-        
-        // Don't fail registration
-      }
+      })();
     }
 
-    // ============================================
-    // AUDIT LOG
-    // ============================================
-    await authPrisma.auditLog
+    // ASYNC: Create worker service records
+    if (services && services.length > 0) {
+      // Fire-and-forget: Don't await
+      (async () => {
+        try {
+          const categories = await authPrisma.category.findMany({
+            include: {
+              subcategories: true,
+            },
+          });
+
+          const subcategoryToCategory = new Map();
+          categories.forEach((category) => {
+            category.subcategories.forEach((sub: any) => {
+              subcategoryToCategory.set(sub.id, category);
+            });
+          });
+
+          const workerServiceRecords = [];
+          const subcategoryIds = supportWorkerCategories || [];
+
+          for (const serviceName of services) {
+            const category = categories.find((c) => c.name === serviceName);
+            if (!category) continue;
+
+            const categoryId = category.id;
+            const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
+              const parentCategory = subcategoryToCategory.get(subId);
+              return parentCategory?.id === categoryId;
+            });
+
+            if (relevantSubcategoryIds.length > 0) {
+              for (const subcategoryId of relevantSubcategoryIds) {
+                const subcategory = category.subcategories.find(
+                  (sub: any) => sub.id === subcategoryId
+                );
+                if (subcategory) {
+                  workerServiceRecords.push({
+                    workerProfileId,
+                    categoryId,
+                    categoryName: serviceName,
+                    subcategoryId,
+                    subcategoryName: subcategory.name,
+                  });
+                }
+              }
+            } else {
+              workerServiceRecords.push({
+                workerProfileId,
+                categoryId,
+                categoryName: serviceName,
+                subcategoryId: null,
+                subcategoryName: null,
+              });
+            }
+          }
+
+          if (workerServiceRecords.length > 0) {
+            await authPrisma.workerService.createMany({
+              data: workerServiceRecords,
+              skipDuplicates: true,
+            });
+          }
+        } catch (error) {
+          // Silently fail - user already registered successfully
+        }
+      })();
+    }
+
+    // ASYNC: Audit log (fire-and-forget)
+    authPrisma.auditLog
       .create({
         data: {
-          userId: user.id,
+          userId,
           action: 'LOGIN_SUCCESS',
           metadata: {
             registrationType: 'WORKER',
@@ -230,16 +258,14 @@ export async function processWorkerRegistration(
           },
         },
       })
-      .catch((error) => {
-   
+      .catch(() => {
+        // Silently fail - not critical
       });
 
-    // ============================================
-    // N8N WEBHOOK
-    // ============================================
+    // ASYNC: N8N webhook (fire-and-forget)
     if (process.env.N8N_WEBHOOK_URL) {
       const webhookData = {
-        userId: user.id,
+        userId,
         email: normalizedEmail,
         role: user.role,
         registeredAt: new Date().toISOString(),
@@ -280,8 +306,8 @@ export async function processWorkerRegistration(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(webhookData),
-      }).catch((webhookError) => {
-       
+      }).catch(() => {
+        // Silently fail - not critical
       });
     }
 

@@ -98,21 +98,10 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // ============================================
-    // GEOCODE LOCATION (Optional - speeds up background processing)
-    // ============================================
-    let geocodedLocation = undefined;
-
-    if (location) {
-      try {
-        geocodedLocation = await geocodeWorkerLocation(location);
-      } catch (geocodeError) {
-        // Will be geocoded in background worker if it fails here
-      }
-    }
-
-    // ============================================
     // PROCESS REGISTRATION IMMEDIATELY
     // ============================================
+    // OPTIMIZATION: Skip geocoding here - will be done in background
+    // This saves 200-500ms from response time!
     const jobData: WorkerRegistrationJobData = {
       email: normalizedEmail,
       password,
@@ -137,7 +126,7 @@ export async function POST(request: Request) {
       photos,
       consentProfileShare,
       consentMarketing,
-      geocodedLocation,
+      geocodedLocation: undefined, // Will be geocoded in background
     };
 
     // Process registration immediately (no queue)

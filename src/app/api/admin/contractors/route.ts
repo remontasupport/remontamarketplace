@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { Prisma } from '@/generated/auth-client'
+import { geocodeAddress } from '@/lib/geocoding'
 
 // ============================================================================
 // TYPES
@@ -174,19 +175,12 @@ const filterRegistry: Record<string, FilterBuilder> = {
       : null,
 
   /**
-   * Location Filter (Without Distance)
-   * Searches city or state fields
-   * Only applies when distance filter is not active
+   * Location Filter - REMOVED
+   * Location field is now ONLY used for distance filtering
+   * When "Within" = "None", all workers are shown regardless of location
+   * When "Within" = distance value, location is used for geocoding and distance calc
    */
-  location: (params) =>
-    params.location && params.within === 'none'
-      ? {
-          OR: [
-            { city: { contains: params.location, mode: 'insensitive' } },
-            { state: { contains: params.location, mode: 'insensitive' } },
-          ]
-        }
-      : null,
+  location: (params) => null,
 
   /**
    * Document Categories Filter (Multi-select)
@@ -421,54 +415,30 @@ function getBoundingBox(lat: number, lng: number, radiusKm: number) {
 
 /**
  * Geocode Location String
- * Converts location to coordinates
+ * Converts location to coordinates using Google Geocoding API
+ *
+ * IMPORTANT: Uses the same geocoding service as worker registration
+ * to ensure coordinate consistency and accurate distance filtering
  */
 async function geocodeLocation(
   location: string
 ): Promise<{ lat: number; lng: number } | null> {
-  // Major Australian cities coordinates
-  const majorCities: Record<string, { lat: number; lng: number }> = {
-    'sydney': { lat: -33.8688, lng: 151.2093 },
-    'melbourne': { lat: -37.8136, lng: 144.9631 },
-    'brisbane': { lat: -27.4705, lng: 153.0260 },
-    'perth': { lat: -31.9505, lng: 115.8605 },
-    'adelaide': { lat: -34.9285, lng: 138.6007 },
-    'gold coast': { lat: -28.0167, lng: 153.4000 },
-    'newcastle': { lat: -32.9283, lng: 151.7817 },
-    'canberra': { lat: -35.2809, lng: 149.1300 },
-    'sunshine coast': { lat: -26.6500, lng: 153.0667 },
-    'wollongong': { lat: -34.4278, lng: 150.8931 },
-  }
-
-  // Extract city name from location string
-  const cityName = location.split(',')[0].trim().toLowerCase()
-
-  // Check if it's a major city
-  if (majorCities[cityName]) {
-    return majorCities[cityName]
-  }
-
-  // Try to fetch from suburbs API
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/suburbs?q=${encodeURIComponent(cityName)}`
-    )
-    const suburbs = await response.json()
+    // Use Google Geocoding API (same as worker registration)
+    // This ensures coordinates match what's stored in worker profiles
+    const result = await geocodeAddress(location)
 
-    if (Array.isArray(suburbs) && suburbs.length > 0) {
-      const match = suburbs[0]
-      if (match.latitude && match.longitude) {
-        return {
-          lat: match.latitude,
-          lng: match.longitude
-        }
+    if (result) {
+      return {
+        lat: result.latitude,
+        lng: result.longitude
       }
     }
-  } catch (error) {
-   
-  }
 
-  return null
+    return null
+  } catch (error) {
+    return null
+  }
 }
 
 // ============================================================================
@@ -670,7 +640,9 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
     return searchStandard({ ...params, within: 'none' })
   }
 
-  const radiusKm = parseInt(params.within!)
+  // Default radius: 500 km when "Within" = "None"
+  // This shows workers in a wide area while still being location-based
+  const radiusKm = params.within === 'none' ? 500 : parseInt(params.within!)
   const bbox = getBoundingBox(coords.lat, coords.lng, radiusKm)
 
   // Build base WHERE clause (all non-distance filters)
@@ -770,10 +742,10 @@ export async function GET(request: NextRequest) {
     const params = parseFilterParams(searchParams)
 
     // Determine if distance filtering is needed
-    const hasDistanceFilter =
-      params.location &&
-      params.within !== 'none' &&
-      params.within !== undefined
+    // Distance filtering is used when:
+    // 1. Location is provided, AND
+    // 2. Within has any value (including "none" which defaults to 500 km)
+    const hasDistanceFilter = params.location && params.location.trim() !== ''
 
     // Execute appropriate search strategy
     const response = hasDistanceFilter
