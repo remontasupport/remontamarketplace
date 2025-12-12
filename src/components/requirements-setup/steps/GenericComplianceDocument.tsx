@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,11 @@ import {
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/requirements-setup.css";
 import { RequirementDocument } from "@/hooks/queries/useWorkerRequirements";
+import {
+  useComplianceDocuments,
+  useUploadComplianceDocument,
+  useDeleteComplianceDocument,
+} from "@/hooks/queries/useComplianceDocuments";
 import Loader from "@/components/ui/Loader";
 
 interface GenericComplianceDocumentProps {
@@ -26,21 +31,6 @@ interface GenericComplianceDocumentProps {
   // Additional props for dynamic rendering
   requirement?: RequirementDocument;
   apiEndpoint?: string;
-}
-
-interface UploadedDocument {
-  id?: string;
-  documentType: string;
-  documentUrl: string;
-  uploadedAt: string;
-  expiryDate?: string;
-}
-
-interface SingleDocument {
-  id: string;
-  documentUrl: string;
-  uploadedAt: string;
-  expiryDate?: string;
 }
 
 // Helper to check if document is a PDF
@@ -57,51 +47,25 @@ export default function GenericComplianceDocument({
 }: GenericComplianceDocumentProps) {
   const { data: session } = useSession();
 
-  const [uploadedDocument, setUploadedDocument] = useState<SingleDocument | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [expiryDate, setExpiryDate] = useState("");
 
   const documentType = requirement?.id || "generic-document";
   const hasExpiration = requirement?.hasExpiration ?? false;
 
-  // Fetch uploaded document on mount and when documentType changes
-  useEffect(() => {
-    if (session?.user?.id && documentType) {
-      // Set loading state and clear previous document
-      setIsLoading(true);
-      setUploadedDocument(null);
-      setExpiryDate("");
+  // OPTIMIZED: Use React Query instead of manual state management
+  const {
+    data: documentsData,
+    isLoading,
+  } = useComplianceDocuments(documentType, apiEndpoint);
 
-      fetchUploadedDocument();
-    } else if (session && !session.user?.id) {
-      // Session exists but no user ID - not loading
-      setIsLoading(false);
-    }
-  }, [session?.user?.id, documentType]);
+  const uploadMutation = useUploadComplianceDocument();
+  const deleteMutation = useDeleteComplianceDocument();
 
-  const fetchUploadedDocument = async () => {
-    try {
-      const response = await fetch(`${apiEndpoint}?documentType=${documentType}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.documents && data.documents.length > 0) {
-          // Only keep the most recent document
-          const mostRecent = data.documents[0];
-          setUploadedDocument({
-            id: mostRecent.id,
-            documentUrl: mostRecent.documentUrl,
-            uploadedAt: mostRecent.uploadedAt,
-            expiryDate: mostRecent.expiryDate,
-          });
-        }
-      }
-    } catch (error) {
-    
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Get the most recent uploaded document
+  const uploadedDocument =
+    documentsData?.documents && documentsData.documents.length > 0
+      ? documentsData.documents[0]
+      : null;
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) return;
@@ -120,44 +84,19 @@ export default function GenericComplianceDocument({
       return;
     }
 
-    setIsUploading(true);
-
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", documentType);
-      if (requirement?.name) {
-        formData.append("requirementName", requirement.name);
-      }
-      if (hasExpiration && expiryDate) {
-        formData.append("expiryDate", expiryDate);
-      }
-
-      const response = await fetch(apiEndpoint, {
-        method: "POST",
-        body: formData,
+      await uploadMutation.mutateAsync({
+        file,
+        documentType,
+        requirementName: requirement?.name,
+        expiryDate: hasExpiration && expiryDate ? expiryDate : undefined,
+        apiEndpoint,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
-      }
-
-      const responseData = await response.json();
-
-      // Refresh the uploaded document
-      setIsLoading(true);
-      await fetchUploadedDocument();
-
-      // Clear expiry date
+      // Clear expiry date after successful upload
       setExpiryDate("");
-
-      
     } catch (error: any) {
-
       alert(`Upload failed: ${error.message}`);
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -169,24 +108,12 @@ export default function GenericComplianceDocument({
     }
 
     try {
-      const response = await fetch(
-        `${apiEndpoint}?id=${uploadedDocument.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
-
-      // Clear the uploaded document immediately for instant feedback
-      setUploadedDocument(null);
-      setIsLoading(false);
-
-    
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType,
+        apiEndpoint,
+      });
     } catch (error: any) {
-
       alert(`Delete failed: ${error.message}`);
     }
   };
@@ -225,17 +152,21 @@ export default function GenericComplianceDocument({
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Skeleton for all loading states */}
       {isLoading ? (
         <div className="mb-6">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-32 mb-3"></div>
-            <div className="document-preview-container">
-              <div className="h-48 bg-gray-200 rounded"></div>
-              <div className="mt-3 space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-48"></div>
-                <div className="h-3 bg-gray-200 rounded w-32"></div>
+          <div className="h-4 bg-gray-200 rounded w-40 mb-3 animate-pulse"></div>
+          <div className="document-preview-container">
+            {/* Skeleton for image/PDF */}
+            <div className="h-64 bg-gray-200 rounded-lg mb-3 animate-pulse"></div>
+
+            {/* Skeleton for metadata */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse"></div>
               </div>
+              <div className="h-8 w-16 bg-gray-200 rounded ml-4 animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -350,9 +281,9 @@ export default function GenericComplianceDocument({
                 }
                 document.getElementById(`file-${documentType}`)?.click();
               }}
-              disabled={isUploading}
+              disabled={uploadMutation.isPending}
             >
-              {isUploading ? (
+              {uploadMutation.isPending ? (
                 <Loader size="sm" />
               ) : (
                 <>

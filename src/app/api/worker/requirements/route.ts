@@ -26,21 +26,13 @@ export async function GET(request: Request) {
     const servicesParam = searchParams.get("services");
     const serviceNameParam = searchParams.get("serviceName");
 
-    // 3. Get worker profile and their services
+    // 3. Get worker profile (minimal data - optimized)
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
       select: {
         id: true,
         services: true,
         supportWorkerCategories: true,
-        workerServices: {
-          select: {
-            categoryId: true,
-            categoryName: true,
-            subcategoryId: true,
-            subcategoryName: true,
-          },
-        },
       },
     });
 
@@ -49,23 +41,28 @@ export async function GET(request: Request) {
     }
 
     // 4. Determine which services to fetch requirements for
+    // OPTIMIZED: Fetch workerServices directly with DB query instead of loading into memory
     let servicesToFetch: string[] = [];
 
     if (serviceNameParam) {
       // Use specific serviceName parameter - filter for this service and its subcategories
-     
+      // OPTIMIZED: Query DB directly with WHERE filter
+      const workerServices = await authPrisma.workerService.findMany({
+        where: {
+          workerProfileId: workerProfile.id,
+          categoryName: serviceNameParam,
+        },
+        select: {
+          categoryName: true,
+          subcategoryName: true,
+        },
+      });
 
-      if (workerProfile.workerServices.length > 0) {
-        // Filter WorkerService entries for this specific service
-        servicesToFetch = workerProfile.workerServices
-          .filter(ws => ws.categoryName === serviceNameParam)
-          .map(ws => {
-            if (ws.subcategoryName) {
-              return `${ws.categoryName}:${ws.subcategoryName}`;
-            } else {
-              return ws.categoryName;
-            }
-          });
+      if (workerServices.length > 0) {
+        // Build service strings from DB results
+        servicesToFetch = workerServices.map(ws =>
+          ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
+        );
       } else {
         // Fallback: use legacy arrays, filter for this service
         const services = workerProfile.services || [];
@@ -78,14 +75,10 @@ export async function GET(request: Request) {
                                      serviceNameParam === "Support Worker";
 
           if (needsSubcategories && subcategories.length > 0) {
-            // Add service:subcategory combinations
-            for (const subcategory of subcategories) {
-              if (subcategory && subcategory.trim()) {
-                servicesToFetch.push(`${serviceNameParam}:${subcategory}`);
-              }
-            }
+            servicesToFetch = subcategories
+              .filter(sub => sub && sub.trim())
+              .map(sub => `${serviceNameParam}:${sub}`);
           } else {
-            // Just add the service
             servicesToFetch.push(serviceNameParam);
           }
         }
@@ -93,49 +86,44 @@ export async function GET(request: Request) {
     } else if (servicesParam) {
       // Use services from parameter
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
-    } else if (workerProfile.workerServices.length > 0) {
-      // NEW APPROACH: Use WorkerService table (normalized data)
- 
-
-      servicesToFetch = workerProfile.workerServices.map(ws => {
-        if (ws.subcategoryName) {
-          return `${ws.categoryName}:${ws.subcategoryName}`;
-        } else {
-          return ws.categoryName;
-        }
-      });
     } else {
-      // FALLBACK: Use old services/supportWorkerCategories arrays
-    
+      // OPTIMIZED: Fetch from DB only what we need (categoryName, subcategoryName)
+      const workerServices = await authPrisma.workerService.findMany({
+        where: { workerProfileId: workerProfile.id },
+        select: {
+          categoryName: true,
+          subcategoryName: true,
+        },
+      });
 
-      const services = workerProfile.services || [];
-      const subcategories = workerProfile.supportWorkerCategories || [];
+      if (workerServices.length > 0) {
+        // Use WorkerService table data
+        servicesToFetch = workerServices.map(ws =>
+          ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
+        );
+      } else {
+        // FALLBACK: Use old services/supportWorkerCategories arrays
+        const services = workerProfile.services || [];
+        const subcategories = workerProfile.supportWorkerCategories || [];
 
-      servicesToFetch = [];
-
-      // Handle each service
-      for (const service of services) {
-        // Check if this service has subcategories
-        if (subcategories && subcategories.length > 0) {
-          // If the service is "Therapeutic Supports" or similar, combine with each subcategory
-          // Otherwise, just use the service name
-          const needsSubcategories = service === "Therapeutic Supports" ||
-                                     service === "Support Worker (High Intensity)";
-
-          if (needsSubcategories) {
-            // Add service:subcategory for each subcategory
-            for (const subcategory of subcategories) {
-              if (subcategory && subcategory.trim()) {
-                servicesToFetch.push(`${service}:${subcategory}`);
-              }
-            }
-          } else {
-            // Just add the service without subcategory
-            servicesToFetch.push(service);
-          }
+        if (services.length === 0) {
+          servicesToFetch = [];
         } else {
-          // No subcategories, just add the service
-          servicesToFetch.push(service);
+          // Build service strings from legacy arrays
+          for (const service of services) {
+            const needsSubcategories = service === "Therapeutic Supports" ||
+                                       service === "Support Worker (High Intensity)";
+
+            if (needsSubcategories && subcategories.length > 0) {
+              servicesToFetch.push(
+                ...subcategories
+                  .filter(sub => sub && sub.trim())
+                  .map(sub => `${service}:${sub}`)
+              );
+            } else {
+              servicesToFetch.push(service);
+            }
+          }
         }
       }
     }
@@ -157,8 +145,7 @@ export async function GET(request: Request) {
 
     // Parse services to separate category and subcategory
     // Format: "Category Name" or "Category Name:Subcategory Name"
-
-
+    // OPTIMIZED: Single pass to extract all needed data
     const parsedServices = servicesToFetch.map(service => {
       const [categoryName, subcategoryName] = service.split(':').map(s => s.trim());
       return {
@@ -169,27 +156,23 @@ export async function GET(request: Request) {
       };
     });
 
-   
+    // Extract unique values for queries
+    const categoryIds = [...new Set(parsedServices.map(s => s.categoryId))];
+    const categoryNames = [...new Set(parsedServices.map(s => s.categoryName))];
+    const requestedSubcategoryIds = [...new Set(parsedServices
+      .map(s => s.subcategoryId)
+      .filter((id): id is string => id !== null))];
+    const requestedSubcategoryNames = [...new Set(parsedServices
+      .map(s => s.subcategoryName)
+      .filter((name): name is string => name !== null))];
 
     // 5. Fetch categories and their required documents from main database
-    const categoryIds = parsedServices.map(s => s.categoryId);
-    const categoryNames = parsedServices.map(s => s.categoryName);
-
-    
-
+    // OPTIMIZED: Only fetch subcategories that were actually requested
     const categories = await prisma.category.findMany({
       where: {
         OR: [
-          {
-            id: {
-              in: categoryIds,
-            },
-          },
-          {
-            name: {
-              in: categoryNames,
-            },
-          },
+          { id: { in: categoryIds } },
+          { name: { in: categoryNames } },
         ],
       },
       include: {
@@ -199,6 +182,15 @@ export async function GET(request: Request) {
           },
         },
         subcategories: {
+          // OPTIMIZED: Filter subcategories at DB level, not in application code
+          where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+            ? {
+                OR: [
+                  { id: { in: requestedSubcategoryIds } },
+                  { name: { in: requestedSubcategoryNames } },
+                ],
+              }
+            : undefined,
           include: {
             additionalDocuments: {
               include: {
@@ -213,22 +205,10 @@ export async function GET(request: Request) {
 
 
     // 6. Process and categorize requirements
+    // OPTIMIZED: Direct processing since DB already filtered what we need
     const allRequirements: any[] = [];
 
-    // OPTIMIZATION: Build HashMap of categoryId -> services (O(n) upfront, then O(1) lookups)
-    const categoryServicesMap = new Map<string, typeof parsedServices>();
-    for (const service of parsedServices) {
-      const key = service.categoryId;
-      if (!categoryServicesMap.has(key)) {
-        categoryServicesMap.set(key, []);
-      }
-      categoryServicesMap.get(key)!.push(service);
-    }
-
     for (const category of categories) {
-      // O(1) lookup instead of O(n) filter
-      const requestedServicesForCategory = categoryServicesMap.get(category.id) || [];
-
       // Add category-level documents (always include these, only once per category)
       for (const catDoc of category.documents) {
         allRequirements.push({
@@ -244,29 +224,9 @@ export async function GET(request: Request) {
         });
       }
 
-    
-
-      // Collect all requested subcategory IDs
-      const requestedSubcategoryIds = requestedServicesForCategory
-        .filter(s => s.subcategoryId)
-        .map(s => s.subcategoryId);
-
-      const requestedSubcategoryNames = requestedServicesForCategory
-        .filter(s => s.subcategoryName)
-        .map(s => s.subcategoryName);
-
-
-      // If specific subcategories were requested, only include those
-      // Otherwise, include all subcategories
-      const subcategoriesToInclude = requestedSubcategoryIds.length > 0
-        ? category.subcategories.filter(
-            sub => requestedSubcategoryIds.includes(sub.id) || requestedSubcategoryNames.includes(sub.name)
-          )
-        : category.subcategories;
-
-   
-
-      for (const subcategory of subcategoriesToInclude) {
+      // OPTIMIZED: No filtering needed - subcategories already filtered at DB level
+      // Process all subcategories (they're already the ones we want)
+      for (const subcategory of category.subcategories) {
         for (const subDoc of subcategory.additionalDocuments) {
           allRequirements.push({
             id: subDoc.document.id,

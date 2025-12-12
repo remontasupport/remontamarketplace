@@ -7,7 +7,7 @@
  * Allows workers to upload required and optional documents for each service
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, DocumentIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
@@ -15,6 +15,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
+import { useWorkerRequirementsByService } from "@/hooks/queries/useWorkerRequirements";
 import { useQueryClient } from "@tanstack/react-query";
 import { slugToServiceName } from "@/utils/serviceSlugMapping";
 
@@ -39,45 +40,19 @@ export default function ServiceDocumentsPage() {
   const serviceSlug = params.serviceName as string;
   const serviceName = slugToServiceName(serviceSlug);
 
-  // State for requirements from API
-  const [requirements, setRequirements] = useState<Requirement[]>([]);
-  const [isLoadingRequirements, setIsLoadingRequirements] = useState(true);
+  // Fetch requirements using React Query (OPTIMIZED: prevents UI flash)
+  const {
+    data: requirementsData,
+    isLoading: isLoadingRequirements
+  } = useWorkerRequirementsByService(serviceName);
 
   // Fetch existing uploaded documents
   const { data: serviceDocumentsData, isLoading: isLoadingDocuments } = useServiceDocuments();
 
-  // Fetch requirements from API
-  useEffect(() => {
-    if (session?.user?.id && serviceName) {
-      fetchRequirements();
-    }
-  }, [session?.user?.id, serviceName]);
+  // Extract qualifications from requirements data
+  const requirements = requirementsData?.requirements?.qualifications || [];
 
-  const fetchRequirements = async () => {
-    setIsLoadingRequirements(true);
-    try {
-     
-      const response = await fetch(`/api/worker/requirements?serviceName=${encodeURIComponent(serviceName)}`);
-      if (response.ok) {
-        const data = await response.json();
-      
-
-        // Use the qualifications array from the response
-        const qualifications = data.requirements?.qualifications || [];
-      
-        setRequirements(qualifications);
-      } else {
- 
-        setRequirements([]);
-      }
-    } catch (error) {
-     
-      setRequirements([]);
-    } finally {
-      setIsLoadingRequirements(false);
-    }
-  };
-
+  // Combined loading state - ensures BOTH queries complete before showing UI
   const isLoading = isLoadingRequirements || isLoadingDocuments;
 
   // State
@@ -340,7 +315,35 @@ export default function ServiceDocumentsPage() {
     return (
       <DashboardLayout showProfileCard={false}>
         <div className="max-w-6xl mx-auto p-6">
-          <p className="text-gray-600 font-poppins">Loading...</p>
+          {/* Back Button Skeleton */}
+          <div className="mb-6 h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+
+          {/* Header Skeleton */}
+          <div className="mb-8">
+            <div className="h-9 w-96 bg-gray-200 rounded mb-2 animate-pulse"></div>
+            <div className="h-6 w-64 bg-gray-100 rounded animate-pulse"></div>
+          </div>
+
+          {/* Document Rows Skeleton */}
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border border-gray-200 rounded-lg p-6 bg-white">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-6 w-20 bg-gray-100 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-4 w-full bg-gray-100 rounded mb-2 animate-pulse"></div>
+                    <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse"></div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </DashboardLayout>
     );

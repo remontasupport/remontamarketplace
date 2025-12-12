@@ -32,7 +32,7 @@ export async function GET(
       );
     }
 
-    // 3. Fetch worker profile with workerServices
+    // 3. Fetch worker profile (without workerServices relation for performance)
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: {
         userId: userId,
@@ -66,14 +66,6 @@ export async function GET(
         isPublished: true,
         verificationStatus: true,
         abn: true,
-        workerServices: {
-          select: {
-            categoryId: true,
-            categoryName: true,
-            subcategoryId: true,
-            subcategoryName: true,
-          },
-        },
       },
     });
 
@@ -86,29 +78,33 @@ export async function GET(
 
     // Transform workerServices data to match the legacy format
     // This ensures backward compatibility with existing components
+    // OPTIMIZED: Use database aggregation (groupBy) instead of fetching all records and iterating in JS
+    // This leverages the index on [workerProfileId, categoryName] for performance
     let services: string[] = [];
     let supportWorkerCategories: string[] = [];
 
-    if (workerProfile.workerServices && workerProfile.workerServices.length > 0) {
-      // Use new WorkerService table data
-    
+    const [categoryGroups, subcategoryGroups] = await Promise.all([
+      authPrisma.workerService.groupBy({
+        by: ['categoryName'],
+        where: { workerProfileId: workerProfile.id },
+      }),
+      authPrisma.workerService.groupBy({
+        by: ['subcategoryId'],
+        where: {
+          workerProfileId: workerProfile.id,
+          subcategoryId: { not: null }
+        },
+      }),
+    ]);
 
-      // Extract unique category names for services
-      const categoryNames = new Set<string>();
-      const subcategoryIds = new Set<string>();
-
-      workerProfile.workerServices.forEach((ws) => {
-        categoryNames.add(ws.categoryName);
-        if (ws.subcategoryId) {
-          subcategoryIds.add(ws.subcategoryId);
-        }
-      });
-
-      services = Array.from(categoryNames);
-      supportWorkerCategories = Array.from(subcategoryIds);
+    if (categoryGroups.length > 0 || subcategoryGroups.length > 0) {
+      // Use new WorkerService table data (normalized structure)
+      services = categoryGroups.map(g => g.categoryName);
+      supportWorkerCategories = subcategoryGroups
+        .map(g => g.subcategoryId)
+        .filter((id): id is string => id !== null);
     } else {
       // Fallback to legacy arrays if workerServices is empty
-    
       services = workerProfile.services || [];
       supportWorkerCategories = workerProfile.supportWorkerCategories || [];
     }

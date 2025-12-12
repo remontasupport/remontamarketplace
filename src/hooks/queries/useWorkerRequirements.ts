@@ -14,6 +14,8 @@ export const workerRequirementsKeys = {
   all: ["worker-requirements"] as const,
   byServices: (services?: string[]) =>
     [...workerRequirementsKeys.all, { services }] as const,
+  byServiceName: (serviceName?: string) =>
+    [...workerRequirementsKeys.all, { serviceName }] as const,
 };
 
 // Types
@@ -79,5 +81,33 @@ export function useWorkerRequirements(services?: string[]) {
     staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache
     retry: 1, // Retry once on failure
+  });
+}
+
+/**
+ * Hook to fetch worker requirements for a specific service
+ * OPTIMIZED: Prevents UI flash by using React Query instead of manual fetch
+ *
+ * @param serviceName - The name of the service to fetch requirements for
+ */
+export function useWorkerRequirementsByService(serviceName?: string) {
+  return useQuery({
+    queryKey: workerRequirementsKeys.byServiceName(serviceName),
+    queryFn: async () => {
+      if (!serviceName) {
+        throw new Error("Service name is required");
+      }
+      const response = await fetch(
+        `/api/worker/requirements?serviceName=${encodeURIComponent(serviceName)}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch requirements");
+      }
+      return response.json() as Promise<WorkerRequirements>;
+    },
+    enabled: !!serviceName, // Only fetch when serviceName is provided
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: 1,
   });
 }

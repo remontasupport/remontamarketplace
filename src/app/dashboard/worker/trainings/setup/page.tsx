@@ -122,11 +122,8 @@ function TrainingsSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/trainings/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed
-        setSuccessMessage("Thank you for submitting your documents. Someone from our team will review them shortly");
-        setTimeout(() => {
-          router.push("/dashboard/worker");
-        }, 2000);
+        // Last step completed - redirect immediately
+        router.push("/dashboard/worker");
       }
     } catch (error) {
       setErrors({ general: "Failed to save. Please try again." });

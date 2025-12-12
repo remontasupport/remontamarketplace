@@ -5,9 +5,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   ArrowUpTrayIcon,
@@ -15,6 +14,10 @@ import {
   CheckCircleIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
+import {
+  useSingleComplianceDocument,
+  useUploadComplianceDocument,
+} from "@/hooks/queries/useComplianceDocuments";
 import "@/app/styles/requirements-setup.css";
 
 interface Step4NDISTrainingProps {
@@ -64,46 +67,28 @@ export default function Step4NDISTraining({
   errors = {},
 }: Step4NDISTrainingProps) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
 
-  const [uploadedDocument, setUploadedDocument] = useState<UploadedDocument | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Fetch uploaded document on mount
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchUploadedDocument();
-    }
-  }, [session?.user?.id]);
+  // OPTIMIZED: Use React Query instead of manual fetch
+  const {
+    data: documentData,
+    isLoading,
+  } = useSingleComplianceDocument("/api/worker/ndis-training", "ndis-worker-orientation");
 
-  const fetchUploadedDocument = async () => {
-    try {
-      const response = await fetch("/api/worker/ndis-training");
-      if (response.ok) {
-        const data = await response.json();
-        if (data.document) {
-          setUploadedDocument(data.document);
-        }
-      }
-    } catch (error) {
-  
-    }
-  };
+  const uploadMutation = useUploadComplianceDocument();
+
+  const uploadedDocument = documentData?.document || null;
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
-     
       alert("Session expired. Please refresh the page.");
       return;
     }
 
-   
-
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-     
       alert("Please upload a JPG, PNG, or PDF file");
       return;
     }
@@ -111,59 +96,21 @@ export default function Step4NDISTraining({
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      
       alert("File size must be less than 10MB");
       return;
     }
 
-    setIsUploading(true);
-
     try {
-    
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", "ndis-training");
-      const response = await fetch("/api/upload/ndis-training", {
-        method: "POST",
-        body: formData,
-      });
-
-    
-
-      if (!response.ok) {
-        const errorText = await response.text();
-      
-
-        let error;
-        try {
-          error = JSON.parse(errorText);
-        } catch {
-          error = { error: errorText };
-        }
-
-        throw new Error(error.error || error.details || "Upload failed");
-      }
-
-      const responseData = await response.json();
-
-
-      // Update uploaded document state
-      setUploadedDocument({
-        id: responseData.id,
+      await uploadMutation.mutateAsync({
+        file,
         documentType: "ndis-training",
-        documentUrl: responseData.url,
-        uploadedAt: new Date().toISOString()
+        apiEndpoint: "/api/upload/ndis-training",
       });
 
       // Exit edit mode
       setIsEditMode(false);
-
-     
     } catch (error: any) {
-    
       alert(`Upload failed: ${error.message}`);
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -226,8 +173,18 @@ export default function Step4NDISTraining({
                 </div>
               )}
 
-              {/* Show uploaded document or upload button */}
-              {uploadedDocument && !isEditMode ? (
+              {/* Skeleton for loading state */}
+              {isLoading ? (
+                <div className="document-preview-container">
+                  <div className="h-64 bg-gray-200 rounded-lg mb-3 animate-pulse"></div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                      <div className="h-3 bg-gray-100 rounded w-1/2 animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              ) : uploadedDocument && !isEditMode ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
                   {isPdfDocument(uploadedDocument.documentUrl) ? (
@@ -289,10 +246,10 @@ export default function Step4NDISTraining({
                     type="button"
                     variant="outline"
                     onClick={() => document.getElementById("ndis-training-file")?.click()}
-                    disabled={isUploading}
+                    disabled={uploadMutation.isPending}
                     className="w-full sm:w-auto"
                   >
-                    {isUploading ? (
+                    {uploadMutation.isPending ? (
                       <>
                         <span className="loading-spinner"></span>
                         Uploading...

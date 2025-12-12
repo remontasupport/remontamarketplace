@@ -142,11 +142,8 @@ function MandatoryRequirementsSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed
-        setSuccessMessage("Compliance setup completed!");
-        setTimeout(() => {
-          router.push("/dashboard/worker");
-        }, 2000);
+        // Last step completed - redirect immediately
+        router.push("/dashboard/worker");
       }
     } catch (error) {
       setErrors({ general: "Failed to save. Please try again." });

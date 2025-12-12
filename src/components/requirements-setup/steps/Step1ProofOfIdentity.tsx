@@ -373,34 +373,6 @@ export default function Step1ProofOfIdentity({
 
   const uploadedCount = Object.keys(uploadedDocs).length;
 
-  // Show loading state while fetching documents
-  if (isLoadingDocuments) {
-    return (
-      <div className="account-step-container">
-        <div className="form-page-content">
-          <div className="form-column">
-            <div className="account-form">
-              <p className="text-sm text-gray-600 font-poppins mb-6">
-                Loading identity documents...
-              </p>
-              <div style={{ padding: "2rem 0" }}>
-                <div className="loading-spinner"></div>
-              </div>
-            </div>
-          </div>
-          <div className="info-column">
-            <div className="info-box">
-              <h3 className="info-box-title">100-Point Check System</h3>
-              <p className="info-box-text">
-                Identity verification is a mandatory requirement for all workers.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="account-step-container">
       <div className="form-page-content">
@@ -733,23 +705,6 @@ export default function Step1ProofOfIdentity({
             )}
           </div>
 
-          {(() => {
-            // Calculate total points (one primary + one secondary = 100 points)
-            const hasPrimary = selectedPrimaryType && uploadedDocs[selectedPrimaryType];
-
-            // Check for secondary document using the display logic
-            const hasSecondary = selectedSecondaryType && !!getDocumentToDisplay(selectedSecondaryType);
-
-            const isComplete = hasPrimary && hasSecondary;
-
-            return isComplete ? (
-              <div className="points-summary-card complete">
-                <p className="points-summary-message complete">
-                  Thank you for submitting your proof of identity. Our team will carefully review and verify your files.
-                </p>
-              </div>
-            ) : null;
-          })()}
         </div>
       </div>
 
