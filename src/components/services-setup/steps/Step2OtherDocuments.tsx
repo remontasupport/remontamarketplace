@@ -272,9 +272,9 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     const selectedFile = selectedFiles[id];
 
     return (
-      <div key={id} className="border border-gray-200 rounded-lg p-6 bg-white hover:border-gray-300 transition-colors">
-        <div className="flex items-start justify-between gap-6">
-          <div className="flex-1">
+      <div key={id} className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-white hover:border-gray-300 transition-colors">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 sm:gap-6">
+          <div className="flex-1 w-full">
             <div className="flex items-center gap-2 mb-2">
               <Label className="text-lg font-poppins font-semibold" style={{ color: '#0C1628' }}>
                 {name}
@@ -336,9 +336,9 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
           </div>
 
           {/* Upload button/controls - Hide if driver's license exists from another step */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full sm:w-auto">
             {!isUploaded && !driverLicenseSource && (
-              <div className="flex flex-col gap-3 min-w-[200px]">
+              <div className="flex flex-col gap-3 w-full sm:min-w-[200px]">
                 <input
                   type="file"
                   id={`upload-${id}`}

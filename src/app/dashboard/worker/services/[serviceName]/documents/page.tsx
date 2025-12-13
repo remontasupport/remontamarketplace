@@ -207,50 +207,50 @@ export default function ServiceDocumentsPage() {
     const uploadedDoc = uploadedDocuments[id];
 
     return (
-      <div key={id} className="border border-gray-200 rounded-lg p-6 bg-white hover:border-gray-300 transition-colors">
-        <div className="flex items-start justify-between gap-6">
-          <div className="flex-1">
+      <div key={id} className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-white hover:border-gray-300 transition-colors">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 sm:gap-6">
+          <div className="flex-1 w-full">
             <div className="flex items-center gap-2 mb-2">
-              <Label className="text-lg font-poppins font-semibold" style={{ color: '#0C1628' }}>
+              <Label className="text-base sm:text-lg font-poppins font-semibold" style={{ color: '#0C1628' }}>
                 {name}
               </Label>
               {isRequired ? (
-                <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded font-poppins font-medium">
+                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-red-100 text-red-700 rounded font-poppins font-medium">
                   Required
                 </span>
               ) : (
-                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded font-poppins font-medium">
+                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-700 rounded font-poppins font-medium">
                   Optional
                 </span>
               )}
               {subcategory && (
-                <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded font-poppins font-medium">
+                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-100 text-purple-700 rounded font-poppins font-medium">
                   {subcategory}
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 font-poppins mb-4">{description}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-poppins mb-4">{description}</p>
 
             {/* Show uploaded document */}
             {isUploaded && uploadedDoc && (
-              <div className="mt-3 flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" />
+              <div className="mt-3 flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+                <CheckCircleIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   {isPdfDocument(uploadedDoc.documentUrl) ? (
                     <a
                       href={uploadedDoc.documentUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-green-700 font-poppins hover:underline flex items-center gap-2 font-medium"
+                      className="text-xs sm:text-sm text-green-700 font-poppins hover:underline flex items-center gap-2 font-medium"
                     >
-                      <DocumentIcon className="w-5 h-5" />
+                      <DocumentIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                       View Document
                     </a>
                   ) : (
                     <img
                       src={uploadedDoc.documentUrl}
                       alt={name}
-                      className="h-20 rounded border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                      className="h-16 sm:h-20 rounded border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => window.open(uploadedDoc.documentUrl, '_blank')}
                     />
                   )}
@@ -261,19 +261,19 @@ export default function ServiceDocumentsPage() {
                 <button
                   type="button"
                   onClick={() => handleDelete(id)}
-                  className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-red-50 transition-colors"
+                  className="text-red-600 hover:text-red-700 p-1.5 sm:p-2 rounded-md hover:bg-red-50 transition-colors"
                   title="Remove document"
                 >
-                  <XCircleIcon className="w-6 h-6" />
+                  <XCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             )}
           </div>
 
           {/* Upload button/controls */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-full sm:w-auto">
             {!isUploaded && (
-              <div className="flex flex-col gap-3 min-w-[200px]">
+              <div className="flex flex-col gap-3 w-full sm:min-w-[200px]">
                 <input
                   type="file"
                   id={`upload-${id}`}
@@ -283,21 +283,21 @@ export default function ServiceDocumentsPage() {
                 />
                 <label
                   htmlFor={`upload-${id}`}
-                  className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-poppins font-medium text-white bg-[#0C1628] hover:bg-[#1a2740] rounded-md transition-colors"
+                  className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-poppins font-medium text-white bg-[#0C1628] hover:bg-[#1a2740] rounded-md transition-colors"
                 >
-                  <ArrowUpTrayIcon className="w-5 h-5" />
+                  <ArrowUpTrayIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   Choose File
                 </label>
 
                 {selectedFile && (
-                  <div className="text-xs text-gray-700 font-poppins bg-gray-50 p-3 rounded-md border border-gray-200">
+                  <div className="text-[10px] sm:text-xs text-gray-700 font-poppins bg-gray-50 p-2 sm:p-3 rounded-md border border-gray-200">
                     <p className="truncate font-medium mb-2">{selectedFile.name}</p>
                     <Button
                       type="button"
                       size="sm"
                       onClick={() => handleUpload(id)}
                       disabled={isUploading}
-                      className="w-full bg-[#0C1628] hover:bg-[#1a2740]"
+                      className="w-full bg-[#0C1628] hover:bg-[#1a2740] text-xs"
                     >
                       {isUploading ? "Uploading..." : "Upload"}
                     </Button>
@@ -314,35 +314,37 @@ export default function ServiceDocumentsPage() {
   if (isLoading) {
     return (
       <DashboardLayout showProfileCard={false}>
-        <div className="max-w-6xl mx-auto p-6">
-          {/* Back Button Skeleton */}
-          <div className="mb-6 h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+        <div className="form-page-container">
+          <div className="max-w-6xl mx-auto p-4 sm:p-6">
+            {/* Back Button Skeleton */}
+            <div className="mb-6 h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
 
-          {/* Header Skeleton */}
-          <div className="mb-8">
-            <div className="h-9 w-96 bg-gray-200 rounded mb-2 animate-pulse"></div>
-            <div className="h-6 w-64 bg-gray-100 rounded animate-pulse"></div>
-          </div>
+            {/* Header Skeleton */}
+            <div className="mb-8">
+              <div className="h-9 w-96 bg-gray-200 rounded mb-2 animate-pulse"></div>
+              <div className="h-6 w-64 bg-gray-100 rounded animate-pulse"></div>
+            </div>
 
-          {/* Document Rows Skeleton */}
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border border-gray-200 rounded-lg p-6 bg-white">
-                <div className="flex items-start justify-between gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="h-6 w-20 bg-gray-100 rounded animate-pulse"></div>
+            {/* Document Rows Skeleton */}
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-6 bg-white">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-6 w-48 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-6 w-20 bg-gray-100 rounded animate-pulse"></div>
+                      </div>
+                      <div className="h-4 w-full bg-gray-100 rounded mb-2 animate-pulse"></div>
+                      <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse"></div>
                     </div>
-                    <div className="h-4 w-full bg-gray-100 rounded mb-2 animate-pulse"></div>
-                    <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse"></div>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -352,22 +354,24 @@ export default function ServiceDocumentsPage() {
   if (requirements.length === 0) {
     return (
       <DashboardLayout showProfileCard={false}>
-        <div className="max-w-6xl mx-auto p-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-poppins transition-colors"
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-            Back to Services
-          </button>
+        <div className="form-page-container">
+          <div className="max-w-6xl mx-auto p-4 sm:p-6">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-poppins transition-colors text-sm sm:text-base"
+            >
+              <ArrowLeftIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              Back to Services
+            </button>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-poppins font-semibold text-gray-900 mb-2">
-              {serviceName}
-            </h2>
-            <p className="text-gray-700 font-poppins">
-              No documents required for this service.
-            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 sm:p-8 text-center">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-poppins font-semibold text-gray-900 mb-2">
+                {serviceName}
+              </h2>
+              <p className="text-sm sm:text-base text-gray-700 font-poppins">
+                No documents required for this service.
+              </p>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -376,77 +380,79 @@ export default function ServiceDocumentsPage() {
 
   return (
     <DashboardLayout showProfileCard={false}>
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-poppins transition-colors"
-        >
-          <ArrowLeftIcon className="h-5 w-5" />
-          Back to Services
-        </button>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-poppins font-bold mb-2" style={{ color: '#0C1628' }}>
-            Upload Documents - {serviceName}
-          </h1>
-          <p className="text-gray-600 font-poppins text-lg">
-            Upload your training certificates and qualifications for this service
-          </p>
-        </div>
-
-        <div className="space-y-8">
-          {/* Required Documents Section */}
-          {requiredDocs.length > 0 && (
-            <div>
-              <h3 className="text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
-                Required Documents
-              </h3>
-              <p className="text-sm text-gray-600 font-poppins mb-4">
-                These documents must be uploaded to offer this service
-              </p>
-              <div className="space-y-4">
-                {requiredDocs.map(renderDocumentRow)}
-              </div>
-            </div>
-          )}
-
-          {/* Optional Documents Section */}
-          {optionalDocs.length > 0 && (
-            <div>
-              <h3 className="text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
-                Optional Documents
-              </h3>
-              <p className="text-sm text-gray-600 font-poppins mb-4">
-                These documents can help strengthen your profile
-              </p>
-              <div className="space-y-4">
-                {optionalDocs.map(renderDocumentRow)}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Info Box */}
-        <div className="mt-8 p-6 bg-teal-50 border border-teal-200 rounded-lg">
-          <h4 className="font-poppins font-semibold text-gray-900 mb-2">
-            Accepted File Formats
-          </h4>
-          <p className="text-sm text-gray-700 font-poppins">
-            PDF, JPG, or PNG files up to 10MB in size
-          </p>
-        </div>
-
-        {/* Action Button */}
-        <div className="mt-8 flex gap-4">
-          <Button
+      <div className="form-page-container">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6">
+          {/* Back Button */}
+          <button
             onClick={() => router.back()}
-            variant="outline"
-            className="font-poppins"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-poppins transition-colors text-sm sm:text-base"
           >
+            <ArrowLeftIcon className="h-4 w-4 sm:h-5 sm:w-5" />
             Back to Services
-          </Button>
+          </button>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-poppins font-bold mb-2" style={{ color: '#0C1628' }}>
+              Upload Documents - {serviceName}
+            </h1>
+            <p className="text-gray-600 font-poppins text-sm sm:text-base md:text-lg">
+              Upload your training certificates and qualifications for this service
+            </p>
+          </div>
+
+          <div className="space-y-8">
+            {/* Required Documents Section */}
+            {requiredDocs.length > 0 && (
+              <div>
+                <h3 className="text-lg sm:text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
+                  Required Documents
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 font-poppins mb-4">
+                  These documents must be uploaded to offer this service
+                </p>
+                <div className="space-y-4">
+                  {requiredDocs.map(renderDocumentRow)}
+                </div>
+              </div>
+            )}
+
+            {/* Optional Documents Section */}
+            {optionalDocs.length > 0 && (
+              <div>
+                <h3 className="text-lg sm:text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
+                  Optional Documents
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 font-poppins mb-4">
+                  These documents can help strengthen your profile
+                </p>
+                <div className="space-y-4">
+                  {optionalDocs.map(renderDocumentRow)}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Info Box */}
+          <div className="mt-8 p-4 sm:p-6 bg-teal-50 border border-teal-200 rounded-lg">
+            <h4 className="font-poppins font-semibold text-gray-900 mb-2 text-sm sm:text-base">
+              Accepted File Formats
+            </h4>
+            <p className="text-xs sm:text-sm text-gray-700 font-poppins">
+              PDF, JPG, or PNG files up to 10MB in size
+            </p>
+          </div>
+
+          {/* Action Button */}
+          <div className="mt-8 flex gap-4">
+            <Button
+              onClick={() => router.back()}
+              variant="outline"
+              className="font-poppins text-xs sm:text-sm"
+            >
+              Back to Services
+            </Button>
+          </div>
         </div>
       </div>
     </DashboardLayout>
