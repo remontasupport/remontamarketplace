@@ -117,6 +117,20 @@
     width: 100% !important;
     max-width: 100% !important;
   }
+
+  /* Content columns - full width for services/other pages */
+  .account-step-container .content-columns {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 1rem !important;
+  }
+
+  .account-step-container .main-column,
+  .account-step-container .side-column {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -147,5 +161,9 @@
 
   .account-step-container .info-box {
     padding: 0.875rem !important;
+  }
+
+  .account-step-container .content-columns {
+    gap: 0.875rem !important;
   }
 }

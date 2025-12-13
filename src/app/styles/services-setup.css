@@ -244,3 +244,32 @@
 .service-btn-done:hover {
   background-color: #1a2740;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Services Step Container - adjust padding for mobile */
+  .services-step-container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Form page header - remove negative margin */
+  .form-page-container:has(.services-step-container) .form-page-header {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  /* Navigation buttons - remove negative margin and excess padding */
+  .form-page-container:has(.services-step-container) .step-navigation {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  /* Form page content - stack vertically on mobile */
+  .services-step-container .form-page-content {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
