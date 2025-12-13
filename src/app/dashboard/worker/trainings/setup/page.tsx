@@ -188,8 +188,8 @@ function TrainingsSetupContent() {
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={handleSkip}
-        isNextLoading={updateProfileMutation.isPending}
-        nextButtonText={currentStep === STEPS.length ? "Complete Setup" : "Next"}
+        isNextLoading={false}
+        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
         showSkip={false}
       >
         {/* Success Message */}

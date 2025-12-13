@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import ProfileCard from './ProfileCard'
 import SimpleDashboardHeader from './SimpleDashboardHeader'
@@ -28,6 +28,20 @@ export default function DashboardLayout({
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
   }
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileMenuOpen])
 
   return (
     <div className="dashboard-wrapper">

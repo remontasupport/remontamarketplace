@@ -341,7 +341,7 @@ function AccountSetupContent() {
         onPrevious={handlePrevious}
         onSkip={handleSkip}
         isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Complete Setup" : "Next"}
+        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
         showSkip={false}
       >
         {/* Success Message */}

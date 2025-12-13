@@ -2,7 +2,7 @@ import * as z from "zod";
 
 export const contractorFormSchema = z.object({
   // Step 1 - Location
-  location: z.string().min(1, "Location is required"),
+  location: z.string().min(1, "Please enter a valid Suburb"),
 
   // Step 2 - Personal Information
   firstName: z.string().min(1, "First name is required"),

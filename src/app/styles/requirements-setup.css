@@ -280,3 +280,70 @@
 .document-update-btn:hover {
   background-color: #1a2942;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Override for form-page-container */
+  .form-page-container:has(.requirements-step-container) {
+    padding: 0 !important;
+  }
+
+  /* Requirements Step Container - adjust padding for mobile */
+  .requirements-step-container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Form page header - remove negative margin */
+  .form-page-container:has(.requirements-step-container) .form-page-header {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  /* Navigation buttons - remove negative margin and excess padding */
+  .form-page-container:has(.requirements-step-container) .step-navigation {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  /* Form page content - stack vertically on mobile */
+  .requirements-step-container .form-page-content {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Add padding to all direct content elements */
+  .upload-section,
+  .identity-section,
+  .document-preview-container,
+  .document-selection-list {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Smaller padding for very small screens */
+  .requirements-step-container {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+}
+
+/* CRITICAL FIX: Add padding to account-step-container on mobile for compliance documents */
+/* Only apply padding to direct children that are NOT form-page-content */
+@media (max-width: 768px) {
+  .account-step-container > *:not(.form-page-content) {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-step-container > *:not(.form-page-content) {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+}
