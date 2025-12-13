@@ -19,6 +19,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { step, data } = body;
 
+
+
     // Prepare update data based on step
     const updateData: any = {};
 
@@ -58,16 +60,24 @@ export async function POST(request: Request) {
         if (data.postalCode) updateData.postalCode = data.postalCode;
         break;
 
-      case 5: // Proof of Identity
-        // This step handles its own uploads via /api/upload/identity-documents
-        // No profile updates needed here
-        break;
-
-      case 6: // Personal Info
-        if (data.age) updateData.age = data.age;
-        if (data.gender) updateData.gender = data.gender.toLowerCase();
-        if (data.languages) updateData.languages = data.languages;
-        if (data.hasVehicle) updateData.hasVehicle = data.hasVehicle;
+      case 5: // Personal Info (Other personal info step)
+        // Convert age to integer (database expects Int, not String)
+        if (data.age !== undefined && data.age !== null && data.age !== '') {
+          const ageInt = typeof data.age === 'string' ? parseInt(data.age, 10) : data.age;
+          if (!isNaN(ageInt)) {
+            updateData.age = ageInt;
+          }
+        }
+        if (data.gender) {
+          updateData.gender = data.gender.toLowerCase();
+        }
+        // Ensure languages is an array
+        if (data.languages) {
+          updateData.languages = Array.isArray(data.languages) ? data.languages : [];
+        }
+        if (data.hasVehicle) {
+          updateData.hasVehicle = data.hasVehicle;
+        }
         break;
 
       case 7: // Emergency Contact
@@ -267,7 +277,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update worker profile
    
 
     if (Object.keys(updateData).length > 0) {
@@ -275,9 +284,9 @@ export async function POST(request: Request) {
         where: { userId: session.user.id },
         data: updateData,
       });
-     
+   
     } else {
-      
+     
     }
 
     return NextResponse.json({

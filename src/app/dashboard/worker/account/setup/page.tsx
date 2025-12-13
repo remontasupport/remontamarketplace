@@ -152,12 +152,13 @@ function AccountSetupContent() {
         state: parsedLocation.state || profileData.state || "",
         postalCode: parsedLocation.postalCode || profileData.postalCode || "",
         identityDocuments: [],
-        age: profileData.age || "",
+        age: profileData.age ? String(profileData.age) : "",
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
-        languages: profileData.languages || [],
+        languages: Array.isArray(profileData.languages) ? profileData.languages : [],
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
       });
+     
       hasInitializedFormData.current = true;
     }
   }, [profileData]);
@@ -228,8 +229,8 @@ function AccountSetupContent() {
     if (!session?.user?.id) return;
 
     try {
-      // Skip saving for step 2 (photo) and step 5 (proof-of-identity) since they handle their own uploads
-      if (currentStep !== 2 && currentStep !== 5) {
+      // Skip saving for step 2 (photo) since it handles its own upload
+      if (currentStep !== 2) {
         // Only send relevant fields for each step to avoid overwriting other fields
         let dataToSend: any = {};
 
@@ -252,13 +253,14 @@ function AccountSetupContent() {
               postalCode: formData.postalCode,
             };
             break;
-          case 6: // Personal Info
+          case 5: // Personal Info (Other personal info step)
             dataToSend = {
               age: formData.age,
               gender: formData.gender,
               languages: formData.languages,
               hasVehicle: formData.hasVehicle,
             };
+          
             break;
           default:
             // For any other step, send the entire formData (fallback)
@@ -266,11 +268,13 @@ function AccountSetupContent() {
         }
 
         // Use mutation hook - automatically invalidates cache on success
+    
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
           data: dataToSend,
         });
+       
       }
 
       // Move to next step or finish

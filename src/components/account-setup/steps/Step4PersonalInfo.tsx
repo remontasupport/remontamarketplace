@@ -80,6 +80,12 @@ export default function Step4PersonalInfo({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [languagesInput, setLanguagesInput] = useState(data.languages.join(", "));
+
+  // Sync local state when data.languages changes (e.g., when loading from database)
+  useEffect(() => {
+    setLanguagesInput(data.languages.join(", "));
+  }, [data.languages]);
 
   // Persistent state using sessionStorage (survives page refreshes)
   const [userDeclinedUseExisting, setUserDeclinedUseExisting] = useState(() =>
@@ -261,9 +267,22 @@ export default function Step4PersonalInfo({
           <TextField
             label="Languages Spoken"
             name="languages"
-            value={data.languages.join(", ")}
-            onChange={(e) => onChange("languages", e.target.value.split(", "))}
-            helperText="Separate multiple languages with commas"
+            value={languagesInput}
+            onChange={(e) => {
+              // Update local state while typing
+              setLanguagesInput(e.target.value);
+            }}
+            onBlur={(e) => {
+              // Process into array when user finishes typing (on blur)
+              const languages = e.target.value
+                .split(/[,\s]+/) // Split by comma and/or space
+                .map(lang => lang.trim()) // Trim whitespace
+                .filter(lang => lang.length > 0); // Remove empty strings
+              onChange("languages", languages);
+              // Update display to show cleaned format
+              setLanguagesInput(languages.join(", "));
+            }}
+            helperText="Separate multiple languages with commas or spaces"
           />
 
           <SelectField
