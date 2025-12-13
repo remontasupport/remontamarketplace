@@ -17,7 +17,7 @@
  *   - Hide the delete button (can only be deleted from original step)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { CheckCircleIcon, XCircleIcon, DocumentIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import { useIdentityDocuments, useDriverLicense } from "@/hooks/queries/useIdentityDocuments";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 interface Step2OtherDocumentsProps {
   data: any;
@@ -44,14 +45,27 @@ interface Document {
   requiredIfTrue?: boolean;
 }
 
+// OPTIMIZED: TanStack Query hook for requirements (replaces useEffect + useState)
+const useWorkerRequirements = () => {
+  return useQuery({
+    queryKey: ['worker-requirements'],
+    queryFn: async () => {
+      const response = await axios.get('/api/worker/requirements');
+      return response.data;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes - cached for 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes - kept in memory for 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocumentsProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
-  // State for requirements from API
-  const [insuranceDocuments, setInsuranceDocuments] = useState<Document[]>([]);
-  const [transportDocuments, setTransportDocuments] = useState<Document[]>([]);
-  const [isLoadingRequirements, setIsLoadingRequirements] = useState(true);
+  // OPTIMIZED: Use TanStack Query instead of manual fetch
+  const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements();
 
   // Fetch existing uploaded documents
   const { data: serviceDocumentsData, isLoading: isLoadingDocuments } = useServiceDocuments();
@@ -64,46 +78,19 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
 
-  // Fetch requirements from API
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchRequirements();
-    }
-  }, [session?.user?.id]);
+  // OPTIMIZED: Extract documents from query data with useMemo
+  const insuranceDocuments = useMemo(() =>
+    requirementsData?.requirements?.insurance || [],
+    [requirementsData]
+  );
 
-  const fetchRequirements = async () => {
-    setIsLoadingRequirements(true);
-    try {
-     
-      const response = await fetch(`/api/worker/requirements`);
-      if (response.ok) {
-        const data = await response.json();
-       
+  const transportDocuments = useMemo(() =>
+    requirementsData?.requirements?.transport || [],
+    [requirementsData]
+  );
 
-        // Extract insurance and transport documents
-        const insurance = data.requirements?.insurance || [];
-        const transport = data.requirements?.transport || [];
-
-        setInsuranceDocuments(insurance);
-        setTransportDocuments(transport);
-      } else {
-      
-        setInsuranceDocuments([]);
-        setTransportDocuments([]);
-      }
-    } catch (error) {
-     
-      setInsuranceDocuments([]);
-      setTransportDocuments([]);
-    } finally {
-      setIsLoadingRequirements(false);
-    }
-  };
-
-  const isLoading = isLoadingRequirements || isLoadingDocuments || isLoadingIdentityDocuments;
-
-  // Get uploaded documents map
-  const getUploadedDocumentsMap = () => {
+  // OPTIMIZED: Memoize uploaded documents map (was running on every render)
+  const uploadedDocuments = useMemo(() => {
     if (!serviceDocumentsData?.documents) return {};
 
     const documentMap: Record<string, any> = {};
@@ -117,14 +104,12 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     });
 
     return documentMap;
-  };
+  }, [serviceDocumentsData?.documents]);
 
-  const uploadedDocuments = getUploadedDocumentsMap();
-
-  // Get driver's license with priority system
+  // OPTIMIZED: Memoize driver's license lookup (was running on every render)
   // Priority 1: identity-drivers-license (uploaded in 100 Points ID step)
   // Priority 2: driver-license-vehicle (uploaded in Other Personal Info step)
-  const getDriverLicenseDocument = () => {
+  const driverLicenseInfo = useMemo(() => {
     // Convert identity documents to map for easier lookup
     const identityDocs: Record<string, any> = {};
     identityDocumentsData?.documents?.forEach((doc: any) => {
@@ -133,7 +118,6 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
     // Priority 1: Check if uploaded in 100 Points ID
     if (identityDocs["identity-drivers-license"]) {
-     
       return {
         document: identityDocs["identity-drivers-license"],
         source: "100-points-id" as const,
@@ -142,7 +126,6 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
     // Priority 2: Check if uploaded in Other Personal Info
     if (driverLicense) {
-      
       return {
         document: driverLicense,
         source: "other-personal-info" as const,
@@ -151,9 +134,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
     // No driver's license found
     return null;
-  };
-
-  const driverLicenseInfo = getDriverLicenseDocument();
+  }, [identityDocumentsData?.documents, driverLicense]);
 
   const handleFileSelect = (documentId: string, file: File | null) => {
     if (!file) {
@@ -395,17 +376,14 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     );
   };
 
-  if (isLoading) {
-    return (
-      <StepContentWrapper>
-        <div className="max-w-6xl mx-auto p-6">
-          <p className="text-gray-600 font-poppins">Loading...</p>
-        </div>
-      </StepContentWrapper>
-    );
-  }
-
+  // OPTIMIZED: Check if data is ready
   const hasDocuments = insuranceDocuments.length > 0 || transportDocuments.length > 0;
+  const isDataReady = !isLoadingRequirements || hasDocuments;
+
+  // OPTIMIZED: Don't show anything until data is ready (appears all at once)
+  if (!isDataReady) {
+    return <StepContentWrapper><div style={{ minHeight: '400px' }}></div></StepContentWrapper>;
+  }
 
   return (
     <StepContentWrapper>
@@ -421,13 +399,8 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
               </p>
             </div>
 
-            {!hasDocuments ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-                <p className="text-gray-700 font-poppins">
-                  No insurance or transport documents required based on your selected services.
-                </p>
-              </div>
-            ) : (
+            {/* OPTIMIZED: Show documents immediately when available, blank space while loading */}
+            {hasDocuments ? (
               <div className="space-y-8">
                 {/* Insurance Documents Section */}
                 {insuranceDocuments.length > 0 && (
@@ -469,7 +442,14 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
                   </p>
                 </div>
               </div>
-            )}
+            ) : !isLoadingRequirements ? (
+              // Only show "no documents" message AFTER loading completes
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+                <p className="text-gray-700 font-poppins">
+                  No insurance or transport documents required based on your selected services.
+                </p>
+              </div>
+            ) : null}
           </div>
 
           {/* Right Column - Info Box */}

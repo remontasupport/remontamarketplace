@@ -99,27 +99,25 @@ export async function POST(request: Request) {
             },
           });
 
-          // Build a map: subcategoryId -> categoryId
-          const subcategoryToCategory = new Map();
-          categories.forEach(category => {
-            category.subcategories.forEach((sub: any) => {
-              subcategoryToCategory.set(sub.id, category);
-            });
-          });
+          // OPTIMIZED: Build subcategoryId -> category map using flatMap (single pass)
+          const subcategoryToCategory = new Map(
+            categories.flatMap(category =>
+              category.subcategories.map((sub: any) => [sub.id, category] as const)
+            )
+          );
 
           // Delete existing WorkerService records
           await authPrisma.workerService.deleteMany({
             where: { workerProfileId: workerProfile.id },
           });
 
-          // Create new WorkerService records
-          const workerServiceRecords = [];
+          // OPTIMIZED: Create new WorkerService records using flatMap (eliminate nested loops)
           const subcategoryIds = data.supportWorkerCategories || [];
 
-          for (const serviceName of data.services) {
+          const workerServiceRecords = data.services.flatMap((serviceName: string) => {
             // Find category by name
             const category = categories.find(c => c.name === serviceName);
-            if (!category) continue;
+            if (!category) return [];
 
             const categoryId = category.id;
 
@@ -130,30 +128,30 @@ export async function POST(request: Request) {
             });
 
             if (relevantSubcategoryIds.length > 0) {
-              // Service has subcategories - create one record per subcategory
-              for (const subcategoryId of relevantSubcategoryIds) {
+              // Service has subcategories - create one record per subcategory using map
+              return relevantSubcategoryIds.map((subcategoryId: string) => {
                 const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
-                if (subcategory) {
-                  workerServiceRecords.push({
-                    workerProfileId: workerProfile.id,
-                    categoryId,
-                    categoryName: serviceName,
-                    subcategoryId,
-                    subcategoryName: subcategory.name,
-                  });
-                }
-              }
+                if (!subcategory) return null;
+
+                return {
+                  workerProfileId: workerProfile.id,
+                  categoryId,
+                  categoryName: serviceName,
+                  subcategoryId,
+                  subcategoryName: subcategory.name,
+                };
+              }).filter(Boolean);
             } else {
               // Service has no subcategories - create one record without subcategory
-              workerServiceRecords.push({
+              return [{
                 workerProfileId: workerProfile.id,
                 categoryId,
                 categoryName: serviceName,
                 subcategoryId: null,
                 subcategoryName: null,
-              });
+              }];
             }
-          }
+          });
 
           if (workerServiceRecords.length > 0) {
             await authPrisma.workerService.createMany({

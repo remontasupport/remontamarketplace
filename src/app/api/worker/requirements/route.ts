@@ -167,7 +167,7 @@ export async function GET(request: Request) {
       .filter((name): name is string => name !== null))];
 
     // 5. Fetch categories and their required documents from main database
-    // OPTIMIZED: Only fetch subcategories that were actually requested
+    // OPTIMIZED: Only fetch subcategories that were actually requested + SELECT only needed fields
     const categories = await prisma.category.findMany({
       where: {
         OR: [
@@ -175,10 +175,23 @@ export async function GET(request: Request) {
           { name: { in: categoryNames } },
         ],
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
         documents: {
-          include: {
-            document: true,
+          select: {
+            documentType: true,
+            conditionKey: true,
+            requiredIfTrue: true,
+            document: {
+              select: {
+                id: true,
+                name: true,
+                category: true,
+                description: true,
+                hasExpiration: true,
+              },
+            },
           },
         },
         subcategories: {
@@ -191,10 +204,20 @@ export async function GET(request: Request) {
                 ],
               }
             : undefined,
-          include: {
+          select: {
+            id: true,
+            name: true,
             additionalDocuments: {
-              include: {
-                document: true,
+              select: {
+                document: {
+                  select: {
+                    id: true,
+                    name: true,
+                    category: true,
+                    description: true,
+                    hasExpiration: true,
+                  },
+                },
               },
             },
           },
@@ -205,13 +228,11 @@ export async function GET(request: Request) {
 
 
     // 6. Process and categorize requirements
-    // OPTIMIZED: Direct processing since DB already filtered what we need
-    const allRequirements: any[] = [];
-
-    for (const category of categories) {
-      // Add category-level documents (always include these, only once per category)
-      for (const catDoc of category.documents) {
-        allRequirements.push({
+    // OPTIMIZED: Use flatMap to eliminate nested loops - single pass through data
+    const allRequirements: any[] = [
+      // Category-level documents - flatten categories and their documents in one pass
+      ...categories.flatMap(category =>
+        category.documents.map(catDoc => ({
           id: catDoc.document.id,
           name: catDoc.document.name,
           category: catDoc.document.category,
@@ -221,14 +242,12 @@ export async function GET(request: Request) {
           serviceCategory: category.name,
           conditionKey: catDoc.conditionKey,
           requiredIfTrue: catDoc.requiredIfTrue,
-        });
-      }
-
-      // OPTIMIZED: No filtering needed - subcategories already filtered at DB level
-      // Process all subcategories (they're already the ones we want)
-      for (const subcategory of category.subcategories) {
-        for (const subDoc of subcategory.additionalDocuments) {
-          allRequirements.push({
+        }))
+      ),
+      // Subcategory-level documents - flatten categories → subcategories → documents in one pass
+      ...categories.flatMap(category =>
+        category.subcategories.flatMap(subcategory =>
+          subcategory.additionalDocuments.map(subDoc => ({
             id: subDoc.document.id,
             name: subDoc.document.name,
             category: subDoc.document.category,
@@ -237,10 +256,10 @@ export async function GET(request: Request) {
             documentType: 'REQUIRED', // Subcategory documents are typically required
             serviceCategory: category.name,
             subcategory: subcategory.name,
-          });
-        }
-      }
-    }
+          }))
+        )
+      )
+    ];
 
     // 7. Group requirements by type and DEDUPLICATE by document ID
     // OPTIMIZED: Single-pass grouping using HashMap (O(n) instead of O(5n))
@@ -285,6 +304,7 @@ export async function GET(request: Request) {
     const insurance = Array.from(groupedRequirements.get('insurance')?.values() || []);
     const transport = Array.from(groupedRequirements.get('transport')?.values() || []);
 
+    // OPTIMIZED: Add aggressive HTTP caching for instant subsequent loads (like 100 Points ID)
     return NextResponse.json({
       success: true,
       services: servicesToFetch,
@@ -295,6 +315,11 @@ export async function GET(request: Request) {
         qualifications,
         insurance,
         transport,
+      },
+    }, {
+      headers: {
+        // Cache for 2 minutes, stale-while-revalidate for 5 minutes
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
       },
     });
   } catch (error: any) {

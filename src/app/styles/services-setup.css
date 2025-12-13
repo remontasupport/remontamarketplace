@@ -129,16 +129,40 @@
   font-family: 'Poppins', sans-serif;
 }
 
+/* Add Subcategories Button (Edit Mode) */
+.service-add-btn {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #d1fae5;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.service-add-btn:hover {
+  background-color: #a7f3d0;
+  transform: scale(1.05);
+}
+
+.service-add-btn svg {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: #059669;
+}
+
 /* Delete Button (Edit Mode) */
 .service-delete-btn {
   padding: 0.5rem;
   border-radius: 0.5rem;
   background-color: #fee2e2;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
 .service-delete-btn:hover {
   background-color: #fecaca;
+  transform: scale(1.05);
 }
 
 .service-delete-btn svg {

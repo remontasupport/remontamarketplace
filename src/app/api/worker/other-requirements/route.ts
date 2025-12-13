@@ -49,7 +49,7 @@ export async function GET() {
       return NextResponse.json({ documents: [] });
     }
 
-    // Transform to match frontend expected format
+    // OPTIMIZED: Transform to match frontend expected format (already efficient single-pass)
     const documents = otherRequirements.map((doc) => ({
       id: doc.id,
       documentType: "other-requirement",
@@ -59,7 +59,12 @@ export async function GET() {
       status: doc.status,
     }));
 
-    return NextResponse.json({ documents });
+    // OPTIMIZED: Add HTTP caching headers for faster subsequent loads
+    return NextResponse.json({ documents }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+      },
+    });
 
   } catch (error: any) {
     return NextResponse.json(

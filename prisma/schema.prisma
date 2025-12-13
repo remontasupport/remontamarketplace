@@ -187,6 +187,8 @@ model CategoryDocument {
   @@unique([categoryId, documentId, documentType, conditionKey])
   @@index([categoryId])
   @@index([documentId])
+  @@index([documentType])
+  @@index([categoryId, documentType]) // OPTIMIZED: Compound index for filtering by category and type
 }
 
 // Join table for subcategory-specific additional documents (e.g., AHPRA for OT)
