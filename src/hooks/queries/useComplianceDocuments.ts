@@ -29,6 +29,7 @@ export interface ComplianceDocumentsResponse {
   success: boolean;
   documents: ComplianceDocument[];
   document?: ComplianceDocument; // For single document responses
+  metadata?: any; // For Right to Work citizenship status and other flexible data
 }
 
 // API Fetcher

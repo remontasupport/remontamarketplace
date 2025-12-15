@@ -18,6 +18,7 @@ import Step3WorkingWithChildren from "@/components/requirements-setup/steps/Step
 import Step4NDISTraining from "@/components/requirements-setup/steps/Step4NDISTraining";
 import Step5InfectionControl from "@/components/requirements-setup/steps/Step5InfectionControl";
 import Step0WorkerScreeningCheck from "@/components/requirements-setup/steps/Step0WorkerScreeningCheck";
+import StepRightToWork from "@/components/requirements-setup/steps/StepRightToWork";
 
 // Account-setup components (reused for compliance)
 import Step6ABN from "@/components/account-setup/steps/Step6ABN";
@@ -96,6 +97,17 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
     documentId: "infection-control-training",
     component: Step5InfectionControl,
     apiEndpoint: "/api/worker/infection-control",
+  },
+
+  // ========================================
+  // WORKING RIGHTS DOCUMENTS
+  // ========================================
+
+  // Right to Work Documents - Citizenship verification with conditional upload
+  "right-to-work": {
+    documentId: "right-to-work",
+    component: StepRightToWork,
+    apiEndpoint: "/api/worker/compliance-documents",
   },
 };
 

@@ -58,11 +58,20 @@ export async function GET(request: Request) {
         documentUrl: true,
         documentUploadedAt: true,
         expiresAt: true,
+        metadata: true,
       },
       orderBy: {
         documentUploadedAt: 'desc',
       },
     });
+
+    // Parse metadata if exists
+    let metadata = null;
+    if (documents.length > 0 && documents[0].metadata) {
+      metadata = typeof documents[0].metadata === 'string'
+        ? JSON.parse(documents[0].metadata)
+        : documents[0].metadata;
+    }
 
     return NextResponse.json({
       documents: documents.map(doc => ({
@@ -72,6 +81,7 @@ export async function GET(request: Request) {
         uploadedAt: doc.documentUploadedAt,
         expiryDate: doc.expiresAt, // Map expiresAt to expiryDate for frontend
       })),
+      metadata, // Include metadata for Right to Work citizenship status
     });
   } catch (error: any) {
   
@@ -149,22 +159,70 @@ export async function POST(request: Request) {
 
   
 
-    // 6. Always create a new document (support multiple documents per type)
+    // 6. Handle document creation/update
+    // For right-to-work, update existing record to preserve metadata
+    // For other types, create new document (support multiple documents per type)
 
-    const verificationReq = await authPrisma.verificationRequirement.create({
-      data: {
-        workerProfileId: workerProfile.id,
-        requirementType: documentType,
-        requirementName: requirementName || documentType,
-        documentUrl: blob.url,
-        documentUploadedAt: new Date(),
-        expiresAt: expiryDate ? new Date(expiryDate) : null,
-        status: "SUBMITTED",
-        submittedAt: new Date(),
-        updatedAt: new Date(),
-        isRequired: false, // Generic documents are typically optional
-      },
-    });
+    let verificationReq;
+
+    if (documentType === "right-to-work") {
+      // Check if record exists (created when citizenship status was saved)
+      const existingRecord = await authPrisma.verificationRequirement.findFirst({
+        where: {
+          workerProfileId: workerProfile.id,
+          requirementType: documentType,
+        },
+      });
+
+      if (existingRecord) {
+        // Update existing record to add document
+        verificationReq = await authPrisma.verificationRequirement.update({
+          where: { id: existingRecord.id },
+          data: {
+            requirementName: requirementName || documentType,
+            documentUrl: blob.url,
+            documentUploadedAt: new Date(),
+            expiresAt: expiryDate ? new Date(expiryDate) : null,
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        // Create new record if none exists
+        verificationReq = await authPrisma.verificationRequirement.create({
+          data: {
+            workerProfileId: workerProfile.id,
+            requirementType: documentType,
+            requirementName: requirementName || documentType,
+            documentUrl: blob.url,
+            documentUploadedAt: new Date(),
+            expiresAt: expiryDate ? new Date(expiryDate) : null,
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            updatedAt: new Date(),
+            isRequired: true,
+            metadata: { isCitizen: false }, // Default for document uploads
+          },
+        });
+      }
+    } else {
+      // For all other document types, always create new (support multiple documents)
+      verificationReq = await authPrisma.verificationRequirement.create({
+        data: {
+          workerProfileId: workerProfile.id,
+          requirementType: documentType,
+          requirementName: requirementName || documentType,
+          documentUrl: blob.url,
+          documentUploadedAt: new Date(),
+          expiresAt: expiryDate ? new Date(expiryDate) : null,
+          status: "SUBMITTED",
+          submittedAt: new Date(),
+          updatedAt: new Date(),
+          isRequired: false, // Generic documents are typically optional
+        },
+      });
+    }
 
 
     // 7. Update worker's verificationStatus to PENDING_REVIEW
@@ -185,6 +243,92 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "Failed to upload document",
+        details: process.env.NODE_ENV === "development" ? error.message : undefined,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH - Update document metadata (e.g., citizenship status for Right to Work)
+ */
+export async function PATCH(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const { documentType, metadata } = body;
+
+    if (!documentType) {
+      return NextResponse.json({ error: "Document type is required" }, { status: 400 });
+    }
+
+    if (!metadata) {
+      return NextResponse.json({ error: "Metadata is required" }, { status: 400 });
+    }
+
+    // Get worker profile
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) {
+      return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
+    }
+
+    // Find existing record or create new one
+    const existingRecord = await authPrisma.verificationRequirement.findFirst({
+      where: {
+        workerProfileId: workerProfile.id,
+        requirementType: documentType,
+      },
+    });
+
+    if (existingRecord) {
+      // Update existing record
+      await authPrisma.verificationRequirement.update({
+        where: { id: existingRecord.id },
+        data: {
+          metadata,
+          // If Australian citizen, mark as submitted
+          status: metadata.isCitizen ? "SUBMITTED" : existingRecord.status,
+          submittedAt: metadata.isCitizen && !existingRecord.submittedAt ? new Date() : existingRecord.submittedAt,
+          updatedAt: new Date(),
+        },
+      });
+    } else {
+      // Create new record
+      await authPrisma.verificationRequirement.create({
+        data: {
+          workerProfileId: workerProfile.id,
+          requirementType: documentType,
+          requirementName: documentType === "right-to-work" ? "Right to Work Documents" : documentType,
+          isRequired: true,
+          status: metadata.isCitizen ? "SUBMITTED" : "PENDING",
+          submittedAt: metadata.isCitizen ? new Date() : null,
+          metadata,
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: metadata.isCitizen
+        ? "Australian citizenship confirmed"
+        : "Citizenship status saved",
+    });
+
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        error: "Failed to update metadata",
         details: process.env.NODE_ENV === "development" ? error.message : undefined,
       },
       { status: 500 }

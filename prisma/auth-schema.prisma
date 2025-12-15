@@ -138,6 +138,7 @@ model VerificationRequirement {
   expiresAt          DateTime?
   notes              String?
   rejectionReason    String?
+  metadata           Json?             // Flexible data storage (e.g., citizenship status for Right to Work documents)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime
   documentCategory   DocumentCategory?
