@@ -63,7 +63,7 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
   "ndis-screening-check": {
     documentId: "ndis-screening-check",
     component: Step0WorkerScreeningCheck,
-    apiEndpoint: "/api/worker/worker-screening",
+    apiEndpoint: "/api/worker/screening-check",
   },
 
   // National Police Check - PRESERVES EXISTING UPLOAD LOGIC

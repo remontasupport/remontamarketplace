@@ -63,7 +63,7 @@ export default function Step5InfectionControl({
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/infection-control", "infection-control-training");
+  } = useSingleComplianceDocument("/api/worker/infection-control", "infection-control");
 
   const uploadMutation = useUploadComplianceDocument();
 

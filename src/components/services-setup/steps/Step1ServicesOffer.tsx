@@ -12,7 +12,6 @@ import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { useCategories } from "@/hooks/queries/useCategories";
-import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/services-setup.css";
 
@@ -296,17 +295,20 @@ export default function Step1ServicesOffer({
   };
 
   return (
-    <StepContentWrapper>
-      <div className="form-page-content">
-        {/* Left Column - Form */}
-        <div className="form-column">
-          <div className="account-form">
-            <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-1">
-              What services can you offer?
-            </h4>
-            <p className="text-sm text-gray-600 font-poppins mb-1">
-              You can select more than one, but make sure you have the relevant qualifications.
-            </p>
+    <div className="services-step-container">
+      <div className="form-page-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', width: '100%', maxWidth: 'none' }}>
+        {/* Main Content - Services on LEFT, Instructions on RIGHT */}
+        <div className="content-columns" style={{ display: 'contents' }}>
+          {/* Left Column - Services */}
+          <div className="main-column" style={{ width: '100%', maxWidth: 'none' }}>
+            <div className="page-header">
+              <h2 className="page-title text-2xl font-poppins font-bold mb-2" style={{ color: '#0C1628' }}>
+                Services You Offer
+              </h2>
+              <p className="page-subtitle text-gray-600 font-poppins mb-6">
+                Select the services you can provide. Make sure you have the relevant qualifications for each service.
+              </p>
+            </div>
 
             {/* Service Cards */}
             <div className="services-list">
@@ -369,11 +371,10 @@ export default function Step1ServicesOffer({
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Column - Info Box */}
-        <div className="info-column">
-          <div className="info-box">
+          {/* Right Column - Info Box */}
+          <div className="info-column" style={{ width: '100%', maxWidth: 'none' }}>
+          <div className="info-box" style={{ width: '100%', maxWidth: 'none' }}>
             <h3 className="info-box-title">About Your Services</h3>
             <p className="info-box-text">
               Add all the services you're qualified to provide. This helps clients find
@@ -392,6 +393,7 @@ export default function Step1ServicesOffer({
               to add more subcategories, or the <span className="text-red-600">trash icon</span> to
               remove a service.
             </p>
+          </div>
           </div>
         </div>
       </div>
@@ -419,6 +421,6 @@ export default function Step1ServicesOffer({
           onSave={handleSubcategoriesSave}
         />
       )}
-    </StepContentWrapper>
+    </div>
   );
 }

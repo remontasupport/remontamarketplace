@@ -88,7 +88,7 @@ export default function Step0WorkerScreeningCheck({
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/worker-screening", "ndis-screening-check");
+  } = useSingleComplianceDocument("/api/worker/screening-check", "worker-screening-check");
 
   const uploadMutation = useUploadComplianceDocument();
 

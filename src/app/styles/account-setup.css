@@ -53,90 +53,152 @@
   max-width: 600px;
 }
 
-/* Mobile Optimization for Account Setup Steps - NUCLEAR APPROACH */
+/* Page header styles */
+.account-step-container .page-header {
+  margin-bottom: 1.5rem;
+}
+
+.account-step-container .page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 0.5rem;
+}
+
+.account-step-container .page-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 1.5rem;
+}
+
+/* Mobile Optimization for Account Setup Steps - COMPLETE OVERRIDE */
 @media (max-width: 768px) {
-  /* FORCE full viewport width for all account step elements */
-  .account-step-container .form-page-content,
-  .account-step-container .form-column,
-  .account-step-container .info-column,
-  .account-step-container .info-box,
-  .account-step-container .account-form {
-    max-width: none !important;
-    width: 100vw !important;
+  /* CRITICAL: Override form-page-container parent */
+  .form-page-container:has(.account-step-container) {
     margin: 0 !important;
     padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Account step container - ZERO padding/margin, container handles spacing */
+  .account-step-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 1rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     box-sizing: border-box !important;
   }
 
-  /* Account step container - true full width with horizontal padding */
-  .account-step-container {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  /* Override desktop header alignment - match with content */
-  .form-page-container:has(.account-step-container) .form-page-header {
-    margin-left: 0 !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  /* Override desktop navigation alignment - match with content */
-  .form-page-container:has(.account-step-container) .step-navigation {
-    margin-left: 0 !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  /* Form page content - full width with breathing room */
+  /* Form page content - add horizontal padding HERE */
   .account-step-container .form-page-content {
     display: flex !important;
     flex-direction: column !important;
     padding: 0 1rem !important;
     gap: 1rem !important;
-  }
-
-  /* Form and info columns - full width within padded parent */
-  .account-step-container .form-column,
-  .account-step-container .info-column {
     width: 100% !important;
     max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
 
-  /* Info box - full width within column */
+  /* Content columns - full width, no extra padding */
+  .account-step-container .content-columns {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 1.5rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Main and info columns - full width */
+  .account-step-container .main-column,
+  .account-step-container .info-column,
+  .account-step-container .form-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* All direct children of main-column - full width */
+  .account-step-container .main-column > *,
+  .account-step-container .main-column button,
+  .account-step-container .main-column div {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Page header - full width */
+  .account-step-container .page-header {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin-bottom: 1rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Page title - responsive sizing */
+  .account-step-container .page-title {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Page subtitle */
+  .account-step-container .page-subtitle {
+    font-size: 0.875rem !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Info box - full width with padding */
   .account-step-container .info-box {
     width: 100% !important;
     max-width: 100% !important;
     padding: 1rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
 
   /* Account form - full width */
   .account-step-container .account-form {
     width: 100% !important;
     max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
 
-  /* Content columns - full width for services/other pages */
-  .account-step-container .content-columns {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 1rem !important;
+  /* Override any desktop header/navigation alignment */
+  .form-page-container:has(.account-step-container) .form-page-header {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 
-  .account-step-container .main-column,
-  .account-step-container .side-column {
-    width: 100% !important;
-    max-width: 100% !important;
+  .form-page-container:has(.account-step-container) .step-navigation {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 }
 
 @media (max-width: 480px) {
-  .account-step-container {
-    padding-left: 0.875rem !important;
-    padding-right: 0.875rem !important;
+  /* Slightly smaller padding on very small screens */
+  .account-step-container .form-page-content {
+    padding: 0 0.875rem !important;
   }
 
   .form-page-container:has(.account-step-container) .form-page-header {
@@ -149,14 +211,8 @@
     padding-right: 0.875rem !important;
   }
 
-  .account-step-container .form-page-content {
-    padding: 0 0.875rem !important;
-  }
-
-  .account-step-container .form-column,
-  .account-step-container .info-column {
-    width: 100% !important;
-    max-width: 100% !important;
+  .account-step-container .page-title {
+    font-size: 1.375rem !important;
   }
 
   .account-step-container .info-box {
@@ -164,6 +220,6 @@
   }
 
   .account-step-container .content-columns {
-    gap: 0.875rem !important;
+    gap: 1rem !important;
   }
 }

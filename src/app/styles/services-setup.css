@@ -6,17 +6,27 @@
   --brand-secondary: #A3DEDE;
 }
 
-/* Services Step Container */
+/* COPY EXACT LAYOUT from account-setup.css */
+/* Override form-page-container when it contains services-step-container */
+.form-page-container:has(.services-step-container) {
+  margin: 0 !important;
+  padding: 1rem 0rem !important;
+  max-width: 100% !important;
+}
+
+/* Services Step Container - Matches Account spacing */
 .services-step-container {
   min-height: 50vh;
-  margin-left: -2rem;
-  padding-left: 1.5rem;
+  margin-left: -1rem !important;
+  margin-right: -1rem !important;
+  padding-left: 3rem !important;
+  padding-right: 3rem !important;
 }
 
 /* Align header elements with the adjusted container */
 .form-page-container:has(.services-step-container) .form-page-header {
-  margin-left: -0.60rem;
-  padding-left: 0;
+  margin-left: -1rem !important;
+  padding-left: 3rem !important;
 }
 
 /* Reduce space between content and navigation */
@@ -26,21 +36,107 @@
 
 /* Align navigation buttons with the adjusted container */
 .form-page-container:has(.services-step-container) .step-navigation {
-  margin-left: -0.60rem;
-  padding-top: 0.5rem;
-  padding-left: 0;
+  margin-left: -1rem !important;
+  padding-top: 0.5rem !important;
+  padding-left: 3rem !important;
 }
 
-/* Override form-page-content grid for services */
+/* Form page content - full width with proper padding */
 .services-step-container .form-page-content {
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  align-items: start;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
-/* Increase width of info box */
-.services-step-container .info-box {
-  max-width: 600px;
+/* Override form-page-content grid for services - ONLY on desktop */
+@media (min-width: 769px) {
+  .services-step-container .form-page-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3rem !important;
+    align-items: start;
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+/* Content columns - base styles */
+.services-step-container .content-columns {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Content columns layout for services/documents pages - ONLY on desktop */
+@media (min-width: 769px) {
+  .services-step-container .content-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3rem;
+    align-items: start;
+    width: 100%;
+  }
+}
+
+.services-step-container .main-column,
+.services-step-container .info-column,
+.services-step-container .side-column {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Page header styles */
+.services-step-container .page-header {
+  margin-bottom: 1.5rem;
+}
+
+.services-step-container .page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.services-step-container .page-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Info box - FORCE full width on ALL screens */
+.services-step-container .info-box,
+.services-step-container .info-column .info-box,
+.services-step-container .content-columns .info-column .info-box,
+div.services-step-container div.info-column div.info-box {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 300px !important;
+}
+
+/* Desktop: FORCE both columns and info box to be FULL WIDTH */
+@media (min-width: 769px) {
+  .services-step-container .main-column,
+  .services-step-container .info-column,
+  .services-step-container .content-columns .main-column,
+  .services-step-container .content-columns .info-column {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .services-step-container .info-box,
+  .services-step-container .info-column .info-box,
+  .services-step-container .content-columns .info-column .info-box,
+  div.services-step-container .info-box,
+  div.services-step-container div.info-box {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  /* Service cards - full width */
+  .services-step-container .service-card,
+  .services-step-container .service-card-wrapper {
+    width: 100% !important;
+    max-width: none !important;
+  }
 }
 
 /* Services Form Column Background */
@@ -247,29 +343,179 @@
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
-  /* Services Step Container - adjust padding for mobile */
+  /* CRITICAL: Override form-page-container parent */
+  .form-page-container:has(.services-step-container) {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Services Step Container - ZERO padding/margin, let form-page-content handle spacing */
   .services-step-container {
+    width: 100% !important;
+    max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
+    padding-top: 1rem !important;
+    box-sizing: border-box !important;
   }
 
-  /* Form page header - remove negative margin */
+  /* Form page content - add horizontal padding HERE */
+  .services-step-container .form-page-content {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 1rem !important;
+    gap: 1rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Content columns - flexbox with reordering */
+  .services-step-container .content-columns {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* CRITICAL: Use display contents to unwrap main-column children */
+  .services-step-container .main-column {
+    display: contents !important;
+  }
+
+  /* Order 1: Page header */
+  .services-step-container .page-header {
+    order: 1 !important;
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .services-step-container .page-header .page-subtitle {
+    margin-bottom: 0 !important;
+  }
+
+  /* Order 2: Info column (appears right after page header) */
+  .services-step-container .info-column {
+    order: 2 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    margin-top: 0.5rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* Order 3: Services list (appears after info box) */
+  .services-step-container .services-list {
+    order: 3 !important;
+    width: 100% !important;
+  }
+
+  /* Info column - AGGRESSIVE full width (main-column uses display:contents) */
+  .services-step-container .info-column,
+  .info-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+
+  /* Page title - responsive sizing */
+  .services-step-container .page-title {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Info box - AGGRESSIVE full width enforcement on mobile */
+  .services-step-container .info-box,
+  .services-step-container .info-column .info-box,
+  .services-step-container .content-columns .info-column .info-box,
+  div.services-step-container div.info-column div.info-box {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: auto !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Info box title and text - full width */
+  .services-step-container .info-box-title,
+  .services-step-container .info-box-text,
+  .info-box-title,
+  .info-box-text {
+    width: 100% !important;
+    max-width: 100% !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+
+  /* Override any desktop header/navigation alignment */
   .form-page-container:has(.services-step-container) .form-page-header {
     margin-left: 0 !important;
-    padding-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
   }
 
-  /* Navigation buttons - remove negative margin and excess padding */
   .form-page-container:has(.services-step-container) .step-navigation {
     margin-left: 0 !important;
-    padding-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Slightly smaller padding on very small screens */
+  .services-step-container .form-page-content {
+    padding: 0 0.875rem !important;
   }
 
-  /* Form page content - stack vertically on mobile */
-  .services-step-container .form-page-content {
-    grid-template-columns: 1fr !important;
+  .form-page-container:has(.services-step-container) .form-page-header {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .form-page-container:has(.services-step-container) .step-navigation {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .services-step-container .page-title {
+    font-size: 1.375rem !important;
+  }
+
+  .services-step-container .info-box,
+  .services-step-container .info-column .info-box,
+  .services-step-container .content-columns .info-column .info-box,
+  div.services-step-container div.info-column div.info-box {
+    padding: 0.875rem !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: auto !important;
+  }
+
+  .services-step-container .content-columns {
     gap: 1rem !important;
+  }
+
+  /* AGGRESSIVE: Ensure info column is full width */
+  div.info-column,
+  .services-step-container div.info-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
   }
 }

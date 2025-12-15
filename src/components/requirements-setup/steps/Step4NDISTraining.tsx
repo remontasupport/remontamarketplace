@@ -74,7 +74,7 @@ export default function Step4NDISTraining({
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/ndis-training", "ndis-worker-orientation");
+  } = useSingleComplianceDocument("/api/worker/ndis-training", "ndis-training");
 
   const uploadMutation = useUploadComplianceDocument();
 
