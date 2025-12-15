@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDownIcon, Bars3Icon, XMarkIcon, PhoneIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import '@/styles/header.css'
 
 interface NavigationItem {
@@ -44,6 +44,11 @@ const navigation: NavigationItem[] = [
     href: '/newsroom',
     hasDropdown: false
   },
+  {
+    name: 'Get In Touch',
+    href: '/contact',
+    hasDropdown: false
+  },
   // {
   //   name: 'More',
   //   href: '#',
@@ -68,6 +73,7 @@ export default function Header() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isNavigating, setIsNavigating] = useState(false)
+  const [signUpModalOpen, setSignUpModalOpen] = useState(false)
   const headerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -226,58 +232,62 @@ export default function Header() {
 
         {/* Right side buttons */}
         <div className="header-actions">
-          {/* Phone Number */}
-          <a
-            href="tel:1300134153"
-            className={`phone-link ${isScrolled ? 'scrolled' : ''}`}
+          {/* Login Button */}
+          <Link
+            href="https://app.remontaservices.com.au/login"
+            className={`auth-button login-button ${isScrolled ? 'scrolled' : ''}`}
+            onClick={() => {
+              setTimeout(() => setOpenDropdown(null), 100);
+            }}
           >
-            <PhoneIcon className="phone-icon" aria-hidden="true" />
-            <span>1300 134 153</span>
-          </a>
+            Login
+          </Link>
 
-          {/* Contact Us Button */}
-          <div className="contact-button-wrapper">
-            <Link
-              href="/contact"
-              className={`contact-button ${isScrolled ? 'scrolled' : ''}`}
+          {/* Sign Up Button */}
+          <div className="signup-button-wrapper">
+            <button
+              className={`auth-button signup-button ${isScrolled ? 'scrolled' : ''}`}
               onClick={() => {
-                // Close dropdown after a brief delay to allow navigation to start
+                setSignUpModalOpen(true);
                 setTimeout(() => setOpenDropdown(null), 100);
               }}
             >
-              Get In Touch
-            </Link>
+              Sign Up
+            </button>
 
-            {/* <button
-              
-              className={`flex items-center justify-center gap-x-1 rounded-full px-6 py-2 font-sans font-medium text-sm transition-colors duration-300 ${isScrolled ? 'bg-[#B1C3CD] text-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628]' : 'bg-[#0C1628] hover:text-[#0C1628] text-white hover:bg-[#B1C3CD]'}`}
-              onClick={() => setOpenDropdown(openDropdown === 'get-started' ? null : 'get-started')}
-            >
-              Contact Us
-              <ChevronDownIcon className="h-4 w-4 flex-none text-white" aria-hidden="true" />
-            </button> */}
+            {/* Sign Up Dropdown Modal - Desktop */}
+            {signUpModalOpen && (
+              <>
+                <div className="signup-dropdown-backdrop" onClick={() => setSignUpModalOpen(false)} />
+                <div className="signup-dropdown-content">
+                  <h2 className="signup-dropdown-title">Sign up to Remonta</h2>
 
-            {/* Get started dropdown */}
-            {/* {openDropdown === 'get-started' && (
-              <div
-                className="absolute left-0 z-10 mt-3 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-              >
-                <div className="py-1">
-                  <Link
-                    href="/register/client"
-                    className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#B1C3CD] transition ease-in-out duration-150"
-                  >
-                    I need support
-                  </Link>
-                  <Link
-                    href="/registration/worker"
-                    className="block px-4 py-2 text-sm font-sans font-medium text-[#0C1628] hover:bg-[#B1C3CD] transition ease-in-out duration-150"
-                  >
-                    I want to provide support
-                  </Link>
+                  <div className="signup-dropdown-options">
+                    <Link
+                      href="/registration/user"
+                      className="signup-dropdown-option"
+                      onClick={() => setSignUpModalOpen(false)}
+                    >
+                      <h3 className="signup-option-title">I want to find support:</h3>
+                      <p className="signup-option-description">
+                        For myself, a client or on behalf of a friend or family member.
+                      </p>
+                    </Link>
+
+                    <Link
+                      href="https://app.remontaservices.com.au/registration/worker"
+                      className="signup-dropdown-option"
+                      onClick={() => setSignUpModalOpen(false)}
+                    >
+                      <h3 className="signup-option-title">I want to provide support:</h3>
+                      <p className="signup-option-description">
+                        As a support worker, nurse, allied health professional, gardener or cleaner.
+                      </p>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            )} */}
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -359,46 +369,63 @@ export default function Header() {
                     </div>
                   ))}
          </div>
-                {/* <div className="py-6 space-y-4">
-                  <Link
-                    href="/login"
-                    className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] hover:bg-[#F8E8D8] border border-[#0C1628] text-center"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Log in
-                  </Link>
-                  <div className="space-y-2">
-                    <Link
-                      href="/register/client"
-                      className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-white bg-[#0C1628] hover:bg-[#B1C3CD] text-center"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      I need support
-                    </Link>
-                    <Link
-                      href="/registration/worker"
-                      className="block rounded-full px-3 py-2.5 text-base font-sans font-medium leading-7 text-[#0C1628] border border-[#0C1628] hover:bg-[#F8E8D8] text-center"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      I want to provide support
-                    </Link>
-                  </div>
-                </div> */}
 
-
-                <div className="mobile-contact-section">
+                {/* Login and Sign Up buttons for mobile */}
+                <div className="mobile-auth-section">
                   <button
-                    className={`mobile-contact-button ${isScrolled ? 'scrolled' : ''}`}
-                    onClick={() => handleMobileNavigation('/contact')}
+                    className="mobile-auth-button mobile-login-button"
+                    onClick={() => handleMobileNavigation('https://app.remontaservices.com.au/login')}
                     disabled={isNavigating}
                   >
-                    Get In Touch
+                    Login
+                  </button>
+                  <button
+                    className="mobile-auth-button mobile-signup-button"
+                    onClick={() => {
+                      setSignUpModalOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Sign Up
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Sign Up Modal - Mobile (centered) */}
+      {signUpModalOpen && mobileMenuOpen === false && (
+        <div className="signup-modal-overlay mobile-only" onClick={() => setSignUpModalOpen(false)}>
+          <div className="signup-modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="signup-modal-title">Sign up to Remonta</h2>
+
+            <div className="signup-modal-options">
+              <Link
+                href="/registration/user"
+                className="signup-modal-option"
+                onClick={() => setSignUpModalOpen(false)}
+              >
+                <p className="signup-option-title">I want to find support:</p>
+                <p className="signup-option-description">
+                  For myself, a client or on behalf of a friend or family member.
+                </p>
+              </Link>
+
+              <Link
+                href="/registration/worker"
+                className="signup-modal-option"
+                onClick={() => setSignUpModalOpen(false)}
+              >
+                <p className="signup-option-title">I want to provide support:</p>
+                <p className="signup-option-description">
+                  As a support worker, nurse, allied health professional, gardener or cleaner.
+                </p>
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </header>
