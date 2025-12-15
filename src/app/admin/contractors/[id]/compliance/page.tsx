@@ -56,6 +56,8 @@ export default function CompliancePage() {
   const [selectedDocument, setSelectedDocument] = useState<VerificationDocument | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingExpiryId, setEditingExpiryId] = useState<string | null>(null)
+  const [expiryDateValue, setExpiryDateValue] = useState<string>('')
 
   useEffect(() => {
     fetchComplianceData()
@@ -177,7 +179,52 @@ export default function CompliancePage() {
       }
     } catch (err) {
       alert('Failed to reset document')
-     
+
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleEditExpiry = (document: VerificationDocument) => {
+    setEditingExpiryId(document.id)
+    // Format date for input field (YYYY-MM-DD)
+    if (document.expiresAt) {
+      const date = new Date(document.expiresAt)
+      const formattedDate = date.toISOString().split('T')[0]
+      setExpiryDateValue(formattedDate)
+    } else {
+      setExpiryDateValue('')
+    }
+  }
+
+  const handleCancelEditExpiry = () => {
+    setEditingExpiryId(null)
+    setExpiryDateValue('')
+  }
+
+  const handleSaveExpiry = async (documentId: string) => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractorId}/compliance/${documentId}/update-expiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expiresAt: expiryDateValue || null,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setEditingExpiryId(null)
+        setExpiryDateValue('')
+        // Refresh the data
+        await fetchComplianceData()
+      } else {
+        alert(`Failed to update expiration date: ${result.error}`)
+      }
+    } catch (err) {
+      alert('Failed to update expiration date')
     } finally {
       setIsSubmitting(false)
     }
@@ -341,22 +388,60 @@ export default function CompliancePage() {
                             })}
                           </div>
                         )}
-                        {doc.expiresAt && (
-                          <div>
-                            <span className="font-medium">Expires:</span>{' '}
-                            <span
-                              className={
-                                new Date(doc.expiresAt) < new Date() ? 'text-red-600 font-semibold' : ''
-                              }
-                            >
-                              {new Date(doc.expiresAt).toLocaleDateString('en-AU', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Expires:</span>{' '}
+                          {editingExpiryId === doc.id ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="date"
+                                value={expiryDateValue}
+                                onChange={(e) => setExpiryDateValue(e.target.value)}
+                                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              />
+                              <button
+                                onClick={() => handleSaveExpiry(doc.id)}
+                                disabled={isSubmitting}
+                                className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors disabled:opacity-50"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleCancelEditExpiry}
+                                disabled={isSubmitting}
+                                className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition-colors disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              {doc.expiresAt ? (
+                                <span
+                                  className={
+                                    new Date(doc.expiresAt) < new Date() ? 'text-red-600 font-semibold' : ''
+                                  }
+                                >
+                                  {new Date(doc.expiresAt).toLocaleDateString('en-AU', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                  })}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">N/A</span>
+                              )}
+                              <button
+                                onClick={() => handleEditExpiry(doc)}
+                                className="ml-1 text-indigo-600 hover:text-indigo-800 transition-colors"
+                                title="Edit expiration date"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
                         {doc.reviewedAt && (
                           <div>
                             <span className="font-medium">Reviewed:</span>{' '}
