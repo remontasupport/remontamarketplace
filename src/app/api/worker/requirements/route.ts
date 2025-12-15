@@ -318,8 +318,8 @@ export async function GET(request: Request) {
       },
     }, {
       headers: {
-        // Cache for 2 minutes, stale-while-revalidate for 5 minutes
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+        // Cache for 30 seconds, stale-while-revalidate for 1 minute
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
       },
     });
   } catch (error: any) {
