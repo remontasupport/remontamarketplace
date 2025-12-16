@@ -395,6 +395,7 @@ enum UserRole {
   WORKER
   CLIENT
   COORDINATOR
+  ADMIN
 }
 
 enum VerificationStatus {

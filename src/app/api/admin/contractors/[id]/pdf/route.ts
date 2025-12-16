@@ -3,6 +3,8 @@ import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { renderToStream } from '@react-pdf/renderer'
 import WorkerProfilePDF from '@/components/pdf/WorkerProfilePDF'
 import React from 'react'
+import { requireRole } from '@/lib/auth'
+import { UserRole } from '@/types/auth'
 
 /**
  * GET /api/admin/contractors/:id/pdf
@@ -13,6 +15,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require ADMIN role
+    await requireRole(UserRole.ADMIN)
+
     const { id: workerId } = await params
 
     if (!workerId) {

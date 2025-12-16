@@ -27,9 +27,8 @@ import {
  */
 export async function GET(request: Request) {
   try {
-    // TODO: Uncomment when admin role is created
-    // const admin = await requireRole(UserRole.COORDINATOR);
-    // For now, we'll skip auth check (add it when admin dashboard is ready)
+    // Require ADMIN role
+    await requireRole(UserRole.ADMIN)
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -89,17 +88,17 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    // TODO: Uncomment when admin role is created
-    // const admin = await requireRole(UserRole.COORDINATOR);
-    // const adminUserId = admin.id;
+    // Require ADMIN role and get admin user ID
+    const admin = await requireRole(UserRole.ADMIN)
+    const adminUserId = admin.id
 
     const body = await request.json();
-    const { action, workerProfileId, adminUserId, notes, reason } = body;
+    const { action, workerProfileId, notes, reason } = body;
 
     // Validation
-    if (!action || !workerProfileId || !adminUserId) {
+    if (!action || !workerProfileId) {
       return NextResponse.json(
-        { error: 'Missing required fields: action, workerProfileId, adminUserId' },
+        { error: 'Missing required fields: action, workerProfileId' },
         { status: 400 }
       );
     }

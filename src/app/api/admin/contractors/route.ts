@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { Prisma } from '@/generated/auth-client'
 import { geocodeAddress } from '@/lib/geocoding'
+import { requireRole } from '@/lib/auth'
+import { UserRole } from '@/types/auth'
 
 // ============================================================================
 // TYPES
@@ -737,6 +739,9 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
   try {
+    // Require ADMIN role
+    await requireRole(UserRole.ADMIN)
+
     // Parse filter parameters
     const searchParams = request.nextUrl.searchParams
     const params = parseFilterParams(searchParams)

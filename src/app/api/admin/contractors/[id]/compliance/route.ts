@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
+import { requireRole } from '@/lib/auth'
+import { UserRole } from '@/types/auth'
 
 /**
  * GET /api/admin/contractors/:id/compliance
@@ -10,6 +12,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require ADMIN role
+    await requireRole(UserRole.ADMIN)
+
     const { id: workerId } = await params
 
     if (!workerId) {

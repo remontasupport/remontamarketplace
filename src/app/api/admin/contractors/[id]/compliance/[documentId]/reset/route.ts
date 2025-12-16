@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
+import { requireRole } from '@/lib/auth'
+import { UserRole } from '@/types/auth'
 
 /**
  * POST /api/admin/contractors/:id/compliance/:documentId/reset
@@ -42,8 +44,9 @@ export async function POST(
       )
     }
 
-    // TODO: Get admin user info from session/auth
-    const adminEmail = 'admin@remonta.com'
+    // Get admin user from session
+    const admin = await requireRole(UserRole.ADMIN)
+    const adminEmail = admin.email
 
     const now = new Date()
 

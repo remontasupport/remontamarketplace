@@ -11,6 +11,7 @@ export enum UserRole {
   WORKER = "WORKER",
   CLIENT = "CLIENT",
   COORDINATOR = "COORDINATOR",
+  ADMIN = "ADMIN",
 }
 
 /**
@@ -103,6 +104,7 @@ export type DashboardPath = {
   [UserRole.WORKER]: "/dashboard/worker";
   [UserRole.CLIENT]: "/dashboard/client";
   [UserRole.COORDINATOR]: "/dashboard/coordinator";
+  [UserRole.ADMIN]: "/admin";
 };
 
 /**
@@ -112,6 +114,7 @@ export const ROLE_REDIRECTS: DashboardPath = {
   [UserRole.WORKER]: "/dashboard/worker",
   [UserRole.CLIENT]: "/dashboard/client",
   [UserRole.COORDINATOR]: "/dashboard/coordinator",
+  [UserRole.ADMIN]: "/admin",
 };
 
 /**

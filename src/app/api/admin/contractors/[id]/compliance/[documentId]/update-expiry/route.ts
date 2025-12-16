@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
+import { requireRole } from '@/lib/auth'
+import { UserRole } from '@/types/auth'
 
 /**
  * POST /api/admin/contractors/:id/compliance/:documentId/update-expiry
@@ -10,6 +12,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string; documentId: string }> }
 ) {
   try {
+    // Require ADMIN role
+    await requireRole(UserRole.ADMIN)
+
     const { id: workerId, documentId } = await params
     const body = await request.json()
     const { expiresAt } = body

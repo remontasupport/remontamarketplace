@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
+import { requireRole } from '@/lib/auth'
+import { UserRole } from '@/types/auth'
 
 /**
  * GET /api/admin/filters
@@ -8,6 +10,9 @@ import { authPrisma as prisma } from '@/lib/auth-prisma'
  */
 export async function GET(request: NextRequest) {
   try {
+    // Require ADMIN role
+    await requireRole(UserRole.ADMIN)
+
     // Fetch all unique document categories and statuses in parallel for maximum speed
     const [
       documentCategories,

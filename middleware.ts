@@ -41,11 +41,16 @@ export default withAuth(
       path.startsWith("/dashboard/coordinator") &&
       token?.role !== UserRole.COORDINATOR
     ) {
-    
+
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
-  
+    // Admin route protection
+    if (path.startsWith("/admin") && token?.role !== UserRole.ADMIN) {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+
+
     return NextResponse.next();
   },
   {
@@ -83,5 +88,6 @@ export const config = {
      * - login, register (auth pages)
      */
     "/dashboard/:path*",
+    "/admin/:path*",
   ],
 };
