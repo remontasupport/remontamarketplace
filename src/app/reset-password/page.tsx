@@ -247,7 +247,7 @@ function ResetPasswordContent() {
                 <Button
                   type="submit"
                   disabled={isLoading || !token || passwordErrors.length > 0 || password !== confirmPassword}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-poppins font-semibold h-12 text-base"
+                  className="w-full bg['#0C1628'] text-white font-poppins font-semibold h-12 text-base"
                 >
                   {isLoading ? (
                     <>
