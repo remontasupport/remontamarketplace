@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
+import { geocodeAddress } from "@/lib/geocoding";
 
 /**
  * POST /api/worker/profile/update-step
@@ -54,6 +55,14 @@ export async function POST(request: Request) {
             ? `${data.streetAddress.trim()}, ${cityStatePostal}`
             : cityStatePostal;
           updateData.location = fullLocation;
+
+          // Geocode the full address (including street address if provided) to get latitude and longitude
+          const geocodeResult = await geocodeAddress(fullLocation);
+
+          if (geocodeResult) {
+            updateData.latitude = geocodeResult.latitude;
+            updateData.longitude = geocodeResult.longitude;
+          }
         }
         if (data.city) updateData.city = data.city;
         if (data.state) updateData.state = data.state;
