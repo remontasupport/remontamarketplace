@@ -29,6 +29,7 @@ interface ModalFormData {
   email: string
   firstName: string
   lastName: string
+  mobileNo: string
   pronouns: string
   enquiryAbout: string
   subject: string
@@ -39,6 +40,7 @@ interface ModalFormErrors {
   email?: string
   firstName?: string
   lastName?: string
+  mobileNo?: string
   subject?: string
   description?: string
 }
@@ -62,6 +64,7 @@ export default function ContactPage() {
     email: '',
     firstName: '',
     lastName: '',
+    mobileNo: '',
     pronouns: '',
     enquiryAbout: '',
     subject: '',
@@ -197,6 +200,17 @@ export default function ContactPage() {
       newErrors.lastName = 'Last name is required'
     }
 
+    if (!modalFormData.mobileNo.trim()) {
+      newErrors.mobileNo = 'Mobile number is required'
+    } else {
+      const phoneRegex = /^(\+?61|0)[4-5]\d{8}$/
+      const cleanedPhone = modalFormData.mobileNo.replace(/[\s\-()]/g, '')
+
+      if (!phoneRegex.test(cleanedPhone)) {
+        newErrors.mobileNo = 'Please enter a valid Australian mobile number'
+      }
+    }
+
     if (!modalFormData.subject.trim()) {
       newErrors.subject = 'Subject is required'
     }
@@ -215,7 +229,15 @@ export default function ContactPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target
-    setModalFormData((prev) => ({ ...prev, [name]: value }))
+
+    // For mobile number field, allow only digits, spaces, hyphens, parentheses, and + sign
+    if (name === 'mobileNo') {
+      const sanitizedValue = value.replace(/[^\d\s\-()+]/g, '')
+      setModalFormData((prev) => ({ ...prev, [name]: sanitizedValue }))
+    } else {
+      setModalFormData((prev) => ({ ...prev, [name]: value }))
+    }
+
     if (modalErrors[name as keyof ModalFormErrors]) {
       setModalErrors((prev) => ({ ...prev, [name]: undefined }))
     }
@@ -252,6 +274,7 @@ export default function ContactPage() {
         email: '',
         firstName: '',
         lastName: '',
+        mobileNo: '',
         pronouns: '',
         enquiryAbout: '',
         subject: '',
@@ -794,6 +817,23 @@ export default function ContactPage() {
                 />
                 {modalErrors.lastName && (
                   <p className="contact-error-text">{modalErrors.lastName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="contact-modal-label">
+                  Mobile No.
+                </label>
+                <input
+                  type="tel"
+                  name="mobileNo"
+                  value={modalFormData.mobileNo}
+                  onChange={handleModalInputChange}
+                  placeholder="e.g. 0412 345 678"
+                  className={`contact-modal-input ${modalErrors.mobileNo ? 'contact-input-error' : ''}`}
+                />
+                {modalErrors.mobileNo && (
+                  <p className="contact-error-text">{modalErrors.mobileNo}</p>
                 )}
               </div>
 

@@ -60,7 +60,7 @@ export default function ServicesPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link
-                  href="/registration/worker"
+                  href="https://app.remontaservices.com.au/registration/worker"
                   style={{ background: BRAND_COLORS.PRIMARY }}
                   className="inline-flex items-center justify-center text-white rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-poppins font-medium text-sm sm:text-base hover:bg-[#EDEFF3] hover:text-white transition-colors duration-300"
                 >

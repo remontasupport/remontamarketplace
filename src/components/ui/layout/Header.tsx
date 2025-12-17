@@ -25,7 +25,7 @@ const navigation: NavigationItem[] = [
     hasDropdown: false
   },
   {
-    name: 'Become an NDIS worker',
+    name: 'Provide Support',
     href: '/provide-support',
     hasDropdown: false
   },

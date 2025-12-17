@@ -48,7 +48,7 @@ export default function JobsPage() {
               <p className="jobs-hero-description">
                 Support workers have a real impact on people’s lives. It’s a meaningful job that comes with both purpose and responsibility. Find out what being an independent support worker could mean for you.
               </p>
-              <Link href="/registration/worker" className="jobs-hero-button">
+              <Link href="https://app.remontaservices.com.au/registration/worker" className="jobs-hero-button">
                 Get Started
               </Link>
             </div>
@@ -268,7 +268,7 @@ export default function JobsPage() {
               <p className="jobs-cta-description">
                 If you have all your documentation ready and you understand what's required of you as a support worker on Remonta, sign up below.
               </p>
-              <Link href="/registration/worker" className="jobs-cta-button">
+              <Link href="https://app.remontaservices.com.au/registration/worker" className="jobs-cta-button">
                 Get started
               </Link>
             </div>
