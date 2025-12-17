@@ -393,7 +393,6 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
           {/* Left Column - Documents */}
           <div className="main-column">
             <div className="page-header">
-              <h2 className="page-title" style={{ color: '#0C1628' }}>Other Documents</h2>
               <p className="page-subtitle">
                 Upload insurance and transport documents based on your selected services
               </p>

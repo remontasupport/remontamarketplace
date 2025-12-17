@@ -22,7 +22,7 @@ export default function ConditionalHeader() {
   }
 
   // Don't render header for authentication pages
-  if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password') {
+  if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/setup-password') {
     return null
   }
 
