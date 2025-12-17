@@ -27,6 +27,7 @@ export default function SetupPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   // Password strength validation
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
@@ -94,7 +95,14 @@ export default function SetupPasswordPage() {
           router.push("/login");
         }, 3000);
       } else {
-        setError(result.error || "Failed to set password. Please try again.");
+        const errorMessage = result.error || "Failed to set password. Please try again.";
+        setError(errorMessage);
+
+        // Track failed attempts for invalid email
+        if (errorMessage.includes("Invalid email") || errorMessage.includes("email address")) {
+          setFailedAttempts(prev => prev + 1);
+        }
+
         setIsLoading(false);
       }
     } catch (error) {
@@ -129,6 +137,23 @@ export default function SetupPasswordPage() {
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="font-poppins">{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Help message after 3 failed attempts */}
+              {failedAttempts >= 3 && (
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="font-poppins text-blue-700">
+                    Can't remember your email address?{" "}
+                    <button
+                      type="button"
+                      onClick={() => router.push("/registration/worker")}
+                      className="font-semibold underline hover:text-blue-800"
+                    >
+                      Sign up here
+                    </button>
+                  </AlertDescription>
                 </Alert>
               )}
 
