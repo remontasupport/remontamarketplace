@@ -590,6 +590,11 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
             categoryName: true,
           }
         },
+        user: {
+          select: {
+            email: true,
+          }
+        },
         city: true,
         state: true,
         postalCode: true,
@@ -608,8 +613,10 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
   // Transform workerServices to legacy services array format for backward compatibility
   const workersWithServices = workers.map(worker => ({
     ...worker,
+    email: worker.user?.email || null,
     services: transformWorkerServices(worker.workerServices),
     workerServices: undefined, // Remove from response
+    user: undefined, // Remove from response
   }))
 
   const totalPages = Math.ceil(total / params.pageSize)
@@ -677,6 +684,11 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
           categoryName: true,
         }
       },
+      user: {
+        select: {
+          email: true,
+        }
+      },
       city: true,
       state: true,
       postalCode: true,
@@ -694,8 +706,10 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
   const workersWithDistance = candidates
     .map(worker => ({
       ...worker,
+      email: worker.user?.email || null,
       services: transformWorkerServices(worker.workerServices),
       workerServices: undefined, // Remove from response
+      user: undefined, // Remove from response
       distance: haversineDistance(
         coords.lat,
         coords.lng,
