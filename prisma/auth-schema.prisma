@@ -46,34 +46,106 @@ model AuditLog {
 }
 
 model ClientProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  firstName String
-  lastName  String
-  mobile    String
-  location  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  firstName       String
+  lastName        String
+  mobile          String
+  streetAddress   String?
+  suburb          String?
+  postalCode      String?
+  servicesRequest String[]     @default([])  // Default to empty array for existing rows
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participant     Participant? // One-to-one: CLIENT can manage only 1 participant
 
   @@index([userId])
+  @@index([suburb])
+  @@index([postalCode])
   @@map("client_profiles")
 }
 
 model CoordinatorProfile {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  firstName    String
-  lastName     String
-  mobile       String
-  organization String?
-  location     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  firstName       String
+  lastName        String
+  mobile          String
+  organization    String?
+  streetAddress   String?
+  suburb          String?
+  postalCode      String?
+  servicesRequest String[]      @default([])  // Default to empty array for existing rows
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participants    Participant[] // One-to-many: COORDINATOR can manage multiple participants
 
   @@index([userId])
+  @@index([suburb])
+  @@index([postalCode])
   @@map("coordinator_profiles")
+}
+
+model Participant {
+  id                           String              @id @default(cuid())
+
+  // Link to either ClientProfile (1:1) OR CoordinatorProfile (many:1)
+  clientProfileId              String?             @unique // Only for CLIENT role (1:1)
+  coordinatorProfileId         String?                     // Only for COORDINATOR role (many:1)
+
+  // Participant details
+  personNeedingSupport         String              // Display name of person needing support
+  firstName                    String
+  lastName                     String
+  dateOfBirth                  DateTime
+  ndisNumber                   String              @unique
+
+  // Contact information
+  mobile                       String
+  email                        String?
+
+  // Address details
+  streetAddress                String?
+  suburb                       String
+  state                        String
+  postalCode                   String
+  latitude                     Float?
+  longitude                    Float?
+
+  // Services and support
+  servicesRequest              String[]            // Array of requested services
+  disabilities                 String[]            // Array of disabilities/conditions
+  supportNeeds                 String?             @db.Text
+
+  // Plan Manager information
+  planManagerName              String?
+  planManagerEmail             String?
+  planManagerPhone             String?
+
+  // Emergency Contact
+  emergencyContactName         String
+  emergencyContactRelationship String
+  emergencyContactMobile       String
+
+  // Additional metadata
+  representativeType           RepresentativeType? // Only for CLIENT: SELF, PARENT, etc.
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
+
+  // Relations
+  clientProfile                ClientProfile?      @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  coordinatorProfile           CoordinatorProfile? @relation(fields: [coordinatorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([clientProfileId])
+  @@index([coordinatorProfileId])
+  @@index([ndisNumber])
+  @@index([suburb])
+  @@index([state])
+  @@index([postalCode])
+  @@index([personNeedingSupport])
+  @@map("participants")
 }
 
 model Session {
@@ -404,4 +476,13 @@ enum VerificationStatus {
   PENDING_REVIEW
   APPROVED
   REJECTED
+}
+
+enum RepresentativeType {
+  SELF
+  PARENT
+  GUARDIAN
+  FAMILY_MEMBER
+  LEGAL_REPRESENTATIVE
+  OTHER
 }
