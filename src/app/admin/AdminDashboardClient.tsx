@@ -974,6 +974,11 @@ export default function AdminDashboard() {
                               <div className="text-sm font-medium text-gray-900">
                                 {contractor.firstName} {contractor.lastName}
                               </div>
+                              {contractor.mobile && (
+                                <div className="text-sm text-gray-500">
+                                  {contractor.mobile}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
