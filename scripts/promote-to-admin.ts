@@ -16,12 +16,12 @@ async function promoteToAdmin(email: string) {
     });
 
     if (!user) {
-      console.error(`❌ User not found: ${email}`);
+   
       process.exit(1);
     }
 
     if (user.role === 'ADMIN') {
-      console.log(`✅ User ${email} is already an ADMIN`);
+      
       process.exit(0);
     }
 
@@ -50,15 +50,11 @@ async function promoteToAdmin(email: string) {
       },
     });
 
-    console.log('✅ User promoted to ADMIN successfully!');
-    console.log(`Email: ${user.email}`);
-    console.log(`Old Role: ${oldRole}`);
-    console.log(`New Role: ADMIN`);
-    console.log('\n🔑 User can now login and access /admin');
+
 
     process.exit(0);
   } catch (error) {
-    console.error('❌ Failed to promote user:', error);
+  
     process.exit(1);
   }
 }
@@ -66,8 +62,7 @@ async function promoteToAdmin(email: string) {
 const email = process.argv[2];
 
 if (!email) {
-  console.error('❌ Usage: npx tsx scripts/promote-to-admin.ts <email>');
-  console.error('Example: npx tsx scripts/promote-to-admin.ts user@example.com');
+  
   process.exit(1);
 }
 

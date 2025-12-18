@@ -67,17 +67,28 @@ export async function processWorkerRegistration(
     const passwordHash = await hashPassword(password);
 
     // ============================================
-    // GEOCODE LOCATION - SKIP FOR NOW (will do in background)
+    // GEOCODE LOCATION (CRITICAL - MUST COMPLETE)
     // ============================================
-    // OPTIMIZATION: Create profile with NULL coordinates first
-    // Update coordinates asynchronously in background (doesn't block response)
-    const geocodedLocation = preGeocodedLocation || {
+    // IMPORTANT: Geocode BEFORE creating user to ensure coordinates are saved
+    // In serverless environments, fire-and-forget patterns cause data loss
+    let geocodedLocation = preGeocodedLocation || {
       city: null,
       state: null,
       postalCode: null,
       latitude: null,
       longitude: null,
     };
+
+    // Geocode location if provided and not already geocoded
+    if (location && !preGeocodedLocation) {
+      try {
+        geocodedLocation = await geocodeWorkerLocation(location);
+      } catch (geocodeError) {
+        // Log error but continue with null coordinates - not critical enough to fail registration
+        console.error('[Registration] Geocoding failed:', geocodeError);
+        // geocodedLocation remains with null values
+      }
+    }
 
     // ============================================
     // CREATE USER + WORKER PROFILE (TRANSACTION)
@@ -106,8 +117,6 @@ export async function processWorkerRegistration(
               age,
               gender,
               languages: languages || [],
-              services: [],
-              supportWorkerCategories: [],
               experience,
               introduction,
               qualifications,
@@ -149,102 +158,107 @@ export async function processWorkerRegistration(
     const workerProfileId = user.workerProfile!.id;
 
     // ============================================
+    // CRITICAL BLOCKING OPERATIONS
+    // ============================================
+    // IMPORTANT: These operations MUST complete before returning
+    // In serverless environments, fire-and-forget patterns will cause data loss
+    // because the execution context terminates after response is sent
+
+    // CRITICAL: Create worker service records (MUST be awaited)
+    if (services && services.length > 0) {
+      try {
+        console.log('[Registration] ========== WORKER SERVICES CREATION START ==========');
+        console.log('[Registration] Input data:', { services, supportWorkerCategories, workerProfileId });
+
+        const categories = await authPrisma.category.findMany({
+          include: {
+            subcategories: true,
+          },
+        });
+
+        console.log('[Registration] Database categories:', categories.map(c => ({ id: c.id, name: c.name })));
+
+        const subcategoryToCategory = new Map();
+        categories.forEach((category) => {
+          category.subcategories.forEach((sub: any) => {
+            subcategoryToCategory.set(sub.id, category);
+          });
+        });
+
+        const workerServiceRecords = [];
+        const subcategoryIds = supportWorkerCategories || [];
+
+        for (const serviceName of services) {
+          console.log(`[Registration] Processing service: "${serviceName}"`);
+          const category = categories.find((c) => c.name === serviceName);
+
+          if (!category) {
+            console.error(`[Registration] ❌ MISMATCH: Service "${serviceName}" not found in database categories:`, categories.map(c => c.name));
+            continue;
+          }
+
+          console.log(`[Registration] ✓ Matched category: ${category.id} - ${category.name}`);
+
+          const categoryId = category.id;
+          const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
+            const parentCategory = subcategoryToCategory.get(subId);
+            return parentCategory?.id === categoryId;
+          });
+
+          if (relevantSubcategoryIds.length > 0) {
+            console.log(`[Registration] Processing ${relevantSubcategoryIds.length} subcategories for ${serviceName}`);
+            for (const subcategoryId of relevantSubcategoryIds) {
+              const subcategory = category.subcategories.find(
+                (sub: any) => sub.id === subcategoryId
+              );
+              if (subcategory) {
+                workerServiceRecords.push({
+                  workerProfileId,
+                  categoryId,
+                  categoryName: serviceName,
+                  subcategoryId,
+                  subcategoryName: subcategory.name,
+                });
+              }
+            }
+          } else {
+            console.log(`[Registration] No subcategories for ${serviceName}, creating category-only record`);
+            workerServiceRecords.push({
+              workerProfileId,
+              categoryId,
+              categoryName: serviceName,
+              subcategoryId: null,
+              subcategoryName: null,
+            });
+          }
+        }
+
+        console.log('[Registration] Final worker service records:', JSON.stringify(workerServiceRecords, null, 2));
+
+        if (workerServiceRecords.length > 0) {
+          const result = await authPrisma.workerService.createMany({
+            data: workerServiceRecords,
+            skipDuplicates: true,
+          });
+          console.log('[Registration] ✅ Successfully created worker services. Count:', result.count);
+        } else {
+          console.error('[Registration] ❌ CRITICAL: No worker service records to create!');
+          console.error('[Registration] This means services in form don\'t match database category names');
+        }
+        console.log('[Registration] ========== WORKER SERVICES CREATION END ==========');
+      } catch (error) {
+        // Log error but don't fail registration - services can be added later
+        console.error('[Registration] ❌ FATAL ERROR creating worker services:', error);
+        console.error('[Registration] Error details:', JSON.stringify(error, null, 2));
+      }
+    } else {
+      console.error('[Registration] ❌ No services provided or services array is empty!');
+    }
+
+    // ============================================
     // ASYNC BACKGROUND OPERATIONS (Fire-and-forget)
     // ============================================
-    // These operations run in the background WITHOUT blocking the response
-    // User gets immediate feedback while we handle the rest
-
-    // ASYNC: Geocode location and update profile
-    if (location) {
-      (async () => {
-        try {
-          const geocoded = await geocodeWorkerLocation(location);
-
-          // Update worker profile with geocoded coordinates
-          await authPrisma.workerProfile.update({
-            where: { id: workerProfileId },
-            data: {
-              city: geocoded.city,
-              state: geocoded.state,
-              postalCode: geocoded.postalCode,
-              latitude: geocoded.latitude,
-              longitude: geocoded.longitude,
-            },
-          });
-        } catch (error) {
-          // Silently fail - coordinates not critical for registration
-        }
-      })();
-    }
-
-    // ASYNC: Create worker service records
-    if (services && services.length > 0) {
-      // Fire-and-forget: Don't await
-      (async () => {
-        try {
-          const categories = await authPrisma.category.findMany({
-            include: {
-              subcategories: true,
-            },
-          });
-
-          const subcategoryToCategory = new Map();
-          categories.forEach((category) => {
-            category.subcategories.forEach((sub: any) => {
-              subcategoryToCategory.set(sub.id, category);
-            });
-          });
-
-          const workerServiceRecords = [];
-          const subcategoryIds = supportWorkerCategories || [];
-
-          for (const serviceName of services) {
-            const category = categories.find((c) => c.name === serviceName);
-            if (!category) continue;
-
-            const categoryId = category.id;
-            const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
-              const parentCategory = subcategoryToCategory.get(subId);
-              return parentCategory?.id === categoryId;
-            });
-
-            if (relevantSubcategoryIds.length > 0) {
-              for (const subcategoryId of relevantSubcategoryIds) {
-                const subcategory = category.subcategories.find(
-                  (sub: any) => sub.id === subcategoryId
-                );
-                if (subcategory) {
-                  workerServiceRecords.push({
-                    workerProfileId,
-                    categoryId,
-                    categoryName: serviceName,
-                    subcategoryId,
-                    subcategoryName: subcategory.name,
-                  });
-                }
-              }
-            } else {
-              workerServiceRecords.push({
-                workerProfileId,
-                categoryId,
-                categoryName: serviceName,
-                subcategoryId: null,
-                subcategoryName: null,
-              });
-            }
-          }
-
-          if (workerServiceRecords.length > 0) {
-            await authPrisma.workerService.createMany({
-              data: workerServiceRecords,
-              skipDuplicates: true,
-            });
-          }
-        } catch (error) {
-          // Silently fail - user already registered successfully
-        }
-      })();
-    }
+    // These operations can run in background - not critical for registration
 
     // ASYNC: Audit log (fire-and-forget)
     authPrisma.auditLog

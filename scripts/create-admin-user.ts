@@ -19,8 +19,7 @@ async function createAdminUser(email: string, password: string) {
     });
 
     if (existing) {
-      console.error(`❌ User with email ${email} already exists`);
-      console.log('If you want to make them admin, use promote-to-admin.ts instead');
+    
       process.exit(1);
     }
 
@@ -51,16 +50,11 @@ async function createAdminUser(email: string, password: string) {
       },
     });
 
-    console.log('✅ Admin user created successfully!');
-    console.log(`Email: ${admin.email}`);
-    console.log(`Role: ${admin.role}`);
-    console.log(`ID: ${admin.id}`);
-    console.log(`Status: ${admin.status}`);
-    console.log('\n🔑 You can now login at /login');
+
 
     process.exit(0);
   } catch (error) {
-    console.error('❌ Failed to create admin user:', error);
+  
     process.exit(1);
   }
 }
@@ -70,13 +64,12 @@ const email = process.argv[2];
 const password = process.argv[3];
 
 if (!email || !password) {
-  console.error('❌ Usage: npx tsx scripts/create-admin-user.ts <email> <password>');
-  console.error('Example: npx tsx scripts/create-admin-user.ts admin@remonta.com "SecurePass123!"');
+ 
   process.exit(1);
 }
 
 if (password.length < 8) {
-  console.error('❌ Password must be at least 8 characters');
+
   process.exit(1);
 }
 
