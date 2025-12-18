@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-    console.error('Error generating weekly report:', error)
+  
 
     return NextResponse.json(
       {

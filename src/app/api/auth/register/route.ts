@@ -274,8 +274,6 @@ export async function POST(request: Request) {
               languages: languages || [],
               // DO NOT save services/supportWorkerCategories arrays for new registrations
               // New workers use WorkerService table only
-              services: [],
-              supportWorkerCategories: [],
               experience,
               introduction,
               qualifications,

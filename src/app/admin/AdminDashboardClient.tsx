@@ -366,7 +366,7 @@ export default function AdminDashboard() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      console.error(`Error generating ${reportType} report:`, error)
+     
       alert(`Failed to generate ${reportType} report. Please try again.`)
     } finally {
       setGeneratingReport(null)

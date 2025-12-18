@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       response: aiResponse,
     });
   } catch (error) {
-    console.error('Chat API error:', error);
+
     return NextResponse.json(
       {
         success: false,
