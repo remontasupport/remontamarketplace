@@ -525,8 +525,8 @@ class ZohoService {
     let page = 1
     let moreRecords = true
 
-    // Filter by "Matching" stage for job listings
-    const criteria = encodeURIComponent(`(Stage:equals:Matching)`)
+    // Filter by "Recruitment End" stage for job listings
+    const criteria = encodeURIComponent(`(Stage:equals:Recruitment End)`)
 
     while (moreRecords) {
       const url = `${this.apiUrl}/Deals/search?criteria=${criteria}&page=${page}&per_page=200`
