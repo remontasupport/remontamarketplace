@@ -180,15 +180,23 @@ export async function POST(request: Request) {
           // Get worker profile to access workerProfileId
           const workerProfile = await authPrisma.workerProfile.findUnique({
             where: { userId: session.user.id },
-            select: { id: true, services: true },
+            select: {
+              id: true,
+              workerServices: {
+                select: {
+                  categoryName: true
+                }
+              }
+            },
           });
 
           if (!workerProfile) {
             throw new Error("Worker profile not found");
           }
 
-          // Get all available qualifications for worker's services
-          const availableQualifications = getQualificationsForServices(workerProfile.services || []);
+          // Get all available qualifications for worker's services from WorkerService table
+          const services = workerProfile.workerServices.map(ws => ws.categoryName);
+          const availableQualifications = getQualificationsForServices(services);
           const availableQualificationTypes = availableQualifications.map(q => q.type);
 
           // Get existing requirements for this worker

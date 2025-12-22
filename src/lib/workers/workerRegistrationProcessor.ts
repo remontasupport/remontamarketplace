@@ -106,8 +106,6 @@ export async function processWorkerRegistration(
               age,
               gender,
               languages: languages || [],
-              services: [],
-              supportWorkerCategories: [],
               experience,
               introduction,
               qualifications,

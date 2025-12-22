@@ -38,11 +38,7 @@ export const contractorFormSchema = z.object({
   gender: z.string().min(1, "Please select your gender"),
   languages: z.array(z.string()).min(1, "Please select at least one language"),
 
-  // Step 4 - Services
-  services: z.array(z.string()).min(1, "Please select at least one service"),
-  supportWorkerCategories: z.array(z.string()).optional(),
-
-  // Step 5 - Professional Information
+  // Step 4 - Professional Information
   experience: z.string().min(1, "Years of Experience is required"),
   introduction: z.string().min(1, "Introduction is required"),
 
@@ -78,8 +74,6 @@ export const contractorFormDefaults = {
   age: 18,
   gender: "",
   languages: [],
-  services: [],
-  supportWorkerCategories: [],
   experience: "",
   introduction: "",
   location: "",

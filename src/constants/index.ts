@@ -208,7 +208,6 @@ export const FORM_DEFAULT_VALUES = {
   experience: "",
   introduction: "",
   location: "",
-  services: [] as string[],
   availability: "",
   startDate: "",
   funFact: "",
