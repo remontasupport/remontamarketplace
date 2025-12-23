@@ -67,12 +67,16 @@ export async function POST(request: Request) {
     }
 
     // 5. Upload to Vercel Blob
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     const timestamp = Date.now();
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const blobPath = `certificates/${session.user.id}/${qualificationType}-${timestamp}-${sanitizedFileName}`;
 
-    const blob = await put(blobPath, file, {
+    const blob = await put(blobPath, buffer, {
       access: 'public',
+      contentType: file.type,
       addRandomSuffix: false,
     });
 
@@ -110,6 +114,7 @@ export async function POST(request: Request) {
           documentUploadedAt: new Date(),
           status: 'SUBMITTED',
           submittedAt: new Date(),
+          updatedAt: new Date(),
         },
       });
     }

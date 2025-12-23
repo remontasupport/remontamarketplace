@@ -141,7 +141,7 @@ export async function POST(request: Request) {
           documentUploadedAt: new Date(),
           status: "SUBMITTED",
           submittedAt: new Date(),
-          updatedAt: new Date(), // ✅ Include updatedAt to avoid Prisma error
+          updatedAt: new Date(),
         },
       });
      
