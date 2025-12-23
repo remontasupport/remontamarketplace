@@ -28,9 +28,6 @@ export async function POST(request: Request) {
     switch (step) {
       case 1: // Name
         updateData.firstName = data.firstName.trim();
-        if (data.middleName && data.middleName.trim()) {
-          updateData.middleName = data.middleName.trim();
-        }
         updateData.lastName = data.lastName.trim();
         break;
 
@@ -189,15 +186,23 @@ export async function POST(request: Request) {
           // Get worker profile to access workerProfileId
           const workerProfile = await authPrisma.workerProfile.findUnique({
             where: { userId: session.user.id },
-            select: { id: true, services: true },
+            select: {
+              id: true,
+              workerServices: {
+                select: {
+                  categoryName: true
+                }
+              }
+            },
           });
 
           if (!workerProfile) {
             throw new Error("Worker profile not found");
           }
 
-          // Get all available qualifications for worker's services
-          const availableQualifications = getQualificationsForServices(workerProfile.services || []);
+          // Get all available qualifications for worker's services from WorkerService table
+          const services = workerProfile.workerServices.map(ws => ws.categoryName);
+          const availableQualifications = getQualificationsForServices(services);
           const availableQualificationTypes = availableQualifications.map(q => q.type);
 
           // Get existing requirements for this worker
@@ -264,27 +269,7 @@ export async function POST(request: Request) {
         break;
     }
 
-    // Handle ABN from ANY step (Compliance section or Services Setup)
-    // This runs for all steps to ensure ABN is saved
-    // WARNING: Only save ABN if it's explicitly provided with a value
-    // Do NOT save empty ABN from unrelated steps (prevents accidental data loss)
-    if (data.abn !== undefined) {
-      const trimmedAbn = data.abn.trim();
-
-      // Only save if ABN has a value OR if we're explicitly on an ABN step
-      // This prevents accidental deletion of ABN from other steps
-      if (trimmedAbn) {
-        updateData.abn = trimmedAbn;
-      
-      } else if (step >= 100 && (step === 103 || data.abn === "")) {
-        // Only allow clearing ABN if we're on Services Setup ABN step (103)
-        // or if ABN is explicitly sent as empty string
-        updateData.abn = null;
-        
-      } else {
-        
-      }
-    }
+    // ABN field has been removed from schema
 
    
 

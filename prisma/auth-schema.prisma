@@ -247,8 +247,6 @@ model WorkerProfile {
   age                       Int?
   gender                    String?
   languages                 String[]
-  services                  String[]
-  supportWorkerCategories   String[]
   experience                String?
   introduction              String?
   qualifications            String?
@@ -265,21 +263,12 @@ model WorkerProfile {
   isPublished               Boolean                   @default(false)
   createdAt                 DateTime                  @default(now())
   updatedAt                 DateTime
-  submittedDocuments        Json?
-  verificationApprovedAt    DateTime?
-  verificationChecklist     Json?
-  verificationNotes         String?
-  verificationRejectedAt    DateTime?
-  verificationReviewedAt    DateTime?
   verificationStatus        VerificationStatus        @default(NOT_STARTED)
-  verificationSubmittedAt   DateTime?
   city                      String?
   latitude                  Float?
   longitude                 Float?
   postalCode                String?
   state                     String?
-  middleName                String?
-  abn                       String?
   verificationRequirements  VerificationRequirement[]
   workerServices            WorkerService[]
   user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)

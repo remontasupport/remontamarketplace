@@ -124,8 +124,6 @@ export interface WorkerRegistrationJobData {
   age?: number;
   gender?: string;
   languages?: string[];
-  services?: string[];
-  supportWorkerCategories?: string[];
   experience?: string;
   introduction?: string;
   qualifications?: string;
@@ -138,6 +136,10 @@ export interface WorkerRegistrationJobData {
   photos?: string[]; // Photo URLs
   consentProfileShare?: boolean;
   consentMarketing?: boolean;
+
+  // Services
+  services?: string[]; // Selected service category IDs
+  supportWorkerCategories?: string[]; // Selected support worker subcategory IDs
 
   // Geocoded location (if already geocoded)
   geocodedLocation?: {

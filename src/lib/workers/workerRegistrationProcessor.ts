@@ -188,12 +188,12 @@ export async function processWorkerRegistration(
         const workerServiceRecords = [];
         const subcategoryIds = supportWorkerCategories || [];
 
-        for (const serviceName of services) {
-          console.log(`[Registration] Processing service: "${serviceName}"`);
-          const category = categories.find((c) => c.name === serviceName);
+        for (const serviceId of services) {
+          console.log(`[Registration] Processing service: "${serviceId}"`);
+          const category = categories.find((c) => c.id === serviceId);
 
           if (!category) {
-            console.error(`[Registration] ❌ MISMATCH: Service "${serviceName}" not found in database categories:`, categories.map(c => c.name));
+            console.error(`[Registration] ❌ MISMATCH: Service "${serviceId}" not found in database categories:`, categories.map(c => c.id));
             continue;
           }
 
@@ -206,7 +206,7 @@ export async function processWorkerRegistration(
           });
 
           if (relevantSubcategoryIds.length > 0) {
-            console.log(`[Registration] Processing ${relevantSubcategoryIds.length} subcategories for ${serviceName}`);
+            console.log(`[Registration] Processing ${relevantSubcategoryIds.length} subcategories for ${category.name}`);
             for (const subcategoryId of relevantSubcategoryIds) {
               const subcategory = category.subcategories.find(
                 (sub: any) => sub.id === subcategoryId
@@ -215,18 +215,18 @@ export async function processWorkerRegistration(
                 workerServiceRecords.push({
                   workerProfileId,
                   categoryId,
-                  categoryName: serviceName,
+                  categoryName: category.name,
                   subcategoryId,
                   subcategoryName: subcategory.name,
                 });
               }
             }
           } else {
-            console.log(`[Registration] No subcategories for ${serviceName}, creating category-only record`);
+            console.log(`[Registration] No subcategories for ${category.name}, creating category-only record`);
             workerServiceRecords.push({
               workerProfileId,
               categoryId,
-              categoryName: serviceName,
+              categoryName: category.name,
               subcategoryId: null,
               subcategoryName: null,
             });
@@ -243,7 +243,7 @@ export async function processWorkerRegistration(
           console.log('[Registration] ✅ Successfully created worker services. Count:', result.count);
         } else {
           console.error('[Registration] ❌ CRITICAL: No worker service records to create!');
-          console.error('[Registration] This means services in form don\'t match database category names');
+          console.error('[Registration] This means services in form don\'t match database category IDs');
         }
         console.log('[Registration] ========== WORKER SERVICES CREATION END ==========');
       } catch (error) {

@@ -31,8 +31,6 @@ export async function GET(request: Request) {
       where: { userId: session.user.id },
       select: {
         id: true,
-        services: true,
-        supportWorkerCategories: true,
       },
     });
 
@@ -58,31 +56,10 @@ export async function GET(request: Request) {
         },
       });
 
-      if (workerServices.length > 0) {
-        // Build service strings from DB results
-        servicesToFetch = workerServices.map(ws =>
-          ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-        );
-      } else {
-        // Fallback: use legacy arrays, filter for this service
-        const services = workerProfile.services || [];
-        const subcategories = workerProfile.supportWorkerCategories || [];
-
-        if (services.includes(serviceNameParam)) {
-          // This service is selected
-          const needsSubcategories = serviceNameParam === "Therapeutic Supports" ||
-                                     serviceNameParam === "Support Worker (High Intensity)" ||
-                                     serviceNameParam === "Support Worker";
-
-          if (needsSubcategories && subcategories.length > 0) {
-            servicesToFetch = subcategories
-              .filter(sub => sub && sub.trim())
-              .map(sub => `${serviceNameParam}:${sub}`);
-          } else {
-            servicesToFetch.push(serviceNameParam);
-          }
-        }
-      }
+      // Build service strings from DB results
+      servicesToFetch = workerServices.map(ws =>
+        ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
+      );
     } else if (servicesParam) {
       // Use services from parameter
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
@@ -96,36 +73,10 @@ export async function GET(request: Request) {
         },
       });
 
-      if (workerServices.length > 0) {
-        // Use WorkerService table data
-        servicesToFetch = workerServices.map(ws =>
-          ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-        );
-      } else {
-        // FALLBACK: Use old services/supportWorkerCategories arrays
-        const services = workerProfile.services || [];
-        const subcategories = workerProfile.supportWorkerCategories || [];
-
-        if (services.length === 0) {
-          servicesToFetch = [];
-        } else {
-          // Build service strings from legacy arrays
-          for (const service of services) {
-            const needsSubcategories = service === "Therapeutic Supports" ||
-                                       service === "Support Worker (High Intensity)";
-
-            if (needsSubcategories && subcategories.length > 0) {
-              servicesToFetch.push(
-                ...subcategories
-                  .filter(sub => sub && sub.trim())
-                  .map(sub => `${service}:${sub}`)
-              );
-            } else {
-              servicesToFetch.push(service);
-            }
-          }
-        }
-      }
+      // Use WorkerService table data
+      servicesToFetch = workerServices.map(ws =>
+        ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
+      );
     }
 
 
@@ -308,7 +259,6 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       services: servicesToFetch,
-      workerServices: workerProfile.services,
       requirements: {
         baseCompliance,
         trainings,

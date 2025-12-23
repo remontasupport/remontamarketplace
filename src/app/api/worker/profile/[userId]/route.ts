@@ -40,7 +40,6 @@ export async function GET(
       select: {
         id: true,
         firstName: true,
-        middleName: true,
         lastName: true,
         mobile: true,
         location: true,
@@ -50,8 +49,6 @@ export async function GET(
         age: true,
         gender: true,
         languages: true,
-        services: true,
-        supportWorkerCategories: true,
         experience: true,
         introduction: true,
         qualifications: true,
@@ -65,7 +62,8 @@ export async function GET(
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,
-        abn: true,
+        consentProfileShare: true,
+        consentMarketing: true,
       },
     });
 
@@ -97,17 +95,11 @@ export async function GET(
       }),
     ]);
 
-    if (categoryGroups.length > 0 || subcategoryGroups.length > 0) {
-      // Use new WorkerService table data (normalized structure)
-      services = categoryGroups.map(g => g.categoryName);
-      supportWorkerCategories = subcategoryGroups
-        .map(g => g.subcategoryId)
-        .filter((id): id is string => id !== null);
-    } else {
-      // Fallback to legacy arrays if workerServices is empty
-      services = workerProfile.services || [];
-      supportWorkerCategories = workerProfile.supportWorkerCategories || [];
-    }
+    // Use WorkerService table data (normalized structure)
+    services = categoryGroups.map(g => g.categoryName);
+    supportWorkerCategories = subcategoryGroups
+      .map(g => g.subcategoryId)
+      .filter((id): id is string => id !== null);
 
     // Return profile data with transformed services
     return NextResponse.json({
