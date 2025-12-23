@@ -9,16 +9,11 @@ import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Step1Location } from "../../../components/forms/workerRegistration/Step1Location";
 import { Step1PersonalInfo } from "../../../components/forms/workerRegistration/Step1PersonalInfo";
-import { Step2AdditionalDetails } from "../../../components/forms/workerRegistration/Step2AdditionalDetails";
 import { Step3Services } from "../../../components/forms/workerRegistration/Step3Services";
-import { Step4Professional } from "../../../components/forms/workerRegistration/Step4Professional";
-import { Step5Services } from "../../../components/forms/workerRegistration/Step5Services";
-import { Step6PersonalTouch } from "../../../components/forms/workerRegistration/Step6PersonalTouch";
 import { Step7Photos } from "../../../components/forms/workerRegistration/Step7Photos";
 import { contractorFormSchema, type ContractorFormData, contractorFormDefaults } from "@/schema/contractorFormSchema";
 import { SERVICE_OPTIONS, TOTAL_STEPS } from "@/constants";
 import { getStepValidationFields } from "@/utils/registrationUtils";
-import { formatWorkerDataForDatabase } from "@/utils/formatWorkerData";
 import { useCategories, transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
 import { fetchWithRetry } from "@/utils/apiRetry";
 
@@ -26,12 +21,9 @@ import { fetchWithRetry } from "@/utils/apiRetry";
 export default function ContractorOnboarding() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
-  const [photoUploadError, setPhotoUploadError] = useState<string>("");
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string>("");
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [uploadedPhotoName, setUploadedPhotoName] = useState<string>("");
   const [registrationJobId, setRegistrationJobId] = useState<string | null>(null);
   const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'processing' | 'completed'>('idle');
 
@@ -77,12 +69,10 @@ export default function ContractorOnboarding() {
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
   // Optimized: Only watch fields for the current step to reduce re-renders
-  const watchedServices = currentStep === 4 ? watch("services") : getValues("services");
-  const watchedSupportWorkerCategories = currentStep === 4 ? watch("supportWorkerCategories") : getValues("supportWorkerCategories");
-  const watchedPhotos = currentStep === 8 ? watch("photos") : getValues("photos");
-  const watchedConsentProfileShare = currentStep === 8 ? watch("consentProfileShare") : getValues("consentProfileShare");
-  const watchedConsentMarketing = currentStep === 8 ? watch("consentMarketing") : getValues("consentMarketing");
-  const watchedHasVehicle = currentStep === 6 ? watch("hasVehicle") : getValues("hasVehicle");
+  const watchedServices = currentStep === 3 ? watch("services") : getValues("services");
+  const watchedSupportWorkerCategories = currentStep === 3 ? watch("supportWorkerCategories") : getValues("supportWorkerCategories");
+  const watchedConsentProfileShare = currentStep === 4 ? watch("consentProfileShare") : getValues("consentProfileShare");
+  const watchedConsentMarketing = currentStep === 4 ? watch("consentMarketing") : getValues("consentMarketing");
 
   const validateCurrentStep = async (step: number) => {
     const fieldsToValidate = getStepValidationFields(step);
@@ -103,71 +93,6 @@ export default function ContractorOnboarding() {
       : [...currentServices, service];
     setValue("services", updatedServices, { shouldValidate: true });
   }, [setValue, getValues]);
-
-  const handlePhotoUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-
-    // Clear previous error
-    setPhotoUploadError("");
-
-    if (files.length === 0) return;
-
-    // Only take the first file (single photo upload)
-    const file = files[0];
-
-    // Allowed image formats for profile photos (security-safe raster formats only)
-    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-
-    const isValidType = ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase());
-    const isValidSize = file.size <= 10 * 1024 * 1024;
-
-    if (!isValidType) {
-      setPhotoUploadError(`${file.name} - Only JPG, PNG, and WebP images are allowed`);
-      return;
-    }
-
-    if (!isValidSize) {
-      setPhotoUploadError(`${file.name} - File exceeds 10MB limit`);
-      return;
-    }
-
-    // Upload photo immediately to Blob storage
-    setIsUploadingPhoto(true);
-    setUploadedPhotoName(file.name);
-
-    try {
-      const formData = new FormData();
-      formData.append('photo', file);
-      formData.append('email', getValues('email') || '');
-
-      const response = await fetch('/api/upload/worker-photo', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Upload failed');
-      }
-
-      // Store the Blob URL (not the file)
-      setValue("photos", [result.url], { shouldValidate: true });
-
-    } catch (error: any) {
-      setPhotoUploadError(`Failed to upload photo: ${error.message}`);
-      setValue("photos", [], { shouldValidate: true });
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  }, [setValue, getValues]);
-
-  const removePhoto = useCallback(() => {
-    setValue("photos", [], { shouldValidate: true });
-    // Clear error when removing photo
-    setPhotoUploadError("");
-    setUploadedPhotoName("");
-  }, [setValue]);
 
   const nextStep = async () => {
     if (currentStep < TOTAL_STEPS) {
@@ -388,15 +313,6 @@ export default function ContractorOnboarding() {
             )}
 
             {currentStep === 3 && (
-              <Step2AdditionalDetails
-                register={register}
-                control={control}
-                errors={errors}
-                currentStep={currentStep}
-              />
-            )}
-
-            {currentStep === 4 && (
               <>
                 {categoriesLoading && (
                   <div className="text-center py-8">
@@ -427,43 +343,13 @@ export default function ContractorOnboarding() {
               </>
             )}
 
-            {currentStep === 5 && (
-              <Step4Professional
-                register={register}
-                control={control}
-                errors={errors}
-                currentStep={currentStep}
-              />
-            )}
-
-            {currentStep === 6 && (
-              <Step5Services
-                register={register}
-                errors={errors}
-                watchedHasVehicle={watchedHasVehicle}
-                setValue={setValue}
-                trigger={trigger}
-                currentStep={currentStep}
-              />
-            )}
-
-            {currentStep === 7 && (
-              <Step6PersonalTouch register={register} errors={errors} />
-            )}
-
-            {currentStep === 8 && (
+            {currentStep === 4 && (
               <Step7Photos
                 errors={errors}
-                watchedPhotos={watchedPhotos}
                 watchedConsentProfileShare={watchedConsentProfileShare}
                 watchedConsentMarketing={watchedConsentMarketing}
-                handlePhotoUpload={handlePhotoUpload}
-                removePhoto={removePhoto}
                 setValue={setValue}
                 trigger={trigger}
-                photoUploadError={photoUploadError}
-                isUploadingPhoto={isUploadingPhoto}
-                uploadedPhotoName={uploadedPhotoName}
               />
             )}
 

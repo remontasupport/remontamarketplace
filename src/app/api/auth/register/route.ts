@@ -94,23 +94,8 @@ export async function POST(request: Request) {
 
       // Worker details
       location,
-      age,
-      gender,
-      languages,
       services,
       supportWorkerCategories,
-      experience,
-      introduction,
-      qualifications,
-      hasVehicle,
-      funFact,
-      hobbies,
-      uniqueService,
-      whyEnjoyWork,
-      additionalInfo,
-      consentProfileShare,
-      consentMarketing,
-      photos, // Photo URLs (already uploaded to Blob)
     } = body;
 
     // ============================================
@@ -268,26 +253,9 @@ export async function POST(request: Request) {
               city: geocodedLocation.city,
               state: geocodedLocation.state,
               postalCode: geocodedLocation.postalCode,
-              // Other worker data
-              age,
-              gender,
-              languages: languages || [],
+              languages: [], // Empty array - will be populated in Additional Info step
               // DO NOT save services/supportWorkerCategories arrays for new registrations
               // New workers use WorkerService table only
-              experience,
-              introduction,
-              qualifications,
-              hasVehicle,
-              funFact,
-              hobbies,
-              uniqueService,
-              whyEnjoyWork,
-              additionalInfo,
-              // Photos: Array of Vercel Blob URLs stored as JSON
-              // Use uploaded photo URLs if available, otherwise undefined
-              photos: (photoUrls.length > 0) ? photoUrls : undefined,
-              consentProfileShare: consentProfileShare || false,
-              consentMarketing: consentMarketing || false,
               profileCompleted: true, // Registration form is complete
               isPublished: false, // Not published until verified
               verificationStatus: 'NOT_STARTED' as const, // Awaiting document upload
@@ -427,34 +395,14 @@ export async function POST(request: Request) {
         lastName,
         mobile,
         location,
-        age,
-        gender,
-        languages,
         services,
         supportWorkerCategories,
-        experience,
-        introduction,
-        qualifications,
-        hasVehicle,
-        funFact,
-        hobbies,
-        uniqueService,
-        whyEnjoyWork,
-        additionalInfo,
-
         // Geocoded Location
         city: geocodedLocation.city,
         state: geocodedLocation.state,
         postalCode: geocodedLocation.postalCode,
         latitude: geocodedLocation.latitude,
         longitude: geocodedLocation.longitude,
-
-        // Photos (URLs)
-        photos: photoUrls,
-
-        // Consent
-        consentProfileShare,
-        consentMarketing,
 
         // Status
         verificationStatus: 'NOT_STARTED',

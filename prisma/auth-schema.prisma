@@ -254,11 +254,7 @@ model WorkerProfile {
   funFact                   String?
   hobbies                   String?
   uniqueService             String?
-  whyEnjoyWork              String?
-  additionalInfo            String?
   photos                    Json?
-  consentProfileShare       Boolean                   @default(false)
-  consentMarketing          Boolean                   @default(false)
   profileCompleted          Boolean                   @default(false)
   isPublished               Boolean                   @default(false)
   createdAt                 DateTime                  @default(now())
@@ -271,6 +267,7 @@ model WorkerProfile {
   state                     String?
   verificationRequirements  VerificationRequirement[]
   workerServices            WorkerService[]
+  workerAdditionalInfo      WorkerAdditionalInfo?
   user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Single-column indexes for basic filtering
@@ -413,6 +410,42 @@ model WorkerService {
   @@index([workerProfileId, categoryName]) // Compound index for worker's services
 
   @@map("worker_services")
+}
+
+model WorkerAdditionalInfo {
+  id                String        @id @default(cuid())
+  workerProfileId   String        @unique  // 1-to-1 relationship
+
+  // Repeating data as JSONB arrays
+  jobHistory        Json?         @default("[]")  // Array of job objects
+  education         Json?         @default("[]")  // Array of education objects
+
+  // Simple array fields
+  languages         String[]      @default([])    // Array of language strings
+  culturalBackground String[]     @default([])    // Array of cultural backgrounds
+  religion          String[]      @default([])    // Array of religions
+  interests         String[]      @default([])    // Array of interests & hobbies
+  workPreferences   String[]      @default([])    // Who do you prefer to work with?
+
+  // Boolean fields
+  lgbtqiaSupport    Boolean?                      // "Good to know" - LGBTQIA+ support
+  nonSmoker         Boolean?                      // Are you a non-smoker?
+  petFriendly       Boolean?                      // Are you pet friendly?
+
+  // Single value fields
+  personality       String?                       // "Outgoing and engaging" or "Calm and relaxed"
+
+  // Text fields (multi-line, min 200 characters)
+  uniqueService     String?       @db.Text        // Your unique service
+  funFact           String?       @db.Text        // Fun fact
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  workerProfile     WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
+  @@map("worker_additional_info")
 }
 
 enum AccountStatus {

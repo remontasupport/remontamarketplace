@@ -121,21 +121,6 @@ export interface WorkerRegistrationJobData {
 
   // Worker details
   location?: string;
-  age?: number;
-  gender?: string;
-  languages?: string[];
-  experience?: string;
-  introduction?: string;
-  qualifications?: string;
-  hasVehicle?: string;
-  funFact?: string;
-  hobbies?: string;
-  uniqueService?: string;
-  whyEnjoyWork?: string;
-  additionalInfo?: string;
-  photos?: string[]; // Photo URLs
-  consentProfileShare?: boolean;
-  consentMarketing?: boolean;
 
   // Services
   services?: string[]; // Selected service category IDs
