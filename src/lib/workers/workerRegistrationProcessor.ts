@@ -42,6 +42,8 @@ export async function processWorkerRegistration(
       consentProfileShare,
       consentMarketing,
       photos,
+      services,
+      supportWorkerCategories,
       geocodedLocation: preGeocodedLocation,
     } = data;
 
@@ -150,37 +152,159 @@ export async function processWorkerRegistration(
     const userId = user.id;
     const workerProfileId = user.workerProfile!.id;
 
+    console.log('[REGISTRATION] User created successfully:', userId);
+    console.log('[REGISTRATION] Worker Profile ID:', workerProfileId);
+    console.log('[REGISTRATION] Services data received:', services);
+    console.log('[REGISTRATION] Support Worker Categories data received:', supportWorkerCategories);
+
     // ============================================
     // ASYNC BACKGROUND OPERATIONS (Fire-and-forget)
     // ============================================
     // These operations run in the background WITHOUT blocking the response
     // User gets immediate feedback while we handle the rest
 
+    // ASYNC: Create worker services (fire-and-forget)
+    if (services && services.length > 0) {
+      (async () => {
+        try {
+          console.log('[WORKER-SERVICES] Starting to save services:', services);
+          console.log('[WORKER-SERVICES] Worker Profile ID:', workerProfileId);
+
+          // Fetch category details from database
+          const categories = await authPrisma.category.findMany({
+            where: {
+              id: {
+                in: services,
+              },
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+
+          console.log('[WORKER-SERVICES] Found categories from DB:', categories);
+
+          // First, determine which categories have subcategories selected
+          let categoriesWithSubcategories = new Set<string>();
+
+          // If support worker subcategories are selected
+          if (supportWorkerCategories && supportWorkerCategories.length > 0) {
+            console.log('[WORKER-SERVICES] Processing subcategories:', supportWorkerCategories);
+
+            // Fetch subcategory details from database
+            const subcategories = await authPrisma.subcategory.findMany({
+              where: {
+                id: {
+                  in: supportWorkerCategories,
+                },
+              },
+              select: {
+                id: true,
+                name: true,
+                categoryId: true,
+              },
+            });
+
+            console.log('[WORKER-SERVICES] Found subcategories from DB:', subcategories);
+
+            // Track which categories have subcategories
+            subcategories.forEach(sub => categoriesWithSubcategories.add(sub.categoryId));
+
+            // Fetch the category names for subcategories
+            const subcategoryCategoryIds = subcategories.map((sub) => sub.categoryId);
+            const subcategoryCategories = await authPrisma.category.findMany({
+              where: {
+                id: {
+                  in: subcategoryCategoryIds,
+                },
+              },
+              select: {
+                id: true,
+                name: true,
+              },
+            });
+
+            const categoryMap = new Map(subcategoryCategories.map((cat) => [cat.id, cat.name]));
+
+            // Create worker service records for each selected subcategory
+            const subcategoryRecords = subcategories.map((subcategory) => ({
+              workerProfileId,
+              categoryId: subcategory.categoryId,
+              categoryName: categoryMap.get(subcategory.categoryId) || subcategory.categoryId,
+              subcategoryId: subcategory.id,
+              subcategoryName: subcategory.name,
+            }));
+
+            console.log('[WORKER-SERVICES] Subcategory records to create:', subcategoryRecords);
+
+            if (subcategoryRecords.length > 0) {
+              await authPrisma.workerService.createMany({
+                data: subcategoryRecords,
+                skipDuplicates: true,
+              });
+              console.log('[WORKER-SERVICES] Successfully created subcategory records');
+            }
+          }
+
+          // Create worker service records ONLY for categories WITHOUT subcategories
+          // This prevents duplicate entries where a category appears both with null subcategoryId and with actual subcategoryIds
+          const serviceRecords = categories
+            .filter(category => !categoriesWithSubcategories.has(category.id))
+            .map((category) => ({
+              workerProfileId,
+              categoryId: category.id,
+              categoryName: category.name,
+              subcategoryId: null,
+              subcategoryName: null,
+            }));
+
+          console.log('[WORKER-SERVICES] Service records to create (excluding categories with subcategories):', serviceRecords);
+
+          if (serviceRecords.length > 0) {
+            await authPrisma.workerService.createMany({
+              data: serviceRecords,
+              skipDuplicates: true,
+            });
+            console.log('[WORKER-SERVICES] Successfully created service records');
+          }
+        } catch (serviceError) {
+          console.error('[WORKER-SERVICES] Error creating worker services:', serviceError);
+        }
+      })();
+    } else {
+      console.log('[WORKER-SERVICES] No services to save - services array is empty or undefined');
+    }
+
     // ASYNC: Geocode location and update profile
     if (location) {
       (async () => {
         try {
+          console.log('[GEOCODING] Starting geocoding for location:', location);
           const geocoded = await geocodeWorkerLocation(location);
+          console.log('[GEOCODING] Geocoding result:', geocoded);
 
-          // Update worker profile with geocoded coordinates
-          await authPrisma.workerProfile.update({
-            where: { id: workerProfileId },
-            data: {
-              city: geocoded.city,
-              state: geocoded.state,
-              postalCode: geocoded.postalCode,
-              latitude: geocoded.latitude,
-              longitude: geocoded.longitude,
-            },
-          });
+          if (geocoded && (geocoded.latitude || geocoded.city)) {
+            // Update worker profile with geocoded coordinates
+            await authPrisma.workerProfile.update({
+              where: { id: workerProfileId },
+              data: {
+                city: geocoded.city,
+                state: geocoded.state,
+                postalCode: geocoded.postalCode,
+                latitude: geocoded.latitude,
+                longitude: geocoded.longitude,
+              },
+            });
+            console.log('[GEOCODING] Successfully updated worker profile with geocoded data');
+          } else {
+            console.error('[GEOCODING] Geocoding returned null or invalid data');
+          }
         } catch (error) {
-          // Silently fail - coordinates not critical for registration
+          console.error('[GEOCODING] Error during geocoding:', error);
         }
       })();
     }
-
-    // Note: Worker services are now managed separately after registration
-    // Services are added through the services setup flow in the dashboard
 
     // ASYNC: Audit log (fire-and-forget)
     authPrisma.auditLog

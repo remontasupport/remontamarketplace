@@ -137,6 +137,10 @@ export interface WorkerRegistrationJobData {
   consentProfileShare?: boolean;
   consentMarketing?: boolean;
 
+  // Services
+  services?: string[]; // Selected service category IDs
+  supportWorkerCategories?: string[]; // Selected support worker subcategory IDs
+
   // Geocoded location (if already geocoded)
   geocodedLocation?: {
     city: string | null;

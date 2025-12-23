@@ -60,6 +60,8 @@ export async function POST(request: Request) {
       consentProfileShare,
       consentMarketing,
       photos,
+      services,
+      supportWorkerCategories,
     } = body;
 
     // ============================================
@@ -122,6 +124,8 @@ export async function POST(request: Request) {
       photos,
       consentProfileShare,
       consentMarketing,
+      services,
+      supportWorkerCategories,
       geocodedLocation: undefined, // Will be geocoded in background
     };
 

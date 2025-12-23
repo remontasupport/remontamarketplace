@@ -40,7 +40,6 @@ export async function GET(
       select: {
         id: true,
         firstName: true,
-        middleName: true,
         lastName: true,
         mobile: true,
         location: true,
@@ -63,7 +62,8 @@ export async function GET(
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,
-        abn: true,
+        consentProfileShare: true,
+        consentMarketing: true,
       },
     });
 

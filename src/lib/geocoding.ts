@@ -96,6 +96,7 @@ export async function geocodeAddress(
     // ============================================
     const cached = getCachedGeocode(address)
     if (cached) {
+      console.log('[GEOCODE-API] Cache hit for:', address);
       return cached
     }
 
@@ -105,7 +106,7 @@ export async function geocodeAddress(
     const apiKey = process.env.GEOMAP_API
 
     if (!apiKey) {
-
+      console.error('[GEOCODE-API] GEOMAP_API environment variable is not set!');
       return null
     }
 
@@ -113,8 +114,10 @@ export async function geocodeAddress(
     const query = `${address}, Australia`
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`
 
+    console.log('[GEOCODE-API] Calling Google Geocoding API for:', query);
     const response = await fetch(url)
     const data: GeocodeResponse = await response.json()
+    console.log('[GEOCODE-API] Google API response status:', data.status);
 
     if (data.status === 'OK' && data.results.length > 0) {
       const result = data.results[0]
@@ -124,6 +127,8 @@ export async function geocodeAddress(
         formattedAddress: result.formatted_address,
       }
 
+      console.log('[GEOCODE-API] Successfully geocoded:', geocodeResult);
+
       // ============================================
       // 3. STORE IN CACHE FOR FUTURE REQUESTS
       // ============================================
@@ -132,10 +137,10 @@ export async function geocodeAddress(
       return geocodeResult
     }
 
- 
+    console.error('[GEOCODE-API] Geocoding failed - status:', data.status);
     return null
   } catch (error) {
-
+    console.error('[GEOCODE-API] Exception during geocoding:', error);
     return null
   }
 }

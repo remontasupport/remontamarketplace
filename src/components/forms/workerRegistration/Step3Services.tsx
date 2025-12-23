@@ -46,12 +46,12 @@ const Step3ServicesComponent = function Step3Services({
 
     if (service.hasSubServices && category && category.subcategories.length > 0) {
       // If checking a category with subcategories, open the dialog
-      if (!watchedServices?.includes(service.title)) {
+      if (!watchedServices?.includes(service.id)) {
         setSelectedCategoryForDialog(category);
         setShowSubcategoriesDialog(true);
       } else {
         // If unchecking, remove it and clear subcategories for this category
-        handleServiceToggle(service.title);
+        handleServiceToggle(service.id);
 
         setSelectedSubcategories(prev => {
           const updated = { ...prev };
@@ -68,8 +68,8 @@ const Step3ServicesComponent = function Step3Services({
         });
       }
     } else {
-      // For services without subcategories, toggle normally
-      handleServiceToggle(service.title);
+      // For services without subcategories, toggle normally (use ID instead of title)
+      handleServiceToggle(service.id);
     }
   };
 
@@ -77,7 +77,6 @@ const Step3ServicesComponent = function Step3Services({
     if (!selectedCategoryForDialog) return;
 
     const categoryId = selectedCategoryForDialog.id;
-    const categoryTitle = selectedCategoryForDialog.name;
 
     // Update subcategories state
     const updatedSubcategories = {
@@ -94,11 +93,11 @@ const Step3ServicesComponent = function Step3Services({
       shouldDirty: true
     });
 
-    // Only add the service if at least one subcategory is selected
-    if (subcategoryIds.length > 0 && !watchedServices?.includes(categoryTitle)) {
-      handleServiceToggle(categoryTitle);
-    } else if (subcategoryIds.length === 0 && watchedServices?.includes(categoryTitle)) {
-      handleServiceToggle(categoryTitle);
+    // Only add the service (use category ID) if at least one subcategory is selected
+    if (subcategoryIds.length > 0 && !watchedServices?.includes(categoryId)) {
+      handleServiceToggle(categoryId);
+    } else if (subcategoryIds.length === 0 && watchedServices?.includes(categoryId)) {
+      handleServiceToggle(categoryId);
     }
   };
 
@@ -140,7 +139,7 @@ const Step3ServicesComponent = function Step3Services({
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id={service.id}
-                    checked={watchedServices?.includes(service.title) || false}
+                    checked={watchedServices?.includes(service.id) || false}
                     onCheckedChange={() => handleCheckboxChange(service)}
                     className="mt-1"
                   />
