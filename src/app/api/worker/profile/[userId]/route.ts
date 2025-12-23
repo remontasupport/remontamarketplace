@@ -50,8 +50,6 @@ export async function GET(
         age: true,
         gender: true,
         languages: true,
-        services: true,
-        supportWorkerCategories: true,
         experience: true,
         introduction: true,
         qualifications: true,

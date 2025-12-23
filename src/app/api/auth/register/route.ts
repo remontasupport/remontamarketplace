@@ -97,8 +97,6 @@ export async function POST(request: Request) {
       age,
       gender,
       languages,
-      services,
-      supportWorkerCategories,
       experience,
       introduction,
       qualifications,
@@ -294,7 +292,13 @@ export async function POST(request: Request) {
           },
         },
         include: {
-          workerProfile: true,
+          workerProfile: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
     } catch (dbError: any) {
@@ -312,81 +316,8 @@ export async function POST(request: Request) {
     // Verify photos were saved
    
 
-    // ============================================
-    // CREATE WORKER SERVICE RECORDS (Normalized)
-    // ============================================
-    if (user.workerProfile && services && services.length > 0) {
-      try {
-        // Get all categories from database to map subcategories to their parent categories
-        const categories = await authPrisma.category.findMany({
-          include: {
-            subcategories: true,
-          },
-        });
-
-        // Build a map: subcategoryId -> categoryId
-        const subcategoryToCategory = new Map();
-        categories.forEach(category => {
-          category.subcategories.forEach((sub: any) => {
-            subcategoryToCategory.set(sub.id, category);
-          });
-        });
-
-        // Create WorkerService records
-        const workerServiceRecords = [];
-        const subcategoryIds = supportWorkerCategories || [];
-
-        for (const serviceName of services) {
-          // Find category by name
-          const category = categories.find(c => c.name === serviceName);
-          if (!category) continue;
-
-          const categoryId = category.id;
-
-          // Find subcategories that belong to this category
-          const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
-            const parentCategory = subcategoryToCategory.get(subId);
-            return parentCategory?.id === categoryId;
-          });
-
-          if (relevantSubcategoryIds.length > 0) {
-            // Service has subcategories - create one record per subcategory
-            for (const subcategoryId of relevantSubcategoryIds) {
-              const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
-              if (subcategory) {
-                workerServiceRecords.push({
-                  workerProfileId: user.workerProfile.id,
-                  categoryId,
-                  categoryName: serviceName,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                });
-              }
-            }
-          } else {
-            // Service has no subcategories - create one record without subcategory
-            workerServiceRecords.push({
-              workerProfileId: user.workerProfile.id,
-              categoryId,
-              categoryName: serviceName,
-              subcategoryId: null,
-              subcategoryName: null,
-            });
-          }
-        }
-
-        if (workerServiceRecords.length > 0) {
-          await authPrisma.workerService.createMany({
-            data: workerServiceRecords,
-            skipDuplicates: true,
-          });
-       
-        }
-      } catch (error) {
-        // Don't fail registration if WorkerService creation fails
-       
-      }
-    }
+    // Note: Worker services are now managed separately after registration
+    // Services are added through the services setup flow in the dashboard
 
     // ============================================
     // AUDIT LOG
@@ -428,8 +359,6 @@ export async function POST(request: Request) {
         age,
         gender,
         languages,
-        services,
-        supportWorkerCategories,
         experience,
         introduction,
         qualifications,

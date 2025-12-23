@@ -31,8 +31,6 @@ export async function GET(request: Request) {
       where: { userId: session.user.id },
       select: {
         id: true,
-        services: true,
-        supportWorkerCategories: true,
       },
     });
 

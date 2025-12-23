@@ -30,8 +30,6 @@ export async function processWorkerRegistration(
       age,
       gender,
       languages,
-      services,
-      supportWorkerCategories,
       experience,
       introduction,
       qualifications,
@@ -126,7 +124,13 @@ export async function processWorkerRegistration(
           },
         },
         include: {
-          workerProfile: true,
+          workerProfile: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
     } catch (dbError: any) {
@@ -175,74 +179,8 @@ export async function processWorkerRegistration(
       })();
     }
 
-    // ASYNC: Create worker service records
-    if (services && services.length > 0) {
-      // Fire-and-forget: Don't await
-      (async () => {
-        try {
-          const categories = await authPrisma.category.findMany({
-            include: {
-              subcategories: true,
-            },
-          });
-
-          const subcategoryToCategory = new Map();
-          categories.forEach((category) => {
-            category.subcategories.forEach((sub: any) => {
-              subcategoryToCategory.set(sub.id, category);
-            });
-          });
-
-          const workerServiceRecords = [];
-          const subcategoryIds = supportWorkerCategories || [];
-
-          for (const serviceName of services) {
-            const category = categories.find((c) => c.name === serviceName);
-            if (!category) continue;
-
-            const categoryId = category.id;
-            const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
-              const parentCategory = subcategoryToCategory.get(subId);
-              return parentCategory?.id === categoryId;
-            });
-
-            if (relevantSubcategoryIds.length > 0) {
-              for (const subcategoryId of relevantSubcategoryIds) {
-                const subcategory = category.subcategories.find(
-                  (sub: any) => sub.id === subcategoryId
-                );
-                if (subcategory) {
-                  workerServiceRecords.push({
-                    workerProfileId,
-                    categoryId,
-                    categoryName: serviceName,
-                    subcategoryId,
-                    subcategoryName: subcategory.name,
-                  });
-                }
-              }
-            } else {
-              workerServiceRecords.push({
-                workerProfileId,
-                categoryId,
-                categoryName: serviceName,
-                subcategoryId: null,
-                subcategoryName: null,
-              });
-            }
-          }
-
-          if (workerServiceRecords.length > 0) {
-            await authPrisma.workerService.createMany({
-              data: workerServiceRecords,
-              skipDuplicates: true,
-            });
-          }
-        } catch (error) {
-          // Silently fail - user already registered successfully
-        }
-      })();
-    }
+    // Note: Worker services are now managed separately after registration
+    // Services are added through the services setup flow in the dashboard
 
     // ASYNC: Audit log (fire-and-forget)
     authPrisma.auditLog
@@ -274,8 +212,6 @@ export async function processWorkerRegistration(
         age,
         gender,
         languages,
-        services,
-        supportWorkerCategories,
         experience,
         introduction,
         qualifications,
