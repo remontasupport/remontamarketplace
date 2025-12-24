@@ -11,6 +11,12 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  updateWorkerName,
+  updateWorkerPhoto,
+  updateWorkerBio,
+  updateWorkerAddress,
+} from "@/services/worker/profile.service";
 
 // Query Keys - centralized for consistency
 export const workerProfileKeys = {
@@ -64,14 +70,63 @@ async function fetchWorkerProfile(userId: string): Promise<WorkerProfile> {
 }
 
 async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
-  const response = await fetch("/api/worker/profile/update-step", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updateData),
-  });
+  const { step, data } = updateData;
 
-  if (!response.ok) {
-    throw new Error("Failed to update profile step");
+  // Route to appropriate server action based on step
+  switch (step) {
+    case 1: // Name
+      const nameResult = await updateWorkerName({
+        firstName: data.firstName,
+        middleName: data.middleName,
+        lastName: data.lastName,
+      });
+      if (!nameResult.success) {
+        throw new Error(nameResult.error || "Failed to update name");
+      }
+      break;
+
+    case 2: // Photo
+      const photoResult = await updateWorkerPhoto({
+        photo: data.photo,
+      });
+      if (!photoResult.success) {
+        throw new Error(photoResult.error || "Failed to update photo");
+      }
+      break;
+
+    case 3: // Bio
+      const bioResult = await updateWorkerBio({
+        bio: data.bio,
+      });
+      if (!bioResult.success) {
+        throw new Error(bioResult.error || "Failed to update bio");
+      }
+      break;
+
+    case 4: // Address
+      const addressResult = await updateWorkerAddress({
+        streetAddress: data.streetAddress,
+        city: data.city,
+        state: data.state,
+        postalCode: data.postalCode,
+      });
+      if (!addressResult.success) {
+        throw new Error(addressResult.error || "Failed to update address");
+      }
+      break;
+
+    default:
+      // For steps not yet refactored (5, 7, 101, 102, etc.), use the old API route
+      const response = await fetch("/api/worker/profile/update-step", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile step");
+      }
+      break;
   }
 }
 

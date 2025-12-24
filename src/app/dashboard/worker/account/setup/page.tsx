@@ -206,6 +206,27 @@ function AccountSetupContent() {
           newErrors.lastName = "Last name is required";
         }
         break;
+      case "bio": // Bio
+        const bioLength = formData.bio.trim().length;
+        if (bioLength < 200) {
+          newErrors.bio = `Your bio must be at least 200 characters long (currently ${bioLength} characters)`;
+        } else if (bioLength > 2000) {
+          newErrors.bio = "Your bio must be less than 2000 characters";
+        }
+        break;
+      case "address": // Address
+        if (!formData.city.trim()) {
+          newErrors.city = "City/Suburb is required";
+        }
+        if (!formData.state.trim()) {
+          newErrors.state = "State is required";
+        }
+        if (!formData.postalCode.trim()) {
+          newErrors.postalCode = "Postal code is required";
+        } else if (!/^\d{4}$/.test(formData.postalCode.trim())) {
+          newErrors.postalCode = "Postal code must be 4 digits";
+        }
+        break;
       case "abn": // ABN
         if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
           newErrors.abn = "ABN must be 11 digits";

@@ -16,9 +16,15 @@ interface Step5AddressProps {
     postalCode: string;
   };
   onChange: (field: string, value: string) => void;
+  errors?: {
+    streetAddress?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+  };
 }
 
-export default function Step5Address({ data, onChange }: Step5AddressProps) {
+export default function Step5Address({ data, onChange, errors }: Step5AddressProps) {
   return (
     <StepContentWrapper>
       <div className="form-page-content">
@@ -32,6 +38,7 @@ export default function Step5Address({ data, onChange }: Step5AddressProps) {
             onChange={(e) => onChange("streetAddress", e.target.value)}
             placeholder="123 Main Street"
             isOptional
+            error={errors?.streetAddress}
           />
 
           <TextField
@@ -40,6 +47,8 @@ export default function Step5Address({ data, onChange }: Step5AddressProps) {
             value={data.city}
             onChange={(e) => onChange("city", e.target.value)}
             placeholder="Sydney"
+            required
+            error={errors?.city}
           />
 
           <TextField
@@ -48,6 +57,8 @@ export default function Step5Address({ data, onChange }: Step5AddressProps) {
             value={data.state}
             onChange={(e) => onChange("state", e.target.value)}
             placeholder="NSW"
+            required
+            error={errors?.state}
           />
 
           <TextField
@@ -56,6 +67,8 @@ export default function Step5Address({ data, onChange }: Step5AddressProps) {
             value={data.postalCode}
             onChange={(e) => onChange("postalCode", e.target.value)}
             placeholder="2000"
+            required
+            error={errors?.postalCode}
           />
         </div>
       </div>
