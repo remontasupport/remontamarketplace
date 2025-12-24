@@ -241,6 +241,7 @@ model WorkerProfile {
   id                        String                    @id @default(cuid())
   userId                    String                    @unique
   firstName                 String
+  middleName                String?
   lastName                  String
   mobile                    String
   location                  String?
@@ -254,7 +255,7 @@ model WorkerProfile {
   funFact                   String?
   hobbies                   String?
   uniqueService             String?
-  photos                    Json?
+  photos                    String?
   profileCompleted          Boolean                   @default(false)
   isPublished               Boolean                   @default(false)
   createdAt                 DateTime                  @default(now())

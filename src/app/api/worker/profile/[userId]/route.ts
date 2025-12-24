@@ -40,13 +40,19 @@ export async function GET(
       select: {
         id: true,
         firstName: true,
+        middleName: true,
         lastName: true,
         mobile: true,
         location: true,
         city: true,
         state: true,
         postalCode: true,
+        photos: true, // Profile photo URL
+        introduction: true, // Bio
+        age: true,
+        gender: true,
         languages: true,
+        hasVehicle: true,
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,

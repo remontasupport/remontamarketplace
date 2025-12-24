@@ -178,7 +178,8 @@ export default async function WorkerDashboard() {
     <DashboardLayout
       profileData={{
         firstName: workerProfile?.firstName || 'Worker',
-        photo: workerProfile?.photos ? (Array.isArray(workerProfile.photos) ? workerProfile.photos[0] : (workerProfile.photos as any)?.[0]) : null,
+        // photos is now a string (single photo URL), not an array
+        photo: workerProfile?.photos || null,
       }}
     >
       {/* Hero Banner */}

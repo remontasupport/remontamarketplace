@@ -2,7 +2,8 @@
  * Photo Upload Component
  * Reusable component for uploading and displaying profile photos
  * Supports both new uploads and displaying existing photos
- * Automatically uploads to blob storage when file is selected
+ * Automatically uploads to Vercel Blob storage when file is selected
+ * Uses /api/upload/worker-photo endpoint (single photo upload)
  */
 
 "use client";
@@ -71,22 +72,14 @@ export default function PhotoUpload({
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
 
-    // Store old photo URL to delete after successful upload
-    const oldPhotoUrl = currentPhoto;
-
     // Upload to blob storage
     setIsUploading(true);
     try {
       const formData = new FormData();
-      formData.append("photos", file);
+      formData.append("photo", file); // Changed from "photos" to "photo"
       formData.append("email", session?.user?.email || "user");
 
-      // Include old photo URL for deletion
-      if (oldPhotoUrl) {
-        formData.append("oldPhotoUrl", oldPhotoUrl);
-      }
-
-      const response = await fetch("/api/upload/worker-photos", {
+      const response = await fetch("/api/upload/worker-photo", {
         method: "POST",
         body: formData,
       });
@@ -97,8 +90,8 @@ export default function PhotoUpload({
 
       const data = await response.json();
 
-      if (data.urls && data.urls.length > 0) {
-        const uploadedUrl = data.urls[0];
+      if (data.url) {
+        const uploadedUrl = data.url;
         setPreviewUrl(uploadedUrl); // Use the uploaded URL
         onPhotoChange(uploadedUrl); // Pass URL to parent
 

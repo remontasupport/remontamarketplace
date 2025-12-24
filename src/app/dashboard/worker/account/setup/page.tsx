@@ -134,9 +134,8 @@ function AccountSetupContent() {
   // Prevents form reset when TanStack Query refetches after mutations
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
-      const photoUrl = Array.isArray(profileData.photos)
-        ? profileData.photos[0]
-        : (profileData.photos as any)?.[0] || null;
+      // photos is now a string (single photo URL), not an array
+      const photoUrl = profileData.photos || null;
 
       // Parse location string to extract street address, city, state, and postal code
       const parsedLocation = parseLocation(profileData.location || "");

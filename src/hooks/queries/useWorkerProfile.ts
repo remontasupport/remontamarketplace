@@ -32,6 +32,12 @@ interface WorkerProfile {
   city?: string;
   state?: string;
   postalCode?: string;
+  photos?: string | null; // Profile photo URL (changed from array to string)
+  introduction?: string; // Bio
+  age?: number;
+  gender?: string;
+  languages?: string[];
+  hasVehicle?: string;
   services?: string[];
   supportWorkerCategories?: string[];
   profileCompleted?: boolean;
