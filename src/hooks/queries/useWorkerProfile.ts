@@ -16,7 +16,11 @@ import {
   updateWorkerPhoto,
   updateWorkerBio,
   updateWorkerAddress,
+  updateWorkerPersonalInfo,
 } from "@/services/worker/profile.service";
+import {
+  updateWorkerABN,
+} from "@/services/worker/compliance.service";
 
 // Query Keys - centralized for consistency
 export const workerProfileKeys = {
@@ -42,14 +46,15 @@ interface WorkerProfile {
   introduction?: string; // Bio
   age?: number;
   gender?: string;
-  languages?: string[];
   hasVehicle?: string;
+  abn?: string;
   services?: string[];
   supportWorkerCategories?: string[];
   profileCompleted?: boolean;
   isPublished?: boolean;
   verificationStatus?: string;
-  abn?: string;
+  currentSetupSection?: string | null;
+  setupProgress?: any; // JSONB field
 }
 
 interface UpdateStepData {
@@ -71,6 +76,17 @@ async function fetchWorkerProfile(userId: string): Promise<WorkerProfile> {
 
 async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
   const { step, data } = updateData;
+
+  // Check if this is an ABN update (compliance step - can be any step number)
+  if (data.abn !== undefined) {
+    const abnResult = await updateWorkerABN({
+      abn: data.abn,
+    });
+    if (!abnResult.success) {
+      throw new Error(abnResult.error || "Failed to update ABN");
+    }
+    return;
+  }
 
   // Route to appropriate server action based on step
   switch (step) {
@@ -115,8 +131,19 @@ async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
       }
       break;
 
+    case 5: // Personal Info
+      const personalInfoResult = await updateWorkerPersonalInfo({
+        age: data.age,
+        gender: data.gender,
+        hasVehicle: data.hasVehicle,
+      });
+      if (!personalInfoResult.success) {
+        throw new Error(personalInfoResult.error || "Failed to update personal information");
+      }
+      break;
+
     default:
-      // For steps not yet refactored (5, 7, 101, 102, etc.), use the old API route
+      // For steps not yet refactored (7, 101, 102, etc.), use the old API route
       const response = await fetch("/api/worker/profile/update-step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

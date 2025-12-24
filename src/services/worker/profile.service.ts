@@ -13,10 +13,13 @@ import {
   type UpdateWorkerBioData,
   updateWorkerAddressSchema,
   type UpdateWorkerAddressData,
+  updateWorkerPersonalInfoSchema,
+  type UpdateWorkerPersonalInfoData,
 } from "@/schema/workerProfileSchema";
 import { z } from "zod";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { geocodeAddress } from "@/lib/geocoding";
+import { autoUpdateAccountDetailsCompletion } from "./setupProgress.service";
 
 /**
  * Backend Service: Worker Profile Management
@@ -95,6 +98,12 @@ export async function updateWorkerName(
     // 5. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/account/setup");
     revalidatePath("/dashboard/worker");
+
+    // 6. Auto-update Account Details completion status (non-blocking)
+    autoUpdateAccountDetailsCompletion().catch((error) => {
+      console.error("Failed to auto-update account details completion:", error);
+      // Don't fail the main operation if this fails
+    });
 
     return {
       success: true,
@@ -219,6 +228,12 @@ export async function updateWorkerPhoto(
     revalidatePath("/dashboard/worker/account/setup");
     revalidatePath("/dashboard/worker");
 
+    // 6. Auto-update Account Details completion status (non-blocking)
+    autoUpdateAccountDetailsCompletion().catch((error) => {
+      console.error("Failed to auto-update account details completion:", error);
+      // Don't fail the main operation if this fails
+    });
+
     return {
       success: true,
       message: "Your photo has been saved successfully!",
@@ -293,6 +308,12 @@ export async function updateWorkerBio(
     // 5. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/account/setup");
     revalidatePath("/dashboard/worker");
+
+    // 6. Auto-update Account Details completion status (non-blocking)
+    autoUpdateAccountDetailsCompletion().catch((error) => {
+      console.error("Failed to auto-update account details completion:", error);
+      // Don't fail the main operation if this fails
+    });
 
     return {
       success: true,
@@ -408,6 +429,12 @@ export async function updateWorkerAddress(
     revalidatePath("/dashboard/worker/account/setup");
     revalidatePath("/dashboard/worker");
 
+    // 8. Auto-update Account Details completion status (non-blocking)
+    autoUpdateAccountDetailsCompletion().catch((error) => {
+      console.error("Failed to auto-update account details completion:", error);
+      // Don't fail the main operation if this fails
+    });
+
     return {
       success: true,
       message: "Your address has been saved successfully!",
@@ -418,6 +445,102 @@ export async function updateWorkerAddress(
     return {
       success: false,
       error: "Failed to save your address. Please try again.",
+    };
+  }
+}
+
+/**
+ * Server Action: Update worker's personal info
+ * Uses Zod schema validation and rate limiting
+ * Handles age, gender, and hasVehicle fields (languages removed)
+ */
+export async function updateWorkerPersonalInfo(
+  data: UpdateWorkerPersonalInfoData
+): Promise<ActionResponse> {
+  try {
+    // 1. Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: "Unauthorized. Please log in.",
+      };
+    }
+
+    // 2. Rate limiting check (protect Neon DB)
+    const rateLimitCheck = await checkServerActionRateLimit(
+      session.user.id,
+      dbWriteRateLimit
+    );
+    if (!rateLimitCheck.success) {
+      return {
+        success: false,
+        error: rateLimitCheck.error,
+      };
+    }
+
+    // 3. Validate input data with Zod
+    const validationResult = updateWorkerPersonalInfoSchema.safeParse(data);
+
+    if (!validationResult.success) {
+      const fieldErrors = validationResult.error.flatten().fieldErrors;
+      return {
+        success: false,
+        error: "Validation failed",
+        fieldErrors: fieldErrors as Record<string, string[]>,
+      };
+    }
+
+    const validatedData = validationResult.data;
+
+    // 4. Build update data object (only include defined fields)
+    const updateData: any = {};
+
+    if (validatedData.age !== undefined) {
+      updateData.age = validatedData.age;
+    }
+
+    if (validatedData.gender) {
+      updateData.gender = validatedData.gender.toLowerCase();
+    }
+
+    if (validatedData.hasVehicle) {
+      updateData.hasVehicle = validatedData.hasVehicle;
+    }
+
+    // 5. Update worker profile in database
+    const updatedProfile = await authPrisma.workerProfile.update({
+      where: {
+        userId: session.user.id,
+      },
+      data: updateData,
+      select: {
+        age: true,
+        gender: true,
+        hasVehicle: true,
+      },
+    });
+
+    // 6. Revalidate the profile page cache
+    revalidatePath("/dashboard/worker/account/setup");
+    revalidatePath("/dashboard/worker");
+
+    // 7. Auto-update Account Details completion status (non-blocking)
+    autoUpdateAccountDetailsCompletion().catch((error) => {
+      console.error("Failed to auto-update account details completion:", error);
+      // Don't fail the main operation if this fails
+    });
+
+    return {
+      success: true,
+      message: "Your personal information has been saved successfully!",
+      data: updatedProfile,
+    };
+  } catch (error: any) {
+    console.error("Error updating worker personal info:", error);
+    return {
+      success: false,
+      error: "Failed to save your personal information. Please try again.",
     };
   }
 }

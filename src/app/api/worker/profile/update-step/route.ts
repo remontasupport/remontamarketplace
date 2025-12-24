@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
-import { geocodeAddress } from "@/lib/geocoding";
 
 /**
  * POST /api/worker/profile/update-step
@@ -25,67 +24,9 @@ export async function POST(request: Request) {
     // Prepare update data based on step
     const updateData: any = {};
 
+    // NOTE: Steps 1-5 have been migrated to server actions in src/services/worker/profile.service.ts
+    // This API route now only handles steps that haven't been refactored yet
     switch (step) {
-      case 1: // Name
-        updateData.firstName = data.firstName.trim();
-        updateData.lastName = data.lastName.trim();
-        break;
-
-      case 2: // Photo
-        if (data.photo) {
-          // Photo URL is already uploaded to blob storage
-          // Store it as a string (single profile photo)
-          updateData.photos = data.photo;
-        }
-        break;
-
-      case 3: // Bio
-        if (data.bio) updateData.introduction = data.bio.trim();
-        break;
-
-      case 4: // Address
-        // Build location string from city, state, and postal code
-        // Format: "City, State PostalCode" or "StreetAddress, City, State PostalCode" if street address exists
-        if (data.city && data.state && data.postalCode) {
-          const cityStatePostal = `${data.city.trim()}, ${data.state.trim()} ${data.postalCode.trim()}`;
-          const fullLocation = data.streetAddress
-            ? `${data.streetAddress.trim()}, ${cityStatePostal}`
-            : cityStatePostal;
-          updateData.location = fullLocation;
-
-          // Geocode the full address (including street address if provided) to get latitude and longitude
-          const geocodeResult = await geocodeAddress(fullLocation);
-
-          if (geocodeResult) {
-            updateData.latitude = geocodeResult.latitude;
-            updateData.longitude = geocodeResult.longitude;
-          }
-        }
-        if (data.city) updateData.city = data.city;
-        if (data.state) updateData.state = data.state;
-        if (data.postalCode) updateData.postalCode = data.postalCode;
-        break;
-
-      case 5: // Personal Info (Other personal info step)
-        // Convert age to integer (database expects Int, not String)
-        if (data.age !== undefined && data.age !== null && data.age !== '') {
-          const ageInt = typeof data.age === 'string' ? parseInt(data.age, 10) : data.age;
-          if (!isNaN(ageInt)) {
-            updateData.age = ageInt;
-          }
-        }
-        if (data.gender) {
-          updateData.gender = data.gender.toLowerCase();
-        }
-        // Ensure languages is an array
-        if (data.languages) {
-          updateData.languages = Array.isArray(data.languages) ? data.languages : [];
-        }
-        if (data.hasVehicle) {
-          updateData.hasVehicle = data.hasVehicle;
-        }
-        break;
-
       case 7: // Emergency Contact
         if (data.emergencyContactName) updateData.emergencyContactName = data.emergencyContactName.trim();
         if (data.emergencyContactPhone) updateData.emergencyContactPhone = data.emergencyContactPhone.trim();

@@ -16,6 +16,7 @@ import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorke
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
+import { autoUpdateComplianceCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
 
 // Form data interface
@@ -106,8 +107,12 @@ function MandatoryRequirementsSetupContent() {
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Validation is optional for requirements
-    // Documents are uploaded via their own API endpoints
+    // Validate ABN if this is the ABN step
+    if (currentStepData?.documentId === "abn-contractor") {
+      if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
+        newErrors.abn = "Please enter a valid ABN";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -136,6 +141,13 @@ function MandatoryRequirementsSetupContent() {
           },
         });
       }
+
+      // Auto-update Compliance completion status (non-blocking)
+      // This checks all compliance requirements and updates the setupProgress
+      autoUpdateComplianceCompletion().catch((error) => {
+        console.error("Failed to auto-update compliance completion:", error);
+        // Don't fail the main operation if this fails
+      });
 
       // Move to next step or finish
       if (currentStep < STEPS.length) {

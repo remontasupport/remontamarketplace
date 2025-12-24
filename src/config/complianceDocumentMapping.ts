@@ -50,10 +50,11 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
   },
 
   // Australian Business Number (text field, numbers only)
+  // Uses server action: updateWorkerABN from @/services/worker/compliance.service.ts
   "abn-contractor": {
     documentId: "abn-contractor",
     component: Step6ABN,
-    apiEndpoint: "/api/worker/profile/update-step",
+    // Server action is called automatically via useUpdateProfileStep hook
   },
 
   // ========================================

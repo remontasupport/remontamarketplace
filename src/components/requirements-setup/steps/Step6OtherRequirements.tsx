@@ -8,6 +8,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import { Button } from "@/components/ui/button";
 import {
   ArrowUpTrayIcon,
@@ -139,7 +140,6 @@ export default function Step6OtherRequirements({
     setIsUploading(true);
 
     try {
-   
 
       const formData = new FormData();
       formData.append("file", file);
@@ -149,31 +149,12 @@ export default function Step6OtherRequirements({
       const documentName = customDocumentName || selectedDocumentType;
       formData.append("documentName", documentName);
 
-    
+      // Use server action instead of API endpoint
+      const result = await uploadComplianceDocument(formData);
 
-      const response = await fetch("/api/upload/other-requirements", {
-        method: "POST",
-        body: formData,
-      });
-
-
-
-      if (!response.ok) {
-        const errorText = await response.text();
-       
-
-        let error;
-        try {
-          error = JSON.parse(errorText);
-        } catch {
-          error = { error: errorText };
-        }
-
-        throw new Error(error.error || error.details || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
-
-      const responseData = await response.json();
-   
 
       // Refresh the list of uploaded documents
       await fetchUploadedDocuments();

@@ -83,3 +83,45 @@ export const updateWorkerAddressDefaults: UpdateWorkerAddressData = {
   state: "",
   postalCode: "",
 };
+
+// Schema: Update Worker Personal Info (Step 5)
+export const updateWorkerPersonalInfoSchema = z.object({
+  age: z.number({
+    required_error: "Age is required",
+    invalid_type_error: "Age is required",
+  })
+    .int("Age must be a whole number")
+    .min(18, "You must be at least 18 years old")
+    .max(120, "Please enter a valid age"),
+  gender: z.enum(["male", "female"], {
+    required_error: "Gender is required",
+    invalid_type_error: "Gender is required",
+  }),
+  hasVehicle: z.enum(["Yes", "No"], {
+    errorMap: () => ({ message: "Please select whether you have driver access" }),
+  }).optional(),
+});
+
+export type UpdateWorkerPersonalInfoData = z.infer<typeof updateWorkerPersonalInfoSchema>;
+
+export const updateWorkerPersonalInfoDefaults: UpdateWorkerPersonalInfoData = {
+  age: undefined,
+  gender: undefined,
+  hasVehicle: undefined,
+};
+
+// Schema: Update Worker ABN
+export const updateWorkerABNSchema = z.object({
+  abn: z.string()
+    .optional()
+    .refine(
+      (val) => !val || val.replace(/\s/g, "").length === 11,
+      { message: "Please enter a valid ABN" }
+    ),
+});
+
+export type UpdateWorkerABNData = z.infer<typeof updateWorkerABNSchema>;
+
+export const updateWorkerABNDefaults: UpdateWorkerABNData = {
+  abn: "",
+};

@@ -43,6 +43,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useIdentityDocuments, useDriverLicense, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
+import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -297,17 +298,12 @@ export default function Step1ProofOfIdentity({
       formData.append("file", file);
       formData.append("documentType", documentType);
 
-      const response = await fetch("/api/upload/identity-documents", {
-        method: "POST",
-        body: formData,
-      });
+      // Use server action instead of API endpoint
+      const result = await uploadComplianceDocument(formData);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
-
-      const responseData = await response.json();
 
       // Invalidate cache to update all steps automatically
       await queryClient.invalidateQueries({
@@ -323,7 +319,7 @@ export default function Step1ProofOfIdentity({
       }
 
     } catch (error: any) {
-   
+
       alert(`Upload failed: ${error.message}`);
     } finally {
       setUploadingFiles((prev) => {

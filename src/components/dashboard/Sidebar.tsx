@@ -13,10 +13,14 @@ import {
   ClipboardDocumentCheckIcon,
   AcademicCapIcon
 } from '@heroicons/react/24/outline'
+import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
+import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
+import { useSession } from 'next-auth/react'
+import { parseSetupProgress } from '@/types/setupProgress'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
 
@@ -60,6 +64,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps = {}) {
+  // Get session and profile data for setup progress
+  const { data: session } = useSession()
+  const { data: profileData } = useWorkerProfile(session?.user?.id)
+
+  // Parse setup progress to show checkmarks
+  const setupProgress = useMemo(() => {
+    return parseSetupProgress(profileData?.setupProgress)
+  }, [profileData?.setupProgress])
+
   // Fetch worker requirements to generate dynamic compliance items
   const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
 
@@ -99,6 +112,22 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
     }
     return []
   }, [dynamicTrainingSteps])
+
+  // Helper to check if a section is completed
+  const isSectionCompleted = (sectionId: string): boolean => {
+    switch (sectionId) {
+      case 'account-details':
+        return setupProgress.accountDetails
+      case 'requirements':
+        return setupProgress.compliance
+      case 'trainings':
+        return setupProgress.trainings
+      case 'services':
+        return setupProgress.services
+      default:
+        return false
+    }
+  }
 
   const menuSections: MenuSection[] = [
     {
@@ -231,6 +260,17 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
                 <div className="nav-dropdown-title">
                   <SectionIcon className="nav-dropdown-badge-icon" />
                   <span>{section.name}</span>
+                  {isSectionCompleted(section.id) && (
+                    <CheckCircleIcon
+                      className="nav-section-checkmark"
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        color: '#10B981',
+                        marginLeft: '8px'
+                      }}
+                    />
+                  )}
                 </div>
                 {isOpen ? (
                   <ChevronUpIcon className="nav-dropdown-icon" />

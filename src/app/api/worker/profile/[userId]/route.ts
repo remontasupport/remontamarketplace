@@ -51,11 +51,13 @@ export async function GET(
         introduction: true, // Bio
         age: true,
         gender: true,
-        languages: true,
         hasVehicle: true,
+        abn: true,
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,
+        currentSetupSection: true,
+        setupProgress: true,
       },
     });
 

@@ -81,10 +81,9 @@ interface FormData {
     documentUrl: string;
     uploadedAt: string;
   }>;
-  // Step 6: Personal Info
+  // Step 5: Personal Info
   age: string;
   gender: string;
-  languages: string[];
   hasVehicle: string;
   // Step 7: ABN
   abn: string;
@@ -125,7 +124,6 @@ function AccountSetupContent() {
     identityDocuments: [],
     age: "",
     gender: "",
-    languages: [],
     hasVehicle: "",
     abn: "",
   });
@@ -147,13 +145,13 @@ function AccountSetupContent() {
         photo: photoUrl,
         bio: profileData.introduction || "",
         streetAddress: parsedLocation.streetAddress || "",
-        city: parsedLocation.city || profileData.city || "",
-        state: parsedLocation.state || profileData.state || "",
-        postalCode: parsedLocation.postalCode || profileData.postalCode || "",
+        // Prioritize individual columns over parsed location (new data structure)
+        city: profileData.city || parsedLocation.city || "",
+        state: profileData.state || parsedLocation.state || "",
+        postalCode: profileData.postalCode || parsedLocation.postalCode || "",
         identityDocuments: [],
         age: profileData.age ? String(profileData.age) : "",
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
-        languages: Array.isArray(profileData.languages) ? profileData.languages : [],
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
       });
@@ -227,6 +225,19 @@ function AccountSetupContent() {
           newErrors.postalCode = "Postal code must be 4 digits";
         }
         break;
+      case "personal-info": // Personal Info
+        if (!formData.age || formData.age === "") {
+          newErrors.age = "Age is required";
+        } else if (typeof formData.age === 'number' && formData.age < 18) {
+          newErrors.age = "You must be at least 18 years old";
+        } else if (typeof formData.age === 'number' && formData.age > 120) {
+          newErrors.age = "Please enter a valid age";
+        }
+
+        if (!formData.gender || formData.gender === "") {
+          newErrors.gender = "Gender is required";
+        }
+        break;
       case "abn": // ABN
         if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
           newErrors.abn = "ABN must be 11 digits";
@@ -274,13 +285,15 @@ function AccountSetupContent() {
             };
             break;
           case 5: // Personal Info (Other personal info step)
+            // Convert age to integer (required by Zod schema)
+            // formData.age is stored as string, need to convert to number
+            const ageValue = typeof formData.age === 'string' ? parseInt(formData.age, 10) : formData.age;
             dataToSend = {
-              age: formData.age,
+              age: ageValue,
               gender: formData.gender,
-              languages: formData.languages,
               hasVehicle: formData.hasVehicle,
             };
-          
+
             break;
           default:
             // For any other step, send the entire formData (fallback)

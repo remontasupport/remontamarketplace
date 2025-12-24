@@ -8,6 +8,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 
 // Query Keys
 export const complianceDocumentsKeys = {
@@ -77,6 +78,7 @@ export function useComplianceDocuments(
 
 /**
  * Hook to upload a compliance document
+ * REFACTORED: Now uses server action instead of API endpoint
  */
 export function useUploadComplianceDocument() {
   const queryClient = useQueryClient();
@@ -87,40 +89,41 @@ export function useUploadComplianceDocument() {
       documentType,
       requirementName,
       expiryDate,
-      apiEndpoint = "/api/worker/compliance-documents",
+      apiEndpoint, // Deprecated - kept for backward compatibility but ignored
     }: {
       file: File;
       documentType: string;
       requirementName?: string;
       expiryDate?: string;
-      apiEndpoint?: string;
+      apiEndpoint?: string; // Deprecated
     }) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("documentType", documentType);
       if (requirementName) {
-        formData.append("requirementName", requirementName);
+        formData.append("documentName", requirementName); // Use documentName for consistency
       }
       if (expiryDate) {
         formData.append("expiryDate", expiryDate);
       }
 
-      const response = await fetch(apiEndpoint, {
-        method: "POST",
-        body: formData,
-      });
+      // Use server action instead of API endpoint
+      const result = await uploadComplianceDocument(formData);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
 
-      return response.json();
+      return result;
     },
     onSuccess: (_, variables) => {
       // Invalidate and refetch compliance documents for this type
       queryClient.invalidateQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
+      });
+      // Also invalidate all compliance documents
+      queryClient.invalidateQueries({
+        queryKey: complianceDocumentsKeys.all,
       });
     },
   });
