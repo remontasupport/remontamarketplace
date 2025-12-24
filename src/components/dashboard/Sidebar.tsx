@@ -132,13 +132,13 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
   const menuSections: MenuSection[] = [
     {
       id: 'account-details',
-      name: 'Account details',
+      name: 'Personal Info',
       icon: UserCircleIcon,
       items: accountDetailsItems
     },
     {
       id: 'requirements',
-      name: 'Compliance',
+      name: 'Mandatory',
       icon: ClipboardDocumentCheckIcon,
       items: requirementsItems
     },
@@ -150,7 +150,7 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
     },
     {
       id: 'services',
-      name: 'Your services',
+      name: 'My Services',
       icon: HandRaisedIcon,
       items: servicesItems
     }

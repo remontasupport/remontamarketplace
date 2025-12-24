@@ -135,8 +135,24 @@ function AccountSetupContent() {
       // photos is now a string (single photo URL), not an array
       const photoUrl = profileData.photos || null;
 
-      // Parse location string to extract street address, city, state, and postal code
-      const parsedLocation = parseLocation(profileData.location || "");
+      // Extract street address from location string
+      let streetAddress = "";
+
+      if (profileData.location && profileData.city && profileData.state && profileData.postalCode) {
+        // Backend joins with ", " so we build: "City, State, PostalCode"
+        const expectedEnd = `${profileData.city}, ${profileData.state}, ${profileData.postalCode}`;
+
+        // Case 1: Location is EXACTLY "City, State, PostalCode" (no street address)
+        if (profileData.location === expectedEnd) {
+          streetAddress = "";
+        }
+        // Case 2: Location is "Street, City, State, PostalCode" (has street address)
+        else if (profileData.location.includes(`, ${expectedEnd}`)) {
+          // Split and take everything before the expected end
+          const parts = profileData.location.split(`, ${expectedEnd}`);
+          streetAddress = parts[0] || "";
+        }
+      }
 
       setFormData({
         firstName: profileData.firstName || "",
@@ -144,18 +160,17 @@ function AccountSetupContent() {
         lastName: profileData.lastName || "",
         photo: photoUrl,
         bio: profileData.introduction || "",
-        streetAddress: parsedLocation.streetAddress || "",
-        // Prioritize individual columns over parsed location (new data structure)
-        city: profileData.city || parsedLocation.city || "",
-        state: profileData.state || parsedLocation.state || "",
-        postalCode: profileData.postalCode || parsedLocation.postalCode || "",
+        streetAddress: streetAddress,
+        city: profileData.city || "",
+        state: profileData.state || "",
+        postalCode: profileData.postalCode || "",
         identityDocuments: [],
         age: profileData.age ? String(profileData.age) : "",
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
       });
-     
+
       hasInitializedFormData.current = true;
     }
   }, [profileData]);

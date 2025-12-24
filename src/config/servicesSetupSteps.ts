@@ -22,7 +22,7 @@ export interface ServicesSetupStep {
 const BASE_STEP: ServicesSetupStep = {
   id: 1,
   slug: "services-offer",
-  title: "Your Services",
+  title: "Qualifications",
   component: Step1ServicesOffer,
 };
 
