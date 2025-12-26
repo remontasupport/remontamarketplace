@@ -12,7 +12,8 @@ import {
   ArrowUpTrayIcon,
   DocumentIcon,
   CheckCircleIcon,
-  PlusCircleIcon
+  PlusCircleIcon,
+  PencilSquareIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
@@ -189,44 +190,26 @@ export default function Step5InfectionControl({
               ) : uploadedDocument && !isEditMode ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
-                  {isPdfDocument(uploadedDocument.documentUrl) ? (
-                    <div className="document-preview-pdf">
-                      <DocumentIcon className="document-preview-pdf-icon" />
-                      <p className="document-preview-pdf-text">
-                        Infection Control Training Certificate
-                      </p>
+                  <div className="uploaded-document-item">
+                    <div className="uploaded-document-content">
+                      <DocumentIcon className="uploaded-document-icon" />
                       <a
                         href={uploadedDocument.documentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                        className="uploaded-document-link"
                       >
-                        View PDF
+                        Infection Control Training Certificate
                       </a>
                     </div>
-                  ) : (
-                    <img
-                      src={uploadedDocument.documentUrl}
-                      alt="Infection Control Training"
-                      className="document-preview-image"
-                    />
-                  )}
-                  <button
-                    onClick={() => setIsEditMode(true)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#0C1628",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      padding: "0.5rem 0",
-                      fontFamily: "var(--font-poppins)",
-                      marginTop: "0.75rem"
-                    }}
-                  >
-                    Replace Document
-                  </button>
+                    <button
+                      onClick={() => setIsEditMode(true)}
+                      className="uploaded-document-remove"
+                      title="Replace document"
+                    >
+                      <PencilSquareIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 // Show upload button

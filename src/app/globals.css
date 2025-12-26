@@ -6,6 +6,7 @@
 @import "./styles/account-setup.css";
 @import "./styles/services-setup.css";
 @import "./styles/requirements-setup.css";
+@import "./styles/profile-building.css";
 
 @custom-variant dark (&:is(.dark *));
 

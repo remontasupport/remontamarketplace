@@ -446,6 +446,9 @@ model WorkerAdditionalInfo {
   uniqueService     String?       @db.Text        // Your unique service
   funFact           String?       @db.Text        // Fun fact
 
+  // Bank Account (JSONB) - stores { accountName, bankName, bsb, accountNumber }
+  bankAccount       Json?                         // Bank account details
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

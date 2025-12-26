@@ -11,7 +11,8 @@ import {
   UserCircleIcon,
   HandRaisedIcon,
   ClipboardDocumentCheckIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline'
 import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
@@ -61,17 +62,27 @@ const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
 interface SidebarProps {
   isMobileOpen?: boolean
   onClose?: () => void
+  profileData?: {
+    firstName: string
+    photo: string | null
+  }
 }
 
-export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps = {}) {
+export default function Sidebar({ isMobileOpen = false, onClose, profileData: profileDataProp }: SidebarProps = {}) {
   // Get session and profile data for setup progress
   const { data: session } = useSession()
-  const { data: profileData } = useWorkerProfile(session?.user?.id)
+  const { data: profileDataFromHook } = useWorkerProfile(session?.user?.id)
+
+  // Use prop data if available, otherwise fall back to hook data
+  const profileData = profileDataProp || profileDataFromHook
 
   // Parse setup progress to show checkmarks
+  // Only access setupProgress if it exists (it's only on WorkerProfile, not the prop type)
   const setupProgress = useMemo(() => {
-    return parseSetupProgress(profileData?.setupProgress)
-  }, [profileData?.setupProgress])
+    if (!profileData) return parseSetupProgress(undefined)
+    const progress = 'setupProgress' in profileData ? profileData.setupProgress : undefined
+    return parseSetupProgress(progress)
+  }, [profileData])
 
   // Fetch worker requirements to generate dynamic compliance items
   const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
@@ -210,6 +221,11 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
     }
   }
 
+  // Get profile photo URL from database or use placeholder
+  // Handle both prop type (photo) and WorkerProfile type (photos)
+  const photoUrl = (profileData && 'photo' in profileData ? profileData.photo : profileData?.photos) || '/images/profilePlaceHolder.png'
+  const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
+
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Logo - Only visible on mobile */}
@@ -226,11 +242,35 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
         </Link>
       </div>
 
+      {/* Profile Section */}
+      <div className="sidebar-profile-section">
+        <div className="sidebar-profile-avatar">
+          <Image
+            src={photoUrl}
+            alt={displayName}
+            width={64}
+            height={64}
+            className="sidebar-profile-img"
+          />
+        </div>
+        <div className="sidebar-profile-info">
+          <h4 className="sidebar-profile-name">{displayName}</h4>
+          <p className="sidebar-profile-role">Support Worker</p>
+        </div>
+      </div>
+
+      {/* Edit Profile Link - Separate Section */}
+      <div className="sidebar-edit-profile-section">
+        <Link href="/dashboard/worker/profile-building" className="sidebar-edit-profile" onClick={handleLinkClick}>
+          <PencilIcon className="sidebar-edit-icon" />
+          <span>Edit profile</span>
+        </Link>
+      </div>
+
       {/* Navigation */}
       <nav className="sidebar-nav">
         {/* Overview Section */}
         <div className="nav-section">
-          <h3 className="nav-section-title">OVERVIEW</h3>
           <ul className="nav-list">
             <li>
               <Link

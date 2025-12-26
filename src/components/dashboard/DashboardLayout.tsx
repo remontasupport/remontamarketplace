@@ -2,12 +2,10 @@
 
 import { ReactNode, useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
-import ProfileCard from './ProfileCard'
 import SimpleDashboardHeader from './SimpleDashboardHeader'
 
 interface DashboardLayoutProps {
   children: ReactNode
-  showProfileCard?: boolean
   profileData?: {
     firstName: string
     photo: string | null
@@ -16,7 +14,6 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({
   children,
-  showProfileCard = true,
   profileData
 }: DashboardLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -48,25 +45,19 @@ export default function DashboardLayout({
       {/* Dashboard Header - Full Width at Top */}
       <SimpleDashboardHeader onMenuToggle={toggleMobileMenu} />
 
-      {/* Dashboard Container - Sidebar + Content + Profile */}
+      {/* Dashboard Container - Sidebar + Content */}
       <div className="dashboard-container">
-        {/* Left Sidebar */}
+        {/* Left Sidebar with Profile */}
         <Sidebar
           isMobileOpen={isMobileMenuOpen}
           onClose={closeMobileMenu}
+          profileData={profileData}
         />
 
         {/* Main Content */}
         <main className="dashboard-main">
           {children}
         </main>
-
-        {/* Right Sidebar - Profile Card */}
-        {showProfileCard && (
-          <aside className="dashboard-right-sidebar">
-            <ProfileCard profileData={profileData} />
-          </aside>
-        )}
       </div>
 
       {/* Mobile Menu Overlay */}

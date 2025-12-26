@@ -10,9 +10,11 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/requirements-setup.css";
@@ -48,6 +50,7 @@ export default function GenericComplianceDocument({
   const { data: session } = useSession();
 
   const [expiryDate, setExpiryDate] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const documentType = requirement?.id || "generic-document";
   const hasExpiration = requirement?.hasExpiration ?? false;
@@ -100,12 +103,12 @@ export default function GenericComplianceDocument({
     }
   };
 
-  const handleFileDelete = async () => {
-    if (!uploadedDocument?.id) return;
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
 
-    if (!window.confirm("Are you sure you want to remove this document?")) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
 
     try {
       await deleteMutation.mutateAsync({
@@ -119,30 +122,41 @@ export default function GenericComplianceDocument({
   };
 
   return (
-    <StepContentWrapper
-      title={requirement?.name || "Upload Document"}
-      description={
-        requirement?.description ||
-        "Please upload the required document for verification."
-      }
-      infoBoxTitle="Document Requirements"
-      infoBoxContent={
-        <>
-          <p className="info-box-text">
-            {requirement?.description || "Upload the required compliance document."}
-          </p>
-          {hasExpiration && (
-            <p className="info-box-text mt-3">
-              <strong>Note:</strong> This document has an expiry date. Please
-              ensure you provide the correct expiration date.
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete file?"
+        confirmText="Yes"
+        cancelText="No"
+      />
+
+      <StepContentWrapper
+        title={requirement?.name || "Upload Document"}
+        description={
+          requirement?.description ||
+          "Please upload the required document for verification."
+        }
+        infoBoxTitle="Document Requirements"
+        infoBoxContent={
+          <>
+            <p className="info-box-text">
+              {requirement?.description || "Upload the required compliance document."}
             </p>
-          )}
-          <p className="info-box-text mt-3">
-            <strong>Accepted formats:</strong> JPG, PNG, PDF (max 10MB)
-          </p>
-        </>
-      }
-    >
+            {hasExpiration && (
+              <p className="info-box-text mt-3">
+                <strong>Note:</strong> This document has an expiry date. Please
+                ensure you provide the correct expiration date.
+              </p>
+            )}
+            <p className="info-box-text mt-3">
+              <strong>Accepted formats:</strong> JPG, PNG, PDF (max 10MB)
+            </p>
+          </>
+        }
+      >
       {/* Error Message */}
       {errors[documentType] && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -176,59 +190,38 @@ export default function GenericComplianceDocument({
           <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
             Uploaded Document
           </h4>
-          <div className="document-preview-container">
-            {isPdfDocument(uploadedDocument.documentUrl) ? (
-              <div className="document-preview-pdf">
-                <DocumentIcon className="document-preview-pdf-icon" />
-                <p className="document-preview-pdf-text">
-                  {requirement?.name || "Document"}
-                </p>
-                <a
-                  href={uploadedDocument.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
-                >
-                  View PDF
-                </a>
-              </div>
-            ) : (
-              <img
-                src={uploadedDocument.documentUrl}
-                alt={requirement?.name || "Document"}
-                className="document-preview-image"
-              />
-            )}
-
-            <div className="mt-3" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                {uploadedDocument.expiryDate && (
-                  <p className="text-sm text-gray-700 font-poppins" style={{ margin: 0 }}>
-                    <strong>Expiry Date:</strong>{" "}
-                    {new Date(uploadedDocument.expiryDate).toLocaleDateString()}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 font-poppins" style={{ marginTop: "0.25rem" }}>
-                  Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
-                </p>
-              </div>
-
-              <button
-                onClick={handleFileDelete}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#dc2626",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  fontSize: "0.875rem",
-                  padding: "0",
-                  fontFamily: "var(--font-poppins)",
-                }}
+          <div className="uploaded-document-item">
+            <div className="uploaded-document-content">
+              <DocumentIcon className="uploaded-document-icon" />
+              <a
+                href={uploadedDocument.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="uploaded-document-link"
               >
-                Delete
-              </button>
+                {requirement?.name || "Document"}
+              </a>
             </div>
+            <button
+              onClick={handleFileDelete}
+              className="uploaded-document-remove"
+              title="Remove document"
+            >
+              <XCircleIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Metadata below the file item */}
+          <div className="mt-3">
+            {uploadedDocument.expiryDate && (
+              <p className="text-sm text-gray-700 font-poppins" style={{ margin: 0 }}>
+                <strong>Expiry Date:</strong>{" "}
+                {new Date(uploadedDocument.expiryDate).toLocaleDateString()}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 font-poppins" style={{ marginTop: "0.25rem" }}>
+              Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+            </p>
           </div>
         </div>
       ) : (
@@ -296,5 +289,6 @@ export default function GenericComplianceDocument({
         </>
       )}
     </StepContentWrapper>
+    </>
   );
 }

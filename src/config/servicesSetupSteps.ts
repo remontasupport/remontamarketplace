@@ -45,17 +45,15 @@ export function generateServicesSetupSteps(selectedServices: string[]): Services
   selectedServices.forEach((serviceTitle, index) => {
     if (serviceHasQualifications(serviceTitle)) {
       const slug = `qualifications-${serviceTitle.toLowerCase().replace(/\s+/g, "-")}`;
-
       steps.push({
         id: steps.length + 1,
         slug: slug,
         title: `Qualifications for ${serviceTitle}`,
         component: ServiceQualificationStep,
-        serviceTitle: serviceTitle, // Pass service title to component
+        serviceTitle: serviceTitle,
       });
     }
   });
-
   return steps;
 }
 

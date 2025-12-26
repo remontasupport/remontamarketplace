@@ -10,8 +10,10 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowUpTrayIcon,
-  DocumentIcon
+  DocumentIcon,
+  XCircleIcon
 } from "@heroicons/react/24/outline";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
   useSingleComplianceDocument,
@@ -84,6 +86,7 @@ export default function Step2PoliceCheck({
   const { data: session } = useSession();
 
   const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // OPTIMIZED: Use React Query instead of manual fetch
   const {
@@ -130,8 +133,37 @@ export default function Step2PoliceCheck({
     }
   };
 
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType: "police-check",
+        apiEndpoint: "/api/worker/police-check",
+      });
+    } catch (error: any) {
+      alert(`Delete failed: ${error.message}`);
+    }
+  };
+
   return (
-    <StepContentWrapper>
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete file?"
+        confirmText="Yes"
+        cancelText="No"
+      />
+
+      <StepContentWrapper>
       <div className="form-page-content">
         {/* Left Column - Form */}
         <div className="form-column">
@@ -188,44 +220,26 @@ export default function Step2PoliceCheck({
               ) : uploadedDocument && !isEditMode ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
-                  {isPdfDocument(uploadedDocument.documentUrl) ? (
-                    <div className="document-preview-pdf">
-                      <DocumentIcon className="document-preview-pdf-icon" />
-                      <p className="document-preview-pdf-text">
-                        National Police Check
-                      </p>
+                  <div className="uploaded-document-item">
+                    <div className="uploaded-document-content">
+                      <DocumentIcon className="uploaded-document-icon" />
                       <a
                         href={uploadedDocument.documentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                        className="uploaded-document-link"
                       >
-                        View PDF
+                        National Police Check
                       </a>
                     </div>
-                  ) : (
-                    <img
-                      src={uploadedDocument.documentUrl}
-                      alt="National Police Check"
-                      className="document-preview-image"
-                    />
-                  )}
-                  <button
-                    onClick={() => setIsEditMode(true)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#0C1628",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      padding: "0.5rem 0",
-                      fontFamily: "var(--font-poppins)",
-                      marginTop: "0.75rem"
-                    }}
-                  >
-                    Replace Document
-                  </button>
+                    <button
+                      onClick={handleFileDelete}
+                      className="uploaded-document-remove"
+                      title="Remove document"
+                    >
+                      <XCircleIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 // Show upload button
@@ -306,5 +320,6 @@ export default function Step2PoliceCheck({
         </div>
       </div>
     </StepContentWrapper>
+    </>
   );
 }
