@@ -106,10 +106,6 @@ export async function POST(request: Request) {
       funFact,
       hobbies,
       uniqueService,
-      whyEnjoyWork,
-      additionalInfo,
-      consentProfileShare,
-      consentMarketing,
       photos, // Photo URLs (already uploaded to Blob)
     } = body;
 
@@ -281,13 +277,9 @@ export async function POST(request: Request) {
               funFact,
               hobbies,
               uniqueService,
-              whyEnjoyWork,
-              additionalInfo,
-              // Photos: Array of Vercel Blob URLs stored as JSON
-              // Use uploaded photo URLs if available, otherwise undefined
-              photos: (photoUrls.length > 0) ? photoUrls : undefined,
-              consentProfileShare: consentProfileShare || false,
-              consentMarketing: consentMarketing || false,
+              // Photos: Single photo URL as string (changed from array to string)
+              // Use first uploaded photo URL if available, otherwise undefined
+              photos: (photoUrls.length > 0) ? photoUrls[0] : undefined,
               profileCompleted: true, // Registration form is complete
               isPublished: false, // Not published until verified
               verificationStatus: 'NOT_STARTED' as const, // Awaiting document upload
@@ -439,8 +431,6 @@ export async function POST(request: Request) {
         funFact,
         hobbies,
         uniqueService,
-        whyEnjoyWork,
-        additionalInfo,
 
         // Geocoded Location
         city: geocodedLocation.city,
@@ -451,10 +441,6 @@ export async function POST(request: Request) {
 
         // Photos (URLs)
         photos: photoUrls,
-
-        // Consent
-        consentProfileShare,
-        consentMarketing,
 
         // Status
         verificationStatus: 'NOT_STARTED',

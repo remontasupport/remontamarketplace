@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 
 interface Step7PhotosProps {
   errors: any;
-  watchedPhotos: string[];
+  watchedPhotos: string;
   watchedConsentProfileShare: boolean | undefined;
   watchedConsentMarketing: boolean | undefined;
   handlePhotoUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -95,7 +95,7 @@ const Step7PhotosComponent = function Step7Photos({
           </div>
         )}
 
-        {!isUploadingPhoto && watchedPhotos && watchedPhotos.length > 0 && (
+        {!isUploadingPhoto && watchedPhotos && (
           <div className="mt-4">
             <p className="text-sm font-poppins text-gray-600 mb-2">Uploaded photo:</p>
             <div className="relative bg-green-50 border border-green-200 rounded-lg p-3">

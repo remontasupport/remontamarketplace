@@ -34,8 +34,8 @@ export async function POST(request: Request) {
       case 2: // Photo
         if (data.photo) {
           // Photo URL is already uploaded to blob storage
-          // Store it in the photos array (first photo is profile photo)
-          updateData.photos = [data.photo];
+          // Store it as a single string (changed from array to string)
+          updateData.photos = data.photo;
         }
         break;
 

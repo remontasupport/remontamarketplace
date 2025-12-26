@@ -54,11 +54,10 @@ export const contractorFormSchema = z.object({
   funFact: z.string().min(1, "A fun fact about yourself is required"),
   hobbies: z.string().min(1, "Hobbies and/or interests are required"),
   uniqueService: z.string().min(1, "Please tell us what makes your service unique"),
-  whyEnjoyWork: z.string().min(1, "Please tell us why you enjoy your work"),
   additionalInfo: z.string().optional(),
 
   // Step 8 - Photos & Consent
-  photos: z.array(z.string().url()).length(1, "Please upload exactly one photo"),
+  photos: z.string().url("Please upload a valid photo").optional().or(z.literal("")),
   consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
   consentMarketing: z.boolean().optional(),
 
@@ -88,11 +87,10 @@ export const contractorFormDefaults = {
   funFact: "",
   hobbies: "",
   uniqueService: "",
-  whyEnjoyWork: "",
   additionalInfo: "",
   qualifications: "",
   hasVehicle: "",
-  photos: [],
+  photos: "",
   consentProfileShare: false,
   consentMarketing: false,
 };

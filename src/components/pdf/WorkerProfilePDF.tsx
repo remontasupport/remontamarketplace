@@ -306,7 +306,7 @@ const WorkerProfilePDF: React.FC<WorkerProfilePDFProps> = ({
 }) => {
   // Use cropped/selected image, or fallback to original
   // Only use valid image URLs (not blob URLs which don't work in PDF)
-  const mainPhoto = worker.photos?.[0] || null;
+  const mainPhoto = worker.photos || null;
   const initials = `${worker.firstName?.[0] || ''}${worker.lastName?.[0] || ''}`;
   const displayName = `${worker.firstName} ${worker.lastName?.[0] || ''}.`;
 

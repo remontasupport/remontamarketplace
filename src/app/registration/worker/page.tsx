@@ -151,19 +151,19 @@ export default function ContractorOnboarding() {
         throw new Error(result.error || 'Upload failed');
       }
 
-      // Store the Blob URL (not the file)
-      setValue("photos", [result.url], { shouldValidate: true });
+      // Store the Blob URL as a string (changed from array to string)
+      setValue("photos", result.url, { shouldValidate: true });
 
     } catch (error: any) {
       setPhotoUploadError(`Failed to upload photo: ${error.message}`);
-      setValue("photos", [], { shouldValidate: true });
+      setValue("photos", "", { shouldValidate: true });
     } finally {
       setIsUploadingPhoto(false);
     }
   }, [setValue, getValues]);
 
   const removePhoto = useCallback(() => {
-    setValue("photos", [], { shouldValidate: true });
+    setValue("photos", "", { shouldValidate: true });
     // Clear error when removing photo
     setPhotoUploadError("");
     setUploadedPhotoName("");

@@ -254,11 +254,7 @@ model WorkerProfile {
   funFact                   String?
   hobbies                   String?
   uniqueService             String?
-  whyEnjoyWork              String?
-  additionalInfo            String?
-  photos                    Json?
-  consentProfileShare       Boolean                   @default(false)
-  consentMarketing          Boolean                   @default(false)
+  photos                    String?
   profileCompleted          Boolean                   @default(false)
   isPublished               Boolean                   @default(false)
   createdAt                 DateTime                  @default(now())

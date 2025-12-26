@@ -262,9 +262,9 @@ export async function getWorkerPhotos(workerId: string): Promise<string[]> {
     },
   });
 
-  // Photos are stored as JSON array
-  if (worker?.photos && Array.isArray(worker.photos)) {
-    return worker.photos as string[];
+  // Photos is now a single string URL (changed from array)
+  if (worker?.photos && typeof worker.photos === 'string') {
+    return [worker.photos]; // Return as array for backwards compatibility
   }
 
   return [];

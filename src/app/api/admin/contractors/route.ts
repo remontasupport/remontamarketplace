@@ -569,45 +569,56 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
   }
 
   // Execute count and data query in parallel for performance
-  const [total, workers] = await Promise.all([
-    prisma.workerProfile.count({ where }),
-    prisma.workerProfile.findMany({
-      where,
-      orderBy,
-      skip,
-      take: params.pageSize,
-      select: {
-        id: true,
-        userId: true,
-        firstName: true,
-        lastName: true,
-        mobile: true,
-        gender: true,
-        age: true,
-        languages: true,
-        workerServices: {
-          select: {
-            categoryName: true,
-          }
-        },
-        user: {
-          select: {
-            email: true,
-          }
-        },
-        city: true,
-        state: true,
-        postalCode: true,
-        latitude: true,
-        longitude: true,
-        experience: true,
-        introduction: true,
-        photos: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    })
-  ])
+  let total, workers;
+  try {
+    [total, workers] = await Promise.all([
+      prisma.workerProfile.count({ where }),
+      prisma.workerProfile.findMany({
+        where,
+        orderBy,
+        skip,
+        take: params.pageSize,
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          mobile: true,
+          gender: true,
+          age: true,
+          languages: true,
+          workerServices: {
+            select: {
+              categoryName: true,
+            }
+          },
+          user: {
+            select: {
+              email: true,
+            }
+          },
+          city: true,
+          state: true,
+          postalCode: true,
+          latitude: true,
+          longitude: true,
+          experience: true,
+          introduction: true,
+          photos: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      })
+    ]);
+  } catch (prismaError: any) {
+    console.error('[Admin Contractors] Prisma query error:', {
+      message: prismaError.message,
+      code: prismaError.code,
+      meta: prismaError.meta,
+      stack: prismaError.stack,
+    });
+    throw new Error(`Database query failed: ${prismaError.message}`);
+  }
 
   const queryDuration = Date.now() - queryStartTime
   // Transform workerServices to legacy services array format for backward compatibility
@@ -783,11 +794,22 @@ export async function GET(request: NextRequest) {
     const duration = Date.now() - startTime
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
+    // Log detailed error for debugging
+    console.error('[Admin Contractors API] Error:', {
+      message: errorMsg,
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+    });
+
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to fetch workers',
         message: errorMsg,
+        // Include stack trace in development
+        ...(process.env.NODE_ENV === 'development' && {
+          stack: error instanceof Error ? error.stack : undefined,
+        }),
       },
       {
         status: 500,

@@ -1020,10 +1020,10 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
-                              {contractor.photos && contractor.photos.length > 0 ? (
+                              {contractor.photos ? (
                                 <img
                                   className="h-10 w-10 rounded-full object-cover"
-                                  src={contractor.photos[0]}
+                                  src={contractor.photos}
                                   alt=""
                                 />
                               ) : (
@@ -1139,10 +1139,10 @@ export default function AdminDashboard() {
               {/* Contractor Info */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
-                  {selectedContractor.photos && selectedContractor.photos.length > 0 ? (
+                  {selectedContractor.photos ? (
                     <img
                       className="h-16 w-16 rounded-full object-cover"
-                      src={selectedContractor.photos[0]}
+                      src={selectedContractor.photos}
                       alt=""
                     />
                   ) : (

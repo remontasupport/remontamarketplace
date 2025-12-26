@@ -99,7 +99,7 @@ export default function WorkerDetailPage() {
 
   // Image crop handlers (must be before early returns)
   const handlePhotoDoubleClick = useCallback(() => {
-    const currentPhoto = selectedImageUrl || data?.data?.photos?.[0]
+    const currentPhoto = selectedImageUrl || data?.data?.photos
     if (isEditMode && currentPhoto) {
       setShowCropModal(true)
     }
@@ -266,7 +266,7 @@ export default function WorkerDetailPage() {
   }
 
   const worker = data.data
-  const mainPhoto = worker.photos && worker.photos.length > 0 ? worker.photos[0] : null
+  const mainPhoto = worker.photos || null
   const initials = `${worker.firstName?.[0] || ''}${worker.lastName?.[0] || ''}`
   const displayName = `${worker.firstName} ${worker.lastName?.[0] || ''}.`
 

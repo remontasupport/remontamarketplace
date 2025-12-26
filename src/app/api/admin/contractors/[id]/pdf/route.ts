@@ -69,7 +69,7 @@ export async function GET(
       ...worker,
       services,
       workerServices: undefined,
-      photos: Array.isArray(worker.photos) ? worker.photos as string[] : undefined,
+      photos: worker.photos || undefined,
     };
 
     // Generate PDF stream
