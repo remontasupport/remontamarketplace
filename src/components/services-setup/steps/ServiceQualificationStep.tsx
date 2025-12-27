@@ -1,8 +1,8 @@
 /**
- * Generic Service Qualification & Skills Step
- * Displays qualifications and skills for a specific service
- * Shows qualifications first, then skills on same page
- * Works with parent's "Next" button - skills view is tracked in formData
+ * Generic Service Qualification, Skills & Documents Step
+ * Displays qualifications, skills, and documents for a specific service
+ * Shows: qualifications → skills → documents
+ * Works with parent's "Next" button - view state is tracked in formData
  */
 
 "use client";
@@ -10,9 +10,10 @@
 import { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon, CloudArrowUpIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
 import { getSkillsForService, SkillCategory } from "@/config/serviceSkills";
+import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
 import "@/app/styles/profile-building.css";
 import { useState } from "react";
 
@@ -22,6 +23,8 @@ interface ServiceQualificationStepProps {
     qualificationsByService: Record<string, string[]>;
     skillsByService: Record<string, string[]>;
     currentServiceShowingSkills: string | null;
+    currentServiceShowingDocuments: string | null;
+    documentsByService?: Record<string, Record<string, File[]>>;
   };
   onChange: (field: string, value: any) => void;
 }
@@ -34,16 +37,23 @@ export default function ServiceQualificationStep({
   // Track expanded categories for skills
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
-  // Get qualifications and skills for this service
+  // Get qualifications, skills, and document requirements for this service
   const qualifications = getQualificationsForService(serviceTitle);
   const skillCategories = getSkillsForService(serviceTitle);
+  const documentRequirements = getServiceDocumentRequirements(serviceTitle);
 
-  // Check if we're showing skills for this service
+  // Check if we're showing skills or documents for this service
   const showingSkills = data.currentServiceShowingSkills === serviceTitle;
+  const showingDocuments = data.currentServiceShowingDocuments === serviceTitle;
 
   // Get currently selected values
   const selectedQualifications = data.qualificationsByService?.[serviceTitle] || [];
   const selectedSkills = data.skillsByService?.[serviceTitle] || [];
+
+  // Local state for uploaded files per requirement type
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>(
+    data.documentsByService?.[serviceTitle] || {}
+  );
 
   // Expand the first 2 skill categories (first row) when switching to skills view
   useEffect(() => {
@@ -104,6 +114,166 @@ export default function ServiceQualificationStep({
   const getSelectedCountForCategory = (category: SkillCategory): number => {
     return category.skills.filter(skill => selectedSkills.includes(skill.id)).length;
   };
+
+  // Document upload handlers
+  const handleFileUpload = (requirementType: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const filesArray = Array.from(files);
+      const currentFiles = uploadedFiles[requirementType] || [];
+      const updatedFiles = [...currentFiles, ...filesArray];
+
+      // Update local state
+      setUploadedFiles((prev) => ({
+        ...prev,
+        [requirementType]: updatedFiles,
+      }));
+
+      // Update parent data
+      const currentDocs = data.documentsByService || {};
+      const updatedDocs = {
+        ...currentDocs,
+        [serviceTitle]: {
+          ...(currentDocs[serviceTitle] || {}),
+          [requirementType]: updatedFiles,
+        },
+      };
+      onChange("documentsByService", updatedDocs);
+    }
+  };
+
+  const handleRemoveFile = (requirementType: string, fileIndex: number) => {
+    const currentFiles = uploadedFiles[requirementType] || [];
+    const updatedFiles = currentFiles.filter((_, i) => i !== fileIndex);
+
+    // Update local state
+    setUploadedFiles((prev) => ({
+      ...prev,
+      [requirementType]: updatedFiles,
+    }));
+
+    // Update parent data
+    const currentDocs = data.documentsByService || {};
+    const updatedDocs = {
+      ...currentDocs,
+      [serviceTitle]: {
+        ...(currentDocs[serviceTitle] || {}),
+        [requirementType]: updatedFiles,
+      },
+    };
+    onChange("documentsByService", updatedDocs);
+  };
+
+  // If showing documents view
+  if (showingDocuments) {
+    return (
+      <div style={{ width: '100%' }}>
+        <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
+          Supporting Documents for {serviceTitle}
+        </h3>
+        <p className="text-sm text-gray-600 font-poppins mb-6">
+          Upload the required documents for {serviceTitle}. Required documents are marked with an asterisk (*).
+        </p>
+
+        {/* Requirements List */}
+        <div className="space-y-6">
+          {documentRequirements.map((requirement) => {
+            const files = uploadedFiles[requirement.type] || [];
+
+            return (
+              <div
+                key={requirement.type}
+                className={`border rounded-lg p-4 ${
+                  requirement.required
+                    ? "border-orange-300 bg-orange-50"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                {/* Requirement Header */}
+                <div className="mb-3">
+                  <h4 className="text-base font-poppins font-semibold text-gray-900 flex items-center gap-2">
+                    {requirement.name}
+                    {requirement.required && (
+                      <span className="text-orange-600 text-sm">*Required</span>
+                    )}
+                    {!requirement.required && (
+                      <span className="text-gray-500 text-sm font-normal">Optional</span>
+                    )}
+                  </h4>
+                  <p className="text-sm text-gray-600 font-poppins mt-1">
+                    {requirement.description}
+                  </p>
+                  <span className="inline-block mt-2 px-2 py-1 text-xs font-poppins bg-gray-100 text-gray-700 rounded">
+                    {requirement.category}
+                  </span>
+                </div>
+
+                {/* Upload Area */}
+                <div className="mb-3">
+                  <label
+                    htmlFor={`upload-${requirement.type}`}
+                    className="block w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-teal-500 transition-colors"
+                  >
+                    <CloudArrowUpIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <div className="text-sm text-gray-600">
+                      <span className="font-semibold text-teal-600 hover:text-teal-500">
+                        Click to upload
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      PDF, PNG, JPG up to 10MB
+                    </p>
+                    <input
+                      id={`upload-${requirement.type}`}
+                      type="file"
+                      className="sr-only"
+                      multiple
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => handleFileUpload(requirement.type, e)}
+                    />
+                  </label>
+                </div>
+
+                {/* Uploaded Files */}
+                {files.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-poppins font-semibold text-gray-700">
+                      Uploaded ({files.length})
+                    </p>
+                    {files.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          <DocumentIcon className="h-4 w-4 text-gray-400" />
+                          <div>
+                            <p className="text-xs font-poppins text-gray-900">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(file.size / 1024).toFixed(2)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(requirement.type, index)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   // If showing skills view
   if (showingSkills) {

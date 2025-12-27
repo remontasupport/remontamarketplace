@@ -25,6 +25,10 @@ interface FormData {
   skillsByService: Record<string, string[]>;
   // Track which service is showing skills view
   currentServiceShowingSkills: string | null;
+  // Track which service is showing documents view
+  currentServiceShowingDocuments: string | null;
+  // Documents by service and requirement type
+  documentsByService: Record<string, Record<string, File[]>>;
   // Other documents step
   selectedQualifications: string[];
 }
@@ -47,6 +51,8 @@ function ServicesSetupContent() {
     qualificationsByService: {},
     skillsByService: {},
     currentServiceShowingSkills: null,
+    currentServiceShowingDocuments: null,
+    documentsByService: {},
     selectedQualifications: [],
   });
 
@@ -70,6 +76,8 @@ function ServicesSetupContent() {
         qualificationsByService: profileData.qualificationsByService || {},
         skillsByService: profileData.skillsByService || {},
         currentServiceShowingSkills: null,
+        currentServiceShowingDocuments: null,
+        documentsByService: profileData.documentsByService || {},
         selectedQualifications: [],
       });
       hasInitializedFormData.current = true;
@@ -100,25 +108,42 @@ function ServicesSetupContent() {
 
   // Save current step and move to next
   const handleNext = async () => {
-    // Import serviceHasSkills function
+    // Import serviceHasSkills function and getServiceDocumentRequirements
     const { serviceHasSkills } = await import("@/config/serviceSkills");
+    const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
 
-    // INTERCEPTOR: Check if we're on a service step with skills
+    // INTERCEPTOR 1: Check if we're on a service step with skills
     // Only intercept if:
     // 1. We have a serviceTitle (it's a service step, not "Other Documents")
     // 2. We're NOT currently showing skills view
-    // 3. The service has skills configured
+    // 3. We're NOT currently showing documents view
+    // 4. The service has skills configured
     const isServiceStep = !!currentStepData?.serviceTitle;
     const isShowingSkills = formData.currentServiceShowingSkills === currentStepData?.serviceTitle;
+    const isShowingDocuments = formData.currentServiceShowingDocuments === currentStepData?.serviceTitle;
     const hasSkills = isServiceStep && serviceHasSkills(currentStepData.serviceTitle!);
 
-    if (isServiceStep && !isShowingSkills && hasSkills) {
+    if (isServiceStep && !isShowingSkills && !isShowingDocuments && hasSkills) {
       // INTERCEPT: Show skills view instead of proceeding to next service
       handleFieldChange("currentServiceShowingSkills", currentStepData.serviceTitle);
       return; // Don't proceed - just show skills
     }
 
-    // PROCEED: Either no skills, or already showed skills, or not a service step
+    // INTERCEPTOR 2: Check if we're on skills view and should show documents
+    // Only intercept if:
+    // 1. We're currently showing skills view
+    // 2. The service has document requirements
+    const documentRequirements = isServiceStep ? getServiceDocumentRequirements(currentStepData.serviceTitle!) : [];
+    const hasDocuments = documentRequirements.length > 0;
+
+    if (isServiceStep && isShowingSkills && !isShowingDocuments && hasDocuments) {
+      // INTERCEPT: Show documents view instead of proceeding to next service
+      handleFieldChange("currentServiceShowingDocuments", currentStepData.serviceTitle);
+      handleFieldChange("currentServiceShowingSkills", null); // Clear skills view
+      return; // Don't proceed - just show documents
+    }
+
+    // PROCEED: Either no skills/documents, or already showed them, or not a service step
     // Validate current step
     if (!validateStep()) {
       return;
@@ -136,10 +161,11 @@ function ServicesSetupContent() {
           selectedQualifications: formData.selectedQualifications,
         };
       } else {
-        // Individual service step - save qualifications AND skills
+        // Individual service step - save qualifications, skills, AND documents
         dataToSend = {
           qualificationsByService: formData.qualificationsByService,
           skillsByService: formData.skillsByService,
+          documentsByService: formData.documentsByService,
         };
       }
 
@@ -150,9 +176,12 @@ function ServicesSetupContent() {
         data: dataToSend,
       });
 
-      // Clear skills view state before moving to next step
+      // Clear skills and documents view state before moving to next step
       if (formData.currentServiceShowingSkills) {
         handleFieldChange("currentServiceShowingSkills", null);
+      }
+      if (formData.currentServiceShowingDocuments) {
+        handleFieldChange("currentServiceShowingDocuments", null);
       }
 
       // Move to next step or go to Additional Documents (Section 3)
@@ -173,6 +202,13 @@ function ServicesSetupContent() {
 
   // Go to previous step
   const handlePrevious = () => {
+    // If we're currently showing documents view, go back to skills view
+    if (formData.currentServiceShowingDocuments) {
+      handleFieldChange("currentServiceShowingDocuments", null);
+      handleFieldChange("currentServiceShowingSkills", currentStepData?.serviceTitle || null);
+      return;
+    }
+
     // If we're currently showing skills view, go back to qualifications view
     if (formData.currentServiceShowingSkills) {
       handleFieldChange("currentServiceShowingSkills", null);
@@ -200,11 +236,14 @@ function ServicesSetupContent() {
     }
   }, [currentStepIndex, router, stepSlug, STEPS]);
 
-  // Reset skills view state when navigating to a different step (e.g., via sidebar)
+  // Reset skills and documents view state when navigating to a different step (e.g., via sidebar)
   useEffect(() => {
     // Always start with qualifications view when landing on a step
     if (formData.currentServiceShowingSkills) {
       handleFieldChange("currentServiceShowingSkills", null);
+    }
+    if (formData.currentServiceShowingDocuments) {
+      handleFieldChange("currentServiceShowingDocuments", null);
     }
   }, [stepSlug]); // Reset whenever stepSlug changes
 
@@ -238,6 +277,54 @@ function ServicesSetupContent() {
     stepProps.serviceTitle = currentStepData.serviceTitle;
   }
 
+  // Determine next button text
+  const getNextButtonText = () => {
+    const { serviceHasSkills } = require("@/config/serviceSkills");
+    const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
+    const isLastService = currentStep === STEPS.length;
+    const currentServiceHasSkills = currentStepData?.serviceTitle && serviceHasSkills(currentStepData.serviceTitle);
+    const documentRequirements = currentStepData?.serviceTitle ? getServiceDocumentRequirements(currentStepData.serviceTitle) : [];
+    const currentServiceHasDocuments = documentRequirements.length > 0;
+
+    // If showing documents view of last service, show "Complete"
+    if (formData.currentServiceShowingDocuments && isLastService) {
+      return "Complete";
+    }
+
+    // If showing documents view of any other service, show "Next"
+    if (formData.currentServiceShowingDocuments) {
+      return "Next";
+    }
+
+    // If showing skills view of last service but it has documents, show "Next"
+    if (formData.currentServiceShowingSkills && isLastService && currentServiceHasDocuments) {
+      return "Next";
+    }
+
+    // If showing skills view of last service with no documents, show "Complete"
+    if (formData.currentServiceShowingSkills && isLastService) {
+      return "Complete";
+    }
+
+    // If showing skills view of any other service, show "Next"
+    if (formData.currentServiceShowingSkills) {
+      return "Next";
+    }
+
+    // If on qualifications of last service but it has skills or documents, show "Next"
+    if (isLastService && (currentServiceHasSkills || currentServiceHasDocuments)) {
+      return "Next";
+    }
+
+    // If on qualifications of last service with no skills and no documents, show "Complete"
+    if (isLastService) {
+      return "Complete";
+    }
+
+    // Otherwise show "Next"
+    return "Next";
+  };
+
   return (
     <DashboardLayout showProfileCard={false}>
       <StepContainer
@@ -249,7 +336,7 @@ function ServicesSetupContent() {
         onPrevious={handlePrevious}
         onSkip={() => {}}
         isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Complete" : "Next"}
+        nextButtonText={getNextButtonText()}
         showSkip={false}
       >
         {/* Success Message */}

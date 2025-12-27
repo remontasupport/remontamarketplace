@@ -9,16 +9,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import Loader from "@/components/ui/Loader";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export default function ManageServicesPage() {
   const { data: session, status } = useSession();
-  const router = useRouter();
 
   // Fetch profile data
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
@@ -95,16 +92,6 @@ export default function ManageServicesPage() {
     <DashboardLayout showProfileCard={false}>
       <div className="form-page-container">
         <div className="account-step-container">
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-poppins transition-colors text-sm"
-            style={{ marginLeft: '2rem' }}
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-            Back
-          </button>
-
           {/* Render Services Management Component */}
           <Step1ServicesOffer
             data={formData}

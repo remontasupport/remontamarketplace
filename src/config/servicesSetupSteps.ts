@@ -27,19 +27,22 @@ const ADDITIONAL_DOCUMENTS_STEP: ServicesSetupStep = {
 
 /**
  * Generate dynamic steps based on selected services
- * Each service gets its own step (NO Additional Documents - that's Section 3)
+ * Each service gets: Qualifications/Skills/Documents (all in one step)
  *
  * Flow: Support Worker → Cleaning Services → ...
- * Note: Skills selection is handled within each service step
+ * Note: Skills and documents selection are handled within the qualifications step
  */
 export function generateServicesSetupSteps(selectedServices: string[]): ServicesSetupStep[] {
   const steps: ServicesSetupStep[] = [];
+  let stepId = 1;
 
-  // Add a step for each selected service
-  selectedServices.forEach((serviceTitle, index) => {
+  // For each service, add qualifications/skills/documents step
+  selectedServices.forEach((serviceTitle) => {
     const slug = serviceNameToSlug(serviceTitle);
+
+    // Single step: Qualifications, Skills & Documents for this service
     steps.push({
-      id: index + 1, // Start from 1
+      id: stepId++,
       slug: slug,
       title: serviceTitle,
       component: ServiceQualificationStep,
