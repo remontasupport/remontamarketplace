@@ -184,7 +184,6 @@ function TrainingsSetupContent() {
         totalSteps={STEPS.length}
         stepTitle={currentStepData.title}
         sectionTitle="Trainings"
-        sectionNumber="4"
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={handleSkip}

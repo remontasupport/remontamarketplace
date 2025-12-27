@@ -431,6 +431,15 @@
   margin: 0 0 1rem 0;
 }
 
+/* Skills view - force full width, break out of grid */
+.skills-view-container {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 /* Checkbox Group (multiple checkboxes) */
 .checkbox-group {
   display: flex;

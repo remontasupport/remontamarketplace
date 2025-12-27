@@ -32,6 +32,7 @@ interface ServiceCardProps {
   onRemove: (service: string) => void;
   onEditCategories: () => void;
   onCardClick: (service: string) => void;
+  onDocumentsClick: (service: string) => void;
   isEditMode: boolean;
   hasSubcategories: boolean; // Flag to show if service has subcategories
 }

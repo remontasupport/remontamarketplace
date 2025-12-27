@@ -45,7 +45,7 @@ export default function StepContainer({
       {/* Header Section */}
       <div className="form-page-header">
         <div className="form-page-breadcrumb">
-          <span className="breadcrumb-number">{sectionNumber}.</span>
+          {sectionNumber && <span className="breadcrumb-number">{sectionNumber}.</span>}
           <span className="breadcrumb-text">{sectionTitle}</span>
         </div>
         <h1 className="form-page-title">{stepTitle}</h1>

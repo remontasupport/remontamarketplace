@@ -210,7 +210,6 @@ function MandatoryRequirementsSetupContent() {
         totalSteps={STEPS.length}
         stepTitle={currentStepData.title}
         sectionTitle="Compliance"
-        sectionNumber="3"
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={handleSkip}

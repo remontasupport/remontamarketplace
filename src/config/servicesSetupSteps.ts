@@ -3,57 +3,50 @@
  * Dynamically generates steps based on selected services
  */
 
-import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
 import Step2OtherDocuments from "@/components/services-setup/steps/Step2OtherDocuments";
 import ServiceQualificationStep from "@/components/services-setup/steps/ServiceQualificationStep";
-import { getQualificationsForService, serviceHasQualifications } from "./serviceQualificationRequirements";
+import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 
 export interface ServicesSetupStep {
   id: number;
   slug: string;
   title: string;
   component: React.ComponentType<any>;
-  serviceTitle?: string; // For qualification steps, which service they belong to
+  serviceTitle?: string; // For service qualification steps
 }
 
 /**
- * Base steps - always shown
+ * Additional Documents step (now removed from services section)
  */
-const BASE_STEP: ServicesSetupStep = {
-  id: 1,
-  slug: "services-offer",
-  title: "Qualifications",
-  component: Step1ServicesOffer,
-};
-
-const OTHER_DOCUMENTS_STEP: ServicesSetupStep = {
-  id: 2,
-  slug: "other-documents",
-  title: "Other Documents",
+const ADDITIONAL_DOCUMENTS_STEP: ServicesSetupStep = {
+  id: 999, // High number to ensure it's last
+  slug: "additional-documents",
+  title: "Additional Documents",
   component: Step2OtherDocuments,
 };
 
 /**
  * Generate dynamic steps based on selected services
- * Each service with qualifications gets its own step
- * NOTE: ABN has been moved to Compliance section
+ * Each service gets its own step (NO Additional Documents - that's Section 3)
+ *
+ * Flow: Support Worker → Cleaning Services → ...
+ * Note: Skills selection is handled within each service step
  */
 export function generateServicesSetupSteps(selectedServices: string[]): ServicesSetupStep[] {
-  const steps: ServicesSetupStep[] = [BASE_STEP, OTHER_DOCUMENTS_STEP];
+  const steps: ServicesSetupStep[] = [];
 
-  // For each selected service, add a qualification step if needed
+  // Add a step for each selected service
   selectedServices.forEach((serviceTitle, index) => {
-    if (serviceHasQualifications(serviceTitle)) {
-      const slug = `qualifications-${serviceTitle.toLowerCase().replace(/\s+/g, "-")}`;
-      steps.push({
-        id: steps.length + 1,
-        slug: slug,
-        title: `Qualifications for ${serviceTitle}`,
-        component: ServiceQualificationStep,
-        serviceTitle: serviceTitle,
-      });
-    }
+    const slug = serviceNameToSlug(serviceTitle);
+    steps.push({
+      id: index + 1, // Start from 1
+      slug: slug,
+      title: serviceTitle,
+      component: ServiceQualificationStep,
+      serviceTitle: serviceTitle,
+    });
   });
+
   return steps;
 }
 
@@ -65,6 +58,11 @@ export const getServicesStepUrl = (slug: string) =>
 
 /**
  * Default steps (when no services selected yet)
- * Shows base steps: Your Services and Other Documents
+ * Empty array - user needs to add services first
  */
-export const SERVICES_SETUP_STEPS = [BASE_STEP, OTHER_DOCUMENTS_STEP];
+export const SERVICES_SETUP_STEPS: ServicesSetupStep[] = [];
+
+/**
+ * Export Additional Documents step for Section 3
+ */
+export { ADDITIONAL_DOCUMENTS_STEP };

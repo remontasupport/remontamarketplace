@@ -388,7 +388,6 @@ function AccountSetupContent() {
         totalSteps={STEPS.length}
         stepTitle={currentStepData.title}
         sectionTitle="Account details"
-        sectionNumber="1"
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={handleSkip}

@@ -12,11 +12,13 @@ import {
   HandRaisedIcon,
   ClipboardDocumentCheckIcon,
   AcademicCapIcon,
-  PencilIcon
+  PencilIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline'
 import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
-import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
+import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
@@ -32,6 +34,7 @@ const getSectionFromPath = (path: string): string | null => {
   if (path.includes('/requirements/')) return 'requirements';
   if (path.includes('/trainings/')) return 'trainings';
   if (path.includes('/services/')) return 'services';
+  if (path.includes('/additional-documents')) return 'additional-credentials';
   return null;
 };
 
@@ -51,12 +54,6 @@ interface MenuSection {
 const accountDetailsItems = ACCOUNT_SETUP_STEPS.map(step => ({
   name: step.title,
   href: getStepUrl(step.slug)
-}))
-
-// Dynamically generate services items from centralized config
-const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
-  name: step.title,
-  href: getServicesStepUrl(step.slug)
 }))
 
 interface SidebarProps {
@@ -124,6 +121,35 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
     return []
   }, [dynamicTrainingSteps])
 
+  // Generate services items dynamically from profile data
+  const servicesItems = useMemo(() => {
+    // Get services from profile data (use hook data which has services array)
+    const services = profileDataFromHook?.services || []
+
+    if (services.length > 0) {
+      // Generate dynamic steps based on selected services
+      const dynamicSteps = generateServicesSetupSteps(services)
+      return dynamicSteps.map(step => ({
+        name: step.title,
+        href: getServicesStepUrl(step.slug)
+      }))
+    }
+
+    // Fallback to static steps if no services selected yet
+    return SERVICES_SETUP_STEPS.map(step => ({
+      name: step.title,
+      href: getServicesStepUrl(step.slug)
+    }))
+  }, [profileDataFromHook?.services])
+
+  // Additional Credentials items (Section 3)
+  const additionalCredentialsItems = useMemo(() => {
+    return [{
+      name: ADDITIONAL_DOCUMENTS_STEP.title,
+      href: '/dashboard/worker/additional-documents'
+    }]
+  }, [])
+
   // Helper to check if a section is completed
   const isSectionCompleted = (sectionId: string): boolean => {
     switch (sectionId) {
@@ -135,6 +161,8 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
         return setupProgress.trainings
       case 'services':
         return setupProgress.services
+      case 'additional-credentials':
+        return setupProgress.additionalCredentials || false
       default:
         return false
     }
@@ -164,6 +192,12 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
       name: 'My Services',
       icon: HandRaisedIcon,
       items: servicesItems
+    },
+    {
+      id: 'additional-credentials',
+      name: 'Additional Credentials',
+      icon: DocumentTextIcon,
+      items: additionalCredentialsItems
     }
   ]
   const pathname = usePathname();
@@ -178,6 +212,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
       'requirements': currentSection === 'requirements',
       'trainings': currentSection === 'trainings',
       'services': currentSection === 'services',
+      'additional-credentials': currentSection === 'additional-credentials',
     };
   });
 
@@ -199,6 +234,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
           'requirements': currentSection === 'requirements',
           'trainings': currentSection === 'trainings',
           'services': currentSection === 'services',
+          'additional-credentials': currentSection === 'additional-credentials',
         });
 
         // Disable transitions after animation completes
@@ -264,6 +300,10 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
         <Link href="/dashboard/worker/profile-building" className="sidebar-edit-profile" onClick={handleLinkClick}>
           <PencilIcon className="sidebar-edit-icon" />
           <span>Edit profile</span>
+        </Link>
+        <Link href="/dashboard/worker/services/manage" className="sidebar-edit-profile" onClick={handleLinkClick} style={{ marginTop: '0.75rem' }}>
+          <Cog6ToothIcon className="sidebar-edit-icon" />
+          <span>Edit services</span>
         </Link>
       </div>
 
