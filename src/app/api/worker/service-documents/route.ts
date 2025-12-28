@@ -45,6 +45,7 @@ export async function GET() {
         documentUrl: doc.documentUrl,
         uploadedAt: doc.documentUploadedAt,
         status: doc.status,
+        serviceTitle: (doc.metadata as any)?.serviceTitle || null,
       })),
     });
   } catch (error: any) {

@@ -18,6 +18,7 @@ interface StepContainerProps {
   isNextDisabled?: boolean;
   isNextLoading?: boolean;
   showSkip?: boolean;
+  showPrevious?: boolean;
   nextButtonText?: string;
   previousButtonText?: string;
 }
@@ -35,10 +36,14 @@ export default function StepContainer({
   isNextDisabled = false,
   isNextLoading = false,
   showSkip = true,
+  showPrevious,
   nextButtonText = "Next",
   previousButtonText = "Back",
 }: StepContainerProps) {
   const progressPercentage = Math.round((currentStep / totalSteps) * 100);
+
+  // Show previous button if explicitly set, or if currentStep > 1
+  const shouldShowPrevious = showPrevious !== undefined ? showPrevious : currentStep > 1;
 
   return (
     <div className="form-page-container">
@@ -59,7 +64,7 @@ export default function StepContainer({
       {/* Navigation Buttons */}
       <div className="step-navigation">
         <div className="step-nav-buttons">
-          {currentStep > 1 && (
+          {shouldShowPrevious && (
             <button
               type="button"
               onClick={onPrevious}

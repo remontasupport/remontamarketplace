@@ -24,6 +24,7 @@ interface ServiceDocument {
   documentUrl: string;
   uploadedAt: string;
   status: string;
+  serviceTitle?: string | null;
 }
 
 interface ServiceDocumentsResponse {

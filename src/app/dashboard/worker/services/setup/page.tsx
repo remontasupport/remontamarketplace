@@ -8,13 +8,15 @@
  * Example: Support Worker → Cleaning Services → Other Documents
  */
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
+import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
+import { serviceHasSkills } from "@/config/serviceSkills";
 import Loader from "@/components/ui/Loader";
 
 // Form data interface
@@ -27,8 +29,8 @@ interface FormData {
   currentServiceShowingSkills: string | null;
   // Track which service is showing documents view
   currentServiceShowingDocuments: string | null;
-  // Documents by service and requirement type
-  documentsByService: Record<string, Record<string, File[]>>;
+  // Documents by service and requirement type (URLs)
+  documentsByService: Record<string, Record<string, string[]>>;
   // Other documents step
   selectedQualifications: string[];
 }
@@ -68,6 +70,40 @@ function ServicesSetupContent() {
   const currentStepIndex = STEPS.findIndex((s) => s.slug === stepSlug);
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
   const currentStepData = STEPS[currentStep - 1];
+
+  // Compute what view should be displayed for the current step (100% synchronous, no flash!)
+  const currentView = useMemo(() => {
+    const serviceTitle = currentStepData?.serviceTitle;
+    if (!serviceTitle) {
+      return { view: 'default', serviceTitle: null };
+    }
+
+    // Check if this specific service has active view state
+    const hasActiveSkillsView = formData.currentServiceShowingSkills === serviceTitle;
+    const hasActiveDocumentsView = formData.currentServiceShowingDocuments === serviceTitle;
+
+    // Priority 1: Documents view (if explicitly set for this service)
+    if (hasActiveDocumentsView) {
+      return { view: 'documents', serviceTitle };
+    }
+
+    // Priority 2: Skills view (if explicitly set for this service)
+    if (hasActiveSkillsView) {
+      return { view: 'skills', serviceTitle };
+    }
+
+    // Priority 3: Auto-determine initial view for this service
+    const hasQualifications = serviceHasQualifications(serviceTitle);
+    const hasSkills = serviceHasSkills(serviceTitle);
+
+    // Auto-show skills if no qualifications but has skills
+    if (!hasQualifications && hasSkills) {
+      return { view: 'skills', serviceTitle };
+    }
+
+    // Default: qualifications view
+    return { view: 'qualifications', serviceTitle };
+  }, [stepSlug, currentStepData?.serviceTitle, formData.currentServiceShowingSkills, formData.currentServiceShowingDocuments]);
 
   // Populate form data ONLY on initial load
   useEffect(() => {
@@ -119,8 +155,8 @@ function ServicesSetupContent() {
     // 3. We're NOT currently showing documents view
     // 4. The service has skills configured
     const isServiceStep = !!currentStepData?.serviceTitle;
-    const isShowingSkills = formData.currentServiceShowingSkills === currentStepData?.serviceTitle;
-    const isShowingDocuments = formData.currentServiceShowingDocuments === currentStepData?.serviceTitle;
+    const isShowingSkills = currentView.view === 'skills';
+    const isShowingDocuments = currentView.view === 'documents';
     const hasSkills = isServiceStep && serviceHasSkills(currentStepData.serviceTitle!);
 
     if (isServiceStep && !isShowingSkills && !isShowingDocuments && hasSkills) {
@@ -161,11 +197,11 @@ function ServicesSetupContent() {
           selectedQualifications: formData.selectedQualifications,
         };
       } else {
-        // Individual service step - save qualifications, skills, AND documents
+        // Individual service step - save qualifications and skills
+        // NOTE: documentsByService is saved directly during upload via uploadServiceDocument
         dataToSend = {
           qualificationsByService: formData.qualificationsByService,
           skillsByService: formData.skillsByService,
-          documentsByService: formData.documentsByService,
         };
       }
 
@@ -201,16 +237,32 @@ function ServicesSetupContent() {
   };
 
   // Go to previous step
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
     // If we're currently showing documents view, go back to skills view
-    if (formData.currentServiceShowingDocuments) {
+    if (currentView.view === 'documents') {
       handleFieldChange("currentServiceShowingDocuments", null);
       handleFieldChange("currentServiceShowingSkills", currentStepData?.serviceTitle || null);
       return;
     }
 
-    // If we're currently showing skills view, go back to qualifications view
-    if (formData.currentServiceShowingSkills) {
+    // If we're currently showing skills view
+    if (currentView.view === 'skills') {
+      // Check if service has qualifications
+      const hasQualifications = currentStepData?.serviceTitle
+        ? serviceHasQualifications(currentStepData.serviceTitle)
+        : false;
+
+      // If no qualifications, skip back to previous service instead of qualifications view
+      if (!hasQualifications) {
+        // Navigate to previous step
+        if (currentStep > 1) {
+          const prevStepSlug = STEPS[currentStep - 2].slug;
+          router.push(`/dashboard/worker/services/setup?step=${prevStepSlug}`);
+        }
+        return;
+      }
+
+      // If has qualifications, go back to qualifications view
       handleFieldChange("currentServiceShowingSkills", null);
       return;
     }
@@ -236,16 +288,13 @@ function ServicesSetupContent() {
     }
   }, [currentStepIndex, router, stepSlug, STEPS]);
 
-  // Reset skills and documents view state when navigating to a different step (e.g., via sidebar)
+  // Reset view state when navigating to a different step
   useEffect(() => {
-    // Always start with qualifications view when landing on a step
-    if (formData.currentServiceShowingSkills) {
-      handleFieldChange("currentServiceShowingSkills", null);
-    }
-    if (formData.currentServiceShowingDocuments) {
-      handleFieldChange("currentServiceShowingDocuments", null);
-    }
-  }, [stepSlug]); // Reset whenever stepSlug changes
+    // Clear the stored view state when step changes
+    // The effectiveViewState useMemo will compute the correct initial state
+    handleFieldChange("currentServiceShowingSkills", null);
+    handleFieldChange("currentServiceShowingDocuments", null);
+  }, [stepSlug]);
 
   // Loading state
   if (status === "loading" || isLoadingProfile) {
@@ -270,6 +319,8 @@ function ServicesSetupContent() {
     data: formData,
     onChange: handleFieldChange,
     errors: errors,
+    // Pass computed view directly to child (eliminates flash)
+    currentView: currentView.view,
   };
 
   // Add service-specific props
@@ -287,27 +338,27 @@ function ServicesSetupContent() {
     const currentServiceHasDocuments = documentRequirements.length > 0;
 
     // If showing documents view of last service, show "Complete"
-    if (formData.currentServiceShowingDocuments && isLastService) {
+    if (currentView.view === 'documents' && isLastService) {
       return "Complete";
     }
 
     // If showing documents view of any other service, show "Next"
-    if (formData.currentServiceShowingDocuments) {
+    if (currentView.view === 'documents') {
       return "Next";
     }
 
     // If showing skills view of last service but it has documents, show "Next"
-    if (formData.currentServiceShowingSkills && isLastService && currentServiceHasDocuments) {
+    if (currentView.view === 'skills' && isLastService && currentServiceHasDocuments) {
       return "Next";
     }
 
     // If showing skills view of last service with no documents, show "Complete"
-    if (formData.currentServiceShowingSkills && isLastService) {
+    if (currentView.view === 'skills' && isLastService) {
       return "Complete";
     }
 
     // If showing skills view of any other service, show "Next"
-    if (formData.currentServiceShowingSkills) {
+    if (currentView.view === 'skills') {
       return "Next";
     }
 
@@ -325,6 +376,25 @@ function ServicesSetupContent() {
     return "Next";
   };
 
+  // Determine if we should show the Previous button
+  const shouldShowPrevious = useMemo(() => {
+    // Always show on documents view
+    if (currentView.view === 'documents') {
+      return true;
+    }
+
+    // On skills view, only show if service has qualifications
+    if (currentView.view === 'skills') {
+      const serviceTitle = currentStepData?.serviceTitle;
+      if (serviceTitle) {
+        return serviceHasQualifications(serviceTitle);
+      }
+    }
+
+    // Don't show on qualifications view
+    return false;
+  }, [currentView.view, currentStepData?.serviceTitle]);
+
   return (
     <DashboardLayout showProfileCard={false}>
       <StepContainer
@@ -338,6 +408,7 @@ function ServicesSetupContent() {
         isNextLoading={false}
         nextButtonText={getNextButtonText()}
         showSkip={false}
+        showPrevious={shouldShowPrevious}
       >
         {/* Success Message */}
         {successMessage && (

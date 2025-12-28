@@ -95,11 +95,38 @@ export async function GET(
       .map(g => g.subcategoryId)
       .filter((id): id is string => id !== null);
 
-    // Return profile data with transformed services
+    // Fetch verification requirements to populate documentsByService
+    const verificationRequirements = await authPrisma.verificationRequirement.findMany({
+      where: { workerProfileId: workerProfile.id },
+      select: {
+        requirementType: true,
+        metadata: true,
+      },
+    });
+
+    // Transform verification requirements into documentsByService format
+    // Format: Record<serviceName, Record<requirementType, string[]>>
+    const documentsByService: Record<string, Record<string, string[]>> = {};
+
+    for (const requirement of verificationRequirements) {
+      const metadata = requirement.metadata as any;
+      const serviceTitle = metadata?.serviceTitle;
+      const documentUrls = metadata?.documentUrls || [];
+
+      if (serviceTitle && documentUrls.length > 0) {
+        if (!documentsByService[serviceTitle]) {
+          documentsByService[serviceTitle] = {};
+        }
+        documentsByService[serviceTitle][requirement.requirementType] = documentUrls;
+      }
+    }
+
+    // Return profile data with transformed services and documents
     return NextResponse.json({
       ...workerProfile,
       services,
       supportWorkerCategories,
+      documentsByService,
     });
 
   } catch (error: any) {

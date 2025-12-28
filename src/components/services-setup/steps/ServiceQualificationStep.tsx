@@ -8,52 +8,120 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { ChevronDownIcon, ChevronUpIcon, CloudArrowUpIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
 import { getSkillsForService, SkillCategory } from "@/config/serviceSkills";
 import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
+import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import "@/app/styles/profile-building.css";
 import { useState } from "react";
 
 interface ServiceQualificationStepProps {
   serviceTitle: string;
+  currentView: 'qualifications' | 'skills' | 'documents' | 'default';
   data: {
     qualificationsByService: Record<string, string[]>;
     skillsByService: Record<string, string[]>;
     currentServiceShowingSkills: string | null;
     currentServiceShowingDocuments: string | null;
-    documentsByService?: Record<string, Record<string, File[]>>;
+    documentsByService?: Record<string, Record<string, string[]>>; // Changed to string[] (URLs)
   };
   onChange: (field: string, value: any) => void;
 }
 
 export default function ServiceQualificationStep({
   serviceTitle,
+  currentView,
   data,
   onChange,
 }: ServiceQualificationStepProps) {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  // Fetch service documents from API
+  const { data: serviceDocumentsData } = useServiceDocuments();
+
   // Track expanded categories for skills
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  // Track uploading state per requirement type
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+
+  // Track delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<{
+    requirementType: string;
+    fileIndex: number;
+    fileUrl: string;
+  } | null>(null);
 
   // Get qualifications, skills, and document requirements for this service
   const qualifications = getQualificationsForService(serviceTitle);
   const skillCategories = getSkillsForService(serviceTitle);
   const documentRequirements = getServiceDocumentRequirements(serviceTitle);
 
-  // Check if we're showing skills or documents for this service
-  const showingSkills = data.currentServiceShowingSkills === serviceTitle;
-  const showingDocuments = data.currentServiceShowingDocuments === serviceTitle;
+  // Use prop-based view state (no derivation, no flash!)
+  const showingSkills = currentView === 'skills';
+  const showingDocuments = currentView === 'documents';
 
   // Get currently selected values
   const selectedQualifications = data.qualificationsByService?.[serviceTitle] || [];
   const selectedSkills = data.skillsByService?.[serviceTitle] || [];
 
-  // Local state for uploaded files per requirement type
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>(
+  // Local state for uploaded file URLs per requirement type
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, string[]>>(
     data.documentsByService?.[serviceTitle] || {}
   );
+
+  // Initialize uploadedFiles from API data when documents are loaded
+  useEffect(() => {
+    console.log('[ServiceQualificationStep] Documents data changed:', {
+      hasData: !!serviceDocumentsData?.documents,
+      totalDocs: serviceDocumentsData?.documents?.length,
+      serviceTitle,
+    });
+
+    if (serviceDocumentsData?.documents) {
+      const documentsByType: Record<string, string[]> = {};
+
+      // Filter documents for the current service and group by requirement type
+      const currentServiceDocs = serviceDocumentsData.documents.filter(
+        (doc) => doc.serviceTitle === serviceTitle
+      );
+
+      console.log('[ServiceQualificationStep] Filtered docs for service:', {
+        serviceTitle,
+        filteredCount: currentServiceDocs.length,
+        docs: currentServiceDocs,
+      });
+
+      currentServiceDocs.forEach((doc) => {
+        if (!documentsByType[doc.documentType]) {
+          documentsByType[doc.documentType] = [];
+        }
+        if (doc.documentUrl) {
+          documentsByType[doc.documentType].push(doc.documentUrl);
+        }
+      });
+
+      console.log('[ServiceQualificationStep] Grouped documents by type:', documentsByType);
+
+      // Update local state with fetched documents
+      setUploadedFiles(documentsByType);
+
+      // Also update parent data
+      const updatedDocs = {
+        ...(data.documentsByService || {}),
+        [serviceTitle]: documentsByType,
+      };
+      onChange("documentsByService", updatedDocs);
+    }
+  }, [serviceDocumentsData, serviceTitle]);
 
   // Expand the first 2 skill categories (first row) when switching to skills view
   useEffect(() => {
@@ -116,161 +184,244 @@ export default function ServiceQualificationStep({
   };
 
   // Document upload handlers
-  const handleFileUpload = (requirementType: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (requirementType: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      const filesArray = Array.from(files);
-      const currentFiles = uploadedFiles[requirementType] || [];
-      const updatedFiles = [...currentFiles, ...filesArray];
+    if (!files || files.length === 0 || !session?.user?.id) {
+      console.log('[Upload] No files or no session:', { files, session });
+      return;
+    }
 
-      // Update local state
-      setUploadedFiles((prev) => ({
-        ...prev,
-        [requirementType]: updatedFiles,
-      }));
+    const file = files[0]; // Only take the first file since multiple is disabled
+    console.log('[Upload] Starting upload for:', { serviceTitle, requirementType, fileName: file.name });
 
-      // Update parent data
-      const currentDocs = data.documentsByService || {};
-      const updatedDocs = {
-        ...currentDocs,
-        [serviceTitle]: {
-          ...(currentDocs[serviceTitle] || {}),
-          [requirementType]: updatedFiles,
-        },
-      };
-      onChange("documentsByService", updatedDocs);
+    // Set uploading state
+    setUploadingFiles((prev) => ({ ...prev, [requirementType]: true }));
+
+    try {
+      // Import the server action
+      const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
+
+      // Upload file to the server
+      console.log('[Upload] Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('serviceTitle', serviceTitle);
+      formData.append('requirementType', requirementType);
+
+      const result = await uploadServiceDocument(formData);
+      console.log('[Upload] Upload result:', result);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      console.log('[Upload] Upload completed successfully:', result.data?.url);
+
+      // Invalidate and refetch service documents query to get fresh data
+      await queryClient.invalidateQueries({
+        queryKey: serviceDocumentsKeys.all,
+        refetchType: 'active',
+      });
+
+      // Force immediate refetch
+      await queryClient.refetchQueries({
+        queryKey: serviceDocumentsKeys.all,
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert(`Failed to upload document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setUploadingFiles((prev) => ({ ...prev, [requirementType]: false }));
+      // Reset the input
+      event.target.value = '';
     }
   };
 
   const handleRemoveFile = (requirementType: string, fileIndex: number) => {
     const currentFiles = uploadedFiles[requirementType] || [];
-    const updatedFiles = currentFiles.filter((_, i) => i !== fileIndex);
+    const fileUrl = currentFiles[fileIndex];
 
-    // Update local state
-    setUploadedFiles((prev) => ({
-      ...prev,
-      [requirementType]: updatedFiles,
-    }));
+    // Set file to delete and open dialog
+    setFileToDelete({
+      requirementType,
+      fileIndex,
+      fileUrl,
+    });
+    setDeleteDialogOpen(true);
+  };
 
-    // Update parent data
-    const currentDocs = data.documentsByService || {};
-    const updatedDocs = {
-      ...currentDocs,
-      [serviceTitle]: {
-        ...(currentDocs[serviceTitle] || {}),
-        [requirementType]: updatedFiles,
-      },
-    };
-    onChange("documentsByService", updatedDocs);
+  const confirmDelete = async () => {
+    if (!fileToDelete || !session?.user?.id) {
+      return;
+    }
+
+    const { requirementType, fileIndex, fileUrl } = fileToDelete;
+
+    try {
+      // Import the server action
+      const { deleteServiceDocument } = await import("@/services/worker/serviceDocuments.service");
+
+      // Delete from server (database + blob storage)
+      const result = await deleteServiceDocument(session.user.id, requirementType, fileUrl);
+
+      if (!result.success) {
+        alert(`Failed to delete document: ${result.error}`);
+        return;
+      }
+
+      // Invalidate and refetch service documents query to get fresh data
+      await queryClient.invalidateQueries({
+        queryKey: serviceDocumentsKeys.all,
+        refetchType: 'active',
+      });
+
+      // Force immediate refetch
+      await queryClient.refetchQueries({
+        queryKey: serviceDocumentsKeys.all,
+      });
+
+      // Reset file to delete
+      setFileToDelete(null);
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   // If showing documents view
   if (showingDocuments) {
     return (
-      <div style={{ width: '100%' }}>
-        <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
-          Supporting Documents for {serviceTitle}
-        </h3>
-        <p className="text-sm text-gray-600 font-poppins mb-6">
-          Upload the required documents for {serviceTitle}. Required documents are marked with an asterisk (*).
-        </p>
+      <div className="form-page-content">
+        {/* Left Column - Form */}
+        <div className="form-column">
+          <div className="account-form">
+            <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
+              Supporting Documents for {serviceTitle}
+            </h3>
+            <p className="text-sm text-gray-600 font-poppins mb-6">
+              Upload the required documents for {serviceTitle}. Required documents are marked with an asterisk (*).
+            </p>
 
-        {/* Requirements List */}
-        <div className="space-y-6">
-          {documentRequirements.map((requirement) => {
-            const files = uploadedFiles[requirement.type] || [];
+            {/* Requirements List */}
+            <div className="space-y-6">
+              {documentRequirements.map((requirement) => {
+                const files = uploadedFiles[requirement.type] || [];
+                console.log('[Render] Requirement:', {
+                  type: requirement.type,
+                  filesCount: files.length,
+                  files,
+                  allUploadedFiles: uploadedFiles,
+                });
 
-            return (
-              <div
-                key={requirement.type}
-                className={`border rounded-lg p-4 ${
-                  requirement.required
-                    ? "border-orange-300 bg-orange-50"
-                    : "border-gray-200 bg-white"
-                }`}
-              >
-                {/* Requirement Header */}
-                <div className="mb-3">
-                  <h4 className="text-base font-poppins font-semibold text-gray-900 flex items-center gap-2">
-                    {requirement.name}
-                    {requirement.required && (
-                      <span className="text-orange-600 text-sm">*Required</span>
-                    )}
-                    {!requirement.required && (
-                      <span className="text-gray-500 text-sm font-normal">Optional</span>
-                    )}
-                  </h4>
-                  <p className="text-sm text-gray-600 font-poppins mt-1">
-                    {requirement.description}
-                  </p>
-                  <span className="inline-block mt-2 px-2 py-1 text-xs font-poppins bg-gray-100 text-gray-700 rounded">
-                    {requirement.category}
-                  </span>
-                </div>
-
-                {/* Upload Area */}
-                <div className="mb-3">
-                  <label
-                    htmlFor={`upload-${requirement.type}`}
-                    className="block w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-teal-500 transition-colors"
+                return (
+                  <div
+                    key={requirement.type}
+                    className={`border rounded-lg p-4 ${
+                      requirement.required
+                        ? "border-orange-300 bg-orange-50"
+                        : "border-gray-200 bg-white"
+                    }`}
                   >
-                    <CloudArrowUpIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                    <div className="text-sm text-gray-600">
-                      <span className="font-semibold text-teal-600 hover:text-teal-500">
-                        Click to upload
-                      </span>
+                    {/* Requirement Header */}
+                    <div className="mb-3">
+                      <h4 className="text-base font-poppins font-semibold text-gray-900 flex items-center gap-2">
+                        {requirement.name}
+                        {requirement.required && (
+                          <span className="text-orange-600 text-sm">*Required</span>
+                        )}
+                        {!requirement.required && (
+                          <span className="text-gray-500 text-sm font-normal">Optional</span>
+                        )}
+                      </h4>
+                      <p className="text-sm text-gray-600 font-poppins mt-1">
+                        {requirement.description}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      PDF, PNG, JPG up to 10MB
-                    </p>
-                    <input
-                      id={`upload-${requirement.type}`}
-                      type="file"
-                      className="sr-only"
-                      multiple
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => handleFileUpload(requirement.type, e)}
-                    />
-                  </label>
-                </div>
 
-                {/* Uploaded Files */}
-                {files.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-poppins font-semibold text-gray-700">
-                      Uploaded ({files.length})
-                    </p>
-                    {files.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
+                    {/* Upload Area */}
+                    <div className="mb-3">
+                      <label
+                        htmlFor={`upload-${requirement.type}`}
+                        className={`inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-poppins text-gray-700 transition-colors ${
+                          uploadingFiles[requirement.type]
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'cursor-pointer hover:bg-gray-50'
+                        }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <DocumentIcon className="h-4 w-4 text-gray-400" />
-                          <div>
-                            <p className="text-xs font-poppins text-gray-900">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {(file.size / 1024).toFixed(2)} KB
-                            </p>
+                        <CloudArrowUpIcon className="h-5 w-5 text-gray-500" />
+                        {uploadingFiles[requirement.type] ? 'Uploading...' : 'Choose File'}
+                        <input
+                          id={`upload-${requirement.type}`}
+                          type="file"
+                          className="sr-only"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => handleFileUpload(requirement.type, e)}
+                          disabled={uploadingFiles[requirement.type]}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Uploaded Files - Preview Links Only */}
+                    {files.length > 0 && (
+                      <div className="space-y-1">
+                        {files.map((fileUrl, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2"
+                          >
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-teal-600 hover:text-teal-700 font-poppins hover:underline"
+                            >
+                              Preview uploaded document
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(requirement.type, index)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                            </button>
                           </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(requirement.type, index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
+
+        {/* Right Column - Info Box */}
+        <div className="info-column">
+          <div className="info-box">
+            <h3 className="info-box-title">About Supporting Documents</h3>
+            <p className="info-box-text">
+              Upload certificates, qualifications, and supporting documents for {serviceTitle}.
+            </p>
+            <p className="info-box-text mt-3">
+              <strong>Required documents</strong> are marked with an asterisk (*) and must be uploaded before you can proceed.
+            </p>
+            <p className="info-box-text mt-3">
+              <strong>Accepted formats:</strong> PDF, PNG, JPG (max 10MB per file)
+            </p>
+            <p className="info-box-text mt-3">
+              You can upload multiple files for each requirement. All documents will be reviewed as part of your profile verification.
+            </p>
+          </div>
+        </div>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+        />
       </div>
     );
   }
@@ -356,23 +507,9 @@ export default function ServiceQualificationStep({
   }
 
   // Default view: Qualifications
+  // If no qualifications, return null (parent's useLayoutEffect will handle auto-skip)
   if (qualifications.length === 0) {
-    return (
-      <div className="form-page-content">
-        <div className="form-column">
-          <div className="account-form">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-              <p className="text-gray-700 font-poppins">
-                No qualifications configured for {serviceTitle} yet.
-              </p>
-              <p className="text-sm text-gray-600 font-poppins mt-2">
-                Click "Next" to continue.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

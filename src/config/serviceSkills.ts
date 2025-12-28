@@ -365,12 +365,489 @@ export const SUPPORT_WORKER_SKILLS: SkillCategory[] = [
 ];
 
 /**
+ * Skills for Cleaning Services
+ */
+export const CLEANING_SERVICES_SKILLS: SkillCategory[] = [
+  {
+    id: "general-cleaning",
+    label: "General Cleaning",
+    icon: "🧹",
+    skills: [
+      {
+        id: "general-household-cleaning",
+        label: "General Household Cleaning",
+        category: "general-cleaning"
+      },
+      {
+        id: "vacuuming-mopping",
+        label: "Vacuuming & Mopping",
+        category: "general-cleaning"
+      },
+      {
+        id: "dusting-surface-cleaning",
+        label: "Dusting & Surface Cleaning",
+        category: "general-cleaning"
+      },
+      {
+        id: "bathroom-cleaning",
+        label: "Bathroom Cleaning",
+        category: "general-cleaning"
+      },
+      {
+        id: "toilet-sanitation-cleaning",
+        label: "Toilet & Sanitation Cleaning",
+        category: "general-cleaning"
+      },
+      {
+        id: "kitchen-cleaning",
+        label: "Kitchen Cleaning",
+        category: "general-cleaning"
+      },
+      {
+        id: "rubbish-removal",
+        label: "Rubbish Removal",
+        category: "general-cleaning"
+      }
+    ]
+  },
+  {
+    id: "deep-detailed-cleaning",
+    label: "Deep & Detailed Cleaning",
+    icon: "🧼",
+    skills: [
+      {
+        id: "deep-cleaning-services",
+        label: "Deep Cleaning Services",
+        category: "deep-detailed-cleaning"
+      },
+      {
+        id: "oven-cleaning",
+        label: "Oven Cleaning",
+        category: "deep-detailed-cleaning"
+      },
+      {
+        id: "rangehood-cleaning",
+        label: "Rangehood Cleaning",
+        category: "deep-detailed-cleaning"
+      },
+      {
+        id: "fridge-cleaning",
+        label: "Fridge Cleaning",
+        category: "deep-detailed-cleaning"
+      },
+      {
+        id: "cupboard-pantry-cleaning",
+        label: "Cupboard & Pantry Cleaning",
+        category: "deep-detailed-cleaning"
+      },
+      {
+        id: "wall-spot-cleaning",
+        label: "Wall Spot Cleaning",
+        category: "deep-detailed-cleaning"
+      },
+      {
+        id: "skirting-boards-detail-cleaning",
+        label: "Skirting Boards & Detail Cleaning",
+        category: "deep-detailed-cleaning"
+      }
+    ]
+  },
+  {
+    id: "windows-fixtures",
+    label: "Windows & Fixtures",
+    icon: "🪟",
+    skills: [
+      {
+        id: "internal-window-cleaning",
+        label: "Internal Window Cleaning",
+        category: "windows-fixtures"
+      },
+      {
+        id: "external-window-cleaning",
+        label: "External Window Cleaning",
+        category: "windows-fixtures"
+      },
+      {
+        id: "glass-mirror-cleaning",
+        label: "Glass & Mirror Cleaning",
+        category: "windows-fixtures"
+      },
+      {
+        id: "blind-cleaning",
+        label: "Blind Cleaning",
+        category: "windows-fixtures"
+      },
+      {
+        id: "ceiling-fans-light-fixtures",
+        label: "Ceiling Fans & Light Fixtures",
+        category: "windows-fixtures"
+      }
+    ]
+  },
+  {
+    id: "laundry-linen",
+    label: "Laundry & Linen",
+    icon: "🛏️",
+    skills: [
+      {
+        id: "washing-drying-laundry",
+        label: "Washing & Drying Laundry",
+        category: "laundry-linen"
+      },
+      {
+        id: "folding-putting-away-clothes",
+        label: "Folding & Putting Away Clothes",
+        category: "laundry-linen"
+      },
+      {
+        id: "bed-making-linen-changes",
+        label: "Bed Making & Linen Changes",
+        category: "laundry-linen"
+      },
+      {
+        id: "ironing",
+        label: "Ironing",
+        category: "laundry-linen"
+      }
+    ]
+  },
+  {
+    id: "hygiene-infection-control",
+    label: "Hygiene & Infection Control",
+    icon: "🧽",
+    skills: [
+      {
+        id: "high-touch-surface-disinfection",
+        label: "High-Touch Surface Disinfection",
+        category: "hygiene-infection-control"
+      },
+      {
+        id: "infection-control-cleaning",
+        label: "Infection Control Cleaning",
+        category: "hygiene-infection-control"
+      },
+      {
+        id: "ppe-safe-chemical-handling",
+        label: "PPE Use & Safe Chemical Handling",
+        category: "hygiene-infection-control"
+      },
+      {
+        id: "cross-contamination-awareness",
+        label: "Cross-Contamination Awareness",
+        category: "hygiene-infection-control"
+      }
+    ]
+  },
+  {
+    id: "client-specific-experience",
+    label: "Client-Specific Experience",
+    icon: "🏠",
+    skills: [
+      {
+        id: "ndis-participant-homes",
+        label: "NDIS Participant Homes",
+        category: "client-specific-experience"
+      },
+      {
+        id: "aged-care-clients",
+        label: "Aged Care Clients",
+        category: "client-specific-experience"
+      },
+      {
+        id: "private-residential-cleaning",
+        label: "Private Residential Cleaning",
+        category: "client-specific-experience"
+      },
+      {
+        id: "homes-with-pets",
+        label: "Homes with Pets",
+        category: "client-specific-experience"
+      },
+      {
+        id: "homes-with-mobility-equipment",
+        label: "Homes with Mobility Equipment",
+        category: "client-specific-experience"
+      }
+    ]
+  },
+  {
+    id: "high-risk-challenging-environments",
+    label: "High-Risk / Challenging Environments",
+    icon: "⚠️",
+    skills: [
+      {
+        id: "hoarding-severe-clutter-support",
+        label: "Hoarding & Severe Clutter Support",
+        category: "high-risk-challenging-environments"
+      },
+      {
+        id: "trauma-informed-cleaning",
+        label: "Trauma-Informed Cleaning",
+        category: "high-risk-challenging-environments"
+      },
+      {
+        id: "heavy-soiling-environments",
+        label: "Heavy Soiling Environments",
+        category: "high-risk-challenging-environments"
+      },
+      {
+        id: "biohazard-awareness-non-clinical",
+        label: "Biohazard Awareness (Non-Clinical)",
+        category: "high-risk-challenging-environments"
+      },
+      {
+        id: "pest-affected-environments",
+        label: "Pest-Affected Environments",
+        category: "high-risk-challenging-environments"
+      }
+    ]
+  },
+  {
+    id: "equipment-supplies",
+    label: "Equipment & Supplies",
+    icon: "🧰",
+    skills: [
+      {
+        id: "own-cleaning-equipment",
+        label: "Own Cleaning Equipment",
+        category: "equipment-supplies"
+      },
+      {
+        id: "own-cleaning-products",
+        label: "Own Cleaning Products",
+        category: "equipment-supplies"
+      },
+      {
+        id: "eco-friendly-low-toxic-products",
+        label: "Eco-Friendly / Low-Toxic Products",
+        category: "equipment-supplies"
+      },
+      {
+        id: "industrial-commercial-equipment",
+        label: "Industrial / Commercial Equipment",
+        category: "equipment-supplies"
+      }
+    ]
+  }
+];
+
+/**
+ * Skills for Home & Yard Maintenance
+ */
+export const HOME_YARD_MAINTENANCE_SKILLS: SkillCategory[] = [
+  {
+    id: "general-yard-maintenance",
+    label: "General Yard Maintenance",
+    icon: "🌿",
+    skills: [
+      {
+        id: "lawn-mowing",
+        label: "Lawn Mowing",
+        category: "general-yard-maintenance"
+      },
+      {
+        id: "edge-trimming",
+        label: "Edge Trimming",
+        category: "general-yard-maintenance"
+      },
+      {
+        id: "weeding-manual",
+        label: "Weeding (Manual)",
+        category: "general-yard-maintenance"
+      },
+      {
+        id: "basic-pruning-trimming",
+        label: "Basic Pruning & Trimming",
+        category: "general-yard-maintenance"
+      },
+      {
+        id: "leaf-green-waste-removal",
+        label: "Leaf & Green Waste Removal",
+        category: "general-yard-maintenance"
+      },
+      {
+        id: "general-garden-tidy-up",
+        label: "General Garden Tidy-Up",
+        category: "general-yard-maintenance"
+      }
+    ]
+  },
+  {
+    id: "gardening-plant-care",
+    label: "Gardening & Plant Care",
+    icon: "🌱",
+    skills: [
+      {
+        id: "planting-plants-shrubs",
+        label: "Planting (Plants / Shrubs)",
+        category: "gardening-plant-care"
+      },
+      {
+        id: "mulching",
+        label: "Mulching",
+        category: "gardening-plant-care"
+      },
+      {
+        id: "fertilising-basic",
+        label: "Fertilising (Basic)",
+        category: "gardening-plant-care"
+      },
+      {
+        id: "watering-irrigation-checks",
+        label: "Watering & Irrigation Checks",
+        category: "gardening-plant-care"
+      },
+      {
+        id: "hedge-trimming",
+        label: "Hedge Trimming",
+        category: "gardening-plant-care"
+      }
+    ]
+  },
+  {
+    id: "tree-structural-work",
+    label: "Tree & Structural Work (Non-Arborist unless qualified)",
+    icon: "🌳",
+    skills: [
+      {
+        id: "small-tree-pruning",
+        label: "Small Tree Pruning (Under Height Limit)",
+        category: "tree-structural-work"
+      },
+      {
+        id: "branch-limb-removal",
+        label: "Branch & Limb Removal (Ground Level)",
+        category: "tree-structural-work"
+      },
+      {
+        id: "storm-debris-cleanup",
+        label: "Storm Debris Clean-Up",
+        category: "tree-structural-work"
+      },
+      {
+        id: "fallen-tree-branch-removal",
+        label: "Fallen Tree / Branch Removal",
+        category: "tree-structural-work"
+      }
+    ]
+  },
+  {
+    id: "hardscape-outdoor-areas",
+    label: "Hardscape & Outdoor Areas",
+    icon: "🧱",
+    skills: [
+      {
+        id: "pathway-paving-cleaning",
+        label: "Pathway & Paving Cleaning",
+        category: "hardscape-outdoor-areas"
+      },
+      {
+        id: "courtyard-patio-cleaning",
+        label: "Courtyard & Patio Cleaning",
+        category: "hardscape-outdoor-areas"
+      },
+      {
+        id: "pressure-washing-paths-driveways",
+        label: "Pressure Washing (Paths / Driveways)",
+        category: "hardscape-outdoor-areas"
+      },
+      {
+        id: "outdoor-furniture-cleaning",
+        label: "Outdoor Furniture Cleaning",
+        category: "hardscape-outdoor-areas"
+      }
+    ]
+  },
+  {
+    id: "cleanup-waste-management",
+    label: "Clean-Up & Waste Management",
+    icon: "🧹",
+    skills: [
+      {
+        id: "green-waste-removal",
+        label: "Green Waste Removal",
+        category: "cleanup-waste-management"
+      },
+      {
+        id: "tip-runs",
+        label: "Tip Runs",
+        category: "cleanup-waste-management"
+      },
+      {
+        id: "yard-rubbish-removal",
+        label: "Yard Rubbish Removal",
+        category: "cleanup-waste-management"
+      },
+      {
+        id: "overgrown-yard-cleanups",
+        label: "Overgrown Yard Clean-Ups",
+        category: "cleanup-waste-management"
+      }
+    ]
+  },
+  {
+    id: "client-specific-experience-yard",
+    label: "Client-Specific Experience",
+    icon: "🧍‍♂️",
+    skills: [
+      {
+        id: "ndis-participant-properties",
+        label: "NDIS Participant Properties",
+        category: "client-specific-experience-yard"
+      },
+      {
+        id: "aged-care-clients-yard",
+        label: "Aged Care Clients",
+        category: "client-specific-experience-yard"
+      },
+      {
+        id: "private-residential-properties",
+        label: "Private Residential Properties",
+        category: "client-specific-experience-yard"
+      },
+      {
+        id: "properties-accessibility-needs",
+        label: "Properties with Accessibility Needs",
+        category: "client-specific-experience-yard"
+      }
+    ]
+  },
+  {
+    id: "equipment-supplies-yard",
+    label: "Equipment & Supplies",
+    icon: "🧰",
+    skills: [
+      {
+        id: "own-vehicle",
+        label: "Own Vehicle",
+        category: "equipment-supplies-yard"
+      },
+      {
+        id: "own-equipment-yard",
+        label: "Own Equipment",
+        category: "equipment-supplies-yard"
+      },
+      {
+        id: "industrial-commercial-equipment-yard",
+        label: "Industrial / Commercial Equipment",
+        category: "equipment-supplies-yard"
+      }
+    ]
+  }
+];
+
+/**
  * Get skills for a specific service
  */
 export function getSkillsForService(serviceTitle: string): SkillCategory[] {
   switch (serviceTitle) {
     case "Support Worker":
+    case "Support Worker (High Intensity)":
       return SUPPORT_WORKER_SKILLS;
+    case "Cleaning Services":
+      return CLEANING_SERVICES_SKILLS;
+    case "Home and Yard Maintenance":
+      return HOME_YARD_MAINTENANCE_SKILLS;
     // Add other services here
     default:
       return [];
