@@ -38,8 +38,6 @@ export async function GET(
         funFact: true,
         hobbies: true,
         uniqueService: true,
-        whyEnjoyWork: true,
-        additionalInfo: true,
         photos: true,
         location: true,
         age: true,

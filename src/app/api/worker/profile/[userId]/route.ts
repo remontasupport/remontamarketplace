@@ -56,8 +56,6 @@ export async function GET(
         funFact: true,
         hobbies: true,
         uniqueService: true,
-        whyEnjoyWork: true,
-        additionalInfo: true,
         photos: true,
         profileCompleted: true,
         isPublished: true,

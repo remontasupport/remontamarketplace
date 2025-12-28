@@ -40,7 +40,6 @@ export async function GET(
         hasVehicle: true,
         hobbies: true,
         uniqueService: true,
-        whyEnjoyWork: true,
         photos: true,
         location: true,
         age: true,
