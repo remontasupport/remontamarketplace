@@ -837,6 +837,194 @@ export const HOME_YARD_MAINTENANCE_SKILLS: SkillCategory[] = [
 ];
 
 /**
+ * Skills for Nursing Services
+ */
+export const NURSING_SERVICES_SKILLS: SkillCategory[] = [
+  {
+    id: "general-nursing-care",
+    label: "General Nursing Care",
+    icon: "🩺",
+    skills: [
+      {
+        id: "registered-nurse",
+        label: "Registered Nurse (RN)",
+        category: "general-nursing-care"
+      },
+      {
+        id: "enrolled-nurse",
+        label: "Enrolled Nurse (EN)",
+        category: "general-nursing-care"
+      },
+      {
+        id: "medication-administration",
+        label: "Medication Administration",
+        category: "general-nursing-care"
+      },
+      {
+        id: "clinical-assessments",
+        label: "Clinical Assessments & Monitoring",
+        category: "general-nursing-care"
+      },
+      {
+        id: "vital-signs-monitoring",
+        label: "Vital Signs Monitoring",
+        category: "general-nursing-care"
+      },
+      {
+        id: "care-plan-implementation",
+        label: "Care Plan Implementation",
+        category: "general-nursing-care"
+      }
+    ]
+  },
+  {
+    id: "medication-treatment",
+    label: "Medication & Treatment Management",
+    icon: "💉",
+    skills: [
+      {
+        id: "med-admin-oral-topical",
+        label: "Medication Administration (Oral / Topical)",
+        category: "medication-treatment"
+      },
+      {
+        id: "med-admin-injectable",
+        label: "Medication Administration (Injectable)",
+        category: "medication-treatment"
+      },
+      {
+        id: "webster-pack-management",
+        label: "Webster Pack Management",
+        category: "medication-treatment"
+      },
+      {
+        id: "medication-reviews",
+        label: "Medication Reviews & Documentation",
+        category: "medication-treatment"
+      },
+      {
+        id: "prn-medication",
+        label: "PRN Medication Management",
+        category: "medication-treatment"
+      }
+    ]
+  },
+  {
+    id: "complex-care",
+    label: "Complex & High-Needs Care",
+    icon: "🧠",
+    skills: [
+      {
+        id: "complex-health-support",
+        label: "Complex Health Support",
+        category: "complex-care"
+      },
+      {
+        id: "chronic-disease-management",
+        label: "Chronic Disease Management",
+        category: "complex-care"
+      },
+      {
+        id: "high-physical-support",
+        label: "High Physical Support Experience",
+        category: "complex-care"
+      },
+      {
+        id: "post-hospital-care",
+        label: "Post-Hospital Care & Monitoring",
+        category: "complex-care"
+      },
+      {
+        id: "palliative-care",
+        label: "Palliative Care Experience",
+        category: "complex-care"
+      }
+    ]
+  },
+  {
+    id: "wound-skin-care",
+    label: "Wound & Skin Care",
+    icon: "🩹",
+    skills: [
+      {
+        id: "wound-assessment",
+        label: "Wound Assessment & Dressing",
+        category: "wound-skin-care"
+      },
+      {
+        id: "pressure-injury",
+        label: "Pressure Injury Prevention & Management",
+        category: "wound-skin-care"
+      },
+      {
+        id: "skin-integrity",
+        label: "Skin Integrity Monitoring",
+        category: "wound-skin-care"
+      },
+      {
+        id: "post-surgical-wound",
+        label: "Post-Surgical Wound Care",
+        category: "wound-skin-care"
+      }
+    ]
+  },
+  {
+    id: "continence-clinical",
+    label: "Continence & Clinical Procedures",
+    icon: "🧪",
+    skills: [
+      {
+        id: "catheter-care",
+        label: "Catheter Care & Management",
+        category: "continence-clinical"
+      },
+      {
+        id: "bowel-care",
+        label: "Bowel Care Management",
+        category: "continence-clinical"
+      },
+      {
+        id: "stoma-care",
+        label: "Stoma Care",
+        category: "continence-clinical"
+      },
+      {
+        id: "peg-feeding",
+        label: "PEG Feeding Management",
+        category: "continence-clinical"
+      }
+    ]
+  },
+  {
+    id: "neurological-respiratory",
+    label: "Neurological & Respiratory Support",
+    icon: "🫁",
+    skills: [
+      {
+        id: "epilepsy-seizure",
+        label: "Epilepsy & Seizure Management",
+        category: "neurological-respiratory"
+      },
+      {
+        id: "tracheostomy-care",
+        label: "Tracheostomy Care (if qualified)",
+        category: "neurological-respiratory"
+      },
+      {
+        id: "respiratory-support",
+        label: "Respiratory Support Monitoring",
+        category: "neurological-respiratory"
+      },
+      {
+        id: "oxygen-therapy",
+        label: "Oxygen Therapy Management",
+        category: "neurological-respiratory"
+      }
+    ]
+  }
+];
+
+/**
  * Get skills for a specific service
  */
 export function getSkillsForService(serviceTitle: string): SkillCategory[] {
@@ -848,6 +1036,8 @@ export function getSkillsForService(serviceTitle: string): SkillCategory[] {
       return CLEANING_SERVICES_SKILLS;
     case "Home and Yard Maintenance":
       return HOME_YARD_MAINTENANCE_SKILLS;
+    case "Nursing Services":
+      return NURSING_SERVICES_SKILLS;
     // Add other services here
     default:
       return [];

@@ -25,10 +25,6 @@ interface FormData {
   qualificationsByService: Record<string, string[]>;
   // Individual service skills
   skillsByService: Record<string, string[]>;
-  // Track which service is showing skills view
-  currentServiceShowingSkills: string | null;
-  // Track which service is showing documents view
-  currentServiceShowingDocuments: string | null;
   // Documents by service and requirement type (URLs)
   documentsByService: Record<string, Record<string, string[]>>;
   // Other documents step
@@ -40,6 +36,7 @@ function ServicesSetupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const stepSlug = searchParams.get("step") || "";
+  const viewParam = searchParams.get("view") || ""; // URL-based view state
 
   // Fetch profile data
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
@@ -48,12 +45,10 @@ function ServicesSetupContent() {
   // Track if we've initialized form data
   const hasInitializedFormData = useRef(false);
 
-  // Form data state
+  // Form data state (view tracking moved to URL params)
   const [formData, setFormData] = useState<FormData>({
     qualificationsByService: {},
     skillsByService: {},
-    currentServiceShowingSkills: null,
-    currentServiceShowingDocuments: null,
     documentsByService: {},
     selectedQualifications: [],
   });
@@ -71,39 +66,43 @@ function ServicesSetupContent() {
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
   const currentStepData = STEPS[currentStep - 1];
 
-  // Compute what view should be displayed for the current step (100% synchronous, no flash!)
+  // Compute current view PURELY from URL + service configuration (100% deterministic!)
   const currentView = useMemo(() => {
     const serviceTitle = currentStepData?.serviceTitle;
     if (!serviceTitle) {
-      return { view: 'default', serviceTitle: null };
+      return { view: 'default' as const, serviceTitle: null };
     }
 
-    // Check if this specific service has active view state
-    const hasActiveSkillsView = formData.currentServiceShowingSkills === serviceTitle;
-    const hasActiveDocumentsView = formData.currentServiceShowingDocuments === serviceTitle;
-
-    // Priority 1: Documents view (if explicitly set for this service)
-    if (hasActiveDocumentsView) {
-      return { view: 'documents', serviceTitle };
+    // Priority 1: Use explicit view from URL if present
+    if (viewParam === 'skills') {
+      return { view: 'skills' as const, serviceTitle };
+    }
+    if (viewParam === 'documents') {
+      return { view: 'documents' as const, serviceTitle };
+    }
+    if (viewParam === 'qualifications') {
+      return { view: 'qualifications' as const, serviceTitle };
     }
 
-    // Priority 2: Skills view (if explicitly set for this service)
-    if (hasActiveSkillsView) {
-      return { view: 'skills', serviceTitle };
-    }
-
-    // Priority 3: Auto-determine initial view for this service
+    // Priority 2: Auto-determine initial view based on service configuration
     const hasQualifications = serviceHasQualifications(serviceTitle);
     const hasSkills = serviceHasSkills(serviceTitle);
 
     // Auto-show skills if no qualifications but has skills
     if (!hasQualifications && hasSkills) {
-      return { view: 'skills', serviceTitle };
+      return { view: 'skills' as const, serviceTitle };
     }
 
     // Default: qualifications view
-    return { view: 'qualifications', serviceTitle };
-  }, [stepSlug, currentStepData?.serviceTitle, formData.currentServiceShowingSkills, formData.currentServiceShowingDocuments]);
+    return { view: 'qualifications' as const, serviceTitle };
+  }, [stepSlug, viewParam, currentStepData?.serviceTitle]);
+
+  console.log('[ServicesSetup] Computed currentView (URL-based):', {
+    stepSlug,
+    viewParam,
+    serviceTitle: currentStepData?.serviceTitle,
+    currentView,
+  });
 
   // Populate form data ONLY on initial load
   useEffect(() => {
@@ -111,8 +110,6 @@ function ServicesSetupContent() {
       setFormData({
         qualificationsByService: profileData.qualificationsByService || {},
         skillsByService: profileData.skillsByService || {},
-        currentServiceShowingSkills: null,
-        currentServiceShowingDocuments: null,
         documentsByService: profileData.documentsByService || {},
         selectedQualifications: [],
       });
@@ -160,9 +157,9 @@ function ServicesSetupContent() {
     const hasSkills = isServiceStep && serviceHasSkills(currentStepData.serviceTitle!);
 
     if (isServiceStep && !isShowingSkills && !isShowingDocuments && hasSkills) {
-      // INTERCEPT: Show skills view instead of proceeding to next service
-      handleFieldChange("currentServiceShowingSkills", currentStepData.serviceTitle);
-      return; // Don't proceed - just show skills
+      // INTERCEPT: Navigate to skills view via URL
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=skills`);
+      return;
     }
 
     // INTERCEPTOR 2: Check if we're on skills view and should show documents
@@ -173,10 +170,9 @@ function ServicesSetupContent() {
     const hasDocuments = documentRequirements.length > 0;
 
     if (isServiceStep && isShowingSkills && !isShowingDocuments && hasDocuments) {
-      // INTERCEPT: Show documents view instead of proceeding to next service
-      handleFieldChange("currentServiceShowingDocuments", currentStepData.serviceTitle);
-      handleFieldChange("currentServiceShowingSkills", null); // Clear skills view
-      return; // Don't proceed - just show documents
+      // INTERCEPT: Navigate to documents view via URL
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
+      return;
     }
 
     // PROCEED: Either no skills/documents, or already showed them, or not a service step
@@ -212,17 +208,10 @@ function ServicesSetupContent() {
         data: dataToSend,
       });
 
-      // Clear skills and documents view state before moving to next step
-      if (formData.currentServiceShowingSkills) {
-        handleFieldChange("currentServiceShowingSkills", null);
-      }
-      if (formData.currentServiceShowingDocuments) {
-        handleFieldChange("currentServiceShowingDocuments", null);
-      }
-
       // Move to next step or go to Additional Documents (Section 3)
       if (currentStep < STEPS.length) {
         const nextStepSlug = STEPS[currentStep].slug;
+        // Navigate to next service WITHOUT view parameter (will auto-determine)
         router.push(`/dashboard/worker/services/setup?step=${nextStepSlug}`);
       } else {
         // All services completed - redirect to Additional Documents (Section 3)
@@ -240,8 +229,7 @@ function ServicesSetupContent() {
   const handlePrevious = async () => {
     // If we're currently showing documents view, go back to skills view
     if (currentView.view === 'documents') {
-      handleFieldChange("currentServiceShowingDocuments", null);
-      handleFieldChange("currentServiceShowingSkills", currentStepData?.serviceTitle || null);
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=skills`);
       return;
     }
 
@@ -263,7 +251,7 @@ function ServicesSetupContent() {
       }
 
       // If has qualifications, go back to qualifications view
-      handleFieldChange("currentServiceShowingSkills", null);
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
       return;
     }
 
@@ -288,13 +276,6 @@ function ServicesSetupContent() {
     }
   }, [currentStepIndex, router, stepSlug, STEPS]);
 
-  // Reset view state when navigating to a different step
-  useEffect(() => {
-    // Clear the stored view state when step changes
-    // The effectiveViewState useMemo will compute the correct initial state
-    handleFieldChange("currentServiceShowingSkills", null);
-    handleFieldChange("currentServiceShowingDocuments", null);
-  }, [stepSlug]);
 
   // Loading state
   if (status === "loading" || isLoadingProfile) {
@@ -319,7 +300,7 @@ function ServicesSetupContent() {
     data: formData,
     onChange: handleFieldChange,
     errors: errors,
-    // Pass computed view directly to child (eliminates flash)
+    // Pass computed view from URL (100% deterministic, no flash!)
     currentView: currentView.view,
   };
 

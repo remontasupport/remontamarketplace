@@ -27,8 +27,6 @@ interface ServiceQualificationStepProps {
   data: {
     qualificationsByService: Record<string, string[]>;
     skillsByService: Record<string, string[]>;
-    currentServiceShowingSkills: string | null;
-    currentServiceShowingDocuments: string | null;
     documentsByService?: Record<string, Record<string, string[]>>; // Changed to string[] (URLs)
   };
   onChange: (field: string, value: any) => void;
@@ -68,6 +66,15 @@ export default function ServiceQualificationStep({
   // Use prop-based view state (no derivation, no flash!)
   const showingSkills = currentView === 'skills';
   const showingDocuments = currentView === 'documents';
+
+  console.log('[ServiceQualificationStep] Render with:', {
+    serviceTitle,
+    currentView,
+    showingSkills,
+    showingDocuments,
+    hasQualifications: qualifications.length > 0,
+    hasSkills: skillCategories.length > 0,
+  });
 
   // Get currently selected values
   const selectedQualifications = data.qualificationsByService?.[serviceTitle] || [];
@@ -507,11 +514,7 @@ export default function ServiceQualificationStep({
   }
 
   // Default view: Qualifications
-  // If no qualifications, return null (parent's useLayoutEffect will handle auto-skip)
-  if (qualifications.length === 0) {
-    return null;
-  }
-
+  // Trust the parent's currentView - if we're here, parent wants us to show qualifications
   return (
     <div className="form-page-content">
       {/* Left Column - Form */}
