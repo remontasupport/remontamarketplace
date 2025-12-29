@@ -8,15 +8,17 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
-  PencilSquareIcon
+  XCircleIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
   useSingleComplianceDocument,
   useUploadComplianceDocument,
+  useDeleteComplianceDocument,
 } from "@/hooks/queries/useComplianceDocuments";
 import "@/app/styles/requirements-setup.css";
 
@@ -83,7 +85,7 @@ export default function Step3WorkingWithChildren({
 }: Step3WorkingWithChildrenProps) {
   const { data: session } = useSession();
 
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // OPTIMIZED: Use React Query instead of manual fetch
   const {
@@ -92,6 +94,7 @@ export default function Step3WorkingWithChildren({
   } = useSingleComplianceDocument("/api/worker/working-with-children", "working-with-children");
 
   const uploadMutation = useUploadComplianceDocument();
+  const deleteMutation = useDeleteComplianceDocument();
 
   const uploadedDocument = documentData?.document || null;
 
@@ -121,17 +124,41 @@ export default function Step3WorkingWithChildren({
         documentType: "working-with-children",
         apiEndpoint: "/api/upload/working-with-children",
       });
-
-      // Exit edit mode
-      setIsEditMode(false);
     } catch (error: any) {
       alert(`Upload failed: ${error.message}`);
     }
   };
 
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType: "working-with-children",
+        apiEndpoint: "/api/worker/working-with-children",
+      });
+
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      alert(`Delete failed: ${error.message}`);
+    }
+  };
+
   return (
-    <StepContentWrapper>
-      <div className="form-page-content">
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
+      <StepContentWrapper>
+        <div className="form-page-content">
         {/* Left Column - Form */}
         <div className="form-column">
           <div className="account-form">
@@ -184,7 +211,7 @@ export default function Step3WorkingWithChildren({
                     </div>
                   </div>
                 </div>
-              ) : uploadedDocument && !isEditMode ? (
+              ) : uploadedDocument ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
                   <div className="uploaded-document-item">
@@ -200,13 +227,16 @@ export default function Step3WorkingWithChildren({
                       </a>
                     </div>
                     <button
-                      onClick={() => setIsEditMode(true)}
+                      onClick={handleFileDelete}
                       className="uploaded-document-remove"
-                      title="Replace document"
+                      title="Remove document"
                     >
-                      <PencilSquareIcon className="w-5 h-5" />
+                      <XCircleIcon className="w-5 h-5" />
                     </button>
                   </div>
+                  <p className="text-xs text-gray-500 font-poppins mt-2">
+                    Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+                  </p>
                 </div>
               ) : (
                 // Show upload button
@@ -287,5 +317,6 @@ export default function Step3WorkingWithChildren({
         </div>
       </div>
     </StepContentWrapper>
+    </>
   );
 }

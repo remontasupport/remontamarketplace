@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
@@ -85,6 +86,8 @@ export default function Step6OtherRequirements({
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
   const [customDocumentName, setCustomDocumentName] = useState<string>("");
   const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   // Fetch uploaded documents on mount
   useEffect(() => {
@@ -173,13 +176,16 @@ export default function Step6OtherRequirements({
     }
   };
 
-  const handleDeleteDocument = async (documentId: string) => {
-    if (!confirm("Are you sure you want to delete this document?")) {
-      return;
-    }
+  const handleDeleteDocument = (documentId: string) => {
+    setDocumentToDelete(documentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
 
     try {
-      const response = await fetch(`/api/worker/other-requirements/${documentId}`, {
+      const response = await fetch(`/api/worker/other-requirements/${documentToDelete}`, {
         method: "DELETE",
       });
 
@@ -189,17 +195,27 @@ export default function Step6OtherRequirements({
 
       // Refresh the list
       await fetchUploadedDocuments();
-    } catch (error: any) {
 
+      // Reset state
+      setDocumentToDelete(null);
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
       alert(`Delete failed: ${error.message}`);
     }
   };
 
   return (
-    <StepContentWrapper>
-      <div className="form-page-content">
-        {/* Left Column - Form */}
-        <div className="form-column">
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
+      <StepContentWrapper>
+        <div className="form-page-content">
+          {/* Left Column - Form */}
+          <div className="form-column">
           <div className="account-form">
             {/* Information */}
             <div className="mb-8">
@@ -431,5 +447,6 @@ export default function Step6OtherRequirements({
         </div>
       </div>
     </StepContentWrapper>
+    </>
   );
 }

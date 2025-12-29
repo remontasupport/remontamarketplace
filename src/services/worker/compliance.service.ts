@@ -10,7 +10,7 @@ import {
 } from "@/schema/workerProfileSchema";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { autoUpdateComplianceCompletion } from "./setupProgress.service";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
 /**
  * Backend Service: Worker Compliance Management
@@ -242,9 +242,12 @@ export async function uploadComplianceDocument(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
+    console.log('[Compliance] Upload document called');
+
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
+      console.log('[Compliance] Authentication failed - no session');
       return {
         success: false,
         error: "Unauthorized. Please log in.",
@@ -257,6 +260,7 @@ export async function uploadComplianceDocument(
       dbWriteRateLimit
     );
     if (!rateLimitCheck.success) {
+      console.log('[Compliance] Rate limit exceeded');
       return {
         success: false,
         error: rateLimitCheck.error,
@@ -264,14 +268,25 @@ export async function uploadComplianceDocument(
     }
 
     // 3. Parse form data
-    const file = formData.get("file") as File;
-    const documentType = formData.get("documentType") as string;
+    const file = formData.get("file") as File | null;
+    const documentType = formData.get("documentType") as string | null;
     const documentName = formData.get("documentName") as string | null;
+    const expiryDate = formData.get("expiryDate") as string | null;
 
-    if (!file) {
+    console.log('[Compliance] Form data parsed:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      documentType,
+      documentName,
+      hasExpiryDate: !!expiryDate
+    });
+
+    if (!file || !(file instanceof File)) {
+      console.log('[Compliance] No file provided or invalid file format');
       return {
         success: false,
-        error: "No file provided",
+        error: "No file provided or invalid file format",
       };
     }
 
@@ -300,14 +315,14 @@ export async function uploadComplianceDocument(
       "image/png",
     ];
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!file.type || !ALLOWED_TYPES.includes(file.type)) {
       return {
         success: false,
         error: "Invalid file type. Only PDF, JPG, and PNG are allowed.",
       };
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (!file.size || file.size > MAX_FILE_SIZE) {
       return {
         success: false,
         error: "File too large. Maximum size is 10MB.",
@@ -328,20 +343,44 @@ export async function uploadComplianceDocument(
     }
 
     // 7. Upload to Vercel Blob
-    const arrayBuffer = await file.arrayBuffer();
+    console.log('[Compliance] Starting blob upload');
+    let arrayBuffer;
+    try {
+      arrayBuffer = await file.arrayBuffer();
+    } catch (bufferError) {
+      console.error("[Compliance] Error converting file to arrayBuffer:", bufferError);
+      return {
+        success: false,
+        error: "Failed to process file. Please try again.",
+      };
+    }
+
     const buffer = Buffer.from(arrayBuffer);
 
     const timestamp = Date.now();
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const blobPath = `${docConfig.folder}/${session.user.id}/${documentType}-${timestamp}-${sanitizedFileName}`;
 
-    const blob = await put(blobPath, buffer, {
-      access: "public",
-      contentType: file.type,
-      addRandomSuffix: false,
-    });
+    console.log('[Compliance] Blob path:', blobPath);
+
+    let blob;
+    try {
+      blob = await put(blobPath, buffer, {
+        access: "public",
+        contentType: file.type,
+        addRandomSuffix: false,
+      });
+      console.log('[Compliance] Blob uploaded successfully:', blob.url);
+    } catch (blobError) {
+      console.error("[Compliance] Error uploading to Vercel Blob:", blobError);
+      return {
+        success: false,
+        error: "Failed to upload file to storage. Please try again.",
+      };
+    }
 
     // 8. Create or update verification requirement
+    console.log('[Compliance] Saving to verification requirements');
     // Check if document of this type already exists
     const existingDoc = await authPrisma.verificationRequirement.findFirst({
       where: {
@@ -354,11 +393,13 @@ export async function uploadComplianceDocument(
 
     if (existingDoc) {
       // Update existing document
+      console.log('[Compliance] Updating existing verification requirement:', existingDoc.id);
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDoc.id },
         data: {
           documentUrl: blob.url,
           documentUploadedAt: new Date(),
+          expiresAt: expiryDate ? new Date(expiryDate) : null,
           status: "SUBMITTED",
           submittedAt: new Date(),
           updatedAt: new Date(),
@@ -372,6 +413,7 @@ export async function uploadComplianceDocument(
       });
     } else {
       // Create new document entry
+      console.log('[Compliance] Creating new verification requirement');
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
@@ -382,6 +424,7 @@ export async function uploadComplianceDocument(
           isRequired: docConfig.isRequired,
           documentUrl: blob.url,
           documentUploadedAt: new Date(),
+          expiresAt: expiryDate ? new Date(expiryDate) : null,
           status: "SUBMITTED",
           submittedAt: new Date(),
           updatedAt: new Date(),
@@ -403,9 +446,11 @@ export async function uploadComplianceDocument(
 
     // 11. Auto-update Compliance completion status (non-blocking)
     autoUpdateComplianceCompletion().catch((error) => {
-      console.error("Failed to auto-update compliance completion:", error);
+      console.error("[Compliance] Failed to auto-update compliance completion:", error);
       // Don't fail the main operation if this fails
     });
+
+    console.log('[Compliance] Upload complete, returning success');
 
     return {
       success: true,
@@ -418,10 +463,124 @@ export async function uploadComplianceDocument(
       },
     };
   } catch (error: any) {
-    console.error("Error uploading compliance document:", error);
+    console.error("[Compliance] Error uploading compliance document:", error);
+    console.error("[Compliance] Error stack:", error.stack);
     return {
       success: false,
-      error: "Failed to upload document. Please try again.",
+      error: `Failed to upload document: ${error.message || 'Unknown error'}`,
+    };
+  }
+}
+
+/**
+ * Server Action: Delete compliance document
+ * Deletes document from both Vercel Blob storage and database
+ */
+export async function deleteComplianceDocument(
+  documentId: string
+): Promise<ActionResponse> {
+  try {
+    console.log('[Compliance] Delete document called:', documentId);
+
+    // 1. Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      console.log('[Compliance] Authentication failed - no session');
+      return {
+        success: false,
+        error: "Unauthorized. Please log in.",
+      };
+    }
+
+    // 2. Rate limiting check (protect Neon DB)
+    const rateLimitCheck = await checkServerActionRateLimit(
+      session.user.id,
+      dbWriteRateLimit
+    );
+    if (!rateLimitCheck.success) {
+      console.log('[Compliance] Rate limit exceeded');
+      return {
+        success: false,
+        error: rateLimitCheck.error,
+      };
+    }
+
+    // 3. Get worker profile
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) {
+      return {
+        success: false,
+        error: "Worker profile not found",
+      };
+    }
+
+    // 4. Find the document
+    const document = await authPrisma.verificationRequirement.findFirst({
+      where: {
+        id: documentId,
+        workerProfileId: workerProfile.id, // Security: Ensure document belongs to this worker
+      },
+      select: {
+        id: true,
+        documentUrl: true,
+        requirementType: true,
+      },
+    });
+
+    if (!document) {
+      return {
+        success: false,
+        error: "Document not found or access denied",
+      };
+    }
+
+    // 5. Delete from Vercel Blob storage (if URL exists)
+    if (document.documentUrl) {
+      try {
+        console.log('[Compliance] Deleting from blob storage:', document.documentUrl);
+        await del(document.documentUrl);
+      } catch (blobError) {
+        console.error("[Compliance] Error deleting from blob storage:", blobError);
+        // Continue with database deletion even if blob deletion fails
+      }
+    }
+
+    // 6. Delete from database
+    console.log('[Compliance] Deleting from database:', documentId);
+    await authPrisma.verificationRequirement.delete({
+      where: { id: documentId },
+    });
+
+    // 7. Revalidate cache
+    revalidatePath("/dashboard/worker/requirements/setup");
+    revalidatePath("/dashboard/worker/trainings/setup");
+    revalidatePath("/dashboard/worker");
+
+    // 8. Auto-update Compliance completion status (non-blocking)
+    autoUpdateComplianceCompletion().catch((error) => {
+      console.error("[Compliance] Failed to auto-update compliance completion:", error);
+      // Don't fail the main operation if this fails
+    });
+
+    console.log('[Compliance] Delete complete, returning success');
+
+    return {
+      success: true,
+      message: "Document deleted successfully!",
+      data: {
+        documentType: document.requirementType,
+      },
+    };
+  } catch (error: any) {
+    console.error("[Compliance] Error deleting compliance document:", error);
+    console.error("[Compliance] Error stack:", error.stack);
+    return {
+      success: false,
+      error: `Failed to delete document: ${error.message || 'Unknown error'}`,
     };
   }
 }

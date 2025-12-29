@@ -9,15 +9,17 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
-  PencilSquareIcon
+  XCircleIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
   useComplianceDocuments,
   useUploadComplianceDocument,
+  useDeleteComplianceDocument,
   complianceDocumentsKeys,
 } from "@/hooks/queries/useComplianceDocuments";
 import "@/app/styles/requirements-setup.css";
@@ -56,7 +58,7 @@ export default function StepRightToWork({
 
   const [citizenshipStatus, setCitizenshipStatus] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch existing document data
@@ -66,6 +68,7 @@ export default function StepRightToWork({
   } = useComplianceDocuments("right-to-work");
 
   const uploadMutation = useUploadComplianceDocument();
+  const deleteMutation = useDeleteComplianceDocument();
 
   const uploadedDocument = documentData?.documents?.[0] || null;
   const metadata = documentData?.metadata;
@@ -160,15 +163,40 @@ export default function StepRightToWork({
         expiryDate,
       });
 
-      // Exit edit mode
-      setIsEditMode(false);
       setExpiryDate("");
     } catch (error: any) {
       alert(`Upload failed: ${error.message}`);
     }
   };
 
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType: "right-to-work",
+        apiEndpoint: "/api/worker/right-to-work",
+      });
+
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      alert(`Delete failed: ${error.message}`);
+    }
+  };
+
   return (
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
     <StepContentWrapper>
       <div className="form-page-content">
         {/* Left Column - Form */}
@@ -240,7 +268,7 @@ export default function StepRightToWork({
                   </div>
                 )}
 
-                {uploadedDocument && uploadedDocument.documentUrl && !isEditMode ? (
+                {uploadedDocument && uploadedDocument.documentUrl ? (
                   // Show uploaded document preview
                   <div className="document-preview-container">
                     <div className="uploaded-document-item">
@@ -256,11 +284,11 @@ export default function StepRightToWork({
                         </a>
                       </div>
                       <button
-                        onClick={() => setIsEditMode(true)}
+                        onClick={handleFileDelete}
                         className="uploaded-document-remove"
-                        title="Replace document"
+                        title="Remove document"
                       >
-                        <PencilSquareIcon className="w-5 h-5" />
+                        <XCircleIcon className="w-5 h-5" />
                       </button>
                     </div>
 
@@ -357,5 +385,6 @@ export default function StepRightToWork({
         </div>
       </div>
     </StepContentWrapper>
+    </>
   );
 }

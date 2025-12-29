@@ -8,7 +8,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { uploadComplianceDocument } from "@/services/worker/compliance.service";
+import {
+  uploadComplianceDocument,
+  deleteComplianceDocument,
+} from "@/services/worker/compliance.service";
 
 // Query Keys
 export const complianceDocumentsKeys = {
@@ -131,6 +134,7 @@ export function useUploadComplianceDocument() {
 
 /**
  * Hook to delete a compliance document
+ * REFACTORED: Now uses server action instead of API endpoint
  */
 export function useDeleteComplianceDocument() {
   const queryClient = useQueryClient();
@@ -139,26 +143,29 @@ export function useDeleteComplianceDocument() {
     mutationFn: async ({
       documentId,
       documentType,
-      apiEndpoint = "/api/worker/compliance-documents",
+      apiEndpoint, // Deprecated - kept for backward compatibility but ignored
     }: {
       documentId: string;
       documentType: string;
-      apiEndpoint?: string;
+      apiEndpoint?: string; // Deprecated
     }) => {
-      const response = await fetch(`${apiEndpoint}?id=${documentId}`, {
-        method: "DELETE",
-      });
+      // Use server action instead of API endpoint
+      const result = await deleteComplianceDocument(documentId);
 
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete document");
       }
 
-      return response.json();
+      return result;
     },
     onSuccess: (_, variables) => {
       // Invalidate compliance documents for this type
       queryClient.invalidateQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
+      });
+      // Also invalidate all compliance documents
+      queryClient.invalidateQueries({
+        queryKey: complianceDocumentsKeys.all,
       });
     },
   });

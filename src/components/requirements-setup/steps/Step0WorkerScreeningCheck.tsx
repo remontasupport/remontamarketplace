@@ -85,7 +85,6 @@ export default function Step0WorkerScreeningCheck({
 }: Step0WorkerScreeningCheckProps) {
   const { data: session } = useSession();
 
-  const [isEditMode, setIsEditMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // OPTIMIZED: Use React Query instead of manual fetch
@@ -125,9 +124,6 @@ export default function Step0WorkerScreeningCheck({
         documentType: "worker-screening-check",
         apiEndpoint: "/api/upload/screening-check",
       });
-
-      // Exit edit mode
-      setIsEditMode(false);
     } catch (error: any) {
       alert(`Upload failed: ${error.message}`);
     }
@@ -146,6 +142,8 @@ export default function Step0WorkerScreeningCheck({
         documentType: "worker-screening-check",
         apiEndpoint: "/api/worker/screening-check",
       });
+
+      setDeleteDialogOpen(false);
     } catch (error: any) {
       alert(`Delete failed: ${error.message}`);
     }
@@ -217,7 +215,7 @@ export default function Step0WorkerScreeningCheck({
                     </div>
                   </div>
                 </div>
-              ) : uploadedDocument && !isEditMode ? (
+              ) : uploadedDocument ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
                   <div className="uploaded-document-item">
@@ -240,6 +238,9 @@ export default function Step0WorkerScreeningCheck({
                       <XCircleIcon className="w-5 h-5" />
                     </button>
                   </div>
+                  <p className="text-xs text-gray-500 font-poppins mt-2">
+                    Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+                  </p>
                 </div>
               ) : (
                 // Show upload button
