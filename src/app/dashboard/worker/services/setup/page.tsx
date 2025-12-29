@@ -16,15 +16,15 @@ import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
-import { serviceHasSkills } from "@/config/serviceSkills";
 import Loader from "@/components/ui/Loader";
+import { useSubcategories, getCategoryIdFromName } from "@/hooks/queries/useServiceSubcategories";
 
 // Form data interface
 interface FormData {
   // Individual service qualifications
   qualificationsByService: Record<string, string[]>;
-  // Individual service skills
-  skillsByService: Record<string, string[]>;
+  // Individual service offerings (what services they can provide)
+  offeringsByService: Record<string, string[]>;
   // Documents by service and requirement type (URLs)
   documentsByService: Record<string, Record<string, string[]>>;
   // Other documents step
@@ -48,7 +48,7 @@ function ServicesSetupContent() {
   // Form data state (view tracking moved to URL params)
   const [formData, setFormData] = useState<FormData>({
     qualificationsByService: {},
-    skillsByService: {},
+    offeringsByService: {},
     documentsByService: {},
     selectedQualifications: [],
   });
@@ -66,6 +66,13 @@ function ServicesSetupContent() {
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
   const currentStepData = STEPS[currentStep - 1];
 
+  // Fetch subcategories for the current service to check if offerings exist
+  // Must be called after currentStepData is defined, but hooks must be called unconditionally
+  const currentServiceCategoryId = currentStepData?.serviceTitle
+    ? getCategoryIdFromName(currentStepData.serviceTitle)
+    : undefined;
+  const { data: availableSubcategories } = useSubcategories(currentServiceCategoryId);
+
   // Compute current view PURELY from URL + service configuration (100% deterministic!)
   const currentView = useMemo(() => {
     const serviceTitle = currentStepData?.serviceTitle;
@@ -74,8 +81,8 @@ function ServicesSetupContent() {
     }
 
     // Priority 1: Use explicit view from URL if present
-    if (viewParam === 'skills') {
-      return { view: 'skills' as const, serviceTitle };
+    if (viewParam === 'offerings') {
+      return { view: 'offerings' as const, serviceTitle };
     }
     if (viewParam === 'documents') {
       return { view: 'documents' as const, serviceTitle };
@@ -86,22 +93,38 @@ function ServicesSetupContent() {
 
     // Priority 2: Auto-determine initial view based on service configuration
     const hasQualifications = serviceHasQualifications(serviceTitle);
-    const hasSkills = serviceHasSkills(serviceTitle);
+    // Check database for subcategories instead of hardcoded config
+    const hasOfferings = availableSubcategories && availableSubcategories.length > 0;
+    const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
+    const documentRequirements = getServiceDocumentRequirements(serviceTitle);
+    const hasDocuments = documentRequirements.length > 0;
 
-    // Auto-show skills if no qualifications but has skills
-    if (!hasQualifications && hasSkills) {
-      return { view: 'skills' as const, serviceTitle };
+    // Auto-show documents if no qualifications and no offerings but has documents
+    if (!hasQualifications && !hasOfferings && hasDocuments) {
+      return { view: 'documents' as const, serviceTitle };
     }
 
-    // Default: qualifications view
-    return { view: 'qualifications' as const, serviceTitle };
-  }, [stepSlug, viewParam, currentStepData?.serviceTitle]);
+    // Auto-show offerings if no qualifications but has offerings
+    if (!hasQualifications && hasOfferings) {
+      return { view: 'offerings' as const, serviceTitle };
+    }
+
+    // Default: qualifications view (if service has qualifications)
+    if (hasQualifications) {
+      return { view: 'qualifications' as const, serviceTitle };
+    }
+
+    // Fallback: if no qualifications, no offerings, no documents - show default
+    return { view: 'default' as const, serviceTitle };
+  }, [stepSlug, viewParam, currentStepData?.serviceTitle, availableSubcategories]);
 
   console.log('[ServicesSetup] Computed currentView (URL-based):', {
     stepSlug,
     viewParam,
     serviceTitle: currentStepData?.serviceTitle,
     currentView,
+    availableSubcategoriesCount: availableSubcategories?.length || 0,
+    hasOfferings: availableSubcategories && availableSubcategories.length > 0,
   });
 
   // Populate form data ONLY on initial load
@@ -109,7 +132,7 @@ function ServicesSetupContent() {
     if (profileData && !hasInitializedFormData.current) {
       setFormData({
         qualificationsByService: profileData.qualificationsByService || {},
-        skillsByService: profileData.skillsByService || {},
+        offeringsByService: {}, // No longer used - offerings are managed via TanStack Query
         documentsByService: profileData.documentsByService || {},
         selectedQualifications: [],
       });
@@ -141,35 +164,46 @@ function ServicesSetupContent() {
 
   // Save current step and move to next
   const handleNext = async () => {
-    // Import serviceHasSkills function and getServiceDocumentRequirements
-    const { serviceHasSkills } = await import("@/config/serviceSkills");
+    // Import getServiceDocumentRequirements
     const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
 
-    // INTERCEPTOR 1: Check if we're on a service step with skills
+    // INTERCEPTOR 1: Check if we're on a service step with offerings
     // Only intercept if:
     // 1. We have a serviceTitle (it's a service step, not "Other Documents")
-    // 2. We're NOT currently showing skills view
+    // 2. We're NOT currently showing offerings view
     // 3. We're NOT currently showing documents view
-    // 4. The service has skills configured
+    // 4. The service has offerings (from database)
     const isServiceStep = !!currentStepData?.serviceTitle;
-    const isShowingSkills = currentView.view === 'skills';
+    const isShowingOfferings = currentView.view === 'offerings';
     const isShowingDocuments = currentView.view === 'documents';
-    const hasSkills = isServiceStep && serviceHasSkills(currentStepData.serviceTitle!);
+    // Check database for subcategories instead of hardcoded config
+    const hasOfferings = isServiceStep && availableSubcategories && availableSubcategories.length > 0;
 
-    if (isServiceStep && !isShowingSkills && !isShowingDocuments && hasSkills) {
-      // INTERCEPT: Navigate to skills view via URL
-      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=skills`);
+    if (isServiceStep && !isShowingOfferings && !isShowingDocuments && hasOfferings) {
+      // INTERCEPT: Navigate to offerings view via URL
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=offerings`);
       return;
     }
 
-    // INTERCEPTOR 2: Check if we're on skills view and should show documents
+    // INTERCEPTOR 2: Check if we're on qualifications view and should skip to documents
     // Only intercept if:
-    // 1. We're currently showing skills view
-    // 2. The service has document requirements
+    // 1. We're on qualifications view (not showing offerings or documents)
+    // 2. The service does NOT have offerings
+    // 3. The service DOES have document requirements
     const documentRequirements = isServiceStep ? getServiceDocumentRequirements(currentStepData.serviceTitle!) : [];
     const hasDocuments = documentRequirements.length > 0;
 
-    if (isServiceStep && isShowingSkills && !isShowingDocuments && hasDocuments) {
+    if (isServiceStep && !isShowingOfferings && !isShowingDocuments && !hasOfferings && hasDocuments) {
+      // INTERCEPT: Navigate directly to documents view (skip offerings)
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
+      return;
+    }
+
+    // INTERCEPTOR 3: Check if we're on offerings view and should show documents
+    // Only intercept if:
+    // 1. We're currently showing offerings view
+    // 2. The service has document requirements
+    if (isServiceStep && isShowingOfferings && !isShowingDocuments && hasDocuments) {
       // INTERCEPT: Navigate to documents view via URL
       router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
       return;
@@ -193,11 +227,11 @@ function ServicesSetupContent() {
           selectedQualifications: formData.selectedQualifications,
         };
       } else {
-        // Individual service step - save qualifications and skills
+        // Individual service step - save qualifications
+        // NOTE: offeringsByService is saved via mutations in real-time (no need to save here)
         // NOTE: documentsByService is saved directly during upload via uploadServiceDocument
         dataToSend = {
           qualificationsByService: formData.qualificationsByService,
-          skillsByService: formData.skillsByService,
         };
       }
 
@@ -227,14 +261,36 @@ function ServicesSetupContent() {
 
   // Go to previous step
   const handlePrevious = async () => {
-    // If we're currently showing documents view, go back to skills view
+    // If we're currently showing documents view
     if (currentView.view === 'documents') {
-      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=skills`);
+      // Check database for subcategories instead of hardcoded config
+      const hasOfferings = availableSubcategories && availableSubcategories.length > 0;
+      const hasQualifications = currentStepData?.serviceTitle
+        ? serviceHasQualifications(currentStepData.serviceTitle)
+        : false;
+
+      // If service has offerings, go back to offerings view
+      if (hasOfferings) {
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=offerings`);
+        return;
+      }
+
+      // If service has qualifications (but no offerings), go back to qualifications view
+      if (hasQualifications) {
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
+        return;
+      }
+
+      // If no offerings and no qualifications, go to previous service
+      if (currentStep > 1) {
+        const prevStepSlug = STEPS[currentStep - 2].slug;
+        router.push(`/dashboard/worker/services/setup?step=${prevStepSlug}`);
+      }
       return;
     }
 
-    // If we're currently showing skills view
-    if (currentView.view === 'skills') {
+    // If we're currently showing offerings view
+    if (currentView.view === 'offerings') {
       // Check if service has qualifications
       const hasQualifications = currentStepData?.serviceTitle
         ? serviceHasQualifications(currentStepData.serviceTitle)
@@ -311,10 +367,10 @@ function ServicesSetupContent() {
 
   // Determine next button text
   const getNextButtonText = () => {
-    const { serviceHasSkills } = require("@/config/serviceSkills");
     const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
     const isLastService = currentStep === STEPS.length;
-    const currentServiceHasSkills = currentStepData?.serviceTitle && serviceHasSkills(currentStepData.serviceTitle);
+    // Check database for subcategories instead of hardcoded config
+    const currentServiceHasOfferings = availableSubcategories && availableSubcategories.length > 0;
     const documentRequirements = currentStepData?.serviceTitle ? getServiceDocumentRequirements(currentStepData.serviceTitle) : [];
     const currentServiceHasDocuments = documentRequirements.length > 0;
 
@@ -328,27 +384,27 @@ function ServicesSetupContent() {
       return "Next";
     }
 
-    // If showing skills view of last service but it has documents, show "Next"
-    if (currentView.view === 'skills' && isLastService && currentServiceHasDocuments) {
+    // If showing offerings view of last service but it has documents, show "Next"
+    if (currentView.view === 'offerings' && isLastService && currentServiceHasDocuments) {
       return "Next";
     }
 
-    // If showing skills view of last service with no documents, show "Complete"
-    if (currentView.view === 'skills' && isLastService) {
+    // If showing offerings view of last service with no documents, show "Complete"
+    if (currentView.view === 'offerings' && isLastService) {
       return "Complete";
     }
 
-    // If showing skills view of any other service, show "Next"
-    if (currentView.view === 'skills') {
+    // If showing offerings view of any other service, show "Next"
+    if (currentView.view === 'offerings') {
       return "Next";
     }
 
-    // If on qualifications of last service but it has skills or documents, show "Next"
-    if (isLastService && (currentServiceHasSkills || currentServiceHasDocuments)) {
+    // If on qualifications of last service but it has offerings or documents, show "Next"
+    if (isLastService && (currentServiceHasOfferings || currentServiceHasDocuments)) {
       return "Next";
     }
 
-    // If on qualifications of last service with no skills and no documents, show "Complete"
+    // If on qualifications of last service with no offerings and no documents, show "Complete"
     if (isLastService) {
       return "Complete";
     }
@@ -364,8 +420,8 @@ function ServicesSetupContent() {
       return true;
     }
 
-    // On skills view, only show if service has qualifications
-    if (currentView.view === 'skills') {
+    // On offerings view, only show if service has qualifications
+    if (currentView.view === 'offerings') {
       const serviceTitle = currentStepData?.serviceTitle;
       if (serviceTitle) {
         return serviceHasQualifications(serviceTitle);

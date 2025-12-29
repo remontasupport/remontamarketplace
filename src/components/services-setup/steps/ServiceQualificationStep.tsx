@@ -15,18 +15,24 @@ import { Label } from "@/components/ui/label";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { ChevronDownIcon, ChevronUpIcon, CloudArrowUpIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
-import { getSkillsForService, SkillCategory } from "@/config/serviceSkills";
 import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
+import {
+  useSubcategories,
+  useWorkerServices,
+  getSelectedSubcategoryIds,
+  getCategoryIdFromName,
+  useToggleSubcategory,
+} from "@/hooks/queries/useServiceSubcategories";
 import "@/app/styles/profile-building.css";
 import { useState } from "react";
 
 interface ServiceQualificationStepProps {
   serviceTitle: string;
-  currentView: 'qualifications' | 'skills' | 'documents' | 'default';
+  currentView: 'qualifications' | 'offerings' | 'documents' | 'default';
   data: {
     qualificationsByService: Record<string, string[]>;
-    skillsByService: Record<string, string[]>;
+    offeringsByService?: Record<string, string[]>; // Selected subcategory IDs
     documentsByService?: Record<string, Record<string, string[]>>; // Changed to string[] (URLs)
   };
   onChange: (field: string, value: any) => void;
@@ -44,8 +50,16 @@ export default function ServiceQualificationStep({
   // Fetch service documents from API
   const { data: serviceDocumentsData } = useServiceDocuments();
 
-  // Track expanded categories for skills
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  // Fetch available subcategories and worker's selected services
+  const categoryId = getCategoryIdFromName(serviceTitle);
+  const { data: availableSubcategories, isLoading: subcategoriesLoading } = useSubcategories(categoryId);
+  const { data: workerServices } = useWorkerServices();
+
+  // Mutation for toggling subcategories
+  const toggleSubcategoryMutation = useToggleSubcategory();
+
+  // Track expanded offerings (for showing descriptions)
+  const [expandedOfferings, setExpandedOfferings] = useState<Set<string>>(new Set());
 
   // Track uploading state per requirement type
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
@@ -58,27 +72,31 @@ export default function ServiceQualificationStep({
     fileUrl: string;
   } | null>(null);
 
-  // Get qualifications, skills, and document requirements for this service
+  // Get qualifications and document requirements for this service
   const qualifications = getQualificationsForService(serviceTitle);
-  const skillCategories = getSkillsForService(serviceTitle);
   const documentRequirements = getServiceDocumentRequirements(serviceTitle);
 
+  // Get selected subcategory IDs from worker services
+  const selectedSubcategoryIds = getSelectedSubcategoryIds(workerServices, serviceTitle);
+
   // Use prop-based view state (no derivation, no flash!)
-  const showingSkills = currentView === 'skills';
+  const showingOfferings = currentView === 'offerings';
   const showingDocuments = currentView === 'documents';
 
   console.log('[ServiceQualificationStep] Render with:', {
     serviceTitle,
     currentView,
-    showingSkills,
+    showingOfferings,
     showingDocuments,
     hasQualifications: qualifications.length > 0,
-    hasSkills: skillCategories.length > 0,
+    availableSubcategories: availableSubcategories?.length || 0,
+    selectedSubcategoryIds: selectedSubcategoryIds.length,
   });
 
   // Get currently selected values
   const selectedQualifications = data.qualificationsByService?.[serviceTitle] || [];
-  const selectedSkills = data.skillsByService?.[serviceTitle] || [];
+  // Use workerServices as source of truth (from TanStack Query cache)
+  const selectedOfferings = selectedSubcategoryIds;
 
   // Local state for uploaded file URLs per requirement type
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, string[]>>(
@@ -130,23 +148,31 @@ export default function ServiceQualificationStep({
     }
   }, [serviceDocumentsData, serviceTitle]);
 
-  // Expand the first 2 skill categories (first row) when switching to skills view
-  useEffect(() => {
-    if (showingSkills && skillCategories.length > 0) {
-      const firstTwoIds = skillCategories.slice(0, 2).map(cat => cat.id);
-      setExpandedCategories(new Set(firstTwoIds));
-    }
-  }, [showingSkills, skillCategories]);
-
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev => {
+  // Toggle offering description expansion
+  const toggleOfferingDescription = (offeringId: string) => {
+    setExpandedOfferings(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
+      if (newSet.has(offeringId)) {
+        newSet.delete(offeringId);
       } else {
-        newSet.add(categoryId);
+        newSet.add(offeringId);
       }
       return newSet;
+    });
+  };
+
+  // Handle offering toggle (checkbox) - uses mutation with optimistic updates
+  const handleOfferingToggle = (subcategoryId: string) => {
+    // Find the subcategory details
+    const subcategory = availableSubcategories?.find((s) => s.id === subcategoryId);
+    if (!subcategory) return;
+
+    // Trigger the mutation
+    toggleSubcategoryMutation.mutate({
+      categoryId,
+      categoryName: serviceTitle,
+      subcategoryId,
+      subcategoryName: subcategory.name,
     });
   };
 
@@ -166,28 +192,6 @@ export default function ServiceQualificationStep({
     };
 
     onChange("qualificationsByService", updatedByService);
-  };
-
-  const handleSkillToggle = (skillId: string) => {
-    const isSelected = selectedSkills.includes(skillId);
-
-    let updatedSkills: string[];
-    if (isSelected) {
-      updatedSkills = selectedSkills.filter((s) => s !== skillId);
-    } else {
-      updatedSkills = [...selectedSkills, skillId];
-    }
-
-    const updatedByService = {
-      ...data.skillsByService,
-      [serviceTitle]: updatedSkills,
-    };
-
-    onChange("skillsByService", updatedByService);
-  };
-
-  const getSelectedCountForCategory = (category: SkillCategory): number => {
-    return category.skills.filter(skill => selectedSkills.includes(skill.id)).length;
   };
 
   // Document upload handlers
@@ -433,82 +437,110 @@ export default function ServiceQualificationStep({
     );
   }
 
-  // If showing skills view
-  if (showingSkills) {
+  // If showing offerings view
+  if (showingOfferings) {
     return (
-      <div style={{ width: '100%' }}>
-        <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
-          Skills for {serviceTitle}
-        </h3>
-        <p className="text-sm text-gray-600 font-poppins mb-6">
-          Select all the skills you can provide for {serviceTitle}. This helps clients find the right support for their needs.
-        </p>
+      <div className="form-page-content">
+        {/* Left Column - Form */}
+        <div className="form-column">
+          <div className="account-form">
+            <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
+              Service Offerings for {serviceTitle}
+            </h3>
+            <p className="text-sm text-gray-600 font-poppins mb-6">
+              Select all the specific services you can provide under {serviceTitle}. This helps clients find the right support for their needs.
+            </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-          {skillCategories.map((category) => {
-            const isExpanded = expandedCategories.has(category.id);
-            const selectedCount = getSelectedCountForCategory(category);
+            {subcategoriesLoading ? (
+              <p className="text-sm text-gray-500">Loading available services...</p>
+            ) : !availableSubcategories || availableSubcategories.length === 0 ? (
+              <p className="text-sm text-gray-500">No service offerings available for this category.</p>
+            ) : (
+              <div className="space-y-4">
+                {availableSubcategories.map((subcategory) => {
+                  const isSelected = selectedOfferings.includes(subcategory.id);
+                  const isExpanded = expandedOfferings.has(subcategory.id);
 
-            return (
-              <div key={category.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                {/* Category Header */}
-                <button
-                  type="button"
-                  onClick={() => toggleCategory(category.id)}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{category.icon}</span>
-                    <div className="text-left">
-                      <h4 className="text-base font-poppins font-semibold text-gray-900">
-                        {category.label}
-                      </h4>
-                      {selectedCount > 0 && (
-                        <p className="text-xs text-teal-600 font-poppins mt-0.5">
-                          {selectedCount} skill{selectedCount > 1 ? 's' : ''} selected
-                        </p>
-                      )}
+                  return (
+                    <div
+                      key={subcategory.id}
+                      className={`border rounded-lg p-4 transition-all duration-200 ${
+                        isSelected
+                          ? "border-teal-500 bg-teal-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id={subcategory.id}
+                          checked={isSelected}
+                          onCheckedChange={() => handleOfferingToggle(subcategory.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor={subcategory.id}
+                            className="text-base font-poppins font-semibold text-gray-900 cursor-pointer"
+                          >
+                            {subcategory.name}
+                          </Label>
+                          {subcategory.requiresRegistration && (
+                            <button
+                              type="button"
+                              onClick={() => toggleOfferingDescription(subcategory.id)}
+                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 flex items-center gap-1"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUpIcon className="w-3 h-3" />
+                                  Hide details
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDownIcon className="w-3 h-3" />
+                                  Show registration requirements
+                                </>
+                              )}
+                            </button>
+                          )}
+                          {isExpanded && subcategory.requiresRegistration && (
+                            <p className="text-sm text-gray-600 font-poppins mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                              {subcategory.requiresRegistration}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronUpIcon className="w-5 h-5 text-gray-500" />
-                  ) : (
-                    <ChevronDownIcon className="w-5 h-5 text-gray-500" />
-                  )}
-                </button>
-
-                {/* Category Skills */}
-                {isExpanded && (
-                  <div className="p-4 bg-white">
-                    <div className="languages-grid">
-                      {category.skills.map((skill) => (
-                        <button
-                          key={skill.id}
-                          type="button"
-                          className={`language-option ${
-                            selectedSkills.includes(skill.id) ? "selected" : ""
-                          }`}
-                          onClick={() => handleSkillToggle(skill.id)}
-                        >
-                          {skill.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            );
-          })}
+            )}
+
+            {selectedOfferings.length > 0 && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800 font-poppins">
+                  ✓ {selectedOfferings.length} service offering{selectedOfferings.length > 1 ? 's' : ''} selected for {serviceTitle}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Selection Summary */}
-        {selectedSkills.length > 0 && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800 font-poppins">
-              ✓ {selectedSkills.length} skill{selectedSkills.length > 1 ? 's' : ''} selected for {serviceTitle}
+        {/* Right Column - Info Box */}
+        <div className="info-column">
+          <div className="info-box">
+            <h3 className="info-box-title">About Service Offerings</h3>
+            <p className="info-box-text">
+              Select the specific services you're qualified and willing to provide under {serviceTitle}.
+            </p>
+            <p className="info-box-text mt-3">
+              Choose all that apply. This helps clients find workers with the exact skills they need.
+            </p>
+            <p className="info-box-text mt-3">
+              Some services may have specific registration or certification requirements. Click "Show registration requirements" to view details.
             </p>
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -525,7 +557,6 @@ export default function ServiceQualificationStep({
           </h3>
           <p className="text-sm text-gray-600 font-poppins mb-6">
             Select all qualifications and certifications you hold for {serviceTitle}.
-            {skillCategories.length > 0 && " After this, you'll select specific skills you can provide."}
           </p>
 
           <div className="space-y-4">
@@ -575,11 +606,6 @@ export default function ServiceQualificationStep({
                 ✓ {selectedQualifications.length} qualification
                 {selectedQualifications.length > 1 ? "s" : ""} selected for {serviceTitle}
               </p>
-              {skillCategories.length > 0 && (
-                <p className="text-xs text-green-700 font-poppins mt-1">
-                  Click "Next" to select your skills for this service.
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -596,11 +622,6 @@ export default function ServiceQualificationStep({
           <p className="info-box-text mt-3">
             Select all that apply. You can always add more qualifications later.
           </p>
-          {skillCategories.length > 0 && (
-            <p className="info-box-text mt-3">
-              After selecting your qualifications, you'll choose specific skills you can provide.
-            </p>
-          )}
         </div>
       </div>
     </div>
