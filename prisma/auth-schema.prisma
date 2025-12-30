@@ -402,6 +402,7 @@ model WorkerService {
   categoryName    String        // e.g., "Support Worker", "Therapeutic Supports"
   subcategoryId   String?       // e.g., "personal-care", "occupational-therapist" (nullable)
   subcategoryName String?       // e.g., "Personal care", "Occupational Therapist" (nullable)
+  metadata        Json?         // Service-specific data (e.g., nursing registration, certifications)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

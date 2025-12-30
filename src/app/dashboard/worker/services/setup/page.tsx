@@ -16,8 +16,10 @@ import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
+import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import Loader from "@/components/ui/Loader";
 import { useSubcategories, getCategoryIdFromName } from "@/hooks/queries/useServiceSubcategories";
+import { saveNursingRegistration, getNursingRegistration } from "@/services/worker/workerServices.service";
 
 // Form data interface
 interface FormData {
@@ -27,6 +29,15 @@ interface FormData {
   offeringsByService: Record<string, string[]>;
   // Documents by service and requirement type (URLs)
   documentsByService: Record<string, Record<string, string[]>>;
+  // Nursing registration (for nursing services only)
+  nursingRegistration?: {
+    nursingType?: 'registered' | 'enrolled';
+    hasExperience?: boolean;
+    registrationNumber?: string;
+    expiryDay?: string;
+    expiryMonth?: string;
+    expiryYear?: string;
+  };
   // Other documents step
   selectedQualifications: string[];
 }
@@ -50,6 +61,7 @@ function ServicesSetupContent() {
     qualificationsByService: {},
     offeringsByService: {},
     documentsByService: {},
+    nursingRegistration: undefined,
     selectedQualifications: [],
   });
 
@@ -80,7 +92,14 @@ function ServicesSetupContent() {
       return { view: 'default' as const, serviceTitle: null };
     }
 
+    // Check if this is nursing services
+    const serviceSlug = serviceNameToSlug(serviceTitle);
+    const isNursingService = serviceSlug === 'nursing-services';
+
     // Priority 1: Use explicit view from URL if present
+    if (viewParam === 'registration') {
+      return { view: 'registration' as const, serviceTitle };
+    }
     if (viewParam === 'offerings') {
       return { view: 'offerings' as const, serviceTitle };
     }
@@ -98,6 +117,11 @@ function ServicesSetupContent() {
     const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
     const documentRequirements = getServiceDocumentRequirements(serviceTitle);
     const hasDocuments = documentRequirements.length > 0;
+
+    // Special case: Nursing services start with registration view
+    if (isNursingService && !viewParam) {
+      return { view: 'registration' as const, serviceTitle };
+    }
 
     // Auto-show documents if no qualifications and no offerings but has documents
     if (!hasQualifications && !hasOfferings && hasDocuments) {
@@ -134,11 +158,34 @@ function ServicesSetupContent() {
         qualificationsByService: profileData.qualificationsByService || {},
         offeringsByService: {}, // No longer used - offerings are managed via TanStack Query
         documentsByService: profileData.documentsByService || {},
+        nursingRegistration: profileData.nursingRegistration || undefined,
         selectedQualifications: [],
       });
       hasInitializedFormData.current = true;
     }
   }, [profileData]);
+
+  // Load nursing registration data when entering registration view
+  useEffect(() => {
+    const loadNursingRegistration = async () => {
+      if (currentView.view === 'registration' && session?.user?.id) {
+        console.log('[Nursing] Loading registration data...');
+        const result = await getNursingRegistration();
+
+        if (result.success && result.data) {
+          console.log('[Nursing] Data loaded:', result.data);
+          setFormData(prev => ({
+            ...prev,
+            nursingRegistration: result.data!,
+          }));
+        } else {
+          console.log('[Nursing] No existing data found');
+        }
+      }
+    };
+
+    loadNursingRegistration();
+  }, [currentView.view, session?.user?.id]);
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
@@ -154,6 +201,22 @@ function ServicesSetupContent() {
         return newErrors;
       });
     }
+    // Clear registration number error when nursing registration changes
+    if (field === 'nursingRegistration' && value?.registrationNumber && errors.registrationNumber) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.registrationNumber;
+        return newErrors;
+      });
+    }
+    // Clear qualifications error when qualificationsByService or documentsByService changes
+    if ((field === 'qualificationsByService' || field === 'documentsByService') && errors.qualifications) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.qualifications;
+        return newErrors;
+      });
+    }
   };
 
   // Validate current step
@@ -166,6 +229,117 @@ function ServicesSetupContent() {
   const handleNext = async () => {
     // Import getServiceDocumentRequirements
     const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
+
+    // VALIDATION: Check if we're on qualifications view and all selected qualifications have uploads
+    const isShowingQualifications = currentView.view === 'qualifications';
+    if (isShowingQualifications && currentStepData?.serviceTitle) {
+      const selectedQuals = formData.qualificationsByService?.[currentStepData.serviceTitle] || [];
+
+      if (selectedQuals.length > 0) {
+        // Check uploaded qualification files - need to query the database
+        const { getServiceDocuments } = await import("@/services/worker/serviceDocuments.service");
+        const documentsResult = await getServiceDocuments();
+
+        if (documentsResult.success && documentsResult.data) {
+          // Filter documents for current service
+          const serviceDocuments = documentsResult.data.filter(
+            (doc: any) => doc.serviceTitle === currentStepData.serviceTitle
+          );
+
+          // Get qualification types that have uploaded files
+          const uploadedQualTypes = new Set(
+            serviceDocuments.map((doc: any) => doc.documentType)
+          );
+
+          // Check if any selected qualification is missing an upload
+          const missingUploads = selectedQuals.filter(qualType => !uploadedQualTypes.has(qualType));
+
+          if (missingUploads.length > 0) {
+            setErrors({
+              qualifications: "Please upload documents for all selected qualifications before proceeding."
+            });
+            return;
+          } else {
+            // Clear the error if validation passes
+            setErrors((prev) => {
+              const newErrors = { ...prev };
+              delete newErrors.qualifications;
+              return newErrors;
+            });
+          }
+        }
+      }
+    }
+
+    // INTERCEPTOR 0: Check if we're on registration view (nursing services)
+    // Navigate to qualifications view OR skip to offerings if no qualifications
+    const isShowingRegistration = currentView.view === 'registration';
+    if (isShowingRegistration) {
+      // Validate registration number (front-end only)
+      if (!formData.nursingRegistration?.registrationNumber || formData.nursingRegistration.registrationNumber.trim() === '') {
+        setErrors({ registrationNumber: "Please enter your registration number before proceeding." });
+        return;
+      }
+
+      // Save nursing registration data using server action
+      if (session?.user?.id && formData.nursingRegistration) {
+        try {
+          console.log('[Nursing] Saving registration data:', formData.nursingRegistration);
+          const result = await saveNursingRegistration({
+            nursingType: formData.nursingRegistration.nursingType || 'registered',
+            hasExperience: formData.nursingRegistration.hasExperience || false,
+            registrationNumber: formData.nursingRegistration.registrationNumber || '',
+            expiryDay: formData.nursingRegistration.expiryDay || '',
+            expiryMonth: formData.nursingRegistration.expiryMonth || '',
+            expiryYear: formData.nursingRegistration.expiryYear || '',
+          });
+
+          if (!result.success) {
+            setErrors({ general: result.error || "Failed to save nursing registration. Please try again." });
+            return;
+          }
+
+          console.log('[Nursing] Registration saved successfully');
+        } catch (error) {
+          console.error('[Nursing] Error saving registration:', error);
+          setErrors({ general: "Failed to save nursing registration. Please try again." });
+          return;
+        }
+      }
+
+      // Check if service has qualifications
+      const hasQualifications = currentStepData?.serviceTitle
+        ? serviceHasQualifications(currentStepData.serviceTitle)
+        : false;
+
+      // Check if service has offerings
+      const hasOfferings = availableSubcategories && availableSubcategories.length > 0;
+
+      // If no qualifications but has offerings, skip to offerings
+      if (!hasQualifications && hasOfferings) {
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=offerings`);
+        return;
+      }
+
+      // If has qualifications, go to qualifications view
+      if (hasQualifications) {
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
+        return;
+      }
+
+      // If no qualifications and no offerings, check for documents
+      const documentRequirements = isServiceStep ? getServiceDocumentRequirements(currentStepData.serviceTitle!) : [];
+      const hasDocuments = documentRequirements.length > 0;
+
+      if (hasDocuments) {
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
+        return;
+      }
+
+      // Fallback: go to qualifications view
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
+      return;
+    }
 
     // INTERCEPTOR 1: Check if we're on a service step with offerings
     // Only intercept if:
@@ -227,11 +401,12 @@ function ServicesSetupContent() {
           selectedQualifications: formData.selectedQualifications,
         };
       } else {
-        // Individual service step - save qualifications
+        // Individual service step - save qualifications and nursing registration
         // NOTE: offeringsByService is saved via mutations in real-time (no need to save here)
         // NOTE: documentsByService is saved directly during upload via uploadServiceDocument
         dataToSend = {
           qualificationsByService: formData.qualificationsByService,
+          nursingRegistration: formData.nursingRegistration,
         };
       }
 
@@ -281,7 +456,16 @@ function ServicesSetupContent() {
         return;
       }
 
-      // If no offerings and no qualifications, go to previous service
+      // Check if it's nursing service (has registration but no qualifications/offerings)
+      const serviceSlug = currentStepData?.serviceTitle ? serviceNameToSlug(currentStepData.serviceTitle) : '';
+      const isNursingService = serviceSlug === 'nursing-services';
+      if (isNursingService) {
+        // Go back to registration (skip qualifications since there are none)
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=registration`);
+        return;
+      }
+
+      // If no offerings and no qualifications and not nursing, go to previous service
       if (currentStep > 1) {
         const prevStepSlug = STEPS[currentStep - 2].slug;
         router.push(`/dashboard/worker/services/setup?step=${prevStepSlug}`);
@@ -296,9 +480,19 @@ function ServicesSetupContent() {
         ? serviceHasQualifications(currentStepData.serviceTitle)
         : false;
 
-      // If no qualifications, skip back to previous service instead of qualifications view
+      // Check if it's nursing service
+      const serviceSlug = currentStepData?.serviceTitle ? serviceNameToSlug(currentStepData.serviceTitle) : '';
+      const isNursingService = serviceSlug === 'nursing-services';
+
+      // If no qualifications
       if (!hasQualifications) {
-        // Navigate to previous step
+        // If nursing service, go back to registration
+        if (isNursingService) {
+          router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=registration`);
+          return;
+        }
+
+        // Otherwise, navigate to previous step
         if (currentStep > 1) {
           const prevStepSlug = STEPS[currentStep - 2].slug;
           router.push(`/dashboard/worker/services/setup?step=${prevStepSlug}`);
@@ -309,6 +503,19 @@ function ServicesSetupContent() {
       // If has qualifications, go back to qualifications view
       router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
       return;
+    }
+
+    // If we're currently showing qualifications view
+    if (currentView.view === 'qualifications') {
+      // Check if it's nursing service (has registration view before qualifications)
+      const serviceSlug = currentStepData?.serviceTitle ? serviceNameToSlug(currentStepData.serviceTitle) : '';
+      const isNursingService = serviceSlug === 'nursing-services';
+
+      if (isNursingService) {
+        // Go back to registration view
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=registration`);
+        return;
+      }
     }
 
     // Otherwise, navigate to previous step
@@ -420,15 +627,32 @@ function ServicesSetupContent() {
       return true;
     }
 
-    // On offerings view, only show if service has qualifications
+    // On offerings view, show Previous button if:
+    // - Service has qualifications (to go back to qualifications), OR
+    // - Service is nursing (to go back to registration), OR
+    // - It's the first step (can't go back to previous service)
     if (currentView.view === 'offerings') {
       const serviceTitle = currentStepData?.serviceTitle;
       if (serviceTitle) {
-        return serviceHasQualifications(serviceTitle);
+        const hasQualifications = serviceHasQualifications(serviceTitle);
+        const serviceSlug = serviceNameToSlug(serviceTitle);
+        const isNursingService = serviceSlug === 'nursing-services';
+        // Show if has qualifications or is nursing service
+        return hasQualifications || isNursingService;
       }
     }
 
-    // Don't show on qualifications view
+    // On qualifications view, show if it's nursing service (to go back to registration)
+    if (currentView.view === 'qualifications') {
+      const serviceTitle = currentStepData?.serviceTitle;
+      if (serviceTitle) {
+        const serviceSlug = serviceNameToSlug(serviceTitle);
+        const isNursingService = serviceSlug === 'nursing-services';
+        return isNursingService;
+      }
+    }
+
+    // Don't show on registration view (it's the first view for nursing services)
     return false;
   }, [currentView.view, currentStepData?.serviceTitle]);
 

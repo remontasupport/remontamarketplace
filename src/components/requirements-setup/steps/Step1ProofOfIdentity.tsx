@@ -342,7 +342,14 @@ export default function Step1ProofOfIdentity({
     if (!documentToDelete) return;
 
     try {
-      const doc = uploadedDocs[documentToDelete];
+      // Get the document to delete - handle driver's license from Other Personal Info
+      let doc = uploadedDocs[documentToDelete];
+
+      // If trying to delete driver's license but it's from Other Personal Info
+      if (documentToDelete === "identity-drivers-license" && !doc && driverLicense) {
+        doc = driverLicense;
+      }
+
       if (doc?.id) {
         const response = await fetch(`/api/worker/identity-documents?id=${doc.id}`, {
           method: "DELETE",
@@ -361,6 +368,10 @@ export default function Step1ProofOfIdentity({
       } else {
         setSelectedSecondaryType(null);
         setIsEditingSecondary(false);
+        // Reset the user choice tracking if deleting driver's license
+        if (documentToDelete === "identity-drivers-license") {
+          setUserHasChosenDifferentDoc(false);
+        }
       }
 
       // Invalidate cache to update all steps automatically
@@ -371,6 +382,7 @@ export default function Step1ProofOfIdentity({
       alert(`Delete failed: ${error.message}`);
     } finally {
       setDocumentToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 

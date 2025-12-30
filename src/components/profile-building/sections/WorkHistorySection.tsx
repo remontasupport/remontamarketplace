@@ -99,6 +99,42 @@ export default function WorkHistorySection() {
     setErrors({});
     setSuccessMessage("");
 
+    // Front-end validation
+    const validationErrors: Record<string, string> = {};
+
+    workHistories.forEach((work, index) => {
+      // Skip validation if currently working (no end date required)
+      if (work.currentlyWorking) return;
+
+      // Check if end year is earlier than start year
+      if (work.startYear && work.endYear) {
+        const startYear = parseInt(work.startYear);
+        const endYear = parseInt(work.endYear);
+
+        if (endYear < startYear) {
+          validationErrors[`${work.id}-endYear`] = "End year cannot be earlier than start year";
+        } else if (endYear === startYear && work.startMonth && work.endMonth) {
+          // If same year, check months
+          const monthsList = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+          ];
+          const startMonthIndex = monthsList.indexOf(work.startMonth);
+          const endMonthIndex = monthsList.indexOf(work.endMonth);
+
+          if (endMonthIndex < startMonthIndex) {
+            validationErrors[`${work.id}-endMonth`] = "End date cannot be earlier than start date";
+          }
+        }
+      }
+    });
+
+    // If there are validation errors, display them and stop
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     try {
       // Remove IDs before saving (not needed in database)
       const jobHistoryData = workHistories.map(({ id, ...job }) => job);
@@ -179,7 +215,7 @@ export default function WorkHistorySection() {
         {workHistories.map((workHistory, index) => (
           <div key={workHistory.id} className="form-group-border">
             {/* Job Title/Role */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label htmlFor={`jobTitle-${workHistory.id}`} className="form-label">
                 Job title/role
               </label>
@@ -193,7 +229,7 @@ export default function WorkHistorySection() {
             </div>
 
             {/* Company */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label htmlFor={`company-${workHistory.id}`} className="form-label">
                 Company
               </label>
@@ -207,7 +243,7 @@ export default function WorkHistorySection() {
             </div>
 
             {/* Start Date */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label className="form-label">Start date</label>
               <div className="form-row">
                 <div className="form-col">
@@ -250,7 +286,7 @@ export default function WorkHistorySection() {
             </div>
 
             {/* End Date */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label className="form-label">End date</label>
 
               {/* Currently Working Checkbox */}
@@ -286,6 +322,9 @@ export default function WorkHistorySection() {
                         </option>
                       ))}
                     </select>
+                    {errors[`${workHistory.id}-endMonth`] && (
+                      <p className="text-red-600 text-sm mt-1">{errors[`${workHistory.id}-endMonth`]}</p>
+                    )}
                   </div>
                   <div className="form-col">
                     <label htmlFor={`endYear-${workHistory.id}`} className="form-sublabel">
@@ -304,6 +343,9 @@ export default function WorkHistorySection() {
                         </option>
                       ))}
                     </select>
+                    {errors[`${workHistory.id}-endYear`] && (
+                      <p className="text-red-600 text-sm mt-1">{errors[`${workHistory.id}-endYear`]}</p>
+                    )}
                   </div>
                 </div>
               )}

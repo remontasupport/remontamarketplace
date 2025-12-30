@@ -106,7 +106,16 @@ export function getSelectedSubcategoryIds(
  * Helper to map category name to category ID
  */
 export function getCategoryIdFromName(categoryName: string): string {
-  // Normalize the category name to match database IDs
+  // Import the proper mapping to ensure consistency
+  const { serviceNameToSlug } = require("@/utils/serviceSlugMapping");
+
+  // First try to use the proper mapping
+  const mappedSlug = serviceNameToSlug(categoryName);
+  if (mappedSlug) {
+    return mappedSlug;
+  }
+
+  // Fallback: Normalize the category name to match database IDs
   return categoryName
     .toLowerCase()
     .replace(/\s+/g, "-")

@@ -14,7 +14,8 @@ import {
   AcademicCapIcon,
   PencilIcon,
   Cog6ToothIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
 import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
@@ -302,7 +303,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
           <span>Edit profile</span>
         </Link>
         <Link href="/dashboard/worker/services/manage" className="sidebar-edit-profile" onClick={handleLinkClick} style={{ marginTop: '0.75rem' }}>
-          <Cog6ToothIcon className="sidebar-edit-icon" />
+          <WrenchScrewdriverIcon className="sidebar-edit-icon" />
           <span>Edit services</span>
         </Link>
       </div>
@@ -380,6 +381,14 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
             </div>
           )
         })}
+
+        {/* Account Button */}
+        <div className="sidebar-account-section">
+          <Link href="/dashboard/worker/account" className="sidebar-account-button" onClick={handleLinkClick}>
+            <Cog6ToothIcon className="sidebar-account-icon" />
+            <span>Account</span>
+          </Link>
+        </div>
       </nav>
     </aside>
   )

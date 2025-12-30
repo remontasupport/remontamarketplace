@@ -19,6 +19,24 @@ export async function GET(request: Request) {
       );
     }
 
+    console.log(`[API] Fetching subcategories for categoryId: "${categoryId}"`);
+
+    // Verify category exists first
+    const category = await authPrisma.category.findUnique({
+      where: { id: categoryId },
+      select: { id: true, name: true },
+    });
+
+    if (!category) {
+      console.warn(`[API] Category not found: "${categoryId}"`);
+      // Still return empty array instead of error to avoid breaking the UI
+      return NextResponse.json([], {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      });
+    }
+
     // Fetch all subcategories for this category
     const subcategories = await authPrisma.subcategory.findMany({
       where: {
@@ -33,6 +51,11 @@ export async function GET(request: Request) {
         name: "asc",
       },
     });
+
+    console.log(`[API] Found ${subcategories.length} subcategories for "${category.name}" (${categoryId})`);
+    if (subcategories.length > 0) {
+      console.log('[API] Subcategories:', subcategories.map(s => s.name).join(', '));
+    }
 
     return NextResponse.json(subcategories, {
       headers: {

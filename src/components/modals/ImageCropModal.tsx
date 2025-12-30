@@ -3,70 +3,12 @@
 import { useState, useCallback } from 'react'
 import Cropper, { Area } from 'react-easy-crop'
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
+import { createCroppedImage } from '@/utils/imageCrop'
 
 interface ImageCropModalProps {
   imageUrl: string
   onClose: () => void
   onCropComplete: (croppedImageUrl: string) => void
-}
-
-/**
- * Creates a cropped image from the source image and crop area
- * @param imageSrc - Source image URL
- * @param pixelCrop - Crop area in pixels
- * @returns Promise resolving to cropped image URL
- */
-const createCroppedImage = async (
-  imageSrc: string,
-  pixelCrop: Area
-): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const image = new Image()
-    image.crossOrigin = 'anonymous'
-
-    image.onload = () => {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'))
-        return
-      }
-
-      // Set canvas size to the crop area
-      canvas.width = pixelCrop.width
-      canvas.height = pixelCrop.height
-
-      // Draw the cropped image
-      ctx.drawImage(
-        image,
-        pixelCrop.x,
-        pixelCrop.y,
-        pixelCrop.width,
-        pixelCrop.height,
-        0,
-        0,
-        pixelCrop.width,
-        pixelCrop.height
-      )
-
-      // Convert canvas to blob and create object URL
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error('Canvas is empty'))
-          return
-        }
-        const croppedImageUrl = URL.createObjectURL(blob)
-        resolve(croppedImageUrl)
-      }, 'image/jpeg', 0.95)
-    }
-
-    image.onerror = () => {
-      reject(new Error('Failed to load image'))
-    }
-
-    image.src = imageSrc
-  })
 }
 
 export default function ImageCropModal({
@@ -93,11 +35,18 @@ export default function ImageCropModal({
 
     try {
       setIsCropping(true)
-      const croppedImageUrl = await createCroppedImage(imageUrl, croppedAreaPixels)
+      // Convert Area type to CropArea type
+      const cropArea = {
+        x: croppedAreaPixels.x,
+        y: croppedAreaPixels.y,
+        width: croppedAreaPixels.width,
+        height: croppedAreaPixels.height,
+      }
+      const croppedImageUrl = await createCroppedImage(imageUrl, cropArea)
       onCropComplete(croppedImageUrl)
       onClose()
     } catch (error) {
-   
+      console.error('Crop error:', error)
       alert('Failed to crop image. Please try again.')
     } finally {
       setIsCropping(false)

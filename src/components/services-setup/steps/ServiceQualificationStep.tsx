@@ -12,8 +12,16 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { ChevronDownIcon, ChevronUpIcon, CloudArrowUpIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon, CloudArrowUpIcon, DocumentIcon, XMarkIcon, InformationCircleIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
 import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
@@ -29,13 +37,22 @@ import { useState } from "react";
 
 interface ServiceQualificationStepProps {
   serviceTitle: string;
-  currentView: 'qualifications' | 'offerings' | 'documents' | 'default';
+  currentView: 'registration' | 'qualifications' | 'offerings' | 'documents' | 'default';
   data: {
     qualificationsByService: Record<string, string[]>;
     offeringsByService?: Record<string, string[]>; // Selected subcategory IDs
     documentsByService?: Record<string, Record<string, string[]>>; // Changed to string[] (URLs)
+    nursingRegistration?: {
+      nursingType?: 'registered' | 'enrolled';
+      hasExperience?: boolean;
+      registrationNumber?: string;
+      expiryDay?: string;
+      expiryMonth?: string;
+      expiryYear?: string;
+    };
   };
   onChange: (field: string, value: any) => void;
+  errors?: Record<string, string>;
 }
 
 export default function ServiceQualificationStep({
@@ -43,6 +60,7 @@ export default function ServiceQualificationStep({
   currentView,
   data,
   onChange,
+  errors = {},
 }: ServiceQualificationStepProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -64,12 +82,91 @@ export default function ServiceQualificationStep({
   // Track uploading state per requirement type
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
 
+  // Track uploaded files for qualifications (qualificationType -> { url, fileName })
+  const [qualificationFiles, setQualificationFiles] = useState<Record<string, { url: string; fileName: string }>>({});
+
+  // Load existing qualification files from database on mount
+  useEffect(() => {
+    console.log('[QualificationFiles] useEffect triggered', {
+      hasServiceDocumentsData: !!serviceDocumentsData,
+      hasDocuments: !!serviceDocumentsData?.documents,
+      documentsLength: serviceDocumentsData?.documents?.length,
+      serviceTitle,
+    });
+
+    if (!serviceDocumentsData?.documents || !serviceTitle) {
+      console.log('[QualificationFiles] Early return - missing data');
+      return;
+    }
+
+    console.log('[QualificationFiles] Loading files for service:', serviceTitle);
+    console.log('[QualificationFiles] All documents:', serviceDocumentsData.documents);
+
+    // Find verification requirements for this service's qualifications
+    const qualificationRequirements = serviceDocumentsData.documents.filter(
+      (doc: any) => doc.serviceTitle === serviceTitle
+    );
+
+    console.log('[QualificationFiles] Filtered documents:', qualificationRequirements);
+
+    // Populate qualificationFiles state with existing files
+    const existingFiles: Record<string, { url: string; fileName: string }> = {};
+    const qualificationTypes: string[] = [];
+
+    qualificationRequirements.forEach((req: any) => {
+      if (req.documentUrl && req.documentType) {
+        // Extract filename from URL
+        // Blob filename structure: {documentType}-{timestamp}-{originalFileName}
+        // Example: cert3-individual-support-aged-care-1767067012044-Certificate.pdf
+        // We want to show only: Certificate.pdf
+        const urlParts = req.documentUrl.split('/');
+        const fullFileName = urlParts[urlParts.length - 1];
+
+        // Match pattern: {documentType}-{timestamp}-{originalFileName}
+        // documentType can have dashes, so match greedily: .+-\d+-{filename}
+        const match = fullFileName.match(/^.+-\d+-(.+)$/);
+        const fileName = match && match[1] ? match[1] : fullFileName;
+
+        existingFiles[req.documentType] = {
+          url: req.documentUrl,
+          fileName: fileName,
+        };
+
+        // Track which qualification types have files
+        qualificationTypes.push(req.documentType);
+      }
+    });
+
+    console.log('[QualificationFiles] Loaded files:', existingFiles);
+    console.log('[QualificationFiles] Qualification types with files:', qualificationTypes);
+
+    setQualificationFiles(existingFiles);
+
+    // Auto-select qualifications that have uploaded files
+    if (qualificationTypes.length > 0) {
+      const currentlySelected = data.qualificationsByService?.[serviceTitle] || [];
+      const needsUpdate = qualificationTypes.some(type => !currentlySelected.includes(type));
+
+      if (needsUpdate) {
+        const updatedQualifications = Array.from(new Set([...currentlySelected, ...qualificationTypes]));
+        const updatedByService = {
+          ...data.qualificationsByService,
+          [serviceTitle]: updatedQualifications,
+        };
+
+        console.log('[QualificationFiles] Auto-selecting qualifications:', updatedQualifications);
+        onChange("qualificationsByService", updatedByService);
+      }
+    }
+  }, [serviceDocumentsData, serviceTitle]);
+
   // Track delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<{
     requirementType: string;
     fileIndex: number;
     fileUrl: string;
+    isQualification?: boolean; // Flag to distinguish qualification files from documents
   } | null>(null);
 
   // Get qualifications and document requirements for this service
@@ -80,12 +177,14 @@ export default function ServiceQualificationStep({
   const selectedSubcategoryIds = getSelectedSubcategoryIds(workerServices, serviceTitle);
 
   // Use prop-based view state (no derivation, no flash!)
+  const showingRegistration = currentView === 'registration';
   const showingOfferings = currentView === 'offerings';
   const showingDocuments = currentView === 'documents';
 
   console.log('[ServiceQualificationStep] Render with:', {
     serviceTitle,
     currentView,
+    showingRegistration,
     showingOfferings,
     showingDocuments,
     hasQualifications: qualifications.length > 0,
@@ -182,6 +281,10 @@ export default function ServiceQualificationStep({
     let updatedQualifications: string[];
     if (isSelected) {
       updatedQualifications = selectedQualifications.filter((q) => q !== qualificationType);
+      // Remove uploaded file if unchecking
+      const updatedFiles = { ...qualificationFiles };
+      delete updatedFiles[qualificationType];
+      setQualificationFiles(updatedFiles);
     } else {
       updatedQualifications = [...selectedQualifications, qualificationType];
     }
@@ -191,7 +294,78 @@ export default function ServiceQualificationStep({
       [serviceTitle]: updatedQualifications,
     };
 
+    // Update parent state
     onChange("qualificationsByService", updatedByService);
+  };
+
+  // Handle qualification file upload
+  const handleQualificationFileUpload = async (qualificationType: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    const file = files[0];
+    console.log('[Qualification Upload] File selected:', {
+      qualificationType,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+
+    // Set uploading state
+    setUploadingFiles(prev => ({ ...prev, [qualificationType]: true }));
+
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("serviceTitle", serviceTitle);
+      formData.append("requirementType", qualificationType);
+
+      // Upload using server action
+      const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
+      const result = await uploadServiceDocument(formData);
+
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
+      }
+
+      console.log('[Qualification Upload] Upload successful:', result.data);
+
+      // Store the uploaded file info
+      setQualificationFiles(prev => ({
+        ...prev,
+        [qualificationType]: {
+          url: result.data.url,
+          fileName: file.name,
+        },
+      }));
+
+      // Invalidate the service documents query to refresh UI
+      queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
+    } catch (error: any) {
+      console.error('[Qualification Upload] Upload failed:', error);
+      alert(`Failed to upload: ${error.message}`);
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [qualificationType]: false }));
+      event.target.value = '';
+    }
+  };
+
+  // Remove qualification file - opens confirmation dialog
+  const handleRemoveQualificationFile = (qualificationType: string) => {
+    const fileInfo = qualificationFiles[qualificationType];
+    if (!fileInfo) return;
+
+    // Set the file to delete and open dialog
+    setFileToDelete({
+      requirementType: qualificationType,
+      fileIndex: 0, // Not used for qualifications
+      fileUrl: fileInfo.url,
+      isQualification: true,
+    });
+    setDeleteDialogOpen(true);
   };
 
   // Document upload handlers
@@ -264,11 +438,13 @@ export default function ServiceQualificationStep({
   };
 
   const confirmDelete = async () => {
+    setDeleteDialogOpen(false); // Close dialog immediately
+
     if (!fileToDelete || !session?.user?.id) {
       return;
     }
 
-    const { requirementType, fileIndex, fileUrl } = fileToDelete;
+    const { requirementType, fileIndex, fileUrl, isQualification } = fileToDelete;
 
     try {
       // Import the server action
@@ -280,6 +456,13 @@ export default function ServiceQualificationStep({
       if (!result.success) {
         alert(`Failed to delete document: ${result.error}`);
         return;
+      }
+
+      // If it's a qualification file, also remove from local state
+      if (isQualification) {
+        const updatedFiles = { ...qualificationFiles };
+        delete updatedFiles[requirementType];
+        setQualificationFiles(updatedFiles);
       }
 
       // Invalidate and refetch service documents query to get fresh data
@@ -300,6 +483,251 @@ export default function ServiceQualificationStep({
       alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
+
+  // Helper functions for nursing registration
+  const nursingData = data.nursingRegistration || {};
+
+  const updateNursingData = (field: string, value: any) => {
+    const updated = {
+      ...nursingData,
+      [field]: value,
+    };
+    onChange("nursingRegistration", updated);
+  };
+
+  // Generate day options (1-31)
+  const dayOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
+
+  // Month names
+  const monthOptions = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  // Generate year options (current year to 10 years in the future)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 11 }, (_, i) => (currentYear + i).toString());
+
+  // If showing registration view (for nursing services)
+  if (showingRegistration) {
+    return (
+      <div className="form-page-content">
+        {/* Left Column - Form */}
+        <div className="form-column">
+          <div className="account-form">
+          
+
+            {/* Nursing Type */}
+            <div className="mb-6">
+
+              <div className="space-y-3">
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                    nursingData.nursingType === 'registered'
+                      ? "border-primary bg-white"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => updateNursingData('nursingType', 'registered')}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        nursingData.nursingType === 'registered'
+                          ? "border-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {nursingData.nursingType === 'registered' && (
+                        <div className="w-3 h-3 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <Label
+                      htmlFor="registered-nurse"
+                      className="text-base font-poppins text-gray-900 cursor-pointer"
+                    >
+                      I am a registered nurse
+                    </Label>
+                  </div>
+                </div>
+
+                <div
+                  className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+                    nursingData.nursingType === 'enrolled'
+                      ? "border-primary bg-white"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => updateNursingData('nursingType', 'enrolled')}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        nursingData.nursingType === 'enrolled'
+                          ? "border-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {nursingData.nursingType === 'enrolled' && (
+                        <div className="w-3 h-3 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    <Label
+                      htmlFor="enrolled-nurse"
+                      className="text-base font-poppins text-gray-900 cursor-pointer"
+                    >
+                      I am an enrolled nurse
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Experience Checkbox */}
+              <div className="mt-4 border rounded-lg p-4 border-gray-200">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="nursing-experience"
+                    checked={nursingData.hasExperience || false}
+                    onCheckedChange={(checked) => updateNursingData('hasExperience', checked)}
+                    className="mt-1"
+                  />
+                  <Label
+                    htmlFor="nursing-experience"
+                    className="text-base font-poppins text-gray-900 cursor-pointer"
+                  >
+                    I have one or more years of relevant nursing experience
+                  </Label>
+                </div>
+              </div>
+
+              {/* Warning Message */}
+              <div className="mt-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <InformationCircleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800 font-poppins">
+                  If this doesn't apply to you, We suggests you change the service you offer to Support Worker.
+                </p>
+              </div>
+            </div>
+
+            {/* Registration Number */}
+            <div className="mb-6">
+              <Label
+                htmlFor="registration-number"
+                className="text-base font-poppins font-semibold text-gray-900 mb-2 block"
+              >
+                Registration number <span className="text-red-600">*</span>
+              </Label>
+              <Input
+                id="registration-number"
+                type="text"
+                value={nursingData.registrationNumber || ''}
+                onChange={(e) => updateNursingData('registrationNumber', e.target.value)}
+                className="w-full"
+                placeholder="Enter your registration number"
+                required
+              />
+              {errors.registrationNumber && (
+                <p className="text-sm text-red-600 font-poppins mt-1">
+                  {errors.registrationNumber}
+                </p>
+              )}
+            </div>
+
+            {/* Expiry Date */}
+            <div className="mb-6">
+              <Label className="text-base font-poppins font-semibold text-gray-900 mb-2 block">
+                Expiry date
+              </Label>
+              <div className="grid grid-cols-3 gap-4">
+                {/* Day */}
+                <div>
+                  <Label htmlFor="expiry-day" className="text-sm text-gray-600 mb-1 block">
+                    Day
+                  </Label>
+                  <Select
+                    value={nursingData.expiryDay || ''}
+                    onValueChange={(value) => updateNursingData('expiryDay', value)}
+                  >
+                    <SelectTrigger id="expiry-day" className="w-full">
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dayOptions.map((day) => (
+                        <SelectItem key={day} value={day}>
+                          {day}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Month */}
+                <div>
+                  <Label htmlFor="expiry-month" className="text-sm text-gray-600 mb-1 block">
+                    Month
+                  </Label>
+                  <Select
+                    value={nursingData.expiryMonth || ''}
+                    onValueChange={(value) => updateNursingData('expiryMonth', value)}
+                  >
+                    <SelectTrigger id="expiry-month" className="w-full">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((month) => (
+                        <SelectItem key={month} value={month}>
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Year */}
+                <div>
+                  <Label htmlFor="expiry-year" className="text-sm text-gray-600 mb-1 block">
+                    Year
+                  </Label>
+                  <Select
+                    value={nursingData.expiryYear || ''}
+                    onValueChange={(value) => updateNursingData('expiryYear', value)}
+                  >
+                    <SelectTrigger id="expiry-year" className="w-full">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {yearOptions.map((year) => (
+                        <SelectItem key={year} value={year}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Info Box */}
+        <div className="info-column">
+          <div className="info-box">
+            <h3 className="info-box-title">About Nursing Registration</h3>
+            <p className="info-box-text">
+              All nurses must be registered with the relevant nursing authority to provide nursing services.
+            </p>
+            <p className="info-box-text mt-3">
+              <strong>Registered Nurse (RN):</strong> Completed a Bachelor of Nursing degree and registered with AHPRA.
+            </p>
+            <p className="info-box-text mt-3">
+              <strong>Enrolled Nurse (EN):</strong> Completed a Diploma of Nursing and registered with AHPRA.
+            </p>
+            <p className="info-box-text mt-3">
+              Your registration number and expiry date help verify your credentials and ensure compliance with regulatory requirements.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If showing documents view
   if (showingDocuments) {
@@ -560,44 +988,104 @@ export default function ServiceQualificationStep({
           </p>
 
           <div className="space-y-4">
-            {qualifications.map((qualification) => (
-              <div
-                key={qualification.type}
-                className={`border rounded-lg p-4 transition-all duration-200 ${
-                  selectedQualifications.includes(qualification.type)
-                    ? "border-teal-500 bg-teal-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id={qualification.type}
-                    checked={selectedQualifications.includes(qualification.type)}
-                    onCheckedChange={() => handleQualificationToggle(qualification.type)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <Label
-                      htmlFor={qualification.type}
-                      className="text-base font-poppins font-semibold text-gray-900 cursor-pointer"
-                    >
-                      {qualification.name}
-                    </Label>
-                    {qualification.description && (
-                      <p className="text-sm text-gray-600 font-poppins mt-1">
-                        {qualification.description}
-                      </p>
-                    )}
-                    {qualification.expiryYears && (
-                      <p className="text-xs text-gray-500 font-poppins mt-1">
-                        Renewal required every {qualification.expiryYears} year
-                        {qualification.expiryYears > 1 ? "s" : ""}
-                      </p>
+            {qualifications.map((qualification) => {
+              const isSelected = selectedQualifications.includes(qualification.type);
+              const hasFile = qualificationFiles[qualification.type];
+
+              console.log('[Render Qualification]', {
+                qualificationType: qualification.type,
+                isSelected,
+                hasFile,
+                allQualificationFiles: qualificationFiles,
+              });
+
+              return (
+                <div
+                  key={qualification.type}
+                  className={`border rounded-lg p-4 transition-all duration-200 ${
+                    isSelected
+                      ? "border-teal-500 bg-teal-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <Checkbox
+                        id={qualification.type}
+                        checked={isSelected}
+                        onCheckedChange={() => handleQualificationToggle(qualification.type)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor={qualification.type}
+                          className="text-base font-poppins font-semibold text-gray-900 cursor-pointer"
+                        >
+                          {qualification.name}
+                        </Label>
+                        {qualification.description && (
+                          <p className="text-sm text-gray-600 font-poppins mt-1">
+                            {qualification.description}
+                          </p>
+                        )}
+                        {qualification.expiryYears && (
+                          <p className="text-xs text-gray-500 font-poppins mt-1">
+                            Renewal required every {qualification.expiryYears} year
+                            {qualification.expiryYears > 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Upload file button - only show when qualification is selected */}
+                    {isSelected && (
+                      <div className="ml-4">
+                        {uploadingFiles[qualification.type] ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-gray-300 border-t-teal-600 rounded-full animate-spin" />
+                            <span className="text-sm text-gray-600 font-poppins">Uploading...</span>
+                          </div>
+                        ) : hasFile ? (
+                          <div className="flex items-center gap-2">
+                            <DocumentIcon className="h-5 w-5 text-gray-600" />
+                            <a
+                              href={hasFile.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 underline font-poppins"
+                            >
+                              {hasFile.fileName}
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveQualificationFile(qualification.type)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <XMarkIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            htmlFor={`upload-${qualification.type}`}
+                            className="inline-flex items-center gap-2 cursor-pointer text-gray-700 hover:text-gray-900"
+                          >
+                            <PaperClipIcon className="h-5 w-5" />
+                            <span className="text-sm font-poppins">Upload file</span>
+                            <input
+                              id={`upload-${qualification.type}`}
+                              type="file"
+                              className="sr-only"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              onChange={(e) => handleQualificationFileUpload(qualification.type, e)}
+                            />
+                          </label>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {selectedQualifications.length > 0 && (
@@ -605,6 +1093,15 @@ export default function ServiceQualificationStep({
               <p className="text-sm text-green-800 font-poppins">
                 ✓ {selectedQualifications.length} qualification
                 {selectedQualifications.length > 1 ? "s" : ""} selected for {serviceTitle}
+              </p>
+            </div>
+          )}
+
+          {/* Error message for missing uploads */}
+          {errors.qualifications && (
+            <div className="mt-4">
+              <p className="text-sm text-red-600 font-poppins">
+                {errors.qualifications}
               </p>
             </div>
           )}
@@ -624,6 +1121,13 @@ export default function ServiceQualificationStep({
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

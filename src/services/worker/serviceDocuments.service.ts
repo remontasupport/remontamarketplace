@@ -6,6 +6,7 @@ import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { put } from "@vercel/blob";
+import { QUALIFICATION_TYPE_TO_NAME } from "@/utils/qualificationMapping";
 
 /**
  * Backend Service: Worker Service Documents Management
@@ -19,6 +20,79 @@ export type ActionResponse<T = any> = {
   data?: T;
   error?: string;
 };
+
+/**
+ * Server Action: Get all service documents for current user
+ * Returns all verification requirements with service qualifications
+ */
+export async function getServiceDocuments(): Promise<ActionResponse> {
+  try {
+    // 1. Authentication check
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: "Unauthorized. Please log in.",
+      };
+    }
+
+    // 2. Get worker profile
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) {
+      return {
+        success: false,
+        error: "Worker profile not found",
+      };
+    }
+
+    // 3. Fetch all service documents
+    const documents = await authPrisma.verificationRequirement.findMany({
+      where: {
+        workerProfileId: workerProfile.id,
+        documentCategory: "SERVICE_QUALIFICATION",
+      },
+      select: {
+        id: true,
+        requirementType: true,
+        requirementName: true,
+        documentUrl: true,
+        documentUploadedAt: true,
+        status: true,
+        metadata: true,
+      },
+      orderBy: {
+        documentUploadedAt: 'desc',
+      },
+    });
+
+    // 4. Format response with serviceTitle from metadata
+    const formattedDocuments = documents.map(doc => ({
+      id: doc.id,
+      documentType: doc.requirementType,
+      documentName: doc.requirementName,
+      documentUrl: doc.documentUrl,
+      uploadedAt: doc.documentUploadedAt,
+      status: doc.status,
+      serviceTitle: (doc.metadata as any)?.serviceTitle || '',
+    }));
+
+    return {
+      success: true,
+      data: formattedDocuments,
+    };
+  } catch (error: any) {
+    console.error("[Server] Error fetching service documents:", error);
+    return {
+      success: false,
+      error: `Failed to fetch documents: ${error.message || 'Unknown error'}`,
+    };
+  }
+}
 
 /**
  * Server Action: Delete service document
@@ -247,9 +321,21 @@ export async function uploadServiceDocument(
 
     if (existingRequirement) {
       // Update existing requirement - replace with new document URL
+      // Also fix the name if it was incorrect
+      const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
+      const requirements = getServiceDocumentRequirements(serviceTitle);
+      const requirement = requirements.find(r => r.type === requirementType);
+
+      const displayName = requirement?.name ||
+                          QUALIFICATION_TYPE_TO_NAME[requirementType] ||
+                          requirementType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+      console.log(`[Server] Updating qualification: ${requirementType} → "${displayName}"`);
+
       await authPrisma.verificationRequirement.update({
         where: { id: existingRequirement.id },
         data: {
+          requirementName: displayName, // Fix name if it was wrong
           documentUrl: blob.url,
           documentUploadedAt: new Date(),
           documentCategory: "SERVICE_QUALIFICATION",
@@ -269,11 +355,18 @@ export async function uploadServiceDocument(
       const requirements = getServiceDocumentRequirements(serviceTitle);
       const requirement = requirements.find(r => r.type === requirementType);
 
+      // Get proper display name: prioritize config, then mapping, then formatted slug
+      const displayName = requirement?.name ||
+                          QUALIFICATION_TYPE_TO_NAME[requirementType] ||
+                          requirementType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+      console.log(`[Server] Creating qualification: ${requirementType} → "${displayName}"`);
+
       await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
           requirementType: requirementType,
-          requirementName: requirement?.name || requirementType,
+          requirementName: displayName,
           isRequired: requirement?.required || false,
           documentCategory: "SERVICE_QUALIFICATION",
           status: "SUBMITTED",

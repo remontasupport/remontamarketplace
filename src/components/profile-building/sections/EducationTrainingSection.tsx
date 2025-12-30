@@ -99,6 +99,42 @@ export default function EducationTrainingSection() {
     setErrors({});
     setSuccessMessage("");
 
+    // Front-end validation
+    const validationErrors: Record<string, string> = {};
+
+    courses.forEach((course, index) => {
+      // Skip validation if currently studying (no end date required)
+      if (course.currentlyStudying) return;
+
+      // Check if end year is earlier than start year
+      if (course.startYear && course.endYear) {
+        const startYear = parseInt(course.startYear);
+        const endYear = parseInt(course.endYear);
+
+        if (endYear < startYear) {
+          validationErrors[`${course.id}-endYear`] = "End year cannot be earlier than start year";
+        } else if (endYear === startYear && course.startMonth && course.endMonth) {
+          // If same year, check months
+          const monthsList = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+          ];
+          const startMonthIndex = monthsList.indexOf(course.startMonth);
+          const endMonthIndex = monthsList.indexOf(course.endMonth);
+
+          if (endMonthIndex < startMonthIndex) {
+            validationErrors[`${course.id}-endMonth`] = "End date cannot be earlier than start date";
+          }
+        }
+      }
+    });
+
+    // If there are validation errors, display them and stop
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     try {
       // Remove IDs before saving (not needed in database)
       const educationData = courses.map(({ id, ...course }) => course);
@@ -179,7 +215,7 @@ export default function EducationTrainingSection() {
         {courses.map((course) => (
           <div key={course.id} className="form-group-border">
             {/* Qualification */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label htmlFor={`qualification-${course.id}`} className="form-label">
                 Qualification/Certificate
               </label>
@@ -194,7 +230,7 @@ export default function EducationTrainingSection() {
             </div>
 
             {/* Institution */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label htmlFor={`institution-${course.id}`} className="form-label">
                 Institution/Training Provider
               </label>
@@ -208,7 +244,7 @@ export default function EducationTrainingSection() {
             </div>
 
             {/* Start Date */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label className="form-label">Start date</label>
               <div className="form-row">
                 <div className="form-col">
@@ -251,7 +287,7 @@ export default function EducationTrainingSection() {
             </div>
 
             {/* End Date */}
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label className="form-label">End date</label>
 
               {/* Currently Studying Checkbox */}
@@ -287,6 +323,9 @@ export default function EducationTrainingSection() {
                         </option>
                       ))}
                     </select>
+                    {errors[`${course.id}-endMonth`] && (
+                      <p className="text-red-600 text-sm mt-1">{errors[`${course.id}-endMonth`]}</p>
+                    )}
                   </div>
                   <div className="form-col">
                     <label htmlFor={`endYear-${course.id}`} className="form-sublabel">
@@ -305,6 +344,9 @@ export default function EducationTrainingSection() {
                         </option>
                       ))}
                     </select>
+                    {errors[`${course.id}-endYear`] && (
+                      <p className="text-red-600 text-sm mt-1">{errors[`${course.id}-endYear`]}</p>
+                    )}
                   </div>
                 </div>
               )}

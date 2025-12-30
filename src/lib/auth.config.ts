@@ -156,13 +156,31 @@ export const authOptions: NextAuthOptions = {
      * Called whenever a JWT is created or updated
      * Adds role and id to the token (keep it small for cookie size limits)
      */
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.email = user.email;
         // Do NOT store requirements in JWT - they make the session cookie too large
         // Requirements should be fetched via API: /api/worker/requirements
       }
+
+      // Refetch user data when session is updated
+      if (trigger === "update" && token.id) {
+        const freshUser = await authPrisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            email: true,
+            role: true,
+          },
+        });
+
+        if (freshUser) {
+          token.email = freshUser.email;
+          token.role = freshUser.role;
+        }
+      }
+
       return token;
     },
 
@@ -175,6 +193,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.email = token.email as string;
         // Requirements are fetched via API, not stored in session
       }
       return session;
