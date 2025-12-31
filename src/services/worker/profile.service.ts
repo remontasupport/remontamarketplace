@@ -374,11 +374,15 @@ export async function updateWorkerAddress(
     const validatedData = validationResult.data;
 
     // 4. Build location string (concatenate address parts)
+    // Format: "City, State PostalCode" or "Street, City, State PostalCode"
+    const statePostal = [validatedData.state, validatedData.postalCode]
+      .filter(Boolean)
+      .join(" ");
+
     const locationParts = [
       validatedData.streetAddress,
       validatedData.city,
-      validatedData.state,
-      validatedData.postalCode
+      statePostal
     ].filter(Boolean);
     const location = locationParts.join(", ");
 

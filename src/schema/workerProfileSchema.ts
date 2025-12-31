@@ -72,7 +72,7 @@ export const updateWorkerAddressSchema = z.object({
     .max(50, "State must be less than 50 characters"),
   postalCode: z.string()
     .min(1, "Postal code is required")
-    .regex(/^\d{4}$/, "Postal code must be 4 digits"),
+    .regex(/^\d{3,4}$/, "Postal code must be 3-4 digits"),
 });
 
 export type UpdateWorkerAddressData = z.infer<typeof updateWorkerAddressSchema>;

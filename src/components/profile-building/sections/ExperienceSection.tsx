@@ -1,22 +1,190 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown, ChevronUp, Check, AlertTriangle } from "lucide-react";
+
+interface ExperienceArea {
+  id: string;
+  name: string;
+  selected: boolean;
+  expanded: boolean;
+  isProfessional: boolean;
+  isPersonal: boolean;
+  specificAreas: string[];
+  description: string;
+  otherAreas: string[];
+}
+
+interface ExperienceData {
+  [key: string]: ExperienceArea;
+}
+
+// Define specific areas for each experience type
+const SPECIFIC_AREAS: { [key: string]: string[] } = {
+  "aged-care": [
+    "Dementia",
+    "Parkinson's Disease",
+    "Alzheimer's Disease",
+    "Stroke Recovery",
+  ],
+  "chronic-medical": [
+    "Arthritis",
+    "COPD or Respiratory Illness",
+    "Asthma",
+    "Diabetes",
+    "Cardiovascular Disease",
+  ],
+  disability: [
+    "Acquired Brain Injury",
+    "Autism",
+    "Cerebral Palsy",
+    "Cystic Fibrosis",
+    "Down Syndrome",
+    "Epilepsy",
+    "Hearing Impairment",
+    "Intellectual Disabilities",
+    "Motor Neuron Disease",
+    "Muscular Dystrophy",
+    "Physical Disabilities",
+    "Spina Bifida",
+    "Spinal Cord Injury",
+    "Vision Impairment",
+  ],
+  "mental-health": [
+    "Anxiety",
+    "Bipolar Disorder",
+    "Depression",
+    "Eating Disorders",
+    "Hoarding",
+    "Obsessive-Compulsive Disorder (OCD)",
+    "Post-traumatic Stress Disorder (PTSD)",
+    "Schizophrenia",
+    "Substance Abuse & Addiction",
+  ],
+};
+
+const EXPERIENCE_AREAS = [
+  { id: "aged-care", label: "Aged care" },
+  { id: "chronic-medical", label: "Chronic medical conditions" },
+  { id: "disability", label: "Disability" },
+  { id: "mental-health", label: "Mental health" },
+];
 
 export default function ExperienceSection() {
-  const [formData, setFormData] = useState({
-    yearsExperience: "",
-    experienceDescription: "",
+  const [experienceData, setExperienceData] = useState<ExperienceData>(() => {
+    const initial: ExperienceData = {};
+    EXPERIENCE_AREAS.forEach((area) => {
+      initial[area.id] = {
+        id: area.id,
+        name: area.label,
+        selected: false,
+        expanded: false,
+        isProfessional: true, // Default to Professional checked
+        isPersonal: false,
+        specificAreas: [],
+        description: "",
+        otherAreas: [],
+      };
+    });
+    return initial;
   });
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({
+  const handleAreaToggle = (areaId: string) => {
+    setExperienceData((prev) => ({
       ...prev,
-      [field]: value,
+      [areaId]: {
+        ...prev[areaId],
+        selected: !prev[areaId].selected,
+        expanded: !prev[areaId].selected ? true : prev[areaId].expanded,
+      },
     }));
   };
 
+  const handleExpandToggle = (areaId: string) => {
+    setExperienceData((prev) => ({
+      ...prev,
+      [areaId]: {
+        ...prev[areaId],
+        expanded: !prev[areaId].expanded,
+      },
+    }));
+  };
+
+  const handleExperienceTypeToggle = (
+    areaId: string,
+    type: "professional" | "personal"
+  ) => {
+    setExperienceData((prev) => ({
+      ...prev,
+      [areaId]: {
+        ...prev[areaId],
+        isProfessional:
+          type === "professional"
+            ? !prev[areaId].isProfessional
+            : prev[areaId].isProfessional,
+        isPersonal:
+          type === "personal"
+            ? !prev[areaId].isPersonal
+            : prev[areaId].isPersonal,
+      },
+    }));
+  };
+
+  const handleSpecificAreaToggle = (areaId: string, specificArea: string) => {
+    setExperienceData((prev) => {
+      const currentAreas = prev[areaId].specificAreas;
+      const isSelected = currentAreas.includes(specificArea);
+
+      // Limit to 3 selections
+      if (!isSelected && currentAreas.length >= 3) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [areaId]: {
+          ...prev[areaId],
+          specificAreas: isSelected
+            ? currentAreas.filter((area) => area !== specificArea)
+            : [...currentAreas, specificArea],
+        },
+      };
+    });
+  };
+
+  const handleDescriptionChange = (areaId: string, value: string) => {
+    // Limit to 600 characters
+    if (value.length > 600) return;
+
+    setExperienceData((prev) => ({
+      ...prev,
+      [areaId]: {
+        ...prev[areaId],
+        description: value,
+      },
+    }));
+  };
+
+  const handleOtherAreaToggle = (areaId: string, otherArea: string) => {
+    setExperienceData((prev) => {
+      const currentOtherAreas = prev[areaId].otherAreas;
+      const isSelected = currentOtherAreas.includes(otherArea);
+
+      return {
+        ...prev,
+        [areaId]: {
+          ...prev[areaId],
+          otherAreas: isSelected
+            ? currentOtherAreas.filter((area) => area !== otherArea)
+            : [...currentOtherAreas, otherArea],
+        },
+      };
+    });
+  };
+
   const handleSave = () => {
-    console.log("Saving experience:", formData);
+    console.log("Saving experience data:", experienceData);
+    // TODO: Implement API call
   };
 
   return (
@@ -25,53 +193,238 @@ export default function ExperienceSection() {
         <h2 className="profile-section-title">Experience</h2>
       </div>
 
-      <p className="profile-section-description">
-        Share your experience in disability support work or related fields.
+      <p className="text-gray-600 mb-6">
+        Select all areas that you've worked or have professional or personal
+        experience in.
       </p>
 
-      <div className="profile-form">
-        {/* Years of Experience */}
-        <div className="form-group">
-          <label htmlFor="yearsExperience" className="form-label">
-            Years of experience in disability support
-          </label>
-          <select
-            id="yearsExperience"
-            className="form-select"
-            value={formData.yearsExperience}
-            onChange={(e) => handleChange("yearsExperience", e.target.value)}
+      {/* Experience Area Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        {EXPERIENCE_AREAS.map((area) => (
+          <button
+            key={area.id}
+            type="button"
+            onClick={() => handleAreaToggle(area.id)}
+            className={`
+              relative px-4 py-6 text-sm font-medium rounded-lg border-2 transition-all
+              ${
+                experienceData[area.id].selected
+                  ? "border-gray-700 bg-gray-50"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }
+            `}
           >
-            <option value="">Select...</option>
-            <option value="less-than-1">Less than 1 year</option>
-            <option value="1-2">1-2 years</option>
-            <option value="3-5">3-5 years</option>
-            <option value="6-10">6-10 years</option>
-            <option value="more-than-10">More than 10 years</option>
-          </select>
-        </div>
+            {experienceData[area.id].selected && (
+              <div
+                className="absolute top-2 left-2 w-5 h-5 rounded flex items-center justify-center text-white"
+                style={{ backgroundColor: "#0C1628" }}
+              >
+                <Check className="w-3 h-3" />
+              </div>
+            )}
+            <span className="text-gray-900 text-center block">{area.label}</span>
+          </button>
+        ))}
+      </div>
 
-        {/* Experience Description */}
-        <div className="form-group">
-          <label htmlFor="experienceDescription" className="form-label">
-            Describe your experience
-          </label>
-          <textarea
-            id="experienceDescription"
-            className="form-textarea"
-            rows={8}
-            placeholder="Share details about your experience working with people with disabilities, specific skills you've developed, types of support you've provided..."
-            value={formData.experienceDescription}
-            onChange={(e) => handleChange("experienceDescription", e.target.value)}
-          />
-          <p className="form-helper-text">
-            Include any relevant volunteer work or caregiving experience
-          </p>
-        </div>
+      <p className="text-sm text-gray-600 mb-8">
+        Provide more details and describe your experience and knowledge under
+        each area.
+      </p>
 
-        {/* Save Button */}
+      {/* Expandable Sections for Selected Areas */}
+      <div className="space-y-4">
+        {EXPERIENCE_AREAS.map((area) => {
+          const data = experienceData[area.id];
+          if (!data.selected) return null;
+
+          return (
+            <div key={area.id} className="border border-gray-200 rounded-lg">
+              {/* Header */}
+              <button
+                type="button"
+                onClick={() => handleExpandToggle(area.id)}
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {area.label}
+                </h3>
+                {data.expanded ? (
+                  <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+
+              {/* Expandable Content */}
+              {data.expanded && (
+                <div className="px-6 pb-6 space-y-6">
+                  {/* Experience Type */}
+                  <div>
+                    <p className={`text-sm font-medium mb-3 ${
+                      !data.isProfessional && !data.isPersonal
+                        ? "text-red-600"
+                        : "text-gray-900"
+                    }`}>
+                      What type of experience do you have with {area.label.toLowerCase()}?
+                    </p>
+
+                    {/* Error Message */}
+                    {!data.isProfessional && !data.isPersonal && (
+                      <div className="flex items-start gap-2 mb-3 text-red-600">
+                        <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm">Select the type of experience.</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={data.isProfessional}
+                          onChange={() =>
+                            handleExperienceTypeToggle(area.id, "professional")
+                          }
+                          className="w-4 h-4 border-gray-300 rounded"
+                          style={{ accentColor: "#0C1628" }}
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          Professional
+                        </span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={data.isPersonal}
+                          onChange={() =>
+                            handleExperienceTypeToggle(area.id, "personal")
+                          }
+                          className="w-4 h-4 border-gray-300 rounded"
+                          style={{ accentColor: "#0C1628" }}
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          Personal
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Specific Areas */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 mb-3">
+                      Select up to three areas you have the most experience in.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {SPECIFIC_AREAS[area.id]?.map((specificArea) => (
+                        <button
+                          key={specificArea}
+                          type="button"
+                          onClick={() =>
+                            handleSpecificAreaToggle(area.id, specificArea)
+                          }
+                          disabled={
+                            !data.specificAreas.includes(specificArea) &&
+                            data.specificAreas.length >= 3
+                          }
+                          className={`
+                            px-4 py-2 text-sm rounded-full border transition-all
+                            ${
+                              data.specificAreas.includes(specificArea)
+                                ? "border-gray-700 text-white"
+                                : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                            }
+                          `}
+                          style={
+                            data.specificAreas.includes(specificArea)
+                              ? { backgroundColor: "#0C1628" }
+                              : {}
+                          }
+                        >
+                          {specificArea}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Strengths */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      What are your key strengths, achievements and skills in{" "}
+                      {area.label.toLowerCase()}?
+                    </label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Don't include personal details or prohibited content as
+                      under our terms of use.
+                    </p>
+                    <textarea
+                      value={data.description}
+                      onChange={(e) =>
+                        handleDescriptionChange(area.id, e.target.value)
+                      }
+                      rows={6}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent resize-none"
+                      placeholder="Describe your experience..."
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-sm text-gray-500">
+                        Minimum 100 characters
+                      </p>
+                      <p
+                        className={`text-sm ${
+                          data.description.length < 100
+                            ? "text-red-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {data.description.length}/600
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Other Areas */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">
+                      What other areas do you know about?
+                    </p>
+                    <p className="text-sm text-gray-600 mb-3">
+                      This could be an area you've studied or have informal
+                      experience.
+                    </p>
+                    <div className="space-y-2">
+                      {SPECIFIC_AREAS[area.id]?.map((otherArea) => (
+                        <label
+                          key={otherArea}
+                          className="flex items-center cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={data.otherAreas.includes(otherArea)}
+                            onChange={() =>
+                              handleOtherAreaToggle(area.id, otherArea)
+                            }
+                            className="w-4 h-4 border-gray-300 rounded"
+                            style={{ accentColor: "#0C1628" }}
+                          />
+                          <span className="ml-2 text-sm text-gray-700">
+                            {otherArea}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Save Button */}
+      <div className="mt-8">
         <button
           type="button"
-          className="save-button"
+          className="px-6 py-3 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90"
+          style={{ backgroundColor: "#0C1628" }}
           onClick={handleSave}
         >
           Save and continue

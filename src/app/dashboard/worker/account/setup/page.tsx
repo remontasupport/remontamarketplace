@@ -236,8 +236,8 @@ function AccountSetupContent() {
         }
         if (!formData.postalCode.trim()) {
           newErrors.postalCode = "Postal code is required";
-        } else if (!/^\d{4}$/.test(formData.postalCode.trim())) {
-          newErrors.postalCode = "Postal code must be 4 digits";
+        } else if (!/^\d{3,4}$/.test(formData.postalCode.trim())) {
+          newErrors.postalCode = "Postal code must be 3-4 digits";
         }
         break;
       case "personal-info": // Personal Info

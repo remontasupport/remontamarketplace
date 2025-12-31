@@ -19,11 +19,11 @@ const menuItems: MenuItem[] = [
     label: "Indicative Rates",
     href: "/dashboard/worker/profile-building?section=indicative-rates",
   },
-  {
-    id: "locations",
-    label: "Locations",
-    href: "/dashboard/worker/profile-building?section=locations",
-  },
+  // {
+  //   id: "locations",
+  //   label: "Locations",
+  //   href: "/dashboard/worker/profile-building?section=locations",
+  // },
   {
     id: "experience",
     label: "Experience",
