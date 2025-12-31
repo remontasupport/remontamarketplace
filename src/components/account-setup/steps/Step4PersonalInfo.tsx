@@ -29,7 +29,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { TextField, SelectField, NumberField } from "@/components/forms/fields";
+import { TextField, SelectField, DatePickerField } from "@/components/forms/fields";
 import StepContentWrapper from "../shared/StepContentWrapper";
 import { useDriverLicense, useIdentityDocuments, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
 import { uploadComplianceDocument } from "@/services/worker/compliance.service";
@@ -64,13 +64,13 @@ const clearDriverLicenseStorage = () => {
 
 interface Step4PersonalInfoProps {
   data: {
-    age: number | string;
+    dateOfBirth: string;
     gender: string;
     hasVehicle: string;
   };
   onChange: (field: string, value: any) => void;
   errors?: {
-    age?: string;
+    dateOfBirth?: string;
     gender?: string;
     hasVehicle?: string;
   };
@@ -229,23 +229,47 @@ export default function Step4PersonalInfo({
     document.getElementById("vehicle-photo-upload")?.click();
   };
 
+  // Calculate age from date of birth for display
+  const calculateAge = (dateOfBirth: string): number | null => {
+    if (!dateOfBirth) return null;
+
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+
+    if (isNaN(birthDate.getTime())) return null;
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age;
+  };
+
+  const age = calculateAge(data.dateOfBirth);
+
   return (
     <StepContentWrapper>
       <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
-          <NumberField
-            label="Age"
-            name="age"
-            value={data.age}
-            onChange={(e) => {
-              const value = e.target.value;
-              onChange("age", value === '' ? '' : parseInt(value, 10));
-            }}
-            min={18}
-            max={120}
+          <DatePickerField
+            label="Date of Birth"
+            name="dateOfBirth"
+            value={data.dateOfBirth}
+            onChange={(value) => onChange("dateOfBirth", value)}
+            error={errors?.dateOfBirth}
+            helperText={
+              age !== null && age >= 0
+                ? `Age: ${age} years old`
+                : undefined
+            }
             required
-            error={errors?.age}
+            placeholder="Select your date of birth"
+            maxDate={new Date()} // Can't select future dates
+            minDate={new Date(1920, 0, 1)} // Minimum year 1920
           />
 
           <SelectField

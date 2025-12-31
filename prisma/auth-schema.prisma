@@ -248,6 +248,7 @@ model WorkerProfile {
   mobile                    String
   location                  String?
   age                       Int?
+  dateOfBirth               String?
   gender                    String?
   languages                 String[]
   experience                String?
@@ -291,6 +292,7 @@ model WorkerProfile {
   // NEW INDEXES FOR ADMIN DASHBOARD PERFORMANCE
   @@index([gender])           // Admin dashboard gender filter
   @@index([age])              // Admin dashboard age range filter
+  @@index([dateOfBirth])
   @@index([firstName])        // Admin dashboard text search
   @@index([lastName])         // Admin dashboard text search
   @@index([mobile])           // Admin dashboard text search

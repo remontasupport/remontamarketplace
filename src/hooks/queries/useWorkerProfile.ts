@@ -45,6 +45,7 @@ interface WorkerProfile {
   photos?: string | null; // Profile photo URL (changed from array to string)
   introduction?: string; // Bio
   age?: number;
+  dateOfBirth?: string;
   gender?: string;
   hasVehicle?: string;
   abn?: string;
@@ -134,7 +135,7 @@ async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
 
     case 5: // Personal Info
       const personalInfoResult = await updateWorkerPersonalInfo({
-        age: data.age,
+        dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         hasVehicle: data.hasVehicle,
       });

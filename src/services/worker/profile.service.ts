@@ -500,8 +500,20 @@ export async function updateWorkerPersonalInfo(
     // 4. Build update data object (only include defined fields)
     const updateData: any = {};
 
-    if (validatedData.age !== undefined) {
-      updateData.age = validatedData.age;
+    // Compute age from dateOfBirth
+    if (validatedData.dateOfBirth) {
+      const birthDate = new Date(validatedData.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      // Adjust age if birthday hasn't occurred this year
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      updateData.age = age;
+      updateData.dateOfBirth = validatedData.dateOfBirth;
     }
 
     if (validatedData.gender) {
@@ -520,6 +532,7 @@ export async function updateWorkerPersonalInfo(
       data: updateData,
       select: {
         age: true,
+        dateOfBirth: true,
         gender: true,
         hasVehicle: true,
       },

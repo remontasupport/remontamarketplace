@@ -50,6 +50,7 @@ export async function GET(
         photos: true, // Profile photo URL
         introduction: true, // Bio
         age: true,
+        dateOfBirth: true,
         gender: true,
         hasVehicle: true,
         abn: true,

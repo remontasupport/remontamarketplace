@@ -86,13 +86,56 @@ export const updateWorkerAddressDefaults: UpdateWorkerAddressData = {
 
 // Schema: Update Worker Personal Info (Step 5)
 export const updateWorkerPersonalInfoSchema = z.object({
-  age: z.number({
-    required_error: "Age is required",
-    invalid_type_error: "Age is required",
+  dateOfBirth: z.string({
+    required_error: "Date of birth is required",
+    invalid_type_error: "Date of birth is required",
   })
-    .int("Age must be a whole number")
-    .min(18, "You must be at least 18 years old")
-    .max(120, "Please enter a valid age"),
+    .refine((val) => {
+      // Validate it's a valid date string in YYYY-MM-DD format
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    }, {
+      message: "Please enter a valid date",
+    })
+    .refine((val) => {
+      // Calculate age from date of birth
+      const birthDate = new Date(val);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      // Adjust age if birthday hasn't occurred this year
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      return age >= 18;
+    }, {
+      message: "You must be at least 18 years old",
+    })
+    .refine((val) => {
+      // Validate birth date is not in the future
+      const birthDate = new Date(val);
+      const today = new Date();
+      return birthDate <= today;
+    }, {
+      message: "Date of birth cannot be in the future",
+    })
+    .refine((val) => {
+      // Calculate age and validate it's not unreasonably high (>120)
+      const birthDate = new Date(val);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      return age <= 120;
+    }, {
+      message: "Please enter a valid date of birth",
+    }),
   gender: z.enum(["male", "female"], {
     required_error: "Gender is required",
     invalid_type_error: "Gender is required",
@@ -105,7 +148,7 @@ export const updateWorkerPersonalInfoSchema = z.object({
 export type UpdateWorkerPersonalInfoData = z.infer<typeof updateWorkerPersonalInfoSchema>;
 
 export const updateWorkerPersonalInfoDefaults: UpdateWorkerPersonalInfoData = {
-  age: undefined,
+  dateOfBirth: undefined,
   gender: undefined,
   hasVehicle: undefined,
 };

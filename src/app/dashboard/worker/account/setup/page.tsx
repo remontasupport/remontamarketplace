@@ -82,7 +82,7 @@ interface FormData {
     uploadedAt: string;
   }>;
   // Step 5: Personal Info
-  age: string;
+  dateOfBirth: string;
   gender: string;
   hasVehicle: string;
   // Step 7: ABN
@@ -122,7 +122,7 @@ function AccountSetupContent() {
     state: "",
     postalCode: "",
     identityDocuments: [],
-    age: "",
+    dateOfBirth: "",
     gender: "",
     hasVehicle: "",
     abn: "",
@@ -165,7 +165,7 @@ function AccountSetupContent() {
         state: profileData.state || "",
         postalCode: profileData.postalCode || "",
         identityDocuments: [],
-        age: profileData.age ? String(profileData.age) : "",
+        dateOfBirth: profileData.dateOfBirth || "",
         gender: profileData.gender ? profileData.gender.toLowerCase() : "",
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
@@ -241,12 +241,32 @@ function AccountSetupContent() {
         }
         break;
       case "personal-info": // Personal Info
-        if (!formData.age || formData.age === "") {
-          newErrors.age = "Age is required";
-        } else if (typeof formData.age === 'number' && formData.age < 18) {
-          newErrors.age = "You must be at least 18 years old";
-        } else if (typeof formData.age === 'number' && formData.age > 120) {
-          newErrors.age = "Please enter a valid age";
+        if (!formData.dateOfBirth || formData.dateOfBirth === "") {
+          newErrors.dateOfBirth = "Date of birth is required";
+        } else {
+          // Validate date format
+          const birthDate = new Date(formData.dateOfBirth);
+          const today = new Date();
+
+          if (isNaN(birthDate.getTime())) {
+            newErrors.dateOfBirth = "Please enter a valid date";
+          } else if (birthDate > today) {
+            newErrors.dateOfBirth = "Date of birth cannot be in the future";
+          } else {
+            // Calculate age
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+
+            if (age < 18) {
+              newErrors.dateOfBirth = "You must be at least 18 years old";
+            } else if (age > 120) {
+              newErrors.dateOfBirth = "Please enter a valid date of birth";
+            }
+          }
         }
 
         if (!formData.gender || formData.gender === "") {
@@ -300,11 +320,8 @@ function AccountSetupContent() {
             };
             break;
           case 5: // Personal Info (Other personal info step)
-            // Convert age to integer (required by Zod schema)
-            // formData.age is stored as string, need to convert to number
-            const ageValue = typeof formData.age === 'string' ? parseInt(formData.age, 10) : formData.age;
             dataToSend = {
-              age: ageValue,
+              dateOfBirth: formData.dateOfBirth,
               gender: formData.gender,
               hasVehicle: formData.hasVehicle,
             };
