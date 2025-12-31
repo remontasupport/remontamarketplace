@@ -29,10 +29,94 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        impersonationToken: { label: "Impersonation Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           throw new Error("Missing credentials");
+        }
+
+        // IMPERSONATION FLOW: Check for impersonation token
+        if (credentials.impersonationToken) {
+          try {
+            // Verify the impersonation token
+            const tokenRecord = await authPrisma.verificationToken.findUnique({
+              where: {
+                identifier_token: {
+                  identifier: `impersonation:${credentials.email}`,
+                  token: credentials.impersonationToken,
+                },
+              },
+            });
+
+            if (!tokenRecord) {
+              throw new Error("Invalid impersonation token");
+            }
+
+            // Check if token is expired
+            if (tokenRecord.expires < new Date()) {
+              // Delete expired token
+              await authPrisma.verificationToken.delete({
+                where: {
+                  identifier_token: {
+                    identifier: `impersonation:${credentials.email}`,
+                    token: credentials.impersonationToken,
+                  },
+                },
+              });
+              throw new Error("Impersonation token expired");
+            }
+
+            // Get the target user
+            const user = await authPrisma.user.findUnique({
+              where: { email: credentials.email.toLowerCase() },
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                status: true,
+              },
+            });
+
+            if (!user) {
+              throw new Error("User not found");
+            }
+
+            if (user.status !== "ACTIVE") {
+              throw new Error(`Account is ${user.status.toLowerCase()}`);
+            }
+
+            // Delete the one-time token
+            await authPrisma.verificationToken.delete({
+              where: {
+                identifier_token: {
+                  identifier: `impersonation:${credentials.email}`,
+                  token: credentials.impersonationToken,
+                },
+              },
+            });
+
+            // Extract admin ID from token (format: imp_{userId}_{adminId}_{timestamp}_{random})
+            const tokenParts = credentials.impersonationToken.split('_');
+            const adminId = tokenParts[2];
+
+            // Return user with impersonation flag
+            return {
+              id: user.id,
+              email: user.email,
+              role: user.role as UserRole,
+              name: `${user.email.split("@")[0]}`,
+              impersonatedBy: adminId,
+            };
+          } catch (error) {
+            console.error("Impersonation auth error:", error);
+            throw error;
+          }
+        }
+
+        // NORMAL LOGIN FLOW
+        if (!credentials?.password) {
+          throw new Error("Missing password");
         }
 
         try {
@@ -161,6 +245,10 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
+        // Preserve impersonation flag if present
+        if ((user as any).impersonatedBy) {
+          token.impersonatedBy = (user as any).impersonatedBy;
+        }
         // Do NOT store requirements in JWT - they make the session cookie too large
         // Requirements should be fetched via API: /api/worker/requirements
       }
@@ -194,9 +282,32 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.email = token.email as string;
+        // Add impersonation data if present
+        session.user.impersonatedBy = token.impersonatedBy as string | undefined;
         // Requirements are fetched via API, not stored in session
       }
       return session;
+    },
+
+    /**
+     * Redirect Callback
+     * Controls where to redirect after sign in based on user role
+     */
+    async redirect({ url, baseUrl }) {
+      // If the url is already a full URL (starts with http), use it
+      if (url.startsWith("http")) {
+        // But only if it's on the same domain
+        if (url.startsWith(baseUrl)) {
+          return url;
+        }
+        return baseUrl;
+      }
+      // If it's a relative URL, prepend baseUrl
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Default to baseUrl
+      return baseUrl;
     },
   },
 

@@ -149,14 +149,16 @@ model Participant {
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  sessionToken    String   @unique
+  userId          String
+  expires         DateTime
+  impersonatedBy  String?  // ID of admin user who is impersonating this user
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([sessionToken])
   @@index([userId])
+  @@index([impersonatedBy])  // For querying active impersonation sessions
   @@map("sessions")
 }
 
@@ -479,6 +481,8 @@ enum AuditAction {
   ACCOUNT_UNLOCKED
   EMAIL_VERIFIED
   ROLE_CHANGE
+  IMPERSONATION_START
+  IMPERSONATION_END
 }
 
 enum DocumentCategory {

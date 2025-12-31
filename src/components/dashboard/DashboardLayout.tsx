@@ -1,8 +1,11 @@
 'use client'
 
 import { ReactNode, useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import Sidebar from './Sidebar'
 import SimpleDashboardHeader from './SimpleDashboardHeader'
+import { ImpersonationBanner } from '@/components/admin/ImpersonationButton'
+import { isImpersonating } from '@/lib/impersonation'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -16,6 +19,7 @@ export default function DashboardLayout({
   children,
   profileData
 }: DashboardLayoutProps) {
+  const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const toggleMobileMenu = () => {
@@ -42,6 +46,9 @@ export default function DashboardLayout({
 
   return (
     <div className="dashboard-wrapper">
+      {/* Impersonation Banner - Shows when admin is impersonating */}
+      {isImpersonating(session) && <ImpersonationBanner />}
+
       {/* Dashboard Header - Full Width at Top */}
       <SimpleDashboardHeader onMenuToggle={toggleMobileMenu} />
 
