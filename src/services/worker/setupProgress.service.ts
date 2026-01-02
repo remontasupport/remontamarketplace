@@ -775,7 +775,9 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
 
     // For trainings, we just need documents uploaded - don't check status
     // since they might still be pending review
-    const isComplete = uploadedTrainings.length === trainingDocIds.size && allHaveDocuments;
+    // Note: We already verified all required trainings are uploaded via missingTrainings check above
+    // So we just need to ensure the uploaded documents have URLs and there's at least one upload
+    const isComplete = uploadedTrainings.length > 0 && allHaveDocuments;
 
     console.log("[Setup Progress] Trainings completion check:", {
       requiredCount: trainingDocIds.size,
@@ -863,7 +865,7 @@ export async function autoUpdateTrainingsCompletion(): Promise<ActionResponse> {
       await authPrisma.workerProfile.update({
         where: { userId: session.user.id },
         data: {
-          setupProgress: JSON.parse(JSON.stringify(updatedProgress)),
+          setupProgress: updatedProgress as any,
         },
       });
 
