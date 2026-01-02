@@ -187,7 +187,7 @@ export default function GenericComplianceDocument({
       ) : uploadedDocument ? (
         /* Show uploaded document */
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
+          <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins" style={{ marginTop: '1.5rem' }}>
             Uploaded Document
           </h4>
           <div className="uploaded-document-item">
@@ -227,7 +227,7 @@ export default function GenericComplianceDocument({
       ) : (
         <>
           {/* Upload document section - Only show if no document uploaded */}
-          <div className="upload-section">
+          <div className="upload-section" style={{ marginTop: '1.5rem' }}>
             <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
               Upload Document
             </h4>

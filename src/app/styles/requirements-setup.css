@@ -358,6 +358,7 @@
   border-radius: 0.5rem;
   background-color: #f9fafb;
   margin-bottom: 1rem;
+  max-width: 500px;
 }
 
 .uploaded-document-content {
@@ -393,7 +394,7 @@
   border: none;
   padding: 0.25rem;
   cursor: pointer;
-  color: #6b7280;
+  color: #ef4444;
   transition: color 0.2s;
   display: flex;
   align-items: center;
@@ -402,7 +403,7 @@
 }
 
 .uploaded-document-remove:hover {
-  color: #ef4444;
+  color: #dc2626;
 }
 
 /* Confirm Dialog Styles */

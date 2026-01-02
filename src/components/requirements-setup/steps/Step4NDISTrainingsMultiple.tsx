@@ -243,7 +243,7 @@ function TrainingModuleUpload({
   return (
     <div className="border-b border-gray-200 pb-6 last:border-0">
       {/* Module Title */}
-      <div className="flex items-start justify-between gap-2 mb-4">
+      <div className="flex items-start gap-2 mb-4">
         <div className="flex-1">
           <h5 className="text-base font-poppins font-semibold text-gray-900">
             {module.name}
@@ -254,9 +254,6 @@ function TrainingModuleUpload({
             </p>
           )}
         </div>
-        {uploadedDocument && (
-          <CheckCircleIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-        )}
       </div>
 
       {/* Error Message */}
@@ -272,8 +269,8 @@ function TrainingModuleUpload({
       ) : uploadedDocument ? (
         // Show uploaded document
         <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3 flex-1">
               <DocumentIcon className="w-8 h-8 text-teal-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <a
