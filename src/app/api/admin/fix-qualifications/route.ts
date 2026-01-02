@@ -9,8 +9,6 @@ import { QUALIFICATION_TYPE_TO_NAME } from "@/utils/qualificationMapping";
  */
 export async function POST(request: Request) {
   try {
-    console.log("Starting qualification name fix...");
-
     // Get all verification requirements that might have incorrect names
     const requirements = await authPrisma.verificationRequirement.findMany({
       where: {
@@ -23,8 +21,6 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(`Found ${requirements.length} worker-selected qualifications`);
-
     let updatedCount = 0;
     let skippedCount = 0;
     const updates: Array<{ id: string; old: string | null; new: string }> = [];
@@ -33,7 +29,7 @@ export async function POST(request: Request) {
       const correctName = QUALIFICATION_TYPE_TO_NAME[req.requirementType];
 
       if (!correctName) {
-        console.log(`Unknown qualification type: ${req.requirementType}`);
+        
         skippedCount++;
         continue;
       }
@@ -55,8 +51,6 @@ export async function POST(request: Request) {
           old: req.requirementName,
           new: correctName,
         });
-
-        console.log(`Updated: ${req.requirementType} → "${correctName}"`);
         updatedCount++;
       } else {
         skippedCount++;
@@ -75,7 +69,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
-    console.error("Error fixing qualification names:", error);
+ 
     return NextResponse.json(
       {
         success: false,
