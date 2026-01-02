@@ -17,7 +17,7 @@ export default function ProfileEditLayout({ children, currentSection }: ProfileE
   const router = useRouter();
 
   useEffect(() => {
-    console.log("Profile data loaded in layout:", data);
+   
   }, [data]);
 
   return (

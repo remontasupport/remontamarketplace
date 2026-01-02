@@ -18,7 +18,7 @@ export default function IndicativeRatesSection() {
   };
 
   const handleSave = () => {
-    console.log("Saving indicative rates:", formData);
+    
   };
 
   return (

@@ -129,7 +129,7 @@ export default function PhotoUpload({
         throw new Error("No URL returned from upload");
       }
     } catch (uploadError: any) {
-      console.error('Upload error:', uploadError);
+      
       setUploadError(uploadError.message || "Failed to upload photo");
       setPreviewUrl(null);
       onPhotoChange(null);

@@ -183,7 +183,7 @@ export default function ExperienceSection() {
   };
 
   const handleSave = () => {
-    console.log("Saving experience data:", experienceData);
+
     // TODO: Implement API call
   };
 

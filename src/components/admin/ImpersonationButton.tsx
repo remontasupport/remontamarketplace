@@ -66,11 +66,7 @@ export function ImpersonationButton({
       const targetRole = result.data?.targetUser.role || userRole
       const dashboardUrl = getRoleBasedDashboard(targetRole || '')
 
-      console.log('Impersonation:', {
-        targetRole,
-        dashboardUrl,
-        targetUser: result.data?.targetUser,
-      })
+    
 
       // Sign in using the impersonation token and redirect to their dashboard
       await signIn('credentials', {
@@ -79,7 +75,7 @@ export function ImpersonationButton({
         callbackUrl: dashboardUrl,
       })
     } catch (err: any) {
-      console.error('Impersonation error:', err)
+      
       setError(err.message || 'An unexpected error occurred')
       setLoading(false)
     }
@@ -136,7 +132,7 @@ export function ImpersonationBanner({ onExit }: ImpersonationBannerProps) {
       // Redirect back to admin dashboard
       window.location.href = '/admin'
     } catch (error) {
-      console.error('Exit impersonation error:', error)
+     
       setLoading(false)
     }
   }

@@ -197,13 +197,13 @@ function ServicesSetupContent() {
         const result = await getTherapeuticRegistration();
 
         if (result.success && result.data) {
-          console.log('[Therapeutic] Data loaded:', result.data);
+       
           setFormData(prev => ({
             ...prev,
             therapeuticRegistration: result.data!,
           }));
         } else {
-          console.log('[Therapeutic] No existing data found');
+         
         }
       }
     };
@@ -311,7 +311,7 @@ function ServicesSetupContent() {
       // Save nursing registration data using server action
       if (session?.user?.id && formData.nursingRegistration) {
         try {
-          console.log('[Nursing] Saving registration data:', formData.nursingRegistration);
+         
           const result = await saveNursingRegistration({
             nursingType: formData.nursingRegistration.nursingType || 'registered',
             hasExperience: formData.nursingRegistration.hasExperience || false,
@@ -326,9 +326,9 @@ function ServicesSetupContent() {
             return;
           }
 
-          console.log('[Nursing] Registration saved successfully');
+        
         } catch (error) {
-          console.error('[Nursing] Error saving registration:', error);
+          
           setErrors({ general: "Failed to save nursing registration. Please try again." });
           return;
         }
@@ -423,7 +423,7 @@ function ServicesSetupContent() {
         // Save therapeutic registration data using server action
         if (session?.user?.id && formData.therapeuticRegistration) {
           try {
-            console.log('[Therapeutic] Saving registration data:', formData.therapeuticRegistration);
+           
             const result = await saveTherapeuticRegistration({
               registrationNumber: formData.therapeuticRegistration.registrationNumber || '',
               expiryDay: formData.therapeuticRegistration.expiryDay || '',
@@ -436,9 +436,9 @@ function ServicesSetupContent() {
               return;
             }
 
-            console.log('[Therapeutic] Registration saved successfully');
+          
           } catch (error) {
-            console.error('[Therapeutic] Error saving registration:', error);
+            
             setErrors({ general: "Failed to save therapeutic registration. Please try again." });
             return;
           }

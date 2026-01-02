@@ -133,7 +133,7 @@ export async function updateUserEmail(
       message: "Email updated successfully!",
     };
   } catch (error) {
-    console.error("Update email error:", error);
+
     return {
       success: false,
       error: "Failed to update email. Please try again.",
@@ -197,7 +197,6 @@ export async function updateUserPassword(
       message: "Password updated successfully!",
     };
   } catch (error) {
-    console.error("Update password error:", error);
     return {
       success: false,
       error: "Failed to update password. Please try again.",

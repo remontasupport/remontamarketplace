@@ -28,17 +28,13 @@ async function searchUsers(query: string, role?: string): Promise<User[]> {
   if (query) params.append('search', query)
   if (role && role !== 'all') params.append('role', role)
 
-  console.log('Searching users:', { query, role, url: `/api/admin/users?${params.toString()}` })
-
   const response = await fetch(`/api/admin/users?${params.toString()}`)
 
   if (!response.ok) {
-    console.error('Search failed:', response.status, response.statusText)
     throw new Error('Failed to fetch users')
   }
 
   const data = await response.json()
-  console.log('Search results:', data.users?.length || 0, 'users')
   return data.users || []
 }
 

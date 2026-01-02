@@ -82,27 +82,20 @@ export default function ServiceQualificationStep({
 
   // Load existing qualification files from database on mount
   useEffect(() => {
-    console.log('[QualificationFiles] useEffect triggered', {
-      hasServiceDocumentsData: !!serviceDocumentsData,
-      hasDocuments: !!serviceDocumentsData?.documents,
-      documentsLength: serviceDocumentsData?.documents?.length,
-      serviceTitle,
-    });
+    
 
     if (!serviceDocumentsData?.documents || !serviceTitle) {
-      console.log('[QualificationFiles] Early return - missing data');
       return;
     }
 
-    console.log('[QualificationFiles] Loading files for service:', serviceTitle);
-    console.log('[QualificationFiles] All documents:', serviceDocumentsData.documents);
+
 
     // Find verification requirements for this service's qualifications
     const qualificationRequirements = serviceDocumentsData.documents.filter(
       (doc: any) => doc.serviceTitle === serviceTitle
     );
 
-    console.log('[QualificationFiles] Filtered documents:', qualificationRequirements);
+
 
     // Populate qualificationFiles state with existing files
     const existingFiles: Record<string, { url: string; fileName: string }> = {};
@@ -132,8 +125,7 @@ export default function ServiceQualificationStep({
       }
     });
 
-    console.log('[QualificationFiles] Loaded files:', existingFiles);
-    console.log('[QualificationFiles] Qualification types with files:', qualificationTypes);
+
 
     setQualificationFiles(existingFiles);
 
@@ -149,7 +141,7 @@ export default function ServiceQualificationStep({
           [serviceTitle]: updatedQualifications,
         };
 
-        console.log('[QualificationFiles] Auto-selecting qualifications:', updatedQualifications);
+
         onChange("qualificationsByService", updatedByService);
       }
     }
@@ -178,16 +170,6 @@ export default function ServiceQualificationStep({
   const showingOfferings = currentView === 'offerings';
   const showingDocuments = currentView === 'documents';
 
-  console.log('[ServiceQualificationStep] Render with:', {
-    serviceTitle,
-    currentView,
-    showingRegistration,
-    showingOfferings,
-    showingDocuments,
-    hasQualifications: qualifications.length > 0,
-    selectedSubcategories: selectedSubcategories.length,
-  });
-
   // Get currently selected values
   const selectedQualifications = data.qualificationsByService?.[serviceTitle] || [];
 
@@ -198,11 +180,6 @@ export default function ServiceQualificationStep({
 
   // Initialize uploadedFiles from API data when documents are loaded
   useEffect(() => {
-    console.log('[ServiceQualificationStep] Documents data changed:', {
-      hasData: !!serviceDocumentsData?.documents,
-      totalDocs: serviceDocumentsData?.documents?.length,
-      serviceTitle,
-    });
 
     if (serviceDocumentsData?.documents) {
       const documentsByType: Record<string, string[]> = {};
@@ -212,12 +189,6 @@ export default function ServiceQualificationStep({
         (doc) => doc.serviceTitle === serviceTitle
       );
 
-      console.log('[ServiceQualificationStep] Filtered docs for service:', {
-        serviceTitle,
-        filteredCount: currentServiceDocs.length,
-        docs: currentServiceDocs,
-      });
-
       currentServiceDocs.forEach((doc) => {
         if (!documentsByType[doc.documentType]) {
           documentsByType[doc.documentType] = [];
@@ -226,8 +197,6 @@ export default function ServiceQualificationStep({
           documentsByType[doc.documentType].push(doc.documentUrl);
         }
       });
-
-      console.log('[ServiceQualificationStep] Grouped documents by type:', documentsByType);
 
       // Update local state with fetched documents
       setUploadedFiles(documentsByType);
@@ -273,12 +242,6 @@ export default function ServiceQualificationStep({
     }
 
     const file = files[0];
-    console.log('[Qualification Upload] File selected:', {
-      qualificationType,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-    });
 
     // Set uploading state
     setUploadingFiles(prev => ({ ...prev, [qualificationType]: true }));
@@ -298,8 +261,6 @@ export default function ServiceQualificationStep({
         throw new Error(result.error || "Upload failed");
       }
 
-      console.log('[Qualification Upload] Upload successful:', result.data);
-
       // Store the uploaded file info
       setQualificationFiles(prev => ({
         ...prev,
@@ -312,7 +273,6 @@ export default function ServiceQualificationStep({
       // Invalidate the service documents query to refresh UI
       queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
     } catch (error: any) {
-      console.error('[Qualification Upload] Upload failed:', error);
       alert(`Failed to upload: ${error.message}`);
     } finally {
       setUploadingFiles(prev => ({ ...prev, [qualificationType]: false }));
@@ -339,12 +299,12 @@ export default function ServiceQualificationStep({
   const handleFileUpload = async (requirementType: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !session?.user?.id) {
-      console.log('[Upload] No files or no session:', { files, session });
+     
       return;
     }
 
     const file = files[0]; // Only take the first file since multiple is disabled
-    console.log('[Upload] Starting upload for:', { serviceTitle, requirementType, fileName: file.name });
+   
 
     // Set uploading state
     setUploadingFiles((prev) => ({ ...prev, [requirementType]: true }));
@@ -354,7 +314,6 @@ export default function ServiceQualificationStep({
       const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
 
       // Upload file to the server
-      console.log('[Upload] Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
 
       const formData = new FormData();
       formData.append('file', file);
@@ -362,13 +321,10 @@ export default function ServiceQualificationStep({
       formData.append('requirementType', requirementType);
 
       const result = await uploadServiceDocument(formData);
-      console.log('[Upload] Upload result:', result);
 
       if (!result.success) {
         throw new Error(result.error || 'Upload failed');
       }
-
-      console.log('[Upload] Upload completed successfully:', result.data?.url);
 
       // Invalidate and refetch service documents query to get fresh data
       await queryClient.invalidateQueries({
@@ -382,7 +338,6 @@ export default function ServiceQualificationStep({
       });
 
     } catch (error) {
-      console.error('Upload error:', error);
       alert(`Failed to upload document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploadingFiles((prev) => ({ ...prev, [requirementType]: false }));
@@ -446,7 +401,7 @@ export default function ServiceQualificationStep({
       // Reset file to delete
       setFileToDelete(null);
     } catch (error) {
-      console.error('Delete error:', error);
+    
       alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -724,12 +679,6 @@ export default function ServiceQualificationStep({
             <div className="space-y-6">
               {documentRequirements.map((requirement) => {
                 const files = uploadedFiles[requirement.type] || [];
-                console.log('[Render] Requirement:', {
-                  type: requirement.type,
-                  filesCount: files.length,
-                  files,
-                  allUploadedFiles: uploadedFiles,
-                });
 
                 return (
                   <div
@@ -1030,12 +979,7 @@ export default function ServiceQualificationStep({
               const isSelected = selectedQualifications.includes(qualification.type);
               const hasFile = qualificationFiles[qualification.type];
 
-              console.log('[Render Qualification]', {
-                qualificationType: qualification.type,
-                isSelected,
-                hasFile,
-                allQualificationFiles: qualificationFiles,
-              });
+          
 
               return (
                 <div

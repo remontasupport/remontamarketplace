@@ -46,7 +46,7 @@ export default function ImageCropModal({
       onCropComplete(croppedImageUrl)
       onClose()
     } catch (error) {
-      console.error('Crop error:', error)
+      
       alert('Failed to crop image. Please try again.')
     } finally {
       setIsCropping(false)
