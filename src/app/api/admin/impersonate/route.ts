@@ -122,7 +122,6 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error('Impersonation error:', error)
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to start impersonation' },
       { status: error.message?.includes('required') ? 403 : 500 }
@@ -184,7 +183,6 @@ export async function DELETE(request: NextRequest) {
       message: 'Impersonation ended successfully',
     })
   } catch (error: any) {
-    console.error('End impersonation error:', error)
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to end impersonation' },
       { status: 500 }

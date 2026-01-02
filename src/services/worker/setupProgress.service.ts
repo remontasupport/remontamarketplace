@@ -60,7 +60,7 @@ export async function updateCurrentSection(
       message: `Current section updated to ${section}`,
     };
   } catch (error: any) {
-    console.error("Error updating current section:", error);
+
     return {
       success: false,
       error: "Failed to update current section",
@@ -141,7 +141,7 @@ export async function updateSectionCompletion(
       },
     };
   } catch (error: any) {
-    console.error("Error updating section completion:", error);
+    
     return {
       success: false,
       error: "Failed to update section completion",
@@ -205,7 +205,7 @@ export async function checkAccountDetailsCompletion(): Promise<ActionResponse<bo
       data: isComplete,
     };
   } catch (error: any) {
-    console.error("Error checking account details completion:", error);
+
     return {
       success: false,
       error: "Failed to check account details completion",
@@ -290,7 +290,7 @@ export async function autoUpdateAccountDetailsCompletion(): Promise<ActionRespon
       message: "Account details completion updated",
     };
   } catch (error: any) {
-    console.error("Error auto-updating account details completion:", error);
+    
     return {
       success: false,
       error: "Failed to auto-update account details completion",
@@ -399,14 +399,12 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
 
     if (baseComplianceIds.size === 0) {
       // No base compliance requirements for these services
-      console.log("[Setup Progress] No base compliance requirements found");
+ 
       return {
         success: true,
         data: false,
       };
     }
-
-    console.log("[Setup Progress] Base compliance document IDs:", Array.from(baseComplianceIds));
 
     // 8. Fetch worker profile with ABN
     const workerWithABN = await authPrisma.workerProfile.findUnique({
@@ -426,7 +424,7 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       },
     });
 
-    console.log("[Setup Progress] Worker's uploaded requirements:", requirements);
+  
 
     // 10. Check each required document with special handling
     const uploadedDocTypes = new Set(requirements.map(req => req.requirementType));
@@ -440,19 +438,19 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
         const hasPrimary = requirements.some(req => req.documentCategory === 'PRIMARY');
         const hasSecondary = requirements.some(req => req.documentCategory === 'SECONDARY');
         isDocumentComplete = hasPrimary && hasSecondary;
-        console.log(`[Setup Progress] identity-points-100: PRIMARY=${hasPrimary}, SECONDARY=${hasSecondary}`);
+
       }
       // Special case: abn-contractor (check WorkerProfile.abn field)
       else if (requiredDocId === 'abn-contractor') {
         isDocumentComplete = !!(workerWithABN?.abn && workerWithABN.abn.trim().length > 0);
-        console.log(`[Setup Progress] abn-contractor: ${isDocumentComplete ? 'provided' : 'missing'}`);
+     
       }
       // Special case: ndis-screening-check (can be stored as worker-screening-check)
       else if (requiredDocId === 'ndis-screening-check') {
         isDocumentComplete = uploadedDocTypes.has('ndis-screening-check') ||
                             uploadedDocTypes.has('worker-screening-check') ||
                             uploadedDocTypes.has('ndis-worker-screening');
-        console.log(`[Setup Progress] ndis-screening-check: ${isDocumentComplete ? 'uploaded' : 'missing'}`);
+        
       }
       // Special case: right-to-work (can be stored as identity-working-rights)
       else if (requiredDocId === 'right-to-work') {
@@ -463,7 +461,7 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       // Normal case: direct match
       else {
         isDocumentComplete = uploadedDocTypes.has(requiredDocId);
-        console.log(`[Setup Progress] ${requiredDocId}: ${isDocumentComplete ? 'uploaded' : 'missing'}`);
+        
       }
 
       if (!isDocumentComplete) {
@@ -472,7 +470,7 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
     }
 
     if (missingDocs.length > 0) {
-      console.log("[Setup Progress] Missing documents:", missingDocs);
+    
       return {
         success: true,
         data: false,

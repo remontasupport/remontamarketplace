@@ -109,7 +109,7 @@ export const authOptions: NextAuthOptions = {
               impersonatedBy: adminId,
             };
           } catch (error) {
-            console.error("Impersonation auth error:", error);
+      
             throw error;
           }
         }

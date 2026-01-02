@@ -97,7 +97,7 @@ function ProfilePreviewContent() {
         throw new Error("No URL returned from upload");
       }
     } catch (error: any) {
-      console.error('Upload error:', error);
+     
       alert(`Failed to upload photo: ${error.message}`);
     } finally {
       setIsUploading(false);

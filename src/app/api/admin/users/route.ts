@@ -97,7 +97,6 @@ export async function GET(request: NextRequest) {
       users: transformedUsers,
     })
   } catch (error: any) {
-    console.error('Fetch users error:', error)
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch users' },
       { status: error.message?.includes('required') ? 403 : 500 }

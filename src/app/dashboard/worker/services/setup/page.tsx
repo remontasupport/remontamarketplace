@@ -150,13 +150,7 @@ function ServicesSetupContent() {
     return { view: 'default' as const, serviceTitle };
   }, [stepSlug, viewParam, currentStepData?.serviceTitle, workerServices]);
 
-  console.log('[ServicesSetup] Computed currentView (URL-based):', {
-    stepSlug,
-    viewParam,
-    serviceTitle: currentStepData?.serviceTitle,
-    currentView,
-    workerServicesCount: workerServices?.length || 0,
-  });
+ 
 
   // Populate form data ONLY on initial load
   useEffect(() => {
@@ -177,17 +171,17 @@ function ServicesSetupContent() {
   useEffect(() => {
     const loadNursingRegistration = async () => {
       if (currentView.view === 'registration' && session?.user?.id) {
-        console.log('[Nursing] Loading registration data...');
+       
         const result = await getNursingRegistration();
 
         if (result.success && result.data) {
-          console.log('[Nursing] Data loaded:', result.data);
+        
           setFormData(prev => ({
             ...prev,
             nursingRegistration: result.data!,
           }));
         } else {
-          console.log('[Nursing] No existing data found');
+         
         }
       }
     };
@@ -199,7 +193,7 @@ function ServicesSetupContent() {
   useEffect(() => {
     const loadTherapeuticRegistration = async () => {
       if (currentView.view === 'offerings' && currentView.serviceTitle === 'Therapeutic Supports' && session?.user?.id) {
-        console.log('[Therapeutic] Loading registration data...');
+       
         const result = await getTherapeuticRegistration();
 
         if (result.success && result.data) {

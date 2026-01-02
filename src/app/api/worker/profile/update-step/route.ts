@@ -77,11 +77,9 @@ export async function POST(request: Request) {
             // and if this service has non-null metadata
             if (!metadataByCategory.has(service.categoryId) && service.metadata !== null) {
               metadataByCategory.set(service.categoryId, service.metadata);
-              console.log(`[Step 101] Preserving metadata for category ${service.categoryId}:`, service.metadata);
+              
             }
           }
-
-          console.log(`[Step 101] Found ${metadataByCategory.size} categories with metadata to preserve`);
 
           // Delete existing WorkerService records
           await authPrisma.workerService.deleteMany({
@@ -184,7 +182,7 @@ export async function POST(request: Request) {
           });
 
           // Auto-fix existing requirements that have incorrect names (slugs instead of display names)
-          console.log(`🔍 Checking ${existingRequirements.length} existing qualifications for incorrect names...`);
+          
           for (const existing of existingRequirements) {
             const qualification = availableQualifications.find(q => q.type === existing.requirementType);
             if (qualification && qualification.name) {
@@ -199,7 +197,7 @@ export async function POST(request: Request) {
                   where: { id: existing.id },
                   data: { requirementName: correctName },
                 });
-                console.log(`🔧 Auto-fixed: "${existing.requirementName}" → "${correctName}"`);
+               
               }
             }
           }
@@ -231,16 +229,16 @@ export async function POST(request: Request) {
             .map((qualificationType: string) => {
               const qualification = availableQualifications.find(q => q.type === qualificationType);
               if (!qualification) {
-                console.warn(`⚠️  Qualification not found for type: ${qualificationType}`);
+              
                 return null;
               }
 
               // Ensure we're saving the proper display name, not the type
               const displayName = qualification.name;
-              console.log(`✅ Creating qualification: ${qualificationType} → "${displayName}"`);
+            
 
               if (!displayName || displayName.includes('-')) {
-                console.error(`❌ Invalid qualification name for ${qualificationType}: ${displayName}`);
+              
                 return null;
               }
 
@@ -258,10 +256,10 @@ export async function POST(request: Request) {
             await authPrisma.verificationRequirement.createMany({
               data: requirementsToCreate as any[],
             });
-            console.log(`✨ Successfully created ${requirementsToCreate.length} new qualification(s)`);
+
           }
 
-          console.log(`📊 Qualifications summary: ${data.selectedQualifications.length} total selected`);
+         
         }
         break;
 

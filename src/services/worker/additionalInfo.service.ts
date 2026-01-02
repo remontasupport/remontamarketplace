@@ -99,7 +99,7 @@ export async function getWorkerAdditionalInfo(): Promise<ActionResponse> {
       data: workerProfile.workerAdditionalInfo || null,
     };
   } catch (error: any) {
-    console.error("Error fetching worker additional info:", error);
+   
     return {
       success: false,
       error: "Failed to load data",
@@ -162,19 +162,17 @@ export async function updateWorkerBankAccount(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
+
 
     // 5. Prepare bank account data (exclude 'understood' field from storage)
     const { understood, ...bankAccountData } = validatedData;
 
-    console.log("Saving bank account data:", { workerProfileId: workerProfile.id, bankAccountData });
 
     // 6. Upsert worker additional info with bank account
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -193,8 +191,6 @@ export async function updateWorkerBankAccount(
       },
     });
 
-    console.log("Bank account saved successfully:", updatedInfo);
-
     // 7. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
     revalidatePath("/dashboard/worker");
@@ -205,12 +201,6 @@ export async function updateWorkerBankAccount(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker bank account:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
     return {
       success: false,
       error: error.message || "Failed to save your bank account details. Please try again.",
@@ -273,15 +263,13 @@ export async function updateWorkerWorkHistory(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving work history data:", { workerProfileId: workerProfile.id, jobHistory: validatedData.jobHistory });
 
     // 5. Upsert worker additional info with work history
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -300,7 +288,6 @@ export async function updateWorkerWorkHistory(
       },
     });
 
-    console.log("Work history saved successfully:", updatedInfo);
 
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
@@ -312,12 +299,7 @@ export async function updateWorkerWorkHistory(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker work history:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+   
     return {
       success: false,
       error: error.message || "Failed to save your work history. Please try again.",
@@ -380,15 +362,13 @@ export async function updateWorkerEducation(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving education data:", { workerProfileId: workerProfile.id, education: validatedData.education });
+
 
     // 5. Upsert worker additional info with education
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -407,7 +387,7 @@ export async function updateWorkerEducation(
       },
     });
 
-    console.log("Education saved successfully:", updatedInfo);
+    
 
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
@@ -419,12 +399,7 @@ export async function updateWorkerEducation(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker education:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+   
     return {
       success: false,
       error: error.message || "Failed to save your education. Please try again.",
@@ -487,15 +462,12 @@ export async function updateWorkerGoodToKnow(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
-
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving LGBTQIA+ support:", { workerProfileId: workerProfile.id, lgbtqiaSupport: validatedData.lgbtqiaSupport });
 
     // 5. Upsert worker additional info with LGBTQIA support
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -514,8 +486,6 @@ export async function updateWorkerGoodToKnow(
       },
     });
 
-    console.log("LGBTQIA+ support saved successfully:", updatedInfo);
-
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
     revalidatePath("/dashboard/worker");
@@ -526,12 +496,6 @@ export async function updateWorkerGoodToKnow(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating LGBTQIA+ support:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
     return {
       success: false,
       error: error.message || "Failed to save your preferences. Please try again.",
@@ -594,15 +558,11 @@ export async function updateWorkerLanguages(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
-
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving languages:", { workerProfileId: workerProfile.id, languages: validatedData.languages });
 
     // 5. Upsert worker additional info with languages
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -621,8 +581,6 @@ export async function updateWorkerLanguages(
       },
     });
 
-    console.log("Languages saved successfully:", updatedInfo);
-
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
     revalidatePath("/dashboard/worker");
@@ -633,12 +591,6 @@ export async function updateWorkerLanguages(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker languages:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
     return {
       success: false,
       error: error.message || "Failed to save your languages. Please try again.",
@@ -701,15 +653,14 @@ export async function updateWorkerCulturalBackground(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+   
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving cultural background:", { workerProfileId: workerProfile.id, culturalBackground: validatedData.culturalBackground });
+   
 
     // 5. Upsert worker additional info with cultural background
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -728,7 +679,7 @@ export async function updateWorkerCulturalBackground(
       },
     });
 
-    console.log("Cultural background saved successfully:", updatedInfo);
+
 
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
@@ -740,12 +691,7 @@ export async function updateWorkerCulturalBackground(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker cultural background:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+    
     return {
       success: false,
       error: error.message || "Failed to save your cultural background. Please try again.",
@@ -808,15 +754,13 @@ export async function updateWorkerReligion(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving religion:", { workerProfileId: workerProfile.id, religion: validatedData.religion });
+ 
 
     // 5. Upsert worker additional info with religion
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -835,7 +779,7 @@ export async function updateWorkerReligion(
       },
     });
 
-    console.log("Religion saved successfully:", updatedInfo);
+
 
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
@@ -847,12 +791,7 @@ export async function updateWorkerReligion(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker religion:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+   
     return {
       success: false,
       error: error.message || "Failed to save your religion. Please try again.",
@@ -915,15 +854,13 @@ export async function updateWorkerInterests(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+   
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving interests:", { workerProfileId: workerProfile.id, interests: validatedData.interests });
 
     // 5. Upsert worker additional info with interests
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -942,8 +879,6 @@ export async function updateWorkerInterests(
       },
     });
 
-    console.log("Interests saved successfully:", updatedInfo);
-
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
     revalidatePath("/dashboard/worker");
@@ -954,12 +889,7 @@ export async function updateWorkerInterests(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker interests:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+    
     return {
       success: false,
       error: error.message || "Failed to save your interests. Please try again.",
@@ -1022,19 +952,14 @@ export async function updateWorkerAboutMe(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+    
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving about me:", {
-      workerProfileId: workerProfile.id,
-      uniqueService: validatedData.uniqueService.substring(0, 50) + "...",
-      funFact: validatedData.funFact.substring(0, 50) + "..."
-    });
+  
 
     // 5. Upsert worker additional info with unique service and fun fact
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -1056,11 +981,7 @@ export async function updateWorkerAboutMe(
       },
     });
 
-    console.log("About me saved successfully:", {
-      uniqueService: updatedInfo.uniqueService?.substring(0, 50) + "...",
-      funFact: updatedInfo.funFact?.substring(0, 50) + "..."
-    });
-
+   
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
     revalidatePath("/dashboard/worker");
@@ -1071,12 +992,7 @@ export async function updateWorkerAboutMe(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker about me:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+   
     return {
       success: false,
       error: error.message || "Failed to save your about me information. Please try again.",
@@ -1139,16 +1055,14 @@ export async function updateWorkerWorkPreferences(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving work preferences:", { workerProfileId: workerProfile.id, workPreferences: validatedData.workPreferences });
-
+   
     // 5. Upsert worker additional info with work preferences
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
       where: {
@@ -1166,8 +1080,6 @@ export async function updateWorkerWorkPreferences(
       },
     });
 
-    console.log("Work preferences saved successfully:", updatedInfo);
-
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
     revalidatePath("/dashboard/worker");
@@ -1178,12 +1090,7 @@ export async function updateWorkerWorkPreferences(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker work preferences:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+   
     return {
       success: false,
       error: error.message || "Failed to save your work preferences. Please try again.",
@@ -1246,20 +1153,13 @@ export async function updateWorkerPersonality(
     });
 
     if (!workerProfile) {
-      console.error("Worker profile not found for user:", session.user.id);
+
       return {
         success: false,
         error: "Worker profile not found",
       };
     }
 
-    console.log("Found worker profile:", workerProfile.id);
-    console.log("Saving personality:", {
-      workerProfileId: workerProfile.id,
-      personality: validatedData.personality,
-      nonSmoker: validatedData.nonSmoker,
-      petFriendly: validatedData.petFriendly
-    });
 
     // 5. Upsert worker additional info with personality data
     const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
@@ -1284,7 +1184,6 @@ export async function updateWorkerPersonality(
       },
     });
 
-    console.log("Personality saved successfully:", updatedInfo);
 
     // 6. Revalidate the profile page cache
     revalidatePath("/dashboard/worker/profile-building");
@@ -1296,12 +1195,7 @@ export async function updateWorkerPersonality(
       data: updatedInfo,
     };
   } catch (error: any) {
-    console.error("Error updating worker personality:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-    });
+  
     return {
       success: false,
       error: error.message || "Failed to save your personality information. Please try again.",

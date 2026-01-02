@@ -144,23 +144,21 @@ export default function Step4NDISTrainingsMultiple({
         <div className="form-column">
           <div className="account-form">
             {/* Main Title */}
-            <h2 className="text-2xl font-poppins font-bold text-gray-900 mb-6">
-              NDIS Training Modules
-            </h2>
+           
 
             {/* Training Information */}
             <div className="mb-8">
               <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-4">
                 Complete the following modules (Free & Mandatory)
               </h4>
-              <p className="text-sm font-poppins text-gray-700 mb-2">
-                Complete these modules at:
+              <p className="text-md font-poppins text-gray-700 mb-2">
+                Access and complete the modules at:
               </p>
               <a
                 href="https://training.ndiscommission.gov.au/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all mb-6 block"
+                className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all mb-12 block"
               >
                 https://training.ndiscommission.gov.au/
               </a>

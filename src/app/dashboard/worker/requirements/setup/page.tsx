@@ -145,7 +145,7 @@ function MandatoryRequirementsSetupContent() {
       // Auto-update Compliance completion status (non-blocking)
       // This checks all compliance requirements and updates the setupProgress
       autoUpdateComplianceCompletion().catch((error) => {
-        console.error("Failed to auto-update compliance completion:", error);
+     
         // Don't fail the main operation if this fails
       });
 

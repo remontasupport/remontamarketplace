@@ -19,8 +19,6 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log(`[API] Fetching subcategories for categoryId: "${categoryId}"`);
-
     // Verify category exists first
     const category = await authPrisma.category.findUnique({
       where: { id: categoryId },
@@ -28,7 +26,6 @@ export async function GET(request: Request) {
     });
 
     if (!category) {
-      console.warn(`[API] Category not found: "${categoryId}"`);
       // Still return empty array instead of error to avoid breaking the UI
       return NextResponse.json([], {
         headers: {
@@ -51,19 +48,14 @@ export async function GET(request: Request) {
         name: "asc",
       },
     });
-
-    console.log(`[API] Found ${subcategories.length} subcategories for "${category.name}" (${categoryId})`);
-    if (subcategories.length > 0) {
-      console.log('[API] Subcategories:', subcategories.map(s => s.name).join(', '));
-    }
-
+    
     return NextResponse.json(subcategories, {
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
       },
     });
   } catch (error) {
-    console.error("Error fetching subcategories:", error);
+ 
     return NextResponse.json(
       { error: "Failed to fetch subcategories" },
       { status: 500 }

@@ -89,7 +89,7 @@ export async function updateWorkerABN(
 
     // 6. Auto-update Compliance completion status (non-blocking)
     autoUpdateComplianceCompletion().catch((error) => {
-      console.error("Failed to auto-update compliance completion:", error);
+
       // Don't fail the main operation if this fails
     });
 
@@ -99,7 +99,7 @@ export async function updateWorkerABN(
       data: updatedProfile,
     };
   } catch (error: any) {
-    console.error("Error updating worker ABN:", error);
+    
     return {
       success: false,
       error: "Please enter a valid ABN",
@@ -263,12 +263,12 @@ export async function uploadComplianceDocument(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    console.log('[Compliance] Upload document called');
+
 
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      console.log('[Compliance] Authentication failed - no session');
+     
       return {
         success: false,
         error: "Unauthorized. Please log in.",
@@ -281,7 +281,7 @@ export async function uploadComplianceDocument(
       dbWriteRateLimit
     );
     if (!rateLimitCheck.success) {
-      console.log('[Compliance] Rate limit exceeded');
+    
       return {
         success: false,
         error: rateLimitCheck.error,
@@ -294,17 +294,10 @@ export async function uploadComplianceDocument(
     const documentName = formData.get("documentName") as string | null;
     const expiryDate = formData.get("expiryDate") as string | null;
 
-    console.log('[Compliance] Form data parsed:', {
-      hasFile: !!file,
-      fileName: file?.name,
-      fileSize: file?.size,
-      documentType,
-      documentName,
-      hasExpiryDate: !!expiryDate
-    });
+  
 
     if (!file || !(file instanceof File)) {
-      console.log('[Compliance] No file provided or invalid file format');
+     
       return {
         success: false,
         error: "No file provided or invalid file format",
@@ -364,12 +357,11 @@ export async function uploadComplianceDocument(
     }
 
     // 7. Upload to Vercel Blob
-    console.log('[Compliance] Starting blob upload');
     let arrayBuffer;
     try {
       arrayBuffer = await file.arrayBuffer();
     } catch (bufferError) {
-      console.error("[Compliance] Error converting file to arrayBuffer:", bufferError);
+      
       return {
         success: false,
         error: "Failed to process file. Please try again.",
@@ -382,8 +374,6 @@ export async function uploadComplianceDocument(
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const blobPath = `${docConfig.folder}/${session.user.id}/${documentType}-${timestamp}-${sanitizedFileName}`;
 
-    console.log('[Compliance] Blob path:', blobPath);
-
     let blob;
     try {
       blob = await put(blobPath, buffer, {
@@ -391,9 +381,9 @@ export async function uploadComplianceDocument(
         contentType: file.type,
         addRandomSuffix: false,
       });
-      console.log('[Compliance] Blob uploaded successfully:', blob.url);
+   
     } catch (blobError) {
-      console.error("[Compliance] Error uploading to Vercel Blob:", blobError);
+     
       return {
         success: false,
         error: "Failed to upload file to storage. Please try again.",
@@ -401,7 +391,6 @@ export async function uploadComplianceDocument(
     }
 
     // 8. Create or update verification requirement
-    console.log('[Compliance] Saving to verification requirements');
     // Check if document of this type already exists
     const existingDoc = await authPrisma.verificationRequirement.findFirst({
       where: {
@@ -414,7 +403,7 @@ export async function uploadComplianceDocument(
 
     if (existingDoc) {
       // Update existing document
-      console.log('[Compliance] Updating existing verification requirement:', existingDoc.id);
+     
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDoc.id },
         data: {
@@ -434,7 +423,7 @@ export async function uploadComplianceDocument(
       });
     } else {
       // Create new document entry
-      console.log('[Compliance] Creating new verification requirement');
+    
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
@@ -467,18 +456,16 @@ export async function uploadComplianceDocument(
 
     // 11. Auto-update Compliance completion status (non-blocking)
     autoUpdateComplianceCompletion().catch((error) => {
-      console.error("[Compliance] Failed to auto-update compliance completion:", error);
+    
       // Don't fail the main operation if this fails
     });
 
     // 12. Auto-update Trainings completion status (non-blocking)
     // Always call this - the function itself checks if trainings are required and complete
     autoUpdateTrainingsCompletion().catch((error) => {
-      console.error("[Compliance] Failed to auto-update trainings completion:", error);
+    
       // Don't fail the main operation if this fails
     });
-
-    console.log('[Compliance] Upload complete, returning success');
 
     return {
       success: true,
@@ -491,8 +478,7 @@ export async function uploadComplianceDocument(
       },
     };
   } catch (error: any) {
-    console.error("[Compliance] Error uploading compliance document:", error);
-    console.error("[Compliance] Error stack:", error.stack);
+
     return {
       success: false,
       error: `Failed to upload document: ${error.message || 'Unknown error'}`,
@@ -508,12 +494,10 @@ export async function deleteComplianceDocument(
   documentId: string
 ): Promise<ActionResponse> {
   try {
-    console.log('[Compliance] Delete document called:', documentId);
 
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      console.log('[Compliance] Authentication failed - no session');
       return {
         success: false,
         error: "Unauthorized. Please log in.",
@@ -526,7 +510,6 @@ export async function deleteComplianceDocument(
       dbWriteRateLimit
     );
     if (!rateLimitCheck.success) {
-      console.log('[Compliance] Rate limit exceeded');
       return {
         success: false,
         error: rateLimitCheck.error,
@@ -569,16 +552,13 @@ export async function deleteComplianceDocument(
     // 5. Delete from Vercel Blob storage (if URL exists)
     if (document.documentUrl) {
       try {
-        console.log('[Compliance] Deleting from blob storage:', document.documentUrl);
+       
         await del(document.documentUrl);
       } catch (blobError) {
-        console.error("[Compliance] Error deleting from blob storage:", blobError);
+        
         // Continue with database deletion even if blob deletion fails
       }
     }
-
-    // 6. Delete from database
-    console.log('[Compliance] Deleting from database:', documentId);
     await authPrisma.verificationRequirement.delete({
       where: { id: documentId },
     });
@@ -590,18 +570,18 @@ export async function deleteComplianceDocument(
 
     // 8. Auto-update Compliance completion status (non-blocking)
     autoUpdateComplianceCompletion().catch((error) => {
-      console.error("[Compliance] Failed to auto-update compliance completion:", error);
+  
       // Don't fail the main operation if this fails
     });
 
     // 9. Auto-update Trainings completion status (non-blocking)
     // Always call this - the function itself checks if trainings are required and complete
     autoUpdateTrainingsCompletion().catch((error) => {
-      console.error("[Compliance] Failed to auto-update trainings completion:", error);
+    
       // Don't fail the main operation if this fails
     });
 
-    console.log('[Compliance] Delete complete, returning success');
+   
 
     return {
       success: true,
@@ -611,8 +591,7 @@ export async function deleteComplianceDocument(
       },
     };
   } catch (error: any) {
-    console.error("[Compliance] Error deleting compliance document:", error);
-    console.error("[Compliance] Error stack:", error.stack);
+   
     return {
       success: false,
       error: `Failed to delete document: ${error.message || 'Unknown error'}`,

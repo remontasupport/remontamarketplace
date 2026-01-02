@@ -102,8 +102,6 @@ export async function POST(request: Request) {
       const displayName = QUALIFICATION_TYPE_TO_NAME[documentType] ||
         documentType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-      console.log(`[Server] Updating verification requirement: ${documentType} → "${displayName}"`);
-
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDoc.id },
         data: {
@@ -126,8 +124,6 @@ export async function POST(request: Request) {
       // Get proper display name from mapping instead of just capitalizing slug
       const displayName = QUALIFICATION_TYPE_TO_NAME[documentType] ||
         documentType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-
-      console.log(`[Server] Creating verification requirement: ${documentType} → "${displayName}"`);
 
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {

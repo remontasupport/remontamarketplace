@@ -73,7 +73,7 @@ export async function startImpersonation(
 
     return result
   } catch (error: any) {
-    console.error('Impersonation error:', error)
+   
     return {
       success: false,
       error: error.message || 'Network error',
@@ -113,7 +113,7 @@ export async function endImpersonation(): Promise<{ success: boolean; error?: st
 
     return result
   } catch (error: any) {
-    console.error('End impersonation error:', error)
+    
     return {
       success: false,
       error: error.message || 'Network error',

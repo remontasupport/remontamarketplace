@@ -15,10 +15,6 @@ export default function LocationsSection() {
     }));
   };
 
-  const handleSave = () => {
-    console.log("Saving locations:", formData);
-  };
-
   return (
     <div className="profile-section">
       <div className="profile-section-header">
@@ -72,7 +68,7 @@ export default function LocationsSection() {
         <button
           type="button"
           className="save-button"
-          onClick={handleSave}
+          
         >
           Save and continue
         </button>

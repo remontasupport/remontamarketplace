@@ -185,7 +185,7 @@ export async function checkServerActionRateLimit(
     return { success: true }
   } catch (error) {
     // If rate limiting fails, log error but allow request (fail open)
-    console.error('Rate limit check failed:', error)
+
     return { success: true }
   }
 }

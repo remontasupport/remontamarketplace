@@ -10,7 +10,7 @@ import { authPrisma } from "@/lib/auth-prisma";
 import { QUALIFICATION_TYPE_TO_NAME } from "@/utils/qualificationMapping";
 
 async function fixQualificationNames() {
-  console.log("Starting qualification name fix...\n");
+
 
   try {
     // Get all verification requirements that might have incorrect names
@@ -25,7 +25,7 @@ async function fixQualificationNames() {
       },
     });
 
-    console.log(`Found ${requirements.length} worker-selected qualifications\n`);
+
 
     let updatedCount = 0;
     let skippedCount = 0;
@@ -34,7 +34,7 @@ async function fixQualificationNames() {
       const correctName = QUALIFICATION_TYPE_TO_NAME[req.requirementType];
 
       if (!correctName) {
-        console.log(`⚠️  Unknown qualification type: ${req.requirementType}`);
+      
         skippedCount++;
         continue;
       }
@@ -51,20 +51,16 @@ async function fixQualificationNames() {
           data: { requirementName: correctName },
         });
 
-        console.log(`✅ Updated: ${req.requirementType} → "${correctName}"`);
+    
         updatedCount++;
       } else {
         skippedCount++;
       }
     }
 
-    console.log(`\n✨ Migration complete!`);
-    console.log(`   Updated: ${updatedCount}`);
-    console.log(`   Skipped: ${skippedCount}`);
-    console.log(`   Total: ${requirements.length}`);
 
   } catch (error) {
-    console.error("❌ Error during migration:", error);
+ 
     throw error;
   } finally {
     await authPrisma.$disconnect();
@@ -76,7 +72,6 @@ if (require.main === module) {
   fixQualificationNames()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error(error);
       process.exit(1);
     });
 }

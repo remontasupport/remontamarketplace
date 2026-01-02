@@ -183,7 +183,6 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
         throw new Error(result.error || "Upload failed");
       }
 
-      console.log('[Upload] Upload successful:', result.data);
 
       // Invalidate the service documents query to refresh UI
       await queryClient.invalidateQueries({
@@ -196,7 +195,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
         queryKey: serviceDocumentsKeys.all,
       });
     } catch (error: any) {
-      console.error('[Upload] Upload failed:', error);
+  
       alert(`Failed to upload: ${error.message}`);
     } finally {
       setUploadingFiles(prev => ({ ...prev, [documentId]: false }));
@@ -253,7 +252,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
       setDocumentToDelete(null);
     } catch (error) {
-      console.error('Delete error:', error);
+    
       alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

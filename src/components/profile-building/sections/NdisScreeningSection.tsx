@@ -16,9 +16,7 @@ export default function NdisScreeningSection() {
     }));
   };
 
-  const handleSave = () => {
-    console.log("Saving NDIS screening:", formData);
-  };
+ 
 
   return (
     <div className="profile-section">
@@ -76,7 +74,7 @@ export default function NdisScreeningSection() {
         <button
           type="button"
           className="save-button"
-          onClick={handleSave}
+      
         >
           Save and continue
         </button>

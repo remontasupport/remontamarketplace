@@ -86,7 +86,7 @@ export async function getServiceDocuments(): Promise<ActionResponse> {
       data: formattedDocuments,
     };
   } catch (error: any) {
-    console.error("[Server] Error fetching service documents:", error);
+  
     return {
       success: false,
       error: `Failed to fetch documents: ${error.message || 'Unknown error'}`,
@@ -104,14 +104,14 @@ export async function deleteServiceDocument(
   documentUrl: string
 ): Promise<ActionResponse> {
   try {
-    console.log('[Server] Delete service document called');
+ 
 
     // 1. Authentication check
     const session = await getServerSession(authOptions);
-    console.log('[Server] Session:', { userId: session?.user?.id, email: session?.user?.email });
+   
 
     if (!session?.user?.id || session.user.id !== userId) {
-      console.log('[Server] Authentication failed - no session or user mismatch');
+     
       return {
         success: false,
         error: "Unauthorized. Please log in.",
@@ -124,7 +124,7 @@ export async function deleteServiceDocument(
       dbWriteRateLimit
     );
     if (!rateLimitCheck.success) {
-      console.log('[Server] Rate limit exceeded');
+ 
       return {
         success: false,
         error: rateLimitCheck.error,
@@ -153,7 +153,7 @@ export async function deleteServiceDocument(
     });
 
     if (!existingRequirement) {
-      console.log('[Server] Requirement not found');
+   
       return {
         success: false,
         error: "Document requirement not found",
@@ -165,21 +165,20 @@ export async function deleteServiceDocument(
       where: { id: existingRequirement.id },
     });
 
-    console.log('[Server] Deleted verification requirement:', existingRequirement.id);
+
 
     // 6. Revalidate cache
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
 
-    console.log('[Server] Delete complete, returning success');
+   
 
     return {
       success: true,
       message: "Document deleted successfully!",
     };
   } catch (error: any) {
-    console.error("[Server] Error deleting service document:", error);
-    console.error("[Server] Error stack:", error.stack);
+ 
     return {
       success: false,
       error: `Failed to delete document: ${error.message || 'Unknown error'}`,
@@ -195,14 +194,14 @@ export async function uploadServiceDocument(
   formData: FormData
 ): Promise<ActionResponse> {
   try {
-    console.log('[Server] Upload service document called');
+ 
 
     // 1. Authentication check
     const session = await getServerSession(authOptions);
-    console.log('[Server] Session:', { userId: session?.user?.id, email: session?.user?.email });
+    
 
     if (!session?.user?.id) {
-      console.log('[Server] Authentication failed - no session');
+    
       return {
         success: false,
         error: "Unauthorized. Please log in.",
@@ -215,7 +214,7 @@ export async function uploadServiceDocument(
       dbWriteRateLimit
     );
     if (!rateLimitCheck.success) {
-      console.log('[Server] Rate limit exceeded');
+  
       return {
         success: false,
         error: rateLimitCheck.error,
@@ -227,16 +226,10 @@ export async function uploadServiceDocument(
     const serviceTitle = formData.get("serviceTitle") as string;
     const requirementType = formData.get("requirementType") as string;
 
-    console.log('[Server] Form data parsed:', {
-      hasFile: !!file,
-      fileName: file?.name,
-      fileSize: file?.size,
-      serviceTitle,
-      requirementType
-    });
+ 
 
     if (!file) {
-      console.log('[Server] No file provided');
+    
       return {
         success: false,
         error: "No file provided",
@@ -244,7 +237,7 @@ export async function uploadServiceDocument(
     }
 
     if (!serviceTitle || !requirementType) {
-      console.log('[Server] Missing serviceTitle or requirementType');
+     
       return {
         success: false,
         error: "Service title and requirement type are required",
@@ -288,7 +281,7 @@ export async function uploadServiceDocument(
     }
 
     // 6. Upload to Vercel Blob
-    console.log('[Server] Starting blob upload');
+    
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -298,7 +291,7 @@ export async function uploadServiceDocument(
     const sanitizedRequirement = requirementType.toLowerCase().replace(/\s+/g, "-");
     const blobPath = `workers/${session.user.id}/service-documents/${sanitizedService}/${sanitizedRequirement}/${timestamp}-${sanitizedFileName}`;
 
-    console.log('[Server] Blob path:', blobPath);
+
 
     const blob = await put(blobPath, buffer, {
       access: "public",
@@ -306,10 +299,7 @@ export async function uploadServiceDocument(
       addRandomSuffix: false,
     });
 
-    console.log('[Server] Blob uploaded successfully:', blob.url);
-
     // 7. Save to VerificationRequirement table
-    console.log('[Server] Saving to verification requirements');
 
     // Find or create verification requirement for this service + requirement type
     const existingRequirement = await authPrisma.verificationRequirement.findFirst({
@@ -330,8 +320,6 @@ export async function uploadServiceDocument(
                           QUALIFICATION_TYPE_TO_NAME[requirementType] ||
                           requirementType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
-      console.log(`[Server] Updating qualification: ${requirementType} → "${displayName}"`);
-
       await authPrisma.verificationRequirement.update({
         where: { id: existingRequirement.id },
         data: {
@@ -347,7 +335,7 @@ export async function uploadServiceDocument(
           },
         },
       });
-      console.log('[Server] Updated existing verification requirement:', existingRequirement.id);
+  
     } else {
       // Create new requirement
       // Get the requirement name from config
@@ -359,8 +347,6 @@ export async function uploadServiceDocument(
       const displayName = requirement?.name ||
                           QUALIFICATION_TYPE_TO_NAME[requirementType] ||
                           requirementType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-
-      console.log(`[Server] Creating qualification: ${requirementType} → "${displayName}"`);
 
       await authPrisma.verificationRequirement.create({
         data: {
@@ -379,14 +365,12 @@ export async function uploadServiceDocument(
           },
         },
       });
-      console.log('[Server] Created new verification requirement');
+
     }
 
     // 8. Revalidate cache
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
-
-    console.log('[Server] Upload complete, returning success');
 
     return {
       success: true,
@@ -398,8 +382,7 @@ export async function uploadServiceDocument(
       },
     };
   } catch (error: any) {
-    console.error("[Server] Error uploading service document:", error);
-    console.error("[Server] Error stack:", error.stack);
+
     return {
       success: false,
       error: `Failed to upload document: ${error.message || 'Unknown error'}`,

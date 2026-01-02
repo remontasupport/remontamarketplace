@@ -101,7 +101,7 @@ export async function updateWorkerName(
 
     // 6. Auto-update Account Details completion status (non-blocking)
     autoUpdateAccountDetailsCompletion().catch((error) => {
-      console.error("Failed to auto-update account details completion:", error);
+
       // Don't fail the main operation if this fails
     });
 
@@ -111,7 +111,7 @@ export async function updateWorkerName(
       data: updatedProfile,
     };
   } catch (error: any) {
-    console.error("Error updating worker name:", error);
+   
     return {
       success: false,
       error: "Failed to save your name. Please try again.",
@@ -159,7 +159,7 @@ export async function getWorkerProfile(): Promise<ActionResponse> {
       data: profile,
     };
   } catch (error: any) {
-    console.error("Error fetching worker profile:", error);
+
     return {
       success: false,
       error: "Failed to load profile data",
@@ -230,7 +230,7 @@ export async function updateWorkerPhoto(
 
     // 6. Auto-update Account Details completion status (non-blocking)
     autoUpdateAccountDetailsCompletion().catch((error) => {
-      console.error("Failed to auto-update account details completion:", error);
+     
       // Don't fail the main operation if this fails
     });
 
@@ -240,7 +240,7 @@ export async function updateWorkerPhoto(
       data: updatedProfile,
     };
   } catch (error: any) {
-    console.error("Error updating worker photo:", error);
+    
     return {
       success: false,
       error: "Failed to save your photo. Please try again.",
@@ -311,7 +311,7 @@ export async function updateWorkerBio(
 
     // 6. Auto-update Account Details completion status (non-blocking)
     autoUpdateAccountDetailsCompletion().catch((error) => {
-      console.error("Failed to auto-update account details completion:", error);
+   
       // Don't fail the main operation if this fails
     });
 
@@ -321,7 +321,7 @@ export async function updateWorkerBio(
       data: updatedProfile,
     };
   } catch (error: any) {
-    console.error("Error updating worker bio:", error);
+   
     return {
       success: false,
       error: "Failed to save your bio. Please try again.",
@@ -395,14 +395,14 @@ export async function updateWorkerAddress(
       if (geocodeResult) {
         latitude = geocodeResult.latitude;
         longitude = geocodeResult.longitude;
-        console.log(`[Geocoding] Successfully geocoded: ${location} -> (${latitude}, ${longitude})`);
+       
       } else {
-        console.warn(`[Geocoding] Failed to geocode address: ${location}`);
+
         // Don't fail the entire request if geocoding fails
         // The address will still be saved without coordinates
       }
     } catch (geocodeError) {
-      console.error(`[Geocoding] Error during geocoding:`, geocodeError);
+   
       // Continue without coordinates rather than failing
     }
 
@@ -435,7 +435,7 @@ export async function updateWorkerAddress(
 
     // 8. Auto-update Account Details completion status (non-blocking)
     autoUpdateAccountDetailsCompletion().catch((error) => {
-      console.error("Failed to auto-update account details completion:", error);
+   
       // Don't fail the main operation if this fails
     });
 
@@ -445,7 +445,7 @@ export async function updateWorkerAddress(
       data: updatedProfile,
     };
   } catch (error: any) {
-    console.error("Error updating worker address:", error);
+ 
     return {
       success: false,
       error: "Failed to save your address. Please try again.",
@@ -544,7 +544,7 @@ export async function updateWorkerPersonalInfo(
 
     // 7. Auto-update Account Details completion status (non-blocking)
     autoUpdateAccountDetailsCompletion().catch((error) => {
-      console.error("Failed to auto-update account details completion:", error);
+    
       // Don't fail the main operation if this fails
     });
 
@@ -554,7 +554,7 @@ export async function updateWorkerPersonalInfo(
       data: updatedProfile,
     };
   } catch (error: any) {
-    console.error("Error updating worker personal info:", error);
+
     return {
       success: false,
       error: "Failed to save your personal information. Please try again.",

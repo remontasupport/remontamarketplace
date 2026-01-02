@@ -199,7 +199,7 @@ export async function getProfilePreviewData(): Promise<ProfilePreviewResponse> {
       },
     };
   } catch (error) {
-    console.error("Error fetching profile preview data:", error);
+  
     return {
       success: false,
       error: "Failed to fetch profile preview data",
