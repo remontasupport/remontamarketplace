@@ -18,8 +18,8 @@ import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servi
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import Loader from "@/components/ui/Loader";
-import { useSubcategories, getCategoryIdFromName } from "@/hooks/queries/useServiceSubcategories";
-import { saveNursingRegistration, getNursingRegistration } from "@/services/worker/workerServices.service";
+import { useWorkerServices } from "@/hooks/queries/useServiceSubcategories";
+import { saveNursingRegistration, getNursingRegistration, saveTherapeuticRegistration, getTherapeuticRegistration } from "@/services/worker/workerServices.service";
 
 // Form data interface
 interface FormData {
@@ -33,6 +33,13 @@ interface FormData {
   nursingRegistration?: {
     nursingType?: 'registered' | 'enrolled';
     hasExperience?: boolean;
+    registrationNumber?: string;
+    expiryDay?: string;
+    expiryMonth?: string;
+    expiryYear?: string;
+  };
+  // Therapeutic registration (for therapeutic supports only)
+  therapeuticRegistration?: {
     registrationNumber?: string;
     expiryDay?: string;
     expiryMonth?: string;
@@ -53,6 +60,9 @@ function ServicesSetupContent() {
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
+  // Fetch worker's selected services
+  const { data: workerServices } = useWorkerServices();
+
   // Track if we've initialized form data
   const hasInitializedFormData = useRef(false);
 
@@ -62,6 +72,7 @@ function ServicesSetupContent() {
     offeringsByService: {},
     documentsByService: {},
     nursingRegistration: undefined,
+    therapeuticRegistration: undefined,
     selectedQualifications: [],
   });
 
@@ -78,13 +89,6 @@ function ServicesSetupContent() {
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
   const currentStepData = STEPS[currentStep - 1];
 
-  // Fetch subcategories for the current service to check if offerings exist
-  // Must be called after currentStepData is defined, but hooks must be called unconditionally
-  const currentServiceCategoryId = currentStepData?.serviceTitle
-    ? getCategoryIdFromName(currentStepData.serviceTitle)
-    : undefined;
-  const { data: availableSubcategories } = useSubcategories(currentServiceCategoryId);
-
   // Compute current view PURELY from URL + service configuration (100% deterministic!)
   const currentView = useMemo(() => {
     const serviceTitle = currentStepData?.serviceTitle;
@@ -92,9 +96,10 @@ function ServicesSetupContent() {
       return { view: 'default' as const, serviceTitle: null };
     }
 
-    // Check if this is nursing services
+    // Check if this is nursing services or therapeutic supports
     const serviceSlug = serviceNameToSlug(serviceTitle);
     const isNursingService = serviceSlug === 'nursing-services';
+    const isTherapeuticSupport = serviceSlug === 'therapeutic-supports';
 
     // Priority 1: Use explicit view from URL if present
     if (viewParam === 'registration') {
@@ -112,8 +117,11 @@ function ServicesSetupContent() {
 
     // Priority 2: Auto-determine initial view based on service configuration
     const hasQualifications = serviceHasQualifications(serviceTitle);
-    // Check database for subcategories instead of hardcoded config
-    const hasOfferings = availableSubcategories && availableSubcategories.length > 0;
+    // Check if worker has selected subcategories for this service
+    const selectedSubcategories = workerServices?.find(
+      (s) => s.categoryName.toLowerCase() === serviceTitle.toLowerCase()
+    )?.subcategories || [];
+    const hasOfferings = selectedSubcategories.length > 0;
     const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
     const documentRequirements = getServiceDocumentRequirements(serviceTitle);
     const hasDocuments = documentRequirements.length > 0;
@@ -140,15 +148,14 @@ function ServicesSetupContent() {
 
     // Fallback: if no qualifications, no offerings, no documents - show default
     return { view: 'default' as const, serviceTitle };
-  }, [stepSlug, viewParam, currentStepData?.serviceTitle, availableSubcategories]);
+  }, [stepSlug, viewParam, currentStepData?.serviceTitle, workerServices]);
 
   console.log('[ServicesSetup] Computed currentView (URL-based):', {
     stepSlug,
     viewParam,
     serviceTitle: currentStepData?.serviceTitle,
     currentView,
-    availableSubcategoriesCount: availableSubcategories?.length || 0,
-    hasOfferings: availableSubcategories && availableSubcategories.length > 0,
+    workerServicesCount: workerServices?.length || 0,
   });
 
   // Populate form data ONLY on initial load
@@ -159,6 +166,7 @@ function ServicesSetupContent() {
         offeringsByService: {}, // No longer used - offerings are managed via TanStack Query
         documentsByService: profileData.documentsByService || {},
         nursingRegistration: profileData.nursingRegistration || undefined,
+        therapeuticRegistration: undefined,
         selectedQualifications: [],
       });
       hasInitializedFormData.current = true;
@@ -186,6 +194,28 @@ function ServicesSetupContent() {
 
     loadNursingRegistration();
   }, [currentView.view, session?.user?.id]);
+
+  // Load therapeutic registration data when entering offerings view for therapeutic supports
+  useEffect(() => {
+    const loadTherapeuticRegistration = async () => {
+      if (currentView.view === 'offerings' && currentView.serviceTitle === 'Therapeutic Supports' && session?.user?.id) {
+        console.log('[Therapeutic] Loading registration data...');
+        const result = await getTherapeuticRegistration();
+
+        if (result.success && result.data) {
+          console.log('[Therapeutic] Data loaded:', result.data);
+          setFormData(prev => ({
+            ...prev,
+            therapeuticRegistration: result.data!,
+          }));
+        } else {
+          console.log('[Therapeutic] No existing data found');
+        }
+      }
+    };
+
+    loadTherapeuticRegistration();
+  }, [currentView.view, currentView.serviceTitle, session?.user?.id]);
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
@@ -271,7 +301,10 @@ function ServicesSetupContent() {
       }
     }
 
-    // INTERCEPTOR 0: Check if we're on registration view (nursing services)
+    // Define service step variables early
+    const isServiceStep = !!currentStepData?.serviceTitle;
+
+    // INTERCEPTOR 0: Check if we're on registration view (nursing services only)
     // Navigate to qualifications view OR skip to offerings if no qualifications
     const isShowingRegistration = currentView.view === 'registration';
     if (isShowingRegistration) {
@@ -312,8 +345,11 @@ function ServicesSetupContent() {
         ? serviceHasQualifications(currentStepData.serviceTitle)
         : false;
 
-      // Check if service has offerings
-      const hasOfferings = availableSubcategories && availableSubcategories.length > 0;
+      // Check if service has offerings (from worker's selected subcategories)
+      const selectedSubcategories = workerServices?.find(
+        (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
+      )?.subcategories || [];
+      const hasOfferings = selectedSubcategories.length > 0;
 
       // If no qualifications but has offerings, skip to offerings
       if (!hasQualifications && hasOfferings) {
@@ -346,12 +382,14 @@ function ServicesSetupContent() {
     // 1. We have a serviceTitle (it's a service step, not "Other Documents")
     // 2. We're NOT currently showing offerings view
     // 3. We're NOT currently showing documents view
-    // 4. The service has offerings (from database)
-    const isServiceStep = !!currentStepData?.serviceTitle;
+    // 4. The service has offerings (from worker's selected subcategories)
     const isShowingOfferings = currentView.view === 'offerings';
     const isShowingDocuments = currentView.view === 'documents';
-    // Check database for subcategories instead of hardcoded config
-    const hasOfferings = isServiceStep && availableSubcategories && availableSubcategories.length > 0;
+    // Check if worker has selected subcategories for this service
+    const serviceSelectedSubcategories = isServiceStep && workerServices?.find(
+      (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
+    )?.subcategories || [];
+    const hasOfferings = isServiceStep && serviceSelectedSubcategories.length > 0;
 
     if (isServiceStep && !isShowingOfferings && !isShowingDocuments && hasOfferings) {
       // INTERCEPT: Navigate to offerings view via URL
@@ -371,6 +409,47 @@ function ServicesSetupContent() {
       // INTERCEPT: Navigate directly to documents view (skip offerings)
       router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
       return;
+    }
+
+    // VALIDATION: Check if we're on offerings view for therapeutic support
+    // Validate and save registration data before proceeding
+    if (isServiceStep && isShowingOfferings) {
+      const serviceSlug = currentStepData?.serviceTitle ? serviceNameToSlug(currentStepData.serviceTitle) : '';
+      const isTherapeuticSupport = serviceSlug === 'therapeutic-supports';
+
+      if (isTherapeuticSupport) {
+        // Validate that all date fields are filled
+        const { expiryDay, expiryMonth, expiryYear } = formData.therapeuticRegistration || {};
+
+        if (!expiryDay || !expiryMonth || !expiryYear) {
+          setErrors({ expiryDate: "Select a date (Day/Month/Year)" });
+          return;
+        }
+
+        // Save therapeutic registration data using server action
+        if (session?.user?.id && formData.therapeuticRegistration) {
+          try {
+            console.log('[Therapeutic] Saving registration data:', formData.therapeuticRegistration);
+            const result = await saveTherapeuticRegistration({
+              registrationNumber: formData.therapeuticRegistration.registrationNumber || '',
+              expiryDay: formData.therapeuticRegistration.expiryDay || '',
+              expiryMonth: formData.therapeuticRegistration.expiryMonth || '',
+              expiryYear: formData.therapeuticRegistration.expiryYear || '',
+            });
+
+            if (!result.success) {
+              setErrors({ general: result.error || "Failed to save therapeutic registration. Please try again." });
+              return;
+            }
+
+            console.log('[Therapeutic] Registration saved successfully');
+          } catch (error) {
+            console.error('[Therapeutic] Error saving registration:', error);
+            setErrors({ general: "Failed to save therapeutic registration. Please try again." });
+            return;
+          }
+        }
+      }
     }
 
     // INTERCEPTOR 3: Check if we're on offerings view and should show documents
@@ -438,8 +517,11 @@ function ServicesSetupContent() {
   const handlePrevious = async () => {
     // If we're currently showing documents view
     if (currentView.view === 'documents') {
-      // Check database for subcategories instead of hardcoded config
-      const hasOfferings = availableSubcategories && availableSubcategories.length > 0;
+      // Check if worker has selected subcategories for this service
+      const selectedSubcategories = currentStepData?.serviceTitle && workerServices?.find(
+        (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
+      )?.subcategories || [];
+      const hasOfferings = selectedSubcategories.length > 0;
       const hasQualifications = currentStepData?.serviceTitle
         ? serviceHasQualifications(currentStepData.serviceTitle)
         : false;
@@ -576,8 +658,11 @@ function ServicesSetupContent() {
   const getNextButtonText = () => {
     const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
     const isLastService = currentStep === STEPS.length;
-    // Check database for subcategories instead of hardcoded config
-    const currentServiceHasOfferings = availableSubcategories && availableSubcategories.length > 0;
+    // Check if worker has selected subcategories for this service
+    const selectedSubcategories = currentStepData?.serviceTitle && workerServices?.find(
+      (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
+    )?.subcategories || [];
+    const currentServiceHasOfferings = selectedSubcategories.length > 0;
     const documentRequirements = currentStepData?.serviceTitle ? getServiceDocumentRequirements(currentStepData.serviceTitle) : [];
     const currentServiceHasDocuments = documentRequirements.length > 0;
 

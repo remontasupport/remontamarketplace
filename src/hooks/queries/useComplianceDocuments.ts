@@ -174,6 +174,10 @@ export function useDeleteComplianceDocument() {
 /**
  * Hook for single document endpoints (Police Check, Worker Screening, etc.)
  * These endpoints return { document } instead of { documents: [] }
+ *
+ * REFACTORED: Now supports both legacy endpoints and generic endpoint
+ * - Legacy: Direct call to specific endpoint (e.g., /api/worker/police-check)
+ * - Generic: Uses /api/worker/compliance-documents?documentType={type}&format=single
  */
 export function useSingleComplianceDocument(
   apiEndpoint: string,
@@ -182,7 +186,20 @@ export function useSingleComplianceDocument(
   return useQuery({
     queryKey: complianceDocumentsKeys.byType(documentType),
     queryFn: async () => {
-      const response = await fetch(apiEndpoint);
+      // Check if this is the generic endpoint or a legacy specific endpoint
+      const isGenericEndpoint = apiEndpoint.includes("compliance-documents");
+
+      let url: string;
+
+      if (isGenericEndpoint) {
+        // Using generic endpoint - add format=single parameter
+        url = `${apiEndpoint}?documentType=${encodeURIComponent(documentType)}&format=single`;
+      } else {
+        // Legacy specific endpoint - use as-is for backward compatibility
+        url = apiEndpoint;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch document");
       }

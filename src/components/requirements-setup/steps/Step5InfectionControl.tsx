@@ -63,10 +63,11 @@ export default function Step5InfectionControl({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // OPTIMIZED: Use React Query instead of manual fetch
+  // REFACTORED: Now uses generic compliance-documents endpoint
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/infection-control", "infection-control");
+  } = useSingleComplianceDocument("/api/worker/compliance-documents", "infection-control");
 
   const uploadMutation = useUploadComplianceDocument();
   const deleteMutation = useDeleteComplianceDocument();

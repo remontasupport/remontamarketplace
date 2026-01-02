@@ -9,7 +9,7 @@ import {
   type UpdateWorkerABNData,
 } from "@/schema/workerProfileSchema";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
-import { autoUpdateComplianceCompletion } from "./setupProgress.service";
+import { autoUpdateComplianceCompletion, autoUpdateTrainingsCompletion } from "./setupProgress.service";
 import { put, del } from "@vercel/blob";
 
 /**
@@ -202,12 +202,33 @@ const DOCUMENT_CONFIGS: Record<string, DocumentConfig> = {
     isRequired: false,
     folder: "infection-control",
   },
-  "ndis-training": {
-    name: "NDIS Training Certificate",
+
+  // NDIS Training Modules (4 separate modules)
+  "ndis-worker-orientation": {
+    name: "NDIS Worker Orientation Module – \"Quality, Safety and You\"",
     category: null,
     isRequired: false,
     folder: "ndis-training",
   },
+  "ndis-induction-module": {
+    name: "New Worker NDIS Induction Module",
+    category: null,
+    isRequired: false,
+    folder: "ndis-training",
+  },
+  "effective-communication": {
+    name: "Supporting Effective Communication",
+    category: null,
+    isRequired: false,
+    folder: "ndis-training",
+  },
+  "safe-enjoyable-meals": {
+    name: "Supporting Safe and Enjoyable Meals",
+    category: null,
+    isRequired: false,
+    folder: "ndis-training",
+  },
+
   "certificate": {
     name: "Certificate",
     category: null,
@@ -450,6 +471,13 @@ export async function uploadComplianceDocument(
       // Don't fail the main operation if this fails
     });
 
+    // 12. Auto-update Trainings completion status (non-blocking)
+    // Always call this - the function itself checks if trainings are required and complete
+    autoUpdateTrainingsCompletion().catch((error) => {
+      console.error("[Compliance] Failed to auto-update trainings completion:", error);
+      // Don't fail the main operation if this fails
+    });
+
     console.log('[Compliance] Upload complete, returning success');
 
     return {
@@ -563,6 +591,13 @@ export async function deleteComplianceDocument(
     // 8. Auto-update Compliance completion status (non-blocking)
     autoUpdateComplianceCompletion().catch((error) => {
       console.error("[Compliance] Failed to auto-update compliance completion:", error);
+      // Don't fail the main operation if this fails
+    });
+
+    // 9. Auto-update Trainings completion status (non-blocking)
+    // Always call this - the function itself checks if trainings are required and complete
+    autoUpdateTrainingsCompletion().catch((error) => {
+      console.error("[Compliance] Failed to auto-update trainings completion:", error);
       // Don't fail the main operation if this fails
     });
 

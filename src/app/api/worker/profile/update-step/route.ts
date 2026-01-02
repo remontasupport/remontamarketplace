@@ -63,6 +63,26 @@ export async function POST(request: Request) {
             )
           );
 
+          // CRITICAL: Save existing metadata BEFORE deleting (nursing, therapeutic, etc.)
+          const existingServices = await authPrisma.workerService.findMany({
+            where: { workerProfileId: workerProfile.id },
+            select: { categoryId: true, metadata: true },
+          });
+
+          // Build a map of categoryId -> metadata
+          // Find the FIRST entry with non-null metadata for each category
+          const metadataByCategory = new Map<string, any>();
+          for (const service of existingServices) {
+            // Only set metadata if we haven't found one for this category yet
+            // and if this service has non-null metadata
+            if (!metadataByCategory.has(service.categoryId) && service.metadata !== null) {
+              metadataByCategory.set(service.categoryId, service.metadata);
+              console.log(`[Step 101] Preserving metadata for category ${service.categoryId}:`, service.metadata);
+            }
+          }
+
+          console.log(`[Step 101] Found ${metadataByCategory.size} categories with metadata to preserve`);
+
           // Delete existing WorkerService records
           await authPrisma.workerService.deleteMany({
             where: { workerProfileId: workerProfile.id },
@@ -77,6 +97,9 @@ export async function POST(request: Request) {
             if (!category) return [];
 
             const categoryId = category.id;
+
+            // Get preserved metadata for this category (undefined if not found)
+            const preservedMetadata = metadataByCategory.get(categoryId) ?? undefined;
 
             // Find subcategories that belong to this category
             const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
@@ -96,6 +119,7 @@ export async function POST(request: Request) {
                   categoryName: serviceName,
                   subcategoryId,
                   subcategoryName: subcategory.name,
+                  metadata: preservedMetadata,
                 };
               }).filter(Boolean);
             } else {
@@ -106,16 +130,19 @@ export async function POST(request: Request) {
                 categoryName: serviceName,
                 subcategoryId: null,
                 subcategoryName: null,
+                metadata: preservedMetadata,
               }];
             }
           });
 
+          // CRITICAL: Use individual creates instead of createMany to support metadata (JSON field)
+          // createMany does NOT support JSON fields in Prisma
           if (workerServiceRecords.length > 0) {
-            await authPrisma.workerService.createMany({
-              data: workerServiceRecords,
-              skipDuplicates: true,
-            });
-           
+            await Promise.all(
+              workerServiceRecords.map((record) =>
+                authPrisma.workerService.create({ data: record })
+              )
+            );
           }
         }
         break;

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
+import { autoUpdateServicesCompletion } from "./setupProgress.service";
 
 /**
  * Backend Service: Worker Services Management
@@ -83,6 +84,12 @@ export async function toggleWorkerSubcategory(
       revalidatePath("/dashboard/worker/services/setup");
       revalidatePath("/dashboard/worker");
 
+      // 6. Auto-update Services completion status (non-blocking)
+      autoUpdateServicesCompletion().catch((error) => {
+        console.error("Failed to auto-update services completion:", error);
+        // Don't fail the main operation if this fails
+      });
+
       return {
         success: true,
         message: `Removed ${subcategoryName}`,
@@ -107,13 +114,19 @@ export async function toggleWorkerSubcategory(
           categoryName,
           subcategoryId,
           subcategoryName,
-          metadata: existingCategoryService?.metadata || undefined,
+          metadata: existingCategoryService?.metadata ?? undefined,
         },
       });
 
       // 5. Revalidate cache
       revalidatePath("/dashboard/worker/services/setup");
       revalidatePath("/dashboard/worker");
+
+      // 6. Auto-update Services completion status (non-blocking)
+      autoUpdateServicesCompletion().catch((error) => {
+        console.error("Failed to auto-update services completion:", error);
+        // Don't fail the main operation if this fails
+      });
 
       return {
         success: true,
@@ -204,7 +217,7 @@ export async function updateWorkerSubcategories(
           categoryName,
           subcategoryId,
           subcategoryName: subcategory?.name || "",
-          metadata: existingMetadata || undefined,
+          metadata: existingMetadata ?? undefined,
         };
       });
 
@@ -219,6 +232,12 @@ export async function updateWorkerSubcategories(
     // 7. Revalidate cache
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
+
+    // 8. Auto-update Services completion status (non-blocking)
+    autoUpdateServicesCompletion().catch((error) => {
+      console.error("Failed to auto-update services completion:", error);
+      // Don't fail the main operation if this fails
+    });
 
     return {
       success: true,
@@ -458,6 +477,226 @@ export async function getNursingRegistration(): Promise<ActionResponse<NursingRe
     return {
       success: false,
       error: "Failed to fetch nursing registration data.",
+    };
+  }
+}
+
+/**
+ * Server Action: Save therapeutic registration data
+ * Stores therapeutic registration information in worker_services.metadata
+ */
+export interface TherapeuticRegistrationData {
+  registrationNumber: string;
+  expiryDay: string;
+  expiryMonth: string;
+  expiryYear: string;
+}
+
+export async function saveTherapeuticRegistration(
+  data: TherapeuticRegistrationData
+): Promise<ActionResponse> {
+  try {
+    console.log("[Therapeutic] Saving therapeutic registration data:", data);
+
+    // 1. Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: "Unauthorized. Please log in.",
+      };
+    }
+
+    // 2. Rate limiting check
+    const rateLimitCheck = await checkServerActionRateLimit(
+      session.user.id,
+      dbWriteRateLimit
+    );
+    if (!rateLimitCheck.success) {
+      return {
+        success: false,
+        error: rateLimitCheck.error,
+      };
+    }
+
+    // 3. Get worker profile
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) {
+      return {
+        success: false,
+        error: "Worker profile not found",
+      };
+    }
+
+    // 4. Convert expiry date to ISO format
+    // Convert month name to month number
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const monthNumber = monthNames.indexOf(data.expiryMonth) + 1;
+    const monthString = monthNumber > 0 ? monthNumber.toString().padStart(2, "0") : "01";
+
+    const expiryDate = `${data.expiryYear}-${monthString}-${data.expiryDay.padStart(2, "0")}`;
+
+    // 5. Prepare metadata
+    const metadata = {
+      registrationNumber: data.registrationNumber,
+      expiryDate,
+    };
+
+    // 6. Find existing therapeutic supports entry
+    const existingTherapeuticServices = await authPrisma.workerService.findMany({
+      where: {
+        workerProfileId: workerProfile.id,
+        categoryId: "therapeutic-supports",
+      },
+    });
+
+    if (existingTherapeuticServices.length === 0) {
+      // User hasn't selected therapeutic supports yet - create a base entry
+      const workerService = await authPrisma.workerService.create({
+        data: {
+          workerProfileId: workerProfile.id,
+          categoryId: "therapeutic-supports",
+          categoryName: "Therapeutic Supports",
+          subcategoryId: null,
+          subcategoryName: null,
+          metadata,
+        },
+      });
+
+      console.log("[Therapeutic] Created new therapeutic support entry with registration:", workerService.id);
+    } else {
+      // Update ALL existing therapeutic support entries with the registration metadata
+      await authPrisma.workerService.updateMany({
+        where: {
+          workerProfileId: workerProfile.id,
+          categoryId: "therapeutic-supports",
+        },
+        data: {
+          metadata,
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log("[Therapeutic] Updated", existingTherapeuticServices.length, "therapeutic support entries with registration");
+    }
+
+    // 7. Revalidate cache
+    revalidatePath("/dashboard/worker/services/setup");
+    revalidatePath("/dashboard/worker");
+
+    return {
+      success: true,
+      message: "Therapeutic registration saved successfully!",
+      data: { metadata },
+    };
+  } catch (error: any) {
+    console.error("[Therapeutic] Error saving registration:", error);
+    return {
+      success: false,
+      error: "Failed to save therapeutic registration. Please try again.",
+    };
+  }
+}
+
+/**
+ * Server Action: Fetch therapeutic registration data
+ * Retrieves therapeutic registration information from worker_services.metadata
+ */
+export async function getTherapeuticRegistration(): Promise<ActionResponse<TherapeuticRegistrationData | null>> {
+  try {
+    console.log("[Therapeutic] Fetching therapeutic registration data");
+
+    // 1. Authentication check
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: "Unauthorized. Please log in.",
+      };
+    }
+
+    // 2. Get worker profile
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) {
+      return {
+        success: false,
+        error: "Worker profile not found",
+      };
+    }
+
+    // 3. Find ANY therapeutic support entry (registration is stored on all entries)
+    const therapeuticService = await authPrisma.workerService.findFirst({
+      where: {
+        workerProfileId: workerProfile.id,
+        categoryId: "therapeutic-supports",
+      },
+      select: {
+        metadata: true,
+      },
+    });
+
+    if (!therapeuticService || !therapeuticService.metadata) {
+      console.log("[Therapeutic] No registration data found");
+      return {
+        success: true,
+        data: null,
+      };
+    }
+
+    const metadata = therapeuticService.metadata as any;
+
+    // 4. Parse expiry date
+    let expiryDay = "";
+    let expiryMonth = "";
+    let expiryYear = "";
+
+    if (metadata.expiryDate) {
+      const dateParts = metadata.expiryDate.split("-");
+      if (dateParts.length === 3) {
+        expiryYear = dateParts[0];
+
+        // Convert month number to month name
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+        const monthNumber = parseInt(dateParts[1], 10);
+        expiryMonth = monthNames[monthNumber - 1] || "";
+
+        // Remove leading zeros from day (e.g., "08" -> "8")
+        expiryDay = parseInt(dateParts[2], 10).toString();
+      }
+    }
+
+    const registrationData: TherapeuticRegistrationData = {
+      registrationNumber: metadata.registrationNumber || "",
+      expiryDay,
+      expiryMonth,
+      expiryYear,
+    };
+
+    console.log("[Therapeutic] Registration data retrieved:", registrationData);
+
+    return {
+      success: true,
+      data: registrationData,
+    };
+  } catch (error: any) {
+    console.error("[Therapeutic] Error fetching registration:", error);
+    return {
+      success: false,
+      error: "Failed to fetch therapeutic registration data.",
     };
   }
 }

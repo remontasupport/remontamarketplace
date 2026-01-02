@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
-  XCircleIcon
+  XCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from "@heroicons/react/24/outline";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
@@ -86,12 +88,14 @@ export default function Step0WorkerScreeningCheck({
   const { data: session } = useSession();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isLinksOpen, setIsLinksOpen] = useState(false);
 
   // OPTIMIZED: Use React Query instead of manual fetch
+  // REFACTORED: Now uses generic compliance-documents endpoint
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/screening-check", "worker-screening-check");
+  } = useSingleComplianceDocument("/api/worker/compliance-documents", "worker-screening-check");
 
   const uploadMutation = useUploadComplianceDocument();
   const deleteMutation = useDeleteComplianceDocument();
@@ -166,27 +170,44 @@ export default function Step0WorkerScreeningCheck({
         {/* Left Column - Form */}
         <div className="form-column">
           <div className="account-form">
-            {/* State/Territory Links Section */}
-            <div className="mb-8">
-              <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-4">
-                NDIS Worker Screening Check - Apply by State/Territory
-              </h4>
-              <div className="space-y-3">
-                {STATE_LINKS.map((item) => (
-                  <div key={item.state}>
-                    <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
-                      {item.state}:
-                    </p>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
-                    >
-                      {item.url}
-                    </a>
+            {/* State/Territory Links Section - Collapsible Card */}
+            <div className="mb-8 mt-6">
+              <div
+                className="border border-gray-300 rounded-lg overflow-hidden cursor-pointer"
+                onClick={() => setIsLinksOpen(!isLinksOpen)}
+              >
+                <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <h4 className="text-base font-poppins font-semibold text-gray-900">
+                    View application links for your state/territory
+                  </h4>
+                  {isLinksOpen ? (
+                    <ChevronUpIcon className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5 text-gray-600" />
+                  )}
+                </div>
+                {isLinksOpen && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="space-y-3">
+                      {STATE_LINKS.map((item) => (
+                        <div key={item.state}>
+                          <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
+                            {item.state}:
+                          </p>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {item.url}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -288,7 +309,7 @@ export default function Step0WorkerScreeningCheck({
 
         {/* Right Column - Info Box */}
         <div className="info-column">
-          <div className="info-box">
+          <div className="info-box mt-6">
             <h3 className="info-box-title">About Worker Screening</h3>
             <p className="info-box-text">
               The NDIS Worker Screening Check is a mandatory requirement for all NDIS workers. It ensures that people working with NDIS participants do not pose a risk.

@@ -26,6 +26,17 @@ export interface DynamicTrainingStep {
 }
 
 /**
+ * NDIS trainings that are combined into a single page
+ * These IDs will be filtered out from appearing as separate steps
+ * They are all handled by the "ndis-worker-orientation" combined page
+ */
+const COMBINED_NDIS_TRAININGS = [
+  "ndis-induction-module",
+  "effective-communication",
+  "safe-enjoyable-meals",
+];
+
+/**
  * Generate training steps from trainings array in requirements
  *
  * @param requirements - Worker requirements data from API
@@ -40,17 +51,15 @@ export function generateTrainingSteps(
 
   const { trainings } = requirements.requirements;
 
-  // Generate steps from trainings
-  const steps: DynamicTrainingStep[] = trainings.map((req, index) => {
+  // Filter out trainings that are combined into the ndis-worker-orientation page
+  const filteredTrainings = trainings.filter(
+    (req) => !COMBINED_NDIS_TRAININGS.includes(req.id)
+  );
+
+  // Generate steps from filtered trainings
+  const steps: DynamicTrainingStep[] = filteredTrainings.map((req, index) => {
     // Check if there's a custom component for this training
     const customMapping = getComponentForDocument(req.id);
-
-   
-    if (customMapping) {
-     
-    } else {
-    
-    }
 
     // Use custom component if available, otherwise use generic component
     const component = customMapping?.component || GenericComplianceDocument;

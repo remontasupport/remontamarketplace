@@ -15,7 +15,12 @@ import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 
 /**
- * GET - Fetch all compliance documents by type
+ * GET - Fetch compliance documents by type
+ * Supports both single document and multiple documents format
+ *
+ * Query params:
+ * - documentType: The type of document to fetch (required)
+ * - format: "single" or "multiple" (default: "multiple")
  */
 export async function GET(request: Request) {
   try {
@@ -26,6 +31,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const documentType = searchParams.get("documentType");
+    const format = searchParams.get("format"); // "single" or "multiple"
 
     if (!documentType) {
       return NextResponse.json({ error: "Document type is required" }, { status: 400 });
@@ -41,6 +47,36 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
     }
 
+    // SINGLE DOCUMENT FORMAT (for backward compatibility with old endpoints)
+    if (format === "single") {
+      const document = await authPrisma.verificationRequirement.findFirst({
+        where: {
+          workerProfileId: workerProfile.id,
+          requirementType: documentType,
+        },
+        select: {
+          id: true,
+          documentUrl: true,
+          documentUploadedAt: true,
+          status: true,
+        },
+      });
+
+      if (!document || !document.documentUrl) {
+        return NextResponse.json({ document: null });
+      }
+
+      return NextResponse.json({
+        document: {
+          id: document.id,
+          documentType: documentType,
+          documentUrl: document.documentUrl,
+          uploadedAt: document.documentUploadedAt?.toISOString() || new Date().toISOString(),
+        },
+      });
+    }
+
+    // MULTIPLE DOCUMENTS FORMAT (default - existing behavior)
     // Find ALL documents of this type
     const documents = await authPrisma.verificationRequirement.findMany({
       where: {

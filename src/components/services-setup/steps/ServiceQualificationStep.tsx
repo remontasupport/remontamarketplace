@@ -21,17 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { ChevronDownIcon, ChevronUpIcon, CloudArrowUpIcon, DocumentIcon, XMarkIcon, InformationCircleIcon, PaperClipIcon } from "@heroicons/react/24/outline";
+import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, InformationCircleIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
 import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import {
-  useSubcategories,
   useWorkerServices,
-  getSelectedSubcategoryIds,
-  getCategoryIdFromName,
-  useToggleSubcategory,
 } from "@/hooks/queries/useServiceSubcategories";
+import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/profile-building.css";
 import { useState } from "react";
 
@@ -45,6 +42,12 @@ interface ServiceQualificationStepProps {
     nursingRegistration?: {
       nursingType?: 'registered' | 'enrolled';
       hasExperience?: boolean;
+      registrationNumber?: string;
+      expiryDay?: string;
+      expiryMonth?: string;
+      expiryYear?: string;
+    };
+    therapeuticRegistration?: {
       registrationNumber?: string;
       expiryDay?: string;
       expiryMonth?: string;
@@ -68,16 +71,8 @@ export default function ServiceQualificationStep({
   // Fetch service documents from API
   const { data: serviceDocumentsData } = useServiceDocuments();
 
-  // Fetch available subcategories and worker's selected services
-  const categoryId = getCategoryIdFromName(serviceTitle);
-  const { data: availableSubcategories, isLoading: subcategoriesLoading } = useSubcategories(categoryId);
+  // Fetch worker's selected services
   const { data: workerServices } = useWorkerServices();
-
-  // Mutation for toggling subcategories
-  const toggleSubcategoryMutation = useToggleSubcategory();
-
-  // Track expanded offerings (for showing descriptions)
-  const [expandedOfferings, setExpandedOfferings] = useState<Set<string>>(new Set());
 
   // Track uploading state per requirement type
   const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
@@ -173,8 +168,10 @@ export default function ServiceQualificationStep({
   const qualifications = getQualificationsForService(serviceTitle);
   const documentRequirements = getServiceDocumentRequirements(serviceTitle);
 
-  // Get selected subcategory IDs from worker services
-  const selectedSubcategoryIds = getSelectedSubcategoryIds(workerServices, serviceTitle);
+  // Get selected subcategories from worker services
+  const selectedSubcategories = workerServices?.find(
+    (s) => s.categoryName.toLowerCase() === serviceTitle.toLowerCase()
+  )?.subcategories || [];
 
   // Use prop-based view state (no derivation, no flash!)
   const showingRegistration = currentView === 'registration';
@@ -188,14 +185,11 @@ export default function ServiceQualificationStep({
     showingOfferings,
     showingDocuments,
     hasQualifications: qualifications.length > 0,
-    availableSubcategories: availableSubcategories?.length || 0,
-    selectedSubcategoryIds: selectedSubcategoryIds.length,
+    selectedSubcategories: selectedSubcategories.length,
   });
 
   // Get currently selected values
   const selectedQualifications = data.qualificationsByService?.[serviceTitle] || [];
-  // Use workerServices as source of truth (from TanStack Query cache)
-  const selectedOfferings = selectedSubcategoryIds;
 
   // Local state for uploaded file URLs per requirement type
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, string[]>>(
@@ -247,33 +241,6 @@ export default function ServiceQualificationStep({
     }
   }, [serviceDocumentsData, serviceTitle]);
 
-  // Toggle offering description expansion
-  const toggleOfferingDescription = (offeringId: string) => {
-    setExpandedOfferings(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(offeringId)) {
-        newSet.delete(offeringId);
-      } else {
-        newSet.add(offeringId);
-      }
-      return newSet;
-    });
-  };
-
-  // Handle offering toggle (checkbox) - uses mutation with optimistic updates
-  const handleOfferingToggle = (subcategoryId: string) => {
-    // Find the subcategory details
-    const subcategory = availableSubcategories?.find((s) => s.id === subcategoryId);
-    if (!subcategory) return;
-
-    // Trigger the mutation
-    toggleSubcategoryMutation.mutate({
-      categoryId,
-      categoryName: serviceTitle,
-      subcategoryId,
-      subcategoryName: subcategory.name,
-    });
-  };
 
   const handleQualificationToggle = (qualificationType: string) => {
     const isSelected = selectedQualifications.includes(qualificationType);
@@ -495,6 +462,17 @@ export default function ServiceQualificationStep({
     onChange("nursingRegistration", updated);
   };
 
+  // Helper functions for therapeutic registration
+  const therapeuticData = data.therapeuticRegistration || {};
+
+  const updateTherapeuticData = (field: string, value: any) => {
+    const updated = {
+      ...therapeuticData,
+      [field]: value,
+    };
+    onChange("therapeuticRegistration", updated);
+  };
+
   // Generate day options (1-31)
   const dayOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 
@@ -508,14 +486,13 @@ export default function ServiceQualificationStep({
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 11 }, (_, i) => (currentYear + i).toString());
 
-  // If showing registration view (for nursing services)
+  // If showing registration view (for nursing services only)
   if (showingRegistration) {
     return (
       <div className="form-page-content">
         {/* Left Column - Form */}
         <div className="form-column">
           <div className="account-form">
-          
 
             {/* Nursing Type */}
             <div className="mb-6">
@@ -620,7 +597,7 @@ export default function ServiceQualificationStep({
                 type="text"
                 value={nursingData.registrationNumber || ''}
                 onChange={(e) => updateNursingData('registrationNumber', e.target.value)}
-                className="w-full"
+                className="w-full bg-white h-12"
                 placeholder="Enter your registration number"
                 required
               />
@@ -867,6 +844,10 @@ export default function ServiceQualificationStep({
 
   // If showing offerings view
   if (showingOfferings) {
+    // Determine if this is therapeutic support
+    const serviceSlug = serviceNameToSlug(serviceTitle);
+    const isTherapeuticSupport = serviceSlug === 'therapeutic-supports';
+
     return (
       <div className="form-page-content">
         {/* Left Column - Form */}
@@ -876,80 +857,140 @@ export default function ServiceQualificationStep({
               Service Offerings for {serviceTitle}
             </h3>
             <p className="text-sm text-gray-600 font-poppins mb-6">
-              Select all the specific services you can provide under {serviceTitle}. This helps clients find the right support for their needs.
+              Below are the specific services you provide under {serviceTitle}.
             </p>
 
-            {subcategoriesLoading ? (
-              <p className="text-sm text-gray-500">Loading available services...</p>
-            ) : !availableSubcategories || availableSubcategories.length === 0 ? (
-              <p className="text-sm text-gray-500">No service offerings available for this category.</p>
+            {selectedSubcategories.length === 0 ? (
+              <p className="text-sm text-gray-500">No service offerings selected for this category.</p>
             ) : (
-              <div className="space-y-4">
-                {availableSubcategories.map((subcategory) => {
-                  const isSelected = selectedOfferings.includes(subcategory.id);
-                  const isExpanded = expandedOfferings.has(subcategory.id);
-
-                  return (
-                    <div
-                      key={subcategory.id}
-                      className={`border rounded-lg p-4 transition-all duration-200 ${
-                        isSelected
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <Checkbox
-                          id={subcategory.id}
-                          checked={isSelected}
-                          onCheckedChange={() => handleOfferingToggle(subcategory.id)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
-                          <Label
-                            htmlFor={subcategory.id}
-                            className="text-base font-poppins font-semibold text-gray-900 cursor-pointer"
-                          >
-                            {subcategory.name}
-                          </Label>
-                          {subcategory.requiresRegistration && (
-                            <button
-                              type="button"
-                              onClick={() => toggleOfferingDescription(subcategory.id)}
-                              className="text-xs text-teal-600 hover:text-teal-700 mt-1 flex items-center gap-1"
-                            >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronUpIcon className="w-3 h-3" />
-                                  Hide details
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDownIcon className="w-3 h-3" />
-                                  Show registration requirements
-                                </>
-                              )}
-                            </button>
-                          )}
-                          {isExpanded && subcategory.requiresRegistration && (
-                            <p className="text-sm text-gray-600 font-poppins mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                              {subcategory.requiresRegistration}
-                            </p>
-                          )}
-                        </div>
+              <div className="space-y-3">
+                {selectedSubcategories.map((subcategory) => (
+                  <div
+                    key={subcategory.subcategoryId}
+                    className="border border-teal-500 bg-teal-50 rounded-lg p-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 flex-shrink-0 rounded-full bg-teal-500 flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M5 13l4 4L19 7"></path>
+                        </svg>
                       </div>
+                      <p className="text-base font-poppins font-semibold text-gray-900">
+                        {subcategory.subcategoryName}
+                      </p>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
 
-            {selectedOfferings.length > 0 && (
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800 font-poppins">
-                  ✓ {selectedOfferings.length} service offering{selectedOfferings.length > 1 ? 's' : ''} selected for {serviceTitle}
-                </p>
-              </div>
+            {/* Therapeutic Support Registration Fields */}
+            {isTherapeuticSupport && (
+              <>
+                <div className="mt-8 mb-6 border-t pt-6">
+               
+
+                  {/* Registration Number */}
+                  <div className="mb-6">
+                    <Label
+                      htmlFor="therapeutic-registration-number"
+                      className="text-base font-poppins font-semibold text-gray-900 mb-2 block"
+                    >
+                      Registration number
+                    </Label>
+                    <Input
+                      id="therapeutic-registration-number"
+                      type="text"
+                      value={therapeuticData.registrationNumber || ''}
+                      onChange={(e) => updateTherapeuticData('registrationNumber', e.target.value)}
+                      className="w-full bg-white h-12"
+                      placeholder="Enter your registration number"
+                    />
+                  </div>
+
+                  {/* Expiry Date */}
+                  <div className="mb-6">
+                    <Label className="text-base font-poppins font-semibold text-gray-900 mb-2 block">
+                      Expiry date
+                    </Label>
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* Day */}
+                      <div>
+                        <Label htmlFor="therapeutic-expiry-day" className="text-sm text-gray-600 mb-1 block">
+                          Day
+                        </Label>
+                        <Select
+                          value={therapeuticData.expiryDay || ''}
+                          onValueChange={(value) => updateTherapeuticData('expiryDay', value)}
+                        >
+                          <SelectTrigger id="therapeutic-expiry-day" className="w-full">
+                            <SelectValue placeholder="Day" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dayOptions.map((day) => (
+                              <SelectItem key={day} value={day}>
+                                {day}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Month */}
+                      <div>
+                        <Label htmlFor="therapeutic-expiry-month" className="text-sm text-gray-600 mb-1 block">
+                          Month
+                        </Label>
+                        <Select
+                          value={therapeuticData.expiryMonth || ''}
+                          onValueChange={(value) => updateTherapeuticData('expiryMonth', value)}
+                        >
+                          <SelectTrigger id="therapeutic-expiry-month" className="w-full">
+                            <SelectValue placeholder="Month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {monthOptions.map((month) => (
+                              <SelectItem key={month} value={month}>
+                                {month}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Year */}
+                      <div>
+                        <Label htmlFor="therapeutic-expiry-year" className="text-sm text-gray-600 mb-1 block">
+                          Year
+                        </Label>
+                        <Select
+                          value={therapeuticData.expiryYear || ''}
+                          onValueChange={(value) => updateTherapeuticData('expiryYear', value)}
+                        >
+                          <SelectTrigger id="therapeutic-expiry-year" className="w-full">
+                            <SelectValue placeholder="Year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {yearOptions.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    {errors.expiryDate && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <InformationCircleIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                        <p className="text-sm text-red-600 font-poppins">
+                          {errors.expiryDate}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -959,13 +1000,10 @@ export default function ServiceQualificationStep({
           <div className="info-box">
             <h3 className="info-box-title">About Service Offerings</h3>
             <p className="info-box-text">
-              Select the specific services you're qualified and willing to provide under {serviceTitle}.
+              These are the specific services you're qualified and willing to provide under {serviceTitle}.
             </p>
             <p className="info-box-text mt-3">
-              Choose all that apply. This helps clients find workers with the exact skills they need.
-            </p>
-            <p className="info-box-text mt-3">
-              Some services may have specific registration or certification requirements. Click "Show registration requirements" to view details.
+              To add or remove service offerings, please go to the Services Management page.
             </p>
           </div>
         </div>

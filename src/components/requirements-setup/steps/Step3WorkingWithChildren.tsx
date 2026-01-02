@@ -12,7 +12,9 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
-  XCircleIcon
+  XCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
@@ -86,12 +88,14 @@ export default function Step3WorkingWithChildren({
   const { data: session } = useSession();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isLinksOpen, setIsLinksOpen] = useState(false);
 
   // OPTIMIZED: Use React Query instead of manual fetch
+  // REFACTORED: Now uses generic compliance-documents endpoint
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/working-with-children", "working-with-children");
+  } = useSingleComplianceDocument("/api/worker/compliance-documents", "working-with-children");
 
   const uploadMutation = useUploadComplianceDocument();
   const deleteMutation = useDeleteComplianceDocument();
@@ -162,27 +166,44 @@ export default function Step3WorkingWithChildren({
         {/* Left Column - Form */}
         <div className="form-column">
           <div className="account-form">
-            {/* State/Territory Links Section */}
-            <div className="mb-8">
-              <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-4">
-                Working With Children Check - Apply by State/Territory
-              </h4>
-              <div className="space-y-3">
-                {STATE_LINKS.map((item) => (
-                  <div key={item.state}>
-                    <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
-                      {item.state}:
-                    </p>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
-                    >
-                      {item.url}
-                    </a>
+            {/* State/Territory Links Section - Collapsible Card */}
+            <div className="mb-8 mt-6">
+              <div
+                className="border border-gray-300 rounded-lg overflow-hidden cursor-pointer"
+                onClick={() => setIsLinksOpen(!isLinksOpen)}
+              >
+                <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <h4 className="text-base font-poppins font-semibold text-gray-900">
+                    View application links for your state/territory
+                  </h4>
+                  {isLinksOpen ? (
+                    <ChevronUpIcon className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5 text-gray-600" />
+                  )}
+                </div>
+                {isLinksOpen && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="space-y-3">
+                      {STATE_LINKS.map((item) => (
+                        <div key={item.state}>
+                          <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
+                            {item.state}:
+                          </p>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {item.url}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -284,7 +305,7 @@ export default function Step3WorkingWithChildren({
 
         {/* Right Column - Info Box */}
         <div className="info-column">
-          <div className="info-box">
+          <div className="info-box mt-6">
             <h3 className="info-box-title">About Working With Children Checks</h3>
             <p className="info-box-text">
               A Working With Children Check is a mandatory requirement for workers who will be working with children and young people. It ensures their suitability to work in child-related roles.
