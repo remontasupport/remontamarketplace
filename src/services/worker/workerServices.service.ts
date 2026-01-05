@@ -270,8 +270,6 @@ export async function saveNursingRegistration(
   data: NursingRegistrationData
 ): Promise<ActionResponse> {
   try {
-    console.log("[Nursing] Saving nursing registration data:", data);
-
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -348,7 +346,6 @@ export async function saveNursingRegistration(
         },
       });
 
-      console.log("[Nursing] Created new nursing service entry with registration:", workerService.id);
     } else {
       // Update ALL existing nursing service entries with the registration metadata
       await authPrisma.workerService.updateMany({
@@ -362,7 +359,6 @@ export async function saveNursingRegistration(
         },
       });
 
-      console.log("[Nursing] Updated", existingNursingServices.length, "nursing service entries with registration");
     }
 
     // 7. Revalidate cache
@@ -389,8 +385,6 @@ export async function saveNursingRegistration(
  */
 export async function getNursingRegistration(): Promise<ActionResponse<NursingRegistrationData | null>> {
   try {
-    console.log("[Nursing] Fetching nursing registration data");
-
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -425,7 +419,7 @@ export async function getNursingRegistration(): Promise<ActionResponse<NursingRe
     });
 
     if (!nursingService || !nursingService.metadata) {
-      console.log("[Nursing] No registration data found");
+ 
       return {
         success: true,
         data: null,
@@ -466,8 +460,6 @@ export async function getNursingRegistration(): Promise<ActionResponse<NursingRe
       expiryYear,
     };
 
-    console.log("[Nursing] Registration data retrieved:", registrationData);
-
     return {
       success: true,
       data: registrationData,
@@ -496,8 +488,6 @@ export async function saveTherapeuticRegistration(
   data: TherapeuticRegistrationData
 ): Promise<ActionResponse> {
   try {
-    console.log("[Therapeutic] Saving therapeutic registration data:", data);
-
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -570,7 +560,6 @@ export async function saveTherapeuticRegistration(
         },
       });
 
-      console.log("[Therapeutic] Created new therapeutic support entry with registration:", workerService.id);
     } else {
       // Update ALL existing therapeutic support entries with the registration metadata
       await authPrisma.workerService.updateMany({
@@ -584,7 +573,6 @@ export async function saveTherapeuticRegistration(
         },
       });
 
-      console.log("[Therapeutic] Updated", existingTherapeuticServices.length, "therapeutic support entries with registration");
     }
 
     // 7. Revalidate cache
@@ -611,7 +599,6 @@ export async function saveTherapeuticRegistration(
  */
 export async function getTherapeuticRegistration(): Promise<ActionResponse<TherapeuticRegistrationData | null>> {
   try {
-    console.log("[Therapeutic] Fetching therapeutic registration data");
 
     // 1. Authentication check
     const session = await getServerSession(authOptions);
@@ -647,7 +634,6 @@ export async function getTherapeuticRegistration(): Promise<ActionResponse<Thera
     });
 
     if (!therapeuticService || !therapeuticService.metadata) {
-      console.log("[Therapeutic] No registration data found");
       return {
         success: true,
         data: null,
@@ -685,8 +671,6 @@ export async function getTherapeuticRegistration(): Promise<ActionResponse<Thera
       expiryMonth,
       expiryYear,
     };
-
-    console.log("[Therapeutic] Registration data retrieved:", registrationData);
 
     return {
       success: true,
