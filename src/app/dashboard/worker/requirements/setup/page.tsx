@@ -155,19 +155,9 @@ function MandatoryRequirementsSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
-        // LAST STEP COMPLETED - Force complete cache refresh
-        // Progress is calculated in real-time, but we need to ensure fresh data loads
-
-        // 1. Invalidate and refetch ALL worker profile data (wait for completion)
-        await queryClient.refetchQueries({
-          queryKey: workerProfileKeys.all,
-          type: 'active',
-        });
-
-        // 2. Force Next.js to re-run server components (bypasses router cache)
-        router.refresh();
-
-        // 3. Navigate to dashboard - fresh data is guaranteed to load
+        // LAST STEP COMPLETED - Redirect immediately
+        // Dashboard will automatically refetch profile with fresh setupProgress
+        // (useWorkerProfile has staleTime: 0 and refetchOnMount: 'always')
         router.push("/dashboard/worker");
       }
     } catch (error) {
