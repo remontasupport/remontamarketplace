@@ -119,15 +119,43 @@ export function useUploadComplianceDocument() {
 
       return result;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate and refetch compliance documents for this type
+    // Cancel outgoing refetches to prevent race conditions
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: complianceDocumentsKeys.byType(variables.documentType),
+      });
+    },
+    onSuccess: (result, variables) => {
+      // OPTIMISTIC UPDATE: Immediately populate cache with uploaded document
+      // This prevents the delay from refetching the same data we just uploaded
+      if (result.success && result.data) {
+        const documentData = {
+          id: result.data.id,
+          documentUrl: result.data.documentUrl,
+          documentType: result.data.documentType,
+          uploadedAt: result.data.uploadedAt,
+        };
+
+        // Update cache with the new document (prevents refetch delay)
+        // Format must match API response exactly: { document: {...} }
+        queryClient.setQueryData(
+          complianceDocumentsKeys.byType(variables.documentType),
+          {
+            document: documentData,
+          }
+        );
+      }
+
+      // Still invalidate for eventual consistency (background refetch)
+      // This ensures data stays in sync if there are any server-side transformations
+      // NOTE: Only invalidate the specific documentType to prevent race conditions
+      // when uploading multiple documents simultaneously
       queryClient.invalidateQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
-      // Also invalidate all compliance documents
-      queryClient.invalidateQueries({
-        queryKey: complianceDocumentsKeys.all,
-      });
+      // REMOVED: complianceDocumentsKeys.all invalidation
+      // Reason: Causes race condition when uploading multiple docs simultaneously
+      // Each document type has its own cache entry, no need to invalidate all
     },
   });
 }
@@ -158,15 +186,51 @@ export function useDeleteComplianceDocument() {
 
       return result;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate compliance documents for this type
+    // TRUE OPTIMISTIC UPDATE: Update cache BEFORE server call
+    // This makes the UI update instantly while server processes in background
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({
+        queryKey: complianceDocumentsKeys.byType(variables.documentType),
+      });
+
+      // Snapshot the previous value for rollback
+      const previousDocument = queryClient.getQueryData(
+        complianceDocumentsKeys.byType(variables.documentType)
+      );
+
+      // Optimistically update cache (INSTANT UI feedback)
+      queryClient.setQueryData(
+        complianceDocumentsKeys.byType(variables.documentType),
+        {
+          document: null,
+        }
+      );
+
+      // Return snapshot for rollback if mutation fails
+      return { previousDocument };
+    },
+    // If mutation fails, rollback to previous state
+    onError: (error, variables, context) => {
+      if (context?.previousDocument) {
+        queryClient.setQueryData(
+          complianceDocumentsKeys.byType(variables.documentType),
+          context.previousDocument
+        );
+      }
+    },
+    // Always refetch after mutation completes (success or error)
+    // This ensures cache is in sync with server
+    // NOTE: Only invalidate the specific documentType to prevent race conditions
+    // when deleting multiple documents simultaneously
+    onSettled: (result, error, variables) => {
       queryClient.invalidateQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
-      // Also invalidate all compliance documents
-      queryClient.invalidateQueries({
-        queryKey: complianceDocumentsKeys.all,
-      });
+      // REMOVED: complianceDocumentsKeys.all invalidation
+      // Reason: Causes race condition when deleting multiple docs simultaneously
+      // If File 1 completes and invalidates ALL, it refetches File 2 while File 2
+      // is still being deleted, causing File 2 to briefly reappear before disappearing
     },
   });
 }
