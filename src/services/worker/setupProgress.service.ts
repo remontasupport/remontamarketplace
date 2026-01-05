@@ -52,8 +52,10 @@ export async function updateCurrentSection(
       },
     });
 
-    // 3. Revalidate cache
-    revalidatePath("/dashboard/worker");
+    // 3. Revalidate cache (async to prevent "during render" errors)
+    Promise.resolve().then(() => {
+      revalidatePath("/dashboard/worker");
+    }).catch(() => {});
 
     return {
       success: true,
@@ -128,9 +130,11 @@ export async function updateSectionCompletion(
       },
     });
 
-    // 6. Revalidate cache
-    revalidatePath("/dashboard/worker");
-    revalidatePath("/dashboard/worker/account/setup");
+    // 6. Revalidate cache (async to prevent "during render" errors)
+    Promise.resolve().then(() => {
+      revalidatePath("/dashboard/worker");
+      revalidatePath("/dashboard/worker/account/setup");
+    }).catch(() => {});
 
     return {
       success: true,
@@ -284,9 +288,11 @@ export async function autoUpdateAccountDetailsCompletion(): Promise<ActionRespon
         },
       });
 
-      // 7. Revalidate cache to update UI immediately
-      revalidatePath("/dashboard/worker");
-      revalidatePath("/dashboard/worker/account/setup");
+      // 7. Revalidate cache to update UI (async to prevent "during render" errors)
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker");
+        revalidatePath("/dashboard/worker/account/setup");
+      }).catch(() => {});
     }
 
     return {
@@ -618,9 +624,11 @@ export async function autoUpdateComplianceCompletion(): Promise<ActionResponse> 
         },
       });
 
-      // 7. Revalidate cache to update UI immediately
-      revalidatePath("/dashboard/worker");
-      revalidatePath("/dashboard/worker/requirements/setup");
+      // 7. Revalidate cache to update UI (async to prevent "during render" errors)
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker");
+        revalidatePath("/dashboard/worker/requirements/setup");
+      }).catch(() => {});
     }
 
     return {
@@ -943,9 +951,13 @@ export async function autoUpdateTrainingsCompletion(): Promise<ActionResponse> {
         },
       });
 
-      // 7. Revalidate cache to update UI
-      revalidatePath("/dashboard/worker");
-      revalidatePath("/dashboard/worker/trainings/setup");
+      // 7. Revalidate cache to update UI (async to prevent "during render" errors)
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker");
+        revalidatePath("/dashboard/worker/trainings/setup");
+      }).catch(() => {
+        // Silently fail - revalidation is not critical
+      });
     }
 
     return {
@@ -1197,9 +1209,11 @@ export async function autoUpdateServicesCompletion(): Promise<ActionResponse> {
         },
       });
 
-      // 7. Revalidate cache to update UI immediately
-      revalidatePath("/dashboard/worker");
-      revalidatePath("/dashboard/worker/services/setup");
+      // 7. Revalidate cache to update UI (async to prevent "during render" errors)
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker");
+        revalidatePath("/dashboard/worker/services/setup");
+      }).catch(() => {});
     }
 
     return {
