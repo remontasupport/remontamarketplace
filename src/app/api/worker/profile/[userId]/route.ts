@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
+import {
+  checkComplianceCompletion,
+  checkTrainingsCompletion,
+  checkServicesCompletion,
+  checkAccountDetailsCompletion,
+} from "@/services/worker/setupProgress.service";
 
 /**
  * GET /api/worker/profile/[userId]
@@ -122,12 +128,37 @@ export async function GET(
       }
     }
 
-    // Return profile data with transformed services and documents
+    // OPTIMIZED: Calculate setupProgress in REAL-TIME from database state
+    // This eliminates race conditions and ensures progress is ALWAYS accurate
+    // No more stale cache issues - progress reflects actual data!
+    const [
+      accountDetailsResult,
+      complianceResult,
+      trainingsResult,
+      servicesResult,
+    ] = await Promise.all([
+      checkAccountDetailsCompletion(),
+      checkComplianceCompletion(),
+      checkTrainingsCompletion(),
+      checkServicesCompletion(),
+    ]);
+
+    // Construct real-time setupProgress from actual database state
+    const realTimeSetupProgress = {
+      accountDetails: accountDetailsResult.success ? (accountDetailsResult.data || false) : false,
+      compliance: complianceResult.success ? (complianceResult.data || false) : false,
+      trainings: trainingsResult.success ? (trainingsResult.data || false) : false,
+      services: servicesResult.success ? (servicesResult.data || false) : false,
+      additionalCredentials: false, // Not implemented yet
+    };
+
+    // Return profile data with REAL-TIME calculated progress (not cached JSON!)
     return NextResponse.json({
       ...workerProfile,
       services,
       supportWorkerCategories,
       documentsByService,
+      setupProgress: realTimeSetupProgress, // Override cached JSON with real-time calculation
     });
 
   } catch (error: any) {

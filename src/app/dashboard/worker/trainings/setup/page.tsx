@@ -10,9 +10,10 @@
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateTrainingSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicTrainingSteps";
 import Loader from "@/components/ui/Loader";
@@ -56,6 +57,7 @@ function TrainingsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
@@ -117,12 +119,20 @@ function TrainingsSetupContent() {
     if (!session?.user?.id) return;
 
     try {
-      // Move to next step or finish
+      // Move to next step or finish (INSTANT navigation - no DB queries!)
       if (currentStep < STEPS.length) {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/trainings/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed - redirect immediately
+        // LAST STEP COMPLETED - Optimized redirect (no setTimeout!)
+        // Optimistic updates already showed checkmarks, just invalidate and redirect
+
+        // Invalidate cache to force fresh data on dashboard
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+
+        // Redirect immediately (optimistic updates already showed correct state)
         router.push("/dashboard/worker");
       }
     } catch (error) {

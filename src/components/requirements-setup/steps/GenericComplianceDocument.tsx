@@ -65,10 +65,12 @@ export default function GenericComplianceDocument({
   const deleteMutation = useDeleteComplianceDocument();
 
   // Get the most recent uploaded document
-  const uploadedDocument =
-    documentsData?.documents && documentsData.documents.length > 0
-      ? documentsData.documents[0]
-      : null;
+  // FIXED: Handle both formats (array from API, single object from optimistic update)
+  const uploadedDocument = documentsData?.document
+    ? documentsData.document  // Single document (from optimistic update or single endpoint)
+    : documentsData?.documents && documentsData.documents.length > 0
+    ? documentsData.documents[0]  // Array format (from API)
+    : null;
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) return;

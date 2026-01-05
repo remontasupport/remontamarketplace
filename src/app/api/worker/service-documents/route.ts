@@ -39,14 +39,23 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      documents: documents.map(doc => ({
-        id: doc.id,
-        documentType: doc.requirementType,
-        documentUrl: doc.documentUrl,
-        uploadedAt: doc.documentUploadedAt,
-        status: doc.status,
-        serviceTitle: (doc.metadata as any)?.serviceTitle || null,
-      })),
+      documents: documents.map(doc => {
+        // Parse composite requirementType to extract base type
+        // Format is "ServiceTitle:requirementType"
+        const requirementParts = doc.requirementType.split(':');
+        const baseRequirementType = requirementParts.length > 1
+          ? requirementParts[requirementParts.length - 1]
+          : doc.requirementType;
+
+        return {
+          id: doc.id,
+          documentType: baseRequirementType, // Use base type for frontend compatibility
+          documentUrl: doc.documentUrl,
+          uploadedAt: doc.documentUploadedAt,
+          status: doc.status,
+          serviceTitle: (doc.metadata as any)?.serviceTitle || null,
+        };
+      }),
     });
   } catch (error: any) {
    

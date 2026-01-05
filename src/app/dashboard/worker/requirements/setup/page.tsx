@@ -10,13 +10,13 @@
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
-import { autoUpdateComplianceCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
 
 // Form data interface
@@ -61,11 +61,12 @@ function MandatoryRequirementsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage] = useState("");
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -140,21 +141,33 @@ function MandatoryRequirementsSetupContent() {
             abn: formData.abn,
           },
         });
+
+        // NOTE: Progress updates automatically - no manual update needed!
+        // setupProgress is calculated in real-time from database state in profile API
       }
 
-      // Auto-update Compliance completion status (non-blocking)
-      // This checks all compliance requirements and updates the setupProgress
-      autoUpdateComplianceCompletion().catch((error) => {
-     
-        // Don't fail the main operation if this fails
-      });
+      // OPTIMIZED: No DB queries on regular NEXT clicks
+      // Progress updates happen automatically in background after document uploads
+      // Document previews are already cached by React Query - no need to refetch
 
-      // Move to next step or finish
+      // Move to next step or finish (INSTANT navigation - no DB queries!)
       if (currentStep < STEPS.length) {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed - redirect immediately
+        // LAST STEP COMPLETED - Force complete cache refresh
+        // Progress is calculated in real-time, but we need to ensure fresh data loads
+
+        // 1. Invalidate and refetch ALL worker profile data (wait for completion)
+        await queryClient.refetchQueries({
+          queryKey: workerProfileKeys.all,
+          type: 'active',
+        });
+
+        // 2. Force Next.js to re-run server components (bypasses router cache)
+        router.refresh();
+
+        // 3. Navigate to dashboard - fresh data is guaranteed to load
         router.push("/dashboard/worker");
       }
     } catch (error) {

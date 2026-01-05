@@ -87,9 +87,9 @@ export async function updateWorkerABN(
     revalidatePath("/dashboard/worker/account/setup");
     revalidatePath("/dashboard/worker");
 
-    // 6. Auto-update Compliance completion status (non-blocking)
-    autoUpdateComplianceCompletion().catch((error) => {
-
+    // 6. Auto-update Compliance completion status (synchronous for cache consistency)
+    await autoUpdateComplianceCompletion().catch((error) => {
+      console.error("[Compliance] Failed to auto-update compliance completion:", error);
       // Don't fail the main operation if this fails
     });
 
@@ -454,24 +454,8 @@ export async function uploadComplianceDocument(
       return requirement;
     });
 
-    // 10. Revalidate cache
-    revalidatePath("/dashboard/worker/requirements/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 11. Auto-update Compliance completion status (non-blocking)
-    autoUpdateComplianceCompletion().catch((error) => {
-    
-      // Don't fail the main operation if this fails
-    });
-
-    // 12. Auto-update Trainings completion status (non-blocking)
-    // Always call this - the function itself checks if trainings are required and complete
-    autoUpdateTrainingsCompletion().catch((error) => {
-    
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 10. Return SUCCESS immediately (optimistic update handles instant UI feedback)
+    const response = {
       success: true,
       message: "Document uploaded successfully!",
       data: {
@@ -482,6 +466,30 @@ export async function uploadComplianceDocument(
         uploadedAt: verificationReq.documentUploadedAt?.toISOString() || new Date().toISOString(),
       },
     };
+
+    // 11. BACKGROUND SYNC: Update database setupProgress field (async, non-blocking)
+    // This runs AFTER response is sent to user (doesn't block)
+    // Optimistic updates handle instant UI feedback, this ensures database stays in sync
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/requirements/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.compliance in database (background)
+      autoUpdateComplianceCompletion().catch((error) => {
+        console.error("[Compliance] Background DB sync failed (non-critical):", error);
+      }),
+      // Update setupProgress.trainings in database (background)
+      autoUpdateTrainingsCompletion().catch((error) => {
+        console.error("[Compliance] Background DB sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      // Silently fail - optimistic updates already showed correct state to user
+      console.error("[Compliance] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
 
     return {
@@ -564,37 +572,40 @@ export async function deleteComplianceDocument(
         // Continue with database deletion even if blob deletion fails
       }
     }
+    // 6. Delete from database
     await authPrisma.verificationRequirement.delete({
       where: { id: documentId },
     });
 
-    // 7. Revalidate cache
-    revalidatePath("/dashboard/worker/requirements/setup");
-    revalidatePath("/dashboard/worker/trainings/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 8. Auto-update Compliance completion status (non-blocking)
-    autoUpdateComplianceCompletion().catch((error) => {
-  
-      // Don't fail the main operation if this fails
-    });
-
-    // 9. Auto-update Trainings completion status (non-blocking)
-    // Always call this - the function itself checks if trainings are required and complete
-    autoUpdateTrainingsCompletion().catch((error) => {
-    
-      // Don't fail the main operation if this fails
-    });
-
-   
-
-    return {
+    // 7. Return SUCCESS immediately (optimistic update handles instant UI feedback)
+    const response = {
       success: true,
       message: "Document deleted successfully!",
       data: {
         documentType: document.requirementType,
       },
     };
+
+    // 8. BACKGROUND SYNC: Update database setupProgress field (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/requirements/setup");
+        revalidatePath("/dashboard/worker/trainings/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress in database (background)
+      autoUpdateComplianceCompletion().catch((error) => {
+        console.error("[Compliance] Background DB sync failed (non-critical):", error);
+      }),
+      autoUpdateTrainingsCompletion().catch((error) => {
+        console.error("[Compliance] Background DB sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      console.error("[Compliance] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
    
     return {

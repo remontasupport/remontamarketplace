@@ -95,23 +95,116 @@ export function useUploadServiceDocument() {
 
       return result;
     },
-    // Cancel outgoing refetches to prevent race conditions
+    // TRUE OPTIMISTIC UPDATE: Update cache BEFORE server responds
+    // This makes preview links appear INSTANTLY while upload happens in background
     onMutate: async (variables) => {
+      // 1. Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: serviceDocumentsKeys.all,
       });
+
+      // 2. Snapshot previous value for rollback on error
+      const previousDocuments = queryClient.getQueryData(serviceDocumentsKeys.all);
+
+      // 3. OPTIMISTICALLY update document cache (INSTANT UI feedback)
+      const optimisticDocument = {
+        id: 'temp-' + Date.now(), // Temporary ID until server responds
+        documentType: variables.requirementType, // Base type
+        documentUrl: URL.createObjectURL(variables.file), // Preview URL
+        uploadedAt: new Date().toISOString(),
+        status: "SUBMITTED",
+        serviceTitle: variables.serviceTitle,
+      };
+
+      queryClient.setQueryData(
+        serviceDocumentsKeys.all,
+        (old: any) => {
+          if (!old?.documents) {
+            return { success: true, documents: [optimisticDocument] };
+          }
+
+          // Add new document or update existing
+          const existingIndex = old.documents.findIndex(
+            (doc: ServiceDocument) =>
+              doc.documentType === variables.requirementType &&
+              doc.serviceTitle === variables.serviceTitle
+          );
+
+          if (existingIndex >= 0) {
+            // Update existing
+            const updated = [...old.documents];
+            updated[existingIndex] = { ...updated[existingIndex], ...optimisticDocument };
+            return { ...old, documents: updated };
+          } else {
+            // Add new
+            return { ...old, documents: [optimisticDocument, ...old.documents] };
+          }
+        }
+      );
+
+      // 4. OPTIMISTICALLY update setupProgress checkmarks (INSTANT checkmark!)
+      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+        const currentProfileData = queryClient.getQueryData(
+          workerProfileKeys.all
+        ) as any;
+
+        if (currentProfileData && Array.isArray(currentProfileData)) {
+          const profileData = currentProfileData[0];
+          if (profileData?.setupProgress) {
+            // Optimistically mark services as complete
+            const optimisticProgress = {
+              ...profileData.setupProgress,
+              services: true, // Will be verified by server
+            };
+
+            queryClient.setQueryData(
+              workerProfileKeys.all,
+              [{
+                ...profileData,
+                setupProgress: optimisticProgress,
+              }]
+            );
+          }
+        }
+      }).catch(() => {
+        // Silently fail - not critical
+      });
+
+      // Return context for rollback
+      return { previousDocuments };
     },
+    // Rollback on error
+    onError: (error, variables, context) => {
+      if (context?.previousDocuments) {
+        queryClient.setQueryData(
+          serviceDocumentsKeys.all,
+          context.previousDocuments
+        );
+      }
+
+      // Rollback setupProgress optimistic update
+      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+      }).catch(() => {});
+    },
+    // Update with real data from server
     onSuccess: (result) => {
-      // OPTIMISTIC UPDATE: Immediately populate cache with uploaded document
-      // This prevents the delay from refetching the same data we just uploaded
       if (result.success && result.data) {
-        // Update the documents list cache
+        // Parse composite requirementType to extract base type
+        const requirementParts = result.data.requirementType.split(':');
+        const baseRequirementType = requirementParts.length > 1
+          ? requirementParts[requirementParts.length - 1]
+          : result.data.requirementType;
+
+        // Replace optimistic data with real server data
         queryClient.setQueryData(
           serviceDocumentsKeys.all,
           (old: any) => {
             const newDocument = {
-              id: `temp-${Date.now()}`, // Temporary ID until refetch
-              documentType: result.data.requirementType,
+              id: result.data.id || `doc-${Date.now()}`,
+              documentType: baseRequirementType,
               documentUrl: result.data.documentUrl,
               uploadedAt: result.data.uploadedAt,
               status: "SUBMITTED",
@@ -122,29 +215,19 @@ export function useUploadServiceDocument() {
               return { success: true, documents: [newDocument] };
             }
 
-            // Add new document or update existing
-            const existingIndex = old.documents.findIndex(
-              (doc: ServiceDocument) => doc.documentType === result.data.requirementType
-            );
-
-            if (existingIndex >= 0) {
-              // Update existing
-              const updated = [...old.documents];
-              updated[existingIndex] = { ...updated[existingIndex], ...newDocument };
-              return { ...old, documents: updated };
-            } else {
-              // Add new
-              return { ...old, documents: [newDocument, ...old.documents] };
-            }
+            // Replace temporary document with real one
+            const withoutTemp = old.documents.filter((doc: ServiceDocument) => !doc.id.startsWith('temp-'));
+            return { ...old, documents: [newDocument, ...withoutTemp] };
           }
         );
       }
 
-      // Still invalidate for eventual consistency (background refetch)
-      // NOTE: Only invalidate service documents, not all queries
-      queryClient.invalidateQueries({
-        queryKey: serviceDocumentsKeys.all,
-      });
+      // Invalidate to refetch fresh setupProgress from server (with real-time calculation)
+      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+      }).catch(() => {});
     },
   });
 }
@@ -216,6 +299,19 @@ export function useDeleteServiceDocument() {
       queryClient.invalidateQueries({
         queryKey: serviceDocumentsKeys.all,
       });
+
+      // Also invalidate worker profile to update setupProgress checkmarks
+      // Using .then() to avoid making onSettled async
+      // Small delay to prevent race conditions
+      setTimeout(() => {
+        import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+          queryClient.invalidateQueries({
+            queryKey: workerProfileKeys.all,
+          });
+        }).catch(() => {
+          // Silently fail if import fails - not critical
+        });
+      }, 100);
     },
   });
 }

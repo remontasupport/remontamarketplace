@@ -497,10 +497,8 @@ function ServicesSetupContent() {
         router.push(`/dashboard/worker/services/setup?step=${nextStepSlug}`);
       } else {
         // All services completed - redirect to Additional Documents (Section 3)
-        setSuccessMessage("Services qualifications & skills completed!");
-        setTimeout(() => {
-          router.push("/dashboard/worker/additional-documents");
-        }, 1500);
+        // OPTIMIZED: Immediate redirect (no setTimeout delay)
+        router.push("/dashboard/worker/additional-documents");
       }
     } catch (error) {
       setErrors({ general: "Failed to save. Please try again." });

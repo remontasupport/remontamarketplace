@@ -84,8 +84,8 @@ export async function toggleWorkerSubcategory(
       revalidatePath("/dashboard/worker/services/setup");
       revalidatePath("/dashboard/worker");
 
-      // 6. Auto-update Services completion status (non-blocking)
-      autoUpdateServicesCompletion().catch((error) => {
+      // 6. Auto-update Services completion status (synchronous for cache consistency)
+      await autoUpdateServicesCompletion().catch((error) => {
         console.error("Failed to auto-update services completion:", error);
         // Don't fail the main operation if this fails
       });
@@ -122,8 +122,8 @@ export async function toggleWorkerSubcategory(
       revalidatePath("/dashboard/worker/services/setup");
       revalidatePath("/dashboard/worker");
 
-      // 6. Auto-update Services completion status (non-blocking)
-      autoUpdateServicesCompletion().catch((error) => {
+      // 6. Auto-update Services completion status (synchronous for cache consistency)
+      await autoUpdateServicesCompletion().catch((error) => {
         console.error("Failed to auto-update services completion:", error);
         // Don't fail the main operation if this fails
       });
@@ -233,8 +233,8 @@ export async function updateWorkerSubcategories(
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
 
-    // 8. Auto-update Services completion status (non-blocking)
-    autoUpdateServicesCompletion().catch((error) => {
+    // 8. Auto-update Services completion status (synchronous for cache consistency)
+    await autoUpdateServicesCompletion().catch((error) => {
       console.error("Failed to auto-update services completion:", error);
       // Don't fail the main operation if this fails
     });

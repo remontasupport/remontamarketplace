@@ -95,21 +95,29 @@ export async function updateWorkerName(
       },
     });
 
-    // 5. Revalidate the profile page cache
-    revalidatePath("/dashboard/worker/account/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 6. Auto-update Account Details completion status (non-blocking)
-    autoUpdateAccountDetailsCompletion().catch((error) => {
-
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 5. Return SUCCESS immediately (background sync handles setupProgress update)
+    const response = {
       success: true,
       message: "Your name has been saved successfully!",
       data: updatedProfile,
     };
+
+    // 6. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.accountDetails in database (background)
+      autoUpdateAccountDetailsCompletion().catch((error) => {
+        console.error("[Profile] Background sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
    
     return {
@@ -224,21 +232,29 @@ export async function updateWorkerPhoto(
       },
     });
 
-    // 5. Revalidate the profile page cache
-    revalidatePath("/dashboard/worker/account/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 6. Auto-update Account Details completion status (non-blocking)
-    autoUpdateAccountDetailsCompletion().catch((error) => {
-     
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 5. Return SUCCESS immediately (background sync handles setupProgress update)
+    const response = {
       success: true,
       message: "Your photo has been saved successfully!",
       data: updatedProfile,
     };
+
+    // 6. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.accountDetails in database (background)
+      autoUpdateAccountDetailsCompletion().catch((error) => {
+        console.error("[Profile] Background sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
     
     return {
@@ -305,21 +321,29 @@ export async function updateWorkerBio(
       },
     });
 
-    // 5. Revalidate the profile page cache
-    revalidatePath("/dashboard/worker/account/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 6. Auto-update Account Details completion status (non-blocking)
-    autoUpdateAccountDetailsCompletion().catch((error) => {
-   
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 5. Return SUCCESS immediately (background sync handles setupProgress update)
+    const response = {
       success: true,
       message: "Your bio has been saved successfully!",
       data: updatedProfile,
     };
+
+    // 6. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.accountDetails in database (background)
+      autoUpdateAccountDetailsCompletion().catch((error) => {
+        console.error("[Profile] Background sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
    
     return {
@@ -429,21 +453,29 @@ export async function updateWorkerAddress(
       },
     });
 
-    // 7. Revalidate the profile page cache
-    revalidatePath("/dashboard/worker/account/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 8. Auto-update Account Details completion status (non-blocking)
-    autoUpdateAccountDetailsCompletion().catch((error) => {
-   
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 7. Return SUCCESS immediately (background sync handles setupProgress update)
+    const response = {
       success: true,
       message: "Your address has been saved successfully!",
       data: updatedProfile,
     };
+
+    // 8. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.accountDetails in database (background)
+      autoUpdateAccountDetailsCompletion().catch((error) => {
+        console.error("[Profile] Background sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
  
     return {
@@ -538,21 +570,29 @@ export async function updateWorkerPersonalInfo(
       },
     });
 
-    // 6. Revalidate the profile page cache
-    revalidatePath("/dashboard/worker/account/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 7. Auto-update Account Details completion status (non-blocking)
-    autoUpdateAccountDetailsCompletion().catch((error) => {
-    
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 6. Return SUCCESS immediately (background sync handles setupProgress update)
+    const response = {
       success: true,
       message: "Your personal information has been saved successfully!",
       data: updatedProfile,
     };
+
+    // 7. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.accountDetails in database (background)
+      autoUpdateAccountDetailsCompletion().catch((error) => {
+        console.error("[Profile] Background sync failed (non-critical):", error);
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
 
     return {

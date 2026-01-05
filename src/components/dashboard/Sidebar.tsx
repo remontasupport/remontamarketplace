@@ -67,20 +67,36 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isMobileOpen = false, onClose, profileData: profileDataProp }: SidebarProps = {}) {
+  // Get pathname first (needed for other hooks)
+  const pathname = usePathname()
+
   // Get session and profile data for setup progress
   const { data: session } = useSession()
-  const { data: profileDataFromHook } = useWorkerProfile(session?.user?.id)
+  const { data: profileDataFromHook, refetch, isRefetching } = useWorkerProfile(session?.user?.id)
 
-  // Use prop data if available, otherwise fall back to hook data
+  // CRITICAL: Aggressively refetch when on dashboard to ensure checkmarks appear
+  useEffect(() => {
+    if (pathname === '/dashboard/worker' && session?.user?.id) {
+      // Force refetch immediately when dashboard mounts
+      // This bypasses React Query cache and gets fresh setupProgress from API
+      refetch()
+    }
+  }, [pathname, session?.user?.id, refetch])
+
+  // CRITICAL FIX: Always use hook data for setupProgress (real-time calculated from API)
+  // profileDataProp is from server component and doesn't include setupProgress
+  // profileDataFromHook is from client-side API call with real-time progress calculation
   const profileData = profileDataProp || profileDataFromHook
 
   // Parse setup progress to show checkmarks
-  // Only access setupProgress if it exists (it's only on WorkerProfile, not the prop type)
+  // ALWAYS use profileDataFromHook for setupProgress (not profileDataProp!)
   const setupProgress = useMemo(() => {
-    if (!profileData) return parseSetupProgress(undefined)
-    const progress = 'setupProgress' in profileData ? profileData.setupProgress : undefined
-    return parseSetupProgress(progress)
-  }, [profileData])
+    // Use hook data which has real-time calculated setupProgress from API
+    const progress = profileDataFromHook?.setupProgress
+    const parsed = parseSetupProgress(progress)
+
+    return parsed
+  }, [profileDataFromHook])
 
   // Fetch worker requirements to generate dynamic compliance items
   const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
@@ -201,7 +217,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
       items: additionalCredentialsItems
     }
   ]
-  const pathname = usePathname();
+  // pathname already declared at top of component
   const previousSectionRef = useRef<string | null>(getSectionFromPath(pathname));
   const [shouldTransition, setShouldTransition] = useState(false);
 

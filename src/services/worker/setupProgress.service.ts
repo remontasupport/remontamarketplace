@@ -283,6 +283,10 @@ export async function autoUpdateAccountDetailsCompletion(): Promise<ActionRespon
           setupProgress: updatedProgress as any,
         },
       });
+
+      // 7. Revalidate cache to update UI immediately
+      revalidatePath("/dashboard/worker");
+      revalidatePath("/dashboard/worker/account/setup");
     }
 
     return {
@@ -314,10 +318,19 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       };
     }
 
-    // 2. Get worker profile
+    // 2. OPTIMIZED: Fetch worker profile WITH services in single query (reduces 2 queries to 1)
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
-      select: { id: true },
+      select: {
+        id: true,
+        abn: true, // Fetch ABN now instead of separate query later
+        workerServices: {
+          select: {
+            categoryName: true,
+            subcategoryName: true,
+          },
+        },
+      },
     });
 
     if (!workerProfile) {
@@ -327,14 +340,8 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       };
     }
 
-    // 3. Fetch worker's services to determine required documents
-    const workerServices = await authPrisma.workerService.findMany({
-      where: { workerProfileId: workerProfile.id },
-      select: {
-        categoryName: true,
-        subcategoryName: true,
-      },
-    });
+    // 3. Use embedded services data (already fetched above)
+    const workerServices = workerProfile.workerServices;
 
     if (workerServices.length === 0) {
       // No services yet - no compliance requirements
@@ -363,7 +370,15 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
     const categoryIds = [...new Set(parsedServices.map(s => s.categoryId))];
     const categoryNames = [...new Set(parsedServices.map(s => s.categoryName))];
 
-    // 6. Fetch categories and their required documents from main database
+    // 6. Fetch categories AND subcategories with their required documents
+    // CRITICAL FIX: Must include subcategory documents for accurate completion check
+    const requestedSubcategoryIds = [...new Set(parsedServices
+      .map(s => s.subcategoryId)
+      .filter((id): id is string => id !== null))];
+    const requestedSubcategoryNames = [...new Set(parsedServices
+      .map(s => s.subcategoryName)
+      .filter((name): name is string => name !== null))];
+
     const categories = await prisma.category.findMany({
       where: {
         OR: [
@@ -382,17 +397,52 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
             },
           },
         },
+        // CRITICAL: Include subcategory documents
+        subcategories: {
+          where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+            ? {
+                OR: [
+                  { id: { in: requestedSubcategoryIds } },
+                  { name: { in: requestedSubcategoryNames } },
+                ],
+              }
+            : undefined,
+          select: {
+            additionalDocuments: {
+              select: {
+                document: {
+                  select: {
+                    id: true,
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
-    // 7. Extract base compliance document IDs (IDENTITY, BUSINESS, COMPLIANCE categories)
+    // 7. Extract base compliance document IDs from BOTH category and subcategory levels
     const baseComplianceIds = new Set<string>();
     const baseComplianceCategories = ['IDENTITY', 'BUSINESS', 'COMPLIANCE'];
 
+    // Category-level compliance documents
     for (const category of categories) {
       for (const catDoc of category.documents) {
         if (baseComplianceCategories.includes(catDoc.document.category)) {
           baseComplianceIds.add(catDoc.document.id);
+        }
+      }
+    }
+
+    // CRITICAL FIX: Subcategory-level compliance documents
+    for (const category of categories) {
+      for (const subcategory of category.subcategories) {
+        for (const subDoc of subcategory.additionalDocuments) {
+          if (baseComplianceCategories.includes(subDoc.document.category)) {
+            baseComplianceIds.add(subDoc.document.id);
+          }
         }
       }
     }
@@ -406,11 +456,8 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       };
     }
 
-    // 8. Fetch worker profile with ABN
-    const workerWithABN = await authPrisma.workerProfile.findUnique({
-      where: { id: workerProfile.id },
-      select: { abn: true },
-    });
+    // 8. OPTIMIZED: ABN already fetched in initial query (line 323)
+    // No need for separate query - use workerProfile.abn
 
     // 9. Fetch ALL verification requirements for this worker (not just required ones)
     const requirements = await authPrisma.verificationRequirement.findMany({
@@ -424,10 +471,19 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       },
     });
 
-  
+
 
     // 10. Check each required document with special handling
-    const uploadedDocTypes = new Set(requirements.map(req => req.requirementType));
+    // Parse composite keys to extract base requirement types
+    // Format is "ServiceTitle:requirementType"
+    const uploadedDocTypes = new Set(
+      requirements.map(req => {
+        const requirementParts = req.requirementType.split(':');
+        return requirementParts.length > 1
+          ? requirementParts[requirementParts.length - 1]
+          : req.requirementType;
+      })
+    );
     const missingDocs: string[] = [];
 
     for (const requiredDocId of baseComplianceIds) {
@@ -440,10 +496,10 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
         isDocumentComplete = hasPrimary && hasSecondary;
 
       }
-      // Special case: abn-contractor (check WorkerProfile.abn field)
+      // Special case: abn-contractor (check WorkerProfile.abn field from initial query)
       else if (requiredDocId === 'abn-contractor') {
-        isDocumentComplete = !!(workerWithABN?.abn && workerWithABN.abn.trim().length > 0);
-     
+        isDocumentComplete = !!(workerProfile.abn && workerProfile.abn.trim().length > 0);
+
       }
       // Special case: ndis-screening-check (can be stored as worker-screening-check)
       else if (requiredDocId === 'ndis-screening-check') {
@@ -456,7 +512,7 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       else if (requiredDocId === 'right-to-work') {
         isDocumentComplete = uploadedDocTypes.has('right-to-work') ||
                             uploadedDocTypes.has('identity-working-rights');
-        console.log(`[Setup Progress] right-to-work: ${isDocumentComplete ? 'uploaded' : 'missing'}`);
+   
       }
       // Normal case: direct match
       else {
@@ -493,8 +549,6 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
     const allComplete = complianceRequirements.length > 0 && complianceRequirements.every(req =>
       req.status === "APPROVED" || req.status === "PENDING_REVIEW" || req.status === "SUBMITTED"
     );
-
-    console.log("[Setup Progress] All compliance documents have valid status?", allComplete);
 
     return {
       success: true,
@@ -564,7 +618,9 @@ export async function autoUpdateComplianceCompletion(): Promise<ActionResponse> 
         },
       });
 
-      console.log(`[Setup Progress] Compliance marked as ${isComplete ? 'complete' : 'incomplete'}`);
+      // 7. Revalidate cache to update UI immediately
+      revalidatePath("/dashboard/worker");
+      revalidatePath("/dashboard/worker/requirements/setup");
     }
 
     return {
@@ -587,49 +643,43 @@ export async function autoUpdateComplianceCompletion(): Promise<ActionResponse> 
  */
 export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean>> {
   try {
-    console.log("[Setup Progress] ===== CHECK TRAININGS COMPLETION CALLED =====");
-
     // 1. Authentication check
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      console.log("[Setup Progress] ❌ No session found");
+
       return {
         success: false,
         error: "Unauthorized. Please log in.",
       };
     }
 
-    // 2. Get worker profile
+    // 2. OPTIMIZED: Fetch worker profile WITH services in single query (reduces 2 queries to 1)
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
-      select: { id: true },
+      select: {
+        id: true,
+        workerServices: {
+          select: {
+            categoryName: true,
+            subcategoryName: true,
+          },
+        },
+      },
     });
 
     if (!workerProfile) {
-      console.log("[Setup Progress] ❌ No worker profile found");
       return {
         success: true,
         data: false,
       };
     }
 
-    console.log("[Setup Progress] Worker profile ID:", workerProfile.id);
+    // 3. Use embedded services data (already fetched above)
+    const workerServices = workerProfile.workerServices;
 
-    // 3. Fetch worker's services to determine required trainings
-    const workerServices = await authPrisma.workerService.findMany({
-      where: { workerProfileId: workerProfile.id },
-      select: {
-        categoryName: true,
-        subcategoryName: true,
-      },
-    });
-
-    console.log("[Setup Progress] Worker services count:", workerServices.length);
-    console.log("[Setup Progress] Worker services:", workerServices);
 
     if (workerServices.length === 0) {
       // No services yet - no training requirements
-      console.log("[Setup Progress] ❌ No services found - no trainings required");
       return {
         success: true,
         data: false,
@@ -655,10 +705,15 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
     const categoryIds = [...new Set(parsedServices.map(s => s.categoryId))];
     const categoryNames = [...new Set(parsedServices.map(s => s.categoryName))];
 
-    console.log("[Setup Progress] Category IDs:", categoryIds);
-    console.log("[Setup Progress] Category Names:", categoryNames);
+    // 6. Fetch categories AND subcategories with their required TRAINING documents
+    // CRITICAL FIX: Must include subcategory documents (e.g., Manual Handling for Hoist and transfer)
+    const requestedSubcategoryIds = [...new Set(parsedServices
+      .map(s => s.subcategoryId)
+      .filter((id): id is string => id !== null))];
+    const requestedSubcategoryNames = [...new Set(parsedServices
+      .map(s => s.subcategoryName)
+      .filter((name): name is string => name !== null))];
 
-    // 6. Fetch categories and their required TRAINING documents from main database
     const categories = await prisma.category.findMany({
       where: {
         OR: [
@@ -680,35 +735,60 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
             },
           },
         },
+        // CRITICAL: Include subcategory documents
+        subcategories: {
+          where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+            ? {
+                OR: [
+                  { id: { in: requestedSubcategoryIds } },
+                  { name: { in: requestedSubcategoryNames } },
+                ],
+              }
+            : undefined,
+          select: {
+            id: true,
+            name: true,
+            additionalDocuments: {
+              select: {
+                document: {
+                  select: {
+                    id: true,
+                    name: true,
+                    category: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
-    console.log("[Setup Progress] Found categories:", categories.length);
-    console.log("[Setup Progress] Categories with documents:", categories.map(c => ({
-      id: c.id,
-      name: c.name,
-      documentCount: c.documents.length,
-      documents: c.documents.map(d => ({ id: d.document.id, name: d.document.name, category: d.document.category }))
-    })));
-
-    // 7. Extract training document IDs (TRAINING category only)
+    // 7. Extract training document IDs from BOTH category-level AND subcategory-level documents
     const trainingDocIds = new Set<string>();
 
+    // Category-level training documents
     for (const category of categories) {
       for (const catDoc of category.documents) {
         if (catDoc.document.category === 'TRAINING') {
           trainingDocIds.add(catDoc.document.id);
-          console.log("[Setup Progress] Added training requirement:", catDoc.document.id, catDoc.document.name);
         }
       }
     }
 
-    console.log("[Setup Progress] Total required trainings:", trainingDocIds.size);
-    console.log("[Setup Progress] Required training IDs:", Array.from(trainingDocIds));
+    // CRITICAL FIX: Subcategory-level training documents (e.g., Manual Handling for Hoist)
+    for (const category of categories) {
+      for (const subcategory of category.subcategories) {
+        for (const subDoc of subcategory.additionalDocuments) {
+          if (subDoc.document.category === 'TRAINING') {
+            trainingDocIds.add(subDoc.document.id);
+          }
+        }
+      }
+    }
 
     if (trainingDocIds.size === 0) {
       // No training requirements for these services
-      console.log("[Setup Progress] ❌ No training requirements found for services - marking as incomplete");
       return {
         success: true,
         data: false,
@@ -729,24 +809,44 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
       }
     }
 
-    console.log("[Setup Progress] Searching for document types (including aliases):", trainingIdsWithAliases);
-
+    // FIXED: Fetch ALL training documents (not just exact matches)
+    // This handles composite keys like "Support Worker:infection-control"
     const uploadedTrainings = await authPrisma.verificationRequirement.findMany({
       where: {
         workerProfileId: workerProfile.id,
-        requirementType: { in: trainingIdsWithAliases },
+        // Fetch ALL requirements and filter in code (handles composite keys)
       },
       select: {
         requirementType: true,
         documentUrl: true,
         status: true,
+        documentCategory: true,
       },
     });
 
-    console.log("[Setup Progress] Uploaded trainings:", uploadedTrainings);
+    // Filter to only TRAINING category documents (more reliable than requirementType matching)
+    const trainingDocuments = uploadedTrainings.filter(doc => {
+      // Check if this is a training document by category
+      if (doc.documentCategory === 'TRAINING') {
+        return true;
+      }
+
+      // Fallback: check if requirementType contains any training ID
+      const baseType = doc.requirementType.split(':').pop() || doc.requirementType;
+      return trainingIdsWithAliases.includes(baseType);
+    });
 
     // 9. Check if all required trainings are uploaded (considering aliases)
-    const uploadedTypes = new Set(uploadedTrainings.map(t => t.requirementType));
+    // Parse composite keys to extract base requirement types
+    // Format is "ServiceTitle:requirementType"
+    const uploadedTypes = new Set(
+      trainingDocuments.map(t => {
+        const requirementParts = t.requirementType.split(':');
+        return requirementParts.length > 1
+          ? requirementParts[requirementParts.length - 1]
+          : t.requirementType;
+      })
+    );
     const missingTrainings: string[] = [];
 
     for (const requiredTrainingId of trainingDocIds) {
@@ -761,35 +861,21 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
     }
 
     if (missingTrainings.length > 0) {
-      console.log("[Setup Progress] Missing trainings:", missingTrainings);
       return {
         success: true,
         data: false,
       };
     }
 
-    // 10. Check if all uploaded trainings have valid documents
-    const allHaveDocuments = uploadedTrainings.every(t => t.documentUrl);
+    // 10. Check if ALL required trainings have valid documents
+    // Must have uploaded all required trainings AND all must have document URLs
+    const allHaveDocuments = trainingDocuments.every(t => t.documentUrl);
 
-    // For trainings, we just need documents uploaded - don't check status
-    // since they might still be pending review
-    // Note: We already verified all required trainings are uploaded via missingTrainings check above
-    // So we just need to ensure the uploaded documents have URLs and there's at least one upload
-    const isComplete = uploadedTrainings.length > 0 && allHaveDocuments;
-
-    console.log("[Setup Progress] Trainings completion check:", {
-      requiredCount: trainingDocIds.size,
-      uploadedCount: uploadedTrainings.length,
-      requiredDocIds: Array.from(trainingDocIds),
-      uploadedDocTypes: Array.from(uploadedTypes),
-      allHaveDocuments,
-      isComplete,
-      uploadedTrainings: uploadedTrainings.map(t => ({
-        type: t.requirementType,
-        hasUrl: !!t.documentUrl,
-        status: t.status
-      }))
-    });
+    // Verify count matches required count
+    const isComplete =
+      uploadedTypes.size >= trainingDocIds.size && // All required trainings are uploaded
+      trainingDocuments.length > 0 &&               // At least one document exists
+      allHaveDocuments;                             // All have URLs
 
     return {
       success: true,
@@ -810,19 +896,14 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
  */
 export async function autoUpdateTrainingsCompletion(): Promise<ActionResponse> {
   try {
-    console.log("[Setup Progress] ===== AUTO-UPDATE TRAININGS CALLED =====");
-
     // 1. Check if trainings are complete
     const completionCheck = await checkTrainingsCompletion();
-    console.log("[Setup Progress] Completion check result:", completionCheck);
 
     if (!completionCheck.success) {
-      console.log("[Setup Progress] Completion check failed:", completionCheck.error);
       return completionCheck;
     }
 
     const isComplete = completionCheck.data || false;
-    console.log("[Setup Progress] Is trainings complete?", isComplete);
 
     // 2. Authentication check
     const session = await getServerSession(authOptions);
@@ -848,18 +929,13 @@ export async function autoUpdateTrainingsCompletion(): Promise<ActionResponse> {
 
     // 4. Get current progress
     const currentProgress = parseSetupProgress(profile.setupProgress);
-    console.log("[Setup Progress] Current trainings status:", currentProgress.trainings);
-
     // 5. Only update if status changed
     if (currentProgress.trainings !== isComplete) {
       const updatedProgress = {
         ...currentProgress,
         trainings: isComplete,
       };
-
-      console.log("[Setup Progress] Updating trainings status from", currentProgress.trainings, "to", isComplete);
-
-      // 6. Update database
+     // 6. Update database
       await authPrisma.workerProfile.update({
         where: { userId: session.user.id },
         data: {
@@ -867,14 +943,9 @@ export async function autoUpdateTrainingsCompletion(): Promise<ActionResponse> {
         },
       });
 
-      console.log(`[Setup Progress] ✅ Trainings marked as ${isComplete ? 'complete' : 'incomplete'}`);
-
       // 7. Revalidate cache to update UI
       revalidatePath("/dashboard/worker");
       revalidatePath("/dashboard/worker/trainings/setup");
-      console.log("[Setup Progress] Cache revalidated");
-    } else {
-      console.log("[Setup Progress] No change needed - status already", isComplete);
     }
 
     return {
@@ -894,7 +965,9 @@ export async function autoUpdateTrainingsCompletion(): Promise<ActionResponse> {
 
 /**
  * Server Action: Check if Services section is complete
- * Checks if worker has added at least one service
+ * Checks if worker has:
+ * 1. Added at least one service
+ * 2. Uploaded all REQUIRED documents for those services (using frontend config)
  */
 export async function checkServicesCompletion(): Promise<ActionResponse<boolean>> {
   try {
@@ -921,22 +994,144 @@ export async function checkServicesCompletion(): Promise<ActionResponse<boolean>
     }
 
     // 3. Check if worker has any services
-    const servicesCount = await authPrisma.workerService.count({
+    const workerServices = await authPrisma.workerService.findMany({
       where: {
         workerProfileId: workerProfile.id,
       },
+      select: {
+        categoryName: true,
+        subcategoryName: true,
+      },
     });
 
-    const isComplete = servicesCount > 0;
+    if (workerServices.length === 0) {
+      return {
+        success: true,
+        data: false,
+      };
+    }
 
-    console.log("[Setup Progress] Services completion:", {
-      servicesCount,
-      isComplete,
+    // 4. Import service document requirements config
+    const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
+
+    // 5. CRITICAL FIX: Build requirements PER SERVICE (not global Set)
+    // Track BOTH required AND all documents (for "at least one" check)
+    const serviceRequirements = new Map<string, { required: Set<string>; all: Set<string> }>();
+
+    for (const service of workerServices) {
+      const serviceTitle = service.categoryName;
+      const subcategoryId = service.subcategoryName
+        ? service.subcategoryName.toLowerCase().replace(/\s+/g, '-')
+        : undefined;
+
+      // Get requirements for this service
+      const requirements = getServiceDocumentRequirements(serviceTitle, subcategoryId);
+
+      // Get or create the requirement sets for this service
+      if (!serviceRequirements.has(serviceTitle)) {
+        serviceRequirements.set(serviceTitle, {
+          required: new Set<string>(),
+          all: new Set<string>(),
+        });
+      }
+      const serviceReqs = serviceRequirements.get(serviceTitle)!;
+
+      // Track ALL documents and separate out REQUIRED ones
+      requirements.forEach(req => {
+        serviceReqs.all.add(req.type); // Track all (required + optional)
+        if (req.required) {
+          serviceReqs.required.add(req.type); // Track only required
+        }
+      });
+    }
+
+    // 6. Fetch uploaded service documents for this worker
+    const uploadedServiceDocs = await authPrisma.verificationRequirement.findMany({
+      where: {
+        workerProfileId: workerProfile.id,
+        documentCategory: "SERVICE_QUALIFICATION",
+      },
+      select: {
+        requirementType: true,
+        documentUrl: true,
+        status: true,
+      },
     });
 
+    // 7. Build uploaded documents PER SERVICE
+    // Parse composite keys: "ServiceTitle:requirementType" → group by service
+    const uploadedByService = new Map<string, Set<string>>();
+
+    for (const doc of uploadedServiceDocs) {
+      if (!doc.documentUrl) continue; // Skip documents without URLs
+
+      // Parse composite key
+      const parts = doc.requirementType.split(':');
+      if (parts.length < 2) continue; // Skip malformed keys
+
+      const serviceTitle = parts[0];
+      const docType = parts[parts.length - 1];
+
+      // Get or create the Set for this service
+      if (!uploadedByService.has(serviceTitle)) {
+        uploadedByService.set(serviceTitle, new Set<string>());
+      }
+      uploadedByService.get(serviceTitle)!.add(docType);
+    }
+
+    // 8. Check if EACH SERVICE has proper documents uploaded
+    // Three scenarios:
+    // A) Service has required documents → Must upload ALL required
+    // B) Service has ONLY optional documents → Must upload AT LEAST ONE
+    // C) Service has NO documents at all → Auto-complete (rare edge case)
+    const missingByService: Record<string, { type: string; details: string[] }> = {};
+
+    for (const [serviceTitle, docs] of serviceRequirements) {
+      const uploadedDocs = uploadedByService.get(serviceTitle) || new Set<string>();
+      const missing: string[] = [];
+
+      // SCENARIO A: Service has required documents
+      if (docs.required.size > 0) {
+        // Check ALL required documents are uploaded
+        for (const requiredDoc of docs.required) {
+          if (!uploadedDocs.has(requiredDoc)) {
+            missing.push(requiredDoc);
+          }
+        }
+
+        if (missing.length > 0) {
+          missingByService[serviceTitle] = {
+            type: 'required',
+            details: missing,
+          };
+        }
+      }
+      // SCENARIO B: Service has ONLY optional documents
+      else if (docs.all.size > 0) {
+        // Check AT LEAST ONE document is uploaded
+        if (uploadedDocs.size === 0) {
+          missingByService[serviceTitle] = {
+            type: 'at-least-one',
+            details: Array.from(docs.all), // Show which optional docs are available
+          };
+        }
+      }
+      // SCENARIO C: Service has NO documents at all
+      // Auto-complete - do nothing (rare edge case)
+    }
+
+    // If ANY service is incomplete, mark entire section as incomplete
+    if (Object.keys(missingByService).length > 0) {
+      return {
+        success: true,
+        data: false,
+      };
+    }
+
+    // All required documents are uploaded
     return {
       success: true,
-      data: isComplete,
+      data: true,
     };
   } catch (error: any) {
     console.error("[Setup Progress] Error checking services completion:", error);
@@ -1002,7 +1197,9 @@ export async function autoUpdateServicesCompletion(): Promise<ActionResponse> {
         },
       });
 
-      console.log(`[Setup Progress] Services marked as ${isComplete ? 'complete' : 'incomplete'}`);
+      // 7. Revalidate cache to update UI immediately
+      revalidatePath("/dashboard/worker");
+      revalidatePath("/dashboard/worker/services/setup");
     }
 
     return {

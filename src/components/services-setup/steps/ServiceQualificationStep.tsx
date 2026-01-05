@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,7 +23,7 @@ import {
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, InformationCircleIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
-import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
+import { getServiceDocumentRequirements, ServiceDocumentRequirement } from "@/config/serviceDocumentRequirements";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import {
   useWorkerServices,
@@ -156,14 +156,50 @@ export default function ServiceQualificationStep({
     isQualification?: boolean; // Flag to distinguish qualification files from documents
   } | null>(null);
 
-  // Get qualifications and document requirements for this service
+  // Get qualifications for this service
   const qualifications = getQualificationsForService(serviceTitle);
-  const documentRequirements = getServiceDocumentRequirements(serviceTitle);
 
   // Get selected subcategories from worker services
   const selectedSubcategories = workerServices?.find(
     (s) => s.categoryName.toLowerCase() === serviceTitle.toLowerCase()
   )?.subcategories || [];
+
+  // CRITICAL FIX: Get document requirements using SAME logic as completion check
+  // The backend loops through EACH subcategory separately, so UI must do the same
+  // This ensures UI and backend always match for ANY service combination
+  const documentRequirements = useMemo(() => {
+    const allRequirements: ServiceDocumentRequirement[] = [];
+    const seenTypes = new Set<string>();
+
+    if (selectedSubcategories.length === 0) {
+      // No subcategories selected - use generic service requirements
+      // Example: Support Worker without subcategories, Nursing Services
+      return getServiceDocumentRequirements(serviceTitle);
+    }
+
+    // Has subcategories - get requirements for EACH subcategory and combine
+    // This matches the backend completion check logic (line 1066-1088 in setupProgress.service.ts)
+    for (const subcategory of selectedSubcategories) {
+      // Convert subcategory name to ID format (e.g., "Light massage" → "light-massage")
+      const subcategoryId = subcategory.subcategoryName
+        .toLowerCase()
+        .replace(/\s+/g, '-');
+
+      // Get requirements for this specific subcategory
+      const requirements = getServiceDocumentRequirements(serviceTitle, subcategoryId);
+
+      // Add requirements, avoiding duplicates by type
+      // (Multiple subcategories may require the same document type)
+      requirements.forEach(req => {
+        if (!seenTypes.has(req.type)) {
+          seenTypes.add(req.type);
+          allRequirements.push(req);
+        }
+      });
+    }
+
+    return allRequirements;
+  }, [serviceTitle, selectedSubcategories]);
 
   // Use prop-based view state (no derivation, no flash!)
   const showingRegistration = currentView === 'registration';
@@ -372,8 +408,12 @@ export default function ServiceQualificationStep({
       // Import the server action
       const { deleteServiceDocument } = await import("@/services/worker/serviceDocuments.service");
 
+      // Create composite key (serviceTitle:requirementType) for service documents
+      // This matches the format used when uploading
+      const compositeRequirementType = `${serviceTitle}:${requirementType}`;
+
       // Delete from server (database + blob storage)
-      const result = await deleteServiceDocument(session.user.id, requirementType, fileUrl);
+      const result = await deleteServiceDocument(session.user.id, compositeRequirementType, fileUrl);
 
       if (!result.success) {
         alert(`Failed to delete document: ${result.error}`);
@@ -663,6 +703,10 @@ export default function ServiceQualificationStep({
 
   // If showing documents view
   if (showingDocuments) {
+    // Check if this service has ONLY optional documents (no required ones)
+    const hasRequiredDocs = documentRequirements.some(req => req.required);
+    const hasOnlyOptionalDocs = documentRequirements.length > 0 && !hasRequiredDocs;
+
     return (
       <div className="form-page-content">
         {/* Left Column - Form */}
@@ -671,8 +715,23 @@ export default function ServiceQualificationStep({
             <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
               Supporting Documents for {serviceTitle}
             </h3>
+
+            {/* Special message for services with only optional documents */}
+            {hasOnlyOptionalDocs && (
+              <div className="mb-4 flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <InformationCircleIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-800 font-poppins">
+                  <strong>At least one document required:</strong> While all documents below are optional,
+                  you must upload at least one to demonstrate your qualifications for {serviceTitle}.
+                </p>
+              </div>
+            )}
+
             <p className="text-sm text-gray-600 font-poppins mb-6">
-              Upload the required documents for {serviceTitle}. Required documents are marked with an asterisk (*).
+              {hasRequiredDocs
+                ? `Upload the required documents for ${serviceTitle}. Required documents are marked with an asterisk (*).`
+                : `Upload at least one document to demonstrate your qualifications for ${serviceTitle}.`
+              }
             </p>
 
             {/* Requirements List */}
@@ -1069,15 +1128,6 @@ export default function ServiceQualificationStep({
               );
             })}
           </div>
-
-          {selectedQualifications.length > 0 && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-800 font-poppins">
-                ✓ {selectedQualifications.length} qualification
-                {selectedQualifications.length > 1 ? "s" : ""} selected for {serviceTitle}
-              </p>
-            </div>
-          )}
 
           {/* Error message for missing uploads */}
           {errors.qualifications && (

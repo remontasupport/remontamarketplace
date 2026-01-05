@@ -71,15 +71,25 @@ export async function getServiceDocuments(): Promise<ActionResponse> {
     });
 
     // 4. Format response with serviceTitle from metadata
-    const formattedDocuments = documents.map(doc => ({
-      id: doc.id,
-      documentType: doc.requirementType,
-      documentName: doc.requirementName,
-      documentUrl: doc.documentUrl,
-      uploadedAt: doc.documentUploadedAt,
-      status: doc.status,
-      serviceTitle: (doc.metadata as any)?.serviceTitle || '',
-    }));
+    // Parse composite requirementType (format: "ServiceName:requirementType")
+    const formattedDocuments = documents.map(doc => {
+      // Extract base requirement type from composite key
+      // Format is "ServiceTitle:requirementType" or just "requirementType" for legacy data
+      const requirementParts = doc.requirementType.split(':');
+      const baseRequirementType = requirementParts.length > 1
+        ? requirementParts[requirementParts.length - 1] // Last part after ':'
+        : doc.requirementType; // Fallback for legacy data without ':'
+
+      return {
+        id: doc.id,
+        documentType: baseRequirementType, // Use base type for frontend compatibility
+        documentName: doc.requirementName,
+        documentUrl: doc.documentUrl,
+        uploadedAt: doc.documentUploadedAt,
+        status: doc.status,
+        serviceTitle: (doc.metadata as any)?.serviceTitle || '',
+      };
+    });
 
     return {
       success: true,
@@ -145,10 +155,13 @@ export async function deleteServiceDocument(
     }
 
     // 4. Find and delete the verification requirement
+    // NOTE: Since we're using composite keys (ServiceTitle:requirementType),
+    // we search by documentUrl which is unique per document
     const existingRequirement = await authPrisma.verificationRequirement.findFirst({
       where: {
         workerProfileId: workerProfile.id,
-        requirementType: requirementType,
+        documentUrl: documentUrl,
+        documentCategory: "SERVICE_QUALIFICATION",
       },
     });
 
@@ -167,16 +180,30 @@ export async function deleteServiceDocument(
 
 
 
-    // 6. Revalidate cache
-    revalidatePath("/dashboard/worker/services/setup");
-    revalidatePath("/dashboard/worker");
-
-   
-
-    return {
+    // 6. Return SUCCESS immediately (optimistic update handles instant UI feedback)
+    const response = {
       success: true,
       message: "Document deleted successfully!",
     };
+
+    // 7. BACKGROUND SYNC: Update database setupProgress field (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/services/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.services in database (background)
+      import("./setupProgress.service").then(({ autoUpdateServicesCompletion }) => {
+        return autoUpdateServicesCompletion().catch((error) => {
+          console.error("[Service Documents] Background DB sync failed (non-critical):", error);
+        });
+      }),
+    ]).catch((error) => {
+      console.error("[Service Documents] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
  
     return {
@@ -309,12 +336,18 @@ export async function uploadServiceDocument(
 
     // 7. OPTIMIZED: Use Prisma transaction for atomic operation
     // Wraps all DB writes in one transaction (reduces round-trips, ensures atomicity)
+
+    // Create unique identifier for this document (service + documentType)
+    // This prevents documents with the same type across different services from overwriting each other
+    const uniqueRequirementType = `${serviceTitle}:${requirementType}`;
+
     await authPrisma.$transaction(async (tx) => {
       // Find or create verification requirement for this service + requirement type
+      // Use unique composite key to separate documents by service
       const existingRequirement = await tx.verificationRequirement.findFirst({
         where: {
           workerProfileId: workerProfile.id,
-          requirementType: requirementType,
+          requirementType: uniqueRequirementType,
         },
       });
 
@@ -349,7 +382,7 @@ export async function uploadServiceDocument(
         await tx.verificationRequirement.create({
           data: {
             workerProfileId: workerProfile.id,
-            requirementType: requirementType,
+            requirementType: uniqueRequirementType, // Use composite key
             requirementName: displayName,
             isRequired: requirement?.required || false,
             documentCategory: "SERVICE_QUALIFICATION",
@@ -366,11 +399,8 @@ export async function uploadServiceDocument(
       }
     });
 
-    // 8. Revalidate cache
-    revalidatePath("/dashboard/worker/services/setup");
-    revalidatePath("/dashboard/worker");
-
-    return {
+    // 8. Return SUCCESS immediately (optimistic update handles instant UI feedback)
+    const response = {
       success: true,
       message: "Document uploaded successfully!",
       data: {
@@ -378,10 +408,29 @@ export async function uploadServiceDocument(
         fileName: sanitizedFileName,
         size: file.size,
         uploadedAt: new Date().toISOString(), // For optimistic updates
-        requirementType: requirementType,
+        requirementType: uniqueRequirementType, // Return the composite key
         serviceTitle: serviceTitle,
       },
     };
+
+    // 9. BACKGROUND SYNC: Update database setupProgress field (async, non-blocking)
+    Promise.all([
+      // Revalidate cache paths
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/services/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      // Update setupProgress.services in database (background)
+      import("./setupProgress.service").then(({ autoUpdateServicesCompletion }) => {
+        return autoUpdateServicesCompletion().catch((error) => {
+          console.error("[Service Documents] Background DB sync failed (non-critical):", error);
+        });
+      }),
+    ]).catch((error) => {
+      console.error("[Service Documents] Background sync operations failed:", error);
+    });
+
+    return response;
   } catch (error: any) {
 
     return {

@@ -119,15 +119,88 @@ export function useUploadComplianceDocument() {
 
       return result;
     },
-    // Cancel outgoing refetches to prevent race conditions
+    // TRUE OPTIMISTIC UPDATE: Update cache BEFORE server responds
+    // This makes checkmarks appear INSTANTLY while upload happens in background
     onMutate: async (variables) => {
+      // 1. Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
+
+      // 2. Snapshot previous value for rollback on error
+      const previousDocument = queryClient.getQueryData(
+        complianceDocumentsKeys.byType(variables.documentType)
+      );
+
+      // 3. OPTIMISTICALLY update document cache (INSTANT UI feedback)
+      const optimisticDocument = {
+        id: 'temp-' + Date.now(), // Temporary ID until server responds
+        documentUrl: URL.createObjectURL(variables.file), // Preview URL
+        documentType: variables.documentType,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData(
+        complianceDocumentsKeys.byType(variables.documentType),
+        {
+          document: optimisticDocument,
+        }
+      );
+
+      // 4. OPTIMISTICALLY update setupProgress checkmarks (INSTANT checkmark!)
+      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+        const currentProfileData = queryClient.getQueryData(
+          workerProfileKeys.all
+        ) as any;
+
+        if (currentProfileData && Array.isArray(currentProfileData)) {
+          const profileData = currentProfileData[0];
+          if (profileData?.setupProgress) {
+            // Determine which section to update based on documentType
+            const isCompliance = ['right-to-work', 'police-check', 'ndis-screening-check', 'abn-contractor'].includes(variables.documentType);
+            const isTraining = ['infection-control', 'first-aid', 'behaviour-support', 'manual-handling', 'ndis-worker-orientation'].includes(variables.documentType);
+
+            const optimisticProgress = {
+              ...profileData.setupProgress,
+              // Optimistically mark as complete (will be verified by server)
+              ...(isCompliance && { compliance: true }),
+              ...(isTraining && { trainings: true }),
+            };
+
+            queryClient.setQueryData(
+              workerProfileKeys.all,
+              [{
+                ...profileData,
+                setupProgress: optimisticProgress,
+              }]
+            );
+          }
+        }
+      }).catch(() => {
+        // Silently fail - not critical
+      });
+
+      // Return context for rollback
+      return { previousDocument };
     },
+    // Rollback on error
+    onError: (error, variables, context) => {
+      if (context?.previousDocument) {
+        queryClient.setQueryData(
+          complianceDocumentsKeys.byType(variables.documentType),
+          context.previousDocument
+        );
+      }
+
+      // Rollback setupProgress optimistic update
+      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+      }).catch(() => {});
+    },
+    // Update with real data from server
     onSuccess: (result, variables) => {
-      // OPTIMISTIC UPDATE: Immediately populate cache with uploaded document
-      // This prevents the delay from refetching the same data we just uploaded
       if (result.success && result.data) {
         const documentData = {
           id: result.data.id,
@@ -136,8 +209,7 @@ export function useUploadComplianceDocument() {
           uploadedAt: result.data.uploadedAt,
         };
 
-        // Update cache with the new document (prevents refetch delay)
-        // Format must match API response exactly: { document: {...} }
+        // Replace optimistic data with real server data
         queryClient.setQueryData(
           complianceDocumentsKeys.byType(variables.documentType),
           {
@@ -146,16 +218,12 @@ export function useUploadComplianceDocument() {
         );
       }
 
-      // Still invalidate for eventual consistency (background refetch)
-      // This ensures data stays in sync if there are any server-side transformations
-      // NOTE: Only invalidate the specific documentType to prevent race conditions
-      // when uploading multiple documents simultaneously
-      queryClient.invalidateQueries({
-        queryKey: complianceDocumentsKeys.byType(variables.documentType),
-      });
-      // REMOVED: complianceDocumentsKeys.all invalidation
-      // Reason: Causes race condition when uploading multiple docs simultaneously
-      // Each document type has its own cache entry, no need to invalidate all
+      // Invalidate to refetch fresh setupProgress from server (with real-time calculation)
+      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+      }).catch(() => {});
     },
   });
 }
@@ -200,10 +268,12 @@ export function useDeleteComplianceDocument() {
       );
 
       // Optimistically update cache (INSTANT UI feedback)
+      // Set both formats to ensure compatibility with all components
       queryClient.setQueryData(
         complianceDocumentsKeys.byType(variables.documentType),
         {
           document: null,
+          documents: [],  // Also clear array format
         }
       );
 
@@ -231,6 +301,18 @@ export function useDeleteComplianceDocument() {
       // Reason: Causes race condition when deleting multiple docs simultaneously
       // If File 1 completes and invalidates ALL, it refetches File 2 while File 2
       // is still being deleted, causing File 2 to briefly reappear before disappearing
+
+      // Also invalidate worker profile to update setupProgress checkmarks
+      // Small delay to prevent race conditions
+      setTimeout(() => {
+        import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+          queryClient.invalidateQueries({
+            queryKey: workerProfileKeys.all,
+          });
+        }).catch(() => {
+          // Silently fail if import fails - not critical
+        });
+      }, 100);
     },
   });
 }

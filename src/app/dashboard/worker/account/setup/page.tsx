@@ -16,9 +16,10 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { ACCOUNT_SETUP_STEPS } from "@/config/accountSetupSteps";
 import Loader from "@/components/ui/Loader";
 
@@ -101,6 +102,7 @@ function AccountSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks - replaces manual fetching
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
@@ -347,11 +349,10 @@ function AccountSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/account/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed
-        setSuccessMessage("Account setup completed!");
-        setTimeout(() => {
-          router.push("/dashboard/worker");
-        }, 2000);
+        // Last step completed - redirect immediately
+        // Dashboard will automatically refetch profile with fresh setupProgress
+        // (useWorkerProfile has staleTime: 0 and refetchOnMount: 'always')
+        router.push("/dashboard/worker");
       }
     } catch (error) {
       setErrors({ general: "Failed to save. Please try again." });
@@ -408,7 +409,7 @@ function AccountSetupContent() {
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={handleSkip}
-        isNextLoading={false}
+        isNextLoading={currentStep === STEPS.length ? updateProfileMutation.isPending : false}
         nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
         showSkip={false}
       >
