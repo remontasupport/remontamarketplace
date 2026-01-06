@@ -10,6 +10,7 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
@@ -61,6 +62,34 @@ export default function StepRightToWork({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  // Helper function to show error modal
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  // Helper function to close error modal
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   // Fetch existing document data
   const {
     data: documentData,
@@ -97,7 +126,7 @@ export default function StepRightToWork({
 
   const saveCitizenshipStatus = async (isCitizen: boolean) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
@@ -123,7 +152,7 @@ export default function StepRightToWork({
         queryKey: complianceDocumentsKeys.byType("right-to-work"),
       });
     } catch (error: any) {
-      alert(`Failed to save: ${error.message}`);
+      showErrorModal(error.message || "Failed to save. Please try again.", "Save Failed");
     } finally {
       setIsSaving(false);
     }
@@ -131,26 +160,26 @@ export default function StepRightToWork({
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
     if (!expiryDate) {
-      alert("Please select a visa expiry date before uploading");
+      showErrorModal("Please select a visa expiry date before uploading", "Expiry Date Required");
       return;
     }
 
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal("Please upload a JPG, PNG, or PDF file", "Invalid File Type");
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal("File size must be less than 10MB", "File Too Large", "Please compress your file or choose a smaller one.");
       return;
     }
 
@@ -165,7 +194,8 @@ export default function StepRightToWork({
 
       setExpiryDate("");
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      // Show specific error, not generic server message
+      showErrorModal(error.message || "Upload failed. Please try again.");
     }
   };
 
@@ -185,7 +215,7 @@ export default function StepRightToWork({
 
       setDeleteDialogOpen(false);
     } catch (error: any) {
-      alert(`Delete failed: ${error.message}`);
+      showErrorModal(error.message || "Delete failed. Please try again.", "Delete Failed");
     }
   };
 
@@ -385,6 +415,14 @@ export default function StepRightToWork({
         </div>
       </div>
     </StepContentWrapper>
+
+    <ErrorModal
+      isOpen={errorModal.isOpen}
+      onClose={closeErrorModal}
+      title={errorModal.title}
+      message={errorModal.message}
+      subtitle={errorModal.subtitle}
+    />
     </>
   );
 }

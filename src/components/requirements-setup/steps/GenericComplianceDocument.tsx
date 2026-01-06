@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
@@ -52,6 +53,31 @@ export default function GenericComplianceDocument({
   const [expiryDate, setExpiryDate] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   const documentType = requirement?.id || "generic-document";
   const hasExpiration = requirement?.hasExpiration ?? false;
 
@@ -78,14 +104,22 @@ export default function GenericComplianceDocument({
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 10MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -101,7 +135,11 @@ export default function GenericComplianceDocument({
       // Clear expiry date after successful upload
       setExpiryDate("");
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Upload Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
@@ -119,7 +157,11 @@ export default function GenericComplianceDocument({
         apiEndpoint,
       });
     } catch (error: any) {
-      alert(`Delete failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
@@ -133,6 +175,14 @@ export default function GenericComplianceDocument({
         message="Are you sure you want to delete file?"
         confirmText="Yes"
         cancelText="No"
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
       />
 
       <StepContentWrapper
@@ -271,7 +321,10 @@ export default function GenericComplianceDocument({
               size="sm"
               onClick={() => {
                 if (hasExpiration && !expiryDate) {
-                  alert("Please enter the expiry date first");
+                  showErrorModal(
+                    "Please enter the expiry date first",
+                    "Missing Information"
+                  );
                   return;
                 }
                 document.getElementById(`file-${documentType}`)?.click();

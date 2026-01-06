@@ -47,6 +47,7 @@ import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   CheckCircleIcon,
   ArrowUpTrayIcon,
@@ -148,6 +149,31 @@ export default function Step1ProofOfIdentity({
   const [userHasChosenDifferentDoc, setUserHasChosenDifferentDoc] = useState(false); // Track if user manually chose different doc
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // ===== DERIVED STATE =====
   // Convert documents array to map for easier lookup
@@ -283,14 +309,22 @@ export default function Step1ProofOfIdentity({
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 10MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -322,8 +356,11 @@ export default function Step1ProofOfIdentity({
       }
 
     } catch (error: any) {
-
-      alert(`Upload failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Upload Failed",
+        "Please try again or contact support if the issue persists."
+      );
     } finally {
       setUploadingFiles((prev) => {
         const next = new Set(prev);
@@ -379,7 +416,11 @@ export default function Step1ProofOfIdentity({
         queryKey: identityDocumentsKeys.all,
       });
     } catch (error: any) {
-      alert(`Delete failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     } finally {
       setDocumentToDelete(null);
       setDeleteDialogOpen(false);
@@ -398,6 +439,14 @@ export default function Step1ProofOfIdentity({
         message="Are you sure you want to delete file?"
         confirmText="Yes"
         cancelText="No"
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
       />
 
       <div className="account-step-container">
