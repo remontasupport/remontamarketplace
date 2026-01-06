@@ -1,7 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Check, AlertTriangle } from "lucide-react";
+import {
+  getWorkerExperience,
+  saveWorkerExperience,
+  type ExperienceData as ServiceExperienceData,
+  type ExperienceArea as ServiceExperienceArea,
+} from "@/services/worker/experience.service";
 
 interface ExperienceArea {
   id: string;
@@ -88,6 +94,50 @@ export default function ExperienceSection() {
     });
     return initial;
   });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Load existing experience on mount
+  useEffect(() => {
+    const loadExperience = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getWorkerExperience();
+
+        if (response.success && response.data) {
+          const savedData = response.data;
+          const updatedExperienceData = { ...experienceData };
+
+          // Populate with saved data
+          for (const [areaId, areaData] of Object.entries(savedData)) {
+            if (updatedExperienceData[areaId]) {
+              updatedExperienceData[areaId] = {
+                ...updatedExperienceData[areaId],
+                selected: true,
+                expanded: false,
+                isProfessional: areaData.isProfessional,
+                isPersonal: areaData.isPersonal,
+                specificAreas: areaData.specificAreas || [],
+                description: areaData.description || "",
+                otherAreas: areaData.otherAreas || [],
+              };
+            }
+          }
+
+          setExperienceData(updatedExperienceData);
+        }
+      } catch (error) {
+        console.error("Error loading experience:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadExperience();
+  }, []);
 
   const handleAreaToggle = (areaId: string) => {
     setExperienceData((prev) => ({
@@ -182,10 +232,71 @@ export default function ExperienceSection() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      setSuccessMessage(null);
 
-    // TODO: Implement API call
+      // Prepare data for saving - only include selected areas
+      const dataToSave: ServiceExperienceData = {};
+
+      for (const [areaId, areaData] of Object.entries(experienceData)) {
+        if (areaData.selected) {
+          // Validate required fields
+          if (!areaData.isProfessional && !areaData.isPersonal) {
+            setError(`Please select experience type (Professional or Personal) for ${areaData.name}.`);
+            return;
+          }
+
+          if (areaData.description.length < 100) {
+            setError(`Description for ${areaData.name} must be at least 100 characters.`);
+            return;
+          }
+
+          dataToSave[areaId] = {
+            isProfessional: areaData.isProfessional,
+            isPersonal: areaData.isPersonal,
+            specificAreas: areaData.specificAreas,
+            description: areaData.description,
+            otherAreas: areaData.otherAreas,
+          };
+        }
+      }
+
+      // Validate that at least one area is selected
+      if (Object.keys(dataToSave).length === 0) {
+        setError("Please select at least one experience area.");
+        return;
+      }
+
+      // Save experience
+      const response = await saveWorkerExperience(dataToSave);
+
+      if (response.success) {
+        setSuccessMessage(response.message || "Experience saved successfully!");
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        setError(response.error || "Failed to save experience.");
+      }
+    } catch (error: any) {
+      console.error("Error saving experience:", error);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="profile-section">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-section">
@@ -197,6 +308,20 @@ export default function ExperienceSection() {
         Select all areas that you've worked or have professional or personal
         experience in.
       </p>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800 font-medium">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-800 font-medium">{error}</p>
+        </div>
+      )}
 
       {/* Experience Area Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -423,11 +548,12 @@ export default function ExperienceSection() {
       <div className="mt-8">
         <button
           type="button"
-          className="px-6 py-3 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90"
+          className="px-6 py-3 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: "#0C1628" }}
           onClick={handleSave}
+          disabled={isSaving}
         >
-          Save and continue
+          {isSaving ? "Saving..." : "Save and continue"}
         </button>
       </div>
     </div>

@@ -454,6 +454,12 @@ model WorkerAdditionalInfo {
   // Bank Account (JSONB) - stores { accountName, bankName, bsb, accountNumber }
   bankAccount       Json?                         // Bank account details
 
+  // Availability (JSONB) - stores { MONDAY: { startTime: "09:00", endTime: "17:00" }, TUESDAY: {...}, ... }
+  availability      Json?         @default("{}")  // Worker availability by day
+
+  // Experience (JSONB) - stores { aged-care: { isProfessional: true, isPersonal: false, specificAreas: [...], description: "...", otherAreas: [...] }, ... }
+  experience        Json?         @default("{}")  // Worker experience by area
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

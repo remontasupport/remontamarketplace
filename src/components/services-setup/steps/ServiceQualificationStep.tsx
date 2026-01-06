@@ -88,6 +88,9 @@ export default function ServiceQualificationStep({
   // Track uploaded files for qualifications (qualificationType -> { url, fileName })
   const [qualificationFiles, setQualificationFiles] = useState<Record<string, { url: string; fileName: string }>>({});
 
+  // Track which specific requirement is currently being uploaded
+  const [uploadingRequirement, setUploadingRequirement] = useState<string | null>(null);
+
   // Error modal state
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
@@ -316,6 +319,9 @@ export default function ServiceQualificationStep({
     const file = files[0];
 
     try {
+      // Set uploading state for this specific requirement
+      setUploadingRequirement(qualificationType);
+
       // Use mutation hook for instant optimistic updates
       const result = await uploadMutation.mutateAsync({
         file,
@@ -347,6 +353,8 @@ export default function ServiceQualificationStep({
         showErrorModal(errorMessage);
       }
     } finally {
+      // Clear uploading state
+      setUploadingRequirement(null);
       event.target.value = '';
     }
   };
@@ -376,6 +384,9 @@ export default function ServiceQualificationStep({
     const file = files[0]; // Only take the first file since multiple is disabled
 
     try {
+      // Set uploading state for this specific requirement
+      setUploadingRequirement(requirementType);
+
       // Use mutation hook for instant optimistic updates
       await uploadMutation.mutateAsync({
         file,
@@ -396,6 +407,8 @@ export default function ServiceQualificationStep({
         showErrorModal(errorMessage);
       }
     } finally {
+      // Clear uploading state
+      setUploadingRequirement(null);
       // Reset the input
       event.target.value = '';
     }
@@ -819,17 +832,17 @@ export default function ServiceQualificationStep({
                           id={`upload-${requirement.type}`}
                           accept=".pdf,.png,.jpg,.jpeg"
                           onChange={(e) => handleFileUpload(requirement.type, e)}
-                          disabled={uploadMutation.isPending}
+                          disabled={uploadingRequirement === requirement.type}
                           className="hidden"
                         />
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => document.getElementById(`upload-${requirement.type}`)?.click()}
-                          disabled={uploadMutation.isPending}
+                          disabled={uploadingRequirement === requirement.type}
                           className="w-full sm:w-auto"
                         >
-                          {uploadMutation.isPending ? (
+                          {uploadingRequirement === requirement.type ? (
                             <>
                               <span className="loading-spinner"></span>
                               Uploading...
@@ -1122,7 +1135,7 @@ export default function ServiceQualificationStep({
                     {/* Upload file button - only show when qualification is selected */}
                     {isSelected && (
                       <div className="ml-4">
-                        {uploadMutation.isPending ? (
+                        {uploadingRequirement === qualification.type ? (
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-gray-300 border-t-teal-600 rounded-full animate-spin" />
                             <span className="text-sm text-gray-600 font-poppins">Uploading...</span>

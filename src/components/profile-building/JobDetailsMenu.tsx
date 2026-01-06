@@ -14,11 +14,6 @@ const menuItems: MenuItem[] = [
     label: "Preferred Hours",
     href: "/dashboard/worker/profile-building?section=preferred-hours",
   },
-  {
-    id: "indicative-rates",
-    label: "Indicative Rates",
-    href: "/dashboard/worker/profile-building?section=indicative-rates",
-  },
   // {
   //   id: "locations",
   //   label: "Locations",

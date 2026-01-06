@@ -6,7 +6,6 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import ProfileEditLayout from "@/components/profile-building/ProfileEditLayout";
 import QueryProvider from "@/providers/QueryProvider";
 import PreferredHoursSection from "@/components/profile-building/sections/PreferredHoursSection";
-import IndicativeRatesSection from "@/components/profile-building/sections/IndicativeRatesSection";
 // import LocationsSection from "@/components/profile-building/sections/LocationsSection";
 import ExperienceSection from "@/components/profile-building/sections/ExperienceSection";
 import BankAccountSection from "@/components/profile-building/sections/BankAccountSection";
@@ -32,8 +31,6 @@ function ProfileBuildingContent() {
       // Job Details
       case "preferred-hours":
         return <PreferredHoursSection />;
-      case "indicative-rates":
-        return <IndicativeRatesSection />;
       // case "locations":
       //   return <LocationsSection />;
       case "experience":
