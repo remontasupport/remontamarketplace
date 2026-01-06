@@ -83,21 +83,26 @@ export async function updateWorkerABN(
       },
     });
 
-    // 5. Revalidate the profile page cache
-    revalidatePath("/dashboard/worker/account/setup");
-    revalidatePath("/dashboard/worker");
-
-    // 6. Auto-update Compliance completion status (synchronous for cache consistency)
-    await autoUpdateComplianceCompletion().catch((error) => {
-      console.error("[Compliance] Failed to auto-update compliance completion:", error);
-      // Don't fail the main operation if this fails
-    });
-
-    return {
+    // 5. Return SUCCESS immediately for instant navigation
+    const response = {
       success: true,
       message: "Your ABN has been saved successfully!",
       data: updatedProfile,
     };
+
+    // 6. BACKGROUND: Auto-update Compliance completion status (non-blocking)
+    // Revalidate cache and update progress in background - doesn't block response
+    Promise.all([
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      autoUpdateComplianceCompletion().catch((error) => {
+        console.error("[Compliance] Background compliance update failed (non-critical):", error);
+      }),
+    ]).catch(() => {});
+
+    return response;
   } catch (error: any) {
     
     return {

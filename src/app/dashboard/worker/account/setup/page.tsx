@@ -14,6 +14,7 @@
  */
 
 import { useState, useEffect, useRef, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,7 +22,9 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { ACCOUNT_SETUP_STEPS } from "@/config/accountSetupSteps";
+import { autoUpdateAccountDetailsCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 // Helper function to parse location string
 // Format: "Street Address, City/Suburb, State PostalCode" or "City/Suburb, State PostalCode"
@@ -108,6 +111,8 @@ function AccountSetupContent() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -296,7 +301,20 @@ function AccountSetupContent() {
 
     if (!session?.user?.id) return;
 
+    // Check if this is the final step
+    const isFinalStep = currentStep === STEPS.length;
+
     try {
+      // Show appropriate loading state BEFORE any async operations
+      if (isFinalStep) {
+        // Use flushSync to force immediate synchronous render
+        flushSync(() => {
+          setIsFinalSaving(true);
+        });
+      } else {
+        setIsNavigating(true);
+      }
+
       // Skip saving for step 2 (photo) since it handles its own upload
       if (currentStep !== 2) {
         // Only send relevant fields for each step to avoid overwriting other fields
@@ -335,26 +353,50 @@ function AccountSetupContent() {
         }
 
         // Use mutation hook - automatically invalidates cache on success
-    
+
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
           data: dataToSend,
         });
-       
+
       }
 
       // Move to next step or finish
-      if (currentStep < STEPS.length) {
+      if (!isFinalStep) {
+        // Reset loading state before navigation
+        setIsNavigating(false);
+
+        // Navigate to next step
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/account/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed - redirect immediately
-        // Dashboard will automatically refetch profile with fresh setupProgress
-        // (useWorkerProfile has staleTime: 0 and refetchOnMount: 'always')
+        // Last step completed - Wait for update with timeout (max 3 seconds)
+        try {
+          // Race between update and timeout - whichever finishes first
+          await Promise.race([
+            autoUpdateAccountDetailsCompletion(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+        } catch (err) {
+          // If timeout or error, continue anyway (dashboard will poll)
+          console.log('Update timed out or failed, navigating anyway');
+        }
+
+        // Invalidate caches so dashboard fetches fresh data
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+
+        // Force Next.js to invalidate server cache and refetch on next navigation
+        router.refresh();
+
+        // Navigate (data should be updated now)
         router.push("/dashboard/worker");
       }
     } catch (error) {
+      setIsNavigating(false);
+      setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -401,40 +443,44 @@ function AccountSetupContent() {
 
   return (
     <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Account details"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={handleSkip}
-        isNextLoading={currentStep === STEPS.length ? updateProfileMutation.isPending : false}
-        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
-        showSkip={false}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
-            {successMessage}
-          </div>
-        )}
+      {!isFinalSaving ? (
+        <StepContainer
+          currentStep={currentStep}
+          totalSteps={STEPS.length}
+          stepTitle={currentStepData.title}
+          sectionTitle="Account details"
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onSkip={handleSkip}
+          isNextLoading={false}
+          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          showSkip={false}
+        >
+          {/* Success Message */}
+          {successMessage && (
+            <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
+              {successMessage}
+            </div>
+          )}
 
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
-            {errors.general}
-          </div>
-        )}
+          {/* General Error */}
+          {errors.general && (
+            <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
+              {errors.general}
+            </div>
+          )}
 
-        {/* Render current step */}
-        <CurrentStepComponent
-          data={formData}
-          onChange={handleFieldChange}
-          onPhotoSave={currentStep === 2 ? handlePhotoSave : undefined}
-          errors={errors}
-        />
-      </StepContainer>
+          {/* Render current step */}
+          <CurrentStepComponent
+            data={formData}
+            onChange={handleFieldChange}
+            onPhotoSave={currentStep === 2 ? handlePhotoSave : undefined}
+            errors={errors}
+          />
+        </StepContainer>
+      ) : (
+        <LoadingOverlay isOpen={isFinalSaving} message="Saving your account details..." />
+      )}
     </DashboardLayout>
   );
 }

@@ -11,6 +11,13 @@ import { UserRole } from "@/types/auth";
 import { authPrisma } from "@/lib/auth-prisma";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import NewsSlider from "@/components/dashboard/NewsSlider";
+import ProfileCompletionReminder from "@/components/dashboard/ProfileCompletionReminder";
+import {
+  checkAccountDetailsCompletion,
+  checkComplianceCompletion,
+  checkTrainingsCompletion,
+  checkServicesCompletion,
+} from "@/services/worker/setupProgress.service";
 
 // Disable caching for this page - CRITICAL for security
 export const dynamic = 'force-dynamic';
@@ -169,8 +176,23 @@ export default async function WorkerDashboard() {
     },
   });
 
-  // Fetch news articles from API
-  const newsArticles = await fetchNewsArticles();
+  // PERFORMANCE OPTIMIZATION: Fetch setup progress in parallel with news articles
+  // This calculates completion status server-side for instant rendering (no client fetch delay)
+  const [newsArticles, accountDetailsResult, complianceResult, trainingsResult, servicesResult] = await Promise.all([
+    fetchNewsArticles(),
+    checkAccountDetailsCompletion(),
+    checkComplianceCompletion(),
+    checkTrainingsCompletion(),
+    checkServicesCompletion(),
+  ]);
+
+  // Construct setupProgress from real-time calculation
+  const setupProgress = {
+    accountDetails: accountDetailsResult.success ? (accountDetailsResult.data || false) : false,
+    compliance: complianceResult.success ? (complianceResult.data || false) : false,
+    trainings: trainingsResult.success ? (trainingsResult.data || false) : false,
+    services: servicesResult.success ? (servicesResult.data || false) : false,
+  };
 
   // At this point, we have a valid WORKER session
   // This code only runs server-side, so it's completely secure
@@ -188,9 +210,14 @@ export default async function WorkerDashboard() {
           <h2 className="hero-title">
             Welcome to Remonta!
           </h2>
-          <p className="text-white/90 text-lg font-poppins mt-4">
+          <p className="text-white/90 text-lg font-poppins mt-4 mb-8">
             Connecting support workers with families to create meaningful, life-changing relationships.
           </p>
+
+          {/* Profile Completion Reminder */}
+          <div style={{ maxWidth: '600px' }}>
+            <ProfileCompletionReminder initialSetupProgress={setupProgress} />
+          </div>
         </div>
         {/* Decorative elements */}
         <div className="hero-decoration hero-decoration-1"></div>

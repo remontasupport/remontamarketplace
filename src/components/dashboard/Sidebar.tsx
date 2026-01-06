@@ -17,7 +17,6 @@ import {
   DocumentTextIcon,
   WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
-import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
@@ -220,6 +219,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
   // pathname already declared at top of component
   const previousSectionRef = useRef<string | null>(getSectionFromPath(pathname));
   const [shouldTransition, setShouldTransition] = useState(false);
+  const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
 
   // State: Only current section open based on route
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -273,6 +273,25 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
       onClose()
     }
   }
+
+  // Handle dashboard navigation with loading state
+  const handleDashboardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Only show loading if we're NOT already on the dashboard
+    if (pathname !== '/dashboard/worker') {
+      setIsNavigatingToDashboard(true)
+    }
+    handleLinkClick()
+  }
+
+  // Clear loading state when we arrive at dashboard
+  useEffect(() => {
+    if (pathname === '/dashboard/worker' && isNavigatingToDashboard) {
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setIsNavigatingToDashboard(false)
+      }, 300)
+    }
+  }, [pathname, isNavigatingToDashboard])
 
   // Get profile photo URL from database or use placeholder
   // Handle both prop type (photo) and WorkerProfile type (photos)
@@ -333,7 +352,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
               <Link
                 href="/dashboard/worker"
                 className={`nav-item ${pathname === '/dashboard/worker' ? 'active' : ''}`}
-                onClick={handleLinkClick}
+                onClick={handleDashboardClick}
               >
                 <HomeIcon className="nav-icon" />
                 <span>Dashboard</span>
@@ -357,17 +376,6 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
                 <div className="nav-dropdown-title">
                   <SectionIcon className="nav-dropdown-badge-icon" />
                   <span>{section.name}</span>
-                  {isSectionCompleted(section.id) && (
-                    <CheckCircleIcon
-                      className="nav-section-checkmark"
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        color: '#10B981',
-                        marginLeft: '8px'
-                      }}
-                    />
-                  )}
                 </div>
                 {isOpen ? (
                   <ChevronUpIcon className="nav-dropdown-icon" />
@@ -406,6 +414,71 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
           </Link>
         </div>
       </nav>
+
+      {/* Loading Overlay */}
+      {isNavigatingToDashboard && (
+        <div className="dashboard-loading-overlay">
+          <div className="dashboard-loading-spinner">
+            <div className="spinner"></div>
+            <p className="loading-text">Loading Dashboard...</p>
+          </div>
+          <style jsx>{`
+            .dashboard-loading-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.7);
+              backdrop-filter: blur(4px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 9999;
+              animation: fadeIn 0.2s ease-in-out;
+            }
+
+            .dashboard-loading-spinner {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 1rem;
+            }
+
+            .spinner {
+              width: 48px;
+              height: 48px;
+              border: 4px solid rgba(255, 255, 255, 0.2);
+              border-top-color: #6366f1;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+            }
+
+            .loading-text {
+              color: white;
+              font-family: 'Poppins', sans-serif;
+              font-size: 1rem;
+              font-weight: 500;
+              margin: 0;
+            }
+
+            @keyframes spin {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+          `}</style>
+        </div>
+      )}
     </aside>
   )
 }

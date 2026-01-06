@@ -21,10 +21,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, InformationCircleIcon, PaperClipIcon } from "@heroicons/react/24/outline";
+import ErrorModal from "@/components/ui/ErrorModal";
+import { Button } from "@/components/ui/button";
+import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, InformationCircleIcon, PaperClipIcon, ArrowUpTrayIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { getQualificationsForService } from "@/config/serviceQualificationRequirements";
 import { getServiceDocumentRequirements, ServiceDocumentRequirement } from "@/config/serviceDocumentRequirements";
-import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
+import {
+  useServiceDocuments,
+  useUploadServiceDocument,
+  useDeleteServiceDocument,
+  serviceDocumentsKeys
+} from "@/hooks/queries/useServiceDocuments";
 import {
   useWorkerServices,
 } from "@/hooks/queries/useServiceSubcategories";
@@ -74,11 +81,40 @@ export default function ServiceQualificationStep({
   // Fetch worker's selected services
   const { data: workerServices } = useWorkerServices();
 
-  // Track uploading state per requirement type
-  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+  // Mutation hooks for upload and delete with optimistic updates
+  const uploadMutation = useUploadServiceDocument();
+  const deleteMutation = useDeleteServiceDocument();
 
   // Track uploaded files for qualifications (qualificationType -> { url, fileName })
   const [qualificationFiles, setQualificationFiles] = useState<Record<string, { url: string; fileName: string }>>({});
+
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  // Helper function to show error modal
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  // Helper function to close error modal
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Load existing qualification files from database on mount
   useEffect(() => {
@@ -270,7 +306,7 @@ export default function ServiceQualificationStep({
     onChange("qualificationsByService", updatedByService);
   };
 
-  // Handle qualification file upload
+  // Handle qualification file upload - using mutation hook for optimistic updates
   const handleQualificationFileUpload = async (qualificationType: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) {
@@ -279,39 +315,38 @@ export default function ServiceQualificationStep({
 
     const file = files[0];
 
-    // Set uploading state
-    setUploadingFiles(prev => ({ ...prev, [qualificationType]: true }));
-
     try {
-      // Create FormData
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("serviceTitle", serviceTitle);
-      formData.append("requirementType", qualificationType);
-
-      // Upload using server action
-      const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
-      const result = await uploadServiceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
+      // Use mutation hook for instant optimistic updates
+      const result = await uploadMutation.mutateAsync({
+        file,
+        serviceTitle,
+        requirementType: qualificationType,
+      });
 
       // Store the uploaded file info
-      setQualificationFiles(prev => ({
-        ...prev,
-        [qualificationType]: {
-          url: result.data.url,
-          fileName: file.name,
-        },
-      }));
-
-      // Invalidate the service documents query to refresh UI
-      queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
+      if (result.success && result.data) {
+        setQualificationFiles(prev => ({
+          ...prev,
+          [qualificationType]: {
+            url: result.data.url,
+            fileName: file.name,
+          },
+        }));
+      }
     } catch (error: any) {
-      alert(`Failed to upload: ${error.message}`);
+      // Detect error type and show appropriate message
+      const errorMessage = error.message || "Unknown error occurred";
+
+      if (errorMessage.includes("unexpected response") || errorMessage.toLowerCase().includes("payload")) {
+        showErrorModal(
+          "File is too large",
+          "Upload Failed",
+          "Maximum file size is 10MB. Please choose a smaller file."
+        );
+      } else {
+        showErrorModal(errorMessage);
+      }
     } finally {
-      setUploadingFiles(prev => ({ ...prev, [qualificationType]: false }));
       event.target.value = '';
     }
   };
@@ -331,52 +366,36 @@ export default function ServiceQualificationStep({
     setDeleteDialogOpen(true);
   };
 
-  // Document upload handlers
+  // Document upload handlers - using mutation hook for optimistic updates
   const handleFileUpload = async (requirementType: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !session?.user?.id) {
-     
       return;
     }
 
     const file = files[0]; // Only take the first file since multiple is disabled
-   
-
-    // Set uploading state
-    setUploadingFiles((prev) => ({ ...prev, [requirementType]: true }));
 
     try {
-      // Import the server action
-      const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
+      // Use mutation hook for instant optimistic updates
+      await uploadMutation.mutateAsync({
+        file,
+        serviceTitle,
+        requirementType,
+      });
+    } catch (error: any) {
+      // Detect error type and show appropriate message
+      const errorMessage = error.message || "Unknown error occurred";
 
-      // Upload file to the server
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('serviceTitle', serviceTitle);
-      formData.append('requirementType', requirementType);
-
-      const result = await uploadServiceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Upload failed');
+      if (errorMessage.includes("unexpected response") || errorMessage.toLowerCase().includes("payload")) {
+        showErrorModal(
+          "File is too large",
+          "Upload Failed",
+          "Maximum file size is 10MB. Please choose a smaller file."
+        );
+      } else {
+        showErrorModal(errorMessage);
       }
-
-      // Invalidate and refetch service documents query to get fresh data
-      await queryClient.invalidateQueries({
-        queryKey: serviceDocumentsKeys.all,
-        refetchType: 'active',
-      });
-
-      // Force immediate refetch
-      await queryClient.refetchQueries({
-        queryKey: serviceDocumentsKeys.all,
-      });
-
-    } catch (error) {
-      alert(`Failed to upload document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setUploadingFiles((prev) => ({ ...prev, [requirementType]: false }));
       // Reset the input
       event.target.value = '';
     }
@@ -405,20 +424,16 @@ export default function ServiceQualificationStep({
     const { requirementType, fileIndex, fileUrl, isQualification } = fileToDelete;
 
     try {
-      // Import the server action
-      const { deleteServiceDocument } = await import("@/services/worker/serviceDocuments.service");
-
       // Create composite key (serviceTitle:requirementType) for service documents
       // This matches the format used when uploading
       const compositeRequirementType = `${serviceTitle}:${requirementType}`;
 
-      // Delete from server (database + blob storage)
-      const result = await deleteServiceDocument(session.user.id, compositeRequirementType, fileUrl);
-
-      if (!result.success) {
-        alert(`Failed to delete document: ${result.error}`);
-        return;
-      }
+      // Use mutation hook for instant optimistic updates
+      await deleteMutation.mutateAsync({
+        userId: session.user.id,
+        requirementType: compositeRequirementType,
+        documentUrl: fileUrl,
+      });
 
       // If it's a qualification file, also remove from local state
       if (isQualification) {
@@ -427,22 +442,14 @@ export default function ServiceQualificationStep({
         setQualificationFiles(updatedFiles);
       }
 
-      // Invalidate and refetch service documents query to get fresh data
-      await queryClient.invalidateQueries({
-        queryKey: serviceDocumentsKeys.all,
-        refetchType: 'active',
-      });
-
-      // Force immediate refetch
-      await queryClient.refetchQueries({
-        queryKey: serviceDocumentsKeys.all,
-      });
-
       // Reset file to delete
       setFileToDelete(null);
-    } catch (error) {
-    
-      alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error: any) {
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
@@ -764,54 +771,79 @@ export default function ServiceQualificationStep({
                       </p>
                     </div>
 
-                    {/* Upload Area */}
-                    <div className="mb-3">
-                      <label
-                        htmlFor={`upload-${requirement.type}`}
-                        className={`inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-poppins text-gray-700 transition-colors ${
-                          uploadingFiles[requirement.type]
-                            ? 'opacity-50 cursor-not-allowed'
-                            : 'cursor-pointer hover:bg-gray-50'
-                        }`}
-                      >
-                        <CloudArrowUpIcon className="h-5 w-5 text-gray-500" />
-                        {uploadingFiles[requirement.type] ? 'Uploading...' : 'Choose File'}
+                    {/* Upload Section */}
+                    {files.length > 0 ? (
+                      // Show uploaded document preview
+                      <div className="space-y-2">
+                        {files.map((fileUrl, index) => {
+                          // Extract filename from URL
+                          const urlParts = fileUrl.split('/');
+                          const fullFileName = urlParts[urlParts.length - 1];
+                          const match = fullFileName.match(/^.+-\d+-(.+)$/);
+                          const fileName = match && match[1] ? match[1] : fullFileName;
+
+                          return (
+                            <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  <DocumentIcon className="w-8 h-8 text-teal-600 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <a
+                                      href={fileUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-poppins font-medium text-teal-600 hover:text-teal-700 underline block truncate"
+                                    >
+                                      {fileName}
+                                    </a>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveFile(requirement.type, index)}
+                                  className="text-red-600 hover:text-red-700 transition-colors ml-3"
+                                  title="Remove document"
+                                >
+                                  <XCircleIcon className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      // Show upload button
+                      <div>
                         <input
-                          id={`upload-${requirement.type}`}
                           type="file"
-                          className="sr-only"
+                          id={`upload-${requirement.type}`}
                           accept=".pdf,.png,.jpg,.jpeg"
                           onChange={(e) => handleFileUpload(requirement.type, e)}
-                          disabled={uploadingFiles[requirement.type]}
+                          disabled={uploadMutation.isPending}
+                          className="hidden"
                         />
-                      </label>
-                    </div>
-
-                    {/* Uploaded Files - Preview Links Only */}
-                    {files.length > 0 && (
-                      <div className="space-y-1">
-                        {files.map((fileUrl, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2"
-                          >
-                            <a
-                              href={fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-teal-600 hover:text-teal-700 font-poppins hover:underline"
-                            >
-                              Preview uploaded document
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveFile(requirement.type, index)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <XMarkIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById(`upload-${requirement.type}`)?.click()}
+                          disabled={uploadMutation.isPending}
+                          className="w-full sm:w-auto"
+                        >
+                          {uploadMutation.isPending ? (
+                            <>
+                              <span className="loading-spinner"></span>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
+                              Choose File
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-xs text-gray-500 font-poppins mt-2">
+                          Accepted formats: PDF, PNG, JPG (max 10MB)
+                        </p>
                       </div>
                     )}
                   </div>
@@ -845,6 +877,15 @@ export default function ServiceQualificationStep({
           isOpen={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
           onConfirm={confirmDelete}
+        />
+
+        {/* Error Modal */}
+        <ErrorModal
+          isOpen={errorModal.isOpen}
+          onClose={closeErrorModal}
+          title={errorModal.title}
+          message={errorModal.message}
+          subtitle={errorModal.subtitle}
         />
       </div>
     );
@@ -1081,7 +1122,7 @@ export default function ServiceQualificationStep({
                     {/* Upload file button - only show when qualification is selected */}
                     {isSelected && (
                       <div className="ml-4">
-                        {uploadingFiles[qualification.type] ? (
+                        {uploadMutation.isPending ? (
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-gray-300 border-t-teal-600 rounded-full animate-spin" />
                             <span className="text-sm text-gray-600 font-poppins">Uploading...</span>
@@ -1159,6 +1200,15 @@ export default function ServiceQualificationStep({
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
       />
     </div>
   );

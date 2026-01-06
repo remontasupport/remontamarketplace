@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
@@ -73,23 +74,59 @@ export default function Step4NDISTrainingsMultiple({
   const uploadMutation = useUploadComplianceDocument();
   const deleteMutation = useDeleteComplianceDocument();
 
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  // Helper function to show error modal
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  // Helper function to close error modal
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   const handleFileUpload = async (file: File, documentType: string) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 10MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -100,7 +137,18 @@ export default function Step4NDISTrainingsMultiple({
         documentType,
       });
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      // Detect error type and show appropriate message
+      const errorMessage = error.message || "Unknown error occurred";
+
+      if (errorMessage.includes("unexpected response") || errorMessage.toLowerCase().includes("payload")) {
+        showErrorModal(
+          "File is too large",
+          "Upload Failed",
+          "Maximum file size is 10MB. Please choose a smaller file."
+        );
+      } else {
+        showErrorModal(errorMessage);
+      }
     } finally {
       setUploadingModuleId(null);
     }
@@ -123,7 +171,11 @@ export default function Step4NDISTrainingsMultiple({
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
     } catch (error: any) {
-      alert(`Delete failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
@@ -136,6 +188,14 @@ export default function Step4NDISTrainingsMultiple({
           setDeleteTarget(null);
         }}
         onConfirm={confirmDelete}
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
       />
 
       <StepContentWrapper>
@@ -158,7 +218,7 @@ export default function Step4NDISTrainingsMultiple({
                 href="https://training.ndiscommission.gov.au/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all mb-12 block"
+                className="text-sm text-blue-600 hover:text-blue-700 underline font-poppins break-all mb-12 block"
               >
                 https://training.ndiscommission.gov.au/
               </a>

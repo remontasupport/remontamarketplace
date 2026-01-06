@@ -10,15 +10,17 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import Step2OtherDocuments from "@/components/services-setup/steps/Step2OtherDocuments";
 import Loader from "@/components/ui/Loader";
 
 function AdditionalDocumentsContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Fetch profile data
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
@@ -31,6 +33,7 @@ function AdditionalDocumentsContent() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Populate form data on load
   useEffect(() => {
@@ -62,6 +65,9 @@ function AdditionalDocumentsContent() {
     if (!session?.user?.id) return;
 
     try {
+      // Show loading state
+      setIsNavigating(true);
+
       // Save to database (step 300 for Section 3)
       await updateProfileMutation.mutateAsync({
         userId: session.user.id,
@@ -71,12 +77,19 @@ function AdditionalDocumentsContent() {
         },
       });
 
-      // Redirect to dashboard
-      setSuccessMessage("Additional documents saved!");
+      // OPTIMIZED FOR INSTANT NAVIGATION
+
+      // Navigate immediately (optimistic UI)
+      router.push("/dashboard/worker");
+
+      // Invalidate cache in background so next dashboard visit shows updated data
       setTimeout(() => {
-        router.push("/dashboard/worker");
-      }, 1500);
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+      }, 100);
     } catch (error) {
+      setIsNavigating(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -107,7 +120,7 @@ function AdditionalDocumentsContent() {
         onNext={handleNext}
         onPrevious={handlePrevious}
         onSkip={() => {}}
-        isNextLoading={updateProfileMutation.isPending}
+        isNextLoading={false}
         nextButtonText="Complete"
         showSkip={false}
       >

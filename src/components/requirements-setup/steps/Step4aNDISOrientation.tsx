@@ -61,7 +61,7 @@ export default function Step4aNDISOrientation({
                 href="https://training.ndiscommission.gov.au/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all mb-4 block"
+                className="text-sm text-blue-600 hover:text-blue-700 underline font-poppins break-all mb-4 block"
               >
                 https://training.ndiscommission.gov.au/
               </a>

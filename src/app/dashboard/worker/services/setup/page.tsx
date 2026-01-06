@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -18,6 +19,7 @@ import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servi
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import Loader from "@/components/ui/Loader";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { useWorkerServices } from "@/hooks/queries/useServiceSubcategories";
 import { saveNursingRegistration, getNursingRegistration, saveTherapeuticRegistration, getTherapeuticRegistration } from "@/services/worker/workerServices.service";
 
@@ -78,6 +80,8 @@ function ServicesSetupContent() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Generate dynamic steps based on selected services
   const STEPS = profileData?.services && profileData.services.length > 0
@@ -464,7 +468,20 @@ function ServicesSetupContent() {
 
     if (!session?.user?.id) return;
 
+    // Check if this is the final step (after all interceptors, so we know we're saving)
+    const isFinalStep = currentStep === STEPS.length;
+
     try {
+      // Show appropriate loading state BEFORE any async operations
+      if (isFinalStep) {
+        // Use flushSync to force immediate synchronous render
+        flushSync(() => {
+          setIsFinalSaving(true);
+        });
+      } else {
+        setIsNavigating(true);
+      }
+
       const apiStep = 100 + currentStep;
       let dataToSend: any = {};
 
@@ -491,16 +508,21 @@ function ServicesSetupContent() {
       });
 
       // Move to next step or go to Additional Documents (Section 3)
-      if (currentStep < STEPS.length) {
-        const nextStepSlug = STEPS[currentStep].slug;
+      if (!isFinalStep) {
+        // Reset loading state before navigation
+        setIsNavigating(false);
+
         // Navigate to next service WITHOUT view parameter (will auto-determine)
+        const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/services/setup?step=${nextStepSlug}`);
       } else {
-        // All services completed - redirect to Additional Documents (Section 3)
-        // OPTIMIZED: Immediate redirect (no setTimeout delay)
+        // All services completed - Navigate to Additional Documents
+        // (don't reset loading state - we're leaving anyway)
         router.push("/dashboard/worker/additional-documents");
       }
     } catch (error) {
+      setIsNavigating(false);
+      setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -735,36 +757,40 @@ function ServicesSetupContent() {
 
   return (
     <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Your services"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={() => {}}
-        isNextLoading={false}
-        nextButtonText={getNextButtonText()}
-        showSkip={false}
-        showPrevious={shouldShowPrevious}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
-            {successMessage}
-          </div>
-        )}
+      {!isFinalSaving ? (
+        <StepContainer
+          currentStep={currentStep}
+          totalSteps={STEPS.length}
+          stepTitle={currentStepData.title}
+          sectionTitle="Your services"
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onSkip={() => {}}
+          isNextLoading={false}
+          nextButtonText={getNextButtonText()}
+          showSkip={false}
+          showPrevious={shouldShowPrevious}
+        >
+          {/* Success Message */}
+          {successMessage && (
+            <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
+              {successMessage}
+            </div>
+          )}
 
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
-            {errors.general}
-          </div>
-        )}
+          {/* General Error */}
+          {errors.general && (
+            <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
+              {errors.general}
+            </div>
+          )}
 
-        {/* Render current step */}
-        <CurrentStepComponent {...stepProps} />
-      </StepContainer>
+          {/* Render current step */}
+          <CurrentStepComponent {...stepProps} />
+        </StepContainer>
+      ) : (
+        <LoadingOverlay isOpen={isFinalSaving} message="Completing your services setup..." />
+      )}
     </DashboardLayout>
   );
 }

@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,7 +17,9 @@ import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateTrainingSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicTrainingSteps";
+import { autoUpdateTrainingsCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 // Form data interface
 interface UploadedDocument {
@@ -63,6 +66,8 @@ function TrainingsSetupContent() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -118,24 +123,55 @@ function TrainingsSetupContent() {
 
     if (!session?.user?.id) return;
 
+    // Check if this is the final step
+    const isFinalStep = currentStep === STEPS.length;
+
     try {
-      // Move to next step or finish (INSTANT navigation - no DB queries!)
-      if (currentStep < STEPS.length) {
+      // Show appropriate loading state BEFORE any async operations
+      if (isFinalStep) {
+        // Use flushSync to force immediate synchronous render
+        flushSync(() => {
+          setIsFinalSaving(true);
+        });
+      } else {
+        setIsNavigating(true);
+      }
+
+      // Move to next step or finish
+      if (!isFinalStep) {
+        // Reset loading state before navigation
+        setIsNavigating(false);
+
+        // Navigate to next step
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/trainings/setup?step=${nextStepSlug}`);
       } else {
-        // LAST STEP COMPLETED - Optimized redirect (no setTimeout!)
-        // Optimistic updates already showed checkmarks, just invalidate and redirect
+        // LAST STEP COMPLETED - Wait for update with timeout (max 3 seconds)
+        try {
+          // Race between update and timeout - whichever finishes first
+          await Promise.race([
+            autoUpdateTrainingsCompletion(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+        } catch (err) {
+          // If timeout or error, continue anyway (dashboard will poll)
+          console.log('Update timed out or failed, navigating anyway');
+        }
 
-        // Invalidate cache to force fresh data on dashboard
+        // Invalidate cache to refresh data
         queryClient.invalidateQueries({
           queryKey: workerProfileKeys.all,
         });
 
-        // Redirect immediately (optimistic updates already showed correct state)
+        // Force Next.js to invalidate server cache and refetch on next navigation
+        router.refresh();
+
+        // Navigate (data should be updated now)
         router.push("/dashboard/worker");
       }
     } catch (error) {
+      setIsNavigating(false);
+      setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -189,42 +225,46 @@ function TrainingsSetupContent() {
 
   return (
     <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Trainings"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={handleSkip}
-        isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
-        showSkip={false}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message">
-            {successMessage}
-          </div>
-        )}
+      {!isFinalSaving ? (
+        <StepContainer
+          currentStep={currentStep}
+          totalSteps={STEPS.length}
+          stepTitle={currentStepData.title}
+          sectionTitle="Trainings"
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onSkip={handleSkip}
+          isNextLoading={false}
+          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          showSkip={false}
+        >
+          {/* Success Message */}
+          {successMessage && (
+            <div className="form-success-message">
+              {successMessage}
+            </div>
+          )}
 
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message">
-            {errors.general}
-          </div>
-        )}
+          {/* General Error */}
+          {errors.general && (
+            <div className="form-error-message">
+              {errors.general}
+            </div>
+          )}
 
-        {/* Render current step */}
-        <CurrentStepComponent
-          data={formData}
-          onChange={handleFieldChange}
-          errors={errors}
-          // Pass additional props for dynamic components
-          requirement={currentStepData?.requirement}
-          apiEndpoint={currentStepData?.apiEndpoint}
-        />
-      </StepContainer>
+          {/* Render current step */}
+          <CurrentStepComponent
+            data={formData}
+            onChange={handleFieldChange}
+            errors={errors}
+            // Pass additional props for dynamic components
+            requirement={currentStepData?.requirement}
+            apiEndpoint={currentStepData?.apiEndpoint}
+          />
+        </StepContainer>
+      ) : (
+        <LoadingOverlay isOpen={isFinalSaving} message="Saving your trainings..." />
+      )}
     </DashboardLayout>
   );
 }

@@ -81,8 +81,8 @@ export default function StepContainer({
             className="btn-primary-brand"
             disabled={isNextDisabled || isNextLoading}
           >
-            {isNextLoading ? "Saving..." : nextButtonText}
-            {!isNextLoading && currentStep < totalSteps && " →"}
+            {nextButtonText}
+            {currentStep < totalSteps && " →"}
           </button>
         </div>
       </div>

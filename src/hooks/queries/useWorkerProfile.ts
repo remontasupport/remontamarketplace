@@ -173,7 +173,11 @@ async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
  * - Deduplicates simultaneous requests
  * - CRITICAL: Always refetches on window focus to ensure setupProgress checkmarks are current
  */
-export function useWorkerProfile(userId: string | undefined) {
+export function useWorkerProfile(userId: string | undefined, options?: {
+  refetchInterval?: number | false;
+  refetchOnMount?: boolean | 'always';
+  refetchOnWindowFocus?: boolean;
+}) {
   return useQuery({
     queryKey: workerProfileKeys.detail(userId || ""),
     queryFn: () => fetchWorkerProfile(userId!),
@@ -181,8 +185,9 @@ export function useWorkerProfile(userId: string | undefined) {
     staleTime: 0, // CRITICAL: Always fetch fresh data (setupProgress is calculated in real-time)
     gcTime: 5 * 60 * 1000, // 5 minutes - keep in memory for quick access
     retry: 1, // Retry once on failure
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: 'always', // CRITICAL: ALWAYS refetch on mount (even if data is fresh)
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true, // Refetch when window gains focus
+    refetchOnMount: options?.refetchOnMount ?? 'always', // CRITICAL: ALWAYS refetch on mount (even if data is fresh)
+    refetchInterval: options?.refetchInterval ?? false, // Optional polling
   });
 }
 
