@@ -21,9 +21,9 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
 
 // Cache TTL configurations (in seconds)
 export const CACHE_TTL = {
-  USER_DATA: 300,          // 5 minutes - user credentials rarely change
-  WORKER_PROFILE: 180,     // 3 minutes - profile data changes occasionally
-  COMPLETION_STATUS: 120,  // 2 minutes - completion status can change frequently
+  USER_DATA: 86400,        // 24 hours - user credentials rarely change
+  WORKER_PROFILE: 604800,  // 7 days - profile data changes occasionally
+  COMPLETION_STATUS: 3600, // 1 hour - completion status can change frequently
   SESSION_DATA: 900,       // 15 minutes - session data
 } as const;
 
