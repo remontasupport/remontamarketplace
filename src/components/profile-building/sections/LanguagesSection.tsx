@@ -35,20 +35,18 @@ const LANGUAGES = [
   "Tamil",
   "Turkish",
   "Vietnamese",
-  "Other",
 ];
 
 const AUSLAN = "Auslan (Australian sign language)";
 
 // All languages including Auslan for loading saved data
-const ALL_LANGUAGES = [...LANGUAGES.slice(0, -1), AUSLAN, "Other"];
+const ALL_LANGUAGES = [...LANGUAGES, AUSLAN];
 
 export default function LanguagesSection() {
   const { data: profileData } = useWorkerProfileData();
   const updateLanguages = useUpdateLanguages();
 
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [otherLanguage, setOtherLanguage] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -61,30 +59,12 @@ export default function LanguagesSection() {
       const languages = profileData.languages as string[];
 
       if (Array.isArray(languages) && languages.length > 0) {
-        const predefined: string[] = [];
-        const customLanguages: string[] = [];
-
-        languages.forEach((lang) => {
-          if (ALL_LANGUAGES.includes(lang)) {
-            predefined.push(lang);
-          } else {
-            customLanguages.push(lang);
-          }
-        });
-
-        if (customLanguages.length > 0) {
-          predefined.push("Other");
-          setOtherLanguage(customLanguages.join(" "));
-        }
-
-        setSelectedLanguages(predefined);
+        setSelectedLanguages(languages);
       } else {
         setSelectedLanguages([]);
-        setOtherLanguage("");
       }
     } else {
       setSelectedLanguages([]);
-      setOtherLanguage("");
     }
   }, [profileData]);
 
@@ -104,10 +84,6 @@ export default function LanguagesSection() {
     setSelectedLanguages((prev) => {
       const isCurrentlySelected = prev.includes(language);
 
-      if (isCurrentlySelected && language === "Other") {
-        setOtherLanguage("");
-      }
-
       return isCurrentlySelected
         ? prev.filter((lang) => lang !== language)
         : [...prev, language];
@@ -116,8 +92,39 @@ export default function LanguagesSection() {
 
   const removeLanguage = (language: string) => {
     setSelectedLanguages((prev) => prev.filter((lang) => lang !== language));
-    if (language === "Other") {
-      setOtherLanguage("");
+  };
+
+  const addCustomLanguage = (language: string) => {
+    const trimmedLanguage = language.trim();
+
+    // Don't add if empty or already exists
+    if (!trimmedLanguage || selectedLanguages.includes(trimmedLanguage)) {
+      return;
+    }
+
+    // Add the custom language
+    setSelectedLanguages((prev) => [...prev, trimmedLanguage]);
+    setSearchQuery("");
+    setIsDropdownOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+
+      // Check if the search query matches any existing language
+      const matchedLanguage = filteredLanguages.find(
+        (lang) => lang.toLowerCase() === searchQuery.toLowerCase()
+      );
+
+      if (matchedLanguage) {
+        // If it matches, add the matched language
+        toggleLanguage(matchedLanguage);
+        setSearchQuery("");
+      } else if (searchQuery.trim()) {
+        // If it doesn't match and not empty, add as custom language
+        addCustomLanguage(searchQuery);
+      }
     }
   };
 
@@ -131,19 +138,8 @@ export default function LanguagesSection() {
     setSuccessMessage("");
 
     try {
-      const finalLanguages = selectedLanguages
-        .filter((lang) => lang !== "Other")
-        .concat(
-          selectedLanguages.includes("Other") && otherLanguage.trim()
-            ? otherLanguage
-                .trim()
-                .split(/[\s,]+/)
-                .filter((lang) => lang.length > 0)
-            : []
-        );
-
       const result = await updateLanguages.mutateAsync({
-        languages: finalLanguages,
+        languages: selectedLanguages,
       });
 
       if (result.success) {
@@ -173,6 +169,10 @@ export default function LanguagesSection() {
 
       <p className="profile-section-description">
         Select all the languages you can speak. Clients are more likely to search for Support Workers who speak their language.
+      </p>
+
+      <p className="text-sm text-gray-600 mb-4">
+        💡 Can't find your language? Type it and press <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">Enter</kbd> to add it.
       </p>
 
       {successMessage && (
@@ -233,13 +233,14 @@ export default function LanguagesSection() {
             <input
               type="text"
               className="form-input w-full pr-10"
-              placeholder="Search languages..."
+              placeholder="Search or type a language and press Enter..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setIsDropdownOpen(true);
               }}
               onFocus={() => setIsDropdownOpen(true)}
+              onKeyDown={handleKeyDown}
             />
             <button
               type="button"
@@ -278,9 +279,14 @@ export default function LanguagesSection() {
                       )}
                     </button>
                   ))
+                ) : searchQuery.trim() ? (
+                  <div className="px-4 py-3 text-gray-600 text-sm">
+                    <p className="font-medium mb-1">No matches found</p>
+                    <p className="text-xs text-gray-500">Press <kbd className="px-1 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">Enter</kbd> to add "{searchQuery}"</p>
+                  </div>
                 ) : (
                   <div className="px-4 py-2 text-gray-500 text-sm">
-                    No languages found
+                    Start typing to search languages
                   </div>
                 )}
               </div>
@@ -302,22 +308,6 @@ export default function LanguagesSection() {
             {selectedLanguages.includes(AUSLAN) ? '✓ ' : ''}Auslan (Australian sign language)
           </button>
         </div>
-
-        {selectedLanguages.includes("Other") && (
-          <div className="form-group mb-6">
-            <label htmlFor="other-language" className="form-label">
-              Please specify your language(s)
-            </label>
-            <input
-              type="text"
-              id="other-language"
-              className="form-input"
-              placeholder="e.g., Korean Persian or Korean, Persian"
-              value={otherLanguage}
-              onChange={(e) => setOtherLanguage(e.target.value)}
-            />
-          </div>
-        )}
 
         <button
           type="button"
