@@ -55,6 +55,8 @@ export type ProfilePreviewResponse = {
       personality: any;
       nonSmoker: boolean | null;
       petFriendly: boolean | null;
+      availability: any;
+      experience: any;
     } | null;
   };
   error?: string;
@@ -109,6 +111,8 @@ export async function getProfilePreviewData(): Promise<ProfilePreviewResponse> {
             personality: true,
             nonSmoker: true,
             petFriendly: true,
+            availability: true,
+            experience: true,
           },
         },
         verificationRequirements: {

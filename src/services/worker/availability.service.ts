@@ -35,8 +35,8 @@ export interface AvailabilityData {
   endTime: string;
 }
 
-// Availability JSON structure stored in database
-export type AvailabilityJSON = Partial<Record<DayOfWeek, TimeSlot>>;
+// Availability JSON structure stored in database (supports multiple time slots per day)
+export type AvailabilityJSON = Partial<Record<DayOfWeek, TimeSlot | TimeSlot[]>>;
 
 /**
  * Server Action: Get worker's availability
@@ -75,14 +75,19 @@ export async function getWorkerAvailability(): Promise<ActionResponse<Availabili
     // Convert JSON to array format for UI compatibility
     const formattedData: AvailabilityData[] = [];
 
-    for (const [day, timeSlot] of Object.entries(availabilityJSON)) {
-      if (timeSlot && timeSlot.startTime && timeSlot.endTime) {
-        formattedData.push({
-          dayOfWeek: day as DayOfWeek,
-          startTime: timeSlot.startTime,
-          endTime: timeSlot.endTime,
-        });
-      }
+    for (const [day, timeSlots] of Object.entries(availabilityJSON)) {
+      // Handle both single time slot and array of time slots
+      const slotsArray = Array.isArray(timeSlots) ? timeSlots : [timeSlots];
+
+      slotsArray.forEach((timeSlot) => {
+        if (timeSlot && timeSlot.startTime && timeSlot.endTime) {
+          formattedData.push({
+            dayOfWeek: day as DayOfWeek,
+            startTime: timeSlot.startTime,
+            endTime: timeSlot.endTime,
+          });
+        }
+      });
     }
 
     return {
@@ -155,13 +160,24 @@ export async function saveWorkerAvailability(
       }
     }
 
-    // Convert array to JSON object
+    // Convert array to JSON object, grouping multiple time slots per day
     const availabilityJSON: AvailabilityJSON = {};
-    availabilityData.forEach((record) => {
-      availabilityJSON[record.dayOfWeek] = {
+
+    // Group by day
+    const dayGroups = availabilityData.reduce((acc, record) => {
+      if (!acc[record.dayOfWeek]) {
+        acc[record.dayOfWeek] = [];
+      }
+      acc[record.dayOfWeek].push({
         startTime: record.startTime,
         endTime: record.endTime,
-      };
+      });
+      return acc;
+    }, {} as Record<DayOfWeek, TimeSlot[]>);
+
+    // Store as single object if only one slot, otherwise as array
+    Object.entries(dayGroups).forEach(([day, slots]) => {
+      availabilityJSON[day as DayOfWeek] = slots.length === 1 ? slots[0] : slots;
     });
 
     // Upsert to WorkerAdditionalInfo

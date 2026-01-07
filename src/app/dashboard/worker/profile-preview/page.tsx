@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft, Eye, ChevronUp, Users } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
 import { getQualificationDisplayName, QUALIFICATION_TYPE_TO_NAME } from "@/utils/qualificationMapping";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -25,6 +25,17 @@ function ProfilePreviewContent() {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Service category expansion state
+  const [expandedServices, setExpandedServices] = useState<Record<string, boolean>>({});
+
+  // Toggle service category expansion
+  const toggleServiceExpansion = (categoryId: string) => {
+    setExpandedServices(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
 
   // Handle photo file selection
   const handlePhotoClick = () => {
@@ -335,9 +346,97 @@ function ProfilePreviewContent() {
               </div>
 
               {/* Experience */}
-              <div className="profile-preview-section">
-                <h3 className="profile-preview-subsection-title">Experience</h3>
-                {yearsOfExperience.length > 0 ? (
+              {additionalInfo?.experience && typeof additionalInfo.experience === 'object' && Object.keys(additionalInfo.experience).length > 0 && (
+                <div className="profile-preview-section">
+                  <h3 className="profile-preview-subsection-title">Experience</h3>
+                  <p className="text-sm text-gray-500 mb-4">Self declared</p>
+
+                  {/* Experience Categories */}
+                  <div className="space-y-4">
+                    {Object.entries(additionalInfo.experience).map(([categoryId, experienceData]: [string, any]) => {
+                      // Find the category name from services
+                      const categoryService = services?.find(s => s.categoryId === categoryId);
+                      const rawCategoryName = categoryService?.categoryName || categoryId;
+
+                      // Capitalize first letter of category name
+                      const categoryName = rawCategoryName.charAt(0).toUpperCase() + rawCategoryName.slice(1);
+
+                      // Skip if experienceData is not valid
+                      if (!experienceData || typeof experienceData !== 'object') {
+                        return null;
+                      }
+
+                      const description = experienceData.description || '';
+                      const specificAreas = experienceData.specificAreas || [];
+                      const otherAreas = experienceData.otherAreas || [];
+                      const allAreas = [...specificAreas, ...otherAreas].filter(Boolean);
+
+                      // Skip if no description
+                      if (!description) {
+                        return null;
+                      }
+
+                      return (
+                        <div key={categoryId} className="border border-gray-200 rounded-lg overflow-hidden" style={{ width: '100%', maxWidth: '100%' }}>
+                          {/* Category Header */}
+                          <div
+                            className="flex items-center justify-between cursor-pointer p-4"
+                            onClick={() => toggleServiceExpansion(categoryId)}
+                          >
+                            <h4 className="text-base font-poppins font-semibold text-gray-900">
+                              {categoryName}
+                            </h4>
+                            <ChevronUp
+                              className={`w-5 h-5 text-gray-600 transition-transform flex-shrink-0 ${
+                                expandedServices[categoryId] ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </div>
+
+                          {/* Expanded Content */}
+                          {expandedServices[categoryId] && (
+                            <div className="px-4 pb-4 border-t border-gray-200 pt-4" style={{ maxWidth: '100%' }}>
+                              <div className="flex items-center gap-2 mb-3">
+                                <Users className="w-5 h-5 text-gray-600" />
+                                <h5 className="text-base font-poppins font-semibold text-gray-700">
+                                  Professional Experience
+                                </h5>
+                              </div>
+                              <p
+                                className="text-base text-gray-700 leading-relaxed mb-4"
+                                style={{
+                                  wordWrap: 'break-word',
+                                  overflowWrap: 'break-word',
+                                  wordBreak: 'break-word',
+                                  whiteSpace: 'normal',
+                                  maxWidth: '100%'
+                                }}
+                              >
+                                {description}
+                              </p>
+
+                              {/* Knows About */}
+                              {allAreas.length > 0 && (
+                                <div>
+                                  <p className="text-base text-gray-900">
+                                    <span className="font-semibold">Knows about: </span>
+                                    {allAreas.join(', ')}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Job History */}
+              {yearsOfExperience.length > 0 && (
+                <div className="profile-preview-section">
+                  <h3 className="profile-preview-subsection-title">Job History</h3>
                   <div className="space-y-2">
                     {yearsOfExperience.map((job: any, index: number) => (
                       <div key={index} className="profile-preview-qualification-item">
@@ -350,12 +449,8 @@ function ProfilePreviewContent() {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="profile-preview-text text-gray-400 italic">
-                    No work experience added yet.
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Education History */}
               <div className="profile-preview-section">
@@ -514,6 +609,49 @@ function ProfilePreviewContent() {
                 <div className="profile-preview-section">
                   <h3 className="profile-preview-subsection-title">Fun Fact</h3>
                   <p className="profile-preview-text">{additionalInfo.funFact}</p>
+                </div>
+              )}
+
+              {/* Working Hours */}
+              {additionalInfo?.availability && Object.keys(additionalInfo.availability).length > 0 && (
+                <div className="profile-preview-section">
+                  <h3 className="profile-preview-subsection-title">Working Hours</h3>
+                  <div className="space-y-4">
+                    {Object.entries(additionalInfo.availability as Record<string, { startTime: string; endTime: string } | Array<{ startTime: string; endTime: string }>>).map(([day, timeSlots]) => {
+                      // Format day name (MONDAY -> Monday)
+                      const dayName = day.charAt(0) + day.slice(1).toLowerCase();
+
+                      // Format times (24hr to 12hr)
+                      const formatTime = (time: string) => {
+                        const [hours, minutes] = time.split(':');
+                        const hour = parseInt(hours);
+                        const ampm = hour >= 12 ? 'pm' : 'am';
+                        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                        return `${displayHour}${minutes !== '00' ? ':' + minutes : ''}${ampm}`;
+                      };
+
+                      // Handle both single object and array of objects
+                      const slotsArray = Array.isArray(timeSlots) ? timeSlots : [timeSlots];
+
+                      return (
+                        <div key={day}>
+                          <h4 className="text-base font-poppins font-semibold text-gray-900 mb-2">
+                            {dayName}
+                          </h4>
+                          <div className="flex flex-wrap items-center gap-4">
+                            {slotsArray.map((slot, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <span className="text-green-600 text-lg">✓</span>
+                                <span className="text-base text-gray-700">
+                                  {formatTime(slot.startTime)}-{formatTime(slot.endTime)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
