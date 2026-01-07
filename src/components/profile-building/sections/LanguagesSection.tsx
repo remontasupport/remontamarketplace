@@ -1,43 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWorkerProfileData, useUpdateLanguages } from "@/hooks/useWorkerProfile";
 
 const LANGUAGES = [
-  "Nepali",
-  "Indonesian",
-  "Russian",
-  "Arabic",
-  "Italian",
-  "Serbian",
-  "Cantonese",
-  "Japanese",
-  "Sinhalese",
-  "Croatian",
-  "Korean",
-  "Samoan",
   "English",
-  "Mandarin",
-  "Spanish",
+  "Arabic",
+  "Cantonese",
+  "Croatian",
   "French",
-  "Maltese",
-  "Tamil",
   "German",
-  "Macedonian",
-  "Tagalog (Filipino)",
   "Greek",
-  "Netherlandic (Dutch)",
-  "Turkish",
   "Hebrew",
-  "Persian",
-  "Vietnamese",
   "Hindi",
-  "Polish",
-  "Auslan (Australian sign language)",
   "Hungarian",
+  "Indonesian",
+  "Italian",
+  "Japanese",
+  "Korean",
+  "Macedonian",
+  "Maltese",
+  "Mandarin",
+  "Nepali",
+  "Netherlandic (Dutch)",
+  "Persian",
+  "Polish",
   "Portugese",
+  "Russian",
+  "Samoan",
+  "Serbian",
+  "Sinhalese",
+  "Spanish",
+  "Tagalog (Filipino)",
+  "Tamil",
+  "Turkish",
+  "Vietnamese",
   "Other",
 ];
+
+const AUSLAN = "Auslan (Australian sign language)";
+
+// All languages including Auslan for loading saved data
+const ALL_LANGUAGES = [...LANGUAGES.slice(0, -1), AUSLAN, "Other"];
 
 export default function LanguagesSection() {
   const { data: profileData } = useWorkerProfileData();
@@ -47,6 +51,9 @@ export default function LanguagesSection() {
   const [otherLanguage, setOtherLanguage] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load data from React Query cache - instant!
   useEffect(() => {
@@ -58,7 +65,7 @@ export default function LanguagesSection() {
         const customLanguages: string[] = [];
 
         languages.forEach((lang) => {
-          if (LANGUAGES.includes(lang)) {
+          if (ALL_LANGUAGES.includes(lang)) {
             predefined.push(lang);
           } else {
             customLanguages.push(lang);
@@ -81,6 +88,18 @@ export default function LanguagesSection() {
     }
   }, [profileData]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const toggleLanguage = (language: string) => {
     setSelectedLanguages((prev) => {
       const isCurrentlySelected = prev.includes(language);
@@ -94,6 +113,18 @@ export default function LanguagesSection() {
         : [...prev, language];
     });
   };
+
+  const removeLanguage = (language: string) => {
+    setSelectedLanguages((prev) => prev.filter((lang) => lang !== language));
+    if (language === "Other") {
+      setOtherLanguage("");
+    }
+  };
+
+  // Filter languages based on search query
+  const filteredLanguages = LANGUAGES.filter((lang) =>
+    lang.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSave = async () => {
     setErrors({});
@@ -171,23 +202,109 @@ export default function LanguagesSection() {
       )}
 
       <div className="profile-form">
-        <div className="languages-grid">
-          {LANGUAGES.map((language) => (
+        {/* Selected Languages */}
+        {selectedLanguages.length > 0 && (
+          <div className="mb-4">
+            <label className="form-label mb-2">Selected Languages</label>
+            <div className="flex flex-wrap gap-2">
+              {selectedLanguages.map((lang) => (
+                <div
+                  key={lang}
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg text-sm"
+                >
+                  <span>{lang}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeLanguage(lang)}
+                    className="text-gray-600 hover:text-red-600 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Dropdown with Search */}
+        <div className="form-group mb-2" ref={dropdownRef}>
+          <label className="form-label mb-2">Add Languages</label>
+          <div className="relative">
+            <input
+              type="text"
+              className="form-input w-full pr-10"
+              placeholder="Search languages..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+            />
             <button
-              key={language}
               type="button"
-              className={`language-option ${
-                selectedLanguages.includes(language) ? "selected" : ""
-              }`}
-              onClick={() => toggleLanguage(language)}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              {language}
+              <svg
+                className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
-          ))}
+
+            {/* Dropdown List */}
+            {isDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredLanguages.length > 0 ? (
+                  filteredLanguages.map((language) => (
+                    <button
+                      key={language}
+                      type="button"
+                      onClick={() => {
+                        toggleLanguage(language);
+                        setSearchQuery("");
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center justify-between ${
+                        selectedLanguages.includes(language) ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <span>{language}</span>
+                      {selectedLanguages.includes(language) && (
+                        <span className="text-blue-600">✓</span>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-gray-500 text-sm">
+                    No languages found
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Auslan Button */}
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => toggleLanguage(AUSLAN)}
+            className={`px-3 py-2 border-2 rounded-lg font-medium transition-all inline-block text-sm ${
+              selectedLanguages.includes(AUSLAN)
+                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+            }`}
+          >
+            {selectedLanguages.includes(AUSLAN) ? '✓ ' : ''}Auslan (Australian sign language)
+          </button>
         </div>
 
         {selectedLanguages.includes("Other") && (
-          <div className="form-group">
+          <div className="form-group mb-6">
             <label htmlFor="other-language" className="form-label">
               Please specify your language(s)
             </label>

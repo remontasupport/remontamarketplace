@@ -21,6 +21,11 @@ export default function ConditionalHeader() {
     return null
   }
 
+  // Don't render header for shared profile pages (public access, clean view)
+  if (pathname?.startsWith('/share')) {
+    return null
+  }
+
   // Don't render header for authentication pages
   if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/setup-password') {
     return null

@@ -63,6 +63,20 @@ export type ProfilePreviewResponse = {
 };
 
 /**
+ * Client-side function: Get worker profile preview data for admin view
+ * Calls the server action with a specific user ID
+ */
+export async function getWorkerProfilePreview(userId: string) {
+  const response = await getProfilePreviewData(userId);
+
+  if (!response.success || !response.data) {
+    throw new Error(response.error || "Failed to fetch profile data");
+  }
+
+  return response.data;
+}
+
+/**
  * Server Action: Get comprehensive profile preview data
  * Fetches data from 4 tables in optimized queries:
  * - worker_profiles (name, photo, bio, created date)
@@ -70,11 +84,15 @@ export type ProfilePreviewResponse = {
  * - verification_requirements (worker-selected qualifications)
  * - worker_additional_info (languages, interests, etc.)
  */
-export async function getProfilePreviewData(): Promise<ProfilePreviewResponse> {
+export async function getProfilePreviewData(userId?: string): Promise<ProfilePreviewResponse> {
   try {
     // 1. Authentication check
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+
+    // If no userId provided, use session user's ID (worker viewing own profile)
+    const targetUserId = userId || session?.user?.id;
+
+    if (!targetUserId) {
       return {
         success: false,
         error: "Unauthorized. Please log in.",
@@ -84,7 +102,7 @@ export async function getProfilePreviewData(): Promise<ProfilePreviewResponse> {
     // 2. Fetch worker profile with related data (single query for performance)
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: {
-        userId: session.user.id,
+        userId: targetUserId,
       },
       select: {
         id: true,
