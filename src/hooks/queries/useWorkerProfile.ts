@@ -54,7 +54,6 @@ interface WorkerProfile {
   profileCompleted?: boolean;
   isPublished?: boolean;
   verificationStatus?: string;
-  currentSetupSection?: string | null;
   setupProgress?: any; // JSONB field
   documentsByService?: Record<string, Record<string, string[]>>; // Service documents from VerificationRequirement table
 }

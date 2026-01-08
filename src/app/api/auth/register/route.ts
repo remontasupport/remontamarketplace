@@ -256,7 +256,7 @@ export async function POST(request: Request) {
               languages: [], // Empty array - will be populated in Additional Info step
               // DO NOT save services/supportWorkerCategories arrays for new registrations
               // New workers use WorkerService table only
-              profileCompleted: true, // Registration form is complete
+              profileCompleted: false, // Profile setup incomplete - worker needs to complete additional sections
               isPublished: false, // Not published until verified
               verificationStatus: 'NOT_STARTED' as const, // Awaiting document upload
               updatedAt: new Date(),
@@ -406,7 +406,7 @@ export async function POST(request: Request) {
 
         // Status
         verificationStatus: 'NOT_STARTED',
-        profileCompleted: true,
+        profileCompleted: false,
         isPublished: false,
       };
 

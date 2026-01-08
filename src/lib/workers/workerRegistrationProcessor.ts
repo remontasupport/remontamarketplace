@@ -100,7 +100,7 @@ export async function processWorkerRegistration(
               state: geocodedLocation.state,
               postalCode: geocodedLocation.postalCode,
               languages: [], // Empty array - will be populated in Additional Info step
-              profileCompleted: true,
+              profileCompleted: false,
               isPublished: false,
               verificationStatus: 'NOT_STARTED' as const,
               updatedAt: new Date(),
@@ -262,7 +262,7 @@ export async function processWorkerRegistration(
         latitude: geocodedLocation.latitude,
         longitude: geocodedLocation.longitude,
         verificationStatus: 'NOT_STARTED',
-        profileCompleted: true,
+        profileCompleted: false,
         isPublished: false,
       };
 

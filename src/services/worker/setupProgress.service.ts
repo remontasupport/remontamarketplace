@@ -26,53 +26,10 @@ export type ActionResponse<T = any> = {
 };
 
 /**
- * Server Action: Update current setup section
- * Tracks which section the worker is currently working on
- */
-export async function updateCurrentSection(
-  section: SetupSection
-): Promise<ActionResponse> {
-  try {
-    // 1. Authentication check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return {
-        success: false,
-        error: "Unauthorized. Please log in.",
-      };
-    }
-
-    // 2. Update current section
-    await authPrisma.workerProfile.update({
-      where: {
-        userId: session.user.id,
-      },
-      data: {
-        currentSetupSection: section,
-      },
-    });
-
-    // 3. Revalidate cache (async to prevent "during render" errors)
-    Promise.resolve().then(() => {
-      revalidatePath("/dashboard/worker");
-    }).catch(() => {});
-
-    return {
-      success: true,
-      message: `Current section updated to ${section}`,
-    };
-  } catch (error: any) {
-
-    return {
-      success: false,
-      error: "Failed to update current section",
-    };
-  }
-}
-
-/**
  * Server Action: Update section completion status
- * Marks a section as completed and updates verification status if all sections are done
+ * Marks a section as completed and automatically updates:
+ * - verificationStatus (PENDING_REVIEW if all sections complete)
+ * - profileCompleted (true only if ALL sections are complete, false otherwise)
  */
 export async function updateSectionCompletion(
   section: keyof SetupProgress,
@@ -108,18 +65,19 @@ export async function updateSectionCompletion(
       [section]: completed,
     };
 
-    // 4. Determine new verification status
+    // 4. Determine new verification status and profileCompleted
     let newVerificationStatus = profile.verificationStatus;
+    const allSectionsCompleted = isAllSectionsCompleted(updatedProgress);
 
     // If all sections are completed, set to PENDING_REVIEW
-    if (isAllSectionsCompleted(updatedProgress)) {
+    if (allSectionsCompleted) {
       newVerificationStatus = "PENDING_REVIEW";
     } else if (newVerificationStatus === "NOT_STARTED") {
       // If worker has started but not completed, set to IN_PROGRESS
       newVerificationStatus = "IN_PROGRESS";
     }
 
-    // 5. Update database
+    // 5. Update database (auto-sync profileCompleted with setupProgress)
     await authPrisma.workerProfile.update({
       where: {
         userId: session.user.id,
@@ -127,6 +85,7 @@ export async function updateSectionCompletion(
       data: {
         setupProgress: updatedProgress as any, // Prisma Json type
         verificationStatus: newVerificationStatus as any, // Prisma enum type
+        profileCompleted: allSectionsCompleted, // AUTO-SYNC: true only if ALL sections complete
       },
     });
 
@@ -1253,7 +1212,6 @@ export async function getSetupProgress(): Promise<ActionResponse<{
     const profile = await authPrisma.workerProfile.findUnique({
       where: { userId: session.user.id },
       select: {
-        currentSetupSection: true,
         setupProgress: true,
         verificationStatus: true,
       },
@@ -1269,7 +1227,6 @@ export async function getSetupProgress(): Promise<ActionResponse<{
     return {
       success: true,
       data: {
-        currentSection: profile.currentSetupSection,
         progress: parseSetupProgress(profile.setupProgress),
         verificationStatus: profile.verificationStatus,
       },

@@ -62,11 +62,17 @@ function ServicesSetupContent() {
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
-  // Fetch worker's selected services
-  const { data: workerServices } = useWorkerServices();
+  // Fetch worker's selected services with SUSPENSE MODE
+  // This throws a promise until data loads, preventing component render
+  // Guarantees workerServices is ALWAYS defined when component renders
+  // Result: ZERO flicker during navigation between steps
+  const { data: workerServices } = useWorkerServices({ suspense: true });
 
   // Track if we've initialized form data
   const hasInitializedFormData = useRef(false);
+
+  // Track if we've already redirected for this step to prevent infinite loops
+  const hasRedirectedForStep = useRef<string | null>(null);
 
   // Form data state (view tracking moved to URL params)
   const [formData, setFormData] = useState<FormData>({
@@ -93,19 +99,17 @@ function ServicesSetupContent() {
   const currentStep = currentStepIndex >= 0 ? currentStepIndex + 1 : 1;
   const currentStepData = STEPS[currentStep - 1];
 
-  // Compute current view PURELY from URL + service configuration (100% deterministic!)
+  // URL-FIRST ARCHITECTURE: View state is ONLY determined by URL parameter
+  // This eliminates flicker by making view computation 100% deterministic and synchronous
+  // Auto-determination happens in redirect logic (useEffect below), not during render
   const currentView = useMemo(() => {
     const serviceTitle = currentStepData?.serviceTitle;
     if (!serviceTitle) {
       return { view: 'default' as const, serviceTitle: null };
     }
 
-    // Check if this is nursing services or therapeutic supports
-    const serviceSlug = serviceNameToSlug(serviceTitle);
-    const isNursingService = serviceSlug === 'nursing-services';
-    const isTherapeuticSupport = serviceSlug === 'therapeutic-supports';
-
-    // Priority 1: Use explicit view from URL if present
+    // ONLY respect explicit view parameter from URL
+    // No async data dependencies = no flicker
     if (viewParam === 'registration') {
       return { view: 'registration' as const, serviceTitle };
     }
@@ -119,40 +123,10 @@ function ServicesSetupContent() {
       return { view: 'qualifications' as const, serviceTitle };
     }
 
-    // Priority 2: Auto-determine initial view based on service configuration
-    const hasQualifications = serviceHasQualifications(serviceTitle);
-    // Check if worker has selected subcategories for this service
-    const selectedSubcategories = workerServices?.find(
-      (s) => s.categoryName.toLowerCase() === serviceTitle.toLowerCase()
-    )?.subcategories || [];
-    const hasOfferings = selectedSubcategories.length > 0;
-    const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
-    const documentRequirements = getServiceDocumentRequirements(serviceTitle);
-    const hasDocuments = documentRequirements.length > 0;
-
-    // Special case: Nursing services start with registration view
-    if (isNursingService && !viewParam) {
-      return { view: 'registration' as const, serviceTitle };
-    }
-
-    // Auto-show documents if no qualifications and no offerings but has documents
-    if (!hasQualifications && !hasOfferings && hasDocuments) {
-      return { view: 'documents' as const, serviceTitle };
-    }
-
-    // Auto-show offerings if no qualifications but has offerings
-    if (!hasQualifications && hasOfferings) {
-      return { view: 'offerings' as const, serviceTitle };
-    }
-
-    // Default: qualifications view (if service has qualifications)
-    if (hasQualifications) {
-      return { view: 'qualifications' as const, serviceTitle };
-    }
-
-    // Fallback: if no qualifications, no offerings, no documents - show default
-    return { view: 'default' as const, serviceTitle };
-  }, [stepSlug, viewParam, currentStepData?.serviceTitle, workerServices]);
+    // Deterministic fallback when no view param (will be redirected by useEffect below)
+    // Use qualifications as default to match most common case
+    return { view: 'qualifications' as const, serviceTitle };
+  }, [viewParam, currentStepData?.serviceTitle]);
 
  
 
@@ -635,9 +609,127 @@ function ServicesSetupContent() {
     }
   }, [currentStepIndex, router, stepSlug, STEPS]);
 
+  // AUTO-REDIRECT: Set initial view parameter when missing
+  // With Suspense mode, component won't render until workerServices exists
+  // This effect redirects to correct initial view based on service configuration
+  useEffect(() => {
+    // Only redirect if:
+    // 1. We have a valid step
+    // 2. No view parameter in URL
+    // 3. We have a service title (not "Other Documents")
+    // 4. workerServices exists (guaranteed by Suspense, but checked for safety)
+    // 5. Haven't already redirected for this step (prevents infinite loops)
+    if (!stepSlug || viewParam || !currentStepData?.serviceTitle || !workerServices) {
+      return;
+    }
 
-  // Loading state
+    // Check if we've already redirected for this step
+    const redirectKey = `${stepSlug}-no-view`;
+    if (hasRedirectedForStep.current === redirectKey) {
+      return;
+    }
+
+    const serviceTitle = currentStepData.serviceTitle;
+    const serviceSlug = serviceNameToSlug(serviceTitle);
+    const isNursingService = serviceSlug === 'nursing-services';
+
+    // Compute the correct initial view using the same logic as before
+    // But now it runs asynchronously, not during render
+    const hasQualifications = serviceHasQualifications(serviceTitle);
+
+    const selectedSubcategories = workerServices.find(
+      (s) => s.categoryName.toLowerCase() === serviceTitle.toLowerCase()
+    )?.subcategories || [];
+    const hasOfferings = selectedSubcategories.length > 0;
+
+    const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
+    const documentRequirements = getServiceDocumentRequirements(serviceTitle);
+    const hasDocuments = documentRequirements.length > 0;
+
+    // Determine initial view based on service configuration
+    let initialView = 'qualifications'; // default
+
+    if (isNursingService) {
+      initialView = 'registration';
+    } else if (!hasQualifications && !hasOfferings && hasDocuments) {
+      initialView = 'documents';
+    } else if (!hasQualifications && hasOfferings) {
+      initialView = 'offerings';
+    } else if (hasQualifications) {
+      initialView = 'qualifications';
+    }
+
+    // Mark that we've redirected for this step
+    hasRedirectedForStep.current = redirectKey;
+
+    // Redirect to same step with explicit view parameter
+    // Use replace() instead of push() to avoid polluting browser history
+    router.replace(`/dashboard/worker/services/setup?step=${stepSlug}&view=${initialView}`);
+  }, [stepSlug, viewParam, currentStepData?.serviceTitle, workerServices, router]);
+
+  // Reset redirect tracking when step changes
+  useEffect(() => {
+    if (viewParam) {
+      // If we have a view param, we can reset the redirect tracking
+      // This allows the effect to run again when navigating to a new step
+      hasRedirectedForStep.current = null;
+    }
+  }, [stepSlug, viewParam]);
+
+  // Determine if we should show the Previous button
+  const shouldShowPrevious = useMemo(() => {
+    // Always show on documents view
+    if (currentView.view === 'documents') {
+      return true;
+    }
+
+    // On offerings view, show Previous button if:
+    // - Service has qualifications (to go back to qualifications), OR
+    // - Service is nursing (to go back to registration), OR
+    // - It's the first step (can't go back to previous service)
+    if (currentView.view === 'offerings') {
+      const serviceTitle = currentStepData?.serviceTitle;
+      if (serviceTitle) {
+        const hasQualifications = serviceHasQualifications(serviceTitle);
+        const serviceSlug = serviceNameToSlug(serviceTitle);
+        const isNursingService = serviceSlug === 'nursing-services';
+        // Show if has qualifications or is nursing service
+        return hasQualifications || isNursingService;
+      }
+    }
+
+    // On qualifications view, show if it's nursing service (to go back to registration)
+    if (currentView.view === 'qualifications') {
+      const serviceTitle = currentStepData?.serviceTitle;
+      if (serviceTitle) {
+        const serviceSlug = serviceNameToSlug(serviceTitle);
+        const isNursingService = serviceSlug === 'nursing-services';
+        return isNursingService;
+      }
+    }
+
+    // Don't show on registration view (it's the first view for nursing services)
+    return false;
+  }, [currentView.view, currentStepData?.serviceTitle]);
+
+  // CRITICAL: ALL HOOKS MUST BE CALLED ABOVE THIS LINE
+  // Loading checks happen here to prevent Hook order violations
+
+  // Loading state check (Suspense handles workerServices loading)
   if (status === "loading" || isLoadingProfile) {
+    return (
+      <DashboardLayout showProfileCard={false}>
+        <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <Loader size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // FLICKER PREVENTION: Show loading state when we're about to auto-redirect
+  // This prevents rendering the wrong view before the redirect completes
+  const isAboutToRedirect = !viewParam && currentStepData?.serviceTitle && workerServices;
+  if (isAboutToRedirect) {
     return (
       <DashboardLayout showProfileCard={false}>
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -719,42 +811,6 @@ function ServicesSetupContent() {
     return "Next";
   };
 
-  // Determine if we should show the Previous button
-  const shouldShowPrevious = useMemo(() => {
-    // Always show on documents view
-    if (currentView.view === 'documents') {
-      return true;
-    }
-
-    // On offerings view, show Previous button if:
-    // - Service has qualifications (to go back to qualifications), OR
-    // - Service is nursing (to go back to registration), OR
-    // - It's the first step (can't go back to previous service)
-    if (currentView.view === 'offerings') {
-      const serviceTitle = currentStepData?.serviceTitle;
-      if (serviceTitle) {
-        const hasQualifications = serviceHasQualifications(serviceTitle);
-        const serviceSlug = serviceNameToSlug(serviceTitle);
-        const isNursingService = serviceSlug === 'nursing-services';
-        // Show if has qualifications or is nursing service
-        return hasQualifications || isNursingService;
-      }
-    }
-
-    // On qualifications view, show if it's nursing service (to go back to registration)
-    if (currentView.view === 'qualifications') {
-      const serviceTitle = currentStepData?.serviceTitle;
-      if (serviceTitle) {
-        const serviceSlug = serviceNameToSlug(serviceTitle);
-        const isNursingService = serviceSlug === 'nursing-services';
-        return isNursingService;
-      }
-    }
-
-    // Don't show on registration view (it's the first view for nursing services)
-    return false;
-  }, [currentView.view, currentStepData?.serviceTitle]);
-
   return (
     <DashboardLayout showProfileCard={false}>
       {!isFinalSaving ? (
@@ -795,7 +851,10 @@ function ServicesSetupContent() {
   );
 }
 
-// Wrap in Suspense to handle useSearchParams()
+// SUSPENSE BOUNDARY: Prevents flicker by suspending render until data is ready
+// useWorkerServices hook throws a promise when loading (suspense: true)
+// Component won't render until workerServices data is available
+// This guarantees zero UI flicker during navigation
 export default function ServicesSetupPage() {
   return (
     <Suspense fallback={

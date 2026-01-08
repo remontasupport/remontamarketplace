@@ -63,7 +63,6 @@ export async function GET(
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,
-        currentSetupSection: true,
         setupProgress: true,
       },
     });
