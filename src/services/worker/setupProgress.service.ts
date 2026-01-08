@@ -292,7 +292,7 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
         workerServices: {
           select: {
             categoryName: true,
-            subcategoryName: true,
+            subcategoryNames: true,
           },
         },
       },
@@ -316,10 +316,19 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       };
     }
 
-    // 4. Build service strings (same logic as API)
-    const servicesToFetch = workerServices.map(ws =>
-      ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-    );
+    // 4. Build service strings (flatten subcategories into individual service strings)
+    const servicesToFetch: string[] = [];
+    workerServices.forEach(ws => {
+      if (ws.subcategoryNames.length > 0) {
+        // Add each subcategory as a separate service string
+        ws.subcategoryNames.forEach(subcategoryName => {
+          servicesToFetch.push(`${ws.categoryName}:${subcategoryName}`);
+        });
+      } else {
+        // No subcategories, add just the category
+        servicesToFetch.push(ws.categoryName);
+      }
+    });
 
     // 5. Parse services to get category/subcategory IDs
     const parsedServices = servicesToFetch.map(service => {
@@ -628,7 +637,7 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
         workerServices: {
           select: {
             categoryName: true,
-            subcategoryName: true,
+            subcategoryNames: true,
           },
         },
       },
@@ -653,10 +662,19 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
       };
     }
 
-    // 4. Build service strings (same logic as API)
-    const servicesToFetch = workerServices.map(ws =>
-      ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-    );
+    // 4. Build service strings (flatten subcategories into individual service strings)
+    const servicesToFetch: string[] = [];
+    workerServices.forEach(ws => {
+      if (ws.subcategoryNames.length > 0) {
+        // Add each subcategory as a separate service string
+        ws.subcategoryNames.forEach(subcategoryName => {
+          servicesToFetch.push(`${ws.categoryName}:${subcategoryName}`);
+        });
+      } else {
+        // No subcategories, add just the category
+        servicesToFetch.push(ws.categoryName);
+      }
+    });
 
     // 5. Parse services to get category/subcategory IDs
     const parsedServices = servicesToFetch.map(service => {
@@ -971,7 +989,7 @@ export async function checkServicesCompletion(): Promise<ActionResponse<boolean>
       },
       select: {
         categoryName: true,
-        subcategoryName: true,
+        subcategoryNames: true,
       },
     });
 
@@ -991,29 +1009,55 @@ export async function checkServicesCompletion(): Promise<ActionResponse<boolean>
 
     for (const service of workerServices) {
       const serviceTitle = service.categoryName;
-      const subcategoryId = service.subcategoryName
-        ? service.subcategoryName.toLowerCase().replace(/\s+/g, '-')
-        : undefined;
 
-      // Get requirements for this service
-      const requirements = getServiceDocumentRequirements(serviceTitle, subcategoryId);
+      // Process each subcategory (or just the category if no subcategories)
+      if (service.subcategoryNames.length > 0) {
+        service.subcategoryNames.forEach(subcategoryName => {
+          const subcategoryId = subcategoryName
+            ? subcategoryName.toLowerCase().replace(/\s+/g, '-')
+            : undefined;
 
-      // Get or create the requirement sets for this service
-      if (!serviceRequirements.has(serviceTitle)) {
-        serviceRequirements.set(serviceTitle, {
-          required: new Set<string>(),
-          all: new Set<string>(),
+          // Get requirements for this service+subcategory combo
+          const requirements = getServiceDocumentRequirements(serviceTitle, subcategoryId);
+
+          // Get or create the requirement sets for this service
+          if (!serviceRequirements.has(serviceTitle)) {
+            serviceRequirements.set(serviceTitle, {
+              required: new Set<string>(),
+              all: new Set<string>(),
+            });
+          }
+          const serviceReqs = serviceRequirements.get(serviceTitle)!;
+
+          // Track ALL documents and separate out REQUIRED ones
+          requirements.forEach(req => {
+            serviceReqs.all.add(req.type); // Track all (required + optional)
+            if (req.required) {
+              serviceReqs.required.add(req.type); // Track only required
+            }
+          });
+        });
+      } else {
+        // No subcategories, process just the category
+        const requirements = getServiceDocumentRequirements(serviceTitle, undefined);
+
+        // Get or create the requirement sets for this service
+        if (!serviceRequirements.has(serviceTitle)) {
+          serviceRequirements.set(serviceTitle, {
+            required: new Set<string>(),
+            all: new Set<string>(),
+          });
+        }
+        const serviceReqs = serviceRequirements.get(serviceTitle)!;
+
+        // Track ALL documents and separate out REQUIRED ones
+        requirements.forEach(req => {
+          serviceReqs.all.add(req.type); // Track all (required + optional)
+          if (req.required) {
+            serviceReqs.required.add(req.type); // Track only required
+          }
         });
       }
-      const serviceReqs = serviceRequirements.get(serviceTitle)!;
-
-      // Track ALL documents and separate out REQUIRED ones
-      requirements.forEach(req => {
-        serviceReqs.all.add(req.type); // Track all (required + optional)
-        if (req.required) {
-          serviceReqs.required.add(req.type); // Track only required
-        }
-      });
     }
 
     // 6. Fetch uploaded service documents for this worker
@@ -1280,7 +1324,7 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
         workerServices: {
           select: {
             categoryName: true,
-            subcategoryName: true,
+            subcategoryNames: true,
           },
         },
         verificationRequirements: {
@@ -1322,10 +1366,19 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
     let complianceComplete = false;
 
     if (workerProfile.workerServices.length > 0) {
-      // Build service strings
-      const servicesToFetch = workerProfile.workerServices.map(ws =>
-        ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-      );
+      // Build service strings (flatten subcategories into individual service strings)
+      const servicesToFetch: string[] = [];
+      workerProfile.workerServices.forEach(ws => {
+        if (ws.subcategoryNames.length > 0) {
+          // Add each subcategory as a separate service string
+          ws.subcategoryNames.forEach(subcategoryName => {
+            servicesToFetch.push(`${ws.categoryName}:${subcategoryName}`);
+          });
+        } else {
+          // No subcategories, add just the category
+          servicesToFetch.push(ws.categoryName);
+        }
+      });
 
       // Parse services
       const parsedServices = servicesToFetch.map(service => {
@@ -1475,10 +1528,19 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
     let trainingsComplete = false;
 
     if (workerProfile.workerServices.length > 0) {
-      // Build service strings
-      const servicesToFetch = workerProfile.workerServices.map(ws =>
-        ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-      );
+      // Build service strings (flatten subcategories into individual service strings)
+      const servicesToFetch: string[] = [];
+      workerProfile.workerServices.forEach(ws => {
+        if (ws.subcategoryNames.length > 0) {
+          // Add each subcategory as a separate service string
+          ws.subcategoryNames.forEach(subcategoryName => {
+            servicesToFetch.push(`${ws.categoryName}:${subcategoryName}`);
+          });
+        } else {
+          // No subcategories, add just the category
+          servicesToFetch.push(ws.categoryName);
+        }
+      });
 
       // Parse services
       const parsedServices = servicesToFetch.map(service => {
@@ -1623,26 +1685,50 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
 
       for (const service of workerProfile.workerServices) {
         const serviceTitle = service.categoryName;
-        const subcategoryId = service.subcategoryName
-          ? service.subcategoryName.toLowerCase().replace(/\s+/g, '-')
-          : undefined;
 
-        const requirements = getServiceDocumentRequirements(serviceTitle, subcategoryId);
+        // Process each subcategory (or just the category if no subcategories)
+        if (service.subcategoryNames.length > 0) {
+          service.subcategoryNames.forEach(subcategoryName => {
+            const subcategoryId = subcategoryName
+              ? subcategoryName.toLowerCase().replace(/\s+/g, '-')
+              : undefined;
 
-        if (!serviceRequirements.has(serviceTitle)) {
-          serviceRequirements.set(serviceTitle, {
-            required: new Set<string>(),
-            all: new Set<string>(),
+            const requirements = getServiceDocumentRequirements(serviceTitle, subcategoryId);
+
+            if (!serviceRequirements.has(serviceTitle)) {
+              serviceRequirements.set(serviceTitle, {
+                required: new Set<string>(),
+                all: new Set<string>(),
+              });
+            }
+            const serviceReqs = serviceRequirements.get(serviceTitle)!;
+
+            requirements.forEach(req => {
+              serviceReqs.all.add(req.type);
+              if (req.required) {
+                serviceReqs.required.add(req.type);
+              }
+            });
+          });
+        } else {
+          // No subcategories, process just the category
+          const requirements = getServiceDocumentRequirements(serviceTitle, undefined);
+
+          if (!serviceRequirements.has(serviceTitle)) {
+            serviceRequirements.set(serviceTitle, {
+              required: new Set<string>(),
+              all: new Set<string>(),
+            });
+          }
+          const serviceReqs = serviceRequirements.get(serviceTitle)!;
+
+          requirements.forEach(req => {
+            serviceReqs.all.add(req.type);
+            if (req.required) {
+              serviceReqs.required.add(req.type);
+            }
           });
         }
-        const serviceReqs = serviceRequirements.get(serviceTitle)!;
-
-        requirements.forEach(req => {
-          serviceReqs.all.add(req.type);
-          if (req.required) {
-            serviceReqs.required.add(req.type);
-          }
-        });
       }
 
       const uploadedServiceDocs = workerProfile.verificationRequirements.filter(

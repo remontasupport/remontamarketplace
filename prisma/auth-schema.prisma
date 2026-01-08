@@ -403,18 +403,17 @@ model WorkerService {
   workerProfileId String
   categoryId      String        // e.g., "support-worker", "therapeutic-supports"
   categoryName    String        // e.g., "Support Worker", "Therapeutic Supports"
-  subcategoryId   String?       // e.g., "personal-care", "occupational-therapist" (nullable)
-  subcategoryName String?       // e.g., "Personal care", "Occupational Therapist" (nullable)
+  subcategoryIds  String[]      @default([])  // e.g., ["personal-care", "occupational-therapist"]
+  subcategoryNames String[]     @default([])  // e.g., ["Personal care", "Occupational Therapist"]
   metadata        Json?         // Service-specific data (e.g., nursing registration, certifications)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  @@unique([workerProfileId, categoryId, subcategoryId])
+  @@unique([workerProfileId, categoryId])
   @@index([workerProfileId])
   @@index([categoryId])
-  @@index([subcategoryId])
 
   // NEW INDEXES FOR PERFORMANCE
   @@index([categoryName])                // Filter by service name (admin dashboard)

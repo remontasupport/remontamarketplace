@@ -65,56 +65,90 @@ export async function toggleWorkerSubcategory(
       };
     }
 
-    // 4. Check if this subcategory already exists
+    // 4. Check if this category service exists
     const existingService = await authPrisma.workerService.findFirst({
       where: {
         workerProfileId: workerProfile.id,
         categoryId,
-        subcategoryId,
+      },
+      select: {
+        id: true,
+        subcategoryIds: true,
+        subcategoryNames: true,
+        metadata: true,
       },
     });
 
     if (existingService) {
-      // Remove the subcategory
-      await authPrisma.workerService.delete({
-        where: { id: existingService.id },
-      });
+      // Check if subcategory is already in the arrays
+      const subcategoryIndex = existingService.subcategoryIds.indexOf(subcategoryId);
 
-      // 5. Revalidate cache
-      revalidatePath("/dashboard/worker/services/setup");
-      revalidatePath("/dashboard/worker");
+      if (subcategoryIndex !== -1) {
+        // Remove the subcategory from arrays
+        const newSubcategoryIds = existingService.subcategoryIds.filter((_, i) => i !== subcategoryIndex);
+        const newSubcategoryNames = existingService.subcategoryNames.filter((_, i) => i !== subcategoryIndex);
 
-      // 6. Auto-update Services completion status (synchronous for cache consistency)
-      await autoUpdateServicesCompletion().catch((error) => {
-        console.error("Failed to auto-update services completion:", error);
-        // Don't fail the main operation if this fails
-      });
+        await authPrisma.workerService.update({
+          where: { id: existingService.id },
+          data: {
+            subcategoryIds: newSubcategoryIds,
+            subcategoryNames: newSubcategoryNames,
+          },
+        });
 
-      return {
-        success: true,
-        message: `Removed ${subcategoryName}`,
-        data: { action: "removed", subcategoryId },
-      };
+        // 5. Revalidate cache
+        revalidatePath("/dashboard/worker/services/setup");
+        revalidatePath("/dashboard/worker");
+
+        // 6. Auto-update Services completion status (synchronous for cache consistency)
+        await autoUpdateServicesCompletion().catch((error) => {
+          console.error("Failed to auto-update services completion:", error);
+          // Don't fail the main operation if this fails
+        });
+
+        return {
+          success: true,
+          message: `Removed ${subcategoryName}`,
+          data: { action: "removed", subcategoryId },
+        };
+      } else {
+        // Add the subcategory to arrays
+        const newSubcategoryIds = [...existingService.subcategoryIds, subcategoryId];
+        const newSubcategoryNames = [...existingService.subcategoryNames, subcategoryName];
+
+        await authPrisma.workerService.update({
+          where: { id: existingService.id },
+          data: {
+            subcategoryIds: newSubcategoryIds,
+            subcategoryNames: newSubcategoryNames,
+          },
+        });
+
+        // 5. Revalidate cache
+        revalidatePath("/dashboard/worker/services/setup");
+        revalidatePath("/dashboard/worker");
+
+        // 6. Auto-update Services completion status (synchronous for cache consistency)
+        await autoUpdateServicesCompletion().catch((error) => {
+          console.error("Failed to auto-update services completion:", error);
+          // Don't fail the main operation if this fails
+        });
+
+        return {
+          success: true,
+          message: `Added ${subcategoryName}`,
+          data: { action: "added", subcategoryId },
+        };
+      }
     } else {
-      // Add the subcategory
-      // First, check if there's existing metadata for this category (e.g., nursing registration)
-      const existingCategoryService = await authPrisma.workerService.findFirst({
-        where: {
-          workerProfileId: workerProfile.id,
-          categoryId,
-        },
-        select: { metadata: true },
-      });
-
-      // Preserve existing metadata when creating new subcategory row
+      // Create new service record with this subcategory
       await authPrisma.workerService.create({
         data: {
           workerProfileId: workerProfile.id,
           categoryId,
           categoryName,
-          subcategoryId,
-          subcategoryName,
-          metadata: existingCategoryService?.metadata ?? undefined,
+          subcategoryIds: [subcategoryId],
+          subcategoryNames: [subcategoryName],
         },
       });
 
@@ -188,45 +222,51 @@ export async function updateWorkerSubcategories(
       };
     }
 
-    // 4. Fetch existing metadata before deleting (e.g., nursing registration)
+    // 4. Fetch existing service record (with metadata like nursing registration)
     const existingCategoryService = await authPrisma.workerService.findFirst({
       where: {
         workerProfileId: workerProfile.id,
         categoryId,
       },
-      select: { metadata: true },
-    });
-
-    const existingMetadata = existingCategoryService?.metadata;
-
-    // 5. Remove all existing subcategories for this category
-    await authPrisma.workerService.deleteMany({
-      where: {
-        workerProfileId: workerProfile.id,
-        categoryId,
+      select: {
+        id: true,
+        metadata: true,
       },
     });
 
-    // 6. Add new subcategories with preserved metadata
-    if (subcategoryIds.length > 0) {
-      const servicesToCreate = subcategoryIds.map((subcategoryId) => {
-        const subcategory = subcategories.find((s) => s.id === subcategoryId);
-        return {
+    // 5. Build subcategory arrays
+    const newSubcategoryIds: string[] = [];
+    const newSubcategoryNames: string[] = [];
+
+    subcategoryIds.forEach((subcategoryId) => {
+      const subcategory = subcategories.find((s) => s.id === subcategoryId);
+      if (subcategory) {
+        newSubcategoryIds.push(subcategoryId);
+        newSubcategoryNames.push(subcategory.name);
+      }
+    });
+
+    // 6. Update or create service record
+    if (existingCategoryService) {
+      // Update existing record with new arrays
+      await authPrisma.workerService.update({
+        where: { id: existingCategoryService.id },
+        data: {
+          subcategoryIds: newSubcategoryIds,
+          subcategoryNames: newSubcategoryNames,
+        },
+      });
+    } else {
+      // Create new record
+      await authPrisma.workerService.create({
+        data: {
           workerProfileId: workerProfile.id,
           categoryId,
           categoryName,
-          subcategoryId,
-          subcategoryName: subcategory?.name || "",
-          metadata: existingMetadata ?? undefined,
-        };
+          subcategoryIds: newSubcategoryIds,
+          subcategoryNames: newSubcategoryNames,
+        },
       });
-
-      // Note: createMany doesn't support Prisma.JsonValue for metadata, so we use individual creates
-      await Promise.all(
-        servicesToCreate.map((serviceData) =>
-          authPrisma.workerService.create({ data: serviceData })
-        )
-      );
     }
 
     // 7. Revalidate cache
@@ -340,8 +380,8 @@ export async function saveNursingRegistration(
           workerProfileId: workerProfile.id,
           categoryId: "nursing-services",
           categoryName: "Nursing Services",
-          subcategoryId: null,
-          subcategoryName: null,
+          subcategoryIds: [],
+          subcategoryNames: [],
           metadata,
         },
       });
@@ -554,8 +594,8 @@ export async function saveTherapeuticRegistration(
           workerProfileId: workerProfile.id,
           categoryId: "therapeutic-supports",
           categoryName: "Therapeutic Supports",
-          subcategoryId: null,
-          subcategoryName: null,
+          subcategoryIds: [],
+          subcategoryNames: [],
           metadata,
         },
       });

@@ -138,14 +138,11 @@ export async function processWorkerRegistration(
     // CRITICAL: Create worker service records (MUST be awaited)
     if (services && services.length > 0) {
       try {
-     
-
         const categories = await authPrisma.category.findMany({
           include: {
             subcategories: true,
           },
         });
-
 
         const subcategoryToCategory = new Map();
         categories.forEach((category) => {
@@ -158,15 +155,11 @@ export async function processWorkerRegistration(
         const subcategoryIds = supportWorkerCategories || [];
 
         for (const serviceId of services) {
-        
           const category = categories.find((c) => c.id === serviceId);
 
           if (!category) {
-           
             continue;
           }
-
-
 
           const categoryId = category.id;
           const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
@@ -174,52 +167,43 @@ export async function processWorkerRegistration(
             return parentCategory?.id === categoryId;
           });
 
+          // Group all subcategories for this category into arrays
+          const subcategoryIdsArray: string[] = [];
+          const subcategoryNamesArray: string[] = [];
+
           if (relevantSubcategoryIds.length > 0) {
-          
             for (const subcategoryId of relevantSubcategoryIds) {
               const subcategory = category.subcategories.find(
                 (sub: any) => sub.id === subcategoryId
               );
               if (subcategory) {
-                workerServiceRecords.push({
-                  workerProfileId,
-                  categoryId,
-                  categoryName: category.name,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                });
+                subcategoryIdsArray.push(subcategoryId);
+                subcategoryNamesArray.push(subcategory.name);
               }
             }
-          } else {
-            
-            workerServiceRecords.push({
-              workerProfileId,
-              categoryId,
-              categoryName: category.name,
-              subcategoryId: null,
-              subcategoryName: null,
-            });
           }
-        }
 
-      
+          // Create ONE record per category with subcategories as arrays
+          workerServiceRecords.push({
+            workerProfileId,
+            categoryId,
+            categoryName: category.name,
+            subcategoryIds: subcategoryIdsArray,
+            subcategoryNames: subcategoryNamesArray,
+          });
+        }
 
         if (workerServiceRecords.length > 0) {
-          const result = await authPrisma.workerService.createMany({
-            data: workerServiceRecords,
-            skipDuplicates: true,
-          });
-         
-        } else {
-          
+          // Use individual creates since createMany doesn't support array fields well
+          await Promise.all(
+            workerServiceRecords.map((record) =>
+              authPrisma.workerService.create({ data: record })
+            )
+          );
         }
-       
       } catch (error) {
         // Log error but don't fail registration - services can be added later
-     
       }
-    } else {
-      
     }
 
     // ============================================

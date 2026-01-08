@@ -33,38 +33,20 @@ export async function GET(request: Request) {
       select: {
         categoryId: true,
         categoryName: true,
-        subcategoryId: true,
-        subcategoryName: true,
+        subcategoryIds: true,
+        subcategoryNames: true,
       },
     });
 
-    // Group by category
-    const servicesMap = new Map<string, {
-      categoryId: string;
-      categoryName: string;
-      subcategories: Array<{ subcategoryId: string; subcategoryName: string }>;
-    }>();
-
-    workerServices.forEach((ws) => {
-      const key = ws.categoryId;
-
-      if (!servicesMap.has(key)) {
-        servicesMap.set(key, {
-          categoryId: ws.categoryId,
-          categoryName: ws.categoryName,
-          subcategories: [],
-        });
-      }
-
-      if (ws.subcategoryId && ws.subcategoryName) {
-        servicesMap.get(key)!.subcategories.push({
-          subcategoryId: ws.subcategoryId,
-          subcategoryName: ws.subcategoryName,
-        });
-      }
-    });
-
-    const services = Array.from(servicesMap.values());
+    // Transform to expected format
+    const services = workerServices.map((ws) => ({
+      categoryId: ws.categoryId,
+      categoryName: ws.categoryName,
+      subcategories: ws.subcategoryIds.map((id, index) => ({
+        subcategoryId: id,
+        subcategoryName: ws.subcategoryNames[index] || '',
+      })),
+    }));
 
     return NextResponse.json(services);
   } catch (error) {

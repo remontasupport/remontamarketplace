@@ -109,7 +109,7 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
       return null;
     }
 
-    // Fetch worker services and group by category
+    // Fetch worker services (now with arrays)
     const workerServices = await authPrisma.workerService.findMany({
       where: {
         workerProfileId: workerProfile.id,
@@ -117,43 +117,23 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
       select: {
         categoryId: true,
         categoryName: true,
-        subcategoryId: true,
-        subcategoryName: true,
+        subcategoryIds: true,
+        subcategoryNames: true,
       },
       orderBy: {
         categoryName: 'asc',
       },
     });
 
-    // Group services by category
-    const servicesGrouped = workerServices.reduce((acc, service) => {
-      const existingCategory = acc.find(cat => cat.categoryId === service.categoryId);
-
-      if (existingCategory) {
-        existingCategory.subcategories.push({
-          subcategoryId: service.subcategoryId,
-          subcategoryName: service.subcategoryName,
-        });
-      } else {
-        acc.push({
-          categoryId: service.categoryId,
-          categoryName: service.categoryName,
-          subcategories: [{
-            subcategoryId: service.subcategoryId,
-            subcategoryName: service.subcategoryName,
-          }],
-        });
-      }
-
-      return acc;
-    }, [] as Array<{
-      categoryId: string;
-      categoryName: string;
-      subcategories: Array<{
-        subcategoryId: string;
-        subcategoryName: string;
-      }>;
-    }>);
+    // Transform services to expected format (arrays are already grouped)
+    const servicesGrouped = workerServices.map(service => ({
+      categoryId: service.categoryId,
+      categoryName: service.categoryName,
+      subcategories: service.subcategoryIds.map((id, index) => ({
+        subcategoryId: id,
+        subcategoryName: service.subcategoryNames[index] || '',
+      })),
+    }));
 
     // Return comprehensive data
     return {

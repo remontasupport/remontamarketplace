@@ -76,30 +76,22 @@ export async function GET(
 
     // Transform workerServices data to match the legacy format
     // This ensures backward compatibility with existing components
-    // OPTIMIZED: Use database aggregation (groupBy) instead of fetching all records and iterating in JS
-    // This leverages the index on [workerProfileId, categoryName] for performance
     let services: string[] = [];
     let supportWorkerCategories: string[] = [];
 
-    const [categoryGroups, subcategoryGroups] = await Promise.all([
-      authPrisma.workerService.groupBy({
-        by: ['categoryName'],
-        where: { workerProfileId: workerProfile.id },
-      }),
-      authPrisma.workerService.groupBy({
-        by: ['subcategoryId'],
-        where: {
-          workerProfileId: workerProfile.id,
-          subcategoryId: { not: null }
-        },
-      }),
-    ]);
+    const workerServices = await authPrisma.workerService.findMany({
+      where: { workerProfileId: workerProfile.id },
+      select: {
+        categoryName: true,
+        subcategoryIds: true,
+      },
+    });
 
-    // Use WorkerService table data (normalized structure)
-    services = categoryGroups.map(g => g.categoryName);
-    supportWorkerCategories = subcategoryGroups
-      .map(g => g.subcategoryId)
-      .filter((id): id is string => id !== null);
+    // Extract unique category names for services
+    services = workerServices.map(ws => ws.categoryName);
+
+    // Flatten all subcategory IDs into a single array
+    supportWorkerCategories = workerServices.flatMap(ws => ws.subcategoryIds);
 
     // Fetch verification requirements to populate documentsByService
     const verificationRequirements = await authPrisma.verificationRequirement.findMany({

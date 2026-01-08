@@ -86,13 +86,13 @@ export async function POST(request: Request) {
             where: { workerProfileId: workerProfile.id },
           });
 
-          // OPTIMIZED: Create new WorkerService records using flatMap (eliminate nested loops)
+          // Create new WorkerService records with subcategories as arrays
           const subcategoryIds = data.supportWorkerCategories || [];
 
-          const workerServiceRecords = data.services.flatMap((serviceName: string) => {
+          const workerServiceRecords = data.services.map((serviceName: string) => {
             // Find category by name
             const category = categories.find(c => c.name === serviceName);
-            if (!category) return [];
+            if (!category) return null;
 
             const categoryId = category.id;
 
@@ -105,33 +105,28 @@ export async function POST(request: Request) {
               return parentCategory?.id === categoryId;
             });
 
-            if (relevantSubcategoryIds.length > 0) {
-              // Service has subcategories - create one record per subcategory using map
-              return relevantSubcategoryIds.map((subcategoryId: string) => {
-                const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
-                if (!subcategory) return null;
+            // Build arrays of subcategory IDs and names
+            const subcategoryIdsArray: string[] = [];
+            const subcategoryNamesArray: string[] = [];
 
-                return {
-                  workerProfileId: workerProfile.id,
-                  categoryId,
-                  categoryName: serviceName,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                  metadata: preservedMetadata,
-                };
-              }).filter(Boolean);
-            } else {
-              // Service has no subcategories - create one record without subcategory
-              return [{
-                workerProfileId: workerProfile.id,
-                categoryId,
-                categoryName: serviceName,
-                subcategoryId: null,
-                subcategoryName: null,
-                metadata: preservedMetadata,
-              }];
+            for (const subcategoryId of relevantSubcategoryIds) {
+              const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
+              if (subcategory) {
+                subcategoryIdsArray.push(subcategoryId);
+                subcategoryNamesArray.push(subcategory.name);
+              }
             }
-          });
+
+            // Create ONE record per category with subcategories as arrays
+            return {
+              workerProfileId: workerProfile.id,
+              categoryId,
+              categoryName: serviceName,
+              subcategoryIds: subcategoryIdsArray,
+              subcategoryNames: subcategoryNamesArray,
+              metadata: preservedMetadata,
+            };
+          }).filter(Boolean);
 
           // CRITICAL: Use individual creates instead of createMany to support metadata (JSON field)
           // createMany does NOT support JSON fields in Prisma
