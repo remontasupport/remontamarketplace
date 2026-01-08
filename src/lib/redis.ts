@@ -44,9 +44,9 @@ export async function getCached<T>(key: string): Promise<T | null> {
     const start = Date.now();
     const data = await redis.get<T>(key);
     if (data) {
-      console.log(`[REDIS] Cache HIT for ${key} (${Date.now() - start}ms)`);
+  
     } else {
-      console.log(`[REDIS] Cache MISS for ${key}`);
+     
     }
     return data;
   } catch (error) {
@@ -68,9 +68,9 @@ export async function setCached<T>(
   try {
     const start = Date.now();
     await redis.setex(key, ttlSeconds, data);
-    console.log(`[REDIS] Cached ${key} with TTL ${ttlSeconds}s (${Date.now() - start}ms)`);
+    
   } catch (error) {
-    console.error('[REDIS] Set error:', error);
+   
   }
 }
 
@@ -87,20 +87,18 @@ export async function invalidateCache(...keys: string[]): Promise<void> {
     if (keys.length === 0) return;
 
     const result = await redis.del(...keys);
-    console.log(`[REDIS] Invalidated cache keys:`, keys);
-    console.log(`[REDIS] Number of keys deleted:`, result);
-
+  
     // Verify deletion worked
     for (const key of keys) {
       const stillExists = await redis.exists(key);
       if (stillExists) {
-        console.error(`[REDIS] WARNING: Key ${key} still exists after deletion!`);
+        
       } else {
-        console.log(`[REDIS] Verified: Key ${key} successfully deleted`);
+        
       }
     }
   } catch (error) {
-    console.error('[REDIS] Delete error:', error);
+
     throw error; // Re-throw so caller knows it failed
   }
 }
@@ -114,9 +112,9 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
   try {
     // Note: Upstash Redis doesn't support SCAN, so this is a simplified version
     // For production, you might want to maintain a Set of keys
-    console.log(`[REDIS] Pattern invalidation requested: ${pattern}`);
+    
   } catch (error) {
-    console.error('[REDIS] Pattern delete error:', error);
+    
   }
 }
 
@@ -136,7 +134,7 @@ export async function getOrFetch<T>(
   }
 
   // Cache miss - fetch from database
-  console.log(`[REDIS] Fetching fresh data for ${key}`);
+
   const data = await fetcher();
 
   // Cache the result (don't await - fire and forget)

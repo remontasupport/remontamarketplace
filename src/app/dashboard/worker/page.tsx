@@ -26,13 +26,8 @@ export const revalidate = 0;
 export default async function WorkerDashboard() {
   // PERFORMANCE LOGGING: Track dashboard rendering
   const dashboardStart = Date.now();
-  console.log('[DASHBOARD] Page render started');
-
   // Server-side session validation using getServerSession (RECOMMENDED APPROACH)
-  const sessionStart = Date.now();
   const session = await getServerSession(authOptions);
-  console.log('[DASHBOARD] getServerSession took:', Date.now() - sessionStart, 'ms');
-
   // Redirect to login if no session
   if (!session || !session.user) {
     redirect("/login");
@@ -55,24 +50,27 @@ export default async function WorkerDashboard() {
           firstName: true,
           lastName: true,
           photos: true,
+          workerServices: {
+            select: {
+              categoryName: true,
+            },
+            take: 1, // Get primary service
+          },
         },
       });
     },
     CACHE_TTL.WORKER_PROFILE
   );
-  console.log('[DASHBOARD] Worker profile fetch took (with Redis):', Date.now() - profileStart, 'ms');
 
   // PHASE 1 OPTIMIZATION: Single optimized query replaces 4 separate functions
   // REDIS OPTIMIZATION: Cache completion status (biggest performance win!)
   // First load: ~7000ms (multiple DB queries), Subsequent loads: ~50ms (Redis cache)
-  const dataStart = Date.now();
   const completionResult = await getOrFetch(
     CACHE_KEYS.completionStatus(session.user.id),
     () => getAllCompletionStatusOptimized(session.user.id),
     CACHE_TTL.COMPLETION_STATUS
   );
-  console.log('[DASHBOARD] Completion status fetch took (with Redis):', Date.now() - dataStart, 'ms');
-
+  
   // Construct setupProgress from optimized single-query result
   const setupProgress = completionResult.success && completionResult.data
     ? completionResult.data
@@ -83,7 +81,8 @@ export default async function WorkerDashboard() {
         services: false,
       };
 
-  console.log('[DASHBOARD] Total page render took:', Date.now() - dashboardStart, 'ms');
+  // Extract primary service for role display
+  const primaryService = workerProfile?.workerServices?.[0]?.categoryName || 'Support Worker';
 
   // At this point, we have a valid WORKER session
   // This code only runs server-side, so it's completely secure
@@ -93,6 +92,7 @@ export default async function WorkerDashboard() {
         firstName: workerProfile?.firstName || 'Worker',
         // photos is now a string (single photo URL), not an array
         photo: workerProfile?.photos || null,
+        role: primaryService,
       }}
     >
       {/* Hero Banner */}

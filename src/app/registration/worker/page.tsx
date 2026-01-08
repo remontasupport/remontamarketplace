@@ -24,8 +24,6 @@ export default function ContractorOnboarding() {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string>("");
-  const [registrationJobId, setRegistrationJobId] = useState<string | null>(null);
-  const [registrationStatus, setRegistrationStatus] = useState<'idle' | 'processing' | 'completed'>('idle');
 
   // Fetch categories from database with caching
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
@@ -167,47 +165,6 @@ export default function ContractorOnboarding() {
     }
   };
 
-  // Poll registration job status
-  useEffect(() => {
-    if (!registrationJobId || registrationStatus === 'completed') {
-      return;
-    }
-
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`/api/auth/registration-status/${registrationJobId}`);
-        const result = await response.json();
-
-        if (response.ok) {
-          const status = result.status;
-
-          if (status === 'completed') {
-            setRegistrationStatus('completed');
-            setIsLoading(false);
-            // Redirect to success page after brief delay
-            setTimeout(() => {
-              window.location.href = `/registration/worker/success`;
-            }, 500);
-          } else if (status === 'failed') {
-            setIsLoading(false);
-            alert('Registration failed. Please try again or contact support.');
-          }
-          // Continue polling for other statuses (processing, retrying, etc.)
-        }
-      } catch (error) {
-        // Continue polling on error
-      }
-    };
-
-    // Poll every 2 seconds
-    const intervalId = setInterval(checkStatus, 2000);
-
-    // Initial check
-    checkStatus();
-
-    return () => clearInterval(intervalId);
-  }, [registrationJobId, registrationStatus]);
-
   const onSubmit = async (data: ContractorFormData) => {
     try {
       setIsLoading(true);
@@ -235,7 +192,6 @@ export default function ContractorOnboarding() {
       }
 
       // Registration successful - redirect to success page
-      setRegistrationStatus('completed');
       window.location.href = `/registration/worker/success`;
     } catch (error: any) {
       // Show user-friendly error message
@@ -371,9 +327,7 @@ export default function ContractorOnboarding() {
                   disabled={isLoading}
                   className="flex items-center gap-2"
                 >
-                  {isLoading && registrationStatus !== 'completed' && "Submitting..."}
-                  {registrationStatus === 'completed' && "✓ Registration complete!"}
-                  {!isLoading && registrationStatus === 'idle' && "Complete Signup"}
+                  {isLoading ? "Submitting..." : "Complete Signup"}
                 </Button>
               ) : (
                 <Button

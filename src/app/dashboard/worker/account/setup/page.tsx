@@ -380,7 +380,7 @@ function AccountSetupContent() {
           ]);
         } catch (err) {
           // If timeout or error, continue anyway (dashboard will poll)
-          console.log('Update timed out or failed, navigating anyway');
+      
         }
 
         // Invalidate caches so dashboard fetches fresh data

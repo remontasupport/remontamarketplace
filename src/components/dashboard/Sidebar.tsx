@@ -62,6 +62,7 @@ interface SidebarProps {
   profileData?: {
     firstName: string
     photo: string | null
+    role?: string
   }
 }
 
@@ -297,6 +298,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
   // Handle both prop type (photo) and WorkerProfile type (photos)
   const photoUrl = (profileData && 'photo' in profileData ? profileData.photo : profileData?.photos) || '/images/profilePlaceHolder.png'
   const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
+  const displayRole = profileData?.role || 'Support Worker'
 
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
@@ -328,7 +330,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
         </div>
         <div className="sidebar-profile-info">
           <h4 className="sidebar-profile-name">{displayName}</h4>
-          <p className="sidebar-profile-role">Support Worker</p>
+          <p className="sidebar-profile-role">{displayRole}</p>
         </div>
       </div>
 

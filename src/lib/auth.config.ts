@@ -123,7 +123,6 @@ export const authOptions: NextAuthOptions = {
         try {
           // PERFORMANCE LOGGING: Track login timing
           const loginStart = Date.now();
-          console.log('[AUTH] Login attempt started:', credentials.email);
 
           // REDIS OPTIMIZATION: Cache user lookup to avoid slow database queries
           // First login: ~1700ms (database), Subsequent logins: ~20-50ms (Redis cache)
@@ -146,7 +145,6 @@ export const authOptions: NextAuthOptions = {
             },
             CACHE_TTL.USER_DATA
           );
-          console.log('[AUTH] User lookup took (with Redis):', Date.now() - dbQueryStart, 'ms');
 
           if (!user || !user.passwordHash) {
             // Don't reveal whether user exists
@@ -164,7 +162,6 @@ export const authOptions: NextAuthOptions = {
             credentials.password,
             user.passwordHash
           );
-          console.log('[AUTH] Bcrypt compare took:', Date.now() - bcryptStart, 'ms');
 
           if (!isValidPassword) {
             // Increment failed login attempts
@@ -244,7 +241,6 @@ export const authOptions: NextAuthOptions = {
           });
 
           // Return user data for session IMMEDIATELY (no await!)
-          console.log('[AUTH] Total login time:', Date.now() - loginStart, 'ms');
           return {
             id: user.id,
             email: user.email,
@@ -269,9 +265,6 @@ export const authOptions: NextAuthOptions = {
      * Adds role and id to the token (keep it small for cookie size limits)
      */
     async jwt({ token, user, trigger }) {
-      const jwtStart = Date.now();
-      console.log('[AUTH] JWT callback started, trigger:', trigger);
-
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -300,7 +293,6 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      console.log('[AUTH] JWT callback took:', Date.now() - jwtStart, 'ms');
       return token;
     },
 
@@ -311,7 +303,6 @@ export const authOptions: NextAuthOptions = {
      */
     async session({ session, token }) {
       const sessionStart = Date.now();
-      console.log('[AUTH] Session callback started');
 
       if (session.user) {
         session.user.id = token.id;
@@ -321,8 +312,6 @@ export const authOptions: NextAuthOptions = {
         session.user.impersonatedBy = token.impersonatedBy as string | undefined;
         // Requirements are fetched via API, not stored in session
       }
-
-      console.log('[AUTH] Session callback took:', Date.now() - sessionStart, 'ms');
       return session;
     },
 

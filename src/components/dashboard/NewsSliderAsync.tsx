@@ -88,7 +88,6 @@ async function fetchNewsArticles(): Promise<Article[]> {
       return FALLBACK_ARTICLES;
     }
 
-    console.log('[NEWS] Successfully fetched', data.articles.length, 'articles from API');
     return data.articles.length > 0 ? data.articles : FALLBACK_ARTICLES;
   } catch (error) {
     // Return fallback articles to ensure the page always has content

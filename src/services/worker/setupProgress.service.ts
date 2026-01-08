@@ -1256,11 +1256,10 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
 }>> {
   try {
     const totalStart = Date.now();
-    console.log('[COMPLETION] Started getAllCompletionStatusOptimized');
+   
 
     // OPTIMIZATION: Single database query fetches ALL needed data at once
     // This replaces multiple separate queries in the 4 individual functions
-    const profileQueryStart = Date.now();
     const workerProfile = await authPrisma.workerProfile.findUnique({
       where: { userId },
       select: {
@@ -1294,7 +1293,6 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
         },
       },
     });
-    console.log('[COMPLETION] Profile query took:', Date.now() - profileQueryStart, 'ms');
 
     if (!workerProfile) {
       return {
@@ -1394,8 +1392,6 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
           },
         },
       });
-      console.log('[COMPLETION] Compliance categories query took:', Date.now() - categoryQueryStart, 'ms');
-
       // Extract base compliance document IDs
       const baseComplianceIds = new Set<string>();
       const baseComplianceCategories = ['IDENTITY', 'BUSINESS', 'COMPLIANCE'];
@@ -1506,7 +1502,6 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
         .filter((name): name is string => name !== null))];
 
       // Fetch categories with training documents
-      const trainingCategoryQueryStart = Date.now();
       const categories = await prisma.category.findMany({
         where: {
           OR: [
@@ -1549,7 +1544,7 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
           },
         },
       });
-      console.log('[COMPLETION] Trainings categories query took:', Date.now() - trainingCategoryQueryStart, 'ms');
+ 
 
       // Extract training document IDs
       const trainingDocIds = new Set<string>();
@@ -1704,7 +1699,7 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
     }
 
     // Return all completion statuses
-    console.log('[COMPLETION] Total getAllCompletionStatusOptimized took:', Date.now() - totalStart, 'ms');
+  
     return {
       success: true,
       data: {

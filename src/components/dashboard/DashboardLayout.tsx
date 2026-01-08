@@ -12,6 +12,7 @@ interface DashboardLayoutProps {
   profileData?: {
     firstName: string
     photo: string | null
+    role?: string
   }
 }
 

@@ -272,7 +272,6 @@ model WorkerProfile {
   abn                       String?
 
   // Setup Progress Tracking
-  currentSetupSection       String?                   // "account-details" | "compliance" | "trainings" | "services"
   setupProgress             Json?                     // { accountDetails: false, compliance: false, trainings: false, services: false }
 
   verificationRequirements  VerificationRequirement[]

@@ -98,7 +98,6 @@ export async function updateWorkerName(
 
     // 5. CRITICAL: Invalidate Redis cache BEFORE returning (ensures fresh data on next page load)
     await invalidateCache(CACHE_KEYS.workerProfile(session.user.id));
-    console.log('[UPDATE NAME] Redis cache invalidated for user:', session.user.id);
 
     // 6. Return SUCCESS immediately
     const response = {
@@ -239,7 +238,7 @@ export async function updateWorkerPhoto(
 
     // 5. CRITICAL: Invalidate Redis cache BEFORE returning (ensures fresh data on next page load)
     await invalidateCache(CACHE_KEYS.workerProfile(session.user.id));
-    console.log('[UPDATE PHOTO] Redis cache invalidated for user:', session.user.id);
+   
 
     // 6. Return SUCCESS immediately
     const response = {

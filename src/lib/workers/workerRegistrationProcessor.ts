@@ -8,7 +8,7 @@
 import { authPrisma } from '@/lib/auth-prisma';
 import { hashPassword } from '@/lib/password';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
-import type { WorkerRegistrationJobData } from '@/lib/queue';
+import type { WorkerRegistrationJobData } from '@/types/workerRegistration';
 
 /**
  * Process worker registration job

@@ -52,7 +52,6 @@
     "next": "15.5.7",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.1",
-    "pg-boss": "^10.4.0",
     "prisma": "^6.16.2",
     "react": "19.1.0",
     "react-day-picker": "^9.13.0",

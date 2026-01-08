@@ -15,7 +15,7 @@ import { NextResponse } from 'next/server';
 import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
 import { verifyRecaptcha } from '@/lib/recaptcha';
 import { processWorkerRegistration } from '@/lib/workers/workerRegistrationProcessor';
-import type { WorkerRegistrationJobData } from '@/lib/queue';
+import type { WorkerRegistrationJobData } from '@/types/workerRegistration';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
 
 export async function POST(request: Request) {
