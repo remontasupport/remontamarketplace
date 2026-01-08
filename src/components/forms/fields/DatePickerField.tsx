@@ -257,46 +257,17 @@ export default function DatePickerField({
                 </button>
               </div>
             ) : (
-              // Calendar View
+              // Calendar View with Dropdowns
               <>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    marginBottom: "1.5rem",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setShowYearPicker(true)}
-                    style={{
-                      padding: "0.75rem 2rem",
-                      backgroundColor: "#0D9488",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "1.1rem",
-                      fontWeight: "600",
-                      color: "white",
-                      cursor: "pointer",
-                      fontFamily: "var(--font-poppins)",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0F766E";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#0D9488";
-                    }}
-                  >
-                    Select Year: {currentMonth.getFullYear()}
-                  </button>
-                </div>
                 <DayPicker
                   mode="single"
                   selected={selectedDate}
                   onSelect={handleSelect}
                   month={currentMonth}
                   onMonthChange={setCurrentMonth}
+                  captionLayout="dropdown"
+                  fromYear={1920}
+                  toYear={currentYear}
                   disabled={[
                     minDate ? { before: minDate } : false,
                     maxDate ? { after: maxDate } : false,
@@ -315,6 +286,7 @@ export default function DatePickerField({
                     today: "rdp-today",
                     outside: "rdp-outside",
                     disabled: "rdp-disabled",
+                    dropdown: "custom-month-year-dropdown",
                   }}
                   style={{
                     fontFamily: "var(--font-poppins)",

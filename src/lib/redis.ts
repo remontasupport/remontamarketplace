@@ -78,14 +78,30 @@ export async function setCached<T>(
  * Invalidate (delete) cached data
  */
 export async function invalidateCache(...keys: string[]): Promise<void> {
-  if (!redis) return;
+  if (!redis) {
+    console.warn('[REDIS] Redis not configured - cache invalidation skipped');
+    return;
+  }
 
   try {
     if (keys.length === 0) return;
-    await redis.del(...keys);
+
+    const result = await redis.del(...keys);
     console.log(`[REDIS] Invalidated cache keys:`, keys);
+    console.log(`[REDIS] Number of keys deleted:`, result);
+
+    // Verify deletion worked
+    for (const key of keys) {
+      const stillExists = await redis.exists(key);
+      if (stillExists) {
+        console.error(`[REDIS] WARNING: Key ${key} still exists after deletion!`);
+      } else {
+        console.log(`[REDIS] Verified: Key ${key} successfully deleted`);
+      }
+    }
   } catch (error) {
     console.error('[REDIS] Delete error:', error);
+    throw error; // Re-throw so caller knows it failed
   }
 }
 

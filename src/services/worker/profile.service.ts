@@ -20,6 +20,7 @@ import { z } from "zod";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { geocodeAddress } from "@/lib/geocoding";
 import { autoUpdateAccountDetailsCompletion } from "./setupProgress.service";
+import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
 
 /**
  * Backend Service: Worker Profile Management
@@ -95,16 +96,20 @@ export async function updateWorkerName(
       },
     });
 
-    // 5. Return SUCCESS immediately (background sync handles setupProgress update)
+    // 5. CRITICAL: Invalidate Redis cache BEFORE returning (ensures fresh data on next page load)
+    await invalidateCache(CACHE_KEYS.workerProfile(session.user.id));
+    console.log('[UPDATE NAME] Redis cache invalidated for user:', session.user.id);
+
+    // 6. Return SUCCESS immediately
     const response = {
       success: true,
       message: "Your name has been saved successfully!",
       data: updatedProfile,
     };
 
-    // 6. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    // 7. BACKGROUND SYNC: Update setupProgress and revalidate paths (async, non-blocking)
     Promise.all([
-      // Revalidate cache paths
+      // Revalidate Next.js cache paths
       Promise.resolve().then(() => {
         revalidatePath("/dashboard/worker/account/setup");
         revalidatePath("/dashboard/worker");
@@ -119,7 +124,7 @@ export async function updateWorkerName(
 
     return response;
   } catch (error: any) {
-   
+
     return {
       success: false,
       error: "Failed to save your name. Please try again.",
@@ -232,16 +237,20 @@ export async function updateWorkerPhoto(
       },
     });
 
-    // 5. Return SUCCESS immediately (background sync handles setupProgress update)
+    // 5. CRITICAL: Invalidate Redis cache BEFORE returning (ensures fresh data on next page load)
+    await invalidateCache(CACHE_KEYS.workerProfile(session.user.id));
+    console.log('[UPDATE PHOTO] Redis cache invalidated for user:', session.user.id);
+
+    // 6. Return SUCCESS immediately
     const response = {
       success: true,
       message: "Your photo has been saved successfully!",
       data: updatedProfile,
     };
 
-    // 6. BACKGROUND SYNC: Update setupProgress in database (async, non-blocking)
+    // 7. BACKGROUND SYNC: Update setupProgress and revalidate paths (async, non-blocking)
     Promise.all([
-      // Revalidate cache paths
+      // Revalidate Next.js cache paths
       Promise.resolve().then(() => {
         revalidatePath("/dashboard/worker/account/setup");
         revalidatePath("/dashboard/worker");

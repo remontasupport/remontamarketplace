@@ -323,6 +323,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
             width={64}
             height={64}
             className="sidebar-profile-img"
+            unoptimized={photoUrl?.includes('blob.vercel-storage.com')}
           />
         </div>
         <div className="sidebar-profile-info">
