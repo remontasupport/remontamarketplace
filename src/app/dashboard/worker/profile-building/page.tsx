@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import ProfileEditLayout from "@/components/profile-building/ProfileEditLayout";
 import QueryProvider from "@/providers/QueryProvider";
@@ -19,11 +20,19 @@ import InterestsHobbiesSection from "@/components/profile-building/sections/Inte
 import AboutMeSection from "@/components/profile-building/sections/AboutMeSection";
 import PersonalitySection from "@/components/profile-building/sections/PersonalitySection";
 import MyPreferencesSection from "@/components/profile-building/sections/MyPreferencesSection";
+import { useWorkerProfile } from "@/hooks/queries/useWorkerProfile";
 import Loader from "@/components/ui/Loader";
 
 function ProfileBuildingContent() {
   const searchParams = useSearchParams();
   const section = searchParams.get("section") || "preferred-hours";
+  const { data: session } = useSession();
+
+  // Fetch worker profile for dynamic role
+  const { data: profileData } = useWorkerProfile(session?.user?.id);
+
+  // Extract primary service for role display
+  const primaryService = profileData?.services?.[0] || 'Support Worker';
 
   // Render the appropriate section based on URL parameter
   const renderSection = () => {
@@ -64,7 +73,13 @@ function ProfileBuildingContent() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      profileData={{
+        firstName: profileData?.firstName || 'Worker',
+        photo: profileData?.photos || null,
+        role: primaryService,
+      }}
+    >
       <QueryProvider>
         <ProfileEditLayout currentSection={section}>
           {renderSection()}
@@ -77,7 +92,13 @@ function ProfileBuildingContent() {
 export default function ProfileBuildingPage() {
   return (
     <Suspense fallback={
-      <DashboardLayout>
+      <DashboardLayout
+        profileData={{
+          firstName: 'Worker',
+          photo: null,
+          role: 'Support Worker',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>

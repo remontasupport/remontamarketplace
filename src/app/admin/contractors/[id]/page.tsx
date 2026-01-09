@@ -15,6 +15,13 @@ interface WorkerProfile {
   location: string | null
   languages?: string[]
   services?: string[]
+  photos?: string | null
+  experience?: string | null
+  hasVehicle?: string | null
+  introduction?: string | null
+  hobbies?: string | null
+  uniqueService?: string | null
+  qualifications?: string | null
 }
 
 interface ApiResponse {
@@ -50,6 +57,10 @@ export default function WorkerDetailPage() {
   const [editableExperience, setEditableExperience] = useState<string>('')
   const [editableVehicle, setEditableVehicle] = useState<string>('')
   const [editableLocation, setEditableLocation] = useState<string>('')
+  const [editableIntroduction, setEditableIntroduction] = useState<string>('')
+  const [editableHobbies, setEditableHobbies] = useState<string>('')
+  const [editableUniqueService, setEditableUniqueService] = useState<string>('')
+  const [editableWhyEnjoy, setEditableWhyEnjoy] = useState<string>('')
   const [experienceItems, setExperienceItems] = useState<string[]>([])
   const [servicesItems, setServicesItems] = useState<string[]>([])
 
@@ -261,6 +272,10 @@ export default function WorkerDetailPage() {
   const experience = editableExperience || worker.experience || '2 years'
   const vehicle = editableVehicle || worker.hasVehicle || 'Yes'
   const location = editableLocation || worker.location || ''
+  const introduction = editableIntroduction || worker.introduction || 'Dedicated support worker committed to providing compassionate care and assistance to individuals with diverse needs.'
+  const hobbies = editableHobbies || worker.hobbies || ''
+  const uniqueService = editableUniqueService || worker.uniqueService || ''
+  const whyEnjoy = editableWhyEnjoy || 'I find great fulfillment in making a positive impact on people\'s lives and helping them achieve their goals.'
 
   // Functions for experience items
   const updateExperienceItem = (index: number, value: string) => {

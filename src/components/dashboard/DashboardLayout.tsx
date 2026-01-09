@@ -9,6 +9,7 @@ import { isImpersonating } from '@/lib/impersonation'
 
 interface DashboardLayoutProps {
   children: ReactNode
+  showProfileCard?: boolean
   profileData?: {
     firstName: string
     photo: string | null
@@ -18,6 +19,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({
   children,
+  showProfileCard = true,
   profileData
 }: DashboardLayoutProps) {
   const { data: session } = useSession()

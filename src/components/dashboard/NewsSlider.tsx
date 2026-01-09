@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Loader from "@/components/ui/Loader";
 
 interface Article {
@@ -25,7 +25,30 @@ interface NewsSliderProps {
 
 export default function NewsSlider({ articles, isLoading = false }: NewsSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerPage = 6;
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  // Responsive items per page - 1 on mobile, 6 on desktop
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+      const newItemsPerPage = isMobile ? 1 : 6;
+
+      if (newItemsPerPage !== itemsPerPage) {
+        setItemsPerPage(newItemsPerPage);
+        // Reset to first page when switching between mobile/desktop
+        setCurrentIndex(0);
+      }
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, [itemsPerPage]);
 
   // Show loading state (same as training steps)
   if (isLoading) {
@@ -74,7 +97,7 @@ export default function NewsSlider({ articles, isLoading = false }: NewsSliderPr
   const showNavigation = articles.length > itemsPerPage;
 
   return (
-    <>
+    <div className="news-slider-wrapper">
       {showNavigation && (
         <div className="section-header-main">
           <h3 className="section-title-main">Read more news</h3>
@@ -121,6 +144,6 @@ export default function NewsSlider({ articles, isLoading = false }: NewsSliderPr
           </a>
         ))}
       </div>
-    </>
+    </div>
   );
 }

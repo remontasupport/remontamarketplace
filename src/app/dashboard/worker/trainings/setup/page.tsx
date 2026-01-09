@@ -199,10 +199,20 @@ function TrainingsSetupContent() {
     }
   }, [currentStepIndex, router, STEPS]);
 
+  // Extract primary service for role display
+  const primaryService = profileData?.services?.[0] || 'Support Worker';
+
   // Authentication is handled by layout - no need to check here
   if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
     return (
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: profileData?.firstName || 'Worker',
+          photo: profileData?.photos || null,
+          role: primaryService,
+        }}
+      >
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>
@@ -215,7 +225,14 @@ function TrainingsSetupContent() {
 
   if (!CurrentStepComponent || !currentStepData) {
     return (
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: profileData?.firstName || 'Worker',
+          photo: profileData?.photos || null,
+          role: primaryService,
+        }}
+      >
         <div className="form-page-container">
           <p className="loading-text">No trainings required at this time.</p>
         </div>
@@ -224,7 +241,14 @@ function TrainingsSetupContent() {
   }
 
   return (
-    <DashboardLayout showProfileCard={false}>
+    <DashboardLayout
+      showProfileCard={false}
+      profileData={{
+        firstName: profileData?.firstName || 'Worker',
+        photo: profileData?.photos || null,
+        role: primaryService,
+      }}
+    >
       {!isFinalSaving ? (
         <StepContainer
           currentStep={currentStep}
@@ -273,7 +297,14 @@ function TrainingsSetupContent() {
 export default function TrainingsSetupPage() {
   return (
     <Suspense fallback={
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: 'Worker',
+          photo: null,
+          role: 'Support Worker',
+        }}
+      >
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>

@@ -95,20 +95,18 @@ export default async function WorkerDashboard() {
         role: primaryService,
       }}
     >
-      {/* Hero Banner */}
+      {/* Hero Banner - Flex approach for mobile */}
       <div className="hero-banner">
         <div className="hero-content">
           <h2 className="hero-title">
             Welcome to Remonta!
           </h2>
-          <p className="text-white/90 text-lg font-poppins mt-4 mb-8">
+          <p className="hero-description">
             Connecting support workers with families to create meaningful, life-changing relationships.
           </p>
 
           {/* Profile Completion Reminder */}
-          <div style={{ maxWidth: '600px' }}>
-            <ProfileCompletionReminder initialSetupProgress={setupProgress} />
-          </div>
+          <ProfileCompletionReminder initialSetupProgress={setupProgress} />
         </div>
         {/* Decorative elements */}
         <div className="hero-decoration hero-decoration-1"></div>

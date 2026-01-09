@@ -1,7 +1,6 @@
 generator client {
-  provider      = "prisma-client-js"
-  output        = "../src/generated/auth-client"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider = "prisma-client-js"
+  output   = "../src/generated/auth-client"
 }
 
 datasource db {
@@ -51,14 +50,14 @@ model ClientProfile {
   firstName       String
   lastName        String
   mobile          String
-  streetAddress   String?
-  suburb          String?
-  postalCode      String?
-  servicesRequest String[]     @default([])  // Default to empty array for existing rows
   createdAt       DateTime     @default(now())
   updatedAt       DateTime
+  postalCode      String?
+  servicesRequest String[]     @default([])
+  streetAddress   String?
+  suburb          String?
   user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  participant     Participant? // One-to-one: CLIENT can manage only 1 participant
+  participant     Participant?
 
   @@index([userId])
   @@index([suburb])
@@ -73,14 +72,14 @@ model CoordinatorProfile {
   lastName        String
   mobile          String
   organization    String?
-  streetAddress   String?
-  suburb          String?
-  postalCode      String?
-  servicesRequest String[]      @default([])  // Default to empty array for existing rows
   createdAt       DateTime      @default(now())
   updatedAt       DateTime
+  postalCode      String?
+  servicesRequest String[]      @default([])
+  streetAddress   String?
+  suburb          String?
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  participants    Participant[] // One-to-many: COORDINATOR can manage multiple participants
+  participants    Participant[]
 
   @@index([userId])
   @@index([suburb])
@@ -90,51 +89,33 @@ model CoordinatorProfile {
 
 model Participant {
   id                           String              @id @default(cuid())
-
-  // Link to either ClientProfile (1:1) OR CoordinatorProfile (many:1)
-  clientProfileId              String?             @unique // Only for CLIENT role (1:1)
-  coordinatorProfileId         String?                     // Only for COORDINATOR role (many:1)
-
-  // Participant details
-  personNeedingSupport         String              // Display name of person needing support
+  clientProfileId              String?             @unique
+  coordinatorProfileId         String?
+  personNeedingSupport         String
   firstName                    String
   lastName                     String
   dateOfBirth                  DateTime
   ndisNumber                   String              @unique
-
-  // Contact information
   mobile                       String
   email                        String?
-
-  // Address details
   streetAddress                String?
   suburb                       String
   state                        String
   postalCode                   String
   latitude                     Float?
   longitude                    Float?
-
-  // Services and support
-  servicesRequest              String[]            // Array of requested services
-  disabilities                 String[]            // Array of disabilities/conditions
-  supportNeeds                 String?             @db.Text
-
-  // Plan Manager information
+  servicesRequest              String[]
+  disabilities                 String[]
+  supportNeeds                 String?
   planManagerName              String?
   planManagerEmail             String?
   planManagerPhone             String?
-
-  // Emergency Contact
   emergencyContactName         String
   emergencyContactRelationship String
   emergencyContactMobile       String
-
-  // Additional metadata
-  representativeType           RepresentativeType? // Only for CLIENT: SELF, PARENT, etc.
+  representativeType           RepresentativeType?
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
-
-  // Relations
   clientProfile                ClientProfile?      @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
   coordinatorProfile           CoordinatorProfile? @relation(fields: [coordinatorProfileId], references: [id], onDelete: Cascade)
 
@@ -149,32 +130,33 @@ model Participant {
 }
 
 model Session {
-  id              String   @id @default(cuid())
-  sessionToken    String   @unique
-  userId          String
-  expires         DateTime
-  impersonatedBy  String?  // ID of admin user who is impersonating this user
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  sessionToken   String   @unique
+  userId         String
+  expires        DateTime
+  impersonatedBy String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([sessionToken])
   @@index([userId])
-  @@index([impersonatedBy])  // For querying active impersonation sessions
+  @@index([impersonatedBy])
   @@map("sessions")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model User {
-  id                   String               @id @default(cuid())
-  email                String               @unique
+  id                   String              @id @default(cuid())
+  email                String              @unique
   passwordHash         String
   role                 UserRole
-  status               AccountStatus        @default(ACTIVE)
-  resetPasswordToken   String?              @unique
+  status               AccountStatus       @default(ACTIVE)
+  resetPasswordToken   String?             @unique
   resetPasswordExpires DateTime?
-  failedLoginAttempts  Int                  @default(0)
+  failedLoginAttempts  Int                 @default(0)
   accountLockedUntil   DateTime?
   lastLoginAt          DateTime?
   lastLoginIp          String?
-  createdAt            DateTime             @default(now())
+  createdAt            DateTime            @default(now())
   updatedAt            DateTime
   accounts             Account[]
   auditLogs            AuditLog[]
@@ -187,11 +169,10 @@ model User {
   @@index([resetPasswordToken])
   @@index([role])
   @@index([status])
-
-  // NEW INDEXES FOR PERFORMANCE
-  @@index([accountLockedUntil])  // Login flow checks account lock status
-  @@index([createdAt])            // Admin queries for user registration date
-
+  @@index([accountLockedUntil])
+  @@index([createdAt])
+  @@index([email], map: "idx_users_email")
+  @@index([email, status, accountLockedUntil], map: "idx_users_email_status_locked")
   @@map("users")
 }
 
@@ -210,12 +191,12 @@ model VerificationRequirement {
   approvedAt         DateTime?
   rejectedAt         DateTime?
   expiresAt          DateTime?
-  notes              String?
   rejectionReason    String?
-  metadata           Json?             // Flexible data storage (e.g., citizenship status for Right to Work documents)
   createdAt          DateTime          @default(now())
   updatedAt          DateTime
   documentCategory   DocumentCategory?
+  notes              String?
+  metadata           Json?
   workerProfile      WorkerProfile     @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
   @@index([documentCategory])
@@ -226,6 +207,7 @@ model VerificationRequirement {
   @@index([workerProfileId, requirementType])
   @@index([workerProfileId, requirementName])
   @@index([workerProfileId, status])
+  @@index([workerProfileId], map: "idx_verification_requirements_worker_profile")
   @@map("verification_requirements")
 }
 
@@ -240,46 +222,42 @@ model VerificationToken {
 }
 
 model WorkerProfile {
-  id                        String                    @id @default(cuid())
-  userId                    String                    @unique
-  firstName                 String
-  middleName                String?
-  lastName                  String
-  mobile                    String
-  location                  String?
-  age                       Int?
-  dateOfBirth               String?
-  gender                    String?
-  languages                 String[]
-  experience                String?
-  introduction              String?
-  qualifications            String?
-  hasVehicle                String?
-  funFact                   String?
-  hobbies                   String?
-  uniqueService             String?
-  photos                    String?
-  profileCompleted          Boolean                   @default(false)
-  isPublished               Boolean                   @default(false)
-  createdAt                 DateTime                  @default(now())
-  updatedAt                 DateTime
-  verificationStatus        VerificationStatus        @default(NOT_STARTED)
-  city                      String?
-  latitude                  Float?
-  longitude                 Float?
-  postalCode                String?
-  state                     String?
-  abn                       String?
+  id                       String                    @id(map: "worker_profiles_new_pkey") @default(cuid())
+  userId                   String                    @unique
+  firstName                String
+  middleName               String?
+  lastName                 String
+  mobile                   String
+  location                 String?
+  city                     String?
+  state                    String?
+  postalCode               String?
+  age                      Int?
+  dateOfBirth              String?
+  gender                   String?
+  languages                String[]                  @default([])
+  experience               String?
+  introduction             String?
+  qualifications           String?
+  hasVehicle               String?
+  funFact                  String?
+  hobbies                  String?
+  uniqueService            String?
+  photos                   String?
+  latitude                 Float?
+  longitude                Float?
+  abn                      String?
+  setupProgress            Json?
+  profileCompleted         Boolean                   @default(false)
+  isPublished              Boolean                   @default(false)
+  verificationStatus       String                    @default("NOT_STARTED")
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime
+  verificationRequirements VerificationRequirement[]
+  workerAdditionalInfo     WorkerAdditionalInfo?
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerServices           WorkerService[]
 
-  // Setup Progress Tracking
-  setupProgress             Json?                     // { accountDetails: false, compliance: false, trainings: false, services: false }
-
-  verificationRequirements  VerificationRequirement[]
-  workerServices            WorkerService[]
-  workerAdditionalInfo      WorkerAdditionalInfo?
-  user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Single-column indexes for basic filtering
   @@index([city])
   @@index([isPublished])
   @@index([latitude, longitude])
@@ -287,111 +265,81 @@ model WorkerProfile {
   @@index([state])
   @@index([userId])
   @@index([verificationStatus])
-
-  // NEW INDEXES FOR ADMIN DASHBOARD PERFORMANCE
-  @@index([gender])           // Admin dashboard gender filter
-  @@index([age])              // Admin dashboard age range filter
+  @@index([gender])
+  @@index([age])
   @@index([dateOfBirth])
-  @@index([firstName])        // Admin dashboard text search
-  @@index([lastName])         // Admin dashboard text search
-  @@index([mobile])           // Admin dashboard text search
-
-  // GIN index for array field (PostgreSQL-specific for fast array queries)
-  // This enables fast queries like: WHERE 'English' = ANY(languages)
+  @@index([firstName])
+  @@index([lastName])
+  @@index([mobile])
   @@index([languages], type: Gin)
-
-  // Compound indexes for common filter combinations
-  @@index([isPublished, city])              // Published workers in a city
-  @@index([isPublished, gender])            // Published workers by gender
-  @@index([isPublished, verificationStatus]) // Published workers by verification
-  @@index([createdAt])                       // Sort by registration date
-
+  @@index([isPublished, city])
+  @@index([isPublished, gender])
+  @@index([isPublished, verificationStatus])
+  @@index([createdAt])
   @@map("worker_profiles")
 }
 
-// Stores all individual document definitions (e.g., "Police Check", "First Aid & CPR")
 model Document {
-  id            String   @id // e.g., "identity-points-100"
-  name          String   // e.g., "100 Points of ID"
-  category      String   // e.g., "IDENTITY", "BUSINESS", "COMPLIANCE"
-  description   String   @db.Text
-  hasExpiration Boolean  @default(false)
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  categoryDocuments      CategoryDocument[]
-  subcategoryDocuments   SubcategoryDocument[]
+  id                   String                @id
+  name                 String
+  category             String
+  description          String
+  hasExpiration        Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  categoryDocuments    CategoryDocument[]
+  subcategoryDocuments SubcategoryDocument[]
 
   @@index([category])
+  @@index([category], map: "idx_document_category")
 }
 
-// Stores main service categories (e.g., "Support Worker", "Therapeutic Supports")
 model Category {
-  id                    String   @id // e.g., "support-worker"
-  name                  String   // e.g., "Support Worker"
-  requiresQualification Boolean  @default(false)
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  // Relations
-  subcategories         Subcategory[]
+  id                    String             @id
+  name                  String
+  requiresQualification Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   documents             CategoryDocument[]
+  subcategories         Subcategory[]
 }
 
-// Stores subcategories under a main category (e.g., "Personal care", "Art Therapist")
 model Subcategory {
-  id                   String   @id // e.g., "personal-care"
+  id                   String                @id
   categoryId           String
-  name                 String   // e.g., "Personal care (showering, toileting...)"
-  requiresRegistration String?  // e.g., "AHPRA" or null
-
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  // Relations
-  category             Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name                 String
+  requiresRegistration String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   additionalDocuments  SubcategoryDocument[]
 
   @@index([categoryId])
 }
 
-// Join table linking categories to their required/optional/conditional documents
 model CategoryDocument {
-  id            String   @id @default(cuid())
-  categoryId    String
-  documentId    String
-
-  documentType  String   // "REQUIRED" | "OPTIONAL" | "CONDITIONAL"
-
-  // For conditional documents (e.g., transport docs required if providesTransport=true)
-  conditionKey   String?  // e.g., "providesTransport"
-  requiredIfTrue Boolean? // true if required when condition is true
-
-  createdAt     DateTime @default(now())
-
-  // Relations
-  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  categoryId     String
+  documentId     String
+  documentType   String
+  conditionKey   String?
+  requiredIfTrue Boolean?
+  createdAt      DateTime @default(now())
+  category       Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([categoryId, documentId, documentType, conditionKey])
   @@index([categoryId])
   @@index([documentId])
 }
 
-// Join table for subcategory-specific additional documents (e.g., AHPRA for OT)
 model SubcategoryDocument {
   id            String      @id @default(cuid())
   subcategoryId String
   documentId    String
-
   createdAt     DateTime    @default(now())
-
-  // Relations
-  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
   document      Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
 
   @@unique([subcategoryId, documentId])
   @@index([subcategoryId])
@@ -399,72 +347,65 @@ model SubcategoryDocument {
 }
 
 model WorkerService {
-  id              String        @id @default(cuid())
-  workerProfileId String
-  categoryId      String        // e.g., "support-worker", "therapeutic-supports"
-  categoryName    String        // e.g., "Support Worker", "Therapeutic Supports"
-  subcategoryIds  String[]      @default([])  // e.g., ["personal-care", "occupational-therapist"]
-  subcategoryNames String[]     @default([])  // e.g., ["Personal care", "Occupational Therapist"]
-  metadata        Json?         // Service-specific data (e.g., nursing registration, certifications)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  workerProfileId  String
+  categoryId       String
+  categoryName     String
+  subcategoryIds   String[]      @default([])
+  subcategoryNames String[]      @default([])
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now()) @updatedAt
+  workerProfile    WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "worker_services_workerprofileid_fkey")
 
-  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
-
-  @@unique([workerProfileId, categoryId])
-  @@index([workerProfileId])
-  @@index([categoryId])
-
-  // NEW INDEXES FOR PERFORMANCE
-  @@index([categoryName])                // Filter by service name (admin dashboard)
-  @@index([workerProfileId, categoryName]) // Compound index for worker's services
-
+  @@unique([workerProfileId, categoryId], map: "worker_services_unique")
+  @@index([categoryId], map: "worker_services_categoryid_idx")
+  @@index([categoryName], map: "worker_services_categoryname_idx")
+  @@index([workerProfileId, categoryName], map: "worker_services_workerprofileid_categoryname_idx")
+  @@index([workerProfileId], map: "worker_services_workerprofileid_idx")
   @@map("worker_services")
 }
 
 model WorkerAdditionalInfo {
-  id                String        @id @default(cuid())
-  workerProfileId   String        @unique  // 1-to-1 relationship
-
-  // Repeating data as JSONB arrays
-  jobHistory        Json?         @default("[]")  // Array of job objects
-  education         Json?         @default("[]")  // Array of education objects
-
-  // Simple array fields
-  languages         String[]      @default([])    // Array of language strings
-  culturalBackground String[]     @default([])    // Array of cultural backgrounds
-  religion          String[]      @default([])    // Array of religions
-  interests         String[]      @default([])    // Array of interests & hobbies
-  workPreferences   String[]      @default([])    // Who do you prefer to work with?
-
-  // Boolean fields
-  lgbtqiaSupport    Boolean?                      // "Good to know" - LGBTQIA+ support
-  nonSmoker         Boolean?                      // Are you a non-smoker?
-  petFriendly       Boolean?                      // Are you pet friendly?
-
-  // Single value fields
-  personality       String?                       // "Outgoing and engaging" or "Calm and relaxed"
-
-  // Text fields (multi-line, min 200 characters)
-  uniqueService     String?       @db.Text        // Your unique service
-  funFact           String?       @db.Text        // Fun fact
-
-  // Bank Account (JSONB) - stores { accountName, bankName, bsb, accountNumber }
-  bankAccount       Json?                         // Bank account details
-
-  // Availability (JSONB) - stores { MONDAY: { startTime: "09:00", endTime: "17:00" }, TUESDAY: {...}, ... }
-  availability      Json?         @default("{}")  // Worker availability by day
-
-  // Experience (JSONB) - stores { aged-care: { isProfessional: true, isPersonal: false, specificAreas: [...], description: "...", otherAreas: [...] }, ... }
-  experience        Json?         @default("{}")  // Worker experience by area
-
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-
-  workerProfile     WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  id                 String        @id(map: "worker_additional_info_new_pkey") @default(cuid())
+  workerProfileId    String        @unique
+  jobHistory         Json?         @default("[]")
+  education          Json?         @default("[]")
+  languages          String[]      @default([])
+  culturalBackground String[]      @default([])
+  religion           String[]      @default([])
+  interests          String[]      @default([])
+  workPreferences    String[]      @default([])
+  lgbtqiaSupport     Boolean?
+  nonSmoker          Boolean?
+  petFriendly        Boolean?
+  personality        String?
+  uniqueService      String?
+  funFact            String?
+  availability       Json?         @default("{}")
+  bankAccount        Json?
+  experience         Json?         @default("{}")
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
   @@index([workerProfileId])
   @@map("worker_additional_info")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model worker_services_backup_20260108 {
+  id              String?
+  workerProfileId String?
+  categoryId      String?
+  categoryName    String?
+  subcategoryId   String?
+  subcategoryName String?
+  createdAt       DateTime?
+  updatedAt       DateTime?
+  metadata        Json?
+
+  @@ignore
 }
 
 enum AccountStatus {

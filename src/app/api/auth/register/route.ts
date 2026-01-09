@@ -302,7 +302,7 @@ export async function POST(request: Request) {
           });
         });
 
-        // Create WorkerService records
+        // Create WorkerService records with subcategories as arrays
         const workerServiceRecords = [];
         const subcategoryIds = supportWorkerCategories || [];
 
@@ -319,38 +319,36 @@ export async function POST(request: Request) {
             return parentCategory?.id === categoryId;
           });
 
-          if (relevantSubcategoryIds.length > 0) {
-            // Service has subcategories - create one record per subcategory
-            for (const subcategoryId of relevantSubcategoryIds) {
-              const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
-              if (subcategory) {
-                workerServiceRecords.push({
-                  workerProfileId: user.workerProfile.id,
-                  categoryId,
-                  categoryName: serviceName,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                });
-              }
+          // Build arrays of subcategory IDs and names
+          const subcategoryIdsArray: string[] = [];
+          const subcategoryNamesArray: string[] = [];
+
+          for (const subcategoryId of relevantSubcategoryIds) {
+            const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
+            if (subcategory) {
+              subcategoryIdsArray.push(subcategoryId);
+              subcategoryNamesArray.push(subcategory.name);
             }
-          } else {
-            // Service has no subcategories - create one record without subcategory
-            workerServiceRecords.push({
-              workerProfileId: user.workerProfile.id,
-              categoryId,
-              categoryName: serviceName,
-              subcategoryId: null,
-              subcategoryName: null,
-            });
           }
+
+          // Create ONE record per category with subcategories as arrays
+          workerServiceRecords.push({
+            workerProfileId: user.workerProfile.id,
+            categoryId,
+            categoryName: serviceName,
+            subcategoryIds: subcategoryIdsArray,
+            subcategoryNames: subcategoryNamesArray,
+          });
         }
 
         if (workerServiceRecords.length > 0) {
-          await authPrisma.workerService.createMany({
-            data: workerServiceRecords,
-            skipDuplicates: true,
-          });
-       
+          // Use individual creates since createMany doesn't support array fields well
+          await Promise.all(
+            workerServiceRecords.map((record) =>
+              authPrisma.workerService.create({ data: record })
+            )
+          );
+
         }
       } catch (error) {
         // Don't fail registration if WorkerService creation fails
