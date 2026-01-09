@@ -13,6 +13,11 @@ export default function Pricing() {
       title: "NDIS funding, including agency, plan and self managed",
       description: "Get help whenever you need it with our round-the-clock support team."
     },
+     {
+      icon: <Image src="/images/aged-care.svg" alt="NDIS funding" width={44} height={44} />,
+      title: "Aged Care funding , including Home Care Packages (HCP) and other approved aged care programs",
+      description: "Get help whenever you need it with our round-the-clock support team."
+    },
     {
       icon: <Image src="/images/state-based.svg" alt="State-based funding" width={44} height={44} />,
       title: "State-based funding",

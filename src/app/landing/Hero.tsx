@@ -44,7 +44,7 @@ export default function Hero() {
       <div className="hero-container">
         <div className="hero-content">
           <h1 className="hero-title scroll-animate fade-up">
-            Your Trusted, Ethical and Reliable NDIS service provider
+            Your Trusted, Ethical and Reliable care provider
           </h1>
 
           <p className="hero-description scroll-animate fade-up" data-delay="1">
