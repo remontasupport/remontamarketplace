@@ -99,8 +99,21 @@ export default function ProfileBuildingPage() {
           role: 'Support Worker',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <Loader size="lg" />
+        {/* Skeleton that matches the actual layout to prevent flicker */}
+        <div className="profile-edit-container" style={{ opacity: 0.6 }}>
+          <div className="profile-edit-header">
+            <div style={{ width: '150px', height: '32px', background: '#e5e7eb', borderRadius: '4px' }}></div>
+          </div>
+          <div className="profile-edit-grid">
+            <div className="profile-edit-sidebar">
+              <div className="additional-details-menu">
+                <div style={{ width: '100%', height: '200px', background: '#f9fafb', borderRadius: '0.75rem' }}></div>
+              </div>
+            </div>
+            <div className="profile-edit-main">
+              <div style={{ width: '100%', height: '300px', background: '#f9fafb', borderRadius: '8px' }}></div>
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     }>

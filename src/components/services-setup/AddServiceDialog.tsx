@@ -62,11 +62,22 @@ export function AddServiceDialog({
   }, [open]);
 
   const handleServiceToggle = (serviceTitle: string) => {
-    setTempSelected(prev =>
-      prev.includes(serviceTitle)
-        ? prev.filter(s => s !== serviceTitle)
-        : [...prev, serviceTitle]
-    );
+    // Find the category to check if it has subcategories
+    const category = categories?.find(cat => cat.name === serviceTitle);
+
+    // If service has subcategories, immediately add it
+    // The onAdd callback will handle opening the subcategory dialog
+    if (category && category.subcategories && category.subcategories.length > 0) {
+      onAdd([serviceTitle]); // Add the service immediately (this will trigger subcategory dialog)
+      onOpenChange(false); // Close this dialog
+    } else {
+      // For services without subcategories, toggle as before
+      setTempSelected(prev =>
+        prev.includes(serviceTitle)
+          ? prev.filter(s => s !== serviceTitle)
+          : [...prev, serviceTitle]
+      );
+    }
   };
 
   const handleAdd = () => {

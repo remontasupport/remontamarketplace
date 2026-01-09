@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdateInterests } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 const INTERESTS = [
   { id: "cooking", label: "Cooking", icon: "🍳" },
@@ -19,6 +21,7 @@ const INTERESTS = [
 ];
 
 export default function InterestsHobbiesSection() {
+   const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateInterests = useUpdateInterests();
 
@@ -102,7 +105,13 @@ export default function InterestsHobbiesSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Interests saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+          const nextSection = getNextSection("interests-hobbies");
+      if (nextSection) {
+        // Small delay to show success message before navigation
+        setTimeout(() => {
+          router.push(nextSection.href);
+        }, 500);
+      }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdateReligion } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 const RELIGIONS = [
   "Anglican",
@@ -22,6 +24,7 @@ const RELIGIONS = [
 ];
 
 export default function ReligionSection() {
+   const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateReligion = useUpdateReligion();
 
@@ -99,7 +102,13 @@ export default function ReligionSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Religion saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+                 const nextSection = getNextSection("religion");
+      if (nextSection) {
+        // Small delay to show success message before navigation
+        setTimeout(() => {
+          router.push(nextSection.href);
+        }, 500);
+      }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

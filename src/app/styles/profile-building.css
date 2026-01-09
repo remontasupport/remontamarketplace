@@ -4,6 +4,13 @@
 .profile-edit-container {
   padding: 2rem;
   max-width: 100%;
+  /* Optimize rendering for smooth page transitions */
+  isolation: isolate;
+  /* Ensure stable width during mount */
+  width: 100%;
+  box-sizing: border-box;
+  /* Prevent transition flicker on mount */
+  transition: none;
 }
 
 /* Header */
@@ -53,11 +60,16 @@
   grid-template-columns: 320px 1fr;
   gap: 2rem;
   align-items: start;
+  /* Prevent transition flicker on layout changes */
+  transition: none;
+  /* Ensure stable rendering during navigation */
+  contain: layout;
 }
 
 @media (max-width: 1024px) {
   .profile-edit-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 
@@ -66,6 +78,13 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  /* Prevent width from affecting layout on mobile */
+  width: 100%;
+  /* Optimize rendering for smooth navigation */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Prevent layout shift during mount */
+  contain: layout style;
 }
 
 .additional-details-menu {
@@ -73,6 +92,18 @@
   border-radius: 0.75rem;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Ensure full width on mobile */
+  width: 100%;
+  /* Prevent flicker on navigation */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.additional-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .additional-details-title {
@@ -80,7 +111,19 @@
   font-size: 1.125rem;
   font-weight: 700;
   color: #111827;
-  margin: 0 0 1rem 0;
+  margin: 0;
+}
+
+.additional-details-chevron {
+  width: 24px;
+  height: 24px;
+  color: #6B7280;
+  transition: transform 0.3s ease;
+  display: none;
+}
+
+.additional-details-chevron.open {
+  transform: rotate(180deg);
 }
 
 .additional-details-nav {
@@ -141,6 +184,13 @@
   padding: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   min-height: 500px;
+  /* Prevent layout shift flicker */
+  width: 100%;
+  /* Force GPU acceleration and prevent repaint flicker */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Optimize for stable rendering during navigation */
+  contain: layout style paint;
 }
 
 /* Profile Section */
@@ -382,6 +432,8 @@
   margin-top: 0.5rem;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 /* Add Button */
@@ -420,6 +472,14 @@
   border-radius: 0.5rem;
   margin-bottom: 1.5rem;
   background-color: #F9FAFB;
+}
+
+.form-group-border .form-group {
+  margin-bottom: 2.5rem !important;
+}
+
+.form-group-border .form-group:last-of-type {
+  margin-bottom: 1rem !important;
 }
 
 /* Work History Number */
@@ -709,6 +769,18 @@
 }
 
 /* Responsive */
+@media (min-width: 769px) {
+  /* Desktop: Header is not clickable */
+  .additional-details-header {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .additional-details-title {
+    pointer-events: auto;
+  }
+}
+
 @media (max-width: 1024px) {
   .languages-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -722,6 +794,13 @@
 @media (max-width: 768px) {
   .profile-edit-container {
     padding: 1rem;
+    /* Prevent layout shift during navigation */
+    content-visibility: auto;
+    /* Force full width and stable layout */
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
   }
 
   .profile-edit-header {
@@ -732,6 +811,21 @@
 
   .profile-edit-main {
     padding: 1.5rem;
+    /* Remove min-height to prevent squeeze flicker */
+    /* Use contain for better rendering performance */
+    contain: layout style paint;
+    /* Ensure full width on mobile */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .profile-edit-grid {
+    /* Remove min-height to prevent layout shift flicker */
+    /* Ensure stable layout during navigation */
+    contain: layout;
+    /* Full width on mobile */
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .form-row {
@@ -744,6 +838,91 @@
 
   .interests-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Mobile Accordion Styles */
+  .additional-details-header {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0;
+  }
+
+  .additional-details-chevron {
+    display: block;
+  }
+
+  .additional-details-nav {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    margin-top: 0;
+    /* Force GPU acceleration for smooth animation */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: max-height;
+  }
+
+  .additional-details-nav.open {
+    max-height: 1000px;
+    margin-top: 1rem;
+  }
+
+  /* Optimize sidebar and content for mobile navigation */
+  .profile-edit-sidebar {
+    /* Prevent layout shift during navigation */
+    contain: layout style;
+    /* Disable transitions on mount to prevent flicker */
+    animation: none !important;
+    /* Ensure full width */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Prevent accordion transition flicker on page load */
+  .additional-details-nav {
+    /* Disable transition briefly on mount */
+    transition-property: max-height, opacity, transform;
+  }
+
+  /* Ensure menu cards are stable */
+  .additional-details-menu {
+    width: 100%;
+    box-sizing: border-box;
+    /* Prevent size flicker */
+    contain: layout style;
+  }
+
+  /* Increase gaps between form fields on mobile */
+  .form-group-border {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group-border .form-group {
+    margin-bottom: 3rem !important;
+  }
+
+  .form-group-border .form-group:last-of-type {
+    margin-bottom: 1rem !important;
+  }
+
+  /* More spacing for form elements */
+  .profile-form {
+    gap: 2rem;
+  }
+
+  /* Hide character count on mobile, keep error message aligned */
+  .form-char-count {
+    justify-content: flex-start;
+  }
+
+  .form-char-count > span:first-child {
+    display: none;
+  }
+
+  /* Remove left margin since character count is hidden */
+  .form-char-count .ml-2 {
+    margin-left: 0 !important;
   }
 }
 

@@ -96,7 +96,7 @@ export default async function WorkerDashboard() {
       }}
     >
       {/* Hero Banner - Flex approach for mobile */}
-      <div className="hero-banner">
+      <div className="hero-banner" style={{ marginTop: '0' }}>
         <div className="hero-content">
           <h2 className="hero-title">
             Welcome to Remonta!
@@ -114,7 +114,7 @@ export default async function WorkerDashboard() {
       </div>
 
       {/* News Section - Streaming with Suspense */}
-      <div>
+      <div style={{ marginTop: '0' }}>
         <Suspense fallback={<NewsSlider articles={[]} isLoading={true} />}>
           <NewsSliderAsync />
         </Suspense>

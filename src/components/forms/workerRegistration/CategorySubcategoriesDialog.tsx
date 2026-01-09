@@ -53,7 +53,7 @@ export function CategorySubcategoriesDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-6xl max-h-[85vh] overflow-y-auto animate-slide-up"
+        className="max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-4rem)] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl max-h-[85vh] overflow-y-auto animate-slide-up"
         style={{
           willChange: 'transform, opacity',
           transform: 'translateZ(0)', // Force GPU acceleration
@@ -98,7 +98,7 @@ export function CategorySubcategoriesDialog({
           ))}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"

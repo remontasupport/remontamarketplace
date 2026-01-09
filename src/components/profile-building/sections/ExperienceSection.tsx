@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Check, AlertTriangle } from "lucide-react";
 import {
   getWorkerExperience,
@@ -8,6 +9,7 @@ import {
   type ExperienceData as ServiceExperienceData,
   type ExperienceArea as ServiceExperienceArea,
 } from "@/services/worker/experience.service";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 interface ExperienceArea {
   id: string;
@@ -77,6 +79,7 @@ const EXPERIENCE_AREAS = [
 ];
 
 export default function ExperienceSection() {
+  const router = useRouter();
   const [experienceData, setExperienceData] = useState<ExperienceData>(() => {
     const initial: ExperienceData = {};
     EXPERIENCE_AREAS.forEach((area) => {
@@ -95,7 +98,7 @@ export default function ExperienceSection() {
     return initial;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  // isLoading removed - using Suspense skeleton at page level
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -104,7 +107,6 @@ export default function ExperienceSection() {
   useEffect(() => {
     const loadExperience = async () => {
       try {
-        setIsLoading(true);
         const response = await getWorkerExperience();
 
         if (response.success && response.data) {
@@ -131,8 +133,6 @@ export default function ExperienceSection() {
         }
       } catch (error) {
         console.error("Error loading experience:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -275,8 +275,15 @@ export default function ExperienceSection() {
 
       if (response.success) {
         setSuccessMessage(response.message || "Experience saved successfully!");
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccessMessage(null), 3000);
+
+        // Navigate to next section after successful save
+        const nextSection = getNextSection("experience");
+        if (nextSection) {
+          // Small delay to show success message before navigation
+          setTimeout(() => {
+            router.push(nextSection.href);
+          }, 500);
+        }
       } else {
         setError(response.error || "Failed to save experience.");
       }
@@ -288,16 +295,7 @@ export default function ExperienceSection() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="profile-section">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      </div>
-    );
-  }
-
+  // Removed loading spinner - handled by Suspense skeleton at page level
   return (
     <div className="profile-section">
       <div className="profile-section-header">

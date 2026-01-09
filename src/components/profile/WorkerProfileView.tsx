@@ -117,7 +117,7 @@ export default function WorkerProfileView({
         {/* Left Column */}
         <div className="profile-preview-column">
           {/* About Me Section */}
-          <div className="profile-preview-section">
+          <div className="profile-preview-section about-me-section">
             <h3 className="profile-preview-subsection-title">About Me</h3>
 
             {/* Drive Access */}
@@ -376,7 +376,7 @@ export default function WorkerProfileView({
           )}
 
           {/* Services Offered */}
-          <div className="profile-preview-section">
+          <div className="profile-preview-section services-offered-section">
             <h3 className="profile-preview-subsection-title">Services offered</h3>
             {allSubcategories.length > 0 ? (
               <div className="profile-preview-qualification-list">

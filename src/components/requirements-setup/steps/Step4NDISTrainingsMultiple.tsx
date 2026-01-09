@@ -327,17 +327,18 @@ function TrainingModuleUpload({
       ) : uploadedDocument ? (
         // Show uploaded document
         <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
               <DocumentIcon className="w-8 h-8 text-teal-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <a
                   href={uploadedDocument.documentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-poppins font-medium text-teal-600 hover:text-teal-700 underline block truncate"
+                  className="text-sm font-poppins font-medium text-teal-600 hover:text-teal-700 underline block"
+                  title={uploadedDocument.documentUrl}
                 >
-                  {module.name} - Certificate
+                  View Certificate
                 </a>
                 <p className="text-xs text-gray-500 font-poppins mt-1">
                   Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
@@ -346,7 +347,7 @@ function TrainingModuleUpload({
             </div>
             <button
               onClick={() => onDelete(uploadedDocument.id, module.id)}
-              className="text-red-600 hover:text-red-700 transition-colors ml-3"
+              className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
               title="Remove document"
             >
               <XCircleIcon className="w-5 h-5" />

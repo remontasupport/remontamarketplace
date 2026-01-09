@@ -360,6 +360,8 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
             border-radius: 12px;
             padding: 1.5rem;
             width: 100%;
+            max-width: 700px;
+            margin: 0;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
 
@@ -401,6 +403,13 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
             }
             50% {
               opacity: 0.7;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .skeleton {
+              max-width: 100% !important;
+              margin: 0;
             }
           }
         `}</style>
@@ -453,6 +462,8 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
           padding: 1.5rem;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           width: 100%;
+          max-width: 700px;
+          margin: 0;
           box-sizing: border-box;
         }
 
@@ -588,7 +599,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
             padding: 1.25rem;
             border-radius: 12px;
             width: 100%;
-            max-width: 100%;
+            max-width: 100% !important;
             margin: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;

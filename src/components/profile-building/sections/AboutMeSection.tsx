@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdateAboutMe } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 export default function AboutMeSection() {
+  const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateAboutMe = useUpdateAboutMe();
 
@@ -51,7 +54,13 @@ export default function AboutMeSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "About me saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+           const nextSection = getNextSection("about-me");
+              if (nextSection) {
+                // Small delay to show success message before navigation
+                setTimeout(() => {
+                  router.push(nextSection.href);
+                }, 500);
+              }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

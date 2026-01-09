@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useWorkerProfileData, useUpdateWorkHistory } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 interface WorkHistory {
   id: string;
@@ -16,6 +18,7 @@ interface WorkHistory {
 }
 
 export default function WorkHistorySection() {
+  const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateWorkHistory = useUpdateWorkHistory();
 
@@ -145,9 +148,13 @@ export default function WorkHistorySection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Work history saved successfully!");
-        setTimeout(() => {
-          setSuccessMessage("");
-        }, 3000);
+        const nextSection = getNextSection("work-history");
+        if (nextSection) {
+          // Small delay to show success message before navigation
+          setTimeout(() => {
+            router.push(nextSection.href);
+          }, 500);
+        }
       } else {
         if (result.fieldErrors) {
           // Map field errors to display
@@ -215,7 +222,7 @@ export default function WorkHistorySection() {
         {workHistories.map((workHistory, index) => (
           <div key={workHistory.id} className="form-group-border">
             {/* Job Title/Role */}
-            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <div className="form-group">
               <label htmlFor={`jobTitle-${workHistory.id}`} className="form-label">
                 Job title/role
               </label>
@@ -229,7 +236,7 @@ export default function WorkHistorySection() {
             </div>
 
             {/* Company */}
-            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <div className="form-group">
               <label htmlFor={`company-${workHistory.id}`} className="form-label">
                 Company
               </label>
@@ -243,7 +250,7 @@ export default function WorkHistorySection() {
             </div>
 
             {/* Start Date */}
-            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <div className="form-group">
               <label className="form-label">Start date</label>
               <div className="form-row">
                 <div className="form-col">
@@ -286,7 +293,7 @@ export default function WorkHistorySection() {
             </div>
 
             {/* End Date */}
-            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <div className="form-group">
               <label className="form-label">End date</label>
 
               {/* Currently Working Checkbox */}

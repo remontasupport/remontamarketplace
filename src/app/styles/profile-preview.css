@@ -9,6 +9,9 @@
   background-color: #f9fafb;
   width: 100%;
   min-height: 100vh;
+  /* Prevent horizontal overflow */
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Back Button Section */
@@ -130,6 +133,17 @@
   color: white;
 }
 
+.profile-preview-ndis-badge {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #10b981;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .profile-preview-roles {
   font-family: 'Poppins', sans-serif;
   font-size: 16px;
@@ -194,6 +208,10 @@
   max-width: 1200px;
   margin: 0 auto;
   border-top: none;
+  /* Ensure content doesn't overflow */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .profile-preview-section {
@@ -202,6 +220,9 @@
   margin-bottom: 0;
   position: relative;
   border-bottom: 1px solid #f3f4f6;
+  /* Ensure section doesn't overflow on mobile */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .profile-preview-section:last-child {
@@ -241,6 +262,11 @@
   color: #4b5563;
   line-height: 1.6;
   margin: 16px 0 0 0;
+  /* Ensure text wraps on multiple lines */
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Two Column Grid */
@@ -251,16 +277,40 @@
   padding-top: 16px;
 }
 
-@media (max-width: 768px) {
-  .profile-preview-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .profile-preview-column {
   display: flex;
   flex-direction: column;
   gap: 40px;
+}
+
+@media (max-width: 768px) {
+  .profile-preview-grid {
+    /* Keep grid but single column */
+    display: grid;
+    grid-template-columns: 1fr;
+    /* Auto-place rows */
+    grid-auto-flow: row;
+  }
+
+  /* Make column wrappers transparent so sections become direct grid children */
+  .profile-preview-column {
+    display: contents !important;
+  }
+
+  /* About Me goes to row 1 */
+  .about-me-section {
+    grid-row: 1;
+  }
+
+  /* Services Offered goes to row 2 */
+  .services-offered-section {
+    grid-row: 2;
+  }
+
+  /* All other sections auto-place starting from row 3 */
+  .profile-preview-section:not(.about-me-section):not(.services-offered-section) {
+    grid-row: auto;
+  }
 }
 
 .profile-preview-subsection-title {
@@ -428,6 +478,10 @@
     font-size: 24px;
   }
 
+  .profile-preview-ndis-badge {
+    font-size: 13px;
+  }
+
   .profile-preview-section-title {
     font-size: 24px;
   }
@@ -451,5 +505,16 @@
 
   .profile-preview-back-button {
     padding: 8px 16px;
+  }
+
+  /* Ensure bio text wraps properly on mobile */
+  .profile-preview-text {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .profile-preview-section {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }

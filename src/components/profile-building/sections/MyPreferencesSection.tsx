@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdateWorkPreferences } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 const PREFERENCES = [
   "Female",
@@ -12,6 +14,7 @@ const PREFERENCES = [
 ];
 
 export default function MyPreferencesSection() {
+   const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateWorkPreferences = useUpdateWorkPreferences();
 
@@ -53,7 +56,13 @@ export default function MyPreferencesSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Work preferences saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+        const nextSection = getNextSection("my-preferences");
+             if (nextSection) {
+               // Small delay to show success message before navigation
+               setTimeout(() => {
+                 router.push(nextSection.href);
+               }, 500);
+             }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

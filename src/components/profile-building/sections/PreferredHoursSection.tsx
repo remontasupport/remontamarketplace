@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
@@ -12,6 +13,7 @@ import {
   type AvailabilityData,
   type DayOfWeek
 } from '@/services/worker/availability.service';
+import { getNextSection } from '@/utils/profileSectionNavigation';
 
 interface TimeSlot {
   startTime: Dayjs | null;
@@ -50,6 +52,7 @@ const DAY_TO_ENUM: Record<string, DayOfWeek> = {
 };
 
 export default function PreferredHoursSection() {
+  const router = useRouter();
   const [schedule, setSchedule] = useState<WeekSchedule>(() => {
     const initialSchedule: WeekSchedule = {};
     DAYS.forEach((day) => {
@@ -61,7 +64,7 @@ export default function PreferredHoursSection() {
     return initialSchedule;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  // isLoading removed - using Suspense skeleton at page level
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -70,7 +73,6 @@ export default function PreferredHoursSection() {
   useEffect(() => {
     const loadAvailability = async () => {
       try {
-        setIsLoading(true);
         const response = await getWorkerAvailability();
 
         if (response.success && response.data) {
@@ -109,8 +111,6 @@ export default function PreferredHoursSection() {
         }
       } catch (error) {
         console.error("Error loading availability:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -274,8 +274,15 @@ export default function PreferredHoursSection() {
 
       if (response.success) {
         setSuccessMessage(response.message || "Availability saved successfully!");
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccessMessage(null), 3000);
+
+        // Navigate to next section after successful save
+        const nextSection = getNextSection("preferred-hours");
+        if (nextSection) {
+          // Small delay to show success message before navigation
+          setTimeout(() => {
+            router.push(nextSection.href);
+          }, 500);
+        }
       } else {
         setError(response.error || "Failed to save availability.");
       }
@@ -287,16 +294,7 @@ export default function PreferredHoursSection() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="profile-section">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      </div>
-    );
-  }
-
+  // Removed loading spinner - handled by Suspense skeleton at page level
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="profile-section">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 import { useWorkerProfileData, useUpdateBankAccount } from "@/hooks/useWorkerProfile";
 import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 export default function BankAccountSection() {
   const router = useRouter();
@@ -67,9 +68,13 @@ export default function BankAccountSection() {
         setSuccessMessage(result.message || "Bank account saved successfully!");
         setHasExistingData(true); // Mark that data now exists
         // Optional: redirect or show success message
-        setTimeout(() => {
-          setSuccessMessage("");
-        }, 3000);
+       const nextSection = getNextSection("bank-account");
+       if (nextSection) {
+          // Small delay to show success message before navigation
+          setTimeout(() => {
+            router.push(nextSection.href);
+          }, 500);
+        }
       } else {
         if (result.fieldErrors) {
           // Map field errors to display

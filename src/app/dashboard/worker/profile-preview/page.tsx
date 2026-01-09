@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import QueryProvider from "@/providers/QueryProvider";
@@ -163,14 +163,6 @@ function ProfilePreviewContent() {
             <ArrowLeft className="w-5 h-5" />
             <span>Edit my profile</span>
           </button>
-        </div>
-
-        {/* Top Banner */}
-        <div className="profile-preview-banner">
-          <div className="profile-preview-banner-content">
-            <Eye className="w-5 h-5" />
-            <span>Your profile isn't visible to clients until your account is approved</span>
-          </div>
         </div>
 
         {/* Profile Header */}

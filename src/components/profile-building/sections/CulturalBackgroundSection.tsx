@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdateCulturalBackground } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 const CULTURAL_BACKGROUNDS = [
   "Australian",
@@ -28,6 +30,7 @@ const CULTURAL_BACKGROUNDS = [
 ];
 
 export default function CulturalBackgroundSection() {
+  const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateCulturalBackground = useUpdateCulturalBackground();
 
@@ -105,7 +108,13 @@ export default function CulturalBackgroundSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Cultural background saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+         const nextSection = getNextSection("cultural-background");
+      if (nextSection) {
+        // Small delay to show success message before navigation
+        setTimeout(() => {
+          router.push(nextSection.href);
+        }, 500);
+      }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

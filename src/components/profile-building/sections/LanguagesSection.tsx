@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useWorkerProfileData, useUpdateLanguages } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 const LANGUAGES = [
   "English",
@@ -43,6 +45,7 @@ const AUSLAN = "Auslan (Australian sign language)";
 const ALL_LANGUAGES = [...LANGUAGES, AUSLAN];
 
 export default function LanguagesSection() {
+  const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateLanguages = useUpdateLanguages();
 
@@ -144,7 +147,13 @@ export default function LanguagesSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Languages saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+        const nextSection = getNextSection("languages");
+             if (nextSection) {
+               // Small delay to show success message before navigation
+               setTimeout(() => {
+                 router.push(nextSection.href);
+               }, 500);
+             }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

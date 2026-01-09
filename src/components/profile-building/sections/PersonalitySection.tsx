@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdatePersonality } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 export default function PersonalitySection() {
+   const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updatePersonality = useUpdatePersonality();
 
@@ -75,7 +78,13 @@ export default function PersonalitySection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Personality saved successfully!");
-        setTimeout(() => setSuccessMessage(""), 3000);
+        const nextSection = getNextSection("personality");
+      if (nextSection) {
+        // Small delay to show success message before navigation
+        setTimeout(() => {
+          router.push(nextSection.href);
+        }, 500);
+      }
       } else {
         if (result.fieldErrors) {
           const newErrors: Record<string, string> = {};

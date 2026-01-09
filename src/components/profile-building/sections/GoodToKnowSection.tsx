@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useWorkerProfileData, useUpdateGoodToKnow } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 export default function GoodToKnowSection() {
+  const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateGoodToKnow = useUpdateGoodToKnow();
 
@@ -35,9 +38,13 @@ export default function GoodToKnowSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Preferences saved successfully!");
+       const nextSection = getNextSection("good-to-know");
+      if (nextSection) {
+        // Small delay to show success message before navigation
         setTimeout(() => {
-          setSuccessMessage("");
-        }, 3000);
+          router.push(nextSection.href);
+        }, 500);
+      }
       } else {
         setErrors({ general: result.error || "Failed to save preferences" });
       }

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useWorkerProfileData, useUpdateEducation } from "@/hooks/useWorkerProfile";
+import { useRouter } from "next/navigation";
+import { getNextSection } from "@/utils/profileSectionNavigation";
 
 interface Course {
   id: string;
@@ -16,6 +18,7 @@ interface Course {
 }
 
 export default function EducationTrainingSection() {
+  const router = useRouter();
   const { data: profileData } = useWorkerProfileData();
   const updateEducation = useUpdateEducation();
 
@@ -145,9 +148,13 @@ export default function EducationTrainingSection() {
 
       if (result.success) {
         setSuccessMessage(result.message || "Education saved successfully!");
-        setTimeout(() => {
-          setSuccessMessage("");
-        }, 3000);
+       const nextSection = getNextSection("education-training");
+        if (nextSection) {
+          // Small delay to show success message before navigation
+          setTimeout(() => {
+            router.push(nextSection.href);
+          }, 500);
+        }
       } else {
         if (result.fieldErrors) {
           // Map field errors to display

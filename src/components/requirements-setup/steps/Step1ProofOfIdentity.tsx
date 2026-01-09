@@ -754,7 +754,7 @@ export default function Step1ProofOfIdentity({
             100-point check system to verify your identity.
           </p>
 
-          <p className="info-box-text mt-3">
+          <p className="info-box-text mt-6">
             <strong>How it works:</strong>
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 font-poppins mt-2">
@@ -762,7 +762,7 @@ export default function Step1ProofOfIdentity({
             <li><strong>Secondary document (30 points)</strong> - Driver's License, Medicare Card, Utility Bill, or Bank Statement</li>
           </ul>
 
-          <p className="info-box-text mt-3">
+          <p className="info-box-text mt-6">
             <strong>Requirements:</strong>
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 font-poppins mt-2">
@@ -771,7 +771,7 @@ export default function Step1ProofOfIdentity({
             <li>Total: 100 points required</li>
           </ul>
 
-          <p className="info-box-text mt-3">
+          <p className="info-box-text mt-6">
             <strong>Privacy:</strong>
           </p>
           <p className="info-box-text mt-1">
