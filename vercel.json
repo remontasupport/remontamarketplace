@@ -1,3 +1,11 @@
 {
-  "buildCommand": "npx prisma generate && npx prisma generate --schema=prisma/auth-schema.prisma && next build"
+  "buildCommand": "npx prisma generate && npx prisma generate --schema=prisma/auth-schema.prisma && next build",
+  "functions": {
+    "app/**/*.tsx": {
+      "includeFiles": "{src/generated/**,node_modules/@prisma/client/**,node_modules/.prisma/**}"
+    },
+    "app/api/**/*.ts": {
+      "includeFiles": "{src/generated/**,node_modules/@prisma/client/**,node_modules/.prisma/**}"
+    }
+  }
 }

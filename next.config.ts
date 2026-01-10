@@ -9,12 +9,23 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Ensure Prisma engine binaries are included in Vercel deployment
+    // CRITICAL: Must include for ALL routes that use Prisma (API routes + Server Components)
     outputFileTracingIncludes: {
-      '/api/**/*': ['./src/generated/auth-client/**/*'],
+      '/**': ['./node_modules/@prisma/client/**/*', './src/generated/auth-client/**/*'],
     },
   },
-  // Tell Next.js not to bundle Prisma Client
-  serverComponentsExternalPackages: ['@prisma/client'],
+  // Tell Next.js not to bundle Prisma Clients (BOTH main and auth)
+  // CRITICAL: This prevents webpack from trying to bundle the native binaries
+  serverComponentsExternalPackages: ['@prisma/client', '.prisma/client'],
+  // Also exclude from webpack bundling entirely
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Don't bundle Prisma binaries in server bundle
+      config.externals = config.externals || [];
+      config.externals.push('@prisma/client', '.prisma/client');
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {
