@@ -33,10 +33,13 @@ export const CACHE_TTL = {
 } as const;
 
 // Cache key generators
+// Version the keys when query structure changes to force cache refresh
+const CACHE_VERSION = 'v2'; // Increment when changing query structure
+
 export const CACHE_KEYS = {
-  user: (email: string) => `user:${email.toLowerCase()}`,
-  workerProfile: (userId: string) => `worker_profile:${userId}`,
-  completionStatus: (userId: string) => `completion_status:${userId}`,
+  user: (email: string) => `user:${CACHE_VERSION}:${email.toLowerCase()}`,
+  workerProfile: (userId: string) => `worker_profile:${CACHE_VERSION}:${userId}`,
+  completionStatus: (userId: string) => `completion_status:${CACHE_VERSION}:${userId}`,
 } as const;
 
 /**
