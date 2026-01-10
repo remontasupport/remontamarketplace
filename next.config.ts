@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Ensure Prisma engine binaries are included in Vercel deployment
+    outputFileTracingIncludes: {
+      '/api/**/*': ['./src/generated/auth-client/**/*'],
+    },
+  },
+  // Tell Next.js not to bundle Prisma Client
+  serverComponentsExternalPackages: ['@prisma/client'],
   images: {
     remotePatterns: [
       {
