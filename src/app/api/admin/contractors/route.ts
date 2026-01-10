@@ -104,28 +104,55 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Age Range Filter
-   * Converts age range string (e.g., "20-30") to integer range query
+   * Filters by dateOfBirth (primary) or age column (fallback)
+   * Converts age range to birth date range for accurate filtering
    */
   age: (params) => {
     if (!params.age || params.age === 'all') return null;
 
+    const today = new Date();
+    const currentYear = today.getFullYear();
+
+    let minAge: number;
+    let maxAge: number;
+
     // Parse age range
     if (params.age === '60+') {
-      return { age: { gte: 60 } };
-    }
+      minAge = 60;
+      maxAge = 120; // Reasonable upper limit
+    } else {
+      const match = params.age.match(/^(\d+)-(\d+)$/);
+      if (!match) return null;
 
-    const match = params.age.match(/^(\d+)-(\d+)$/);
-    if (match) {
       const [, min, max] = match;
-      return {
-        age: {
-          gte: parseInt(min, 10),
-          lte: parseInt(max, 10)
-        }
-      };
+      minAge = parseInt(min, 10);
+      maxAge = parseInt(max, 10);
     }
 
-    return null;
+    // Calculate birth year range (reverse logic: older age = earlier birth year)
+    const maxBirthYear = currentYear - minAge; // younger end of range
+    const minBirthYear = currentYear - maxAge; // older end of range
+
+    // Create OR condition: match either dateOfBirth range OR age range
+    return {
+      OR: [
+        // Match by dateOfBirth (primary method)
+        {
+          AND: [
+            { dateOfBirth: { not: null } },
+            { dateOfBirth: { gte: `${minBirthYear}-01-01` } },
+            { dateOfBirth: { lte: `${maxBirthYear}-12-31` } }
+          ]
+        },
+        // Match by age column (fallback for profiles without dateOfBirth)
+        {
+          AND: [
+            { dateOfBirth: null },
+            { age: { gte: minAge, lte: maxAge } }
+          ]
+        }
+      ]
+    };
   },
 
   /**
@@ -149,6 +176,7 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Languages Filter (Multi-select)
+   * Queries from WorkerAdditionalInfo table's languages column
    * Uses PostgreSQL array intersection
    * Matches workers who speak ANY of the selected languages
    * Normalizes to Title Case to match database format (e.g., "English", "Mandarin")
@@ -158,7 +186,11 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
     const normalizedLanguages = params.languages.map(toTitleCase);
 
-    return { languages: { hasSome: normalizedLanguages } };
+    return {
+      workerAdditionalInfo: {
+        languages: { hasSome: normalizedLanguages }
+      }
+    };
   },
 
   /**
@@ -458,6 +490,30 @@ function transformWorkerServices(workerServices: Array<{ categoryName: string }>
 }
 
 /**
+ * Calculate age from date of birth string
+ * Supports various date formats (YYYY-MM-DD, DD/MM/YYYY, etc.)
+ */
+function calculateAge(dateOfBirth: string): number | null {
+  try {
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    // Adjust if birthday hasn't occurred this year yet
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    return age >= 0 ? age : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * Parse filter parameters from URL
  */
 function parseFilterParams(searchParams: URLSearchParams): FilterParams {
@@ -584,7 +640,12 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
         mobile: true,
         gender: true,
         age: true,
-        languages: true,
+        dateOfBirth: true,
+        workerAdditionalInfo: {
+          select: {
+            languages: true,
+          }
+        },
         workerServices: {
           select: {
             categoryName: true,
@@ -611,13 +672,25 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
 
   const queryDuration = Date.now() - queryStartTime
   // Transform workerServices to legacy services array format for backward compatibility
-  const workersWithServices = workers.map(worker => ({
-    ...worker,
-    email: worker.user?.email || null,
-    services: transformWorkerServices(worker.workerServices),
-    workerServices: undefined, // Remove from response
-    user: undefined, // Remove from response
-  }))
+  const workersWithServices = workers.map(worker => {
+    // Calculate age from dateOfBirth if available, otherwise use age column
+    const calculatedAge = worker.dateOfBirth
+      ? calculateAge(worker.dateOfBirth)
+      : null;
+    const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
+
+    return {
+      ...worker,
+      email: worker.user?.email || null,
+      age: finalAge,
+      languages: worker.workerAdditionalInfo?.languages || [],
+      services: transformWorkerServices(worker.workerServices),
+      workerServices: undefined, // Remove from response
+      workerAdditionalInfo: undefined, // Remove from response
+      user: undefined, // Remove from response
+      dateOfBirth: undefined, // Remove from response (internal use only)
+    };
+  })
 
   const totalPages = Math.ceil(total / params.pageSize)
 
@@ -678,7 +751,12 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
       mobile: true,
       gender: true,
       age: true,
-      languages: true,
+      dateOfBirth: true,
+      workerAdditionalInfo: {
+        select: {
+          languages: true,
+        }
+      },
       workerServices: {
         select: {
           categoryName: true,
@@ -704,19 +782,31 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
 
   // Calculate exact distance and filter
   const workersWithDistance = candidates
-    .map(worker => ({
-      ...worker,
-      email: worker.user?.email || null,
-      services: transformWorkerServices(worker.workerServices),
-      workerServices: undefined, // Remove from response
-      user: undefined, // Remove from response
-      distance: haversineDistance(
-        coords.lat,
-        coords.lng,
-        worker.latitude!,
-        worker.longitude!
-      )
-    }))
+    .map(worker => {
+      // Calculate age from dateOfBirth if available, otherwise use age column
+      const calculatedAge = worker.dateOfBirth
+        ? calculateAge(worker.dateOfBirth)
+        : null;
+      const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
+
+      return {
+        ...worker,
+        email: worker.user?.email || null,
+        age: finalAge,
+        languages: worker.workerAdditionalInfo?.languages || [],
+        services: transformWorkerServices(worker.workerServices),
+        workerServices: undefined, // Remove from response
+        workerAdditionalInfo: undefined, // Remove from response
+        user: undefined, // Remove from response
+        dateOfBirth: undefined, // Remove from response (internal use only)
+        distance: haversineDistance(
+          coords.lat,
+          coords.lng,
+          worker.latitude!,
+          worker.longitude!
+        )
+      };
+    })
     .filter(worker => worker.distance <= radiusKm)
     .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
 

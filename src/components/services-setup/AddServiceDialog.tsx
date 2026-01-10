@@ -98,7 +98,7 @@ export function AddServiceDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="mt-2">
           <DialogTitle className="text-xl font-poppins font-semibold">
             Add Services
           </DialogTitle>
