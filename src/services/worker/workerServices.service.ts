@@ -6,6 +6,7 @@ import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { autoUpdateServicesCompletion } from "./setupProgress.service";
+import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
 
 /**
  * Backend Service: Worker Services Management
@@ -96,9 +97,13 @@ export async function toggleWorkerSubcategory(
           },
         });
 
-        // 5. Revalidate cache
+        // 5. Revalidate cache (both Next.js and Redis)
         revalidatePath("/dashboard/worker/services/setup");
         revalidatePath("/dashboard/worker");
+        await invalidateCache(
+          CACHE_KEYS.workerProfile(session.user.id),
+          CACHE_KEYS.completionStatus(session.user.id)
+        );
 
         // 6. Auto-update Services completion status (synchronous for cache consistency)
         await autoUpdateServicesCompletion().catch((error) => {
@@ -124,9 +129,13 @@ export async function toggleWorkerSubcategory(
           },
         });
 
-        // 5. Revalidate cache
+        // 5. Revalidate cache (both Next.js and Redis)
         revalidatePath("/dashboard/worker/services/setup");
         revalidatePath("/dashboard/worker");
+        await invalidateCache(
+          CACHE_KEYS.workerProfile(session.user.id),
+          CACHE_KEYS.completionStatus(session.user.id)
+        );
 
         // 6. Auto-update Services completion status (synchronous for cache consistency)
         await autoUpdateServicesCompletion().catch((error) => {
@@ -152,9 +161,13 @@ export async function toggleWorkerSubcategory(
         },
       });
 
-      // 5. Revalidate cache
+      // 5. Revalidate cache (both Next.js and Redis)
       revalidatePath("/dashboard/worker/services/setup");
       revalidatePath("/dashboard/worker");
+      await invalidateCache(
+        CACHE_KEYS.workerProfile(session.user.id),
+        CACHE_KEYS.completionStatus(session.user.id)
+      );
 
       // 6. Auto-update Services completion status (synchronous for cache consistency)
       await autoUpdateServicesCompletion().catch((error) => {
@@ -269,9 +282,13 @@ export async function updateWorkerSubcategories(
       });
     }
 
-    // 7. Revalidate cache
+    // 7. Revalidate cache (both Next.js and Redis)
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
+    await invalidateCache(
+      CACHE_KEYS.workerProfile(session.user.id),
+      CACHE_KEYS.completionStatus(session.user.id)
+    );
 
     // 8. Auto-update Services completion status (synchronous for cache consistency)
     await autoUpdateServicesCompletion().catch((error) => {
@@ -401,9 +418,13 @@ export async function saveNursingRegistration(
 
     }
 
-    // 7. Revalidate cache
+    // 7. Revalidate cache (both Next.js and Redis)
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
+    await invalidateCache(
+      CACHE_KEYS.workerProfile(session.user.id),
+      CACHE_KEYS.completionStatus(session.user.id)
+    );
 
     return {
       success: true,
@@ -615,9 +636,13 @@ export async function saveTherapeuticRegistration(
 
     }
 
-    // 7. Revalidate cache
+    // 7. Revalidate cache (both Next.js and Redis)
     revalidatePath("/dashboard/worker/services/setup");
     revalidatePath("/dashboard/worker");
+    await invalidateCache(
+      CACHE_KEYS.workerProfile(session.user.id),
+      CACHE_KEYS.completionStatus(session.user.id)
+    );
 
     return {
       success: true,

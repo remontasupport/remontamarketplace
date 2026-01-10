@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
+import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
 
 /**
  * POST /api/worker/profile/update-step
@@ -137,6 +138,12 @@ export async function POST(request: Request) {
               )
             );
           }
+
+          // Invalidate Redis cache to reflect service changes immediately
+          await invalidateCache(
+            CACHE_KEYS.workerProfile(session.user.id),
+            CACHE_KEYS.completionStatus(session.user.id)
+          );
         }
         break;
 

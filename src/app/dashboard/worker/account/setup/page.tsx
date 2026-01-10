@@ -146,14 +146,15 @@ function AccountSetupContent() {
       let streetAddress = "";
 
       if (profileData.location && profileData.city && profileData.state && profileData.postalCode) {
-        // Backend joins with ", " so we build: "City, State, PostalCode"
-        const expectedEnd = `${profileData.city}, ${profileData.state}, ${profileData.postalCode}`;
+        // Backend joins with ", " and State+PostalCode with SPACE (not comma)
+        // Saved format: "Street, City, State PostalCode" or "City, State PostalCode"
+        const expectedEnd = `${profileData.city}, ${profileData.state} ${profileData.postalCode}`;
 
-        // Case 1: Location is EXACTLY "City, State, PostalCode" (no street address)
+        // Case 1: Location is EXACTLY "City, State PostalCode" (no street address)
         if (profileData.location === expectedEnd) {
           streetAddress = "";
         }
-        // Case 2: Location is "Street, City, State, PostalCode" (has street address)
+        // Case 2: Location is "Street, City, State PostalCode" (has street address)
         else if (profileData.location.includes(`, ${expectedEnd}`)) {
           // Split and take everything before the expected end
           const parts = profileData.location.split(`, ${expectedEnd}`);
