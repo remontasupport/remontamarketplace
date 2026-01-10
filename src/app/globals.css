@@ -6,8 +6,37 @@
 @import "./styles/account-setup.css";
 @import "./styles/services-setup.css";
 @import "./styles/requirements-setup.css";
+@import "./styles/profile-building.css";
+
+/* Component styles */
+@import "./styles/date-picker.css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
+}
 
 html {
   scroll-behavior: smooth;

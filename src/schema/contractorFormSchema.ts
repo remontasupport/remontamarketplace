@@ -33,31 +33,11 @@ export const contractorFormSchema = z.object({
       "Password must include uppercase and lowercase letters, numbers and special characters (e.g. @, !, #, %, %)"
     ),
 
-  // Step 3 - Additional Details
-  age: z.number().min(18, "You must be at least 18 years old").max(120, "Please enter a valid age"),
-  gender: z.string().min(1, "Please select your gender"),
-  languages: z.array(z.string()).min(1, "Please select at least one language"),
-
-  // Step 4 - Services
+  // Step 3 - Services
   services: z.array(z.string()).min(1, "Please select at least one service"),
   supportWorkerCategories: z.array(z.string()).optional(),
 
-  // Step 5 - Professional Information
-  experience: z.string().min(1, "Years of Experience is required"),
-  introduction: z.string().min(1, "Introduction is required"),
-
-  // Step 6 - Qualifications & Vehicle
-  qualifications: z.string().min(1, "Qualifications and certifications are required"),
-  hasVehicle: z.string().min(1, "Please indicate if you have vehicle access"),
-
-  // Step 7 - Personal Touch
-  funFact: z.string().min(1, "A fun fact about yourself is required"),
-  hobbies: z.string().min(1, "Hobbies and/or interests are required"),
-  uniqueService: z.string().min(1, "Please tell us what makes your service unique"),
-  additionalInfo: z.string().optional(),
-
-  // Step 8 - Photos & Consent
-  photos: z.string().url("Please upload a valid photo").optional().or(z.literal("")),
+  // Step 4 - Consent
   consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
   consentMarketing: z.boolean().optional(),
 
@@ -74,23 +54,11 @@ export const contractorFormDefaults = {
   email: "",
   mobile: "",
   password: "",
-  age: 18,
-  gender: "",
-  languages: [],
   services: [],
   supportWorkerCategories: [],
-  experience: "",
-  introduction: "",
   location: "",
   availability: "",
   startDate: "",
-  funFact: "",
-  hobbies: "",
-  uniqueService: "",
-  additionalInfo: "",
-  qualifications: "",
-  hasVehicle: "",
-  photos: "",
   consentProfileShare: false,
   consentMarketing: false,
 };

@@ -192,32 +192,17 @@ export const TITLE_ROLE_OPTIONS = [
   "Other"
 ];
 
-export const TOTAL_STEPS = 8;
+export const TOTAL_STEPS = 4;
 
 export const FORM_DEFAULT_VALUES = {
   firstName: "",
   lastName: "",
   email: "",
   mobile: "",
-  age: 18,
-  gender: "",
   city: "",
   state: "",
-  languages: "",
   titleRole: "",
-  experience: "",
-  introduction: "",
   location: "",
   availability: "",
   startDate: "",
-  funFact: "",
-  hobbies: "",
-  uniqueService: "",
-  whyEnjoyWork: "",
-  additionalInfo: "",
-  qualifications: "",
-  hasVehicle: "",
-  photos: [] as File[],
-  consentProfileShare: false,
-  consentMarketing: false,
 };

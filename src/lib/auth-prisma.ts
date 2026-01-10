@@ -27,14 +27,9 @@ const createAuthPrismaClient = () => {
   // Use AUTH_DATABASE_URL if set, otherwise fallback to DATABASE_URL
   const databaseUrl = process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL;
 
-  // Build connection string with connection pooling parameters
-  // These settings optimize for serverless high-concurrency workloads
-  const connectionString = databaseUrl + (databaseUrl?.includes('?') ? '&' : '?') + [
-    'connection_limit=10',           // Max connections per Prisma Client instance
-    'pool_timeout=30',               // Seconds to wait for connection from pool
-    'connect_timeout=10',            // Seconds to wait for initial connection
-    'socket_timeout=30',             // Seconds before timing out socket operations
-  ].join('&');
+  // Connection string already has pooling parameters from .env
+  // Don't add duplicate parameters when using Neon's pooler
+  const connectionString = databaseUrl;
 
   return new AuthPrismaClient({
     log: process.env.NODE_ENV === 'development'

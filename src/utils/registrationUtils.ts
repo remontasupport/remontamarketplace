@@ -4,12 +4,8 @@ import { ContractorFormData } from "@/schema/contractorFormSchema";
 const STEP_VALIDATION_FIELDS: Record<number, (keyof ContractorFormData)[]> = {
   1: ["location"],
   2: ["firstName", "lastName", "email", "mobile", "password"],
-  3: ["age", "gender", "languages"],
-  4: ["services"],
-  5: ["experience", "introduction"],
-  6: ["qualifications", "hasVehicle"],
-  7: ["funFact", "hobbies", "uniqueService", "whyEnjoyWork"],
-  8: ["photos", "consentProfileShare"],
+  3: ["services"],
+  4: ["consentProfileShare"],
 };
 
 export const getStepValidationFields = (step: number): (keyof ContractorFormData)[] => {

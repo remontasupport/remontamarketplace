@@ -9,14 +9,18 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
-  DocumentIcon
+  DocumentIcon,
+  XCircleIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
   useComplianceDocuments,
   useUploadComplianceDocument,
+  useDeleteComplianceDocument,
   complianceDocumentsKeys,
 } from "@/hooks/queries/useComplianceDocuments";
 import "@/app/styles/requirements-setup.css";
@@ -55,8 +59,36 @@ export default function StepRightToWork({
 
   const [citizenshipStatus, setCitizenshipStatus] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  // Helper function to show error modal
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  // Helper function to close error modal
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Fetch existing document data
   const {
@@ -65,6 +97,7 @@ export default function StepRightToWork({
   } = useComplianceDocuments("right-to-work");
 
   const uploadMutation = useUploadComplianceDocument();
+  const deleteMutation = useDeleteComplianceDocument();
 
   const uploadedDocument = documentData?.documents?.[0] || null;
   const metadata = documentData?.metadata;
@@ -93,7 +126,7 @@ export default function StepRightToWork({
 
   const saveCitizenshipStatus = async (isCitizen: boolean) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
@@ -119,7 +152,7 @@ export default function StepRightToWork({
         queryKey: complianceDocumentsKeys.byType("right-to-work"),
       });
     } catch (error: any) {
-      alert(`Failed to save: ${error.message}`);
+      showErrorModal(error.message || "Failed to save. Please try again.", "Save Failed");
     } finally {
       setIsSaving(false);
     }
@@ -127,26 +160,26 @@ export default function StepRightToWork({
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
     if (!expiryDate) {
-      alert("Please select a visa expiry date before uploading");
+      showErrorModal("Please select a visa expiry date before uploading", "Expiry Date Required");
       return;
     }
 
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal("Please upload a JPG, PNG, or PDF file", "Invalid File Type");
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal("File size must be less than 10MB", "File Too Large", "Please compress your file or choose a smaller one.");
       return;
     }
 
@@ -159,15 +192,41 @@ export default function StepRightToWork({
         expiryDate,
       });
 
-      // Exit edit mode
-      setIsEditMode(false);
       setExpiryDate("");
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      // Show specific error, not generic server message
+      showErrorModal(error.message || "Upload failed. Please try again.");
+    }
+  };
+
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType: "right-to-work",
+        apiEndpoint: "/api/worker/right-to-work",
+      });
+
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      showErrorModal(error.message || "Delete failed. Please try again.", "Delete Failed");
     }
   };
 
   return (
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
     <StepContentWrapper>
       <div className="form-page-content">
         {/* Left Column - Form */}
@@ -239,54 +298,35 @@ export default function StepRightToWork({
                   </div>
                 )}
 
-                {uploadedDocument && uploadedDocument.documentUrl && !isEditMode ? (
+                {uploadedDocument && uploadedDocument.documentUrl ? (
                   // Show uploaded document preview
                   <div className="document-preview-container">
-                    {isPdfDocument(uploadedDocument.documentUrl) ? (
-                      <div className="document-preview-pdf">
-                        <DocumentIcon className="document-preview-pdf-icon" />
-                        <p className="document-preview-pdf-text">
-                          Visa / Working Rights
-                        </p>
+                    <div className="uploaded-document-item">
+                      <div className="uploaded-document-content">
+                        <DocumentIcon className="uploaded-document-icon" />
                         <a
                           href={uploadedDocument.documentUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                          className="uploaded-document-link"
                         >
-                          View PDF
+                          Visa / Working Rights
                         </a>
                       </div>
-                    ) : (
-                      <img
-                        src={uploadedDocument.documentUrl}
-                        alt="Visa Document"
-                        className="document-preview-image"
-                      />
-                    )}
+                      <button
+                        onClick={handleFileDelete}
+                        className="uploaded-document-remove"
+                        title="Remove document"
+                      >
+                        <XCircleIcon className="w-5 h-5" />
+                      </button>
+                    </div>
 
                     {uploadedDocument.expiryDate && (
                       <p className="text-sm text-gray-600 font-poppins mt-2">
                         Expires: {new Date(uploadedDocument.expiryDate).toLocaleDateString('en-AU')}
                       </p>
                     )}
-
-                    <button
-                      onClick={() => setIsEditMode(true)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#0C1628",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        padding: "0.5rem 0",
-                        fontFamily: "var(--font-poppins)",
-                        marginTop: "0.75rem"
-                      }}
-                    >
-                      Replace Document
-                    </button>
                   </div>
                 ) : (
                   // Show upload button
@@ -375,5 +415,14 @@ export default function StepRightToWork({
         </div>
       </div>
     </StepContentWrapper>
+
+    <ErrorModal
+      isOpen={errorModal.isOpen}
+      onClose={closeErrorModal}
+      title={errorModal.title}
+      message={errorModal.message}
+      subtitle={errorModal.subtitle}
+    />
+    </>
   );
 }

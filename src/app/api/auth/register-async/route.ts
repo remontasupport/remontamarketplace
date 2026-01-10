@@ -15,7 +15,7 @@ import { NextResponse } from 'next/server';
 import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
 import { verifyRecaptcha } from '@/lib/recaptcha';
 import { processWorkerRegistration } from '@/lib/workers/workerRegistrationProcessor';
-import type { WorkerRegistrationJobData } from '@/lib/queue';
+import type { WorkerRegistrationJobData } from '@/types/workerRegistration';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
 
 export async function POST(request: Request) {
@@ -45,19 +45,6 @@ export async function POST(request: Request) {
       lastName,
       mobile,
       location,
-      age,
-      gender,
-      languages,
-      experience,
-      introduction,
-      qualifications,
-      hasVehicle,
-      funFact,
-      hobbies,
-      uniqueService,
-      consentProfileShare,
-      consentMarketing,
-      photos,
       services,
       supportWorkerCategories,
     } = body;
@@ -107,17 +94,6 @@ export async function POST(request: Request) {
       lastName,
       mobile,
       location,
-      age,
-      gender,
-      languages,
-      experience,
-      introduction,
-      qualifications,
-      hasVehicle,
-      funFact,
-      hobbies,
-      uniqueService,
-      photos,
       services,
       supportWorkerCategories,
       geocodedLocation: undefined, // Will be geocoded in background

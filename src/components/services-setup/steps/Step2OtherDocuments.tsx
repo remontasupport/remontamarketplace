@@ -19,14 +19,15 @@
 
 import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { CheckCircleIcon, XCircleIcon, DocumentIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { DocumentIcon, PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
 import { useIdentityDocuments, useDriverLicense } from "@/hooks/queries/useIdentityDocuments";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import Loader from "@/components/ui/Loader";
 
 interface Step2OtherDocumentsProps {
   data: any;
@@ -75,8 +76,11 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
   const { driverLicense, hasDriverLicense } = useDriverLicense();
 
   // State for file handling
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
-  const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
+
+  // State for delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<{ id: string; url: string } | null>(null);
 
   // OPTIMIZED: Extract documents from query data with useMemo
   const insuranceDocuments = useMemo(() =>
@@ -136,15 +140,14 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     return null;
   }, [identityDocumentsData?.documents, driverLicense]);
 
-  const handleFileSelect = (documentId: string, file: File | null) => {
-    if (!file) {
-      setSelectedFiles(prev => {
-        const updated = { ...prev };
-        delete updated[documentId];
-        return updated;
-      });
+  // Handle file upload using server action
+  const handleFileUpload = async (documentId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !session?.user?.id) {
       return;
     }
+
+    const file = files[0];
 
     // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
@@ -160,90 +163,98 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
       return;
     }
 
-    setSelectedFiles(prev => ({
-      ...prev,
-      [documentId]: file,
-    }));
-  };
-
-  const handleUpload = async (documentId: string, serviceName?: string) => {
-    const file = selectedFiles[documentId];
-    if (!file) return;
-
-    setUploadingFiles(prev => new Set(prev).add(documentId));
+    // Set uploading state
+    setUploadingFiles(prev => ({ ...prev, [documentId]: true }));
 
     try {
+      // Import the server action
+      const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
+
+      // Create FormData
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("documentType", documentId);
-      formData.append("serviceName", serviceName || "Other Documents");
+      formData.append("serviceTitle", "Other Documents");
+      formData.append("requirementType", documentId);
 
-      const response = await fetch("/api/upload/service-documents", {
-        method: "POST",
-        body: formData,
-      });
+      // Upload using server action
+      const result = await uploadServiceDocument(formData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
 
-      const responseData = await response.json();
-     
 
-      // Clear selected file after upload
-      setSelectedFiles(prev => {
-        const updated = { ...prev };
-        delete updated[documentId];
-        return updated;
+      // Invalidate the service documents query to refresh UI
+      await queryClient.invalidateQueries({
+        queryKey: serviceDocumentsKeys.all,
+        refetchType: 'active',
       });
 
-      // Invalidate service documents cache to refetch
-      queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
-    } catch (error) {
-     
-      alert(error instanceof Error ? error.message : "Failed to upload document");
+      // Force immediate refetch
+      await queryClient.refetchQueries({
+        queryKey: serviceDocumentsKeys.all,
+      });
+    } catch (error: any) {
+  
+      alert(`Failed to upload: ${error.message}`);
     } finally {
-      setUploadingFiles(prev => {
-        const updated = new Set(prev);
-        updated.delete(documentId);
-        return updated;
-      });
+      setUploadingFiles(prev => ({ ...prev, [documentId]: false }));
+      event.target.value = '';
     }
   };
 
-  const handleDelete = async (documentId: string) => {
-    if (!window.confirm("Are you sure you want to remove this document?")) {
+  // Open delete confirmation dialog
+  const handleDelete = (documentId: string) => {
+    const document = uploadedDocuments[documentId];
+    if (!document) return;
+
+    setDocumentToDelete({
+      id: documentId,
+      url: document.documentUrl,
+    });
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirm delete using server action
+  const confirmDelete = async () => {
+    setDeleteDialogOpen(false);
+
+    if (!documentToDelete || !session?.user?.id) {
       return;
     }
 
     try {
-      const documentToDelete = uploadedDocuments[documentId];
-      if (!documentToDelete) {
-       
+      // Import the server action
+      const { deleteServiceDocument } = await import("@/services/worker/serviceDocuments.service");
+
+      // Delete from server (database + blob storage)
+      const result = await deleteServiceDocument(
+        session.user.id,
+        documentToDelete.id,
+        documentToDelete.url
+      );
+
+      if (!result.success) {
+        alert(`Failed to delete document: ${result.error}`);
         return;
       }
 
-      const response = await fetch(`/api/worker/service-documents?id=${documentToDelete.id}`, {
-        method: "DELETE",
+      // Invalidate and refetch service documents query to get fresh data
+      await queryClient.invalidateQueries({
+        queryKey: serviceDocumentsKeys.all,
+        refetchType: 'active',
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
+      // Force immediate refetch
+      await queryClient.refetchQueries({
+        queryKey: serviceDocumentsKeys.all,
+      });
 
-     
-
-      // Invalidate service documents cache
-      queryClient.invalidateQueries({ queryKey: serviceDocumentsKeys.all });
+      setDocumentToDelete(null);
     } catch (error) {
-     
-      alert("Failed to delete document");
+    
+      alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
-
-  const isPdfDocument = (url: string) => {
-    return url.toLowerCase().endsWith('.pdf') || url.includes('.pdf?');
   };
 
   const renderDocumentRow = (document: Document) => {
@@ -268,15 +279,42 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
         : "Other Personal Info";
     }
 
-    const isUploading = uploadingFiles.has(id);
-    const selectedFile = selectedFiles[id];
+    const isUploading = uploadingFiles[id];
+
+    // Extract filename from URL
+    // Blob filename structure: {documentType}-{timestamp}-{originalFileName}
+    // Example: driver-license-vehicle-1767067012044-Screenshot_2025-12-30_083835.png
+    // We want to show only: Screenshot_2025-12-30_083835.png
+    const getFileName = (url: string) => {
+      const urlParts = url.split('/');
+      const fullFileName = urlParts[urlParts.length - 1];
+
+      // Match pattern: {documentType}-{timestamp}-{originalFileName}
+      // documentType can have dashes, so match greedily: .+-\d+-{filename}
+      // This matches the LAST occurrence of -digits- in the string
+      const match = fullFileName.match(/^.+-\d+-(.+)$/);
+
+      if (match && match[1]) {
+        return match[1]; // Return only the original filename
+      }
+
+      // Fallback: if pattern doesn't match, return as-is
+      return fullFileName;
+    };
 
     return (
-      <div key={id} className="border border-gray-200 rounded-lg p-4 sm:p-6 bg-white hover:border-gray-300 transition-colors">
-        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4 sm:gap-6">
-          <div className="flex-1 w-full">
+      <div
+        key={id}
+        className={`border rounded-lg p-4 transition-all duration-200 ${
+          isUploaded
+            ? "border-teal-500 bg-teal-50"
+            : "border-gray-200 hover:border-gray-300"
+        }`}
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <Label className="text-lg font-poppins font-semibold" style={{ color: '#0C1628' }}>
+              <Label className="text-base font-poppins font-semibold text-gray-900">
                 {name}
               </Label>
               {isOptional && (
@@ -285,91 +323,61 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 font-poppins mb-4">{description}</p>
+            <p className="text-sm text-gray-600 font-poppins">{description}</p>
 
-            {/* Show uploaded document */}
-            {isUploaded && uploadedDoc && (
-              <div className="mt-3 flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  {isPdfDocument(uploadedDoc.documentUrl) ? (
-                    <a
-                      href={uploadedDoc.documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-green-700 font-poppins hover:underline flex items-center gap-2 font-medium"
-                    >
-                      <DocumentIcon className="w-5 h-5" />
-                      View Document
-                    </a>
-                  ) : (
-                    <img
-                      src={uploadedDoc.documentUrl}
-                      alt={name}
-                      className="h-20 rounded border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => window.open(uploadedDoc.documentUrl, '_blank')}
-                    />
-                  )}
-                  <p className="text-xs text-gray-500 mt-2">
-                    Uploaded {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}
-                  </p>
-                  {/* Show note if driver's license is from another step */}
-                  {driverLicenseSource && (
-                    <p className="text-sm text-green-700 font-poppins mt-1" style={{ fontWeight: 500 }}>
-                      ✓ Using Driver's License from {driverLicenseSource}
-                    </p>
-                  )}
-                </div>
+            {/* Show note if driver's license is from another step */}
+            {driverLicenseSource && (
+              <p className="text-sm text-green-700 font-poppins mt-2" style={{ fontWeight: 500 }}>
+                ✓ Using Driver's License from {driverLicenseSource}
+              </p>
+            )}
+          </div>
+
+          {/* Upload/Delete Controls */}
+          <div className="ml-4">
+            {isUploading ? (
+              <div className="flex items-center gap-2">
+                <Loader size="sm" />
+                <span className="text-sm text-gray-600 font-poppins">Uploading...</span>
+              </div>
+            ) : isUploaded && uploadedDoc ? (
+              <div className="flex items-center gap-2">
+                <DocumentIcon className="h-5 w-5 text-gray-600" />
+                <a
+                  href={uploadedDoc.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-800 underline font-poppins"
+                >
+                  {getFileName(uploadedDoc.documentUrl)}
+                </a>
                 {/* Only show delete button if this is NOT a driver's license from identity documents */}
                 {!driverLicenseSource && (
                   <button
                     type="button"
                     onClick={() => handleDelete(id)}
-                    className="text-red-600 hover:text-red-700 p-2 rounded-md hover:bg-red-50 transition-colors"
-                    title="Remove document"
+                    className="text-red-600 hover:text-red-800"
                   >
-                    <XCircleIcon className="w-6 h-6" />
+                    <XMarkIcon className="h-4 w-4" />
                   </button>
                 )}
               </div>
-            )}
-          </div>
-
-          {/* Upload button/controls - Hide if driver's license exists from another step */}
-          <div className="flex-shrink-0 w-full sm:w-auto">
-            {!isUploaded && !driverLicenseSource && (
-              <div className="flex flex-col gap-3 w-full sm:min-w-[200px]">
+            ) : !driverLicenseSource ? (
+              <label
+                htmlFor={`upload-${id}`}
+                className="inline-flex items-center gap-2 cursor-pointer text-gray-700 hover:text-gray-900"
+              >
+                <PaperClipIcon className="h-5 w-5" />
+                <span className="text-sm font-poppins">Upload file</span>
                 <input
-                  type="file"
                   id={`upload-${id}`}
-                  accept="image/jpeg,image/jpg,image/png,application/pdf"
-                  onChange={(e) => handleFileSelect(id, e.target.files?.[0] || null)}
-                  className="hidden"
+                  type="file"
+                  className="sr-only"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  onChange={(e) => handleFileUpload(id, e)}
                 />
-                <label
-                  htmlFor={`upload-${id}`}
-                  className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-poppins font-medium text-white bg-[#0C1628] hover:bg-[#1a2740] rounded-md transition-colors"
-                >
-                  <ArrowUpTrayIcon className="w-5 h-5" />
-                  Choose File
-                </label>
-
-                {selectedFile && (
-                  <div className="text-xs text-gray-700 font-poppins bg-gray-50 p-3 rounded-md border border-gray-200">
-                    <p className="truncate font-medium mb-2">{selectedFile.name}</p>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleUpload(id, document.serviceCategory)}
-                      disabled={isUploading}
-                      className="w-full bg-[#0C1628] hover:bg-[#1a2740]"
-                    >
-                      {isUploading ? "Uploading..." : "Upload"}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+              </label>
+            ) : null}
           </div>
         </div>
       </div>
@@ -386,94 +394,99 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
   }
 
   return (
-    <StepContentWrapper>
-      <div className="form-page-content">
-        {/* Main Content */}
-        <div className="content-columns">
-          {/* Left Column - Documents */}
-          <div className="main-column">
-            <div className="page-header">
-              <p className="page-subtitle">
-                Upload insurance and transport documents based on your selected services
-              </p>
-            </div>
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete this file?"
+        confirmText="Yes"
+        cancelText="No"
+      />
 
-            {/* OPTIMIZED: Show documents immediately when available, blank space while loading */}
-            {hasDocuments ? (
-              <div className="space-y-8">
-                {/* Insurance Documents Section */}
-                {insuranceDocuments.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
-                      Insurance Documents
-                    </h3>
-                    <p className="text-sm text-gray-600 font-poppins mb-4">
-                      These insurance documents are required or recommended for your services
-                    </p>
-                    <div className="space-y-4">
-                      {insuranceDocuments.map(renderDocumentRow)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Transport Documents Section */}
-                {transportDocuments.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
-                      Transport Documents
-                    </h3>
-                    <p className="text-sm text-gray-600 font-poppins mb-4">
-                      These documents are required if you provide transport services
-                    </p>
-                    <div className="space-y-4">
-                      {transportDocuments.map(renderDocumentRow)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Info Box */}
-                <div className="mt-8 p-6 bg-teal-50 border border-teal-200 rounded-lg">
-                  <h4 className="font-poppins font-semibold text-gray-900 mb-2">
-                    Accepted File Formats
-                  </h4>
-                  <p className="text-sm text-gray-700 font-poppins">
-                    PDF, JPG, or PNG files up to 10MB in size
-                  </p>
-                </div>
-              </div>
-            ) : !isLoadingRequirements ? (
-              // Only show "no documents" message AFTER loading completes
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-                <p className="text-gray-700 font-poppins">
-                  No insurance or transport documents required based on your selected services.
+      <StepContentWrapper>
+        <div className="form-page-content">
+          {/* Main Content */}
+          <div className="content-columns">
+            {/* Left Column - Documents */}
+            <div className="main-column">
+              <div className="page-header">
+                <p className="page-subtitle">
+                  Upload insurance and transport documents based on your selected services
                 </p>
               </div>
-            ) : null}
-          </div>
 
-          {/* Right Column - Info Box */}
-          <div className="info-column">
-            <div className="info-box">
-              <h3 className="info-box-title">About Other Documents</h3>
-              <p className="info-box-text">
-                Based on the services you've selected, you may need to upload additional
-                insurance and transport documents.
-              </p>
-              <p className="info-box-text mt-3">
-                <strong>Insurance Documents:</strong> Public liability insurance and professional
-                indemnity insurance may be required depending on your services.
-              </p>
-              <p className="info-box-text mt-3">
-                <strong>Transport Documents:</strong> If you provide transport services, you'll
-                need to upload your driver's license, vehicle registration, and insurance.
-              </p>
-              <p className="info-box-text mt-3">
-                These documents help ensure compliance and build trust with clients.
-              </p>
+              {/* OPTIMIZED: Show documents immediately when available, blank space while loading */}
+              {hasDocuments ? (
+                <div className="space-y-8">
+                  {/* Insurance Documents Section */}
+                  {insuranceDocuments.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
+                        Insurance Documents
+                      </h3>
+                      <p className="text-sm text-gray-600 font-poppins mb-4">
+                        These insurance documents are required or recommended for your services
+                      </p>
+                      <div className="space-y-4">
+                        {insuranceDocuments.map(renderDocumentRow)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Transport Documents Section */}
+                  {transportDocuments.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-poppins font-semibold mb-4" style={{ color: '#0C1628' }}>
+                        Transport Documents
+                      </h3>
+                      <p className="text-sm text-gray-600 font-poppins mb-4">
+                        These documents are required if you provide transport services
+                      </p>
+                      <div className="space-y-4">
+                        {transportDocuments.map(renderDocumentRow)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Info Box */}
+                 
+                </div>
+              ) : !isLoadingRequirements ? (
+                // Only show "no documents" message AFTER loading completes
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+                  <p className="text-gray-700 font-poppins">
+                    No insurance or transport documents required based on your selected services.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Right Column - Info Box */}
+            <div className="info-column mt-6">
+              <div className="info-box">
+                <h3 className="info-box-title">About Other Documents</h3>
+                <p className="info-box-text">
+                  Based on the services you've selected, you may need to upload additional
+                  insurance and transport documents.
+                </p>
+                <p className="info-box-text mt-3">
+                  <strong>Insurance Documents:</strong> Public liability insurance and professional
+                  indemnity insurance may be required depending on your services.
+                </p>
+                <p className="info-box-text mt-3">
+                  <strong>Transport Documents:</strong> If you provide transport services, you'll
+                  need to upload your driver's license, vehicle registration, and insurance.
+                </p>
+                <p className="info-box-text mt-3">
+                  These documents help ensure compliance and build trust with clients.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </StepContentWrapper>
+      </StepContentWrapper>
+    </>
   );
 }

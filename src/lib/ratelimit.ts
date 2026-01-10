@@ -39,6 +39,23 @@ export const strictApiRateLimit = process.env.UPSTASH_REDIS_REST_URL
   : null
 
 /**
+ * Database write rate limiter
+ *
+ * Limits:
+ * - 20 requests per minute per user
+ * - Protects Neon DB from being overwhelmed by write operations
+ * - Use for server actions that write to database
+ */
+export const dbWriteRateLimit = process.env.UPSTASH_REDIS_REST_URL
+  ? new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(20, '1 m'), // 20 writes per minute
+      analytics: true,
+      prefix: 'ratelimit:db:write',
+    })
+  : null
+
+/**
  * Helper function to get client IP from request
  * Works with Vercel, Cloudflare, and standard deployments
  */
@@ -100,7 +117,7 @@ export async function applyRateLimit(
 
     if (!success) {
       // Rate limit exceeded
-     
+
 
       return {
         success: false,
@@ -123,12 +140,52 @@ export async function applyRateLimit(
     }
 
     // Rate limit OK, log for monitoring
-  
+
 
     return { success: true }
   } catch (error) {
     // If rate limiting fails, log error but allow request (fail open)
-  
+
+    return { success: true }
+  }
+}
+
+/**
+ * Apply rate limiting to Server Actions
+ *
+ * Usage in server actions:
+ * ```typescript
+ * const rateLimitCheck = await checkServerActionRateLimit(userId, dbWriteRateLimit)
+ * if (!rateLimitCheck.success) {
+ *   return { success: false, error: rateLimitCheck.error }
+ * }
+ * ```
+ */
+export async function checkServerActionRateLimit(
+  identifier: string,
+  limiter: Ratelimit | null
+): Promise<{ success: boolean; error?: string; retryAfter?: number }> {
+  // Skip rate limiting if not configured (development mode)
+  if (!limiter) {
+    return { success: true }
+  }
+
+  try {
+    const { success, reset } = await limiter.limit(identifier)
+
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000)
+      return {
+        success: false,
+        error: `Too many requests. Please try again in ${retryAfter} seconds.`,
+        retryAfter,
+      }
+    }
+
+    return { success: true }
+  } catch (error) {
+    // If rate limiting fails, log error but allow request (fail open)
+
     return { success: true }
   }
 }

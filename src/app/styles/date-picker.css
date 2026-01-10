@@ -1,0 +1,210 @@
+/**
+ * Custom Date Picker Styles
+ * Styled to match Remonta's design system
+ */
+
+.rdp-custom {
+  font-family: var(--font-poppins);
+}
+
+.rdp-month_grid {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.rdp-weekdays {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6B7280;
+  text-transform: uppercase;
+}
+
+.rdp-weekday {
+  width: 2.5rem;
+  padding: 0.5rem 0;
+  text-align: center;
+  display: table-cell;
+}
+
+.rdp-week {
+  display: table-row;
+}
+
+.rdp-day {
+  padding: 0.2rem;
+  text-align: center;
+  display: table-cell;
+  width: 2.5rem;
+}
+
+.rdp-day_button {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #0C1628;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.15s ease;
+  font-family: var(--font-poppins);
+  font-weight: 500;
+  margin: 0 auto;
+}
+
+.rdp-day_button:hover:not(.rdp-disabled):not(.rdp-selected) {
+  background-color: #F3F4F6;
+  color: #0C1628;
+}
+
+.rdp-day_button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.3);
+}
+
+/* Selected date */
+.rdp-selected .rdp-day_button {
+  background-color: #0D9488 !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.rdp-selected .rdp-day_button:hover {
+  background-color: #0F766E !important;
+}
+
+/* Today */
+.rdp-today:not(.rdp-selected) .rdp-day_button {
+  border: 2px solid #0D9488;
+  font-weight: 600;
+}
+
+/* Outside month */
+.rdp-outside .rdp-day_button {
+  color: #D1D5DB;
+}
+
+/* Disabled dates */
+.rdp-disabled .rdp-day_button {
+  color: #D1D5DB;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.rdp-disabled .rdp-day_button:hover {
+  background-color: transparent;
+}
+
+/* Navigation buttons - HIDDEN */
+.rdp-nav {
+  display: none !important;
+}
+
+.rdp-nav button,
+.rdp-button_previous,
+.rdp-button_next {
+  display: none !important;
+}
+
+
+/* Month caption styling - Show with dropdowns */
+.rdp-month_caption {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* Hide the caption label (month/year text) - only show dropdowns */
+.rdp-caption_label {
+  display: none !important;
+}
+
+/* Custom dropdown styles for Month and Year */
+.custom-month-year-dropdown,
+.custom-month-dropdown,
+.custom-year-dropdown {
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: #0C1628 !important;
+  background-color: #EDEFF3 !important; /* Brand HIGHLIGHT color */
+  border: 2px solid #EDEFF3 !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-family: var(--font-poppins) !important;
+  transition: all 0.15s ease !important;
+}
+
+.custom-month-year-dropdown:hover,
+.custom-month-dropdown:hover,
+.custom-year-dropdown:hover {
+  border-color: #0D9488 !important;
+  background-color: #EDEFF3 !important; /* Brand HIGHLIGHT color */
+}
+
+.custom-month-year-dropdown:focus,
+.custom-month-dropdown:focus,
+.custom-year-dropdown:focus {
+  outline: none !important;
+  border-color: #0D9488 !important;
+  background-color: #EDEFF3 !important; /* Brand HIGHLIGHT color */
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1) !important;
+}
+
+/* Modal animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Center the calendar in modal */
+.date-picker-modal .rdp-custom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Custom scrollbar for year picker */
+.date-picker-modal div[style*="overflowY"] {
+  scrollbar-width: thin;
+  scrollbar-color: #0D9488 #F3F4F6;
+}
+
+.date-picker-modal div[style*="overflowY"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.date-picker-modal div[style*="overflowY"]::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 4px;
+}
+
+.date-picker-modal div[style*="overflowY"]::-webkit-scrollbar-thumb {
+  background: #0D9488;
+  border-radius: 4px;
+}
+
+.date-picker-modal div[style*="overflowY"]::-webkit-scrollbar-thumb:hover {
+  background: #0F766E;
+}

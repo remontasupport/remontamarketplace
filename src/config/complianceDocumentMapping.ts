@@ -15,7 +15,7 @@
 import Step1ProofOfIdentity from "@/components/requirements-setup/steps/Step1ProofOfIdentity";
 import Step2PoliceCheck from "@/components/requirements-setup/steps/Step2PoliceCheck";
 import Step3WorkingWithChildren from "@/components/requirements-setup/steps/Step3WorkingWithChildren";
-import Step4NDISTraining from "@/components/requirements-setup/steps/Step4NDISTraining";
+import Step4NDISTrainingsMultiple from "@/components/requirements-setup/steps/Step4NDISTrainingsMultiple";
 import Step5InfectionControl from "@/components/requirements-setup/steps/Step5InfectionControl";
 import Step0WorkerScreeningCheck from "@/components/requirements-setup/steps/Step0WorkerScreeningCheck";
 import StepRightToWork from "@/components/requirements-setup/steps/StepRightToWork";
@@ -50,53 +50,62 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
   },
 
   // Australian Business Number (text field, numbers only)
+  // Uses server action: updateWorkerABN from @/services/worker/compliance.service.ts
   "abn-contractor": {
     documentId: "abn-contractor",
     component: Step6ABN,
-    apiEndpoint: "/api/worker/profile/update-step",
+    // Server action is called automatically via useUpdateProfileStep hook
   },
 
   // ========================================
   // COMPLIANCE & SCREENING DOCUMENTS
   // ========================================
 
-  // NDIS Worker Screening Check - PRESERVES EXISTING UPLOAD LOGIC
+  // NDIS Worker Screening Check - REFACTORED: Now uses generic endpoint
   "ndis-screening-check": {
     documentId: "ndis-screening-check",
     component: Step0WorkerScreeningCheck,
-    apiEndpoint: "/api/worker/screening-check",
   },
 
-  // National Police Check - PRESERVES EXISTING UPLOAD LOGIC
+  // National Police Check - REFACTORED: Now uses generic endpoint
   "police-check": {
     documentId: "police-check",
     component: Step2PoliceCheck,
-    apiEndpoint: "/api/worker/police-check",
   },
 
-  // Working with Children Check - PRESERVES EXISTING UPLOAD LOGIC
+  // Working with Children Check - REFACTORED: Now uses generic endpoint
   "working-with-children": {
     documentId: "working-with-children",
     component: Step3WorkingWithChildren,
-    apiEndpoint: "/api/worker/working-with-children",
   },
 
   // ========================================
   // TRAINING DOCUMENTS
   // ========================================
 
-  // NDIS Worker Orientation Module - PRESERVES EXISTING UPLOAD LOGIC
+  // NDIS Training Modules - COMBINED PAGE for all 4 modules
+  // This single page handles:
+  // - ndis-worker-orientation (NDIS Worker Orientation Module)
+  // - ndis-induction-module (New Worker NDIS Induction Module)
+  // - effective-communication (Supporting Effective Communication)
+  // - safe-enjoyable-meals (Supporting Safe and Enjoyable Meals)
+  // NOTE: Only this ID is mapped so only ONE step appears in the sidebar
+  // REFACTORED: Now uses generic endpoint internally
   "ndis-worker-orientation": {
     documentId: "ndis-worker-orientation",
-    component: Step4NDISTraining,
-    apiEndpoint: "/api/worker/ndis-training",
+    component: Step4NDISTrainingsMultiple,
   },
 
-  // Infection Control Training - PRESERVES EXISTING UPLOAD LOGIC
+  // NOTE: The following IDs are NOT mapped so they don't appear as separate steps:
+  // - "ndis-induction-module"
+  // - "effective-communication"
+  // - "safe-enjoyable-meals"
+  // They are handled within the Step4NDISTrainingsMultiple component above
+
+  // Infection Control Training - REFACTORED: Now uses generic endpoint
   "infection-control-training": {
     documentId: "infection-control-training",
     component: Step5InfectionControl,
-    apiEndpoint: "/api/worker/infection-control",
   },
 
   // ========================================

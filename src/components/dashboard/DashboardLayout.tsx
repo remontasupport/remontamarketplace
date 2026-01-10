@@ -1,9 +1,11 @@
 'use client'
 
 import { ReactNode, useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import Sidebar from './Sidebar'
-import ProfileCard from './ProfileCard'
 import SimpleDashboardHeader from './SimpleDashboardHeader'
+import { ImpersonationBanner } from '@/components/admin/ImpersonationButton'
+import { isImpersonating } from '@/lib/impersonation'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -11,6 +13,7 @@ interface DashboardLayoutProps {
   profileData?: {
     firstName: string
     photo: string | null
+    role?: string
   }
 }
 
@@ -19,6 +22,7 @@ export default function DashboardLayout({
   showProfileCard = true,
   profileData
 }: DashboardLayoutProps) {
+  const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const toggleMobileMenu = () => {
@@ -45,28 +49,25 @@ export default function DashboardLayout({
 
   return (
     <div className="dashboard-wrapper">
+      {/* Impersonation Banner - Shows when admin is impersonating */}
+      {isImpersonating(session) && <ImpersonationBanner />}
+
       {/* Dashboard Header - Full Width at Top */}
       <SimpleDashboardHeader onMenuToggle={toggleMobileMenu} />
 
-      {/* Dashboard Container - Sidebar + Content + Profile */}
+      {/* Dashboard Container - Sidebar + Content */}
       <div className="dashboard-container">
-        {/* Left Sidebar */}
+        {/* Left Sidebar with Profile */}
         <Sidebar
           isMobileOpen={isMobileMenuOpen}
           onClose={closeMobileMenu}
+          profileData={profileData}
         />
 
         {/* Main Content */}
         <main className="dashboard-main">
           {children}
         </main>
-
-        {/* Right Sidebar - Profile Card */}
-        {showProfileCard && (
-          <aside className="dashboard-right-sidebar">
-            <ProfileCard profileData={profileData} />
-          </aside>
-        )}
       </div>
 
       {/* Mobile Menu Overlay */}

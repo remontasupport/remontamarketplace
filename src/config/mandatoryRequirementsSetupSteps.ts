@@ -6,6 +6,7 @@
 import Step0WorkerScreeningCheck from "@/components/requirements-setup/steps/Step0WorkerScreeningCheck";
 import Step2PoliceCheck from "@/components/requirements-setup/steps/Step2PoliceCheck";
 import Step3WorkingWithChildren from "@/components/requirements-setup/steps/Step3WorkingWithChildren";
+import Step4aNDISOrientation from "@/components/requirements-setup/steps/Step4aNDISOrientation";
 import Step4NDISTraining from "@/components/requirements-setup/steps/Step4NDISTraining";
 import Step5InfectionControl from "@/components/requirements-setup/steps/Step5InfectionControl";
 import Step6OtherRequirements from "@/components/requirements-setup/steps/Step6OtherRequirements";
@@ -41,18 +42,24 @@ export const MANDATORY_REQUIREMENTS_SETUP_STEPS: MandatoryRequirementsSetupStep[
   },
   {
     id: 4,
-    slug: "ndis-training",
-    title: "NDIS training",
-    component: Step4NDISTraining,
+    slug: "ndis-orientation",
+    title: "NDIS Worker Orientation",
+    component: Step4aNDISOrientation,
   },
   {
     id: 5,
+    slug: "ndis-training",
+    title: "NDIS Training Upload",
+    component: Step4NDISTraining,
+  },
+  {
+    id: 6,
     slug: "infection-control",
     title: "Infection control",
     component: Step5InfectionControl,
   },
   {
-    id: 6,
+    id: 7,
     slug: "other-requirements",
     title: "Other requirements",
     component: Step6OtherRequirements,

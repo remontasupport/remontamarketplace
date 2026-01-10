@@ -31,7 +31,6 @@ interface ServiceCardProps {
   categoryData: any; // Full category data from database
   onRemove: (service: string) => void;
   onEditCategories: () => void;
-  onCardClick: (service: string) => void;
   isEditMode: boolean;
   hasSubcategories: boolean; // Flag to show if service has subcategories
 }
@@ -42,7 +41,6 @@ function ServiceCard({
   categoryData,
   onRemove,
   onEditCategories,
-  onCardClick,
   isEditMode,
   hasSubcategories,
 }: ServiceCardProps) {
@@ -63,18 +61,11 @@ function ServiceCard({
       .filter(Boolean);
   }, [categoryData, supportWorkerCategories]);
 
-  const handleCardClick = () => {
-    if (!isEditMode) {
-      onCardClick(service);
-    }
-  };
-
   return (
     <div className="service-card-wrapper">
       <div
-        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""} ${!isEditMode ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""}`}
         style={{ backgroundColor: 'white' }}
-        onClick={handleCardClick}
       >
         <div className="service-card-content flex flex-col h-full">
           <div className="service-card-header flex-grow">
@@ -84,7 +75,7 @@ function ServiceCard({
           </div>
 
           {/* Subcategories section */}
-          {subcategoryNames.length > 0 ? (
+          {subcategoryNames.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <ul className="space-y-2">
                 {subcategoryNames.map((name, idx) => (
@@ -94,33 +85,7 @@ function ServiceCard({
                   </li>
                 ))}
               </ul>
-              <button
-                type="button"
-                className="text-xs text-teal-600 font-poppins mt-3 hover:underline font-semibold"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCardClick(service);
-                }}
-              >
-                Upload Supporting Documents
-              </button>
             </div>
-          ) : (
-            /* Upload link for services without subcategories */
-            !isEditMode && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  className="text-xs text-teal-600 font-poppins hover:underline font-semibold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCardClick(service);
-                  }}
-                >
-                  Upload Supporting Documents
-                </button>
-              </div>
-            )
           )}
         </div>
       </div>
@@ -288,12 +253,6 @@ export default function Step1ServicesOffer({
     }
   };
 
-  const handleCardClick = (serviceTitle: string) => {
-    // Convert service title to slug using utility function
-    const serviceSlug = serviceNameToSlug(serviceTitle);
-    router.push(`/dashboard/worker/services/${serviceSlug}/documents`);
-  };
-
   return (
     <div className="services-step-container">
       <div className="form-page-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', width: '100%', maxWidth: 'none' }}>
@@ -324,7 +283,6 @@ export default function Step1ServicesOffer({
                       categoryData={categoryData}
                       onRemove={handleRemoveService}
                       onEditCategories={() => handleEditCategories(service)}
-                      onCardClick={handleCardClick}
                       isEditMode={isEditMode}
                       hasSubcategories={hasSubcategories}
                     />
@@ -381,8 +339,8 @@ export default function Step1ServicesOffer({
               the right support worker for their needs.
             </p>
             <p className="info-box-text mt-3">
-              Click "Upload Supporting Documents" on any service card to upload required
-              certificates and qualifications for that service.
+              Each service you add will have its own setup page where you can manage qualifications,
+              skills, and upload supporting documents.
             </p>
             <p className="info-box-text mt-3">
               If you add "Support Worker" or other services with subcategories, you'll be able

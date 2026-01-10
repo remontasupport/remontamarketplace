@@ -30,7 +30,7 @@ export default function Step2Photo({ data, onChange, onPhotoSave, errors }: Step
       <div className="form-column">
         <div className="account-form">
           <p className="field-helper-text" style={{ marginBottom: "1.5rem" }}>
-            The first impression you give on the Mable platform matters. Your profile photo is a key element of your profile as it makes your profile more likely to be viewed by others. Your photo should give clients a clear idea of what you'd look like if they met you tomorrow.
+            The first impression you give on the Remonta platform matters. Your profile photo is a key element of your profile as it makes your profile more likely to be viewed by others. Your photo should give clients a clear idea of what you'd look like if they met you tomorrow.
           </p>
 
           {/* Photo Upload */}

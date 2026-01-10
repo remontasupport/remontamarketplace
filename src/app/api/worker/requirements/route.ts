@@ -44,7 +44,6 @@ export async function GET(request: Request) {
 
     if (serviceNameParam) {
       // Use specific serviceName parameter - filter for this service and its subcategories
-      // OPTIMIZED: Query DB directly with WHERE filter
       const workerServices = await authPrisma.workerService.findMany({
         where: {
           workerProfileId: workerProfile.id,
@@ -52,31 +51,37 @@ export async function GET(request: Request) {
         },
         select: {
           categoryName: true,
-          subcategoryName: true,
+          subcategoryNames: true,
         },
       });
 
-      // Build service strings from DB results
-      servicesToFetch = workerServices.map(ws =>
-        ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-      );
+      // Build service strings from DB results (flatten subcategory arrays)
+      servicesToFetch = workerServices.flatMap(ws => {
+        if (ws.subcategoryNames.length > 0) {
+          return ws.subcategoryNames.map(subName => `${ws.categoryName}:${subName}`);
+        }
+        return [ws.categoryName];
+      });
     } else if (servicesParam) {
       // Use services from parameter
       servicesToFetch = servicesParam.split(',').map(s => s.trim()).filter(Boolean);
     } else {
-      // OPTIMIZED: Fetch from DB only what we need (categoryName, subcategoryName)
+      // Fetch from DB with array fields
       const workerServices = await authPrisma.workerService.findMany({
         where: { workerProfileId: workerProfile.id },
         select: {
           categoryName: true,
-          subcategoryName: true,
+          subcategoryNames: true,
         },
       });
 
-      // Use WorkerService table data
-      servicesToFetch = workerServices.map(ws =>
-        ws.subcategoryName ? `${ws.categoryName}:${ws.subcategoryName}` : ws.categoryName
-      );
+      // Use WorkerService table data (flatten subcategory arrays)
+      servicesToFetch = workerServices.flatMap(ws => {
+        if (ws.subcategoryNames.length > 0) {
+          return ws.subcategoryNames.map(subName => `${ws.categoryName}:${subName}`);
+        }
+        return [ws.categoryName];
+      });
     }
 
 

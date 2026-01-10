@@ -12,20 +12,16 @@ interface WorkerProfile {
   id: string
   firstName: string
   lastName: string
-  age: number | null
   location: string | null
-  experience: string | null
-  introduction: string | null
-  qualifications: string | null
-  hasVehicle: string | null
-  funFact: string | null
-  hobbies: string | null
-  uniqueService: string | null
-  whyEnjoyWork: string | null
-  additionalInfo: string | null
-  photos: string[]
   languages?: string[]
   services?: string[]
+  photos?: string | null
+  experience?: string | null
+  hasVehicle?: string | null
+  introduction?: string | null
+  hobbies?: string | null
+  uniqueService?: string | null
+  qualifications?: string | null
 }
 
 interface ApiResponse {
@@ -61,12 +57,12 @@ export default function WorkerDetailPage() {
   const [editableExperience, setEditableExperience] = useState<string>('')
   const [editableVehicle, setEditableVehicle] = useState<string>('')
   const [editableLocation, setEditableLocation] = useState<string>('')
-  const [experienceItems, setExperienceItems] = useState<string[]>([])
-  const [servicesItems, setServicesItems] = useState<string[]>([])
+  const [editableIntroduction, setEditableIntroduction] = useState<string>('')
   const [editableHobbies, setEditableHobbies] = useState<string>('')
   const [editableUniqueService, setEditableUniqueService] = useState<string>('')
   const [editableWhyEnjoy, setEditableWhyEnjoy] = useState<string>('')
-  const [editableIntroduction, setEditableIntroduction] = useState<string>('')
+  const [experienceItems, setExperienceItems] = useState<string[]>([])
+  const [servicesItems, setServicesItems] = useState<string[]>([])
 
   // Initialize experience and services items when data loads
   useEffect(() => {
@@ -99,7 +95,7 @@ export default function WorkerDetailPage() {
 
   // Image crop handlers (must be before early returns)
   const handlePhotoDoubleClick = useCallback(() => {
-    const currentPhoto = selectedImageUrl || data?.data?.photos
+    const currentPhoto = selectedImageUrl || data?.data?.photos?.[0]
     if (isEditMode && currentPhoto) {
       setShowCropModal(true)
     }
@@ -266,6 +262,7 @@ export default function WorkerDetailPage() {
   }
 
   const worker = data.data
+  // photos is now a string (single photo URL), not an array
   const mainPhoto = worker.photos || null
   const initials = `${worker.firstName?.[0] || ''}${worker.lastName?.[0] || ''}`
   const displayName = `${worker.firstName} ${worker.lastName?.[0] || ''}.`
@@ -275,6 +272,10 @@ export default function WorkerDetailPage() {
   const experience = editableExperience || worker.experience || '2 years'
   const vehicle = editableVehicle || worker.hasVehicle || 'Yes'
   const location = editableLocation || worker.location || ''
+  const introduction = editableIntroduction || worker.introduction || 'Dedicated support worker committed to providing compassionate care and assistance to individuals with diverse needs.'
+  const hobbies = editableHobbies || worker.hobbies || ''
+  const uniqueService = editableUniqueService || worker.uniqueService || ''
+  const whyEnjoy = editableWhyEnjoy || 'I find great fulfillment in making a positive impact on people\'s lives and helping them achieve their goals.'
 
   // Functions for experience items
   const updateExperienceItem = (index: number, value: string) => {
@@ -308,11 +309,6 @@ export default function WorkerDetailPage() {
     setServicesItems(newItems)
   }
 
-  // Quote values
-  const hobbies = editableHobbies || worker.hobbies || ''
-  const uniqueService = editableUniqueService || worker.uniqueService || ''
-  const whyEnjoy = editableWhyEnjoy || worker.whyEnjoyWork || 'I feel deeply fulfilled when I see my clients happy and content after our shift—it reminds me of the positive impact I can make in their daily lives'
-  const introduction = editableIntroduction || worker.introduction || 'Skilled in daily living support, community participation, and implementing trauma-informed care plans. Passionate about mentoring staff, implementing person-centered care plans, and coordinating supports that ensure client wellbeing, independence, and dignity.'
 
   return (
     <div className="profile-container">

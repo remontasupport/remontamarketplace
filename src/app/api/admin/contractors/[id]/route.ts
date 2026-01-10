@@ -31,20 +31,20 @@ export async function GET(
         id: true,
         firstName: true,
         lastName: true,
+        location: true,
+        languages: true,
+        photos: true,
         experience: true,
-        introduction: true,
-        qualifications: true,
         hasVehicle: true,
-        funFact: true,
+        introduction: true,
         hobbies: true,
         uniqueService: true,
-        photos: true,
-        location: true,
-        age: true,
-        languages: true,
+        qualifications: true,
         workerServices: {
           select: {
             categoryName: true,
+            subcategoryIds: true,
+            subcategoryNames: true,
           }
         },
       }
@@ -65,9 +65,19 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: {
-        ...worker,
+        id: worker.id,
+        firstName: worker.firstName,
+        lastName: worker.lastName,
+        location: worker.location,
+        languages: worker.languages,
+        photos: worker.photos,
+        experience: worker.experience,
+        hasVehicle: worker.hasVehicle,
+        introduction: worker.introduction,
+        hobbies: worker.hobbies,
+        uniqueService: worker.uniqueService,
+        qualifications: worker.qualifications,
         services,
-        workerServices: undefined, // Remove from response
       }
     })
 

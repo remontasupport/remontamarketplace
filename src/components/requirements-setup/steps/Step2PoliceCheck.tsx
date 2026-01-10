@@ -10,8 +10,13 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowUpTrayIcon,
-  DocumentIcon
+  DocumentIcon,
+  XCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from "@heroicons/react/24/outline";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
   useSingleComplianceDocument,
@@ -83,13 +88,40 @@ export default function Step2PoliceCheck({
 }: Step2PoliceCheckProps) {
   const { data: session } = useSession();
 
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isLinksOpen, setIsLinksOpen] = useState(false);
+
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // OPTIMIZED: Use React Query instead of manual fetch
+  // REFACTORED: Now uses generic compliance-documents endpoint
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/police-check", "police-check");
+  } = useSingleComplianceDocument("/api/worker/compliance-documents", "police-check");
 
   const uploadMutation = useUploadComplianceDocument();
   const deleteMutation = useDeleteComplianceDocument();
@@ -98,21 +130,29 @@ export default function Step2PoliceCheck({
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 10MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -122,41 +162,102 @@ export default function Step2PoliceCheck({
         documentType: "police-check",
         apiEndpoint: "/api/upload/police-check",
       });
-
-      // Exit edit mode
-      setIsEditMode(false);
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Upload Failed",
+        "Please try again or contact support if the issue persists."
+      );
+    }
+  };
+
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType: "police-check",
+        apiEndpoint: "/api/worker/police-check",
+      });
+
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
   return (
-    <StepContentWrapper>
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete file?"
+        confirmText="Yes"
+        cancelText="No"
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
+      />
+
+      <StepContentWrapper>
       <div className="form-page-content">
         {/* Left Column - Form */}
         <div className="form-column">
           <div className="account-form">
-            {/* State/Territory Links Section */}
-            <div className="mb-8">
-              <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-4">
-                National Police Check - Apply by State/Territory
-              </h4>
-              <div className="space-y-3">
-                {STATE_LINKS.map((item) => (
-                  <div key={item.state}>
-                    <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
-                      {item.state}:
-                    </p>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
-                    >
-                      {item.url}
-                    </a>
+            {/* State/Territory Links Section - Collapsible Card */}
+            <div className="mb-8 mt-6">
+              <div
+                className="border border-gray-300 rounded-lg overflow-hidden cursor-pointer"
+                onClick={() => setIsLinksOpen(!isLinksOpen)}
+              >
+                <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <h4 className="text-base font-poppins font-semibold text-gray-900">
+                    View application links for your state/territory
+                  </h4>
+                  {isLinksOpen ? (
+                    <ChevronUpIcon className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5 text-gray-600" />
+                  )}
+                </div>
+                {isLinksOpen && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="space-y-3">
+                      {STATE_LINKS.map((item) => (
+                        <div key={item.state}>
+                          <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
+                            {item.state}:
+                          </p>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {item.url}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -185,47 +286,32 @@ export default function Step2PoliceCheck({
                     </div>
                   </div>
                 </div>
-              ) : uploadedDocument && !isEditMode ? (
+              ) : uploadedDocument ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
-                  {isPdfDocument(uploadedDocument.documentUrl) ? (
-                    <div className="document-preview-pdf">
-                      <DocumentIcon className="document-preview-pdf-icon" />
-                      <p className="document-preview-pdf-text">
-                        National Police Check
-                      </p>
+                  <div className="uploaded-document-item">
+                    <div className="uploaded-document-content">
+                      <DocumentIcon className="uploaded-document-icon" />
                       <a
                         href={uploadedDocument.documentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                        className="uploaded-document-link"
                       >
-                        View PDF
+                        National Police Check
                       </a>
                     </div>
-                  ) : (
-                    <img
-                      src={uploadedDocument.documentUrl}
-                      alt="National Police Check"
-                      className="document-preview-image"
-                    />
-                  )}
-                  <button
-                    onClick={() => setIsEditMode(true)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#0C1628",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      padding: "0.5rem 0",
-                      fontFamily: "var(--font-poppins)",
-                      marginTop: "0.75rem"
-                    }}
-                  >
-                    Replace Document
-                  </button>
+                    <button
+                      onClick={handleFileDelete}
+                      className="uploaded-document-remove"
+                      title="Remove document"
+                    >
+                      <XCircleIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 font-poppins mt-2">
+                    Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+                  </p>
                 </div>
               ) : (
                 // Show upload button
@@ -273,7 +359,7 @@ export default function Step2PoliceCheck({
 
         {/* Right Column - Info Box */}
         <div className="info-column">
-          <div className="info-box">
+          <div className="info-box mt-6">
             <h3 className="info-box-title">About Police Checks</h3>
             <p className="info-box-text">
               A National Police Check is a mandatory requirement for all workers. It provides a record of your criminal history (if any) to ensure the safety of clients.
@@ -306,5 +392,6 @@ export default function Step2PoliceCheck({
         </div>
       </div>
     </StepContentWrapper>
+    </>
   );
 }

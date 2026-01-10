@@ -34,15 +34,7 @@ export async function GET(
         id: true,
         firstName: true,
         lastName: true,
-        experience: true,
-        introduction: true,
-        qualifications: true,
-        hasVehicle: true,
-        hobbies: true,
-        uniqueService: true,
-        photos: true,
         location: true,
-        age: true,
         languages: true,
         workerServices: {
           select: {
@@ -68,7 +60,7 @@ export async function GET(
       ...worker,
       services,
       workerServices: undefined,
-      photos: worker.photos || undefined,
+      photos: Array.isArray(worker.photos) ? worker.photos as string[] : undefined,
     };
 
     // Generate PDF stream

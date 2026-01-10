@@ -24,6 +24,12 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
+
 export const metadata: Metadata = {
   title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
   description: "Connecting NDIS participants with quality support workers across Australia",

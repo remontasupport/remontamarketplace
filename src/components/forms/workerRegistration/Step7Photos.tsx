@@ -4,121 +4,22 @@ import { Card } from "@/components/ui/card";
 
 interface Step7PhotosProps {
   errors: any;
-  watchedPhotos: string;
   watchedConsentProfileShare: boolean | undefined;
   watchedConsentMarketing: boolean | undefined;
-  handlePhotoUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  removePhoto: () => void;
   setValue: any;
   trigger: any;
-  photoUploadError?: string;
-  isUploadingPhoto?: boolean;
-  uploadedPhotoName?: string;
 }
 
 const Step7PhotosComponent = function Step7Photos({
   errors,
-  watchedPhotos,
   watchedConsentProfileShare,
   watchedConsentMarketing,
-  handlePhotoUpload,
-  removePhoto,
   setValue,
   trigger,
-  photoUploadError,
-  isUploadingPhoto,
-  uploadedPhotoName
 }: Step7PhotosProps) {
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-poppins font-semibold">Photo Submission</h3>
-
-      <div>
-        <Label className="text-lg font-poppins font-medium">Photo Submission - Upload <span className="text-red-500">*</span></Label>
-        <p className="text-sm font-poppins text-gray-600 mt-2 mb-4">
-          Please attach one high-quality photo of yourself (JPG, PNG, or WebP format only). Ensure the photo is:
-        </p>
-        <div className="space-y-2 mb-4 text-sm font-poppins text-gray-700">
-          <div className="flex items-center gap-2">
-            <span>•</span>
-            <span>Taken in a well-lit area</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>•</span>
-            <span>Clear and in focus</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>•</span>
-            <span>Candid, friendly, and genuine (avoid heavy filters or overly posed shots)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>•</span>
-            <span>Show a bit of your personality – a smile, a laugh, or a natural moment works great</span>
-          </div>
-        </div>
-
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-          <input
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={handlePhotoUpload}
-            className="hidden"
-            id="photo-upload"
-          />
-          <label
-            htmlFor="photo-upload"
-            className="cursor-pointer flex flex-col items-center gap-2"
-          >
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <span className="text-lg font-poppins text-gray-700">Choose File</span>
-          </label>
-        </div>
-
-        {photoUploadError && (
-          <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-            <p className="text-sm font-poppins text-orange-700">{photoUploadError}</p>
-          </div>
-        )}
-
-        {isUploadingPhoto && (
-          <div className="mt-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                <span className="text-sm font-poppins text-blue-700">Uploading {uploadedPhotoName}...</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!isUploadingPhoto && watchedPhotos && (
-          <div className="mt-4">
-            <p className="text-sm font-poppins text-gray-600 mb-2">Uploaded photo:</p>
-            <div className="relative bg-green-50 border border-green-200 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm font-poppins text-green-700">{uploadedPhotoName || 'Photo uploaded successfully'}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  className="ml-2 text-red-500 hover:text-red-700 font-bold"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {errors.photos && <p className="text-red-500 text-sm font-poppins">{errors.photos.message}</p>}
-      </div>
+      <h3 className="text-xl font-poppins font-semibold">Consent</h3>
 
       <div>
         <Label className="text-lg font-poppins font-medium">Consent to Share Profile with Clients <span className="text-red-500">*</span></Label>

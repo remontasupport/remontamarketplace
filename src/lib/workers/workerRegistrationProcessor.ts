@@ -8,7 +8,7 @@
 import { authPrisma } from '@/lib/auth-prisma';
 import { hashPassword } from '@/lib/password';
 import { geocodeWorkerLocation } from '@/lib/location-parser';
-import type { WorkerRegistrationJobData } from '@/lib/queue';
+import type { WorkerRegistrationJobData } from '@/types/workerRegistration';
 
 /**
  * Process worker registration job
@@ -27,19 +27,8 @@ export async function processWorkerRegistration(
       lastName,
       mobile,
       location,
-      age,
-      gender,
-      languages,
       services,
       supportWorkerCategories,
-      experience,
-      introduction,
-      qualifications,
-      hasVehicle,
-      funFact,
-      hobbies,
-      uniqueService,
-      photos,
       geocodedLocation: preGeocodedLocation,
     } = data;
 
@@ -81,7 +70,7 @@ export async function processWorkerRegistration(
         geocodedLocation = await geocodeWorkerLocation(location);
       } catch (geocodeError) {
         // Log error but continue with null coordinates - not critical enough to fail registration
-        console.error('[Registration] Geocoding failed:', geocodeError);
+      
         // geocodedLocation remains with null values
       }
     }
@@ -110,19 +99,8 @@ export async function processWorkerRegistration(
               city: geocodedLocation.city,
               state: geocodedLocation.state,
               postalCode: geocodedLocation.postalCode,
-              age,
-              gender,
-              languages: languages || [],
-              experience,
-              introduction,
-              qualifications,
-              hasVehicle,
-              funFact,
-              hobbies,
-              uniqueService,
-              // Photos: Single photo URL as string (changed from array to string)
-              photos: photos && photos.length > 0 ? (Array.isArray(photos) ? photos[0] : photos) : undefined,
-              profileCompleted: true,
+              languages: [], // Empty array - will be populated in Additional Info step
+              profileCompleted: false,
               isPublished: false,
               verificationStatus: 'NOT_STARTED' as const,
               updatedAt: new Date(),
@@ -160,16 +138,11 @@ export async function processWorkerRegistration(
     // CRITICAL: Create worker service records (MUST be awaited)
     if (services && services.length > 0) {
       try {
-        console.log('[Registration] ========== WORKER SERVICES CREATION START ==========');
-        console.log('[Registration] Input data:', { services, supportWorkerCategories, workerProfileId });
-
         const categories = await authPrisma.category.findMany({
           include: {
             subcategories: true,
           },
         });
-
-        console.log('[Registration] Database categories:', categories.map(c => ({ id: c.id, name: c.name })));
 
         const subcategoryToCategory = new Map();
         categories.forEach((category) => {
@@ -182,15 +155,11 @@ export async function processWorkerRegistration(
         const subcategoryIds = supportWorkerCategories || [];
 
         for (const serviceId of services) {
-          console.log(`[Registration] Processing service: "${serviceId}"`);
           const category = categories.find((c) => c.id === serviceId);
 
           if (!category) {
-            console.error(`[Registration] ❌ MISMATCH: Service "${serviceId}" not found in database categories:`, categories.map(c => c.id));
             continue;
           }
-
-          console.log(`[Registration] ✓ Matched category: ${category.id} - ${category.name}`);
 
           const categoryId = category.id;
           const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
@@ -198,54 +167,43 @@ export async function processWorkerRegistration(
             return parentCategory?.id === categoryId;
           });
 
+          // Group all subcategories for this category into arrays
+          const subcategoryIdsArray: string[] = [];
+          const subcategoryNamesArray: string[] = [];
+
           if (relevantSubcategoryIds.length > 0) {
-            console.log(`[Registration] Processing ${relevantSubcategoryIds.length} subcategories for ${category.name}`);
             for (const subcategoryId of relevantSubcategoryIds) {
               const subcategory = category.subcategories.find(
                 (sub: any) => sub.id === subcategoryId
               );
               if (subcategory) {
-                workerServiceRecords.push({
-                  workerProfileId,
-                  categoryId,
-                  categoryName: category.name,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                });
+                subcategoryIdsArray.push(subcategoryId);
+                subcategoryNamesArray.push(subcategory.name);
               }
             }
-          } else {
-            console.log(`[Registration] No subcategories for ${category.name}, creating category-only record`);
-            workerServiceRecords.push({
-              workerProfileId,
-              categoryId,
-              categoryName: category.name,
-              subcategoryId: null,
-              subcategoryName: null,
-            });
           }
-        }
 
-        console.log('[Registration] Final worker service records:', JSON.stringify(workerServiceRecords, null, 2));
+          // Create ONE record per category with subcategories as arrays
+          workerServiceRecords.push({
+            workerProfileId,
+            categoryId,
+            categoryName: category.name,
+            subcategoryIds: subcategoryIdsArray,
+            subcategoryNames: subcategoryNamesArray,
+          });
+        }
 
         if (workerServiceRecords.length > 0) {
-          const result = await authPrisma.workerService.createMany({
-            data: workerServiceRecords,
-            skipDuplicates: true,
-          });
-          console.log('[Registration] ✅ Successfully created worker services. Count:', result.count);
-        } else {
-          console.error('[Registration] ❌ CRITICAL: No worker service records to create!');
-          console.error('[Registration] This means services in form don\'t match database category IDs');
+          // Use individual creates since createMany doesn't support array fields well
+          await Promise.all(
+            workerServiceRecords.map((record) =>
+              authPrisma.workerService.create({ data: record })
+            )
+          );
         }
-        console.log('[Registration] ========== WORKER SERVICES CREATION END ==========');
       } catch (error) {
         // Log error but don't fail registration - services can be added later
-        console.error('[Registration] ❌ FATAL ERROR creating worker services:', error);
-        console.error('[Registration] Error details:', JSON.stringify(error, null, 2));
       }
-    } else {
-      console.error('[Registration] ❌ No services provided or services array is empty!');
     }
 
     // ============================================
@@ -280,26 +238,15 @@ export async function processWorkerRegistration(
         lastName,
         mobile,
         location,
-        age,
-        gender,
-        languages,
         services,
         supportWorkerCategories,
-        experience,
-        introduction,
-        qualifications,
-        hasVehicle,
-        funFact,
-        hobbies,
-        uniqueService,
         city: geocodedLocation.city,
         state: geocodedLocation.state,
         postalCode: geocodedLocation.postalCode,
         latitude: geocodedLocation.latitude,
         longitude: geocodedLocation.longitude,
-        photos: photos || [],
         verificationStatus: 'NOT_STARTED',
-        profileCompleted: true,
+        profileCompleted: false,
         isPublished: false,
       };
 

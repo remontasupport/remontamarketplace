@@ -11,12 +11,19 @@ import {
   UserCircleIcon,
   HandRaisedIcon,
   ClipboardDocumentCheckIcon,
-  AcademicCapIcon
+  AcademicCapIcon,
+  PencilIcon,
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
-import { SERVICES_SETUP_STEPS, getServicesStepUrl } from '@/config/servicesSetupSteps'
+import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
+import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
+import { useSession } from 'next-auth/react'
+import { parseSetupProgress } from '@/types/setupProgress'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
 
@@ -27,6 +34,7 @@ const getSectionFromPath = (path: string): string | null => {
   if (path.includes('/requirements/')) return 'requirements';
   if (path.includes('/trainings/')) return 'trainings';
   if (path.includes('/services/')) return 'services';
+  if (path.includes('/additional-documents')) return 'additional-credentials';
   return null;
 };
 
@@ -48,18 +56,48 @@ const accountDetailsItems = ACCOUNT_SETUP_STEPS.map(step => ({
   href: getStepUrl(step.slug)
 }))
 
-// Dynamically generate services items from centralized config
-const servicesItems = SERVICES_SETUP_STEPS.map(step => ({
-  name: step.title,
-  href: getServicesStepUrl(step.slug)
-}))
-
 interface SidebarProps {
   isMobileOpen?: boolean
   onClose?: () => void
+  profileData?: {
+    firstName: string
+    photo: string | null
+    role?: string
+  }
 }
 
-export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps = {}) {
+export default function Sidebar({ isMobileOpen = false, onClose, profileData: profileDataProp }: SidebarProps = {}) {
+  // Get pathname first (needed for other hooks)
+  const pathname = usePathname()
+
+  // Get session and profile data for setup progress
+  const { data: session } = useSession()
+  const { data: profileDataFromHook, refetch, isRefetching } = useWorkerProfile(session?.user?.id)
+
+  // CRITICAL: Aggressively refetch when on dashboard to ensure checkmarks appear
+  useEffect(() => {
+    if (pathname === '/dashboard/worker' && session?.user?.id) {
+      // Force refetch immediately when dashboard mounts
+      // This bypasses React Query cache and gets fresh setupProgress from API
+      refetch()
+    }
+  }, [pathname, session?.user?.id, refetch])
+
+  // CRITICAL FIX: Always use hook data for setupProgress (real-time calculated from API)
+  // profileDataProp is from server component and doesn't include setupProgress
+  // profileDataFromHook is from client-side API call with real-time progress calculation
+  const profileData = profileDataProp || profileDataFromHook
+
+  // Parse setup progress to show checkmarks
+  // ALWAYS use profileDataFromHook for setupProgress (not profileDataProp!)
+  const setupProgress = useMemo(() => {
+    // Use hook data which has real-time calculated setupProgress from API
+    const progress = profileDataFromHook?.setupProgress
+    const parsed = parseSetupProgress(progress)
+
+    return parsed
+  }, [profileDataFromHook])
+
   // Fetch worker requirements to generate dynamic compliance items
   const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
 
@@ -100,16 +138,63 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
     return []
   }, [dynamicTrainingSteps])
 
+  // Generate services items dynamically from profile data
+  const servicesItems = useMemo(() => {
+    // Get services from profile data (use hook data which has services array)
+    const services = profileDataFromHook?.services || []
+
+    if (services.length > 0) {
+      // Generate dynamic steps based on selected services
+      const dynamicSteps = generateServicesSetupSteps(services)
+      return dynamicSteps.map(step => ({
+        name: step.title,
+        href: getServicesStepUrl(step.slug)
+      }))
+    }
+
+    // Fallback to static steps if no services selected yet
+    return SERVICES_SETUP_STEPS.map(step => ({
+      name: step.title,
+      href: getServicesStepUrl(step.slug)
+    }))
+  }, [profileDataFromHook?.services])
+
+  // Additional Credentials items (Section 3)
+  const additionalCredentialsItems = useMemo(() => {
+    return [{
+      name: ADDITIONAL_DOCUMENTS_STEP.title,
+      href: '/dashboard/worker/additional-documents'
+    }]
+  }, [])
+
+  // Helper to check if a section is completed
+  const isSectionCompleted = (sectionId: string): boolean => {
+    switch (sectionId) {
+      case 'account-details':
+        return setupProgress.accountDetails
+      case 'requirements':
+        return setupProgress.compliance
+      case 'trainings':
+        return setupProgress.trainings
+      case 'services':
+        return setupProgress.services
+      case 'additional-credentials':
+        return setupProgress.additionalCredentials || false
+      default:
+        return false
+    }
+  }
+
   const menuSections: MenuSection[] = [
     {
       id: 'account-details',
-      name: 'Account details',
+      name: 'Personal Info',
       icon: UserCircleIcon,
       items: accountDetailsItems
     },
     {
       id: 'requirements',
-      name: 'Compliance',
+      name: 'Mandatory',
       icon: ClipboardDocumentCheckIcon,
       items: requirementsItems
     },
@@ -121,14 +206,21 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
     },
     {
       id: 'services',
-      name: 'Your services',
+      name: 'My Services',
       icon: HandRaisedIcon,
       items: servicesItems
+    },
+    {
+      id: 'additional-credentials',
+      name: 'Additional Credentials',
+      icon: DocumentTextIcon,
+      items: additionalCredentialsItems
     }
   ]
-  const pathname = usePathname();
+  // pathname already declared at top of component
   const previousSectionRef = useRef<string | null>(getSectionFromPath(pathname));
   const [shouldTransition, setShouldTransition] = useState(false);
+  const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
 
   // State: Only current section open based on route
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -138,6 +230,7 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
       'requirements': currentSection === 'requirements',
       'trainings': currentSection === 'trainings',
       'services': currentSection === 'services',
+      'additional-credentials': currentSection === 'additional-credentials',
     };
   });
 
@@ -159,6 +252,7 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
           'requirements': currentSection === 'requirements',
           'trainings': currentSection === 'trainings',
           'services': currentSection === 'services',
+          'additional-credentials': currentSection === 'additional-credentials',
         });
 
         // Disable transitions after animation completes
@@ -181,6 +275,31 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
     }
   }
 
+  // Handle dashboard navigation with loading state
+  const handleDashboardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Only show loading if we're NOT already on the dashboard
+    if (pathname !== '/dashboard/worker') {
+      setIsNavigatingToDashboard(true)
+    }
+    handleLinkClick()
+  }
+
+  // Clear loading state when we arrive at dashboard
+  useEffect(() => {
+    if (pathname === '/dashboard/worker' && isNavigatingToDashboard) {
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setIsNavigatingToDashboard(false)
+      }, 300)
+    }
+  }, [pathname, isNavigatingToDashboard])
+
+  // Get profile photo URL from database or use placeholder
+  // Handle both prop type (photo) and WorkerProfile type (photos)
+  const photoUrl = (profileData && 'photo' in profileData ? profileData.photo : profileData?.photos) || '/images/profilePlaceHolder.png'
+  const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
+  const displayRole = profileData?.role || 'Support Worker'
+
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Logo - Only visible on mobile */}
@@ -197,17 +316,46 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
         </Link>
       </div>
 
+      {/* Profile Section */}
+      <div className="sidebar-profile-section">
+        <div className="sidebar-profile-avatar">
+          <Image
+            src={photoUrl}
+            alt={displayName}
+            width={64}
+            height={64}
+            className="sidebar-profile-img"
+            unoptimized={photoUrl?.includes('blob.vercel-storage.com')}
+          />
+        </div>
+        <div className="sidebar-profile-info">
+          <h4 className="sidebar-profile-name">{displayName}</h4>
+          <p className="sidebar-profile-role">{displayRole}</p>
+        </div>
+      </div>
+
+      {/* Edit Profile Link - Separate Section */}
+      <div className="sidebar-edit-profile-section">
+        <Link href="/dashboard/worker/profile-building" className="sidebar-edit-profile" onClick={handleLinkClick}>
+          <PencilIcon className="sidebar-edit-icon" />
+          <span>Edit profile</span>
+        </Link>
+        <Link href="/dashboard/worker/services/manage" className="sidebar-edit-profile" onClick={handleLinkClick} style={{ marginTop: '0.75rem' }}>
+          <WrenchScrewdriverIcon className="sidebar-edit-icon" />
+          <span>Edit services</span>
+        </Link>
+      </div>
+
       {/* Navigation */}
       <nav className="sidebar-nav">
         {/* Overview Section */}
         <div className="nav-section">
-          <h3 className="nav-section-title">OVERVIEW</h3>
           <ul className="nav-list">
             <li>
               <Link
                 href="/dashboard/worker"
                 className={`nav-item ${pathname === '/dashboard/worker' ? 'active' : ''}`}
-                onClick={handleLinkClick}
+                onClick={handleDashboardClick}
               >
                 <HomeIcon className="nav-icon" />
                 <span>Dashboard</span>
@@ -260,7 +408,80 @@ export default function Sidebar({ isMobileOpen = false, onClose }: SidebarProps 
             </div>
           )
         })}
+
+        {/* Account Button */}
+        <div className="sidebar-account-section">
+          <Link href="/dashboard/worker/account" className="sidebar-account-button" onClick={handleLinkClick}>
+            <Cog6ToothIcon className="sidebar-account-icon" />
+            <span>Account</span>
+          </Link>
+        </div>
       </nav>
+
+      {/* Loading Overlay */}
+      {isNavigatingToDashboard && (
+        <div className="dashboard-loading-overlay">
+          <div className="dashboard-loading-spinner">
+            <div className="spinner"></div>
+            <p className="loading-text">Loading Dashboard...</p>
+          </div>
+          <style jsx>{`
+            .dashboard-loading-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.7);
+              backdrop-filter: blur(4px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 9999;
+              animation: fadeIn 0.2s ease-in-out;
+            }
+
+            .dashboard-loading-spinner {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 1rem;
+            }
+
+            .spinner {
+              width: 48px;
+              height: 48px;
+              border: 4px solid rgba(255, 255, 255, 0.2);
+              border-top-color: #6366f1;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+            }
+
+            .loading-text {
+              color: white;
+              font-family: 'Poppins', sans-serif;
+              font-size: 1rem;
+              font-weight: 500;
+              margin: 0;
+            }
+
+            @keyframes spin {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+          `}</style>
+        </div>
+      )}
     </aside>
   )
 }

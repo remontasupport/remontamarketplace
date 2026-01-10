@@ -10,9 +10,12 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import "@/app/styles/requirements-setup.css";
@@ -48,6 +51,32 @@ export default function GenericComplianceDocument({
   const { data: session } = useSession();
 
   const [expiryDate, setExpiryDate] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const documentType = requirement?.id || "generic-document";
   const hasExpiration = requirement?.hasExpiration ?? false;
@@ -62,10 +91,12 @@ export default function GenericComplianceDocument({
   const deleteMutation = useDeleteComplianceDocument();
 
   // Get the most recent uploaded document
-  const uploadedDocument =
-    documentsData?.documents && documentsData.documents.length > 0
-      ? documentsData.documents[0]
-      : null;
+  // FIXED: Handle both formats (array from API, single object from optimistic update)
+  const uploadedDocument = documentsData?.document
+    ? documentsData.document  // Single document (from optimistic update or single endpoint)
+    : documentsData?.documents && documentsData.documents.length > 0
+    ? documentsData.documents[0]  // Array format (from API)
+    : null;
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) return;
@@ -73,14 +104,22 @@ export default function GenericComplianceDocument({
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 10MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -96,16 +135,20 @@ export default function GenericComplianceDocument({
       // Clear expiry date after successful upload
       setExpiryDate("");
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Upload Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
-  const handleFileDelete = async () => {
-    if (!uploadedDocument?.id) return;
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
 
-    if (!window.confirm("Are you sure you want to remove this document?")) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
 
     try {
       await deleteMutation.mutateAsync({
@@ -114,35 +157,58 @@ export default function GenericComplianceDocument({
         apiEndpoint,
       });
     } catch (error: any) {
-      alert(`Delete failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
   return (
-    <StepContentWrapper
-      title={requirement?.name || "Upload Document"}
-      description={
-        requirement?.description ||
-        "Please upload the required document for verification."
-      }
-      infoBoxTitle="Document Requirements"
-      infoBoxContent={
-        <>
-          <p className="info-box-text">
-            {requirement?.description || "Upload the required compliance document."}
-          </p>
-          {hasExpiration && (
-            <p className="info-box-text mt-3">
-              <strong>Note:</strong> This document has an expiry date. Please
-              ensure you provide the correct expiration date.
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete file?"
+        confirmText="Yes"
+        cancelText="No"
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
+      />
+
+      <StepContentWrapper
+        title={requirement?.name || "Upload Document"}
+        description={
+          requirement?.description ||
+          "Please upload the required document for verification."
+        }
+        infoBoxTitle="Document Requirements"
+        infoBoxContent={
+          <>
+            <p className="info-box-text">
+              {requirement?.description || "Upload the required compliance document."}
             </p>
-          )}
-          <p className="info-box-text mt-3">
-            <strong>Accepted formats:</strong> JPG, PNG, PDF (max 10MB)
-          </p>
-        </>
-      }
-    >
+            {hasExpiration && (
+              <p className="info-box-text mt-3">
+                <strong>Note:</strong> This document has an expiry date. Please
+                ensure you provide the correct expiration date.
+              </p>
+            )}
+            <p className="info-box-text mt-3">
+              <strong>Accepted formats:</strong> JPG, PNG, PDF (max 10MB)
+            </p>
+          </>
+        }
+      >
       {/* Error Message */}
       {errors[documentType] && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -173,68 +239,47 @@ export default function GenericComplianceDocument({
       ) : uploadedDocument ? (
         /* Show uploaded document */
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
+          <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins" style={{ marginTop: '1.5rem' }}>
             Uploaded Document
           </h4>
-          <div className="document-preview-container">
-            {isPdfDocument(uploadedDocument.documentUrl) ? (
-              <div className="document-preview-pdf">
-                <DocumentIcon className="document-preview-pdf-icon" />
-                <p className="document-preview-pdf-text">
-                  {requirement?.name || "Document"}
-                </p>
-                <a
-                  href={uploadedDocument.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
-                >
-                  View PDF
-                </a>
-              </div>
-            ) : (
-              <img
-                src={uploadedDocument.documentUrl}
-                alt={requirement?.name || "Document"}
-                className="document-preview-image"
-              />
-            )}
-
-            <div className="mt-3" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                {uploadedDocument.expiryDate && (
-                  <p className="text-sm text-gray-700 font-poppins" style={{ margin: 0 }}>
-                    <strong>Expiry Date:</strong>{" "}
-                    {new Date(uploadedDocument.expiryDate).toLocaleDateString()}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 font-poppins" style={{ marginTop: "0.25rem" }}>
-                  Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
-                </p>
-              </div>
-
-              <button
-                onClick={handleFileDelete}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#dc2626",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  fontSize: "0.875rem",
-                  padding: "0",
-                  fontFamily: "var(--font-poppins)",
-                }}
+          <div className="uploaded-document-item">
+            <div className="uploaded-document-content">
+              <DocumentIcon className="uploaded-document-icon" />
+              <a
+                href={uploadedDocument.documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="uploaded-document-link"
               >
-                Delete
-              </button>
+                {requirement?.name || "Document"}
+              </a>
             </div>
+            <button
+              onClick={handleFileDelete}
+              className="uploaded-document-remove"
+              title="Remove document"
+            >
+              <XCircleIcon className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Metadata below the file item */}
+          <div className="mt-3">
+            {uploadedDocument.expiryDate && (
+              <p className="text-sm text-gray-700 font-poppins" style={{ margin: 0 }}>
+                <strong>Expiry Date:</strong>{" "}
+                {new Date(uploadedDocument.expiryDate).toLocaleDateString()}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 font-poppins" style={{ marginTop: "0.25rem" }}>
+              Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+            </p>
           </div>
         </div>
       ) : (
         <>
           {/* Upload document section - Only show if no document uploaded */}
-          <div className="upload-section">
+          <div className="upload-section" style={{ marginTop: '1.5rem' }}>
             <h4 className="text-sm font-medium text-gray-700 mb-3 font-poppins">
               Upload Document
             </h4>
@@ -276,7 +321,10 @@ export default function GenericComplianceDocument({
               size="sm"
               onClick={() => {
                 if (hasExpiration && !expiryDate) {
-                  alert("Please enter the expiry date first");
+                  showErrorModal(
+                    "Please enter the expiry date first",
+                    "Missing Information"
+                  );
                   return;
                 }
                 document.getElementById(`file-${documentType}`)?.click();
@@ -296,5 +344,6 @@ export default function GenericComplianceDocument({
         </>
       )}
     </StepContentWrapper>
+    </>
   );
 }

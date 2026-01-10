@@ -78,9 +78,10 @@ export function useWorkerRequirements(services?: string[]) {
   return useQuery({
     queryKey: workerRequirementsKeys.byServices(services),
     queryFn: () => fetchWorkerRequirements(services),
-    staleTime: 30 * 1000, // 30 seconds - data is fresh
-    gcTime: 5 * 60 * 1000, // 5 minutes - keep in cache
+    staleTime: 5 * 60 * 1000, // 5 minutes - requirements rarely change during a session
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache
     retry: 1, // Retry once on failure
+    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
   });
 }
 
@@ -106,8 +107,9 @@ export function useWorkerRequirementsByService(serviceName?: string) {
       return response.json() as Promise<WorkerRequirements>;
     },
     enabled: !!serviceName, // Only fetch when serviceName is provided
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - requirements rarely change
+    gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 1,
+    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
   });
 }

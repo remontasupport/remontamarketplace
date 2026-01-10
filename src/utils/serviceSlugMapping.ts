@@ -27,10 +27,10 @@
 export const SLUG_TO_SERVICE_NAME: Record<string, string> = {
   // Database services (these WILL work)
   "support-worker": "Support Worker",
-  "support-worker-(high-intensity)": "Support Worker (High Intensity)",
+  "support-worker-high-intensity": "Support Worker (High Intensity)", // Note: parentheses removed from slug
   "therapeutic-supports": "Therapeutic Supports",
   "cleaning-services": "Cleaning Services",
-  "home-and-yard-maintenance": "Home and Yard Maintenance",
+  "home-yard-maintenance": "Home and Yard Maintenance", // Note: "and" is removed from slug
   "nursing-services": "Nursing Services",
   "personal-trainer": "Personal Trainer",
 

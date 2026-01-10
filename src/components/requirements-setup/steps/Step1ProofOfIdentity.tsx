@@ -43,8 +43,11 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useIdentityDocuments, useDriverLicense, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
+import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   CheckCircleIcon,
   ArrowUpTrayIcon,
@@ -144,6 +147,33 @@ export default function Step1ProofOfIdentity({
   const [isEditingPrimary, setIsEditingPrimary] = useState(false);
   const [isEditingSecondary, setIsEditingSecondary] = useState(false);
   const [userHasChosenDifferentDoc, setUserHasChosenDifferentDoc] = useState(false); // Track if user manually chose different doc
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // ===== DERIVED STATE =====
   // Convert documents array to map for easier lookup
@@ -279,14 +309,22 @@ export default function Step1ProofOfIdentity({
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 10MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -297,17 +335,12 @@ export default function Step1ProofOfIdentity({
       formData.append("file", file);
       formData.append("documentType", documentType);
 
-      const response = await fetch("/api/upload/identity-documents", {
-        method: "POST",
-        body: formData,
-      });
+      // Use server action instead of API endpoint
+      const result = await uploadComplianceDocument(formData);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
-
-      const responseData = await response.json();
 
       // Invalidate cache to update all steps automatically
       await queryClient.invalidateQueries({
@@ -323,8 +356,11 @@ export default function Step1ProofOfIdentity({
       }
 
     } catch (error: any) {
-   
-      alert(`Upload failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Upload Failed",
+        "Please try again or contact support if the issue persists."
+      );
     } finally {
       setUploadingFiles((prev) => {
         const next = new Set(prev);
@@ -334,13 +370,23 @@ export default function Step1ProofOfIdentity({
     }
   };
 
-  const handleFileDelete = async (documentType: string) => {
-    if (!window.confirm("Are you sure you want to remove this document?")) {
-      return;
-    }
+  const handleFileDelete = (documentType: string) => {
+    setDocumentToDelete(documentType);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
 
     try {
-      const doc = uploadedDocs[documentType];
+      // Get the document to delete - handle driver's license from Other Personal Info
+      let doc = uploadedDocs[documentToDelete];
+
+      // If trying to delete driver's license but it's from Other Personal Info
+      if (documentToDelete === "identity-drivers-license" && !doc && driverLicense) {
+        doc = driverLicense;
+      }
+
       if (doc?.id) {
         const response = await fetch(`/api/worker/identity-documents?id=${doc.id}`, {
           method: "DELETE",
@@ -352,13 +398,17 @@ export default function Step1ProofOfIdentity({
       }
 
       // Reset selection and edit mode for the category
-      const isPrimary = PRIMARY_DOCUMENTS.some(d => d.type === documentType);
+      const isPrimary = PRIMARY_DOCUMENTS.some(d => d.type === documentToDelete);
       if (isPrimary) {
         setSelectedPrimaryType(null);
         setIsEditingPrimary(false);
       } else {
         setSelectedSecondaryType(null);
         setIsEditingSecondary(false);
+        // Reset the user choice tracking if deleting driver's license
+        if (documentToDelete === "identity-drivers-license") {
+          setUserHasChosenDifferentDoc(false);
+        }
       }
 
       // Invalidate cache to update all steps automatically
@@ -366,16 +416,41 @@ export default function Step1ProofOfIdentity({
         queryKey: identityDocumentsKeys.all,
       });
     } catch (error: any) {
-    
-      alert(`Delete failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
+    } finally {
+      setDocumentToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 
   const uploadedCount = Object.keys(uploadedDocs).length;
 
   return (
-    <div className="account-step-container">
-      <div className="form-page-content">
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete File"
+        message="Are you sure you want to delete file?"
+        confirmText="Yes"
+        cancelText="No"
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
+      />
+
+      <div className="account-step-container">
+        <div className="form-page-content">
       {/* Left Column - Form */}
       <div className="form-column">
         <div className="account-form">
@@ -406,45 +481,25 @@ export default function Step1ProofOfIdentity({
 
             {/* Check if any primary document is already uploaded */}
             {selectedPrimaryType && uploadedDocs[selectedPrimaryType] && !isEditingPrimary ? (
-              // Show uploaded document preview
-              <div className="document-preview-container">
-                {isPdfDocument(uploadedDocs[selectedPrimaryType].documentUrl) ? (
-                  <div className="document-preview-pdf">
-                    <DocumentIcon className="document-preview-pdf-icon" />
-                    <p className="document-preview-pdf-text">
-                      {PRIMARY_DOCUMENTS.find(d => d.type === selectedPrimaryType)?.name}
-                    </p>
-                    <a
-                      href={uploadedDocs[selectedPrimaryType].documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
-                    >
-                      View PDF
-                    </a>
-                  </div>
-                ) : (
-                  <img
-                    src={uploadedDocs[selectedPrimaryType].documentUrl}
-                    alt={PRIMARY_DOCUMENTS.find(d => d.type === selectedPrimaryType)?.name}
-                    className="document-preview-image"
-                  />
-                )}
+              // Show uploaded document as filename link
+              <div className="uploaded-document-item">
+                <div className="uploaded-document-content">
+                  <DocumentIcon className="uploaded-document-icon" />
+                  <a
+                    href={uploadedDocs[selectedPrimaryType].documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="uploaded-document-link"
+                  >
+                    {PRIMARY_DOCUMENTS.find(d => d.type === selectedPrimaryType)?.name}
+                  </a>
+                </div>
                 <button
-                  onClick={() => setIsEditingPrimary(true)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#0C1628",
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                    fontSize: "0.875rem",
-                    padding: "0.5rem 0",
-                    fontFamily: "var(--font-poppins)",
-                    marginTop: "0.75rem"
-                  }}
+                  onClick={() => handleFileDelete(selectedPrimaryType)}
+                  className="uploaded-document-remove"
+                  title="Remove document"
                 >
-                  Replace Document
+                  <XCircleIcon className="w-5 h-5" />
                 </button>
               </div>
             ) : (
@@ -557,51 +612,33 @@ export default function Step1ProofOfIdentity({
               }
 
               return (
-                <div className="document-preview-container">
-                  {isPdfDocument(documentToShow.documentUrl) ? (
-                    <div className="document-preview-pdf">
-                      <DocumentIcon className="document-preview-pdf-icon" />
-                      <p className="document-preview-pdf-text">
-                        {SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
-                      </p>
+                <div>
+                  <div className="uploaded-document-item">
+                    <div className="uploaded-document-content">
+                      <DocumentIcon className="uploaded-document-icon" />
                       <a
                         href={documentToShow.documentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                        className="uploaded-document-link"
                       >
-                        View PDF
+                        {SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
                       </a>
                     </div>
-                  ) : (
-                    <img
-                      src={documentToShow.documentUrl}
-                      alt={SECONDARY_DOCUMENTS.find(d => d.type === selectedSecondaryType)?.name}
-                      className="document-preview-image"
-                    />
-                  )}
+                    <button
+                      onClick={() => handleFileDelete(selectedSecondaryType)}
+                      className="uploaded-document-remove"
+                      title="Remove document"
+                    >
+                      <XCircleIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                   {/* Show note if using driver's license from Other Personal Info */}
                   {isFromOtherPersonalInfo && (
                     <p className="text-sm text-gray-700 font-poppins mt-2" style={{ fontWeight: 500 }}>
                       ✓ Driver's License as a secondary
                     </p>
                   )}
-                  <button
-                    onClick={handleReplaceSecondary}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#0C1628",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      padding: "0.5rem 0",
-                      fontFamily: "var(--font-poppins)",
-                      marginTop: "0.75rem"
-                    }}
-                  >
-                    Replace Document
-                  </button>
                 </div>
               );
             })()}
@@ -717,7 +754,7 @@ export default function Step1ProofOfIdentity({
             100-point check system to verify your identity.
           </p>
 
-          <p className="info-box-text mt-3">
+          <p className="info-box-text mt-6">
             <strong>How it works:</strong>
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 font-poppins mt-2">
@@ -725,7 +762,7 @@ export default function Step1ProofOfIdentity({
             <li><strong>Secondary document (30 points)</strong> - Driver's License, Medicare Card, Utility Bill, or Bank Statement</li>
           </ul>
 
-          <p className="info-box-text mt-3">
+          <p className="info-box-text mt-6">
             <strong>Requirements:</strong>
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 font-poppins mt-2">
@@ -734,7 +771,7 @@ export default function Step1ProofOfIdentity({
             <li>Total: 100 points required</li>
           </ul>
 
-          <p className="info-box-text mt-3">
+          <p className="info-box-text mt-6">
             <strong>Privacy:</strong>
           </p>
           <p className="info-box-text mt-1">
@@ -745,5 +782,6 @@ export default function Step1ProofOfIdentity({
       </div>
       </div>
     </div>
+    </>
   );
 }
