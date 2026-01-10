@@ -20,10 +20,15 @@ const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_RE
   : null;
 
 // Cache TTL configurations (in seconds)
+// Best practices:
+// - User-facing dynamic data: 1-5 minutes (balances performance with freshness)
+// - Status/progress data: 1 minute (needs to be very fresh)
+// - Semi-static data: 5-30 minutes
+// - Static data (credentials): 1 hour
 export const CACHE_TTL = {
-  USER_DATA: 86400,        // 24 hours - user credentials rarely change
-  WORKER_PROFILE: 604800,  // 7 days - profile data changes occasionally
-  COMPLETION_STATUS: 3600, // 1 hour - completion status can change frequently
+  USER_DATA: 3600,         // 1 hour - user credentials rarely change
+  WORKER_PROFILE: 300,     // 5 minutes - profile data can change (services, photos, personal info)
+  COMPLETION_STATUS: 60,   // 1 minute - completion status changes frequently as users complete steps
   SESSION_DATA: 900,       // 15 minutes - session data
 } as const;
 

@@ -85,6 +85,9 @@ export async function GET(
         categoryName: true,
         subcategoryIds: true,
       },
+      orderBy: {
+        createdAt: 'asc', // Get services in order they were added (primary first)
+      },
     });
 
     // Extract unique category names for services

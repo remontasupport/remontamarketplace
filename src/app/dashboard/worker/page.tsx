@@ -54,7 +54,10 @@ export default async function WorkerDashboard() {
             select: {
               categoryName: true,
             },
-            take: 1, // Get primary service
+            orderBy: {
+              createdAt: 'asc', // Get first service added (primary service)
+            },
+            take: 1,
           },
         },
       });
