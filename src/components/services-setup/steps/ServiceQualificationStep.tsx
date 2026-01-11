@@ -797,24 +797,23 @@ export default function ServiceQualificationStep({
 
                           return (
                             <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                  <DocumentIcon className="w-8 h-8 text-teal-600 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <a
-                                      href={fileUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm font-poppins font-medium text-teal-600 hover:text-teal-700 underline block truncate"
-                                    >
-                                      {fileName}
-                                    </a>
-                                  </div>
+                              <div className="flex items-center gap-3">
+                                <DocumentIcon className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <a
+                                    href={fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm font-poppins font-medium text-teal-600 hover:text-teal-700 underline block truncate"
+                                    title={fileName}
+                                  >
+                                    {fileName.length > 30 ? `${fileName.substring(0, 30)}...` : fileName}
+                                  </a>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveFile(requirement.type, index)}
-                                  className="text-red-600 hover:text-red-700 transition-colors ml-3"
+                                  className="text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
                                   title="Remove document"
                                 >
                                   <XCircleIcon className="w-5 h-5" />
@@ -1141,20 +1140,22 @@ export default function ServiceQualificationStep({
                             <span className="text-sm text-gray-600 font-poppins">Uploading...</span>
                           </div>
                         ) : hasFile ? (
-                          <div className="flex items-center gap-2">
-                            <DocumentIcon className="h-5 w-5 text-gray-600" />
+                          <div className="flex items-center gap-2 max-w-full">
+                            <DocumentIcon className="h-5 w-5 text-gray-600 flex-shrink-0" />
                             <a
                               href={hasFile.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 underline font-poppins"
+                              className="text-sm text-blue-600 hover:text-blue-800 underline font-poppins truncate max-w-[150px] sm:max-w-[200px]"
+                              title={hasFile.fileName}
                             >
                               {hasFile.fileName}
                             </a>
                             <button
                               type="button"
                               onClick={() => handleRemoveQualificationFile(qualification.type)}
-                              className="text-red-600 hover:text-red-800"
+                              className="text-red-600 hover:text-red-800 flex-shrink-0"
+                              title="Remove file"
                             >
                               <XMarkIcon className="h-4 w-4" />
                             </button>
