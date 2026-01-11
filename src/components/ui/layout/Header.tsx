@@ -232,8 +232,8 @@ export default function Header() {
 
         {/* Right side buttons */}
         <div className="header-actions">
-          {/* Login Button - Temporarily Commented Out */}
-          {/* <Link
+          {/* Login Button */}
+          <Link
             href="https://app.remontaservices.com.au/login"
             className={`auth-button login-button ${isScrolled ? 'scrolled' : ''}`}
             onClick={() => {
@@ -241,21 +241,19 @@ export default function Header() {
             }}
           >
             Login
-          </Link> */}
+          </Link>
 
           {/* Sign Up Button */}
           <div className="signup-button-wrapper">
-            <Link
-              href="https://forms.zohopublic.com.au/remontaservices1/form/ProfileSubmission/formperma/3FHPymU7Ch_tGMS79a3xgZgSw98Zx83NRDDxlE70MZo"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
               className={`auth-button signup-button ${isScrolled ? 'scrolled' : ''}`}
               onClick={() => {
+                setSignUpModalOpen(!signUpModalOpen);
                 setTimeout(() => setOpenDropdown(null), 100);
               }}
             >
               Sign Up
-            </Link>
+            </button>
 
             {/* Sign Up Dropdown Modal - Desktop */}
             {signUpModalOpen && (
@@ -374,18 +372,18 @@ export default function Header() {
 
                 {/* Login and Sign Up buttons for mobile */}
                 <div className="mobile-auth-section">
-                  {/* Login Button - Temporarily Commented Out */}
-                  {/* <button
+                  {/* Login Button */}
+                  <button
                     className="mobile-auth-button mobile-login-button"
                     onClick={() => handleMobileNavigation('https://app.remontaservices.com.au/login')}
                     disabled={isNavigating}
                   >
                     Login
-                  </button> */}
+                  </button>
                   <button
                     className="mobile-auth-button mobile-signup-button"
                     onClick={() => {
-                      window.open('https://forms.zohopublic.com.au/remontaservices1/form/ProfileSubmission/formperma/3FHPymU7Ch_tGMS79a3xgZgSw98Zx83NRDDxlE70MZo', '_blank');
+                      setSignUpModalOpen(true);
                       setMobileMenuOpen(false);
                     }}
                   >
