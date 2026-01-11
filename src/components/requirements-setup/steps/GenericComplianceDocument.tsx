@@ -112,13 +112,13 @@ export default function GenericComplianceDocument({
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
       showErrorModal(
         "File is too large",
         "Upload Failed",
-        "Maximum file size is 10MB. Please choose a smaller file."
+        "Maximum file size is 50MB. Please choose a smaller file."
       );
       return;
     }
@@ -204,7 +204,7 @@ export default function GenericComplianceDocument({
               </p>
             )}
             <p className="info-box-text mt-3">
-              <strong>Accepted formats:</strong> JPG, PNG, PDF (max 10MB)
+              <strong>Accepted formats:</strong> JPG, PNG, WebP, HEIC, PDF (max 50MB)
             </p>
           </>
         }
@@ -305,7 +305,7 @@ export default function GenericComplianceDocument({
             <input
               type="file"
               id={`file-${documentType}`}
-              accept="image/jpeg,image/jpg,image/png,application/pdf"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {

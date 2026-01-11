@@ -115,15 +115,15 @@ export async function uploadWorkerPhoto(
  * @returns Error message if invalid, null if valid
  */
 export function validateImageFile(file: File): string | null {
-  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
   if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
-    return `Invalid file type. Only JPG, PNG, and WebP images are allowed.`;
+    return `Invalid file type. Only JPG, PNG, WebP, and HEIC images are allowed.`;
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return `File size exceeds 10MB limit.`;
+    return `File size exceeds 50MB limit.`;
   }
 
   return null;

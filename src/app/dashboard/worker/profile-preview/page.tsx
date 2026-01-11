@@ -35,16 +35,16 @@ function ProfilePreviewContent() {
     if (!file) return;
 
     // Validate file type
-    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
     if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
-      alert("Only JPG, PNG, and WebP formats are allowed");
+      alert("Only JPG, PNG, WebP, and HEIC formats are allowed");
       return;
     }
 
-    // Validate file size (10MB)
-    const maxSizeBytes = 10 * 1024 * 1024;
+    // Validate file size (50MB)
+    const maxSizeBytes = 50 * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      alert("File size must be less than 10MB");
+      alert("File size must be less than 50MB");
       return;
     }
 

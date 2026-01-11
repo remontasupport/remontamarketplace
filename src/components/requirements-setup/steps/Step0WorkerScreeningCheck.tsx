@@ -144,10 +144,10 @@ export default function Step0WorkerScreeningCheck({
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      showErrorModal("File size must be less than 10MB", "File Too Large", "Please compress your file or choose a smaller one.");
+      showErrorModal("File size must be less than 50MB", "File Too Large", "Please compress your file or choose a smaller one.");
       return;
     }
 
@@ -299,7 +299,7 @@ export default function Step0WorkerScreeningCheck({
                   <input
                     type="file"
                     id="screening-check-file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -329,7 +329,7 @@ export default function Step0WorkerScreeningCheck({
                     )}
                   </Button>
                   <p className="text-xs text-gray-500 font-poppins mt-2">
-                    Accepted formats: JPG, PNG, PDF (max 10MB)
+                    Accepted formats: JPG, PNG, WebP, HEIC, PDF (max 50MB)
                   </p>
                 </div>
               )}

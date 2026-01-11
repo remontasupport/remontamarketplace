@@ -130,13 +130,13 @@ export default function Step4NDISTraining({
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
       showErrorModal(
         "File is too large",
         "Upload Failed",
-        "Maximum file size is 10MB. Please choose a smaller file."
+        "Maximum file size is 50MB. Please choose a smaller file."
       );
       return;
     }
@@ -155,7 +155,7 @@ export default function Step4NDISTraining({
         showErrorModal(
           "File is too large",
           "Upload Failed",
-          "Maximum file size is 10MB. Please choose a smaller file."
+          "Maximum file size is 50MB. Please choose a smaller file."
         );
       } else {
         showErrorModal(errorMessage);
@@ -305,7 +305,7 @@ export default function Step4NDISTraining({
                   <input
                     type="file"
                     id="ndis-training-file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -335,7 +335,7 @@ export default function Step4NDISTraining({
                     )}
                   </Button>
                   <p className="text-xs text-gray-500 font-poppins mt-2">
-                    Accepted formats: JPG, PNG, PDF (max 10MB)
+                    Accepted formats: JPG, PNG, WebP, HEIC, PDF (max 50MB)
                   </p>
                 </div>
               )}

@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
     outputFileTracingIncludes: {
       '/**': ['./node_modules/@prisma/client/**/*', './src/generated/auth-client/**/*'],
     },
+    // Increase Server Action body size limit for file uploads (default is 1MB)
+    serverActions: {
+      bodySizeLimit: '50mb', // Allow up to 50MB file uploads via Server Actions
+    },
   },
   // Tell Next.js not to bundle Prisma Clients (BOTH main and auth)
   // CRITICAL: This prevents webpack from trying to bundle the native binaries

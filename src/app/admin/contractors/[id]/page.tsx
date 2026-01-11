@@ -211,10 +211,10 @@ export default function WorkerDetailPage() {
       return
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024 // 50MB in bytes
     if (file.size > maxSize) {
-      alert('Image size must be less than 10MB')
+      alert('Image size must be less than 50MB')
       return
     }
 

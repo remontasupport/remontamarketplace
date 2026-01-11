@@ -178,9 +178,9 @@ export default function Step4PersonalInfo({
       return;
     }
 
-    // Validate file size (10MB max to match identity documents)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError("File size must be less than 10MB");
+    // Validate file size (50MB max to match identity documents)
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError("File size must be less than 50MB");
       return;
     }
 
@@ -413,7 +413,7 @@ export default function Step4PersonalInfo({
                   {/* Hidden file input for replace */}
                   <input
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={handleVehiclePhotoUpload}
                     disabled={isUploading}
                     style={{ display: "none" }}
@@ -441,7 +441,7 @@ export default function Step4PersonalInfo({
                   </p>
                   <input
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={handleVehiclePhotoUpload}
                     disabled={isUploading}
                     style={{ display: "none" }}

@@ -156,10 +156,10 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      alert("File size must be less than 50MB");
       return;
     }
 

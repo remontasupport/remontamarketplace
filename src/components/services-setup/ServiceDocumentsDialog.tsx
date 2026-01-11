@@ -64,10 +64,10 @@ export function ServiceDocumentsDialog({
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      alert("File size must be less than 50MB");
       return;
     }
 
@@ -175,7 +175,7 @@ export function ServiceDocumentsDialog({
                 <input
                   type="file"
                   id={`upload-${type}`}
-                  accept="image/jpeg,image/jpg,image/png,application/pdf"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                   onChange={(e) => handleFileSelect(type, e.target.files?.[0] || null)}
                   className="hidden"
                 />

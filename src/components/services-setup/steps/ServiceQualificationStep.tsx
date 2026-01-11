@@ -347,7 +347,7 @@ export default function ServiceQualificationStep({
         showErrorModal(
           "File is too large",
           "Upload Failed",
-          "Maximum file size is 10MB. Please choose a smaller file."
+          "Maximum file size is 50MB. Please choose a smaller file."
         );
       } else {
         showErrorModal(errorMessage);
@@ -401,7 +401,7 @@ export default function ServiceQualificationStep({
         showErrorModal(
           "File is too large",
           "Upload Failed",
-          "Maximum file size is 10MB. Please choose a smaller file."
+          "Maximum file size is 50MB. Please choose a smaller file."
         );
       } else {
         showErrorModal(errorMessage);
@@ -855,7 +855,7 @@ export default function ServiceQualificationStep({
                           )}
                         </Button>
                         <p className="text-xs text-gray-500 font-poppins mt-2">
-                          Accepted formats: PDF, PNG, JPG (max 10MB)
+                          Accepted formats: PDF, PNG, JPG, WebP, HEIC (max 50MB)
                         </p>
                       </div>
                     )}
@@ -877,7 +877,7 @@ export default function ServiceQualificationStep({
               <strong>Required documents</strong> are marked with an asterisk (*) and must be uploaded before you can proceed.
             </p>
             <p className="info-box-text mt-3">
-              <strong>Accepted formats:</strong> PDF, PNG, JPG (max 10MB per file)
+              <strong>Accepted formats:</strong> PDF, PNG, JPG, WebP, HEIC (max 50MB per file)
             </p>
             <p className="info-box-text mt-3">
               You can upload multiple files for each requirement. All documents will be reviewed as part of your profile verification.

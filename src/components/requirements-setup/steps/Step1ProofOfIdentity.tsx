@@ -307,23 +307,23 @@ export default function Step1ProofOfIdentity({
     if (!session?.user?.id) return;
 
     // Validate file type (images and PDFs only)
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
-    if (!validTypes.includes(file.type)) {
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
+    if (!validTypes.includes(file.type.toLowerCase())) {
       showErrorModal(
         "Invalid file type",
         "Upload Failed",
-        "Please upload a JPG, PNG, or PDF file."
+        "Please upload a JPG, PNG, WebP, HEIC, or PDF file."
       );
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
       showErrorModal(
         "File is too large",
         "Upload Failed",
-        "Maximum file size is 10MB. Please choose a smaller file."
+        "Maximum file size is 50MB. Please choose a smaller file."
       );
       return;
     }
@@ -541,7 +541,7 @@ export default function Step1ProofOfIdentity({
                             <input
                               type="file"
                               id={`file-${docType.type}`}
-                              accept="image/jpeg,image/jpg,image/png,application/pdf"
+                              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
@@ -700,7 +700,7 @@ export default function Step1ProofOfIdentity({
                             <input
                               type="file"
                               id={`file-${docType.type}`}
-                              accept="image/jpeg,image/jpg,image/png,application/pdf"
+                              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {

@@ -26,7 +26,7 @@ export default function PhotoUpload({
   currentPhoto,
   onPhotoChange,
   onPhotoSave,
-  maxSizeMB = 10,
+  maxSizeMB = 50,
   error,
 }: PhotoUploadProps) {
   const { data: session } = useSession();
@@ -61,12 +61,12 @@ export default function PhotoUpload({
     }
 
     // Allowed image formats (security-safe raster formats only)
-    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
     // Validate file type
     if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
-      setUploadError("Only JPG, PNG, and WebP formats are allowed");
+      setUploadError("Only JPG, PNG, WebP, and HEIC formats are allowed");
       return;
     }
 
@@ -183,7 +183,7 @@ export default function PhotoUpload({
         <div className="photo-upload-section-horizontal">
           <input
             type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
             onChange={handleFileChange}
             className="hidden"
             id="photo-upload-input"
