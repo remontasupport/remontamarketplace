@@ -463,7 +463,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           width: 100%;
           max-width: 700px;
-          margin: 0;
+          margin-top: 1rem;
           box-sizing: border-box;
         }
 
@@ -603,6 +603,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
             margin: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             box-sizing: border-box;
+            margin-top: 2rem;
           }
 
           .completion-title {

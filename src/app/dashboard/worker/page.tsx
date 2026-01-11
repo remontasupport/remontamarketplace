@@ -108,6 +108,37 @@ export default async function WorkerDashboard() {
             Connecting support workers with families to create meaningful, life-changing relationships.
           </p>
 
+          {/* View Profile Button with Morphing Animation */}
+          <a
+            href="/dashboard/worker/profile-preview"
+            className="group inline-flex items-center gap-3 transition-all duration-300 ease-in-out"
+          >
+            {/* Circular button that expands on hover */}
+            <div className="relative flex items-center justify-center w-10 h-10 bg-teal-600 rounded-full transition-all duration-300 ease-in-out group-hover:w-[180px] group-hover:rounded-full overflow-hidden">
+              {/* Arrow icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+                className="w-5 h-5 text-white transition-transform duration-300 ease-in-out group-hover:translate-x-[-55px]"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+
+              {/* Text inside button (visible only on hover) */}
+              <span className="absolute left-12 text-sm font-poppins font-bold text-white uppercase tracking-wide opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-100 whitespace-nowrap">
+                VIEW PROFILE
+              </span>
+            </div>
+
+            {/* Text outside button (hidden on hover) */}
+            <span className="text-sm font-poppins font-bold text-white-800 uppercase tracking-wide transition-opacity duration-300 ease-in-out group-hover:opacity-0">
+              VIEW PROFILE
+            </span>
+          </a>
+
           {/* Profile Completion Reminder */}
           <ProfileCompletionReminder initialSetupProgress={setupProgress} />
         </div>
