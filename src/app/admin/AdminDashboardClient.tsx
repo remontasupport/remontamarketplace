@@ -784,13 +784,13 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Document Filters Section */}
+            {/* Document Filters Section - HIDDEN */}
+            {/* Uncomment this section to enable document filters
             {!isLoadingFilters && filterOptions && (
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Document Filters</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Document Statuses */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
                       Document Status
@@ -827,7 +827,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Requirement Types */}
                   {filterOptions.requirementTypes.length > 0 && (
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -867,7 +866,6 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                {/* Apply Document Filters Button */}
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={() => {
@@ -889,6 +887,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+            */}
 
             {/* Clear Filters Button */}
             <div className="flex justify-end mt-4">
@@ -1182,44 +1181,44 @@ export default function AdminDashboard() {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    router.push(`/admin/contractors/${selectedContractor.id}`)
-                    closeModal()
-                  }}
+                <a
+                  href={`/admin/contractors/${selectedContractor.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeModal}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Edit Profile
-                </button>
+                </a>
 
-                <button
-                  onClick={() => {
-                    router.push(`/admin/contractors/${selectedContractor.userId}/profile`)
-                    closeModal()
-                  }}
+                <a
+                  href={`/admin/contractors/${selectedContractor.userId}/profile`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeModal}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Show Profile
-                </button>
+                </a>
 
-                <button
-                  onClick={() => {
-                    router.push(`/admin/contractors/${selectedContractor.id}/compliance`)
-                    closeModal()
-                  }}
+                <a
+                  href={`/admin/contractors/${selectedContractor.id}/compliance`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeModal}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Show Compliance
-                </button>
+                </a>
 
                 <button
                   onClick={() => setShowContactInfo(!showContactInfo)}
