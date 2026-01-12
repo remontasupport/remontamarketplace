@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCategories } from '@/hooks/queries/useCategories'
 import { signOut } from 'next-auth/react'
 
@@ -137,6 +137,145 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 // ============================================================================
 
 /**
+ * Parse URL search params into filter state
+ * Reads query parameters and converts them to the correct types
+ */
+function parseFiltersFromURL(searchParams: URLSearchParams): Partial<ContractorsFilters> {
+  const filters: Partial<ContractorsFilters> = {}
+
+  // Pagination
+  const page = searchParams.get('page')
+  if (page) filters.page = parseInt(page, 10) || 1
+
+  const pageSize = searchParams.get('pageSize')
+  if (pageSize) filters.pageSize = parseInt(pageSize, 10) || 20
+
+  // Search
+  const search = searchParams.get('search')
+  if (search) filters.search = search
+
+  // Sort
+  const sortBy = searchParams.get('sortBy')
+  if (sortBy) filters.sortBy = sortBy
+
+  const sortOrder = searchParams.get('sortOrder')
+  if (sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
+    filters.sortOrder = sortOrder
+  }
+
+  // Location
+  const location = searchParams.get('location')
+  if (location) filters.location = location
+
+  // Type of Support
+  const typeOfSupport = searchParams.get('typeOfSupport')
+  if (typeOfSupport) filters.typeOfSupport = typeOfSupport
+
+  // Gender
+  const gender = searchParams.get('gender')
+  if (gender) filters.gender = gender
+
+  // Languages (array)
+  const languages = searchParams.get('languages')
+  if (languages) filters.languages = languages.split(',').filter(Boolean)
+
+  // Age
+  const age = searchParams.get('age')
+  if (age) filters.age = age
+
+  // Within (distance)
+  const within = searchParams.get('within')
+  if (within) filters.within = within
+
+  // Document filters (arrays)
+  const documentCategories = searchParams.get('documentCategories')
+  if (documentCategories) filters.documentCategories = documentCategories.split(',').filter(Boolean)
+
+  const documentStatuses = searchParams.get('documentStatuses')
+  if (documentStatuses) filters.documentStatuses = documentStatuses.split(',').filter(Boolean)
+
+  const requirementTypes = searchParams.get('requirementTypes')
+  if (requirementTypes) filters.requirementTypes = requirementTypes.split(',').filter(Boolean)
+
+  return filters
+}
+
+/**
+ * Build URL query string from filter state
+ * Only includes non-default values to keep URL clean
+ */
+function buildURLFromFilters(filters: ContractorsFilters): string {
+  const params = new URLSearchParams()
+
+  // Always include page (unless it's 1)
+  if (filters.page && filters.page !== 1) {
+    params.set('page', filters.page.toString())
+  }
+
+  // Include pageSize only if not default
+  if (filters.pageSize && filters.pageSize !== 20) {
+    params.set('pageSize', filters.pageSize.toString())
+  }
+
+  // Search
+  if (filters.search) {
+    params.set('search', filters.search)
+  }
+
+  // Sort (only if not default)
+  if (filters.sortBy && filters.sortBy !== 'createdAt') {
+    params.set('sortBy', filters.sortBy)
+  }
+  if (filters.sortOrder && filters.sortOrder !== 'desc') {
+    params.set('sortOrder', filters.sortOrder)
+  }
+
+  // Location
+  if (filters.location) {
+    params.set('location', filters.location)
+  }
+
+  // Type of Support (only if not 'all')
+  if (filters.typeOfSupport && filters.typeOfSupport !== 'all') {
+    params.set('typeOfSupport', filters.typeOfSupport)
+  }
+
+  // Gender (only if not 'all')
+  if (filters.gender && filters.gender !== 'all') {
+    params.set('gender', filters.gender)
+  }
+
+  // Languages (array)
+  if (filters.languages && filters.languages.length > 0) {
+    params.set('languages', filters.languages.join(','))
+  }
+
+  // Age (only if not 'all')
+  if (filters.age && filters.age !== 'all') {
+    params.set('age', filters.age)
+  }
+
+  // Within/Distance (only if not 'none')
+  if (filters.within && filters.within !== 'none') {
+    params.set('within', filters.within)
+  }
+
+  // Document filters (arrays)
+  if (filters.documentCategories && filters.documentCategories.length > 0) {
+    params.set('documentCategories', filters.documentCategories.join(','))
+  }
+  if (filters.documentStatuses && filters.documentStatuses.length > 0) {
+    params.set('documentStatuses', filters.documentStatuses.join(','))
+  }
+  if (filters.requirementTypes && filters.requirementTypes.length > 0) {
+    params.set('requirementTypes', filters.requirementTypes.join(','))
+  }
+
+  const queryString = params.toString()
+  return queryString ? `?${queryString}` : ''
+}
+
+/**
  * Convert distance in kilometers to travel time
  * Uses average driving speed in urban/suburban areas (40 km/h)
  * @param distanceKm - Distance in kilometers
@@ -167,6 +306,7 @@ function formatTravelTime(distanceKm: number): string {
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Fetch categories from database
   const { data: categories, isLoading: isCategoriesLoading } = useCategories()
@@ -174,31 +314,48 @@ export default function AdminDashboard() {
   // State for report generation - track which report is being generated
   const [generatingReport, setGeneratingReport] = useState<'daily' | 'weekly' | null>(null)
 
-  // State for filters (unified state)
-  const [filters, setFilters] = useState<ContractorsFilters>({
-    page: 1,
-    pageSize: 20,
-    search: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-    // Advanced filters
-    location: '',
-    typeOfSupport: 'all',
-    gender: 'all',
-    languages: [],
-    age: 'all',
-    within: 'none',
-    // Document filters
-    documentCategories: [],
-    documentStatuses: [],
-    requirementTypes: [],
+  // State for filters (unified state) - Initialize from URL params if available
+  const [filters, setFilters] = useState<ContractorsFilters>(() => {
+    const defaultFilters: ContractorsFilters = {
+      page: 1,
+      pageSize: 20,
+      search: '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      // Advanced filters
+      location: '',
+      typeOfSupport: 'all',
+      gender: 'all',
+      languages: [],
+      age: 'all',
+      within: 'none',
+      // Document filters
+      documentCategories: [],
+      documentStatuses: [],
+      requirementTypes: [],
+    }
+
+    // Parse URL params and merge with defaults
+    const urlFilters = parseFiltersFromURL(searchParams)
+    return { ...defaultFilters, ...urlFilters }
   })
 
-  const [searchInput, setSearchInput] = useState('')
+  // Initialize search input from URL as well
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
 
   // Document filter options (fetched from API)
   const [filterOptions, setFilterOptions] = useState<any>(null)
   const [isLoadingFilters, setIsLoadingFilters] = useState(true)
+
+  // Pending advanced filters (not applied until Search button is clicked)
+  const [pendingFilters, setPendingFilters] = useState({
+    location: filters.location,
+    typeOfSupport: filters.typeOfSupport,
+    gender: filters.gender,
+    languages: filters.languages,
+    age: filters.age,
+    within: filters.within,
+  })
 
   // Pending document filters (not applied yet)
   const [pendingDocFilters, setPendingDocFilters] = useState({
@@ -323,6 +480,30 @@ export default function AdminDashboard() {
     const timeoutId = setTimeout(fetchSuburbs, 300) // Debounce for 300ms
     return () => clearTimeout(timeoutId)
   }, [suburbSearch])
+
+  // Sync pendingFilters when actual filters change (e.g., from URL navigation)
+  useEffect(() => {
+    setPendingFilters({
+      location: filters.location,
+      typeOfSupport: filters.typeOfSupport,
+      gender: filters.gender,
+      languages: filters.languages,
+      age: filters.age,
+      within: filters.within,
+    })
+  }, [filters.location, filters.typeOfSupport, filters.gender, filters.languages, filters.age, filters.within])
+
+  // Sync filters to URL whenever they change
+  useEffect(() => {
+    const newURL = buildURLFromFilters(filters)
+    const currentPath = window.location.pathname
+    const newFullURL = currentPath + newURL
+
+    // Only update URL if it's different from current URL
+    if (newFullURL !== window.location.pathname + window.location.search) {
+      router.replace(newFullURL, { scroll: false })
+    }
+  }, [filters, router])
 
   // Fetch contractors using TanStack Query
   const { data, isLoading, error, isFetching } = useQuery({
@@ -580,7 +761,7 @@ export default function AdminDashboard() {
                             isSuburbSelectedRef.current = true
                             setShowSuburbDropdown(false)
                             setSuburbs([])
-                            setFilters(prev => ({ ...prev, location: selectedValue, page: 1 }))
+                            setPendingFilters(prev => ({ ...prev, location: selectedValue }))
                             setSuburbSearch(selectedValue)
                           }}
                         >
@@ -600,8 +781,8 @@ export default function AdminDashboard() {
                   Type of Support
                 </label>
                 <select
-                  value={filters.typeOfSupport}
-                  onChange={(e) => setFilters(prev => ({ ...prev, typeOfSupport: e.target.value, page: 1 }))}
+                  value={pendingFilters.typeOfSupport}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, typeOfSupport: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                   disabled={isCategoriesLoading}
                 >
@@ -624,8 +805,8 @@ export default function AdminDashboard() {
                   Gender
                 </label>
                 <select
-                  value={filters.gender}
-                  onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value, page: 1 }))}
+                  value={pendingFilters.gender}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, gender: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -640,8 +821,8 @@ export default function AdminDashboard() {
                   Within
                 </label>
                 <select
-                  value={filters.within}
-                  onChange={(e) => setFilters(prev => ({ ...prev, within: e.target.value, page: 1 }))}
+                  value={pendingFilters.within}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, within: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="none">None</option>
@@ -656,8 +837,17 @@ export default function AdminDashboard() {
               <div className="flex flex-col justify-end">
                 <button
                   onClick={() => {
-                    // Reset to first page when applying filters
-                    setFilters(prev => ({ ...prev, page: 1 }))
+                    // Apply all pending filters and reset to first page
+                    setFilters(prev => ({
+                      ...prev,
+                      location: pendingFilters.location,
+                      typeOfSupport: pendingFilters.typeOfSupport,
+                      gender: pendingFilters.gender,
+                      languages: pendingFilters.languages,
+                      age: pendingFilters.age,
+                      within: pendingFilters.within,
+                      page: 1
+                    }))
                   }}
                   className="rounded-md bg-gray-900 px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 h-[42px]"
                 >
@@ -679,11 +869,11 @@ export default function AdminDashboard() {
                     onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
                     className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
                   >
-                    {filters.languages.length === 0 ? (
+                    {pendingFilters.languages.length === 0 ? (
                       <span className="text-gray-400">All languages</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
-                        {filters.languages.map((lang) => (
+                        {pendingFilters.languages.map((lang) => (
                           <span
                             key={lang}
                             className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
@@ -693,10 +883,9 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setFilters(prev => ({
+                                setPendingFilters(prev => ({
                                   ...prev,
-                                  languages: prev.languages.filter(l => l !== lang),
-                                  page: 1
+                                  languages: prev.languages.filter(l => l !== lang)
                                 }))
                               }}
                               className="hover:text-indigo-600"
@@ -731,24 +920,23 @@ export default function AdminDashboard() {
                             key={language}
                             type="button"
                             onClick={() => {
-                              const isSelected = filters.languages.includes(language)
-                              setFilters(prev => ({
+                              const isSelected = pendingFilters.languages.includes(language)
+                              setPendingFilters(prev => ({
                                 ...prev,
                                 languages: isSelected
                                   ? prev.languages.filter(l => l !== language)
-                                  : [...prev.languages, language],
-                                page: 1
+                                  : [...prev.languages, language]
                               }))
                             }}
                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                              filters.languages.includes(language)
+                              pendingFilters.languages.includes(language)
                                 ? 'bg-indigo-50 text-indigo-700 font-medium'
                                 : ''
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span>{language}</span>
-                              {filters.languages.includes(language) && (
+                              {pendingFilters.languages.includes(language) && (
                                 <span className="text-indigo-600">✓</span>
                               )}
                             </div>
@@ -771,8 +959,8 @@ export default function AdminDashboard() {
                   Age
                 </label>
                 <select
-                  value={filters.age}
-                  onChange={(e) => setFilters(prev => ({ ...prev, age: e.target.value, page: 1 }))}
+                  value={pendingFilters.age}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, age: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -908,6 +1096,14 @@ export default function AdminDashboard() {
                     documentCategories: [],
                     documentStatuses: [],
                     requirementTypes: [],
+                  })
+                  setPendingFilters({
+                    location: '',
+                    typeOfSupport: 'all',
+                    gender: 'all',
+                    languages: [],
+                    age: 'all',
+                    within: 'none',
                   })
                   setPendingDocFilters({
                     documentCategories: [],

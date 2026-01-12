@@ -176,8 +176,13 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Languages Filter (Multi-select)
-   * Queries from WorkerAdditionalInfo table's languages column
-   * Uses PostgreSQL array intersection
+   * Queries from WorkerAdditionalInfo table's languages column with fallback to WorkerProfile.languages
+   *
+   * FALLBACK LOGIC:
+   * 1. Primary: Check workerAdditionalInfo.languages array (preferred, detailed info)
+   * 2. Fallback: Check workerProfile.languages array (basic profile data)
+   *
+   * Both use PostgreSQL array intersection for fast queries
    * Matches workers who speak ANY of the selected languages
    * Normalizes to Title Case to match database format (e.g., "English", "Mandarin")
    */
@@ -187,9 +192,18 @@ const filterRegistry: Record<string, FilterBuilder> = {
     const normalizedLanguages = params.languages.map(toTitleCase);
 
     return {
-      workerAdditionalInfo: {
-        languages: { hasSome: normalizedLanguages }
-      }
+      OR: [
+        // Primary: Check workerAdditionalInfo.languages array
+        {
+          workerAdditionalInfo: {
+            languages: { hasSome: normalizedLanguages }
+          }
+        },
+        // Fallback: Check workerProfile.languages array
+        {
+          languages: { hasSome: normalizedLanguages }
+        }
+      ]
     };
   },
 
@@ -643,6 +657,7 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
           gender: true,
           age: true,
           dateOfBirth: true,
+          languages: true,
           workerAdditionalInfo: {
             select: {
               languages: true,
@@ -690,11 +705,22 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
       : null;
     const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
 
+    // Languages fallback logic:
+    // 1. Primary: Use workerAdditionalInfo.languages array if it exists and is not empty
+    // 2. Fallback: Use workerProfile.languages array
+    // 3. Default: Empty array
+    let finalLanguages: string[] = [];
+    if (worker.workerAdditionalInfo?.languages && worker.workerAdditionalInfo.languages.length > 0) {
+      finalLanguages = worker.workerAdditionalInfo.languages;
+    } else if (worker.languages && worker.languages.length > 0) {
+      finalLanguages = worker.languages;
+    }
+
     return {
       ...worker,
       email: worker.user?.email || null,
       age: finalAge,
-      languages: worker.workerAdditionalInfo?.languages || [],
+      languages: finalLanguages,
       services: transformWorkerServices(worker.workerServices),
       workerServices: undefined, // Remove from response
       workerAdditionalInfo: undefined, // Remove from response
@@ -763,6 +789,7 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
       gender: true,
       age: true,
       dateOfBirth: true,
+      languages: true,
       workerAdditionalInfo: {
         select: {
           languages: true,
@@ -800,11 +827,22 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
         : null;
       const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
 
+      // Languages fallback logic:
+      // 1. Primary: Use workerAdditionalInfo.languages array if it exists and is not empty
+      // 2. Fallback: Use workerProfile.languages array
+      // 3. Default: Empty array
+      let finalLanguages: string[] = [];
+      if (worker.workerAdditionalInfo?.languages && worker.workerAdditionalInfo.languages.length > 0) {
+        finalLanguages = worker.workerAdditionalInfo.languages;
+      } else if (worker.languages && worker.languages.length > 0) {
+        finalLanguages = worker.languages;
+      }
+
       return {
         ...worker,
         email: worker.user?.email || null,
         age: finalAge,
-        languages: worker.workerAdditionalInfo?.languages || [],
+        languages: finalLanguages,
         services: transformWorkerServices(worker.workerServices),
         workerServices: undefined, // Remove from response
         workerAdditionalInfo: undefined, // Remove from response
