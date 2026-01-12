@@ -7,28 +7,19 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Ensure Prisma engine binaries are included in Vercel deployment
+  // CRITICAL: Must include for ALL routes that use Prisma (API routes + Server Components)
+  outputFileTracingIncludes: {
+    '/**': ['./node_modules/@prisma/client/**/*', './src/generated/auth-client/**/*'],
+  },
+  // Tell Next.js not to bundle Prisma Clients (BOTH main and auth)
+  // CRITICAL: This prevents webpack from trying to bundle the native binaries
+  serverExternalPackages: ['@prisma/client', '.prisma/client'],
   experimental: {
-    // Ensure Prisma engine binaries are included in Vercel deployment
-    // CRITICAL: Must include for ALL routes that use Prisma (API routes + Server Components)
-    outputFileTracingIncludes: {
-      '/**': ['./node_modules/@prisma/client/**/*', './src/generated/auth-client/**/*'],
-    },
     // Increase Server Action body size limit for file uploads (default is 1MB)
     serverActions: {
       bodySizeLimit: '50mb', // Allow up to 50MB file uploads via Server Actions
     },
-  },
-  // Tell Next.js not to bundle Prisma Clients (BOTH main and auth)
-  // CRITICAL: This prevents webpack from trying to bundle the native binaries
-  serverComponentsExternalPackages: ['@prisma/client', '.prisma/client'],
-  // Also exclude from webpack bundling entirely
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Don't bundle Prisma binaries in server bundle
-      config.externals = config.externals || [];
-      config.externals.push('@prisma/client', '.prisma/client');
-    }
-    return config;
   },
   images: {
     remotePatterns: [
