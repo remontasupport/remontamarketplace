@@ -772,7 +772,10 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
   where.longitude = { gte: bbox.minLng, lte: bbox.maxLng }
 
   // Ensure lat/lng are not null
+  // IMPORTANT: Append to existing AND conditions instead of replacing them
+  const existingAndConditions = where.AND ? (Array.isArray(where.AND) ? where.AND : [where.AND]) : []
   where.AND = [
+    ...existingAndConditions,
     { latitude: { not: null } },
     { longitude: { not: null } }
   ]

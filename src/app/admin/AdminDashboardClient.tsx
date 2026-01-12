@@ -838,9 +838,12 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => {
                     // Apply all pending filters and reset to first page
+                    // IMPORTANT: Use suburbSearch if user typed manually without selecting from dropdown
+                    const finalLocation = suburbSearch.trim() || pendingFilters.location
+
                     setFilters(prev => ({
                       ...prev,
-                      location: pendingFilters.location,
+                      location: finalLocation,
                       typeOfSupport: pendingFilters.typeOfSupport,
                       gender: pendingFilters.gender,
                       languages: pendingFilters.languages,
