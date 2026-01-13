@@ -152,12 +152,20 @@ export default function WorkerProfileView({
               {/* Experience Categories */}
               <div className="space-y-4">
                 {Object.entries(additionalInfo.experience).map(([categoryId, experienceData]: [string, any]) => {
-                  // Find the category name from services
-                  const categoryService = services?.find(s => s.categoryId === categoryId);
-                  const rawCategoryName = categoryService?.categoryName || categoryId;
+                  // Map experience category IDs to display names
+                  const experienceCategoryNames: { [key: string]: string } = {
+                    "aged-care": "Aged care",
+                    "chronic-medical": "Chronic medical conditions",
+                    "disability": "Disability",
+                    "mental-health": "Mental health",
+                    "working-with-children": "Working with Children",
+                  };
 
-                  // Capitalize first letter of category name
-                  const categoryName = rawCategoryName.charAt(0).toUpperCase() + rawCategoryName.slice(1);
+                  // Find the category name from services, or use the mapping, or fallback to formatted ID
+                  const categoryService = services?.find(s => s.categoryId === categoryId);
+                  const categoryName = categoryService?.categoryName
+                    || experienceCategoryNames[categoryId]
+                    || categoryId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
                   // Skip if experienceData is not valid
                   if (!experienceData || typeof experienceData !== 'object') {
