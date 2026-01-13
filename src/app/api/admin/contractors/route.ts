@@ -24,6 +24,9 @@ interface FilterParams {
   age?: string
   within?: string
 
+  // Therapeutic subcategories filter (NEW)
+  therapeuticSubcategories?: string[]
+
   // Document filters (NEW)
   documentCategories?: string[]
   documentStatuses?: string[]
@@ -221,6 +224,26 @@ const filterRegistry: Record<string, FilterBuilder> = {
           ]
         }
       : null,
+
+  /**
+   * Therapeutic Subcategories Filter (Multi-select)
+   * Filters workers who have therapeutic supports with specific subcategories
+   * Checks WorkerService.subcategoryIds array for therapeutic-supports category
+   */
+  therapeuticSubcategories: (params) => {
+    if (!params.therapeuticSubcategories || params.therapeuticSubcategories.length === 0) return null;
+
+    return {
+      workerServices: {
+        some: {
+          categoryId: 'therapeutic-supports',
+          subcategoryIds: {
+            hasSome: params.therapeuticSubcategories
+          }
+        }
+      }
+    };
+  },
 
   /**
    * Location Filter - REMOVED
@@ -550,6 +573,12 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     ? languagesParam.split(',').map(l => l.trim()).filter(Boolean)
     : []
 
+  // Parse therapeutic subcategories (comma-separated)
+  const therapeuticSubcategoriesParam = searchParams.get('therapeuticSubcategories')
+  const therapeuticSubcategories = therapeuticSubcategoriesParam
+    ? therapeuticSubcategoriesParam.split(',').map(s => s.trim()).filter(Boolean)
+    : []
+
   // Parse document filters (NEW - comma-separated arrays)
   const documentCategoriesParam = searchParams.get('documentCategories')
   const documentCategories = documentCategoriesParam
@@ -578,6 +607,7 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     languages,
     age,
     within,
+    therapeuticSubcategories,
     documentCategories,
     documentStatuses,
     requirementTypes,
@@ -606,6 +636,9 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   }
   if (params.within && params.within !== 'none') {
     applied.within = params.within
+  }
+  if (params.therapeuticSubcategories && params.therapeuticSubcategories.length > 0) {
+    applied.therapeuticSubcategories = params.therapeuticSubcategories
   }
   if (params.documentCategories && params.documentCategories.length > 0) {
     applied.documentCategories = params.documentCategories

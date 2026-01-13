@@ -62,6 +62,9 @@ interface ContractorsFilters {
   age: string
   within: string
 
+  // Therapeutic subcategories filter (NEW)
+  therapeuticSubcategories: string[]
+
   // Document filters (NEW)
   documentCategories: string[]
   documentStatuses: string[]
@@ -108,6 +111,11 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 
   if (filters.within && filters.within !== 'none') {
     params.append('within', filters.within)
+  }
+
+  // Therapeutic subcategories filter (NEW)
+  if (filters.therapeuticSubcategories && filters.therapeuticSubcategories.length > 0) {
+    params.append('therapeuticSubcategories', filters.therapeuticSubcategories.join(','))
   }
 
   // Document filters (NEW)
@@ -187,6 +195,10 @@ function parseFiltersFromURL(searchParams: URLSearchParams): Partial<Contractors
   const within = searchParams.get('within')
   if (within) filters.within = within
 
+  // Therapeutic subcategories (array)
+  const therapeuticSubcategories = searchParams.get('therapeuticSubcategories')
+  if (therapeuticSubcategories) filters.therapeuticSubcategories = therapeuticSubcategories.split(',').filter(Boolean)
+
   // Document filters (arrays)
   const documentCategories = searchParams.get('documentCategories')
   if (documentCategories) filters.documentCategories = documentCategories.split(',').filter(Boolean)
@@ -260,6 +272,11 @@ function buildURLFromFilters(filters: ContractorsFilters): string {
     params.set('within', filters.within)
   }
 
+  // Therapeutic subcategories (array)
+  if (filters.therapeuticSubcategories && filters.therapeuticSubcategories.length > 0) {
+    params.set('therapeuticSubcategories', filters.therapeuticSubcategories.join(','))
+  }
+
   // Document filters (arrays)
   if (filters.documentCategories && filters.documentCategories.length > 0) {
     params.set('documentCategories', filters.documentCategories.join(','))
@@ -329,6 +346,8 @@ export default function AdminDashboard() {
       languages: [],
       age: 'all',
       within: 'none',
+      // Therapeutic subcategories filter
+      therapeuticSubcategories: [],
       // Document filters
       documentCategories: [],
       documentStatuses: [],
@@ -355,6 +374,7 @@ export default function AdminDashboard() {
     languages: filters.languages,
     age: filters.age,
     within: filters.within,
+    therapeuticSubcategories: filters.therapeuticSubcategories,
   })
 
   // Pending document filters (not applied yet)
@@ -396,6 +416,18 @@ export default function AdminDashboard() {
   // Filter languages based on search
   const filteredLanguages = AVAILABLE_LANGUAGES.filter(lang =>
     lang.toLowerCase().includes(languageSearch.toLowerCase())
+  )
+
+  // Therapeutic subcategories filter states
+  const [therapeuticSubcategories, setTherapeuticSubcategories] = useState<Array<{ id: string; name: string }>>([])
+  const [isLoadingTherapeuticSubcategories, setIsLoadingTherapeuticSubcategories] = useState(false)
+  const [therapeuticSubcategorySearch, setTherapeuticSubcategorySearch] = useState('')
+  const [showTherapeuticSubcategoryDropdown, setShowTherapeuticSubcategoryDropdown] = useState(false)
+  const therapeuticSubcategoryDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Filter therapeutic subcategories based on search
+  const filteredTherapeuticSubcategories = therapeuticSubcategories.filter(sub =>
+    sub.name.toLowerCase().includes(therapeuticSubcategorySearch.toLowerCase())
   )
 
   // Fetch document filter options on mount
@@ -440,6 +472,45 @@ export default function AdminDashboard() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Close therapeutic subcategory dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(event.target as Node)) {
+        setShowTherapeuticSubcategoryDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Fetch therapeutic subcategories when Therapeutic Supports is selected
+  useEffect(() => {
+    const fetchTherapeuticSubcategories = async () => {
+      if (pendingFilters.typeOfSupport !== 'Therapeutic Supports') {
+        setTherapeuticSubcategories([])
+        return
+      }
+
+      setIsLoadingTherapeuticSubcategories(true)
+      try {
+        const response = await fetch('/api/categories/therapeutic-supports/subcategories')
+        const data = await response.json()
+
+        if (data.success && Array.isArray(data.data)) {
+          setTherapeuticSubcategories(data.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch therapeutic subcategories:', error)
+        setTherapeuticSubcategories([])
+      } finally {
+        setIsLoadingTherapeuticSubcategories(false)
+      }
+    }
+
+    fetchTherapeuticSubcategories()
+  }, [pendingFilters.typeOfSupport])
 
   // Fetch suburbs from API
   useEffect(() => {
@@ -490,8 +561,9 @@ export default function AdminDashboard() {
       languages: filters.languages,
       age: filters.age,
       within: filters.within,
+      therapeuticSubcategories: filters.therapeuticSubcategories,
     })
-  }, [filters.location, filters.typeOfSupport, filters.gender, filters.languages, filters.age, filters.within])
+  }, [filters.location, filters.typeOfSupport, filters.gender, filters.languages, filters.age, filters.within, filters.therapeuticSubcategories])
 
   // Sync filters to URL whenever they change
   useEffect(() => {
@@ -849,6 +921,7 @@ export default function AdminDashboard() {
                       languages: pendingFilters.languages,
                       age: pendingFilters.age,
                       within: pendingFilters.within,
+                      therapeuticSubcategories: pendingFilters.therapeuticSubcategories,
                       page: 1
                     }))
                   }}
@@ -955,6 +1028,111 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
+
+              {/* Therapeutic Subcategories - Multi-select with Search (only shown when Therapeutic Supports is selected) */}
+              {pendingFilters.typeOfSupport === 'Therapeutic Supports' && (
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Therapeutic Subcategories
+                  </label>
+                  <div className="relative" ref={therapeuticSubcategoryDropdownRef}>
+                    {/* Selected Subcategories Display */}
+                    <div
+                      onClick={() => setShowTherapeuticSubcategoryDropdown(!showTherapeuticSubcategoryDropdown)}
+                      className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
+                    >
+                      {pendingFilters.therapeuticSubcategories.length === 0 ? (
+                        <span className="text-gray-400">All subcategories</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {pendingFilters.therapeuticSubcategories.map((subId) => {
+                            const sub = therapeuticSubcategories.find(s => s.id === subId)
+                            return (
+                              <span
+                                key={subId}
+                                className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
+                              >
+                                {sub?.name || subId}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPendingFilters(prev => ({
+                                      ...prev,
+                                      therapeuticSubcategories: prev.therapeuticSubcategories.filter(id => id !== subId)
+                                    }))
+                                  }}
+                                  className="hover:text-indigo-600"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Dropdown */}
+                    {showTherapeuticSubcategoryDropdown && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                        {/* Search Input */}
+                        <div className="p-2 border-b border-gray-200">
+                          <input
+                            type="text"
+                            placeholder="Search subcategories..."
+                            value={therapeuticSubcategorySearch}
+                            onChange={(e) => setTherapeuticSubcategorySearch(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+
+                        {/* Subcategory List */}
+                        <div className="max-h-48 overflow-y-auto">
+                          {isLoadingTherapeuticSubcategories ? (
+                            <div className="px-4 py-3 text-gray-500 text-center text-sm">
+                              Loading subcategories...
+                            </div>
+                          ) : filteredTherapeuticSubcategories.length === 0 ? (
+                            <div className="px-4 py-3 text-gray-500 text-center text-sm">
+                              No subcategories found
+                            </div>
+                          ) : (
+                            filteredTherapeuticSubcategories.map((subcategory) => (
+                              <button
+                                key={subcategory.id}
+                                type="button"
+                                onClick={() => {
+                                  const isSelected = pendingFilters.therapeuticSubcategories.includes(subcategory.id)
+                                  setPendingFilters(prev => ({
+                                    ...prev,
+                                    therapeuticSubcategories: isSelected
+                                      ? prev.therapeuticSubcategories.filter(id => id !== subcategory.id)
+                                      : [...prev.therapeuticSubcategories, subcategory.id]
+                                  }))
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                  pendingFilters.therapeuticSubcategories.includes(subcategory.id)
+                                    ? 'bg-indigo-50 text-indigo-700 font-medium'
+                                    : ''
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{subcategory.name}</span>
+                                  {pendingFilters.therapeuticSubcategories.includes(subcategory.id) && (
+                                    <span className="text-indigo-600">✓</span>
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Age */}
               <div className="flex flex-col">
@@ -1096,6 +1274,7 @@ export default function AdminDashboard() {
                     languages: [],
                     age: 'all',
                     within: 'none',
+                    therapeuticSubcategories: [],
                     documentCategories: [],
                     documentStatuses: [],
                     requirementTypes: [],
@@ -1107,6 +1286,7 @@ export default function AdminDashboard() {
                     languages: [],
                     age: 'all',
                     within: 'none',
+                    therapeuticSubcategories: [],
                   })
                   setPendingDocFilters({
                     documentCategories: [],
@@ -1116,6 +1296,7 @@ export default function AdminDashboard() {
                   setSearchInput('')
                   setSuburbSearch('')
                   setLanguageSearch('')
+                  setTherapeuticSubcategorySearch('')
                 }}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
