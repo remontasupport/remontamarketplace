@@ -33,7 +33,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
       const redirectPath = getRedirectPathForRole(session.user.role);
-      router.push(redirectPath);
+      // Use window.location.href for immediate redirect (works even in background tabs)
+      window.location.href = redirectPath;
     }
   }, [status, session, router]);
 
