@@ -69,6 +69,15 @@ const SPECIFIC_AREAS: { [key: string]: string[] } = {
     "Schizophrenia",
     "Substance Abuse & Addiction",
   ],
+  "working-with-children": [
+    "Children with Disabilities",
+    "Children with Behavioral Challenges",
+    "Children with Learning Difficulties",
+    "Children with Autism",
+    "Children with ADHD",
+    "Children with Developmental Delays",
+    "Siblings of Children with Disabilities",
+  ],
 };
 
 const EXPERIENCE_AREAS = [
@@ -76,6 +85,7 @@ const EXPERIENCE_AREAS = [
   { id: "chronic-medical", label: "Chronic medical conditions" },
   { id: "disability", label: "Disability" },
   { id: "mental-health", label: "Mental health" },
+  { id: "working-with-children", label: "Working with Children" },
 ];
 
 export default function ExperienceSection() {
