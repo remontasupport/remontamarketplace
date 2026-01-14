@@ -22,6 +22,8 @@ interface Step1ServicesOfferProps {
   };
   onChange: (field: string, value: any) => void;
   onSaveServices?: (services: string[], supportWorkerCategories: string[]) => Promise<void>;
+  onSaveAndExit?: () => void;
+  errors?: Record<string, string>;
 }
 
 // Service Card Component
@@ -126,6 +128,7 @@ export default function Step1ServicesOffer({
   data,
   onChange,
   onSaveServices,
+  onSaveAndExit,
 }: Step1ServicesOfferProps) {
   const router = useRouter();
   const [showAddServiceDialog, setShowAddServiceDialog] = useState(false);
@@ -253,6 +256,35 @@ export default function Step1ServicesOffer({
     }
   };
 
+  // Validation: Check if all services with subcategories have at least one selected
+  const hasValidSubcategories = useMemo(() => {
+    const currentServices = data.services || [];
+    const selectedSubcategories = data.supportWorkerCategories || [];
+
+    // Check each service
+    for (const serviceTitle of currentServices) {
+      const category = categoryMap.get(serviceTitle);
+
+      // If service has subcategories available
+      if (category && category.subcategories && category.subcategories.length > 0) {
+        // Get subcategory IDs for this service
+        const serviceLevelSubcategoryIds = category.subcategories.map((sub: any) => sub.id);
+
+        // Check if at least one subcategory is selected for this service
+        const hasSelectedSubcategory = serviceLevelSubcategoryIds.some((id: string) =>
+          selectedSubcategories.includes(id)
+        );
+
+        // If no subcategory is selected for this service, validation fails
+        if (!hasSelectedSubcategory) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }, [data.services, data.supportWorkerCategories, categoryMap]);
+
   return (
     <div className="services-step-container">
       <div className="form-page-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', width: '100%', maxWidth: 'none' }}>
@@ -311,20 +343,42 @@ export default function Step1ServicesOffer({
                     <button
                       type="button"
                       onClick={() => setIsEditMode(false)}
+                      disabled={!hasValidSubcategories}
                       className="service-btn-done"
+                      title={!hasValidSubcategories ? "Please select service offerings for all services" : ""}
                     >
-                      DONE EDITING
+                      Done
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditMode(true)}
-                    className="service-btn-edit"
-                  >
-                    <PlusIcon />
-                    EDIT SERVICES
-                  </button>
+                  <div className="service-button-group">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(true)}
+                      className="service-btn-edit"
+                    >
+                      <PlusIcon />
+                      EDIT SERVICES
+                    </button>
+                    {/* Main Save button - only redirects, does not save (already saved when subcategories were selected) */}
+                    {onSaveAndExit && (
+                      <button
+                        type="button"
+                        onClick={onSaveAndExit}
+                        disabled={!hasValidSubcategories || (data.services?.length === 0)}
+                        className="service-btn-done"
+                        title={
+                          data.services?.length === 0
+                            ? "Please add at least one service"
+                            : !hasValidSubcategories
+                            ? "Please select service offerings for all services"
+                            : "Save and return"
+                        }
+                      >
+                        Save
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

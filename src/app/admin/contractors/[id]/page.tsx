@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
 import ImageCropModal from '@/components/modals/ImageCropModal'
+import ServiceSelectionModal from '@/components/modals/ServiceSelectionModal'
 import NextImage from 'next/image'
 import { useState, useCallback, useEffect } from 'react'
 import './contractor-profile.css'
@@ -51,6 +52,9 @@ export default function WorkerDetailPage() {
   const [showCropModal, setShowCropModal] = useState<boolean>(false)
   const [croppedImageUrl, setCroppedImageUrl] = useState<string>('')
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>('')
+
+  // Service selection modal state
+  const [showServiceModal, setShowServiceModal] = useState<boolean>(false)
 
   // Editable fields state (not saved to database)
   const [editableLanguages, setEditableLanguages] = useState<string>('')
@@ -269,7 +273,10 @@ export default function WorkerDetailPage() {
 
   // Initialize editable fields when data loads
   const languages = editableLanguages || (worker.languages && worker.languages.length > 0 ? worker.languages.join(', ') : 'English')
-  const experience = editableExperience || worker.experience || '2 years'
+  const rawExperience = editableExperience || worker.experience || '2'
+  const experience = rawExperience.toLowerCase().includes('year')
+    ? rawExperience
+    : `${rawExperience} ${rawExperience === '1' ? 'year' : 'years'}`
   const vehicle = editableVehicle || worker.hasVehicle || 'Yes'
   const location = editableLocation || worker.location || ''
   const introduction = editableIntroduction || worker.introduction || 'Dedicated support worker committed to providing compassionate care and assistance to individuals with diverse needs.'
@@ -301,7 +308,11 @@ export default function WorkerDetailPage() {
   }
 
   const addServiceItem = () => {
-    setServicesItems([...servicesItems, 'New service'])
+    setShowServiceModal(true)
+  }
+
+  const handleSelectService = (service: string) => {
+    setServicesItems([...servicesItems, service])
   }
 
   const removeServiceItem = (index: number) => {
@@ -484,35 +495,37 @@ export default function WorkerDetailPage() {
                   </div>
                 </div>
 
-                <div className="about-item">
-                  <div className="about-label">
-                    <Car className="w-4 h-4" />
-                    Drive Access
+                {(vehicle && vehicle.toLowerCase() !== 'no' && vehicle.toLowerCase() !== 'false') && (
+                  <div className="about-item">
+                    <div className="about-label">
+                      <Car className="w-4 h-4" />
+                      Drive Access
+                    </div>
+                    <div className="about-value">
+                      • <span
+                          contentEditable={isEditMode}
+                          suppressContentEditableWarning
+                          onFocus={(e) => {
+                            const range = document.createRange()
+                            range.selectNodeContents(e.currentTarget)
+                            const selection = window.getSelection()
+                            selection?.removeAllRanges()
+                            selection?.addRange(range)
+                          }}
+                          onBlur={(e) => setEditableVehicle(e.currentTarget.textContent || '')}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              e.currentTarget.blur()
+                            }
+                          }}
+                          className="editable-field"
+                        >
+                          {vehicle}
+                        </span>
+                    </div>
                   </div>
-                  <div className="about-value">
-                    • <span
-                        contentEditable={isEditMode}
-                        suppressContentEditableWarning
-                        onFocus={(e) => {
-                          const range = document.createRange()
-                          range.selectNodeContents(e.currentTarget)
-                          const selection = window.getSelection()
-                          selection?.removeAllRanges()
-                          selection?.addRange(range)
-                        }}
-                        onBlur={(e) => setEditableVehicle(e.currentTarget.textContent || '')}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            e.currentTarget.blur()
-                          }
-                        }}
-                        className="editable-field"
-                      >
-                        {vehicle}
-                      </span>
-                  </div>
-                </div>
+                )}
 
                 {(location || worker.location) && (
                   <div className="about-item">
@@ -803,6 +816,14 @@ export default function WorkerDetailPage() {
             imageUrl={selectedImageUrl || mainPhoto || ''}
             onClose={handleCloseCropModal}
             onCropComplete={handleCropComplete}
+          />
+        )}
+
+        {/* Service Selection Modal */}
+        {showServiceModal && (
+          <ServiceSelectionModal
+            onClose={() => setShowServiceModal(false)}
+            onSelectService={handleSelectService}
           />
         )}
       </div>

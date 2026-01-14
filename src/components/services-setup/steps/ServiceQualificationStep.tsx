@@ -9,6 +9,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -909,6 +910,9 @@ export default function ServiceQualificationStep({
     const serviceSlug = serviceNameToSlug(serviceTitle);
     const isTherapeuticSupport = serviceSlug === 'therapeutic-supports';
 
+    // Build return URL for redirect after editing services
+    const returnUrl = `/dashboard/worker/services/setup?step=${serviceSlug}&view=offerings`;
+
     return (
       <div className="form-page-content">
         {/* Left Column - Form */}
@@ -922,7 +926,15 @@ export default function ServiceQualificationStep({
             </p>
 
             {selectedSubcategories.length === 0 ? (
-              <p className="text-sm text-gray-500">No service offerings selected for this category.</p>
+              <div className="text-center py-6">
+                <p className="text-sm text-gray-500 mb-4">No service offerings selected for this Service.</p>
+                <Link
+                  href={`/dashboard/worker/services/manage?returnUrl=${encodeURIComponent(returnUrl)}`}
+                  className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins font-medium"
+                >
+                  Edit/Add more services here
+                </Link>
+              </div>
             ) : (
               <div className="space-y-3">
                 {selectedSubcategories.map((subcategory) => (

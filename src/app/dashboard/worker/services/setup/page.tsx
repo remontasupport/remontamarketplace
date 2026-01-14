@@ -349,12 +349,12 @@ function ServicesSetupContent() {
       return;
     }
 
-    // INTERCEPTOR 1: Check if we're on a service step with offerings
+    // INTERCEPTOR 1: Check if we're on a service step - always show offerings view
     // Only intercept if:
     // 1. We have a serviceTitle (it's a service step, not "Other Documents")
     // 2. We're NOT currently showing offerings view
     // 3. We're NOT currently showing documents view
-    // 4. The service has offerings (from worker's selected subcategories)
+    // Note: We removed the hasOfferings check so offerings view shows even when empty
     const isShowingOfferings = currentView.view === 'offerings';
     const isShowingDocuments = currentView.view === 'documents';
     // Check if worker has selected subcategories for this service
@@ -363,25 +363,19 @@ function ServicesSetupContent() {
     )?.subcategories || [];
     const hasOfferings = isServiceStep && serviceSelectedSubcategories.length > 0;
 
-    if (isServiceStep && !isShowingOfferings && !isShowingDocuments && hasOfferings) {
-      // INTERCEPT: Navigate to offerings view via URL
+    if (isServiceStep && !isShowingOfferings && !isShowingDocuments) {
+      // INTERCEPT: Navigate to offerings view via URL (even if no offerings)
       router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=offerings`);
       return;
     }
 
-    // INTERCEPTOR 2: Check if we're on qualifications view and should skip to documents
-    // Only intercept if:
-    // 1. We're on qualifications view (not showing offerings or documents)
-    // 2. The service does NOT have offerings
-    // 3. The service DOES have document requirements
+    // INTERCEPTOR 2: Removed - Always show offerings view even if empty
+    // This allows users to see "Add more services here" message
     const documentRequirements = isServiceStep ? getServiceDocumentRequirements(currentStepData.serviceTitle!) : [];
     const hasDocuments = documentRequirements.length > 0;
 
-    if (isServiceStep && !isShowingOfferings && !isShowingDocuments && !hasOfferings && hasDocuments) {
-      // INTERCEPT: Navigate directly to documents view (skip offerings)
-      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
-      return;
-    }
+    // Note: We no longer skip to documents when there are no offerings
+    // The offerings view will display a "Add more services here" link instead
 
     // VALIDATION: Check if we're on offerings view for therapeutic support
     // Validate and save registration data before proceeding
@@ -651,9 +645,8 @@ function ServicesSetupContent() {
 
     if (isNursingService) {
       initialView = 'registration';
-    } else if (!hasQualifications && !hasOfferings && hasDocuments) {
-      initialView = 'documents';
-    } else if (!hasQualifications && hasOfferings) {
+    } else if (!hasQualifications) {
+      // Always show offerings view if no qualifications (even if empty)
       initialView = 'offerings';
     } else if (hasQualifications) {
       initialView = 'qualifications';

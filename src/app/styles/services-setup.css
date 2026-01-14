@@ -341,6 +341,16 @@ div.services-step-container div.info-column div.info-box {
   background-color: #1a2740;
 }
 
+.service-btn-done:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.service-btn-done:disabled:hover {
+  background-color: #9ca3af;
+}
+
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
   /* CRITICAL: Override form-page-container parent */

@@ -1000,6 +1000,19 @@ export async function checkServicesCompletion(): Promise<ActionResponse<boolean>
       };
     }
 
+    // CRITICAL: Check if ANY service has empty subcategories (no service offerings selected)
+    // If so, mark services section as incomplete
+    const hasServiceWithNoOfferings = workerServices.some(
+      service => service.subcategoryNames.length === 0
+    );
+
+    if (hasServiceWithNoOfferings) {
+      return {
+        success: true,
+        data: false,
+      };
+    }
+
     // 4. Import service document requirements config
     const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
 
@@ -1680,6 +1693,19 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
 
     if (workerProfile.workerServices.length > 0) {
       const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
+
+      // CRITICAL: Check if ANY service has empty subcategories (no service offerings selected)
+      // If so, mark services section as incomplete
+      const hasServiceWithNoOfferings = workerProfile.workerServices.some(
+        service => service.subcategoryNames.length === 0
+      );
+
+      if (hasServiceWithNoOfferings) {
+        return {
+          success: true,
+          data: false,
+        };
+      }
 
       const serviceRequirements = new Map<string, { required: Set<string>; all: Set<string> }>();
 

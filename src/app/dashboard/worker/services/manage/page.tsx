@@ -9,6 +9,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
@@ -16,6 +18,10 @@ import Loader from "@/components/ui/Loader";
 
 export default function ManageServicesPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
+  const queryClient = useQueryClient();
 
   // Fetch profile data
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
@@ -31,6 +37,7 @@ export default function ManageServicesPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   // Populate form data on initial load
   useEffect(() => {
@@ -59,7 +66,7 @@ export default function ManageServicesPage() {
     }
   };
 
-  // Auto-save services to database
+  // Auto-save services to database (NO redirect here)
   const handleSaveServices = async (services: string[], supportWorkerCategories: string[]) => {
     if (!session?.user?.id) return;
 
@@ -73,9 +80,40 @@ export default function ManageServicesPage() {
         },
       });
     } catch (error) {
+      console.error('Error saving services:', error);
       throw error;
     }
   };
+
+  // Handle redirect after user clicks "Save" button
+  const handleSaveAndRedirect = () => {
+    if (returnUrl) {
+      setShouldRedirect(true);
+    }
+  };
+
+  // Effect: Handle cache invalidation and redirect after successful save
+  useEffect(() => {
+    if (shouldRedirect && returnUrl) {
+      // Invalidate all relevant caches and wait for refetch to prevent flicker
+      const invalidateAndRedirect = async () => {
+        // Invalidate and refetch to ensure fresh data is in cache before redirect
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ['worker-services', 'current'] }),
+          queryClient.refetchQueries({ queryKey: ['worker-services'] }),
+          queryClient.invalidateQueries({ queryKey: ['worker-profile'] }),
+        ]);
+
+        // Navigate with router.push (no need for router.refresh as data is already fresh)
+        router.push(returnUrl);
+
+        // Reset the redirect flag after navigation starts
+        setShouldRedirect(false);
+      };
+
+      invalidateAndRedirect();
+    }
+  }, [shouldRedirect, returnUrl, queryClient, router]);
 
   // Extract primary service for role display
   const primaryService = profileData?.services?.[0] || 'Support Worker';
@@ -109,13 +147,20 @@ export default function ManageServicesPage() {
     >
       <div className="form-page-container">
         <div className="account-step-container">
-          {/* Render Services Management Component */}
-          <Step1ServicesOffer
-            data={formData}
-            onChange={handleFieldChange}
-            onSaveServices={handleSaveServices}
-            errors={errors}
-          />
+          {/* Show loading state only when redirecting, not during auto-save */}
+          {shouldRedirect && returnUrl ? (
+            <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
+              <Loader size="lg" />
+            </div>
+          ) : (
+            <Step1ServicesOffer
+              data={formData}
+              onChange={handleFieldChange}
+              onSaveServices={handleSaveServices}
+              onSaveAndExit={returnUrl ? handleSaveAndRedirect : undefined}
+              errors={errors}
+            />
+          )}
         </div>
       </div>
     </DashboardLayout>
