@@ -470,10 +470,16 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
         isDocumentComplete = hasPrimary && hasSecondary;
 
       }
-      // Special case: abn-contractor (check WorkerProfile.abn field from initial query)
+      // Special case: abn-contractor (check WorkerProfile.abn JSON field)
       else if (requiredDocId === 'abn-contractor') {
-        isDocumentComplete = !!(workerProfile.abn && workerProfile.abn.trim().length > 0);
-
+        // abn is now JSON: { workerEngagementType: { type: "abn" | "tfn", value: "..." } }
+        if (workerProfile.abn && typeof workerProfile.abn === 'object') {
+          const abnData = workerProfile.abn as { workerEngagementType?: { type: string; value: string } };
+          const engagement = abnData.workerEngagementType;
+          isDocumentComplete = !!(engagement?.type && engagement?.value?.trim().length > 0);
+        } else {
+          isDocumentComplete = false;
+        }
       }
       // Special case: ndis-screening-check (can be stored as worker-screening-check)
       else if (requiredDocId === 'ndis-screening-check') {

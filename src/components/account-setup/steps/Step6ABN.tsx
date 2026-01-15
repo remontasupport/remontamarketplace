@@ -28,24 +28,37 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
   const [selectedType, setSelectedType] = useState<EngagementType>(
     data.workerEngagementType?.type || null
   );
-  const [inputValue, setInputValue] = useState<string>(
-    data.workerEngagementType?.value || ""
+  // Store both values separately so switching doesn't lose data
+  const [abnValue, setAbnValue] = useState<string>(
+    data.workerEngagementType?.type === "abn" ? data.workerEngagementType.value : ""
   );
+  const [tfnValue, setTfnValue] = useState<string>(
+    data.workerEngagementType?.type === "tfn" ? data.workerEngagementType.value : ""
+  );
+
+  // Get current input value based on selected type
+  const inputValue = selectedType === "abn" ? abnValue : selectedType === "tfn" ? tfnValue : "";
 
   // Sync state when data prop changes (e.g., after async data load)
   useEffect(() => {
     if (data.workerEngagementType) {
       setSelectedType(data.workerEngagementType.type);
-      setInputValue(data.workerEngagementType.value);
+      if (data.workerEngagementType.type === "abn") {
+        setAbnValue(data.workerEngagementType.value);
+      } else if (data.workerEngagementType.type === "tfn") {
+        setTfnValue(data.workerEngagementType.value);
+      }
     }
   }, [data.workerEngagementType]);
 
   // Handle type selection
   const handleTypeSelect = (type: EngagementType) => {
     setSelectedType(type);
-    setInputValue(""); // Clear value when switching type
-    if (type) {
-      onChange("workerEngagementType", { type, value: "" });
+    // Restore the value for the selected type
+    if (type === "abn") {
+      onChange("workerEngagementType", { type, value: abnValue });
+    } else if (type === "tfn") {
+      onChange("workerEngagementType", { type, value: tfnValue });
     } else {
       onChange("workerEngagementType", null);
     }
@@ -62,7 +75,12 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
     const maxDigits = selectedType === "abn" ? 11 : 9;
 
     if (digits.length <= maxDigits) {
-      setInputValue(cleaned);
+      // Update the correct state based on selected type
+      if (selectedType === "abn") {
+        setAbnValue(cleaned);
+      } else if (selectedType === "tfn") {
+        setTfnValue(cleaned);
+      }
       if (selectedType) {
         onChange("workerEngagementType", { type: selectedType, value: cleaned });
       }
