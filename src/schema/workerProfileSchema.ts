@@ -153,20 +153,42 @@ export const updateWorkerPersonalInfoDefaults: UpdateWorkerPersonalInfoData = {
   hasVehicle: undefined,
 };
 
-// Schema: Update Worker ABN
+// Schema: Worker Engagement Type (ABN or TFN)
+const workerEngagementTypeSchema = z.object({
+  type: z.enum(["abn", "tfn"]),
+  value: z.string(),
+}).refine(
+  (data) => {
+    const digits = data.value.replace(/\s/g, "");
+    if (data.type === "abn") {
+      return digits.length === 11;
+    } else if (data.type === "tfn") {
+      return digits.length === 9;
+    }
+    return false;
+  },
+  {
+    message: "Please enter a valid ABN (11 digits) or TFN (9 digits)",
+  }
+);
+
+// Schema: Update Worker ABN (now supports ABN or TFN via JSON)
 export const updateWorkerABNSchema = z.object({
-  abn: z.string()
-    .optional()
-    .refine(
-      (val) => !val || val.replace(/\s/g, "").length === 11,
-      { message: "Please enter a valid ABN" }
-    ),
+  abn: z.object({
+    workerEngagementType: workerEngagementTypeSchema,
+  }),
 });
 
+export type WorkerEngagementType = z.infer<typeof workerEngagementTypeSchema>;
 export type UpdateWorkerABNData = z.infer<typeof updateWorkerABNSchema>;
 
 export const updateWorkerABNDefaults: UpdateWorkerABNData = {
-  abn: "",
+  abn: {
+    workerEngagementType: {
+      type: "abn",
+      value: "",
+    },
+  },
 };
 
 // Schema: Update Worker Bank Account

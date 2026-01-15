@@ -80,13 +80,13 @@ async function fetchWorkerProfile(userId: string): Promise<WorkerProfile> {
 async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
   const { step, data } = updateData;
 
-  // Check if this is an ABN update (compliance step - can be any step number)
-  if (data.abn !== undefined) {
+  // Check if this is an ABN/TFN update (compliance step - data.abn is now a JSON object)
+  if (data.abn !== undefined && typeof data.abn === "object" && data.abn.workerEngagementType) {
     const abnResult = await updateWorkerABN({
       abn: data.abn,
     });
     if (!abnResult.success) {
-      throw new Error(abnResult.error || "Failed to update ABN");
+      throw new Error(abnResult.error || "Failed to update ABN/TFN");
     }
     return;
   }

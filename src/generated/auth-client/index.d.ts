@@ -13365,7 +13365,6 @@ export namespace Prisma {
     photos: string | null
     latitude: number | null
     longitude: number | null
-    abn: string | null
     profileCompleted: boolean | null
     isPublished: boolean | null
     verificationStatus: string | null
@@ -13397,7 +13396,6 @@ export namespace Prisma {
     photos: string | null
     latitude: number | null
     longitude: number | null
-    abn: string | null
     profileCompleted: boolean | null
     isPublished: boolean | null
     verificationStatus: string | null
@@ -13477,7 +13475,6 @@ export namespace Prisma {
     photos?: true
     latitude?: true
     longitude?: true
-    abn?: true
     profileCompleted?: true
     isPublished?: true
     verificationStatus?: true
@@ -13509,7 +13506,6 @@ export namespace Prisma {
     photos?: true
     latitude?: true
     longitude?: true
-    abn?: true
     profileCompleted?: true
     isPublished?: true
     verificationStatus?: true
@@ -13663,7 +13659,7 @@ export namespace Prisma {
     photos: string | null
     latitude: number | null
     longitude: number | null
-    abn: string | null
+    abn: JsonValue | null
     setupProgress: JsonValue | null
     profileCompleted: boolean
     isPublished: boolean
@@ -13882,7 +13878,7 @@ export namespace Prisma {
       photos: string | null
       latitude: number | null
       longitude: number | null
-      abn: string | null
+      abn: Prisma.JsonValue | null
       setupProgress: Prisma.JsonValue | null
       profileCompleted: boolean
       isPublished: boolean
@@ -14340,7 +14336,7 @@ export namespace Prisma {
     readonly photos: FieldRef<"WorkerProfile", 'String'>
     readonly latitude: FieldRef<"WorkerProfile", 'Float'>
     readonly longitude: FieldRef<"WorkerProfile", 'Float'>
-    readonly abn: FieldRef<"WorkerProfile", 'String'>
+    readonly abn: FieldRef<"WorkerProfile", 'Json'>
     readonly setupProgress: FieldRef<"WorkerProfile", 'Json'>
     readonly profileCompleted: FieldRef<"WorkerProfile", 'Boolean'>
     readonly isPublished: FieldRef<"WorkerProfile", 'Boolean'>
@@ -24015,7 +24011,7 @@ export namespace Prisma {
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
     latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
-    abn?: StringNullableFilter<"WorkerProfile"> | string | null
+    abn?: JsonNullableFilter<"WorkerProfile">
     setupProgress?: JsonNullableFilter<"WorkerProfile">
     profileCompleted?: BoolFilter<"WorkerProfile"> | boolean
     isPublished?: BoolFilter<"WorkerProfile"> | boolean
@@ -24094,7 +24090,7 @@ export namespace Prisma {
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
     latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
-    abn?: StringNullableFilter<"WorkerProfile"> | string | null
+    abn?: JsonNullableFilter<"WorkerProfile">
     setupProgress?: JsonNullableFilter<"WorkerProfile">
     profileCompleted?: BoolFilter<"WorkerProfile"> | boolean
     isPublished?: BoolFilter<"WorkerProfile"> | boolean
@@ -24174,7 +24170,7 @@ export namespace Prisma {
     photos?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     latitude?: FloatNullableWithAggregatesFilter<"WorkerProfile"> | number | null
     longitude?: FloatNullableWithAggregatesFilter<"WorkerProfile"> | number | null
-    abn?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
+    abn?: JsonNullableWithAggregatesFilter<"WorkerProfile">
     setupProgress?: JsonNullableWithAggregatesFilter<"WorkerProfile">
     profileCompleted?: BoolWithAggregatesFilter<"WorkerProfile"> | boolean
     isPublished?: BoolWithAggregatesFilter<"WorkerProfile"> | boolean
@@ -25715,7 +25711,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -25753,7 +25749,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -25789,7 +25785,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -25827,7 +25823,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -25864,7 +25860,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -25897,7 +25893,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -25931,7 +25927,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -27482,7 +27478,6 @@ export namespace Prisma {
     photos?: SortOrder
     latitude?: SortOrder
     longitude?: SortOrder
-    abn?: SortOrder
     profileCompleted?: SortOrder
     isPublished?: SortOrder
     verificationStatus?: SortOrder
@@ -27514,7 +27509,6 @@ export namespace Prisma {
     photos?: SortOrder
     latitude?: SortOrder
     longitude?: SortOrder
-    abn?: SortOrder
     profileCompleted?: SortOrder
     isPublished?: SortOrder
     verificationStatus?: SortOrder
@@ -30287,7 +30281,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -30323,7 +30317,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -30545,7 +30539,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -30581,7 +30575,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -30617,7 +30611,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -30654,7 +30648,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -30705,7 +30699,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -30742,7 +30736,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -31659,7 +31653,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -31696,7 +31690,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -31747,7 +31741,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -31784,7 +31778,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -31819,7 +31813,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -31856,7 +31850,7 @@ export namespace Prisma {
     photos?: string | null
     latitude?: number | null
     longitude?: number | null
-    abn?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
     isPublished?: boolean
@@ -31907,7 +31901,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean
@@ -31944,7 +31938,7 @@ export namespace Prisma {
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    abn?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
     isPublished?: BoolFieldUpdateOperationsInput | boolean

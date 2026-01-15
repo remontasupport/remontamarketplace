@@ -30,11 +30,16 @@ interface UploadedDocument {
   uploadedAt: string;
 }
 
+interface WorkerEngagementType {
+  type: "abn" | "tfn";
+  value: string;
+}
+
 interface FormData {
   // Step 1: Proof of Identity
   identityDocuments: UploadedDocument[];
-  // ABN field
-  abn: string;
+  // Worker engagement type (ABN/TFN)
+  workerEngagementType: WorkerEngagementType | null;
 }
 
 function MandatoryRequirementsSetupContent() {
@@ -79,15 +84,24 @@ function MandatoryRequirementsSetupContent() {
   // Form data state
   const [formData, setFormData] = useState<FormData>({
     identityDocuments: [],
-    abn: "",
+    workerEngagementType: null,
   });
 
   // Populate form data ONLY on initial load
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
+      // Parse workerEngagementType from the abn JSON field
+      let workerEngagementType: WorkerEngagementType | null = null;
+      if (profileData.abn && typeof profileData.abn === "object") {
+        const abnData = profileData.abn as { workerEngagementType?: WorkerEngagementType };
+        if (abnData.workerEngagementType) {
+          workerEngagementType = abnData.workerEngagementType;
+        }
+      }
+
       setFormData({
         identityDocuments: [], // Will be loaded from VerificationRequirement table
-        abn: profileData.abn || "",
+        workerEngagementType,
       });
       hasInitializedFormData.current = true;
     }
@@ -113,10 +127,19 @@ function MandatoryRequirementsSetupContent() {
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Validate ABN if this is the ABN step
+    // Validate ABN/TFN if this is the ABN step
     if (currentStepData?.documentId === "abn-contractor") {
-      if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
-        newErrors.abn = "Please enter a valid ABN";
+      const engagement = formData.workerEngagementType;
+      if (engagement?.type === "abn") {
+        const digits = engagement.value.replace(/\s/g, "");
+        if (!digits || digits.length !== 11) {
+          newErrors.workerEngagementType = "Please enter a valid 11-digit ABN";
+        }
+      } else if (engagement?.type === "tfn") {
+        const digits = engagement.value.replace(/\s/g, "");
+        if (!digits || digits.length !== 9) {
+          newErrors.workerEngagementType = "Please enter a valid 9-digit TFN";
+        }
       }
     }
 
@@ -150,13 +173,15 @@ function MandatoryRequirementsSetupContent() {
       // Determine if this step needs to save data to the database
       const needsSaving = currentStepData?.documentId === "abn-contractor";
 
-      // Save ABN if needed (await it to ensure it completes before navigation)
-      if (needsSaving) {
+      // Save worker engagement type if needed (await it to ensure it completes before navigation)
+      if (needsSaving && formData.workerEngagementType) {
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
           data: {
-            abn: formData.abn,
+            abn: {
+              workerEngagementType: formData.workerEngagementType,
+            },
           },
         });
       }

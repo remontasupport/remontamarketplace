@@ -27,9 +27,9 @@ export type ActionResponse<T = any> = {
 };
 
 /**
- * Server Action: Update worker's ABN (Australian Business Number)
+ * Server Action: Update worker's ABN or TFN (Worker Engagement Type)
  * Uses Zod schema validation and rate limiting
- * ABN is optional and must be 11 digits if provided
+ * Stores as JSON: { workerEngagementType: { type: "abn" | "tfn", value: "..." } }
  */
 export async function updateWorkerABN(
   data: UpdateWorkerABNData
@@ -70,13 +70,13 @@ export async function updateWorkerABN(
 
     const validatedData = validationResult.data;
 
-    // 4. Update worker profile ABN in database
+    // 4. Update worker profile ABN in database (stored as JSON)
     const updatedProfile = await authPrisma.workerProfile.update({
       where: {
         userId: session.user.id,
       },
       data: {
-        abn: validatedData.abn?.trim() || null,
+        abn: validatedData.abn,
       },
       select: {
         abn: true,
@@ -84,9 +84,10 @@ export async function updateWorkerABN(
     });
 
     // 5. Return SUCCESS immediately for instant navigation
+    const engagementType = validatedData.abn.workerEngagementType.type.toUpperCase();
     const response = {
       success: true,
-      message: "Your ABN has been saved successfully!",
+      message: `Your ${engagementType} has been saved successfully!`,
       data: updatedProfile,
     };
 
@@ -104,10 +105,10 @@ export async function updateWorkerABN(
 
     return response;
   } catch (error: any) {
-    
+
     return {
       success: false,
-      error: "Please enter a valid ABN",
+      error: "Please enter a valid ABN or TFN",
     };
   }
 }

@@ -247,7 +247,7 @@ model WorkerProfile {
   photos                   String?
   latitude                 Float?
   longitude                Float?
-  abn                      String?
+  abn                      Json?
   setupProgress            Json?
   profileCompleted         Boolean                   @default(false)
   isPublished              Boolean                   @default(false)
