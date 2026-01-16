@@ -99,13 +99,16 @@ export default function StepRightToWork({
   const uploadMutation = useUploadComplianceDocument();
   const deleteMutation = useDeleteComplianceDocument();
 
-  const uploadedDocument = documentData?.documents?.[0] || null;
+  const uploadedDocument = documentData?.document || documentData?.documents?.[0] || null;
   const metadata = documentData?.metadata;
 
-  // Load citizenship status from metadata
+  // Load citizenship status from metadata or infer from uploaded document
   useEffect(() => {
     if (metadata?.isCitizen !== undefined) {
       setCitizenshipStatus(metadata.isCitizen ? "yes" : "no");
+    } else if (uploadedDocument?.documentUrl) {
+      // If there's an uploaded document, user is not a citizen (visa holder)
+      setCitizenshipStatus("no");
     }
     if (uploadedDocument?.expiryDate) {
       setExpiryDate(uploadedDocument.expiryDate);

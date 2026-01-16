@@ -1507,7 +1507,14 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
             const hasSecondary = workerProfile.verificationRequirements.some(req => req.documentCategory === 'SECONDARY');
             isDocumentComplete = hasPrimary && hasSecondary;
           } else if (requiredDocId === 'abn-contractor') {
-            isDocumentComplete = !!(workerProfile.abn && workerProfile.abn.trim().length > 0);
+            // abn is JSON: { workerEngagementType: { type: "abn" | "tfn", value: "..." } }
+            if (workerProfile.abn && typeof workerProfile.abn === 'object') {
+              const abnData = workerProfile.abn as { workerEngagementType?: { type: string; value: string } };
+              const engagement = abnData.workerEngagementType;
+              isDocumentComplete = !!(engagement?.type && engagement?.value?.trim().length > 0);
+            } else {
+              isDocumentComplete = false;
+            }
           } else if (requiredDocId === 'ndis-screening-check') {
             isDocumentComplete = uploadedDocTypes.has('ndis-screening-check') ||
                                 uploadedDocTypes.has('worker-screening-check') ||
