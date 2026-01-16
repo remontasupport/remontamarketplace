@@ -40,11 +40,14 @@ export const authOptions: NextAuthOptions = {
         // IMPERSONATION FLOW: Check for impersonation token
         if (credentials.impersonationToken) {
           try {
+            // Normalize email for consistent token lookup
+            const normalizedEmail = credentials.email.toLowerCase();
+
             // Verify the impersonation token
             const tokenRecord = await authPrisma.verificationToken.findUnique({
               where: {
                 identifier_token: {
-                  identifier: `impersonation:${credentials.email}`,
+                  identifier: `impersonation:${normalizedEmail}`,
                   token: credentials.impersonationToken,
                 },
               },
@@ -60,7 +63,7 @@ export const authOptions: NextAuthOptions = {
               await authPrisma.verificationToken.delete({
                 where: {
                   identifier_token: {
-                    identifier: `impersonation:${credentials.email}`,
+                    identifier: `impersonation:${normalizedEmail}`,
                     token: credentials.impersonationToken,
                   },
                 },
@@ -68,9 +71,9 @@ export const authOptions: NextAuthOptions = {
               throw new Error("Impersonation token expired");
             }
 
-            // Get the target user
-            const user = await authPrisma.user.findUnique({
-              where: { email: credentials.email.toLowerCase() },
+            // Get the target user (case-insensitive to handle mixed-case emails in DB)
+            const user = await authPrisma.user.findFirst({
+              where: { email: { equals: credentials.email, mode: "insensitive" } },
               select: {
                 id: true,
                 email: true,
@@ -91,13 +94,25 @@ export const authOptions: NextAuthOptions = {
             await authPrisma.verificationToken.delete({
               where: {
                 identifier_token: {
-                  identifier: `impersonation:${credentials.email}`,
+                  identifier: `impersonation:${normalizedEmail}`,
                   token: credentials.impersonationToken,
                 },
               },
             });
 
-            // Extract admin ID from token (format: imp_{userId}_{adminId}_{timestamp}_{random})
+            // Check if this is a restore token (admin returning from impersonation)
+            // Restore tokens start with "restore_" and should NOT have impersonatedBy flag
+            if (credentials.impersonationToken.startsWith('restore_')) {
+              // Return admin user without impersonation flag (normal session)
+              return {
+                id: user.id,
+                email: user.email,
+                role: user.role as UserRole,
+                name: `${user.email.split("@")[0]}`,
+              };
+            }
+
+            // Extract admin ID from impersonation token (format: imp_{userId}_{adminId}_{timestamp}_{random})
             const tokenParts = credentials.impersonationToken.split('_');
             const adminId = tokenParts[2];
 
@@ -126,12 +141,15 @@ export const authOptions: NextAuthOptions = {
 
           // REDIS OPTIMIZATION: Cache user lookup to avoid slow database queries
           // First login: ~1700ms (database), Subsequent logins: ~20-50ms (Redis cache)
+          // Note: Normalize email for consistent cache keys
+          const normalizedLoginEmail = credentials.email.toLowerCase();
           const dbQueryStart = Date.now();
           const user = await getOrFetch(
-            CACHE_KEYS.user(credentials.email),
+            CACHE_KEYS.user(normalizedLoginEmail),
             async () => {
-              return await authPrisma.user.findUnique({
-                where: { email: credentials.email.toLowerCase() },
+              // Use case-insensitive lookup to handle mixed-case emails in DB
+              return await authPrisma.user.findFirst({
+                where: { email: { equals: credentials.email, mode: "insensitive" } },
                 select: {
                   id: true,
                   email: true,
@@ -188,7 +206,7 @@ export const authOptions: NextAuthOptions = {
             });
 
             // Invalidate user cache so next attempt gets fresh failedLoginAttempts count
-            invalidateCache(CACHE_KEYS.user(user.email)).catch(() => {});
+            invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
 
             // Log failed login (fire-and-forget, non-blocking)
             authPrisma.auditLog.create({
@@ -226,7 +244,7 @@ export const authOptions: NextAuthOptions = {
           });
 
           // Invalidate user cache so next login gets fresh data (fire-and-forget)
-          invalidateCache(CACHE_KEYS.user(user.email)).catch(() => {});
+          invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
 
           // Async: Log successful login (fire-and-forget, non-blocking)
           authPrisma.auditLog.create({

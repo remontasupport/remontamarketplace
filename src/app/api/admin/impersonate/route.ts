@@ -39,9 +39,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find the target user
-    const targetUser = await authPrisma.user.findUnique({
-      where: { email: userEmail.toLowerCase() },
+    // Find the target user (case-insensitive to match search behavior)
+    const targetUser = await authPrisma.user.findFirst({
+      where: { email: { equals: userEmail, mode: 'insensitive' } },
       select: {
         id: true,
         email: true,
@@ -100,9 +100,10 @@ export async function POST(request: NextRequest) {
 
     // Store the token temporarily (you could use Redis in production)
     // For now, we'll create a verification token entry
+    // Note: Normalize email to lowercase for consistent token lookup
     await authPrisma.verificationToken.create({
       data: {
-        identifier: `impersonation:${targetUser.email}`,
+        identifier: `impersonation:${targetUser.email.toLowerCase()}`,
         token: impersonationToken,
         expires: tokenExpiry,
       },
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * DELETE /api/admin/impersonate
- * End current impersonation session
+ * End current impersonation session and return token to restore admin session
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -153,10 +154,30 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    const adminId = token.impersonatedBy as string
+
+    // Get the admin user to restore their session
+    const adminUser = await authPrisma.user.findUnique({
+      where: { id: adminId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        status: true,
+      },
+    })
+
+    if (!adminUser || adminUser.status !== 'ACTIVE') {
+      return NextResponse.json(
+        { success: false, error: 'Admin account not found or inactive' },
+        { status: 400 }
+      )
+    }
+
     // Log impersonation end
     await authPrisma.auditLog.create({
       data: {
-        userId: token.impersonatedBy as string,
+        userId: adminId,
         action: 'IMPERSONATION_END',
         metadata: {
           targetUserId: token.id,
@@ -172,15 +193,32 @@ export async function DELETE(request: NextRequest) {
         userId: token.id as string,
         action: 'IMPERSONATION_END',
         metadata: {
-          impersonatedBy: token.impersonatedBy,
+          impersonatedBy: adminId,
           timestamp: new Date().toISOString(),
         },
+      },
+    })
+
+    // Generate a one-time token for restoring admin session (valid for 60 seconds)
+    const restoreToken = `restore_${adminUser.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+    const tokenExpiry = new Date(Date.now() + 60000) // 60 seconds
+
+    // Store the restore token
+    await authPrisma.verificationToken.create({
+      data: {
+        identifier: `impersonation:${adminUser.email.toLowerCase()}`,
+        token: restoreToken,
+        expires: tokenExpiry,
       },
     })
 
     return NextResponse.json({
       success: true,
       message: 'Impersonation ended successfully',
+      data: {
+        adminEmail: adminUser.email,
+        restoreToken,
+      },
     })
   } catch (error: any) {
     return NextResponse.json(

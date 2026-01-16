@@ -8,8 +8,8 @@
  */
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { startImpersonation, getRoleBasedDashboard } from '@/lib/impersonation'
+import { signIn, signOut } from 'next-auth/react'
+import { startImpersonation, getRoleBasedDashboard, endImpersonation } from '@/lib/impersonation'
 
 interface ImpersonationButtonProps {
   userEmail: string
@@ -116,24 +116,45 @@ interface ImpersonationBannerProps {
 
 export function ImpersonationBanner({ onExit }: ImpersonationBannerProps) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleExit = async () => {
     setLoading(true)
+    setError(null)
 
     try {
       // Clear impersonation from sessionStorage
       sessionStorage.removeItem('impersonation')
+
+      // Call the API to end impersonation and get restore token
+      const response = await fetch('/api/admin/impersonate', {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+
+      if (!result.success || !result.data?.restoreToken) {
+        // If we can't restore, just sign out and redirect to login
+        await signOut({ redirect: false })
+        window.location.href = '/login'
+        return
+      }
 
       // Call the optional onExit callback
       if (onExit) {
         onExit()
       }
 
-      // Redirect back to admin dashboard
-      window.location.href = '/admin'
-    } catch (error) {
-     
-      setLoading(false)
+      // Sign in as admin using the restore token
+      await signIn('credentials', {
+        email: result.data.adminEmail,
+        impersonationToken: result.data.restoreToken,
+        callbackUrl: '/admin',
+      })
+    } catch (err: any) {
+      // On error, sign out and redirect to login as fallback
+      await signOut({ redirect: false })
+      window.location.href = '/login'
     }
   }
 

@@ -96,10 +96,10 @@ export default function ImpersonatePage() {
               </label>
               <div className="relative">
                 <input
-                  type="email"
+                  type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by email (min 2 characters)..."
+                  placeholder="Search by name or email (min 2 characters)..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
                 <svg
@@ -196,7 +196,7 @@ export default function ImpersonatePage() {
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900">Search for users</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Enter at least 2 characters or select a role filter to begin
+                Enter a name or email (min 2 characters) or select a role filter to begin
               </p>
             </div>
           )}
