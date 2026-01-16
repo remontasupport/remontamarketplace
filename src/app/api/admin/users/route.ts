@@ -29,9 +29,17 @@ export async function GET(request: NextRequest) {
     // Build where clause
     const where: any = {}
 
-    // Simple email search only
+    // Search by email, first name, or last name
     if (search && search.length >= 2) {
-      where.email = { contains: search, mode: 'insensitive' }
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { workerProfile: { firstName: { contains: search, mode: 'insensitive' } } },
+        { workerProfile: { lastName: { contains: search, mode: 'insensitive' } } },
+        { clientProfile: { firstName: { contains: search, mode: 'insensitive' } } },
+        { clientProfile: { lastName: { contains: search, mode: 'insensitive' } } },
+        { coordinatorProfile: { firstName: { contains: search, mode: 'insensitive' } } },
+        { coordinatorProfile: { lastName: { contains: search, mode: 'insensitive' } } },
+      ]
     }
 
     // Role filter

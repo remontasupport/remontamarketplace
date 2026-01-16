@@ -41,16 +41,29 @@ export default function DatePickerField({
   maxDate = new Date(),
 }: DatePickerFieldProps) {
   const [open, setOpen] = React.useState(false);
-  const [month, setMonth] = React.useState<Date>(
-    value ? new Date(value) : new Date()
-  );
+  // Parse date string safely without timezone issues
+  const parseDate = (dateStr: string): Date | undefined => {
+    if (!dateStr) return undefined;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (!year || !month || !day) return undefined;
+    return new Date(year, month - 1, day, 12, 0, 0); // Noon to avoid boundary issues
+  };
 
-  const selectedDate = value ? new Date(value) : undefined;
+  const [month, setMonth] = React.useState<Date>(() => {
+    const parsed = parseDate(value);
+    return parsed || new Date();
+  });
+
+  const selectedDate = parseDate(value);
 
   const handleSelect = (date: Date | undefined) => {
     if (date) {
-      const isoString = date.toISOString().split("T")[0];
-      onChange(isoString);
+      // Use LOCAL date methods, NOT toISOString() which converts to UTC
+      const year = date.getFullYear();
+      const monthNum = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${monthNum}-${day}`;
+      onChange(dateString);
       setOpen(false);
     }
   };

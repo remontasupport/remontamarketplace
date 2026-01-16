@@ -542,7 +542,11 @@ export async function updateWorkerPersonalInfo(
 
     // Compute age from dateOfBirth
     if (validatedData.dateOfBirth) {
-      const birthDate = new Date(validatedData.dateOfBirth);
+      // Parse the date string (YYYY-MM-DD) to extract components
+      const [year, month, day] = validatedData.dateOfBirth.split('-').map(Number);
+
+      // Create date at noon LOCAL time for age calculation (avoids boundary issues)
+      const birthDate = new Date(year, month - 1, day, 12, 0, 0);
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -553,6 +557,7 @@ export async function updateWorkerPersonalInfo(
       }
 
       updateData.age = age;
+      // Save as string (YYYY-MM-DD) - dateOfBirth is String type in schema
       updateData.dateOfBirth = validatedData.dateOfBirth;
     }
 
