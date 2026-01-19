@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCategories } from '@/hooks/queries/useCategories'
 import { signOut } from 'next-auth/react'
@@ -32,6 +32,7 @@ interface Contractor {
   createdAt: string
   updatedAt: string
   distance?: number // Only present when distance filtering is active
+  isActive: boolean
 }
 
 interface PaginatedResponse {
@@ -326,6 +327,34 @@ function formatTravelTime(distanceKm: number): string {
 export default function AdminDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+
+  // Mutation for toggling worker status
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ contractorId, isActive }: { contractorId: string; isActive: boolean }) => {
+      console.log('[Toggle Status] Sending request:', { contractorId, isActive })
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive })
+      })
+      const data = await response.json()
+      console.log('[Toggle Status] Response:', data)
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update status')
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      console.log('[Toggle Status] Success:', data)
+      // Invalidate and refetch contractors list
+      queryClient.invalidateQueries({ queryKey: ['contractors'] })
+    },
+    onError: (error) => {
+      console.error('[Toggle Status] Error:', error)
+      alert('Failed to update worker status: ' + error.message)
+    }
+  })
 
   // Fetch categories from database
   const { data: categories, isLoading: isCategoriesLoading } = useCategories()
@@ -394,6 +423,10 @@ export default function AdminDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
   const [showContactInfo, setShowContactInfo] = useState(false)
+  const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
+  const [showInactiveModal, setShowInactiveModal] = useState(false)
+  const [inactiveWorkers, setInactiveWorkers] = useState<Contractor[]>([])
+  const [isLoadingInactive, setIsLoadingInactive] = useState(false)
 
   // Suburb autocomplete states
   const [suburbSearch, setSuburbSearch] = useState('')
@@ -651,6 +684,47 @@ export default function AdminDashboard() {
     setIsModalOpen(false)
     setSelectedContractor(null)
     setShowContactInfo(false)
+  }
+
+  const fetchInactiveWorkers = async () => {
+    setIsLoadingInactive(true)
+    try {
+      const response = await fetch('/api/admin/contractors/inactive')
+      const result = await response.json()
+      if (result.success) {
+        setInactiveWorkers(result.data)
+        setShowInactiveModal(true)
+      } else {
+        alert('Failed to fetch inactive workers: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error fetching inactive workers:', error)
+      alert('Failed to fetch inactive workers')
+    } finally {
+      setIsLoadingInactive(false)
+    }
+  }
+
+  const reactivateWorker = async (contractorId: string) => {
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true })
+      })
+      const result = await response.json()
+      if (result.success) {
+        // Remove from inactive list
+        setInactiveWorkers(prev => prev.filter(w => w.id !== contractorId))
+        // Refresh main list
+        queryClient.invalidateQueries({ queryKey: ['contractors'] })
+      } else {
+        alert('Failed to reactivate worker: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error reactivating worker:', error)
+      alert('Failed to reactivate worker')
+    }
   }
 
   // ========================================
@@ -1037,6 +1111,14 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </div>
+                {/* Show Inactive Link */}
+                <button
+                  onClick={fetchInactiveWorkers}
+                  disabled={isLoadingInactive}
+                  className="mt-4 text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait text-left"
+                >
+                  {isLoadingInactive ? 'Loading...' : 'Show Inactive'}
+                </button>
               </div>
 
               {/* Therapeutic Subcategories - Multi-select with Search (only shown when Therapeutic Supports is selected) */}
@@ -1441,7 +1523,7 @@ export default function AdminDashboard() {
                           setSelectedContractor(contractor)
                           setIsModalOpen(true)
                         }}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors">
+                        className={`hover:bg-gray-50 cursor-pointer transition-colors ${!contractor.isActive ? 'opacity-50' : ''}`}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -1461,8 +1543,48 @@ export default function AdminDashboard() {
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {contractor.firstName} {contractor.lastName}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {contractor.firstName} {contractor.lastName}
+                                </span>
+                                {/* Active Status with Toggle on Click */}
+                                <div className="flex items-center gap-1">
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowToggleForContractor(
+                                        showToggleForContractor === contractor.id ? null : contractor.id
+                                      );
+                                    }}
+                                    className="text-xs text-green-700 font-medium cursor-pointer select-none px-2 py-0.5 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
+                                  >
+                                    Active
+                                  </span>
+                                  {showToggleForContractor === contractor.id && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleStatusMutation.mutate({
+                                          contractorId: contractor.id,
+                                          isActive: !contractor.isActive
+                                        })
+                                      }}
+                                      disabled={toggleStatusMutation.isPending}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                                        contractor.isActive ? 'bg-green-500' : 'bg-gray-300'
+                                      } ${toggleStatusMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
+                                      role="switch"
+                                      aria-checked={contractor.isActive}
+                                      title={contractor.isActive ? 'Click to deactivate' : 'Click to activate'}
+                                    >
+                                      <span
+                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                          contractor.isActive ? 'translate-x-4' : 'translate-x-0'
+                                        }`}
+                                      />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               {contractor.mobile && (
                                 <div className="text-sm text-gray-500">
@@ -1695,6 +1817,88 @@ export default function AdminDashboard() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inactive Workers Modal */}
+      {showInactiveModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => setShowInactiveModal(false)}
+          ></div>
+
+          {/* Modal */}
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div
+              className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Inactive Workers ({inactiveWorkers.length})
+                </h3>
+                <button
+                  onClick={() => setShowInactiveModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="overflow-y-auto max-h-[60vh] p-6">
+                {inactiveWorkers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No inactive workers found
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {inactiveWorkers.map((worker) => (
+                      <div
+                        key={worker.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          {worker.photos ? (
+                            <img
+                              className="h-10 w-10 rounded-full object-cover"
+                              src={worker.photos}
+                              alt=""
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <span className="text-gray-600 font-medium text-sm">
+                                {worker.firstName?.[0]}{worker.lastName?.[0]}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {worker.firstName} {worker.lastName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {worker.email || worker.mobile || 'No contact info'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => reactivateWorker(worker.id)}
+                          className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
+                        >
+                          Reactivate
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

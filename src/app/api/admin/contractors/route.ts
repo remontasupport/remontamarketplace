@@ -429,6 +429,13 @@ const filterRegistry: Record<string, FilterBuilder> = {
  * - Expected query time: < 100ms for 10k+ records
  */
 function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput {
+  // Base condition: Only show ACTIVE users (hide suspended/inactive workers)
+  const baseCondition: Prisma.WorkerProfileWhereInput = {
+    user: {
+      status: 'ACTIVE'
+    }
+  }
+
   // Execute all filters and collect non-null results
   const activeFilters = Object.values(filterRegistry)
     .map(filterFn => filterFn(params))
@@ -438,9 +445,9 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
   if (activeFilters.length > 0) {
   }
 
-  // Edge case: No filters active
+  // Edge case: No filters active - still apply base condition
   if (activeFilters.length === 0) {
-    return {}
+    return baseCondition
   }
 
   // Separate OR filters from AND filters
@@ -451,10 +458,10 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
   if (orFilters.length > 0) {
     const andConditions = orFilters.map(f => ({ OR: f.OR }))
 
-    // Merge with regular AND filters
+    // Merge with regular AND filters + base condition
     const mergedAndFilters = andFilters.reduce((acc, filter) => {
       return { ...acc, ...filter }
-    }, {})
+    }, baseCondition)
 
     // Combine everything
     let result
@@ -464,16 +471,16 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
       }
     } else {
       result = orFilters.length === 1
-        ? orFilters[0]
-        : { AND: andConditions }
+        ? { ...orFilters[0], ...baseCondition }
+        : { AND: [...andConditions, baseCondition] }
     }
     return result;
   }
 
-  // No OR filters, just merge AND filters
+  // No OR filters, just merge AND filters with base condition
   const result = andFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
     return { ...acc, ...filter }
-  }, {})
+  }, baseCondition)
 
   return result
 }
@@ -769,6 +776,7 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
           user: {
             select: {
               email: true,
+              status: true,
             }
           },
           city: true,
@@ -820,6 +828,7 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
       age: finalAge,
       languages: finalLanguages,
       services: transformWorkerServices(worker.workerServices),
+      isActive: worker.user?.status === 'ACTIVE',
       workerServices: undefined, // Remove from response
       workerAdditionalInfo: undefined, // Remove from response
       user: undefined, // Remove from response
@@ -904,6 +913,7 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
       user: {
         select: {
           email: true,
+          status: true,
         }
       },
       city: true,
@@ -945,6 +955,7 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
         age: finalAge,
         languages: finalLanguages,
         services: transformWorkerServices(worker.workerServices),
+        isActive: worker.user?.status === 'ACTIVE',
         workerServices: undefined, // Remove from response
         workerAdditionalInfo: undefined, // Remove from response
         user: undefined, // Remove from response
