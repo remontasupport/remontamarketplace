@@ -138,7 +138,9 @@ export default function WorkerProfileView({
                 <h4 className="text-base font-poppins font-semibold text-gray-700">Location</h4>
               </div>
               <p className="text-base text-gray-900 ml-7">
-                {profile?.location || 'Not specified'}
+                {profile?.city && profile?.state
+                  ? `${profile.city}, ${profile.state}${profile.postalCode ? ` ${profile.postalCode}` : ''}`
+                  : profile?.city || profile?.state || 'Not specified'}
               </p>
             </div>
           </div>

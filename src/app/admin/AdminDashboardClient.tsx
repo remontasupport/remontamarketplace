@@ -1584,7 +1584,7 @@ export default function AdminDashboard() {
                     </h3>
                     <p className="text-sm text-gray-500">
                       {selectedContractor.city && selectedContractor.state
-                        ? `${selectedContractor.city}, ${selectedContractor.state}`
+                        ? `${selectedContractor.city}, ${selectedContractor.state}${selectedContractor.postalCode ? ` ${selectedContractor.postalCode}` : ''}`
                         : selectedContractor.city || selectedContractor.state || 'Location not specified'}
                     </p>
                   </div>

@@ -21,7 +21,9 @@ export type ProfilePreviewResponse = {
       photos: string | null;
       introduction: string | null;
       createdAt: Date;
-      location: string | null;
+      city: string | null;
+      state: string | null;
+      postalCode: string | null;
       hasVehicle: boolean | null;
     };
     // From worker_services table (grouped by category)
@@ -111,7 +113,9 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
         photos: true,
         introduction: true,
         createdAt: true,
-        location: true,
+        city: true,
+        state: true,
+        postalCode: true,
         hasVehicle: true,
         workerAdditionalInfo: {
           select: {
@@ -192,7 +196,9 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
           photos: workerProfile.photos,
           introduction: workerProfile.introduction,
           createdAt: workerProfile.createdAt,
-          location: workerProfile.location,
+          city: workerProfile.city,
+          state: workerProfile.state,
+          postalCode: workerProfile.postalCode,
           hasVehicle: workerProfile.hasVehicle,
         },
         services: servicesGrouped,

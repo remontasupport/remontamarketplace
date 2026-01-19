@@ -13,7 +13,9 @@ export type ProfilePreviewData = {
     photos: string | null;
     introduction: string | null;
     createdAt: Date;
-    location: string | null;
+    city: string | null;
+    state: string | null;
+    postalCode: string | null;
     hasVehicle: boolean | null;
   };
   services: Array<{
@@ -67,7 +69,9 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
         photos: true,
         introduction: true,
         createdAt: true,
-        location: true,
+        city: true,
+        state: true,
+        postalCode: true,
         hasVehicle: true,
         workerAdditionalInfo: {
           select: {
@@ -143,7 +147,9 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
         photos: workerProfile.photos,
         introduction: workerProfile.introduction,
         createdAt: workerProfile.createdAt,
-        location: workerProfile.location,
+        city: workerProfile.city,
+        state: workerProfile.state,
+        postalCode: workerProfile.postalCode,
         hasVehicle: workerProfile.hasVehicle,
       },
       services: servicesGrouped,
