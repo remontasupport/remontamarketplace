@@ -58,6 +58,8 @@ interface ContractorsFilters {
   location: string
   typeOfSupport: string
   gender: string
+  hasVehicle: string
+  workerType: string
   languages: string[]
   age: string
   within: string
@@ -99,6 +101,14 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 
   if (filters.gender && filters.gender !== 'all') {
     params.append('gender', filters.gender)
+  }
+
+  if (filters.hasVehicle && filters.hasVehicle !== 'all') {
+    params.append('hasVehicle', filters.hasVehicle)
+  }
+
+  if (filters.workerType && filters.workerType !== 'all') {
+    params.append('workerType', filters.workerType)
   }
 
   if (filters.languages && filters.languages.length > 0) {
@@ -183,6 +193,14 @@ function parseFiltersFromURL(searchParams: URLSearchParams): Partial<Contractors
   const gender = searchParams.get('gender')
   if (gender) filters.gender = gender
 
+  // Has Vehicle (Driver Access)
+  const hasVehicle = searchParams.get('hasVehicle')
+  if (hasVehicle) filters.hasVehicle = hasVehicle
+
+  // Worker Type
+  const workerType = searchParams.get('workerType')
+  if (workerType) filters.workerType = workerType
+
   // Languages (array)
   const languages = searchParams.get('languages')
   if (languages) filters.languages = languages.split(',').filter(Boolean)
@@ -255,6 +273,16 @@ function buildURLFromFilters(filters: ContractorsFilters): string {
   // Gender (only if not 'all')
   if (filters.gender && filters.gender !== 'all') {
     params.set('gender', filters.gender)
+  }
+
+  // Has Vehicle / Driver Access (only if not 'all')
+  if (filters.hasVehicle && filters.hasVehicle !== 'all') {
+    params.set('hasVehicle', filters.hasVehicle)
+  }
+
+  // Worker Type (only if not 'all')
+  if (filters.workerType && filters.workerType !== 'all') {
+    params.set('workerType', filters.workerType)
   }
 
   // Languages (array)
@@ -343,6 +371,8 @@ export default function AdminDashboard() {
       location: '',
       typeOfSupport: 'all',
       gender: 'all',
+      hasVehicle: 'all',
+      workerType: 'all',
       languages: [],
       age: 'all',
       within: 'none',
@@ -371,6 +401,8 @@ export default function AdminDashboard() {
     location: filters.location,
     typeOfSupport: filters.typeOfSupport,
     gender: filters.gender,
+    hasVehicle: filters.hasVehicle,
+    workerType: filters.workerType,
     languages: filters.languages,
     age: filters.age,
     within: filters.within,
@@ -558,12 +590,14 @@ export default function AdminDashboard() {
       location: filters.location,
       typeOfSupport: filters.typeOfSupport,
       gender: filters.gender,
+      hasVehicle: filters.hasVehicle,
+      workerType: filters.workerType,
       languages: filters.languages,
       age: filters.age,
       within: filters.within,
       therapeuticSubcategories: filters.therapeuticSubcategories,
     })
-  }, [filters.location, filters.typeOfSupport, filters.gender, filters.languages, filters.age, filters.within, filters.therapeuticSubcategories])
+  }, [filters.location, filters.typeOfSupport, filters.gender, filters.hasVehicle, filters.workerType, filters.languages, filters.age, filters.within, filters.therapeuticSubcategories])
 
   // Sync filters to URL whenever they change
   useEffect(() => {
@@ -918,6 +952,8 @@ export default function AdminDashboard() {
                       location: finalLocation,
                       typeOfSupport: pendingFilters.typeOfSupport,
                       gender: pendingFilters.gender,
+                      hasVehicle: pendingFilters.hasVehicle,
+                      workerType: pendingFilters.workerType,
                       languages: pendingFilters.languages,
                       age: pendingFilters.age,
                       within: pendingFilters.within,
@@ -1151,6 +1187,38 @@ export default function AdminDashboard() {
                   <option value="60+">60 above</option>
                 </select>
               </div>
+
+              {/* Driver Access */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Driver Access
+                </label>
+                <select
+                  value={pendingFilters.hasVehicle}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, hasVehicle: e.target.value }))}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="all">All</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              {/* Worker Type */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Worker Type
+                </label>
+                <select
+                  value={pendingFilters.workerType}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, workerType: e.target.value }))}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="all">All</option>
+                  <option value="Employee">Employee</option>
+                  <option value="Contractor">Contractor</option>
+                </select>
+              </div>
             </div>
 
             {/* Document Filters Section - HIDDEN */}
@@ -1271,6 +1339,8 @@ export default function AdminDashboard() {
                     location: '',
                     typeOfSupport: 'all',
                     gender: 'all',
+                    hasVehicle: 'all',
+                    workerType: 'all',
                     languages: [],
                     age: 'all',
                     within: 'none',
@@ -1283,6 +1353,8 @@ export default function AdminDashboard() {
                     location: '',
                     typeOfSupport: 'all',
                     gender: 'all',
+                    hasVehicle: 'all',
+                    workerType: 'all',
                     languages: [],
                     age: 'all',
                     within: 'none',

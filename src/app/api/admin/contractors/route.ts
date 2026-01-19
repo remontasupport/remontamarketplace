@@ -20,6 +20,8 @@ interface FilterParams {
   location?: string
   typeOfSupport?: string
   gender?: string
+  hasVehicle?: string
+  workerType?: string
   languages?: string[]
   age?: string
   within?: string
@@ -103,6 +105,31 @@ const filterRegistry: Record<string, FilterBuilder> = {
   gender: (params) => {
     if (!params.gender || params.gender === 'all') return null;
     return { gender: toTitleCase(params.gender) };
+  },
+
+  /**
+   * Has Vehicle / Driver Access Filter
+   * Database format is "Yes" or "No"
+   */
+  hasVehicle: (params) => {
+    if (!params.hasVehicle || params.hasVehicle === 'all') return null;
+    return { hasVehicle: params.hasVehicle };
+  },
+
+  /**
+   * Worker Type Filter
+   * Queries JSON column: abn = {"workerEngagementType":{"type":"abn"|"tfn","value":"..."}}
+   * Employee = type is "tfn", Contractor = type is "abn"
+   */
+  workerType: (params) => {
+    if (!params.workerType || params.workerType === 'all') return null;
+    const typeValue = params.workerType === 'Employee' ? 'tfn' : 'abn';
+    return {
+      abn: {
+        path: ['workerEngagementType', 'type'],
+        equals: typeValue,
+      },
+    };
   },
 
   /**
@@ -564,6 +591,8 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
   const location = searchParams.get('location') || undefined
   const typeOfSupport = searchParams.get('typeOfSupport') || undefined
   const gender = searchParams.get('gender') || undefined
+  const hasVehicle = searchParams.get('hasVehicle') || undefined
+  const workerType = searchParams.get('workerType') || undefined
   const age = searchParams.get('age') || undefined
   const within = searchParams.get('within') || 'none'
 
@@ -604,6 +633,8 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     location,
     typeOfSupport,
     gender,
+    hasVehicle,
+    workerType,
     languages,
     age,
     within,
@@ -627,6 +658,12 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   }
   if (params.gender && params.gender !== 'all') {
     applied.gender = params.gender
+  }
+  if (params.hasVehicle && params.hasVehicle !== 'all') {
+    applied.hasVehicle = params.hasVehicle
+  }
+  if (params.workerType && params.workerType !== 'all') {
+    applied.workerType = params.workerType
   }
   if (params.languages && params.languages.length > 0) {
     applied.languages = params.languages
