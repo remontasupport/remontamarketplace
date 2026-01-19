@@ -85,61 +85,35 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
     sortOrder: filters.sortOrder,
   })
 
-  // Text search
-  if (filters.search) {
-    params.append('search', filters.search)
-  }
+  // Filter groups by default value type
+  const stringFilters = ['search', 'location'] as const
+  const allDefaultFilters = ['typeOfSupport', 'gender', 'hasVehicle', 'workerType', 'age'] as const
+  const noneDefaultFilters = ['within'] as const
+  const arrayFilters = ['languages', 'therapeuticSubcategories', 'documentCategories', 'documentStatuses', 'requirementTypes'] as const
 
-  // Advanced filters - only add if they have values
-  if (filters.location) {
-    params.append('location', filters.location)
-  }
+  // String filters (truthy check only)
+  stringFilters.forEach(key => {
+    const value = filters[key]
+    if (value) params.append(key, value)
+  })
 
-  if (filters.typeOfSupport && filters.typeOfSupport !== 'all') {
-    params.append('typeOfSupport', filters.typeOfSupport)
-  }
+  // String filters with 'all' as default
+  allDefaultFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value !== 'all') params.append(key, value)
+  })
 
-  if (filters.gender && filters.gender !== 'all') {
-    params.append('gender', filters.gender)
-  }
+  // String filters with 'none' as default
+  noneDefaultFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value !== 'none') params.append(key, value)
+  })
 
-  if (filters.hasVehicle && filters.hasVehicle !== 'all') {
-    params.append('hasVehicle', filters.hasVehicle)
-  }
-
-  if (filters.workerType && filters.workerType !== 'all') {
-    params.append('workerType', filters.workerType)
-  }
-
-  if (filters.languages && filters.languages.length > 0) {
-    params.append('languages', filters.languages.join(','))
-  }
-
-  if (filters.age && filters.age !== 'all') {
-    params.append('age', filters.age)
-  }
-
-  if (filters.within && filters.within !== 'none') {
-    params.append('within', filters.within)
-  }
-
-  // Therapeutic subcategories filter (NEW)
-  if (filters.therapeuticSubcategories && filters.therapeuticSubcategories.length > 0) {
-    params.append('therapeuticSubcategories', filters.therapeuticSubcategories.join(','))
-  }
-
-  // Document filters (NEW)
-  if (filters.documentCategories && filters.documentCategories.length > 0) {
-    params.append('documentCategories', filters.documentCategories.join(','))
-  }
-
-  if (filters.documentStatuses && filters.documentStatuses.length > 0) {
-    params.append('documentStatuses', filters.documentStatuses.join(','))
-  }
-
-  if (filters.requirementTypes && filters.requirementTypes.length > 0) {
-    params.append('requirementTypes', filters.requirementTypes.join(','))
-  }
+  // Array filters (join with comma)
+  arrayFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value.length > 0) params.append(key, value.join(','))
+  })
 
   const response = await fetch(`/api/admin/contractors?${params.toString()}`)
 
