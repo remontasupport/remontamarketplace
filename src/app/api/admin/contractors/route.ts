@@ -240,17 +240,45 @@ const filterRegistry: Record<string, FilterBuilder> = {
   /**
    * Text Search Filter
    * Searches across firstName, lastName, mobile
+   * Supports full name search (e.g., "Test Terson" matches firstName="Test" lastName="Terson")
    */
-  textSearch: (params) =>
-    params.search
-      ? {
-          OR: [
-            { firstName: { contains: params.search, mode: 'insensitive' } },
-            { lastName: { contains: params.search, mode: 'insensitive' } },
-            { mobile: { contains: params.search } },
-          ]
-        }
-      : null,
+  textSearch: (params) => {
+    if (!params.search) return null;
+
+    const search = params.search.trim();
+    const searchParts = search.split(/\s+/).filter(Boolean);
+
+    // Base conditions: search in individual fields
+    const baseConditions = [
+      { firstName: { contains: search, mode: 'insensitive' as const } },
+      { lastName: { contains: search, mode: 'insensitive' as const } },
+      { mobile: { contains: search } },
+    ];
+
+    // If search has multiple words, add full name matching conditions
+    if (searchParts.length >= 2) {
+      const firstPart = searchParts[0];
+      const remainingParts = searchParts.slice(1).join(' ');
+
+      // firstName matches first part AND lastName matches remaining (e.g., "Test Terson")
+      baseConditions.push({
+        AND: [
+          { firstName: { contains: firstPart, mode: 'insensitive' as const } },
+          { lastName: { contains: remainingParts, mode: 'insensitive' as const } },
+        ],
+      } as any);
+
+      // lastName matches first part AND firstName matches remaining (e.g., "Terson Test")
+      baseConditions.push({
+        AND: [
+          { lastName: { contains: firstPart, mode: 'insensitive' as const } },
+          { firstName: { contains: remainingParts, mode: 'insensitive' as const } },
+        ],
+      } as any);
+    }
+
+    return { OR: baseConditions };
+  },
 
   /**
    * Therapeutic Subcategories Filter (Multi-select)
