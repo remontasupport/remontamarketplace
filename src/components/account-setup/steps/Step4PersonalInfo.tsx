@@ -252,8 +252,8 @@ export default function Step4PersonalInfo({
             value={data.gender}
             onChange={(e) => onChange("gender", e.target.value)}
             options={[
-              { label: "Male", value: "male" },
-              { label: "Female", value: "female" },
+              { label: "Male", value: "Male" },
+              { label: "Female", value: "Female" },
             ]}
             placeholder="Select an option"
             required

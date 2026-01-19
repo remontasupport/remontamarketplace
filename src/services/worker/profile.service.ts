@@ -562,7 +562,7 @@ export async function updateWorkerPersonalInfo(
     }
 
     if (validatedData.gender) {
-      updateData.gender = validatedData.gender.toLowerCase();
+      updateData.gender = validatedData.gender;
     }
 
     if (validatedData.hasVehicle) {

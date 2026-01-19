@@ -174,7 +174,9 @@ function AccountSetupContent() {
         postalCode: profileData.postalCode || "",
         identityDocuments: [],
         dateOfBirth: profileData.dateOfBirth || "",
-        gender: profileData.gender ? profileData.gender.toLowerCase() : "",
+        gender: profileData.gender
+          ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1).toLowerCase()
+          : "",
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
       });

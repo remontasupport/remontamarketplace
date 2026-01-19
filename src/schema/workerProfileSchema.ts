@@ -136,7 +136,7 @@ export const updateWorkerPersonalInfoSchema = z.object({
     }, {
       message: "Please enter a valid date of birth",
     }),
-  gender: z.enum(["male", "female"], {
+  gender: z.enum(["Male", "Female"], {
     required_error: "Gender is required",
     invalid_type_error: "Gender is required",
   }),
