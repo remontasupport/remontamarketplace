@@ -136,71 +136,44 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 function parseFiltersFromURL(searchParams: URLSearchParams): Partial<ContractorsFilters> {
   const filters: Partial<ContractorsFilters> = {}
 
-  // Pagination
-  const page = searchParams.get('page')
-  if (page) filters.page = parseInt(page, 10) || 1
+  // Integer filters with default fallback
+  const intFilters = [
+    { key: 'page', fallback: 1 },
+    { key: 'pageSize', fallback: 20 },
+  ] as const
 
-  const pageSize = searchParams.get('pageSize')
-  if (pageSize) filters.pageSize = parseInt(pageSize, 10) || 20
+  intFilters.forEach(({ key, fallback }) => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, number>)[key] = parseInt(value, 10) || fallback
+  })
 
-  // Search
-  const search = searchParams.get('search')
-  if (search) filters.search = search
+  // Simple string filters (direct assignment)
+  const stringFilters = [
+    'search', 'sortBy', 'location', 'typeOfSupport',
+    'gender', 'hasVehicle', 'workerType', 'age', 'within'
+  ] as const
 
-  // Sort
-  const sortBy = searchParams.get('sortBy')
-  if (sortBy) filters.sortBy = sortBy
+  stringFilters.forEach(key => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, string>)[key] = value
+  })
 
+  // Validated sortOrder (must be 'asc' or 'desc')
   const sortOrder = searchParams.get('sortOrder')
-  if (sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
+  if (sortOrder === 'asc' || sortOrder === 'desc') {
     filters.sortOrder = sortOrder
   }
 
-  // Location
-  const location = searchParams.get('location')
-  if (location) filters.location = location
+  // Array filters (comma-separated)
+  const arrayFilters = [
+    'languages', 'therapeuticSubcategories',
+    'documentCategories', 'documentStatuses', 'requirementTypes'
+  ] as const
 
-  // Type of Support
-  const typeOfSupport = searchParams.get('typeOfSupport')
-  if (typeOfSupport) filters.typeOfSupport = typeOfSupport
-
-  // Gender
-  const gender = searchParams.get('gender')
-  if (gender) filters.gender = gender
-
-  // Has Vehicle (Driver Access)
-  const hasVehicle = searchParams.get('hasVehicle')
-  if (hasVehicle) filters.hasVehicle = hasVehicle
-
-  // Worker Type
-  const workerType = searchParams.get('workerType')
-  if (workerType) filters.workerType = workerType
-
-  // Languages (array)
-  const languages = searchParams.get('languages')
-  if (languages) filters.languages = languages.split(',').filter(Boolean)
-
-  // Age
-  const age = searchParams.get('age')
-  if (age) filters.age = age
-
-  // Within (distance)
-  const within = searchParams.get('within')
-  if (within) filters.within = within
-
-  // Therapeutic subcategories (array)
-  const therapeuticSubcategories = searchParams.get('therapeuticSubcategories')
-  if (therapeuticSubcategories) filters.therapeuticSubcategories = therapeuticSubcategories.split(',').filter(Boolean)
-
-  // Document filters (arrays)
-  const documentCategories = searchParams.get('documentCategories')
-  if (documentCategories) filters.documentCategories = documentCategories.split(',').filter(Boolean)
-
-  const documentStatuses = searchParams.get('documentStatuses')
-  if (documentStatuses) filters.documentStatuses = documentStatuses.split(',').filter(Boolean)
-
-  const requirementTypes = searchParams.get('requirementTypes')
-  if (requirementTypes) filters.requirementTypes = requirementTypes.split(',').filter(Boolean)
+  arrayFilters.forEach(key => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, string[]>)[key] = value.split(',').filter(Boolean)
+  })
 
   return filters
 }
@@ -212,84 +185,58 @@ function parseFiltersFromURL(searchParams: URLSearchParams): Partial<Contractors
 function buildURLFromFilters(filters: ContractorsFilters): string {
   const params = new URLSearchParams()
 
-  // Always include page (unless it's 1)
-  if (filters.page && filters.page !== 1) {
-    params.set('page', filters.page.toString())
-  }
+  // Integer filters with default values to skip
+  const intFilters = [
+    { key: 'page', defaultValue: 1 },
+    { key: 'pageSize', defaultValue: 20 },
+  ] as const
 
-  // Include pageSize only if not default
-  if (filters.pageSize && filters.pageSize !== 20) {
-    params.set('pageSize', filters.pageSize.toString())
-  }
+  intFilters.forEach(({ key, defaultValue }) => {
+    const value = filters[key]
+    if (value && value !== defaultValue) {
+      params.set(key, value.toString())
+    }
+  })
 
-  // Search
-  if (filters.search) {
-    params.set('search', filters.search)
-  }
+  // String filters with no default (truthy check only)
+  const stringFilters = ['search', 'location'] as const
 
-  // Sort (only if not default)
-  if (filters.sortBy && filters.sortBy !== 'createdAt') {
-    params.set('sortBy', filters.sortBy)
-  }
-  if (filters.sortOrder && filters.sortOrder !== 'desc') {
-    params.set('sortOrder', filters.sortOrder)
-  }
+  stringFilters.forEach(key => {
+    const value = filters[key]
+    if (value) params.set(key, value)
+  })
 
-  // Location
-  if (filters.location) {
-    params.set('location', filters.location)
-  }
+  // String filters with specific default values to skip
+  const stringFiltersWithDefaults = [
+    { key: 'sortBy', defaultValue: 'createdAt' },
+    { key: 'sortOrder', defaultValue: 'desc' },
+    { key: 'typeOfSupport', defaultValue: 'all' },
+    { key: 'gender', defaultValue: 'all' },
+    { key: 'hasVehicle', defaultValue: 'all' },
+    { key: 'workerType', defaultValue: 'all' },
+    { key: 'age', defaultValue: 'all' },
+    { key: 'within', defaultValue: 'none' },
+  ] as const
 
-  // Type of Support (only if not 'all')
-  if (filters.typeOfSupport && filters.typeOfSupport !== 'all') {
-    params.set('typeOfSupport', filters.typeOfSupport)
-  }
+  stringFiltersWithDefaults.forEach(({ key, defaultValue }) => {
+    const value = filters[key]
+    if (value && value !== defaultValue) {
+      params.set(key, value)
+    }
+  })
 
-  // Gender (only if not 'all')
-  if (filters.gender && filters.gender !== 'all') {
-    params.set('gender', filters.gender)
-  }
+  // Array filters (join with comma)
+  const arrayFilters = [
+    'languages', 'therapeuticSubcategories',
+    'documentCategories', 'documentStatuses', 'requirementTypes'
+  ] as const
 
-  // Has Vehicle / Driver Access (only if not 'all')
-  if (filters.hasVehicle && filters.hasVehicle !== 'all') {
-    params.set('hasVehicle', filters.hasVehicle)
-  }
-
-  // Worker Type (only if not 'all')
-  if (filters.workerType && filters.workerType !== 'all') {
-    params.set('workerType', filters.workerType)
-  }
-
-  // Languages (array)
-  if (filters.languages && filters.languages.length > 0) {
-    params.set('languages', filters.languages.join(','))
-  }
-
-  // Age (only if not 'all')
-  if (filters.age && filters.age !== 'all') {
-    params.set('age', filters.age)
-  }
-
-  // Within/Distance (only if not 'none')
-  if (filters.within && filters.within !== 'none') {
-    params.set('within', filters.within)
-  }
-
-  // Therapeutic subcategories (array)
-  if (filters.therapeuticSubcategories && filters.therapeuticSubcategories.length > 0) {
-    params.set('therapeuticSubcategories', filters.therapeuticSubcategories.join(','))
-  }
-
-  // Document filters (arrays)
-  if (filters.documentCategories && filters.documentCategories.length > 0) {
-    params.set('documentCategories', filters.documentCategories.join(','))
-  }
-  if (filters.documentStatuses && filters.documentStatuses.length > 0) {
-    params.set('documentStatuses', filters.documentStatuses.join(','))
-  }
-  if (filters.requirementTypes && filters.requirementTypes.length > 0) {
-    params.set('requirementTypes', filters.requirementTypes.join(','))
-  }
+  arrayFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value.length > 0) {
+      params.set(key, value.join(','))
+    }
+  })
 
   const queryString = params.toString()
   return queryString ? `?${queryString}` : ''
@@ -419,14 +366,17 @@ export default function AdminDashboard() {
     requirementTypes: [] as string[],
   })
 
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  // Contractor modal state (isModalOpen derived from selectedContractor !== null)
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
   const [showContactInfo, setShowContactInfo] = useState(false)
   const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
-  const [showInactiveModal, setShowInactiveModal] = useState(false)
-  const [inactiveWorkers, setInactiveWorkers] = useState<Contractor[]>([])
-  const [isLoadingInactive, setIsLoadingInactive] = useState(false)
+
+  // Inactive workers modal state (grouped)
+  const [inactiveWorkersState, setInactiveWorkersState] = useState({
+    isOpen: false,
+    workers: [] as Contractor[],
+    isLoading: false,
+  })
 
   // Suburb autocomplete states
   const [suburbSearch, setSuburbSearch] = useState('')
@@ -681,27 +631,25 @@ export default function AdminDashboard() {
   }
 
   const closeModal = () => {
-    setIsModalOpen(false)
     setSelectedContractor(null)
     setShowContactInfo(false)
   }
 
   const fetchInactiveWorkers = async () => {
-    setIsLoadingInactive(true)
+    setInactiveWorkersState(prev => ({ ...prev, isLoading: true }))
     try {
       const response = await fetch('/api/admin/contractors/inactive')
       const result = await response.json()
       if (result.success) {
-        setInactiveWorkers(result.data)
-        setShowInactiveModal(true)
+        setInactiveWorkersState({ isOpen: true, workers: result.data, isLoading: false })
       } else {
+        setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
         alert('Failed to fetch inactive workers: ' + result.error)
       }
     } catch (error) {
       console.error('Error fetching inactive workers:', error)
+      setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
       alert('Failed to fetch inactive workers')
-    } finally {
-      setIsLoadingInactive(false)
     }
   }
 
@@ -715,7 +663,10 @@ export default function AdminDashboard() {
       const result = await response.json()
       if (result.success) {
         // Remove from inactive list
-        setInactiveWorkers(prev => prev.filter(w => w.id !== contractorId))
+        setInactiveWorkersState(prev => ({
+          ...prev,
+          workers: prev.workers.filter(w => w.id !== contractorId)
+        }))
         // Refresh main list
         queryClient.invalidateQueries({ queryKey: ['contractors'] })
       } else {
@@ -1114,10 +1065,10 @@ export default function AdminDashboard() {
                 {/* Show Inactive Link */}
                 <button
                   onClick={fetchInactiveWorkers}
-                  disabled={isLoadingInactive}
+                  disabled={inactiveWorkersState.isLoading}
                   className="mt-4 text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait text-left"
                 >
-                  {isLoadingInactive ? 'Loading...' : 'Show Inactive'}
+                  {inactiveWorkersState.isLoading ? 'Loading...' : 'Show Inactive'}
                 </button>
               </div>
 
@@ -1519,10 +1470,7 @@ export default function AdminDashboard() {
                     data.data.map((contractor) => (
                       <tr
                         key={contractor.id}
-                        onClick={() => {
-                          setSelectedContractor(contractor)
-                          setIsModalOpen(true)
-                        }}
+                        onClick={() => setSelectedContractor(contractor)}
                         className={`hover:bg-gray-50 cursor-pointer transition-colors ${!contractor.isActive ? 'opacity-50' : ''}`}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -1659,7 +1607,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Modal for contractor actions */}
-      {isModalOpen && selectedContractor && (
+      {selectedContractor && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
@@ -1823,12 +1771,12 @@ export default function AdminDashboard() {
       )}
 
       {/* Inactive Workers Modal */}
-      {showInactiveModal && (
+      {inactiveWorkersState.isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setShowInactiveModal(false)}
+            onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
           ></div>
 
           {/* Modal */}
@@ -1840,10 +1788,10 @@ export default function AdminDashboard() {
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Inactive Workers ({inactiveWorkers.length})
+                  Inactive Workers ({inactiveWorkersState.workers.length})
                 </h3>
                 <button
-                  onClick={() => setShowInactiveModal(false)}
+                  onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1854,13 +1802,13 @@ export default function AdminDashboard() {
 
               {/* Content */}
               <div className="overflow-y-auto max-h-[60vh] p-6">
-                {inactiveWorkers.length === 0 ? (
+                {inactiveWorkersState.workers.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No inactive workers found
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {inactiveWorkers.map((worker) => (
+                    {inactiveWorkersState.workers.map((worker) => (
                       <div
                         key={worker.id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
