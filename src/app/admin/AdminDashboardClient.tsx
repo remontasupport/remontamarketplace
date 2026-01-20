@@ -438,34 +438,18 @@ export default function AdminDashboard() {
     fetchFilterOptions()
   }, [])
 
-  // Close suburb dropdown when clicking outside
+  // Close all dropdowns when clicking outside (combined handler)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (suburbDropdownRef.current && !suburbDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+
+      if (suburbDropdownRef.current && !suburbDropdownRef.current.contains(target)) {
         setShowSuburbDropdown(false)
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Close language dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
         setShowLanguageDropdown(false)
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Close therapeutic subcategory dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(event.target as Node)) {
+      if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(target)) {
         setShowTherapeuticSubcategoryDropdown(false)
       }
     }
@@ -540,21 +524,6 @@ export default function AdminDashboard() {
     const timeoutId = setTimeout(fetchSuburbs, 300) // Debounce for 300ms
     return () => clearTimeout(timeoutId)
   }, [suburbSearch])
-
-  // Sync pendingFilters when actual filters change (e.g., from URL navigation)
-  useEffect(() => {
-    setPendingFilters({
-      location: filters.location,
-      typeOfSupport: filters.typeOfSupport,
-      gender: filters.gender,
-      hasVehicle: filters.hasVehicle,
-      workerType: filters.workerType,
-      languages: filters.languages,
-      age: filters.age,
-      within: filters.within,
-      therapeuticSubcategories: filters.therapeuticSubcategories,
-    })
-  }, [filters.location, filters.typeOfSupport, filters.gender, filters.hasVehicle, filters.workerType, filters.languages, filters.age, filters.within, filters.therapeuticSubcategories])
 
   // Sync filters to URL whenever they change
   useEffect(() => {
