@@ -3,7 +3,7 @@ import * as z from "zod";
 export const clientFormSchema = z.object({
   // Step 1 - Who is completing this form
   completingFormAs: z.enum(
-    ["coordinator", "client"],
+    ["coordinator", "self", "client"],
     {
       required_error: "Please select who is completing this form",
     }
@@ -27,6 +27,15 @@ export const clientFormSchema = z.object({
     }, "Please enter a valid Australian mobile number (e.g., 04XX XXX XXX)"),
   organisationName: z.string().optional(),
   clientTypes: z.array(z.string()).min(1, "Please select at least one client type"),
+
+  // Step 3 - About the person needing support (only for client path)
+  fundingType: z.enum(
+    ["ndis", "aged-care", "insurance", "private", "other"],
+    {
+      required_error: "Please select a funding type",
+    }
+  ).optional(),
+
   servicesRequested: z.array(z.string()).min(1, "Please select at least one service"),
   serviceSubcategories: z.array(z.string()).optional(),
   additionalInformation: z.string().optional(),
@@ -45,9 +54,9 @@ export const clientFormSchema = z.object({
     message: "You must agree to the terms to continue",
   }),
 
-  // Step 6 - Relationship to Client (only for client path)
+  // Step 3 - Relationship to Client (only for client path, part of funding type step)
   relationshipToClient: z.enum(
-    ["self", "parent", "legal-guardian", "spouse-partner", "other"],
+    ["parent", "legal-guardian", "spouse-partner", "children", "other"],
     {
       required_error: "Please select your relationship to the client/participant",
     }
@@ -71,6 +80,7 @@ export const clientFormDefaults: ClientFormData = {
   phoneNumber: "",
   organisationName: "",
   clientTypes: [],
+  fundingType: undefined,
   servicesRequested: [],
   serviceSubcategories: [],
   additionalInformation: "",

@@ -21,7 +21,39 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
         control={control}
         render={({ field }) => (
           <div className="space-y-4">
-            {/* Option 1: Support Coordinator */}
+            {/* Option 1: Me/Self manage */}
+            <button
+              type="button"
+              onClick={() => field.onChange("self")}
+              className={`w-full p-5 rounded-lg border-2 transition-all duration-200 flex items-center justify-between text-left ${
+                field.value === "self"
+                  ? "border-[#0C1628] bg-[#EDEFF3]"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <span className="text-base font-poppins text-gray-800">
+                Me/Self manage
+              </span>
+              <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
+            </button>
+
+            {/* Option 2: A person I'm assisting */}
+            <button
+              type="button"
+              onClick={() => field.onChange("client")}
+              className={`w-full p-5 rounded-lg border-2 transition-all duration-200 flex items-center justify-between text-left ${
+                field.value === "client"
+                  ? "border-[#0C1628] bg-[#EDEFF3]"
+                  : "border-gray-200 bg-white hover:border-gray-300"
+              }`}
+            >
+              <span className="text-base font-poppins text-gray-800">
+                A person I'm assisting (e.g a friend or family member)
+              </span>
+              <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
+            </button>
+
+            {/* Option 3: Support Coordinator */}
             <button
               type="button"
               onClick={() => field.onChange("coordinator")}
@@ -33,22 +65,6 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
             >
               <span className="text-base font-poppins text-gray-800">
                 I am a Support Coordinator / Representative / Referrer
-              </span>
-              <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
-            </button>
-
-            {/* Option 2: Client/Participant */}
-            <button
-              type="button"
-              onClick={() => field.onChange("client")}
-              className={`w-full p-5 rounded-lg border-2 transition-all duration-200 flex items-center justify-between text-left ${
-                field.value === "client"
-                  ? "border-[#0C1628] bg-[#EDEFF3]"
-                  : "border-gray-200 bg-white hover:border-gray-300"
-              }`}
-            >
-              <span className="text-base font-poppins text-gray-800">
-                I am the Client / Participant
               </span>
               <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
             </button>

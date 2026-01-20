@@ -9,10 +9,10 @@ import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Step1WhoIsCompleting } from "@/components/forms/clientRegistration/Step1WhoIsCompleting";
 import { Step2PersonalInfo } from "@/components/forms/clientRegistration/Step2PersonalInfo";
+import { Step3FundingType } from "@/components/forms/clientRegistration/Step3FundingType";
 import { Step3ServicesRequested } from "@/components/forms/clientRegistration/Step3ServicesRequested";
 import { Step3Address } from "@/components/forms/clientRegistration/Step3Address";
 import { Step5AccountSetup } from "@/components/forms/clientRegistration/Step5AccountSetup";
-import { Step4Relationship } from "@/components/forms/clientRegistration/Step4Relationship";
 import { Step5ClientInfo } from "@/components/forms/clientRegistration/Step5ClientInfo";
 import { clientFormSchema, type ClientFormData, clientFormDefaults } from "@/schema/clientFormSchema";
 import { useCategories } from "@/hooks/queries/useCategories";
@@ -41,9 +41,10 @@ export default function ClientsRegistration() {
   const serviceSubcategories = watch("serviceSubcategories") || [];
 
   // Calculate total steps based on path
-  // Client path: 7 steps (Who, Personal, Services, Address, Account, Relationship, Client Info)
+  // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Services, Address, Account, Client Info)
+  // Self (registering for myself): 6 steps (Who, Personal, Funding Type, Services, Address, Account)
   // Coordinator path: 5 steps (Who, Personal, Services, Address, Account)
-  const TOTAL_STEPS = completingFormAs === "client" ? 7 : 5;
+  const TOTAL_STEPS = completingFormAs === "client" ? 7 : completingFormAs === "self" ? 6 : 5;
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
@@ -55,25 +56,49 @@ export default function ClientsRegistration() {
         fieldsToValidate = ["completingFormAs"];
         break;
       case 2:
-        fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
+        // Only validate clientTypes for coordinators
+        if (completingFormAs === "coordinator") {
+          fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
+        } else {
+          fieldsToValidate = ["firstName", "lastName", "phoneNumber"];
+        }
         break;
       case 3:
-        fieldsToValidate = ["servicesRequested"];
+        // For client path: validate funding type and relationship
+        // For self path: validate funding type only
+        // For coordinator: validate services
+        if (completingFormAs === "client") {
+          fieldsToValidate = ["fundingType", "relationshipToClient"];
+        } else if (completingFormAs === "self") {
+          fieldsToValidate = ["fundingType"];
+        } else {
+          fieldsToValidate = ["servicesRequested"];
+        }
         break;
       case 4:
-        fieldsToValidate = ["location"];
+        // For client/self path: services; for coordinator: location
+        if (completingFormAs === "client" || completingFormAs === "self") {
+          fieldsToValidate = ["servicesRequested"];
+        } else {
+          fieldsToValidate = ["location"];
+        }
         break;
       case 5:
-        fieldsToValidate = ["email", "password", "consent"];
+        // For client/self path: location; for coordinator: account setup
+        if (completingFormAs === "client" || completingFormAs === "self") {
+          fieldsToValidate = ["location"];
+        } else {
+          fieldsToValidate = ["email", "password", "consent"];
+        }
         break;
       case 6:
-        // Only validate relationship if user is on client path
-        if (completingFormAs === "client") {
-          fieldsToValidate = ["relationshipToClient"];
+        // Client/self path: account setup
+        if (completingFormAs === "client" || completingFormAs === "self") {
+          fieldsToValidate = ["email", "password", "consent"];
         }
         break;
       case 7:
-        // Only validate client info if user is on client path
+        // Client path only: client info (self path ends at step 6)
         if (completingFormAs === "client") {
           fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
         }
@@ -172,10 +197,20 @@ export default function ClientsRegistration() {
             )}
 
             {currentStep === 2 && (
-              <Step2PersonalInfo control={control} errors={errors} />
+              <Step2PersonalInfo control={control} errors={errors} completingFormAs={completingFormAs} />
             )}
 
-            {currentStep === 3 && (
+            {/* Step 3 - Funding Type (Client/Self path only) */}
+            {currentStep === 3 && completingFormAs === "client" && (
+              <Step3FundingType control={control} errors={errors} showRelationship={true} />
+            )}
+            {currentStep === 3 && completingFormAs === "self" && (
+              <Step3FundingType control={control} errors={errors} showRelationship={false} />
+            )}
+
+            {/* Step 3/4 - Services Requested */}
+            {((currentStep === 3 && completingFormAs === "coordinator") ||
+              (currentStep === 4 && (completingFormAs === "client" || completingFormAs === "self"))) && (
               <>
                 {categoriesLoading && (
                   <div className="text-center py-4">
@@ -201,18 +236,19 @@ export default function ClientsRegistration() {
               </>
             )}
 
-            {currentStep === 4 && (
+            {/* Step 4/5 - Address */}
+            {((currentStep === 4 && completingFormAs === "coordinator") ||
+              (currentStep === 5 && (completingFormAs === "client" || completingFormAs === "self"))) && (
               <Step3Address control={control} errors={errors} />
             )}
 
-            {currentStep === 5 && (
+            {/* Step 5/6 - Account Setup */}
+            {((currentStep === 5 && completingFormAs === "coordinator") ||
+              (currentStep === 6 && (completingFormAs === "client" || completingFormAs === "self"))) && (
               <Step5AccountSetup control={control} errors={errors} />
             )}
 
-            {currentStep === 6 && completingFormAs === "client" && (
-              <Step4Relationship control={control} errors={errors} />
-            )}
-
+            {/* Step 7 - Client Info (Client path only) */}
             {currentStep === 7 && completingFormAs === "client" && (
               <Step5ClientInfo control={control} errors={errors} />
             )}
