@@ -25,12 +25,27 @@ export const clientFormSchema = z.object({
         (phone.startsWith('+61') && cleanPhone.length === 11 && cleanPhone.startsWith('614'))
       );
     }, "Please enter a valid Australian mobile number (e.g., 04XX XXX XXX)"),
+  organisationName: z.string().optional(),
+  clientTypes: z.array(z.string()).min(1, "Please select at least one client type"),
+  servicesRequested: z.array(z.string()).min(1, "Please select at least one service"),
+  serviceSubcategories: z.array(z.string()).optional(),
+  additionalInformation: z.string().optional(),
 
-  // Step 3 - Location Information
-  streetAddress: z.string().min(1, "Street address is required"),
+  // Step 4 - Location Information
+  streetAddress: z.string().optional(),
   location: z.string().min(1, "Please enter a valid Suburb"),
 
-  // Step 4 - Relationship to Client (only for client path)
+  // Step 5 - Account Setup
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+  consent: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms to continue",
+  }),
+
+  // Step 6 - Relationship to Client (only for client path)
   relationshipToClient: z.enum(
     ["self", "parent", "legal-guardian", "spouse-partner", "other"],
     {
@@ -54,8 +69,15 @@ export const clientFormDefaults: ClientFormData = {
   lastName: "",
   email: "",
   phoneNumber: "",
+  organisationName: "",
+  clientTypes: [],
+  servicesRequested: [],
+  serviceSubcategories: [],
+  additionalInformation: "",
   streetAddress: "",
   location: "",
+  password: "",
+  consent: false,
   relationshipToClient: undefined,
   clientFirstName: "",
   clientLastName: "",

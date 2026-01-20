@@ -9,17 +9,23 @@ import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Step1WhoIsCompleting } from "@/components/forms/clientRegistration/Step1WhoIsCompleting";
 import { Step2PersonalInfo } from "@/components/forms/clientRegistration/Step2PersonalInfo";
+import { Step3ServicesRequested } from "@/components/forms/clientRegistration/Step3ServicesRequested";
 import { Step3Address } from "@/components/forms/clientRegistration/Step3Address";
+import { Step5AccountSetup } from "@/components/forms/clientRegistration/Step5AccountSetup";
 import { Step4Relationship } from "@/components/forms/clientRegistration/Step4Relationship";
 import { Step5ClientInfo } from "@/components/forms/clientRegistration/Step5ClientInfo";
 import { clientFormSchema, type ClientFormData, clientFormDefaults } from "@/schema/clientFormSchema";
+import { useCategories } from "@/hooks/queries/useCategories";
 
 export default function ClientsRegistration() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { control, handleSubmit, formState, trigger, getValues, watch } = useForm<ClientFormData>({
+  // Fetch categories from database
+  const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
+
+  const { control, handleSubmit, formState, trigger, getValues, watch, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
     mode: "all",
     reValidateMode: "onChange",
@@ -32,11 +38,12 @@ export default function ClientsRegistration() {
 
   // Watch completingFormAs to determine total steps
   const completingFormAs = watch("completingFormAs");
+  const serviceSubcategories = watch("serviceSubcategories") || [];
 
   // Calculate total steps based on path
-  // Client path: 5 steps (Who, Personal, Address, Relationship, Client Info)
-  // Coordinator path: 3 steps (Who, Personal, Address) - for now
-  const TOTAL_STEPS = completingFormAs === "client" ? 5 : 3;
+  // Client path: 7 steps (Who, Personal, Services, Address, Account, Relationship, Client Info)
+  // Coordinator path: 5 steps (Who, Personal, Services, Address, Account)
+  const TOTAL_STEPS = completingFormAs === "client" ? 7 : 5;
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
@@ -48,24 +55,29 @@ export default function ClientsRegistration() {
         fieldsToValidate = ["completingFormAs"];
         break;
       case 2:
-        fieldsToValidate = ["firstName", "lastName", "email", "phoneNumber"];
+        fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
         break;
       case 3:
-        fieldsToValidate = ["streetAddress", "location"];
+        fieldsToValidate = ["servicesRequested"];
         break;
       case 4:
+        fieldsToValidate = ["location"];
+        break;
+      case 5:
+        fieldsToValidate = ["email", "password", "consent"];
+        break;
+      case 6:
         // Only validate relationship if user is on client path
         if (completingFormAs === "client") {
           fieldsToValidate = ["relationshipToClient"];
         }
         break;
-      case 5:
+      case 7:
         // Only validate client info if user is on client path
         if (completingFormAs === "client") {
           fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
         }
         break;
-      // Add more cases as steps are added
     }
 
     const isValid = await trigger(fieldsToValidate, { shouldFocus: true });
@@ -164,18 +176,46 @@ export default function ClientsRegistration() {
             )}
 
             {currentStep === 3 && (
+              <>
+                {categoriesLoading && (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600 font-poppins">Loading services...</p>
+                  </div>
+                )}
+                {categoriesError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-red-600 text-sm font-poppins">
+                      Failed to load services. Please refresh the page.
+                    </p>
+                  </div>
+                )}
+                {!categoriesLoading && !categoriesError && categories && (
+                  <Step3ServicesRequested
+                    control={control}
+                    errors={errors}
+                    categories={categories}
+                    setValue={setValue}
+                    serviceSubcategories={serviceSubcategories}
+                  />
+                )}
+              </>
+            )}
+
+            {currentStep === 4 && (
               <Step3Address control={control} errors={errors} />
             )}
 
-            {currentStep === 4 && completingFormAs === "client" && (
+            {currentStep === 5 && (
+              <Step5AccountSetup control={control} errors={errors} />
+            )}
+
+            {currentStep === 6 && completingFormAs === "client" && (
               <Step4Relationship control={control} errors={errors} />
             )}
 
-            {currentStep === 5 && completingFormAs === "client" && (
+            {currentStep === 7 && completingFormAs === "client" && (
               <Step5ClientInfo control={control} errors={errors} />
             )}
-
-            {/* Additional steps will be added here */}
 
             <div className="flex justify-between pt-6">
               <Button

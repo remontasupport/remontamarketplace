@@ -92,6 +92,9 @@ export function Step3Address({ control, errors }: Step3AddressProps) {
           <Label className="text-base font-poppins font-semibold text-gray-900">
             Street address
           </Label>
+          <p className="text-sm text-gray-600 font-poppins mt-1">
+            Optional
+          </p>
           <Controller
             name="streetAddress"
             control={control}
@@ -99,13 +102,12 @@ export function Step3Address({ control, errors }: Step3AddressProps) {
               <Input
                 placeholder=""
                 className="text-base font-poppins mt-2"
-                value={field.value}
+                value={field.value || ""}
                 onChange={(e) => field.onChange(e.target.value)}
                 onBlur={field.onBlur}
               />
             )}
           />
-          {errors.streetAddress && <p className="text-red-500 text-sm font-poppins mt-1">{errors.streetAddress.message}</p>}
         </div>
 
         <div>
