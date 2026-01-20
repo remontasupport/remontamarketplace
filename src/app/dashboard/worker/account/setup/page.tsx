@@ -14,13 +14,17 @@
  */
 
 import { useState, useEffect, useRef, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { ACCOUNT_SETUP_STEPS } from "@/config/accountSetupSteps";
+import { autoUpdateAccountDetailsCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 // Helper function to parse location string
 // Format: "Street Address, City/Suburb, State PostalCode" or "City/Suburb, State PostalCode"
@@ -81,10 +85,9 @@ interface FormData {
     documentUrl: string;
     uploadedAt: string;
   }>;
-  // Step 6: Personal Info
-  age: string;
+  // Step 5: Personal Info
+  dateOfBirth: string;
   gender: string;
-  languages: string[];
   hasVehicle: string;
   // Step 7: ABN
   abn: string;
@@ -102,11 +105,14 @@ function AccountSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks - replaces manual fetching
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -123,9 +129,8 @@ function AccountSetupContent() {
     state: "",
     postalCode: "",
     identityDocuments: [],
-    age: "",
+    dateOfBirth: "",
     gender: "",
-    languages: [],
     hasVehicle: "",
     abn: "",
   });
@@ -134,12 +139,28 @@ function AccountSetupContent() {
   // Prevents form reset when TanStack Query refetches after mutations
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
-      const photoUrl = Array.isArray(profileData.photos)
-        ? profileData.photos[0]
-        : (profileData.photos as any)?.[0] || null;
+      // photos is now a string (single photo URL), not an array
+      const photoUrl = profileData.photos || null;
 
-      // Parse location string to extract street address, city, state, and postal code
-      const parsedLocation = parseLocation(profileData.location || "");
+      // Extract street address from location string
+      let streetAddress = "";
+
+      if (profileData.location && profileData.city && profileData.state && profileData.postalCode) {
+        // Backend joins with ", " and State+PostalCode with SPACE (not comma)
+        // Saved format: "Street, City, State PostalCode" or "City, State PostalCode"
+        const expectedEnd = `${profileData.city}, ${profileData.state} ${profileData.postalCode}`;
+
+        // Case 1: Location is EXACTLY "City, State PostalCode" (no street address)
+        if (profileData.location === expectedEnd) {
+          streetAddress = "";
+        }
+        // Case 2: Location is "Street, City, State PostalCode" (has street address)
+        else if (profileData.location.includes(`, ${expectedEnd}`)) {
+          // Split and take everything before the expected end
+          const parts = profileData.location.split(`, ${expectedEnd}`);
+          streetAddress = parts[0] || "";
+        }
+      }
 
       setFormData({
         firstName: profileData.firstName || "",
@@ -147,18 +168,19 @@ function AccountSetupContent() {
         lastName: profileData.lastName || "",
         photo: photoUrl,
         bio: profileData.introduction || "",
-        streetAddress: parsedLocation.streetAddress || "",
-        city: parsedLocation.city || profileData.city || "",
-        state: parsedLocation.state || profileData.state || "",
-        postalCode: parsedLocation.postalCode || profileData.postalCode || "",
+        streetAddress: streetAddress,
+        city: profileData.city || "",
+        state: profileData.state || "",
+        postalCode: profileData.postalCode || "",
         identityDocuments: [],
-        age: profileData.age ? String(profileData.age) : "",
-        gender: profileData.gender ? profileData.gender.toLowerCase() : "",
-        languages: Array.isArray(profileData.languages) ? profileData.languages : [],
+        dateOfBirth: profileData.dateOfBirth || "",
+        gender: profileData.gender
+          ? profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1).toLowerCase()
+          : "",
         hasVehicle: profileData.hasVehicle || "",
         abn: "",
       });
-     
+
       hasInitializedFormData.current = true;
     }
   }, [profileData]);
@@ -207,6 +229,60 @@ function AccountSetupContent() {
           newErrors.lastName = "Last name is required";
         }
         break;
+      case "bio": // Bio
+        const bioLength = formData.bio.trim().length;
+        if (bioLength < 200) {
+          newErrors.bio = `Your bio must be at least 200 characters long (currently ${bioLength} characters)`;
+        } else if (bioLength > 2000) {
+          newErrors.bio = "Your bio must be less than 2000 characters";
+        }
+        break;
+      case "address": // Address
+        if (!formData.city.trim()) {
+          newErrors.city = "City/Suburb is required";
+        }
+        if (!formData.state.trim()) {
+          newErrors.state = "State is required";
+        }
+        if (!formData.postalCode.trim()) {
+          newErrors.postalCode = "Postal code is required";
+        } else if (!/^\d{3,4}$/.test(formData.postalCode.trim())) {
+          newErrors.postalCode = "Postal code must be 3-4 digits";
+        }
+        break;
+      case "personal-info": // Personal Info
+        if (!formData.dateOfBirth || formData.dateOfBirth === "") {
+          newErrors.dateOfBirth = "Date of birth is required";
+        } else {
+          // Validate date format
+          const birthDate = new Date(formData.dateOfBirth);
+          const today = new Date();
+
+          if (isNaN(birthDate.getTime())) {
+            newErrors.dateOfBirth = "Please enter a valid date";
+          } else if (birthDate > today) {
+            newErrors.dateOfBirth = "Date of birth cannot be in the future";
+          } else {
+            // Calculate age
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+
+            if (age < 18) {
+              newErrors.dateOfBirth = "You must be at least 18 years old";
+            } else if (age > 120) {
+              newErrors.dateOfBirth = "Please enter a valid date of birth";
+            }
+          }
+        }
+
+        if (!formData.gender || formData.gender === "") {
+          newErrors.gender = "Gender is required";
+        }
+        break;
       case "abn": // ABN
         if (formData.abn && formData.abn.replace(/\s/g, "").length !== 11) {
           newErrors.abn = "ABN must be 11 digits";
@@ -228,7 +304,20 @@ function AccountSetupContent() {
 
     if (!session?.user?.id) return;
 
+    // Check if this is the final step
+    const isFinalStep = currentStep === STEPS.length;
+
     try {
+      // Show appropriate loading state BEFORE any async operations
+      if (isFinalStep) {
+        // Use flushSync to force immediate synchronous render
+        flushSync(() => {
+          setIsFinalSaving(true);
+        });
+      } else {
+        setIsNavigating(true);
+      }
+
       // Skip saving for step 2 (photo) since it handles its own upload
       if (currentStep !== 2) {
         // Only send relevant fields for each step to avoid overwriting other fields
@@ -255,12 +344,11 @@ function AccountSetupContent() {
             break;
           case 5: // Personal Info (Other personal info step)
             dataToSend = {
-              age: formData.age,
+              dateOfBirth: formData.dateOfBirth,
               gender: formData.gender,
-              languages: formData.languages,
               hasVehicle: formData.hasVehicle,
             };
-          
+
             break;
           default:
             // For any other step, send the entire formData (fallback)
@@ -268,27 +356,50 @@ function AccountSetupContent() {
         }
 
         // Use mutation hook - automatically invalidates cache on success
-    
+
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
           data: dataToSend,
         });
-       
+
       }
 
       // Move to next step or finish
-      if (currentStep < STEPS.length) {
+      if (!isFinalStep) {
+        // Reset loading state before navigation
+        setIsNavigating(false);
+
+        // Navigate to next step
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/account/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed
-        setSuccessMessage("Account setup completed!");
-        setTimeout(() => {
-          router.push("/dashboard/worker");
-        }, 2000);
+        // Last step completed - Wait for update with timeout (max 3 seconds)
+        try {
+          // Race between update and timeout - whichever finishes first
+          await Promise.race([
+            autoUpdateAccountDetailsCompletion(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+        } catch (err) {
+          // If timeout or error, continue anyway (dashboard will poll)
+      
+        }
+
+        // Invalidate caches so dashboard fetches fresh data
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+
+        // Force Next.js to invalidate server cache and refetch on next navigation
+        router.refresh();
+
+        // Navigate (data should be updated now)
+        router.push("/dashboard/worker");
       }
     } catch (error) {
+      setIsNavigating(false);
+      setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -316,9 +427,19 @@ function AccountSetupContent() {
     }
   }, [currentStepIndex, router]);
 
+  // Extract primary service for role display
+  const primaryService = profileData?.services?.[0] || 'Support Worker';
+
   if (status === "loading" || isLoadingProfile) {
     return (
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: profileData?.firstName || 'Worker',
+          photo: profileData?.photos || null,
+          role: primaryService,
+        }}
+      >
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>
@@ -334,42 +455,52 @@ function AccountSetupContent() {
   }
 
   return (
-    <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Account details"
-        sectionNumber="1"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={handleSkip}
-        isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
-        showSkip={false}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
-            {successMessage}
-          </div>
-        )}
+    <DashboardLayout
+      showProfileCard={false}
+      profileData={{
+        firstName: profileData?.firstName || 'Worker',
+        photo: profileData?.photos || null,
+        role: primaryService,
+      }}
+    >
+      {!isFinalSaving ? (
+        <StepContainer
+          currentStep={currentStep}
+          totalSteps={STEPS.length}
+          stepTitle={currentStepData.title}
+          sectionTitle="Account details"
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onSkip={handleSkip}
+          isNextLoading={false}
+          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          showSkip={false}
+        >
+          {/* Success Message */}
+          {successMessage && (
+            <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
+              {successMessage}
+            </div>
+          )}
 
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
-            {errors.general}
-          </div>
-        )}
+          {/* General Error */}
+          {errors.general && (
+            <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
+              {errors.general}
+            </div>
+          )}
 
-        {/* Render current step */}
-        <CurrentStepComponent
-          data={formData}
-          onChange={handleFieldChange}
-          onPhotoSave={currentStep === 2 ? handlePhotoSave : undefined}
-          errors={errors}
-        />
-      </StepContainer>
+          {/* Render current step */}
+          <CurrentStepComponent
+            data={formData}
+            onChange={handleFieldChange}
+            onPhotoSave={currentStep === 2 ? handlePhotoSave : undefined}
+            errors={errors}
+          />
+        </StepContainer>
+      ) : (
+        <LoadingOverlay isOpen={isFinalSaving} message="Saving your account details..." />
+      )}
     </DashboardLayout>
   );
 }
@@ -378,7 +509,14 @@ function AccountSetupContent() {
 export default function AccountSetupPage() {
   return (
     <Suspense fallback={
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: 'Worker',
+          photo: null,
+          role: 'Support Worker',
+        }}
+      >
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>

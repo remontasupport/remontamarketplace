@@ -22,6 +22,8 @@ interface Step1ServicesOfferProps {
   };
   onChange: (field: string, value: any) => void;
   onSaveServices?: (services: string[], supportWorkerCategories: string[]) => Promise<void>;
+  onSaveAndExit?: () => void;
+  errors?: Record<string, string>;
 }
 
 // Service Card Component
@@ -31,7 +33,6 @@ interface ServiceCardProps {
   categoryData: any; // Full category data from database
   onRemove: (service: string) => void;
   onEditCategories: () => void;
-  onCardClick: (service: string) => void;
   isEditMode: boolean;
   hasSubcategories: boolean; // Flag to show if service has subcategories
 }
@@ -42,7 +43,6 @@ function ServiceCard({
   categoryData,
   onRemove,
   onEditCategories,
-  onCardClick,
   isEditMode,
   hasSubcategories,
 }: ServiceCardProps) {
@@ -63,18 +63,11 @@ function ServiceCard({
       .filter(Boolean);
   }, [categoryData, supportWorkerCategories]);
 
-  const handleCardClick = () => {
-    if (!isEditMode) {
-      onCardClick(service);
-    }
-  };
-
   return (
     <div className="service-card-wrapper">
       <div
-        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""} ${!isEditMode ? "cursor-pointer hover:shadow-lg transition-shadow" : ""}`}
+        className={`service-card ${subcategoryNames.length > 0 ? "min-h-[140px]" : ""}`}
         style={{ backgroundColor: 'white' }}
-        onClick={handleCardClick}
       >
         <div className="service-card-content flex flex-col h-full">
           <div className="service-card-header flex-grow">
@@ -84,7 +77,7 @@ function ServiceCard({
           </div>
 
           {/* Subcategories section */}
-          {subcategoryNames.length > 0 ? (
+          {subcategoryNames.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <ul className="space-y-2">
                 {subcategoryNames.map((name, idx) => (
@@ -94,33 +87,7 @@ function ServiceCard({
                   </li>
                 ))}
               </ul>
-              <button
-                type="button"
-                className="text-xs text-teal-600 font-poppins mt-3 hover:underline font-semibold"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCardClick(service);
-                }}
-              >
-                Upload Supporting Documents
-              </button>
             </div>
-          ) : (
-            /* Upload link for services without subcategories */
-            !isEditMode && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  className="text-xs text-teal-600 font-poppins hover:underline font-semibold"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCardClick(service);
-                  }}
-                >
-                  Upload Supporting Documents
-                </button>
-              </div>
-            )
           )}
         </div>
       </div>
@@ -161,6 +128,7 @@ export default function Step1ServicesOffer({
   data,
   onChange,
   onSaveServices,
+  onSaveAndExit,
 }: Step1ServicesOfferProps) {
   const router = useRouter();
   const [showAddServiceDialog, setShowAddServiceDialog] = useState(false);
@@ -288,11 +256,34 @@ export default function Step1ServicesOffer({
     }
   };
 
-  const handleCardClick = (serviceTitle: string) => {
-    // Convert service title to slug using utility function
-    const serviceSlug = serviceNameToSlug(serviceTitle);
-    router.push(`/dashboard/worker/services/${serviceSlug}/documents`);
-  };
+  // Validation: Check if all services with subcategories have at least one selected
+  const hasValidSubcategories = useMemo(() => {
+    const currentServices = data.services || [];
+    const selectedSubcategories = data.supportWorkerCategories || [];
+
+    // Check each service
+    for (const serviceTitle of currentServices) {
+      const category = categoryMap.get(serviceTitle);
+
+      // If service has subcategories available
+      if (category && category.subcategories && category.subcategories.length > 0) {
+        // Get subcategory IDs for this service
+        const serviceLevelSubcategoryIds = category.subcategories.map((sub: any) => sub.id);
+
+        // Check if at least one subcategory is selected for this service
+        const hasSelectedSubcategory = serviceLevelSubcategoryIds.some((id: string) =>
+          selectedSubcategories.includes(id)
+        );
+
+        // If no subcategory is selected for this service, validation fails
+        if (!hasSelectedSubcategory) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }, [data.services, data.supportWorkerCategories, categoryMap]);
 
   return (
     <div className="services-step-container">
@@ -324,7 +315,6 @@ export default function Step1ServicesOffer({
                       categoryData={categoryData}
                       onRemove={handleRemoveService}
                       onEditCategories={() => handleEditCategories(service)}
-                      onCardClick={handleCardClick}
                       isEditMode={isEditMode}
                       hasSubcategories={hasSubcategories}
                     />
@@ -353,20 +343,42 @@ export default function Step1ServicesOffer({
                     <button
                       type="button"
                       onClick={() => setIsEditMode(false)}
+                      disabled={!hasValidSubcategories}
                       className="service-btn-done"
+                      title={!hasValidSubcategories ? "Please select service offerings for all services" : ""}
                     >
-                      DONE EDITING
+                      Done
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditMode(true)}
-                    className="service-btn-edit"
-                  >
-                    <PlusIcon />
-                    EDIT SERVICES
-                  </button>
+                  <div className="service-button-group">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(true)}
+                      className="service-btn-edit"
+                    >
+                      <PlusIcon />
+                      EDIT SERVICES
+                    </button>
+                    {/* Main Save button - only redirects, does not save (already saved when subcategories were selected) */}
+                    {onSaveAndExit && (
+                      <button
+                        type="button"
+                        onClick={onSaveAndExit}
+                        disabled={!hasValidSubcategories || (data.services?.length === 0)}
+                        className="service-btn-done"
+                        title={
+                          data.services?.length === 0
+                            ? "Please add at least one service"
+                            : !hasValidSubcategories
+                            ? "Please select service offerings for all services"
+                            : "Save and return"
+                        }
+                      >
+                        Save
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -381,8 +393,8 @@ export default function Step1ServicesOffer({
               the right support worker for their needs.
             </p>
             <p className="info-box-text mt-3">
-              Click "Upload Supporting Documents" on any service card to upload required
-              certificates and qualifications for that service.
+              Each service you add will have its own setup page where you can manage qualifications,
+              skills, and upload supporting documents.
             </p>
             <p className="info-box-text mt-3">
               If you add "Support Worker" or other services with subcategories, you'll be able

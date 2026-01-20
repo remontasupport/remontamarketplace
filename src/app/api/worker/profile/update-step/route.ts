@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
-import { geocodeAddress } from "@/lib/geocoding";
+import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
 
 /**
  * POST /api/worker/profile/update-step
@@ -25,70 +25,9 @@ export async function POST(request: Request) {
     // Prepare update data based on step
     const updateData: any = {};
 
+    // NOTE: Steps 1-5 have been migrated to server actions in src/services/worker/profile.service.ts
+    // This API route now only handles steps that haven't been refactored yet
     switch (step) {
-      case 1: // Name
-        updateData.firstName = data.firstName.trim();
-        if (data.middleName && data.middleName.trim()) {
-          updateData.middleName = data.middleName.trim();
-        }
-        updateData.lastName = data.lastName.trim();
-        break;
-
-      case 2: // Photo
-        if (data.photo) {
-          // Photo URL is already uploaded to blob storage
-          // Store it in the photos array (first photo is profile photo)
-          updateData.photos = [data.photo];
-        }
-        break;
-
-      case 3: // Bio
-        if (data.bio) updateData.introduction = data.bio.trim();
-        break;
-
-      case 4: // Address
-        // Build location string from city, state, and postal code
-        // Format: "City, State PostalCode" or "StreetAddress, City, State PostalCode" if street address exists
-        if (data.city && data.state && data.postalCode) {
-          const cityStatePostal = `${data.city.trim()}, ${data.state.trim()} ${data.postalCode.trim()}`;
-          const fullLocation = data.streetAddress
-            ? `${data.streetAddress.trim()}, ${cityStatePostal}`
-            : cityStatePostal;
-          updateData.location = fullLocation;
-
-          // Geocode the full address (including street address if provided) to get latitude and longitude
-          const geocodeResult = await geocodeAddress(fullLocation);
-
-          if (geocodeResult) {
-            updateData.latitude = geocodeResult.latitude;
-            updateData.longitude = geocodeResult.longitude;
-          }
-        }
-        if (data.city) updateData.city = data.city;
-        if (data.state) updateData.state = data.state;
-        if (data.postalCode) updateData.postalCode = data.postalCode;
-        break;
-
-      case 5: // Personal Info (Other personal info step)
-        // Convert age to integer (database expects Int, not String)
-        if (data.age !== undefined && data.age !== null && data.age !== '') {
-          const ageInt = typeof data.age === 'string' ? parseInt(data.age, 10) : data.age;
-          if (!isNaN(ageInt)) {
-            updateData.age = ageInt;
-          }
-        }
-        if (data.gender) {
-          updateData.gender = data.gender.toLowerCase();
-        }
-        // Ensure languages is an array
-        if (data.languages) {
-          updateData.languages = Array.isArray(data.languages) ? data.languages : [];
-        }
-        if (data.hasVehicle) {
-          updateData.hasVehicle = data.hasVehicle;
-        }
-        break;
-
       case 7: // Emergency Contact
         if (data.emergencyContactName) updateData.emergencyContactName = data.emergencyContactName.trim();
         if (data.emergencyContactPhone) updateData.emergencyContactPhone = data.emergencyContactPhone.trim();
@@ -125,20 +64,41 @@ export async function POST(request: Request) {
             )
           );
 
+          // CRITICAL: Save existing metadata BEFORE deleting (nursing, therapeutic, etc.)
+          const existingServices = await authPrisma.workerService.findMany({
+            where: { workerProfileId: workerProfile.id },
+            select: { categoryId: true, metadata: true },
+          });
+
+          // Build a map of categoryId -> metadata
+          // Find the FIRST entry with non-null metadata for each category
+          const metadataByCategory = new Map<string, any>();
+          for (const service of existingServices) {
+            // Only set metadata if we haven't found one for this category yet
+            // and if this service has non-null metadata
+            if (!metadataByCategory.has(service.categoryId) && service.metadata !== null) {
+              metadataByCategory.set(service.categoryId, service.metadata);
+              
+            }
+          }
+
           // Delete existing WorkerService records
           await authPrisma.workerService.deleteMany({
             where: { workerProfileId: workerProfile.id },
           });
 
-          // OPTIMIZED: Create new WorkerService records using flatMap (eliminate nested loops)
+          // Create new WorkerService records with subcategories as arrays
           const subcategoryIds = data.supportWorkerCategories || [];
 
-          const workerServiceRecords = data.services.flatMap((serviceName: string) => {
+          const workerServiceRecords = data.services.map((serviceName: string) => {
             // Find category by name
             const category = categories.find(c => c.name === serviceName);
-            if (!category) return [];
+            if (!category) return null;
 
             const categoryId = category.id;
+
+            // Get preserved metadata for this category (undefined if not found)
+            const preservedMetadata = metadataByCategory.get(categoryId) ?? undefined;
 
             // Find subcategories that belong to this category
             const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
@@ -146,39 +106,44 @@ export async function POST(request: Request) {
               return parentCategory?.id === categoryId;
             });
 
-            if (relevantSubcategoryIds.length > 0) {
-              // Service has subcategories - create one record per subcategory using map
-              return relevantSubcategoryIds.map((subcategoryId: string) => {
-                const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
-                if (!subcategory) return null;
+            // Build arrays of subcategory IDs and names
+            const subcategoryIdsArray: string[] = [];
+            const subcategoryNamesArray: string[] = [];
 
-                return {
-                  workerProfileId: workerProfile.id,
-                  categoryId,
-                  categoryName: serviceName,
-                  subcategoryId,
-                  subcategoryName: subcategory.name,
-                };
-              }).filter(Boolean);
-            } else {
-              // Service has no subcategories - create one record without subcategory
-              return [{
-                workerProfileId: workerProfile.id,
-                categoryId,
-                categoryName: serviceName,
-                subcategoryId: null,
-                subcategoryName: null,
-              }];
+            for (const subcategoryId of relevantSubcategoryIds) {
+              const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
+              if (subcategory) {
+                subcategoryIdsArray.push(subcategoryId);
+                subcategoryNamesArray.push(subcategory.name);
+              }
             }
-          });
 
+            // Create ONE record per category with subcategories as arrays
+            return {
+              workerProfileId: workerProfile.id,
+              categoryId,
+              categoryName: serviceName,
+              subcategoryIds: subcategoryIdsArray,
+              subcategoryNames: subcategoryNamesArray,
+              metadata: preservedMetadata,
+            };
+          }).filter(Boolean);
+
+          // CRITICAL: Use individual creates instead of createMany to support metadata (JSON field)
+          // createMany does NOT support JSON fields in Prisma
           if (workerServiceRecords.length > 0) {
-            await authPrisma.workerService.createMany({
-              data: workerServiceRecords,
-              skipDuplicates: true,
-            });
-           
+            await Promise.all(
+              workerServiceRecords.map((record) =>
+                authPrisma.workerService.create({ data: record })
+              )
+            );
           }
+
+          // Invalidate Redis cache to reflect service changes immediately
+          await invalidateCache(
+            CACHE_KEYS.workerProfile(session.user.id),
+            CACHE_KEYS.completionStatus(session.user.id)
+          );
         }
         break;
 
@@ -189,15 +154,23 @@ export async function POST(request: Request) {
           // Get worker profile to access workerProfileId
           const workerProfile = await authPrisma.workerProfile.findUnique({
             where: { userId: session.user.id },
-            select: { id: true, services: true },
+            select: {
+              id: true,
+              workerServices: {
+                select: {
+                  categoryName: true
+                }
+              }
+            },
           });
 
           if (!workerProfile) {
             throw new Error("Worker profile not found");
           }
 
-          // Get all available qualifications for worker's services
-          const availableQualifications = getQualificationsForServices(workerProfile.services || []);
+          // Get all available qualifications for worker's services from WorkerService table
+          const services = workerProfile.workerServices.map(ws => ws.categoryName);
+          const availableQualifications = getQualificationsForServices(services);
           const availableQualificationTypes = availableQualifications.map(q => q.type);
 
           // Get existing requirements for this worker
@@ -209,6 +182,27 @@ export async function POST(request: Request) {
               },
             },
           });
+
+          // Auto-fix existing requirements that have incorrect names (slugs instead of display names)
+          
+          for (const existing of existingRequirements) {
+            const qualification = availableQualifications.find(q => q.type === existing.requirementType);
+            if (qualification && qualification.name) {
+              // If the existing name is wrong (is a slug or doesn't match), update it
+              const correctName = qualification.name;
+              const needsUpdate = !existing.requirementName ||
+                                 existing.requirementName.includes('-') ||
+                                 existing.requirementName !== correctName;
+
+              if (needsUpdate) {
+                await authPrisma.verificationRequirement.update({
+                  where: { id: existing.id },
+                  data: { requirementName: correctName },
+                });
+               
+              }
+            }
+          }
 
           // Map existing requirements by type
           const existingRequirementsByType = new Map(
@@ -236,12 +230,24 @@ export async function POST(request: Request) {
             .filter((qualificationType: string) => !existingRequirementsByType.has(qualificationType))
             .map((qualificationType: string) => {
               const qualification = availableQualifications.find(q => q.type === qualificationType);
-              if (!qualification) return null;
+              if (!qualification) {
+              
+                return null;
+              }
+
+              // Ensure we're saving the proper display name, not the type
+              const displayName = qualification.name;
+            
+
+              if (!displayName || displayName.includes('-')) {
+              
+                return null;
+              }
 
               return {
                 workerProfileId: workerProfile.id,
                 requirementType: qualificationType,
-                requirementName: qualification.name,
+                requirementName: displayName,
                 isRequired: false, // Worker-selected, not mandatory
                 status: "PENDING" as const,
               };
@@ -252,10 +258,10 @@ export async function POST(request: Request) {
             await authPrisma.verificationRequirement.createMany({
               data: requirementsToCreate as any[],
             });
-            
+
           }
 
-          
+         
         }
         break;
 
@@ -264,27 +270,7 @@ export async function POST(request: Request) {
         break;
     }
 
-    // Handle ABN from ANY step (Compliance section or Services Setup)
-    // This runs for all steps to ensure ABN is saved
-    // WARNING: Only save ABN if it's explicitly provided with a value
-    // Do NOT save empty ABN from unrelated steps (prevents accidental data loss)
-    if (data.abn !== undefined) {
-      const trimmedAbn = data.abn.trim();
-
-      // Only save if ABN has a value OR if we're explicitly on an ABN step
-      // This prevents accidental deletion of ABN from other steps
-      if (trimmedAbn) {
-        updateData.abn = trimmedAbn;
-      
-      } else if (step >= 100 && (step === 103 || data.abn === "")) {
-        // Only allow clearing ABN if we're on Services Setup ABN step (103)
-        // or if ABN is explicitly sent as empty string
-        updateData.abn = null;
-        
-      } else {
-        
-      }
-    }
+    // ABN field has been removed from schema
 
    
 

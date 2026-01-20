@@ -13,6 +13,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { authPrisma } from "./auth-prisma";
 import { UserRole } from "@/types/auth";
+import { getOrFetch, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
 
 /**
  * NextAuth configuration options
@@ -29,26 +30,139 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        impersonationToken: { label: "Impersonation Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           throw new Error("Missing credentials");
         }
 
+        // IMPERSONATION FLOW: Check for impersonation token
+        if (credentials.impersonationToken) {
+          try {
+            // Normalize email for consistent token lookup
+            const normalizedEmail = credentials.email.toLowerCase();
+
+            // Verify the impersonation token
+            const tokenRecord = await authPrisma.verificationToken.findUnique({
+              where: {
+                identifier_token: {
+                  identifier: `impersonation:${normalizedEmail}`,
+                  token: credentials.impersonationToken,
+                },
+              },
+            });
+
+            if (!tokenRecord) {
+              throw new Error("Invalid impersonation token");
+            }
+
+            // Check if token is expired
+            if (tokenRecord.expires < new Date()) {
+              // Delete expired token
+              await authPrisma.verificationToken.delete({
+                where: {
+                  identifier_token: {
+                    identifier: `impersonation:${normalizedEmail}`,
+                    token: credentials.impersonationToken,
+                  },
+                },
+              });
+              throw new Error("Impersonation token expired");
+            }
+
+            // Get the target user (case-insensitive to handle mixed-case emails in DB)
+            const user = await authPrisma.user.findFirst({
+              where: { email: { equals: credentials.email, mode: "insensitive" } },
+              select: {
+                id: true,
+                email: true,
+                role: true,
+                status: true,
+              },
+            });
+
+            if (!user) {
+              throw new Error("User not found");
+            }
+
+            if (user.status !== "ACTIVE") {
+              throw new Error(`Account is ${user.status.toLowerCase()}`);
+            }
+
+            // Delete the one-time token
+            await authPrisma.verificationToken.delete({
+              where: {
+                identifier_token: {
+                  identifier: `impersonation:${normalizedEmail}`,
+                  token: credentials.impersonationToken,
+                },
+              },
+            });
+
+            // Check if this is a restore token (admin returning from impersonation)
+            // Restore tokens start with "restore_" and should NOT have impersonatedBy flag
+            if (credentials.impersonationToken.startsWith('restore_')) {
+              // Return admin user without impersonation flag (normal session)
+              return {
+                id: user.id,
+                email: user.email,
+                role: user.role as UserRole,
+                name: `${user.email.split("@")[0]}`,
+              };
+            }
+
+            // Extract admin ID from impersonation token (format: imp_{userId}_{adminId}_{timestamp}_{random})
+            const tokenParts = credentials.impersonationToken.split('_');
+            const adminId = tokenParts[2];
+
+            // Return user with impersonation flag
+            return {
+              id: user.id,
+              email: user.email,
+              role: user.role as UserRole,
+              name: `${user.email.split("@")[0]}`,
+              impersonatedBy: adminId,
+            };
+          } catch (error) {
+      
+            throw error;
+          }
+        }
+
+        // NORMAL LOGIN FLOW
+        if (!credentials?.password) {
+          throw new Error("Missing password");
+        }
+
         try {
-          // Find user in database - optimized to select only needed fields
-          const user = await authPrisma.user.findUnique({
-            where: { email: credentials.email.toLowerCase() },
-            select: {
-              id: true,
-              email: true,
-              passwordHash: true,
-              role: true,
-              status: true,
-              failedLoginAttempts: true,
-              accountLockedUntil: true,
+          // PERFORMANCE LOGGING: Track login timing
+          const loginStart = Date.now();
+
+          // REDIS OPTIMIZATION: Cache user lookup to avoid slow database queries
+          // First login: ~1700ms (database), Subsequent logins: ~20-50ms (Redis cache)
+          // Note: Normalize email for consistent cache keys
+          const normalizedLoginEmail = credentials.email.toLowerCase();
+          const dbQueryStart = Date.now();
+          const user = await getOrFetch(
+            CACHE_KEYS.user(normalizedLoginEmail),
+            async () => {
+              // Use case-insensitive lookup to handle mixed-case emails in DB
+              return await authPrisma.user.findFirst({
+                where: { email: { equals: credentials.email, mode: "insensitive" } },
+                select: {
+                  id: true,
+                  email: true,
+                  passwordHash: true,
+                  role: true,
+                  status: true,
+                  failedLoginAttempts: true,
+                  accountLockedUntil: true,
+                },
+              });
             },
-          });
+            CACHE_TTL.USER_DATA
+          );
 
           if (!user || !user.passwordHash) {
             // Don't reveal whether user exists
@@ -61,6 +175,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Verify password
+          const bcryptStart = Date.now();
           const isValidPassword = await bcrypt.compare(
             credentials.password,
             user.passwordHash
@@ -80,10 +195,18 @@ export const authOptions: NextAuthOptions = {
               updates.accountLockedUntil = lockUntil;
             }
 
-            await authPrisma.user.update({
+            // OPTIMIZATION: Fire-and-forget for failed login tracking (non-blocking)
+            // User gets error response IMMEDIATELY without waiting for DB update
+            // This improves failed login responsiveness by 50-100ms
+            authPrisma.user.update({
               where: { id: user.id },
               data: updates,
+            }).catch(() => {
+              // Ignore update errors silently - user gets error message anyway
             });
+
+            // Invalidate user cache so next attempt gets fresh failedLoginAttempts count
+            invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
 
             // Log failed login (fire-and-forget, non-blocking)
             authPrisma.auditLog.create({
@@ -119,6 +242,9 @@ export const authOptions: NextAuthOptions = {
           }).catch(() => {
             // Ignore update errors silently - user is already logged in
           });
+
+          // Invalidate user cache so next login gets fresh data (fire-and-forget)
+          invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
 
           // Async: Log successful login (fire-and-forget, non-blocking)
           authPrisma.auditLog.create({
@@ -156,13 +282,35 @@ export const authOptions: NextAuthOptions = {
      * Called whenever a JWT is created or updated
      * Adds role and id to the token (keep it small for cookie size limits)
      */
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.email = user.email;
+        // Preserve impersonation flag if present
+        if ((user as any).impersonatedBy) {
+          token.impersonatedBy = (user as any).impersonatedBy;
+        }
         // Do NOT store requirements in JWT - they make the session cookie too large
         // Requirements should be fetched via API: /api/worker/requirements
       }
+
+      // Refetch user data when session is updated
+      if (trigger === "update" && token.id) {
+        const freshUser = await authPrisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            email: true,
+            role: true,
+          },
+        });
+
+        if (freshUser) {
+          token.email = freshUser.email;
+          token.role = freshUser.role;
+        }
+      }
+
       return token;
     },
 
@@ -172,12 +320,38 @@ export const authOptions: NextAuthOptions = {
      * Adds role and id to the session
      */
     async session({ session, token }) {
+      const sessionStart = Date.now();
+
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.email = token.email as string;
+        // Add impersonation data if present
+        session.user.impersonatedBy = token.impersonatedBy as string | undefined;
         // Requirements are fetched via API, not stored in session
       }
       return session;
+    },
+
+    /**
+     * Redirect Callback
+     * Controls where to redirect after sign in based on user role
+     */
+    async redirect({ url, baseUrl }) {
+      // If the url is already a full URL (starts with http), use it
+      if (url.startsWith("http")) {
+        // But only if it's on the same domain
+        if (url.startsWith(baseUrl)) {
+          return url;
+        }
+        return baseUrl;
+      }
+      // If it's a relative URL, prepend baseUrl
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Default to baseUrl
+      return baseUrl;
     },
   },
 

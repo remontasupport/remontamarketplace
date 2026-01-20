@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCategories } from '@/hooks/queries/useCategories'
 import { signOut } from 'next-auth/react'
 
@@ -32,6 +32,7 @@ interface Contractor {
   createdAt: string
   updatedAt: string
   distance?: number // Only present when distance filtering is active
+  isActive: boolean
 }
 
 interface PaginatedResponse {
@@ -58,9 +59,14 @@ interface ContractorsFilters {
   location: string
   typeOfSupport: string
   gender: string
+  hasVehicle: string
+  workerType: string
   languages: string[]
   age: string
   within: string
+
+  // Therapeutic subcategories filter (NEW)
+  therapeuticSubcategories: string[]
 
   // Document filters (NEW)
   documentCategories: string[]
@@ -80,48 +86,35 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
     sortOrder: filters.sortOrder,
   })
 
-  // Text search
-  if (filters.search) {
-    params.append('search', filters.search)
-  }
+  // Filter groups by default value type
+  const stringFilters = ['search', 'location'] as const
+  const allDefaultFilters = ['typeOfSupport', 'gender', 'hasVehicle', 'workerType', 'age'] as const
+  const noneDefaultFilters = ['within'] as const
+  const arrayFilters = ['languages', 'therapeuticSubcategories', 'documentCategories', 'documentStatuses', 'requirementTypes'] as const
 
-  // Advanced filters - only add if they have values
-  if (filters.location) {
-    params.append('location', filters.location)
-  }
+  // String filters (truthy check only)
+  stringFilters.forEach(key => {
+    const value = filters[key]
+    if (value) params.append(key, value)
+  })
 
-  if (filters.typeOfSupport && filters.typeOfSupport !== 'all') {
-    params.append('typeOfSupport', filters.typeOfSupport)
-  }
+  // String filters with 'all' as default
+  allDefaultFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value !== 'all') params.append(key, value)
+  })
 
-  if (filters.gender && filters.gender !== 'all') {
-    params.append('gender', filters.gender)
-  }
+  // String filters with 'none' as default
+  noneDefaultFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value !== 'none') params.append(key, value)
+  })
 
-  if (filters.languages && filters.languages.length > 0) {
-    params.append('languages', filters.languages.join(','))
-  }
-
-  if (filters.age && filters.age !== 'all') {
-    params.append('age', filters.age)
-  }
-
-  if (filters.within && filters.within !== 'none') {
-    params.append('within', filters.within)
-  }
-
-  // Document filters (NEW)
-  if (filters.documentCategories && filters.documentCategories.length > 0) {
-    params.append('documentCategories', filters.documentCategories.join(','))
-  }
-
-  if (filters.documentStatuses && filters.documentStatuses.length > 0) {
-    params.append('documentStatuses', filters.documentStatuses.join(','))
-  }
-
-  if (filters.requirementTypes && filters.requirementTypes.length > 0) {
-    params.append('requirementTypes', filters.requirementTypes.join(','))
-  }
+  // Array filters (join with comma)
+  arrayFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value.length > 0) params.append(key, value.join(','))
+  })
 
   const response = await fetch(`/api/admin/contractors?${params.toString()}`)
 
@@ -135,6 +128,119 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Parse URL search params into filter state
+ * Reads query parameters and converts them to the correct types
+ */
+function parseFiltersFromURL(searchParams: URLSearchParams): Partial<ContractorsFilters> {
+  const filters: Partial<ContractorsFilters> = {}
+
+  // Integer filters with default fallback
+  const intFilters = [
+    { key: 'page', fallback: 1 },
+    { key: 'pageSize', fallback: 20 },
+  ] as const
+
+  intFilters.forEach(({ key, fallback }) => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, number>)[key] = parseInt(value, 10) || fallback
+  })
+
+  // Simple string filters (direct assignment)
+  const stringFilters = [
+    'search', 'sortBy', 'location', 'typeOfSupport',
+    'gender', 'hasVehicle', 'workerType', 'age', 'within'
+  ] as const
+
+  stringFilters.forEach(key => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, string>)[key] = value
+  })
+
+  // Validated sortOrder (must be 'asc' or 'desc')
+  const sortOrder = searchParams.get('sortOrder')
+  if (sortOrder === 'asc' || sortOrder === 'desc') {
+    filters.sortOrder = sortOrder
+  }
+
+  // Array filters (comma-separated)
+  const arrayFilters = [
+    'languages', 'therapeuticSubcategories',
+    'documentCategories', 'documentStatuses', 'requirementTypes'
+  ] as const
+
+  arrayFilters.forEach(key => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, string[]>)[key] = value.split(',').filter(Boolean)
+  })
+
+  return filters
+}
+
+/**
+ * Build URL query string from filter state
+ * Only includes non-default values to keep URL clean
+ */
+function buildURLFromFilters(filters: ContractorsFilters): string {
+  const params = new URLSearchParams()
+
+  // Integer filters with default values to skip
+  const intFilters = [
+    { key: 'page', defaultValue: 1 },
+    { key: 'pageSize', defaultValue: 20 },
+  ] as const
+
+  intFilters.forEach(({ key, defaultValue }) => {
+    const value = filters[key]
+    if (value && value !== defaultValue) {
+      params.set(key, value.toString())
+    }
+  })
+
+  // String filters with no default (truthy check only)
+  const stringFilters = ['search', 'location'] as const
+
+  stringFilters.forEach(key => {
+    const value = filters[key]
+    if (value) params.set(key, value)
+  })
+
+  // String filters with specific default values to skip
+  const stringFiltersWithDefaults = [
+    { key: 'sortBy', defaultValue: 'createdAt' },
+    { key: 'sortOrder', defaultValue: 'desc' },
+    { key: 'typeOfSupport', defaultValue: 'all' },
+    { key: 'gender', defaultValue: 'all' },
+    { key: 'hasVehicle', defaultValue: 'all' },
+    { key: 'workerType', defaultValue: 'all' },
+    { key: 'age', defaultValue: 'all' },
+    { key: 'within', defaultValue: 'none' },
+  ] as const
+
+  stringFiltersWithDefaults.forEach(({ key, defaultValue }) => {
+    const value = filters[key]
+    if (value && value !== defaultValue) {
+      params.set(key, value)
+    }
+  })
+
+  // Array filters (join with comma)
+  const arrayFilters = [
+    'languages', 'therapeuticSubcategories',
+    'documentCategories', 'documentStatuses', 'requirementTypes'
+  ] as const
+
+  arrayFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value.length > 0) {
+      params.set(key, value.join(','))
+    }
+  })
+
+  const queryString = params.toString()
+  return queryString ? `?${queryString}` : ''
+}
 
 /**
  * Convert distance in kilometers to travel time
@@ -167,6 +273,35 @@ function formatTravelTime(distanceKm: number): string {
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+
+  // Mutation for toggling worker status
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ contractorId, isActive }: { contractorId: string; isActive: boolean }) => {
+      console.log('[Toggle Status] Sending request:', { contractorId, isActive })
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive })
+      })
+      const data = await response.json()
+      console.log('[Toggle Status] Response:', data)
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update status')
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      console.log('[Toggle Status] Success:', data)
+      // Invalidate and refetch contractors list
+      queryClient.invalidateQueries({ queryKey: ['contractors'] })
+    },
+    onError: (error) => {
+      console.error('[Toggle Status] Error:', error)
+      alert('Failed to update worker status: ' + error.message)
+    }
+  })
 
   // Fetch categories from database
   const { data: categories, isLoading: isCategoriesLoading } = useCategories()
@@ -174,31 +309,55 @@ export default function AdminDashboard() {
   // State for report generation - track which report is being generated
   const [generatingReport, setGeneratingReport] = useState<'daily' | 'weekly' | null>(null)
 
-  // State for filters (unified state)
-  const [filters, setFilters] = useState<ContractorsFilters>({
-    page: 1,
-    pageSize: 20,
-    search: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-    // Advanced filters
-    location: '',
-    typeOfSupport: 'all',
-    gender: 'all',
-    languages: [],
-    age: 'all',
-    within: 'none',
-    // Document filters
-    documentCategories: [],
-    documentStatuses: [],
-    requirementTypes: [],
+  // State for filters (unified state) - Initialize from URL params if available
+  const [filters, setFilters] = useState<ContractorsFilters>(() => {
+    const defaultFilters: ContractorsFilters = {
+      page: 1,
+      pageSize: 20,
+      search: '',
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      // Advanced filters
+      location: '',
+      typeOfSupport: 'all',
+      gender: 'all',
+      hasVehicle: 'all',
+      workerType: 'all',
+      languages: [],
+      age: 'all',
+      within: 'none',
+      // Therapeutic subcategories filter
+      therapeuticSubcategories: [],
+      // Document filters
+      documentCategories: [],
+      documentStatuses: [],
+      requirementTypes: [],
+    }
+
+    // Parse URL params and merge with defaults
+    const urlFilters = parseFiltersFromURL(searchParams)
+    return { ...defaultFilters, ...urlFilters }
   })
 
-  const [searchInput, setSearchInput] = useState('')
+  // Initialize search input from URL as well
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
 
   // Document filter options (fetched from API)
   const [filterOptions, setFilterOptions] = useState<any>(null)
   const [isLoadingFilters, setIsLoadingFilters] = useState(true)
+
+  // Pending advanced filters (not applied until Search button is clicked)
+  const [pendingFilters, setPendingFilters] = useState({
+    location: filters.location,
+    typeOfSupport: filters.typeOfSupport,
+    gender: filters.gender,
+    hasVehicle: filters.hasVehicle,
+    workerType: filters.workerType,
+    languages: filters.languages,
+    age: filters.age,
+    within: filters.within,
+    therapeuticSubcategories: filters.therapeuticSubcategories,
+  })
 
   // Pending document filters (not applied yet)
   const [pendingDocFilters, setPendingDocFilters] = useState({
@@ -207,10 +366,17 @@ export default function AdminDashboard() {
     requirementTypes: [] as string[],
   })
 
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  // Contractor modal state (isModalOpen derived from selectedContractor !== null)
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
   const [showContactInfo, setShowContactInfo] = useState(false)
+  const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
+
+  // Inactive workers modal state (grouped)
+  const [inactiveWorkersState, setInactiveWorkersState] = useState({
+    isOpen: false,
+    workers: [] as Contractor[],
+    isLoading: false,
+  })
 
   // Suburb autocomplete states
   const [suburbSearch, setSuburbSearch] = useState('')
@@ -241,6 +407,18 @@ export default function AdminDashboard() {
     lang.toLowerCase().includes(languageSearch.toLowerCase())
   )
 
+  // Therapeutic subcategories filter states
+  const [therapeuticSubcategories, setTherapeuticSubcategories] = useState<Array<{ id: string; name: string }>>([])
+  const [isLoadingTherapeuticSubcategories, setIsLoadingTherapeuticSubcategories] = useState(false)
+  const [therapeuticSubcategorySearch, setTherapeuticSubcategorySearch] = useState('')
+  const [showTherapeuticSubcategoryDropdown, setShowTherapeuticSubcategoryDropdown] = useState(false)
+  const therapeuticSubcategoryDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Filter therapeutic subcategories based on search
+  const filteredTherapeuticSubcategories = therapeuticSubcategories.filter(sub =>
+    sub.name.toLowerCase().includes(therapeuticSubcategorySearch.toLowerCase())
+  )
+
   // Fetch document filter options on mount
   useEffect(() => {
     const fetchFilterOptions = async () => {
@@ -260,29 +438,52 @@ export default function AdminDashboard() {
     fetchFilterOptions()
   }, [])
 
-  // Close suburb dropdown when clicking outside
+  // Close all dropdowns when clicking outside (combined handler)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (suburbDropdownRef.current && !suburbDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+
+      if (suburbDropdownRef.current && !suburbDropdownRef.current.contains(target)) {
         setShowSuburbDropdown(false)
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Close language dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
         setShowLanguageDropdown(false)
+      }
+      if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(target)) {
+        setShowTherapeuticSubcategoryDropdown(false)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Fetch therapeutic subcategories when Therapeutic Supports is selected
+  useEffect(() => {
+    const fetchTherapeuticSubcategories = async () => {
+      if (pendingFilters.typeOfSupport !== 'Therapeutic Supports') {
+        setTherapeuticSubcategories([])
+        return
+      }
+
+      setIsLoadingTherapeuticSubcategories(true)
+      try {
+        const response = await fetch('/api/categories/therapeutic-supports/subcategories')
+        const data = await response.json()
+
+        if (data.success && Array.isArray(data.data)) {
+          setTherapeuticSubcategories(data.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch therapeutic subcategories:', error)
+        setTherapeuticSubcategories([])
+      } finally {
+        setIsLoadingTherapeuticSubcategories(false)
+      }
+    }
+
+    fetchTherapeuticSubcategories()
+  }, [pendingFilters.typeOfSupport])
 
   // Fetch suburbs from API
   useEffect(() => {
@@ -323,6 +524,18 @@ export default function AdminDashboard() {
     const timeoutId = setTimeout(fetchSuburbs, 300) // Debounce for 300ms
     return () => clearTimeout(timeoutId)
   }, [suburbSearch])
+
+  // Sync filters to URL whenever they change
+  useEffect(() => {
+    const newURL = buildURLFromFilters(filters)
+    const currentPath = window.location.pathname
+    const newFullURL = currentPath + newURL
+
+    // Only update URL if it's different from current URL
+    if (newFullURL !== window.location.pathname + window.location.search) {
+      router.replace(newFullURL, { scroll: false })
+    }
+  }, [filters, router])
 
   // Fetch contractors using TanStack Query
   const { data, isLoading, error, isFetching } = useQuery({
@@ -387,9 +600,51 @@ export default function AdminDashboard() {
   }
 
   const closeModal = () => {
-    setIsModalOpen(false)
     setSelectedContractor(null)
     setShowContactInfo(false)
+  }
+
+  const fetchInactiveWorkers = async () => {
+    setInactiveWorkersState(prev => ({ ...prev, isLoading: true }))
+    try {
+      const response = await fetch('/api/admin/contractors/inactive')
+      const result = await response.json()
+      if (result.success) {
+        setInactiveWorkersState({ isOpen: true, workers: result.data, isLoading: false })
+      } else {
+        setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
+        alert('Failed to fetch inactive workers: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error fetching inactive workers:', error)
+      setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
+      alert('Failed to fetch inactive workers')
+    }
+  }
+
+  const reactivateWorker = async (contractorId: string) => {
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true })
+      })
+      const result = await response.json()
+      if (result.success) {
+        // Remove from inactive list
+        setInactiveWorkersState(prev => ({
+          ...prev,
+          workers: prev.workers.filter(w => w.id !== contractorId)
+        }))
+        // Refresh main list
+        queryClient.invalidateQueries({ queryKey: ['contractors'] })
+      } else {
+        alert('Failed to reactivate worker: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error reactivating worker:', error)
+      alert('Failed to reactivate worker')
+    }
   }
 
   // ========================================
@@ -580,7 +835,7 @@ export default function AdminDashboard() {
                             isSuburbSelectedRef.current = true
                             setShowSuburbDropdown(false)
                             setSuburbs([])
-                            setFilters(prev => ({ ...prev, location: selectedValue, page: 1 }))
+                            setPendingFilters(prev => ({ ...prev, location: selectedValue }))
                             setSuburbSearch(selectedValue)
                           }}
                         >
@@ -600,8 +855,8 @@ export default function AdminDashboard() {
                   Type of Support
                 </label>
                 <select
-                  value={filters.typeOfSupport}
-                  onChange={(e) => setFilters(prev => ({ ...prev, typeOfSupport: e.target.value, page: 1 }))}
+                  value={pendingFilters.typeOfSupport}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, typeOfSupport: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                   disabled={isCategoriesLoading}
                 >
@@ -624,8 +879,8 @@ export default function AdminDashboard() {
                   Gender
                 </label>
                 <select
-                  value={filters.gender}
-                  onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value, page: 1 }))}
+                  value={pendingFilters.gender}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, gender: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -640,8 +895,8 @@ export default function AdminDashboard() {
                   Within
                 </label>
                 <select
-                  value={filters.within}
-                  onChange={(e) => setFilters(prev => ({ ...prev, within: e.target.value, page: 1 }))}
+                  value={pendingFilters.within}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, within: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="none">None</option>
@@ -656,8 +911,23 @@ export default function AdminDashboard() {
               <div className="flex flex-col justify-end">
                 <button
                   onClick={() => {
-                    // Reset to first page when applying filters
-                    setFilters(prev => ({ ...prev, page: 1 }))
+                    // Apply all pending filters and reset to first page
+                    // IMPORTANT: Use suburbSearch if user typed manually without selecting from dropdown
+                    const finalLocation = suburbSearch.trim() || pendingFilters.location
+
+                    setFilters(prev => ({
+                      ...prev,
+                      location: finalLocation,
+                      typeOfSupport: pendingFilters.typeOfSupport,
+                      gender: pendingFilters.gender,
+                      hasVehicle: pendingFilters.hasVehicle,
+                      workerType: pendingFilters.workerType,
+                      languages: pendingFilters.languages,
+                      age: pendingFilters.age,
+                      within: pendingFilters.within,
+                      therapeuticSubcategories: pendingFilters.therapeuticSubcategories,
+                      page: 1
+                    }))
                   }}
                   className="rounded-md bg-gray-900 px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 h-[42px]"
                 >
@@ -679,11 +949,11 @@ export default function AdminDashboard() {
                     onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
                     className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
                   >
-                    {filters.languages.length === 0 ? (
+                    {pendingFilters.languages.length === 0 ? (
                       <span className="text-gray-400">All languages</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
-                        {filters.languages.map((lang) => (
+                        {pendingFilters.languages.map((lang) => (
                           <span
                             key={lang}
                             className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
@@ -693,10 +963,9 @@ export default function AdminDashboard() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setFilters(prev => ({
+                                setPendingFilters(prev => ({
                                   ...prev,
-                                  languages: prev.languages.filter(l => l !== lang),
-                                  page: 1
+                                  languages: prev.languages.filter(l => l !== lang)
                                 }))
                               }}
                               className="hover:text-indigo-600"
@@ -731,24 +1000,23 @@ export default function AdminDashboard() {
                             key={language}
                             type="button"
                             onClick={() => {
-                              const isSelected = filters.languages.includes(language)
-                              setFilters(prev => ({
+                              const isSelected = pendingFilters.languages.includes(language)
+                              setPendingFilters(prev => ({
                                 ...prev,
                                 languages: isSelected
                                   ? prev.languages.filter(l => l !== language)
-                                  : [...prev.languages, language],
-                                page: 1
+                                  : [...prev.languages, language]
                               }))
                             }}
                             className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                              filters.languages.includes(language)
+                              pendingFilters.languages.includes(language)
                                 ? 'bg-indigo-50 text-indigo-700 font-medium'
                                 : ''
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <span>{language}</span>
-                              {filters.languages.includes(language) && (
+                              {pendingFilters.languages.includes(language) && (
                                 <span className="text-indigo-600">✓</span>
                               )}
                             </div>
@@ -763,7 +1031,120 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </div>
+                {/* Show Inactive Link */}
+                <button
+                  onClick={fetchInactiveWorkers}
+                  disabled={inactiveWorkersState.isLoading}
+                  className="mt-4 text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait text-left"
+                >
+                  {inactiveWorkersState.isLoading ? 'Loading...' : 'Show Inactive'}
+                </button>
               </div>
+
+              {/* Therapeutic Subcategories - Multi-select with Search (only shown when Therapeutic Supports is selected) */}
+              {pendingFilters.typeOfSupport === 'Therapeutic Supports' && (
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Therapeutic Subcategories
+                  </label>
+                  <div className="relative" ref={therapeuticSubcategoryDropdownRef}>
+                    {/* Selected Subcategories Display */}
+                    <div
+                      onClick={() => setShowTherapeuticSubcategoryDropdown(!showTherapeuticSubcategoryDropdown)}
+                      className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
+                    >
+                      {pendingFilters.therapeuticSubcategories.length === 0 ? (
+                        <span className="text-gray-400">All subcategories</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {pendingFilters.therapeuticSubcategories.map((subId) => {
+                            const sub = therapeuticSubcategories.find(s => s.id === subId)
+                            return (
+                              <span
+                                key={subId}
+                                className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
+                              >
+                                {sub?.name || subId}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPendingFilters(prev => ({
+                                      ...prev,
+                                      therapeuticSubcategories: prev.therapeuticSubcategories.filter(id => id !== subId)
+                                    }))
+                                  }}
+                                  className="hover:text-indigo-600"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Dropdown */}
+                    {showTherapeuticSubcategoryDropdown && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                        {/* Search Input */}
+                        <div className="p-2 border-b border-gray-200">
+                          <input
+                            type="text"
+                            placeholder="Search subcategories..."
+                            value={therapeuticSubcategorySearch}
+                            onChange={(e) => setTherapeuticSubcategorySearch(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+
+                        {/* Subcategory List */}
+                        <div className="max-h-48 overflow-y-auto">
+                          {isLoadingTherapeuticSubcategories ? (
+                            <div className="px-4 py-3 text-gray-500 text-center text-sm">
+                              Loading subcategories...
+                            </div>
+                          ) : filteredTherapeuticSubcategories.length === 0 ? (
+                            <div className="px-4 py-3 text-gray-500 text-center text-sm">
+                              No subcategories found
+                            </div>
+                          ) : (
+                            filteredTherapeuticSubcategories.map((subcategory) => (
+                              <button
+                                key={subcategory.id}
+                                type="button"
+                                onClick={() => {
+                                  const isSelected = pendingFilters.therapeuticSubcategories.includes(subcategory.id)
+                                  setPendingFilters(prev => ({
+                                    ...prev,
+                                    therapeuticSubcategories: isSelected
+                                      ? prev.therapeuticSubcategories.filter(id => id !== subcategory.id)
+                                      : [...prev.therapeuticSubcategories, subcategory.id]
+                                  }))
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                  pendingFilters.therapeuticSubcategories.includes(subcategory.id)
+                                    ? 'bg-indigo-50 text-indigo-700 font-medium'
+                                    : ''
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{subcategory.name}</span>
+                                  {pendingFilters.therapeuticSubcategories.includes(subcategory.id) && (
+                                    <span className="text-indigo-600">✓</span>
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Age */}
               <div className="flex flex-col">
@@ -771,8 +1152,8 @@ export default function AdminDashboard() {
                   Age
                 </label>
                 <select
-                  value={filters.age}
-                  onChange={(e) => setFilters(prev => ({ ...prev, age: e.target.value, page: 1 }))}
+                  value={pendingFilters.age}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, age: e.target.value }))}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                 >
                   <option value="all">All</option>
@@ -782,15 +1163,47 @@ export default function AdminDashboard() {
                   <option value="60+">60 above</option>
                 </select>
               </div>
+
+              {/* Driver Access */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Driver Access
+                </label>
+                <select
+                  value={pendingFilters.hasVehicle}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, hasVehicle: e.target.value }))}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="all">All</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              {/* Worker Type */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">
+                  Worker Type
+                </label>
+                <select
+                  value={pendingFilters.workerType}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, workerType: e.target.value }))}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="all">All</option>
+                  <option value="Employee">Employee</option>
+                  <option value="Contractor">Contractor</option>
+                </select>
+              </div>
             </div>
 
-            {/* Document Filters Section */}
+            {/* Document Filters Section - HIDDEN */}
+            {/* Uncomment this section to enable document filters
             {!isLoadingFilters && filterOptions && (
               <div className="mt-6 border-t border-gray-200 pt-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Document Filters</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Document Statuses */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
                       Document Status
@@ -827,7 +1240,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Requirement Types */}
                   {filterOptions.requirementTypes.length > 0 && (
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -867,7 +1279,6 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                {/* Apply Document Filters Button */}
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={() => {
@@ -889,6 +1300,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+            */}
 
             {/* Clear Filters Button */}
             <div className="flex justify-end mt-4">
@@ -903,12 +1315,26 @@ export default function AdminDashboard() {
                     location: '',
                     typeOfSupport: 'all',
                     gender: 'all',
+                    hasVehicle: 'all',
+                    workerType: 'all',
                     languages: [],
                     age: 'all',
                     within: 'none',
+                    therapeuticSubcategories: [],
                     documentCategories: [],
                     documentStatuses: [],
                     requirementTypes: [],
+                  })
+                  setPendingFilters({
+                    location: '',
+                    typeOfSupport: 'all',
+                    gender: 'all',
+                    hasVehicle: 'all',
+                    workerType: 'all',
+                    languages: [],
+                    age: 'all',
+                    within: 'none',
+                    therapeuticSubcategories: [],
                   })
                   setPendingDocFilters({
                     documentCategories: [],
@@ -918,6 +1344,7 @@ export default function AdminDashboard() {
                   setSearchInput('')
                   setSuburbSearch('')
                   setLanguageSearch('')
+                  setTherapeuticSubcategorySearch('')
                 }}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
@@ -1012,18 +1439,15 @@ export default function AdminDashboard() {
                     data.data.map((contractor) => (
                       <tr
                         key={contractor.id}
-                        onClick={() => {
-                          setSelectedContractor(contractor)
-                          setIsModalOpen(true)
-                        }}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors">
+                        onClick={() => setSelectedContractor(contractor)}
+                        className={`hover:bg-gray-50 cursor-pointer transition-colors ${!contractor.isActive ? 'opacity-50' : ''}`}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
-                              {contractor.photos && contractor.photos.length > 0 ? (
+                              {contractor.photos ? (
                                 <img
                                   className="h-10 w-10 rounded-full object-cover"
-                                  src={contractor.photos[0]}
+                                  src={contractor.photos}
                                   alt=""
                                 />
                               ) : (
@@ -1036,8 +1460,48 @@ export default function AdminDashboard() {
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {contractor.firstName} {contractor.lastName}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {contractor.firstName} {contractor.lastName}
+                                </span>
+                                {/* Active Status with Toggle on Click */}
+                                <div className="flex items-center gap-1">
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowToggleForContractor(
+                                        showToggleForContractor === contractor.id ? null : contractor.id
+                                      );
+                                    }}
+                                    className="text-xs text-green-700 font-medium cursor-pointer select-none px-2 py-0.5 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
+                                  >
+                                    Active
+                                  </span>
+                                  {showToggleForContractor === contractor.id && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleStatusMutation.mutate({
+                                          contractorId: contractor.id,
+                                          isActive: !contractor.isActive
+                                        })
+                                      }}
+                                      disabled={toggleStatusMutation.isPending}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                                        contractor.isActive ? 'bg-green-500' : 'bg-gray-300'
+                                      } ${toggleStatusMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
+                                      role="switch"
+                                      aria-checked={contractor.isActive}
+                                      title={contractor.isActive ? 'Click to deactivate' : 'Click to activate'}
+                                    >
+                                      <span
+                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                          contractor.isActive ? 'translate-x-4' : 'translate-x-0'
+                                        }`}
+                                      />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               {contractor.mobile && (
                                 <div className="text-sm text-gray-500">
@@ -1112,7 +1576,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Modal for contractor actions */}
-      {isModalOpen && selectedContractor && (
+      {selectedContractor && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
@@ -1139,10 +1603,10 @@ export default function AdminDashboard() {
               {/* Contractor Info */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
-                  {selectedContractor.photos && selectedContractor.photos.length > 0 ? (
+                  {selectedContractor.photos ? (
                     <img
                       className="h-16 w-16 rounded-full object-cover"
-                      src={selectedContractor.photos[0]}
+                      src={selectedContractor.photos}
                       alt=""
                     />
                   ) : (
@@ -1159,7 +1623,7 @@ export default function AdminDashboard() {
                     </h3>
                     <p className="text-sm text-gray-500">
                       {selectedContractor.city && selectedContractor.state
-                        ? `${selectedContractor.city}, ${selectedContractor.state}`
+                        ? `${selectedContractor.city}, ${selectedContractor.state}${selectedContractor.postalCode ? ` ${selectedContractor.postalCode}` : ''}`
                         : selectedContractor.city || selectedContractor.state || 'Location not specified'}
                     </p>
                   </div>
@@ -1182,31 +1646,44 @@ export default function AdminDashboard() {
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    router.push(`/admin/contractors/${selectedContractor.id}`)
-                    closeModal()
-                  }}
+                <a
+                  href={`/admin/contractors/${selectedContractor.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeModal}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Edit Profile
-                </button>
+                </a>
 
-                <button
-                  onClick={() => {
-                    router.push(`/admin/contractors/${selectedContractor.id}/compliance`)
-                    closeModal()
-                  }}
+                <a
+                  href={`/admin/contractors/${selectedContractor.userId}/profile`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeModal}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Show Profile
+                </a>
+
+                <a
+                  href={`/admin/contractors/${selectedContractor.id}/compliance`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeModal}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Show Compliance
-                </button>
+                </a>
 
                 <button
                   onClick={() => setShowContactInfo(!showContactInfo)}
@@ -1257,6 +1734,88 @@ export default function AdminDashboard() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inactive Workers Modal */}
+      {inactiveWorkersState.isOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
+          ></div>
+
+          {/* Modal */}
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div
+              className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Inactive Workers ({inactiveWorkersState.workers.length})
+                </h3>
+                <button
+                  onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="overflow-y-auto max-h-[60vh] p-6">
+                {inactiveWorkersState.workers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No inactive workers found
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {inactiveWorkersState.workers.map((worker) => (
+                      <div
+                        key={worker.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          {worker.photos ? (
+                            <img
+                              className="h-10 w-10 rounded-full object-cover"
+                              src={worker.photos}
+                              alt=""
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <span className="text-gray-600 font-medium text-sm">
+                                {worker.firstName?.[0]}{worker.lastName?.[0]}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {worker.firstName} {worker.lastName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {worker.email || worker.mobile || 'No contact info'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => reactivateWorker(worker.id)}
+                          className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
+                        >
+                          Reactivate
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

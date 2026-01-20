@@ -96,6 +96,7 @@ export async function geocodeAddress(
     // ============================================
     const cached = getCachedGeocode(address)
     if (cached) {
+    
       return cached
     }
 
@@ -105,7 +106,7 @@ export async function geocodeAddress(
     const apiKey = process.env.GEOMAP_API
 
     if (!apiKey) {
-
+     
       return null
     }
 
@@ -113,8 +114,10 @@ export async function geocodeAddress(
     const query = `${address}, Australia`
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`
 
+
     const response = await fetch(url)
     const data: GeocodeResponse = await response.json()
+
 
     if (data.status === 'OK' && data.results.length > 0) {
       const result = data.results[0]
@@ -124,6 +127,8 @@ export async function geocodeAddress(
         formattedAddress: result.formatted_address,
       }
 
+  
+
       // ============================================
       // 3. STORE IN CACHE FOR FUTURE REQUESTS
       // ============================================
@@ -132,10 +137,10 @@ export async function geocodeAddress(
       return geocodeResult
     }
 
- 
+
     return null
   } catch (error) {
-
+    
     return null
   }
 }

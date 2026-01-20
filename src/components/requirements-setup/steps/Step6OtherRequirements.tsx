@@ -8,7 +8,10 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
@@ -84,6 +87,36 @@ export default function Step6OtherRequirements({
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
   const [customDocumentName, setCustomDocumentName] = useState<string>("");
   const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  // Helper function to show error modal
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  // Helper function to close error modal
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // Fetch uploaded documents on mount
   useEffect(() => {
@@ -109,12 +142,12 @@ export default function Step6OtherRequirements({
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
  
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.");
       return;
     }
 
     if (!selectedDocumentType && !customDocumentName) {
-      alert("Please select a document type or enter a custom name.");
+      showErrorModal("Please select a document type or enter a custom name.");
       return;
     }
 
@@ -124,22 +157,21 @@ export default function Step6OtherRequirements({
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
     
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal("Please upload a JPG, PNG, or PDF file", "Invalid File Type");
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-    
-      alert("File size must be less than 10MB");
+
+      showErrorModal("File size must be less than 50MB", "File Too Large", "Please compress your file or choose a smaller one.");
       return;
     }
 
     setIsUploading(true);
 
     try {
-   
 
       const formData = new FormData();
       formData.append("file", file);
@@ -149,31 +181,12 @@ export default function Step6OtherRequirements({
       const documentName = customDocumentName || selectedDocumentType;
       formData.append("documentName", documentName);
 
-    
+      // Use server action instead of API endpoint
+      const result = await uploadComplianceDocument(formData);
 
-      const response = await fetch("/api/upload/other-requirements", {
-        method: "POST",
-        body: formData,
-      });
-
-
-
-      if (!response.ok) {
-        const errorText = await response.text();
-       
-
-        let error;
-        try {
-          error = JSON.parse(errorText);
-        } catch {
-          error = { error: errorText };
-        }
-
-        throw new Error(error.error || error.details || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
-
-      const responseData = await response.json();
-   
 
       // Refresh the list of uploaded documents
       await fetchUploadedDocuments();
@@ -183,22 +196,25 @@ export default function Step6OtherRequirements({
       setCustomDocumentName("");
       setEditingDocumentId(null);
 
-   
+
     } catch (error: any) {
-     
-      alert(`Upload failed: ${error.message}`);
+      // Show specific error, not generic server message
+      showErrorModal(error.message || "Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleDeleteDocument = async (documentId: string) => {
-    if (!confirm("Are you sure you want to delete this document?")) {
-      return;
-    }
+  const handleDeleteDocument = (documentId: string) => {
+    setDocumentToDelete(documentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
 
     try {
-      const response = await fetch(`/api/worker/other-requirements/${documentId}`, {
+      const response = await fetch(`/api/worker/other-requirements/${documentToDelete}`, {
         method: "DELETE",
       });
 
@@ -208,17 +224,27 @@ export default function Step6OtherRequirements({
 
       // Refresh the list
       await fetchUploadedDocuments();
-    } catch (error: any) {
 
-      alert(`Delete failed: ${error.message}`);
+      // Reset state
+      setDocumentToDelete(null);
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      showErrorModal(error.message || "Delete failed. Please try again.", "Delete Failed");
     }
   };
 
   return (
-    <StepContentWrapper>
-      <div className="form-page-content">
-        {/* Left Column - Form */}
-        <div className="form-column">
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
+      <StepContentWrapper>
+        <div className="form-page-content">
+          {/* Left Column - Form */}
+          <div className="form-column">
           <div className="account-form">
             {/* Information */}
             <div className="mb-8">
@@ -294,7 +320,7 @@ export default function Step6OtherRequirements({
                 <input
                   type="file"
                   id="other-requirements-file"
-                  accept="image/jpeg,image/jpg,image/png,application/pdf"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
@@ -324,7 +350,7 @@ export default function Step6OtherRequirements({
                   )}
                 </Button>
                 <p className="text-xs text-gray-500 font-poppins mt-2">
-                  Accepted formats: JPG, PNG, PDF (max 10MB)
+                  Accepted formats: JPG, PNG, WebP, HEIC, PDF (max 50MB)
                 </p>
               </div>
 
@@ -450,5 +476,14 @@ export default function Step6OtherRequirements({
         </div>
       </div>
     </StepContentWrapper>
+
+    <ErrorModal
+      isOpen={errorModal.isOpen}
+      onClose={closeErrorModal}
+      title={errorModal.title}
+      message={errorModal.message}
+      subtitle={errorModal.subtitle}
+    />
+    </>
   );
 }

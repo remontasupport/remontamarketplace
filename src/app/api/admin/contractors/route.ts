@@ -20,9 +20,14 @@ interface FilterParams {
   location?: string
   typeOfSupport?: string
   gender?: string
+  hasVehicle?: string
+  workerType?: string
   languages?: string[]
   age?: string
   within?: string
+
+  // Therapeutic subcategories filter (NEW)
+  therapeuticSubcategories?: string[]
 
   // Document filters (NEW)
   documentCategories?: string[]
@@ -103,29 +108,81 @@ const filterRegistry: Record<string, FilterBuilder> = {
   },
 
   /**
+   * Has Vehicle / Driver Access Filter
+   * Database format is "Yes" or "No"
+   */
+  hasVehicle: (params) => {
+    if (!params.hasVehicle || params.hasVehicle === 'all') return null;
+    return { hasVehicle: params.hasVehicle };
+  },
+
+  /**
+   * Worker Type Filter
+   * Queries JSON column: abn = {"workerEngagementType":{"type":"abn"|"tfn","value":"..."}}
+   * Employee = type is "tfn", Contractor = type is "abn"
+   */
+  workerType: (params) => {
+    if (!params.workerType || params.workerType === 'all') return null;
+    const typeValue = params.workerType === 'Employee' ? 'tfn' : 'abn';
+    return {
+      abn: {
+        path: ['workerEngagementType', 'type'],
+        equals: typeValue,
+      },
+    };
+  },
+
+  /**
    * Age Range Filter
-   * Converts age range string (e.g., "20-30") to integer range query
+   * Filters by dateOfBirth (primary) or age column (fallback)
+   * Converts age range to birth date range for accurate filtering
    */
   age: (params) => {
     if (!params.age || params.age === 'all') return null;
 
+    const today = new Date();
+    const currentYear = today.getFullYear();
+
+    let minAge: number;
+    let maxAge: number;
+
     // Parse age range
     if (params.age === '60+') {
-      return { age: { gte: 60 } };
-    }
+      minAge = 60;
+      maxAge = 120; // Reasonable upper limit
+    } else {
+      const match = params.age.match(/^(\d+)-(\d+)$/);
+      if (!match) return null;
 
-    const match = params.age.match(/^(\d+)-(\d+)$/);
-    if (match) {
       const [, min, max] = match;
-      return {
-        age: {
-          gte: parseInt(min, 10),
-          lte: parseInt(max, 10)
-        }
-      };
+      minAge = parseInt(min, 10);
+      maxAge = parseInt(max, 10);
     }
 
-    return null;
+    // Calculate birth year range (reverse logic: older age = earlier birth year)
+    const maxBirthYear = currentYear - minAge; // younger end of range
+    const minBirthYear = currentYear - maxAge; // older end of range
+
+    // Create OR condition: match either dateOfBirth range OR age range
+    return {
+      OR: [
+        // Match by dateOfBirth (primary method)
+        {
+          AND: [
+            { dateOfBirth: { not: null } },
+            { dateOfBirth: { gte: `${minBirthYear}-01-01` } },
+            { dateOfBirth: { lte: `${maxBirthYear}-12-31` } }
+          ]
+        },
+        // Match by age column (fallback for profiles without dateOfBirth)
+        {
+          AND: [
+            { dateOfBirth: null },
+            { age: { gte: minAge, lte: maxAge } }
+          ]
+        }
+      ]
+    };
   },
 
   /**
@@ -149,7 +206,13 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Languages Filter (Multi-select)
-   * Uses PostgreSQL array intersection
+   * Queries from WorkerAdditionalInfo table's languages column with fallback to WorkerProfile.languages
+   *
+   * FALLBACK LOGIC:
+   * 1. Primary: Check workerAdditionalInfo.languages array (preferred, detailed info)
+   * 2. Fallback: Check workerProfile.languages array (basic profile data)
+   *
+   * Both use PostgreSQL array intersection for fast queries
    * Matches workers who speak ANY of the selected languages
    * Normalizes to Title Case to match database format (e.g., "English", "Mandarin")
    */
@@ -158,23 +221,84 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
     const normalizedLanguages = params.languages.map(toTitleCase);
 
-    return { languages: { hasSome: normalizedLanguages } };
+    return {
+      OR: [
+        // Primary: Check workerAdditionalInfo.languages array
+        {
+          workerAdditionalInfo: {
+            languages: { hasSome: normalizedLanguages }
+          }
+        },
+        // Fallback: Check workerProfile.languages array
+        {
+          languages: { hasSome: normalizedLanguages }
+        }
+      ]
+    };
   },
 
   /**
    * Text Search Filter
    * Searches across firstName, lastName, mobile
+   * Supports full name search (e.g., "Test Terson" matches firstName="Test" lastName="Terson")
    */
-  textSearch: (params) =>
-    params.search
-      ? {
-          OR: [
-            { firstName: { contains: params.search, mode: 'insensitive' } },
-            { lastName: { contains: params.search, mode: 'insensitive' } },
-            { mobile: { contains: params.search } },
-          ]
+  textSearch: (params) => {
+    if (!params.search) return null;
+
+    const search = params.search.trim();
+    const searchParts = search.split(/\s+/).filter(Boolean);
+
+    // Base conditions: search in individual fields
+    const baseConditions = [
+      { firstName: { contains: search, mode: 'insensitive' as const } },
+      { lastName: { contains: search, mode: 'insensitive' as const } },
+      { mobile: { contains: search } },
+    ];
+
+    // If search has multiple words, add full name matching conditions
+    if (searchParts.length >= 2) {
+      const firstPart = searchParts[0];
+      const remainingParts = searchParts.slice(1).join(' ');
+
+      // firstName matches first part AND lastName matches remaining (e.g., "Test Terson")
+      baseConditions.push({
+        AND: [
+          { firstName: { contains: firstPart, mode: 'insensitive' as const } },
+          { lastName: { contains: remainingParts, mode: 'insensitive' as const } },
+        ],
+      } as any);
+
+      // lastName matches first part AND firstName matches remaining (e.g., "Terson Test")
+      baseConditions.push({
+        AND: [
+          { lastName: { contains: firstPart, mode: 'insensitive' as const } },
+          { firstName: { contains: remainingParts, mode: 'insensitive' as const } },
+        ],
+      } as any);
+    }
+
+    return { OR: baseConditions };
+  },
+
+  /**
+   * Therapeutic Subcategories Filter (Multi-select)
+   * Filters workers who have therapeutic supports with specific subcategories
+   * Checks WorkerService.subcategoryIds array for therapeutic-supports category
+   */
+  therapeuticSubcategories: (params) => {
+    if (!params.therapeuticSubcategories || params.therapeuticSubcategories.length === 0) return null;
+
+    return {
+      workerServices: {
+        some: {
+          categoryId: 'therapeutic-supports',
+          subcategoryIds: {
+            hasSome: params.therapeuticSubcategories
+          }
         }
-      : null,
+      }
+    };
+  },
 
   /**
    * Location Filter - REMOVED
@@ -305,6 +429,13 @@ const filterRegistry: Record<string, FilterBuilder> = {
  * - Expected query time: < 100ms for 10k+ records
  */
 function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput {
+  // Base condition: Only show ACTIVE users (hide suspended/inactive workers)
+  const baseCondition: Prisma.WorkerProfileWhereInput = {
+    user: {
+      status: 'ACTIVE'
+    }
+  }
+
   // Execute all filters and collect non-null results
   const activeFilters = Object.values(filterRegistry)
     .map(filterFn => filterFn(params))
@@ -314,9 +445,9 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
   if (activeFilters.length > 0) {
   }
 
-  // Edge case: No filters active
+  // Edge case: No filters active - still apply base condition
   if (activeFilters.length === 0) {
-    return {}
+    return baseCondition
   }
 
   // Separate OR filters from AND filters
@@ -327,10 +458,10 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
   if (orFilters.length > 0) {
     const andConditions = orFilters.map(f => ({ OR: f.OR }))
 
-    // Merge with regular AND filters
+    // Merge with regular AND filters + base condition
     const mergedAndFilters = andFilters.reduce((acc, filter) => {
       return { ...acc, ...filter }
-    }, {})
+    }, baseCondition)
 
     // Combine everything
     let result
@@ -340,16 +471,16 @@ function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput 
       }
     } else {
       result = orFilters.length === 1
-        ? orFilters[0]
-        : { AND: andConditions }
+        ? { ...orFilters[0], ...baseCondition }
+        : { AND: [...andConditions, baseCondition] }
     }
     return result;
   }
 
-  // No OR filters, just merge AND filters
+  // No OR filters, just merge AND filters with base condition
   const result = andFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
     return { ...acc, ...filter }
-  }, {})
+  }, baseCondition)
 
   return result
 }
@@ -458,6 +589,30 @@ function transformWorkerServices(workerServices: Array<{ categoryName: string }>
 }
 
 /**
+ * Calculate age from date of birth string
+ * Supports various date formats (YYYY-MM-DD, DD/MM/YYYY, etc.)
+ */
+function calculateAge(dateOfBirth: string): number | null {
+  try {
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    // Adjust if birthday hasn't occurred this year yet
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    return age >= 0 ? age : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * Parse filter parameters from URL
  */
 function parseFilterParams(searchParams: URLSearchParams): FilterParams {
@@ -471,6 +626,8 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
   const location = searchParams.get('location') || undefined
   const typeOfSupport = searchParams.get('typeOfSupport') || undefined
   const gender = searchParams.get('gender') || undefined
+  const hasVehicle = searchParams.get('hasVehicle') || undefined
+  const workerType = searchParams.get('workerType') || undefined
   const age = searchParams.get('age') || undefined
   const within = searchParams.get('within') || 'none'
 
@@ -478,6 +635,12 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
   const languagesParam = searchParams.get('languages')
   const languages = languagesParam
     ? languagesParam.split(',').map(l => l.trim()).filter(Boolean)
+    : []
+
+  // Parse therapeutic subcategories (comma-separated)
+  const therapeuticSubcategoriesParam = searchParams.get('therapeuticSubcategories')
+  const therapeuticSubcategories = therapeuticSubcategoriesParam
+    ? therapeuticSubcategoriesParam.split(',').map(s => s.trim()).filter(Boolean)
     : []
 
   // Parse document filters (NEW - comma-separated arrays)
@@ -505,9 +668,12 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     location,
     typeOfSupport,
     gender,
+    hasVehicle,
+    workerType,
     languages,
     age,
     within,
+    therapeuticSubcategories,
     documentCategories,
     documentStatuses,
     requirementTypes,
@@ -528,6 +694,12 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   if (params.gender && params.gender !== 'all') {
     applied.gender = params.gender
   }
+  if (params.hasVehicle && params.hasVehicle !== 'all') {
+    applied.hasVehicle = params.hasVehicle
+  }
+  if (params.workerType && params.workerType !== 'all') {
+    applied.workerType = params.workerType
+  }
   if (params.languages && params.languages.length > 0) {
     applied.languages = params.languages
   }
@@ -536,6 +708,9 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   }
   if (params.within && params.within !== 'none') {
     applied.within = params.within
+  }
+  if (params.therapeuticSubcategories && params.therapeuticSubcategories.length > 0) {
+    applied.therapeuticSubcategories = params.therapeuticSubcategories
   }
   if (params.documentCategories && params.documentCategories.length > 0) {
     applied.documentCategories = params.documentCategories
@@ -569,55 +744,97 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
   }
 
   // Execute count and data query in parallel for performance
-  const [total, workers] = await Promise.all([
-    prisma.workerProfile.count({ where }),
-    prisma.workerProfile.findMany({
-      where,
-      orderBy,
-      skip,
-      take: params.pageSize,
-      select: {
-        id: true,
-        userId: true,
-        firstName: true,
-        lastName: true,
-        mobile: true,
-        gender: true,
-        age: true,
-        languages: true,
-        workerServices: {
-          select: {
-            categoryName: true,
-          }
-        },
-        user: {
-          select: {
-            email: true,
-          }
-        },
-        city: true,
-        state: true,
-        postalCode: true,
-        latitude: true,
-        longitude: true,
-        experience: true,
-        introduction: true,
-        photos: true,
-        createdAt: true,
-        updatedAt: true,
-      }
-    })
-  ])
+  let total, workers;
+  try {
+    [total, workers] = await Promise.all([
+      prisma.workerProfile.count({ where }),
+      prisma.workerProfile.findMany({
+        where,
+        orderBy,
+        skip,
+        take: params.pageSize,
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          mobile: true,
+          gender: true,
+          age: true,
+          dateOfBirth: true,
+          languages: true,
+          workerAdditionalInfo: {
+            select: {
+              languages: true,
+            }
+          },
+          workerServices: {
+            select: {
+              categoryName: true,
+            }
+          },
+          user: {
+            select: {
+              email: true,
+              status: true,
+            }
+          },
+          city: true,
+          state: true,
+          postalCode: true,
+          latitude: true,
+          longitude: true,
+          experience: true,
+          introduction: true,
+          photos: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      })
+    ]);
+  } catch (prismaError: any) {
+    console.error('[Admin Contractors] Prisma query error:', {
+      message: prismaError.message,
+      code: prismaError.code,
+      meta: prismaError.meta,
+      stack: prismaError.stack,
+    });
+    throw new Error(`Database query failed: ${prismaError.message}`);
+  }
 
   const queryDuration = Date.now() - queryStartTime
   // Transform workerServices to legacy services array format for backward compatibility
-  const workersWithServices = workers.map(worker => ({
-    ...worker,
-    email: worker.user?.email || null,
-    services: transformWorkerServices(worker.workerServices),
-    workerServices: undefined, // Remove from response
-    user: undefined, // Remove from response
-  }))
+  const workersWithServices = workers.map(worker => {
+    // Calculate age from dateOfBirth if available, otherwise use age column
+    const calculatedAge = worker.dateOfBirth
+      ? calculateAge(worker.dateOfBirth)
+      : null;
+    const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
+
+    // Languages fallback logic:
+    // 1. Primary: Use workerAdditionalInfo.languages array if it exists and is not empty
+    // 2. Fallback: Use workerProfile.languages array
+    // 3. Default: Empty array
+    let finalLanguages: string[] = [];
+    if (worker.workerAdditionalInfo?.languages && worker.workerAdditionalInfo.languages.length > 0) {
+      finalLanguages = worker.workerAdditionalInfo.languages;
+    } else if (worker.languages && worker.languages.length > 0) {
+      finalLanguages = worker.languages;
+    }
+
+    return {
+      ...worker,
+      email: worker.user?.email || null,
+      age: finalAge,
+      languages: finalLanguages,
+      services: transformWorkerServices(worker.workerServices),
+      isActive: worker.user?.status === 'ACTIVE',
+      workerServices: undefined, // Remove from response
+      workerAdditionalInfo: undefined, // Remove from response
+      user: undefined, // Remove from response
+      dateOfBirth: undefined, // Remove from response (internal use only)
+    };
+  })
 
   const totalPages = Math.ceil(total / params.pageSize)
 
@@ -662,7 +879,10 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
   where.longitude = { gte: bbox.minLng, lte: bbox.maxLng }
 
   // Ensure lat/lng are not null
+  // IMPORTANT: Append to existing AND conditions instead of replacing them
+  const existingAndConditions = where.AND ? (Array.isArray(where.AND) ? where.AND : [where.AND]) : []
   where.AND = [
+    ...existingAndConditions,
     { latitude: { not: null } },
     { longitude: { not: null } }
   ]
@@ -678,7 +898,13 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
       mobile: true,
       gender: true,
       age: true,
+      dateOfBirth: true,
       languages: true,
+      workerAdditionalInfo: {
+        select: {
+          languages: true,
+        }
+      },
       workerServices: {
         select: {
           categoryName: true,
@@ -687,6 +913,7 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
       user: {
         select: {
           email: true,
+          status: true,
         }
       },
       city: true,
@@ -704,19 +931,43 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
 
   // Calculate exact distance and filter
   const workersWithDistance = candidates
-    .map(worker => ({
-      ...worker,
-      email: worker.user?.email || null,
-      services: transformWorkerServices(worker.workerServices),
-      workerServices: undefined, // Remove from response
-      user: undefined, // Remove from response
-      distance: haversineDistance(
-        coords.lat,
-        coords.lng,
-        worker.latitude!,
-        worker.longitude!
-      )
-    }))
+    .map(worker => {
+      // Calculate age from dateOfBirth if available, otherwise use age column
+      const calculatedAge = worker.dateOfBirth
+        ? calculateAge(worker.dateOfBirth)
+        : null;
+      const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
+
+      // Languages fallback logic:
+      // 1. Primary: Use workerAdditionalInfo.languages array if it exists and is not empty
+      // 2. Fallback: Use workerProfile.languages array
+      // 3. Default: Empty array
+      let finalLanguages: string[] = [];
+      if (worker.workerAdditionalInfo?.languages && worker.workerAdditionalInfo.languages.length > 0) {
+        finalLanguages = worker.workerAdditionalInfo.languages;
+      } else if (worker.languages && worker.languages.length > 0) {
+        finalLanguages = worker.languages;
+      }
+
+      return {
+        ...worker,
+        email: worker.user?.email || null,
+        age: finalAge,
+        languages: finalLanguages,
+        services: transformWorkerServices(worker.workerServices),
+        isActive: worker.user?.status === 'ACTIVE',
+        workerServices: undefined, // Remove from response
+        workerAdditionalInfo: undefined, // Remove from response
+        user: undefined, // Remove from response
+        dateOfBirth: undefined, // Remove from response (internal use only)
+        distance: haversineDistance(
+          coords.lat,
+          coords.lng,
+          worker.latitude!,
+          worker.longitude!
+        )
+      };
+    })
     .filter(worker => worker.distance <= radiusKm)
     .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
 
@@ -783,11 +1034,22 @@ export async function GET(request: NextRequest) {
     const duration = Date.now() - startTime
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
+    // Log detailed error for debugging
+    console.error('[Admin Contractors API] Error:', {
+      message: errorMsg,
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error,
+    });
+
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to fetch workers',
         message: errorMsg,
+        // Include stack trace in development
+        ...(process.env.NODE_ENV === 'development' && {
+          stack: error instanceof Error ? error.stack : undefined,
+        }),
       },
       {
         status: 500,

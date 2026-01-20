@@ -39,6 +39,7 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       image?: string | null;
+      impersonatedBy?: string; // ID of admin who is impersonating this user
     };
   }
 
@@ -57,5 +58,6 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
     role: UserRole;
+    impersonatedBy?: string; // ID of admin who is impersonating this user
   }
 }

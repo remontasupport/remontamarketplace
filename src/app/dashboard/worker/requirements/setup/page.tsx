@@ -8,15 +8,19 @@
  */
 
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
+import { autoUpdateComplianceCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 // Form data interface
 interface UploadedDocument {
@@ -26,11 +30,16 @@ interface UploadedDocument {
   uploadedAt: string;
 }
 
+interface WorkerEngagementType {
+  type: "abn" | "tfn";
+  value: string;
+}
+
 interface FormData {
   // Step 1: Proof of Identity
   identityDocuments: UploadedDocument[];
-  // ABN field
-  abn: string;
+  // Worker engagement type (ABN/TFN)
+  workerEngagementType: WorkerEngagementType | null;
 }
 
 function MandatoryRequirementsSetupContent() {
@@ -60,11 +69,14 @@ function MandatoryRequirementsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -72,15 +84,24 @@ function MandatoryRequirementsSetupContent() {
   // Form data state
   const [formData, setFormData] = useState<FormData>({
     identityDocuments: [],
-    abn: "",
+    workerEngagementType: null,
   });
 
   // Populate form data ONLY on initial load
   useEffect(() => {
     if (profileData && !hasInitializedFormData.current) {
+      // Parse workerEngagementType from the abn JSON field
+      let workerEngagementType: WorkerEngagementType | null = null;
+      if (profileData.abn && typeof profileData.abn === "object") {
+        const abnData = profileData.abn as { workerEngagementType?: WorkerEngagementType };
+        if (abnData.workerEngagementType) {
+          workerEngagementType = abnData.workerEngagementType;
+        }
+      }
+
       setFormData({
         identityDocuments: [], // Will be loaded from VerificationRequirement table
-        abn: profileData.abn || "",
+        workerEngagementType,
       });
       hasInitializedFormData.current = true;
     }
@@ -106,8 +127,21 @@ function MandatoryRequirementsSetupContent() {
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Validation is optional for requirements
-    // Documents are uploaded via their own API endpoints
+    // Validate ABN/TFN if this is the ABN step
+    if (currentStepData?.documentId === "abn-contractor") {
+      const engagement = formData.workerEngagementType;
+      if (engagement?.type === "abn") {
+        const digits = engagement.value.replace(/\s/g, "");
+        if (!digits || digits.length !== 11) {
+          newErrors.workerEngagementType = "Please enter a valid 11-digit ABN";
+        }
+      } else if (engagement?.type === "tfn") {
+        const digits = engagement.value.replace(/\s/g, "");
+        if (!digits || digits.length !== 9) {
+          newErrors.workerEngagementType = "Please enter a valid 9-digit TFN";
+        }
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -122,30 +156,71 @@ function MandatoryRequirementsSetupContent() {
 
     if (!session?.user?.id) return;
 
+    // Check if this is the final step
+    const isFinalStep = currentStep === STEPS.length;
+
     try {
+      // Show appropriate loading state BEFORE any async operations
+      if (isFinalStep) {
+        // Use flushSync to force immediate synchronous render
+        flushSync(() => {
+          setIsFinalSaving(true);
+        });
+      } else {
+        setIsNavigating(true);
+      }
+
       // Determine if this step needs to save data to the database
       const needsSaving = currentStepData?.documentId === "abn-contractor";
 
-      if (needsSaving) {
-        // Save ABN to WorkerProfile table
+      // Save worker engagement type if needed (await it to ensure it completes before navigation)
+      if (needsSaving && formData.workerEngagementType) {
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
           data: {
-            abn: formData.abn,
+            abn: {
+              workerEngagementType: formData.workerEngagementType,
+            },
           },
         });
       }
 
       // Move to next step or finish
-      if (currentStep < STEPS.length) {
+      if (!isFinalStep) {
+        // Reset loading state before navigation
+        setIsNavigating(false);
+
+        // Navigate to next step
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed - redirect immediately
+        // LAST STEP COMPLETED - Wait for update with timeout (max 3 seconds)
+        try {
+          // Race between update and timeout - whichever finishes first
+          await Promise.race([
+            autoUpdateComplianceCompletion(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+        } catch (err) {
+          // If timeout or error, continue anyway (dashboard will poll)
+        
+        }
+
+        // Invalidate cache to refresh data
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+
+        // Force Next.js to invalidate server cache and refetch on next navigation
+        router.refresh();
+
+        // Navigate (data should be updated now)
         router.push("/dashboard/worker");
       }
     } catch (error) {
+      setIsNavigating(false);
+      setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -193,43 +268,46 @@ function MandatoryRequirementsSetupContent() {
 
   return (
     <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Compliance"
-        sectionNumber="3"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={handleSkip}
-        isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
-        showSkip={false}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
-            {successMessage}
-          </div>
-        )}
+      {!isFinalSaving ? (
+        <StepContainer
+          currentStep={currentStep}
+          totalSteps={STEPS.length}
+          stepTitle={currentStepData.title}
+          sectionTitle="Compliance"
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onSkip={handleSkip}
+          isNextLoading={false}
+          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          showSkip={false}
+        >
+          {/* Success Message */}
+          {successMessage && (
+            <div className="form-success-message" style={{ marginBottom: "1.5rem" }}>
+              {successMessage}
+            </div>
+          )}
 
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
-            {errors.general}
-          </div>
-        )}
+          {/* General Error */}
+          {errors.general && (
+            <div className="form-error-message" style={{ marginBottom: "1.5rem" }}>
+              {errors.general}
+            </div>
+          )}
 
-        {/* Render current step */}
-        <CurrentStepComponent
-          data={formData}
-          onChange={handleFieldChange}
-          errors={errors}
-          // Pass additional props for dynamic components
-          requirement={currentStepData?.requirement}
-          apiEndpoint={currentStepData?.apiEndpoint}
-        />
-      </StepContainer>
+          {/* Render current step */}
+          <CurrentStepComponent
+            data={formData}
+            onChange={handleFieldChange}
+            errors={errors}
+            // Pass additional props for dynamic components
+            requirement={currentStepData?.requirement}
+            apiEndpoint={currentStepData?.apiEndpoint}
+          />
+        </StepContainer>
+      ) : (
+        <LoadingOverlay isOpen={isFinalSaving} message="Saving compliance requirements..." />
+      )}
     </DashboardLayout>
   );
 }

@@ -223,3 +223,85 @@
     gap: 1rem !important;
   }
 }
+
+/* Tax ID Selection (ABN/TFN Radio Buttons) */
+.tax-id-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+.radio-option:hover {
+  border-color: var(--brand-secondary);
+  background-color: #f9fafb;
+}
+
+.radio-option:has(input:checked) {
+  border-color: var(--brand-primary);
+  background-color: #f0fdfa;
+}
+
+.radio-option input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--brand-primary);
+  cursor: pointer;
+}
+
+.radio-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #374151;
+  font-family: 'Poppins', sans-serif;
+}
+
+.tax-id-input {
+  margin-top: 0.5rem;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Info box spacing for tax ID step */
+.tax-id-selection + .tax-id-input + .info-column .info-box,
+.form-column:has(.tax-id-selection) ~ .info-column .info-box {
+  margin-top: 1.5rem;
+}
+
+/* Mobile adjustments for radio buttons */
+@media (max-width: 768px) {
+  .tax-id-selection {
+    gap: 0.5rem;
+  }
+
+  .radio-option {
+    padding: 0.875rem;
+  }
+
+  .radio-label {
+    font-size: 0.875rem;
+  }
+}

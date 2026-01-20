@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Loader from "@/components/ui/Loader";
 
 interface Article {
@@ -25,7 +25,33 @@ interface NewsSliderProps {
 
 export default function NewsSlider({ articles, isLoading = false }: NewsSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const itemsPerPage = 6;
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Responsive items per page - show all on mobile for swipe, 6 on desktop for pagination
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      const newItemsPerPage = mobile ? articles.length : 6;
+
+      setIsMobile(mobile);
+
+      if (newItemsPerPage !== itemsPerPage) {
+        setItemsPerPage(newItemsPerPage);
+        // Reset to first page when switching between mobile/desktop
+        setCurrentIndex(0);
+      }
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, [itemsPerPage, articles.length]);
 
   // Show loading state (same as training steps)
   if (isLoading) {
@@ -70,11 +96,11 @@ export default function NewsSlider({ articles, isLoading = false }: NewsSliderPr
     );
   }
 
-  // Check if we need navigation (more than 6 articles)
-  const showNavigation = articles.length > itemsPerPage;
+  // Check if we need navigation (more than 6 articles on desktop only, hide on mobile for swipe)
+  const showNavigation = articles.length > 6 && !isMobile;
 
   return (
-    <>
+    <div className="news-slider-wrapper">
       {showNavigation && (
         <div className="section-header-main">
           <h3 className="section-title-main">Read more news</h3>
@@ -97,7 +123,7 @@ export default function NewsSlider({ articles, isLoading = false }: NewsSliderPr
         </div>
       )}
 
-      <div className="course-cards-grid">
+      <div className={isMobile ? "course-cards-grid news-swipeable" : "course-cards-grid"}>
         {currentArticles.map((article) => (
           <a
             key={article._id}
@@ -121,6 +147,6 @@ export default function NewsSlider({ articles, isLoading = false }: NewsSliderPr
           </a>
         ))}
       </div>
-    </>
+    </div>
   );
 }

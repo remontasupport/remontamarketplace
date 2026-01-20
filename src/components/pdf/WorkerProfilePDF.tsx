@@ -265,16 +265,7 @@ interface WorkerProfilePDFProps {
   worker: {
     firstName: string;
     lastName: string;
-    age?: number | null;
     location?: string | null;
-    experience?: string | null;
-    introduction?: string | null;
-    qualifications?: string | null;
-    hasVehicle?: string | null;
-    hobbies?: string | null;
-    uniqueService?: string | null;
-    whyEnjoyWork?: string | null;
-    photos?: string[];
     languages?: string[];
     services?: string[];
   };
@@ -282,15 +273,8 @@ interface WorkerProfilePDFProps {
   selectedImageUrl?: string;
   editableData?: {
     languages?: string;
-    experience?: string;
-    vehicle?: string;
     location?: string;
-    experienceItems?: string[];
     servicesItems?: string[];
-    hobbies?: string;
-    uniqueService?: string;
-    whyEnjoy?: string;
-    introduction?: string;
   };
 }
 
@@ -306,7 +290,7 @@ const WorkerProfilePDF: React.FC<WorkerProfilePDFProps> = ({
 }) => {
   // Use cropped/selected image, or fallback to original
   // Only use valid image URLs (not blob URLs which don't work in PDF)
-  const mainPhoto = worker.photos?.[0] || null;
+  const mainPhoto = worker.photos || null;
   const initials = `${worker.firstName?.[0] || ''}${worker.lastName?.[0] || ''}`;
   const displayName = `${worker.firstName} ${worker.lastName?.[0] || ''}.`;
 
@@ -335,12 +319,6 @@ const WorkerProfilePDF: React.FC<WorkerProfilePDFProps> = ({
         'Care plan implementation'
       ]);
 
-  const hobbies = (editableData?.hobbies && editableData.hobbies.trim()) || worker.hobbies || '';
-  const uniqueService = (editableData?.uniqueService && editableData.uniqueService.trim()) || worker.uniqueService || '';
-  const whyEnjoy = (editableData?.whyEnjoy && editableData.whyEnjoy.trim()) || worker.whyEnjoyWork ||
-    'I feel deeply fulfilled when I see my clients happy and content after our shift—it reminds me of the positive impact I can make in their daily lives';
-  const introduction = (editableData?.introduction && editableData.introduction.trim()) || worker.introduction ||
-    'Skilled in daily living support, community participation, and implementing trauma-informed care plans. Passionate about mentoring staff, implementing person-centered care plans, and coordinating supports that ensure client wellbeing, independence, and dignity.';
 
   return (
     <Document>

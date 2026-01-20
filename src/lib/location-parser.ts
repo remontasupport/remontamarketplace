@@ -78,7 +78,7 @@ export function parseLocation(location: string): ParsedLocation {
   // Patterns
   const stateAbbrevPattern = /\b(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\b/i;
   const stateFullPattern = /\b(New South Wales|Victoria|Queensland|South Australia|Western Australia|Tasmania|Northern Territory|Australian Capital Territory)\b/i;
-  const postalPattern = /\b\d{4}\b/; // Australian postal codes are 4 digits
+  const postalPattern = /\b\d{3,4}\b/; // Australian postal codes are 3-4 digits (800-9999)
 
   // Extract state
   const stateAbbrevMatch = locationInput.match(stateAbbrevPattern);

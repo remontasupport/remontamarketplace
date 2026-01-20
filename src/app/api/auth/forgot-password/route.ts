@@ -39,9 +39,27 @@ export async function POST(request: Request) {
     const user = await authPrisma.user.findUnique({
       where: { email: normalizedEmail },
       include: {
-        workerProfile: true,
-        clientProfile: true,
-        coordinatorProfile: true,
+        workerProfile: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        clientProfile: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        coordinatorProfile: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
       },
     });
 

@@ -1,19 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-// Create Prisma client connected to AUTH_DATABASE_URL for categories
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.AUTH_DATABASE_URL || process.env.DATABASE_URL,
-    },
-  },
-});
+import { authPrisma } from '@/lib/auth-prisma';
 
 export async function GET() {
   try {
     // Fetch all categories with their documents and subcategories
-    const categories = await prisma.category.findMany({
+    const categories = await authPrisma.category.findMany({
       include: {
         documents: {
           include: {
@@ -99,7 +90,5 @@ export async function GET() {
       { error: 'Failed to fetch categories' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

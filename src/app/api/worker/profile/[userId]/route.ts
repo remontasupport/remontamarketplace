@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
+import {
+  checkComplianceCompletion,
+  checkTrainingsCompletion,
+  checkServicesCompletion,
+  checkAccountDetailsCompletion,
+} from "@/services/worker/setupProgress.service";
 
 /**
  * GET /api/worker/profile/[userId]
@@ -47,25 +53,17 @@ export async function GET(
         city: true,
         state: true,
         postalCode: true,
+        photos: true, // Profile photo URL
+        introduction: true, // Bio
         age: true,
+        dateOfBirth: true,
         gender: true,
-        languages: true,
-        services: true,
-        supportWorkerCategories: true,
-        experience: true,
-        introduction: true,
-        qualifications: true,
         hasVehicle: true,
-        funFact: true,
-        hobbies: true,
-        uniqueService: true,
-        whyEnjoyWork: true,
-        additionalInfo: true,
-        photos: true,
+        abn: true,
         profileCompleted: true,
         isPublished: true,
         verificationStatus: true,
-        abn: true,
+        setupProgress: true,
       },
     });
 
@@ -78,42 +76,83 @@ export async function GET(
 
     // Transform workerServices data to match the legacy format
     // This ensures backward compatibility with existing components
-    // OPTIMIZED: Use database aggregation (groupBy) instead of fetching all records and iterating in JS
-    // This leverages the index on [workerProfileId, categoryName] for performance
     let services: string[] = [];
     let supportWorkerCategories: string[] = [];
 
-    const [categoryGroups, subcategoryGroups] = await Promise.all([
-      authPrisma.workerService.groupBy({
-        by: ['categoryName'],
-        where: { workerProfileId: workerProfile.id },
-      }),
-      authPrisma.workerService.groupBy({
-        by: ['subcategoryId'],
-        where: {
-          workerProfileId: workerProfile.id,
-          subcategoryId: { not: null }
-        },
-      }),
-    ]);
+    const workerServices = await authPrisma.workerService.findMany({
+      where: { workerProfileId: workerProfile.id },
+      select: {
+        categoryName: true,
+        subcategoryIds: true,
+      },
+      orderBy: {
+        createdAt: 'asc', // Get services in order they were added (primary first)
+      },
+    });
 
-    if (categoryGroups.length > 0 || subcategoryGroups.length > 0) {
-      // Use new WorkerService table data (normalized structure)
-      services = categoryGroups.map(g => g.categoryName);
-      supportWorkerCategories = subcategoryGroups
-        .map(g => g.subcategoryId)
-        .filter((id): id is string => id !== null);
-    } else {
-      // Fallback to legacy arrays if workerServices is empty
-      services = workerProfile.services || [];
-      supportWorkerCategories = workerProfile.supportWorkerCategories || [];
+    // Extract unique category names for services
+    services = workerServices.map(ws => ws.categoryName);
+
+    // Flatten all subcategory IDs into a single array
+    supportWorkerCategories = workerServices.flatMap(ws => ws.subcategoryIds);
+
+    // Fetch verification requirements to populate documentsByService
+    const verificationRequirements = await authPrisma.verificationRequirement.findMany({
+      where: { workerProfileId: workerProfile.id },
+      select: {
+        requirementType: true,
+        metadata: true,
+      },
+    });
+
+    // Transform verification requirements into documentsByService format
+    // Format: Record<serviceName, Record<requirementType, string[]>>
+    const documentsByService: Record<string, Record<string, string[]>> = {};
+
+    for (const requirement of verificationRequirements) {
+      const metadata = requirement.metadata as any;
+      const serviceTitle = metadata?.serviceTitle;
+      const documentUrls = metadata?.documentUrls || [];
+
+      if (serviceTitle && documentUrls.length > 0) {
+        if (!documentsByService[serviceTitle]) {
+          documentsByService[serviceTitle] = {};
+        }
+        documentsByService[serviceTitle][requirement.requirementType] = documentUrls;
+      }
     }
 
-    // Return profile data with transformed services
+    // OPTIMIZED: Calculate setupProgress in REAL-TIME from database state
+    // This eliminates race conditions and ensures progress is ALWAYS accurate
+    // No more stale cache issues - progress reflects actual data!
+    const [
+      accountDetailsResult,
+      complianceResult,
+      trainingsResult,
+      servicesResult,
+    ] = await Promise.all([
+      checkAccountDetailsCompletion(),
+      checkComplianceCompletion(),
+      checkTrainingsCompletion(),
+      checkServicesCompletion(),
+    ]);
+
+    // Construct real-time setupProgress from actual database state
+    const realTimeSetupProgress = {
+      accountDetails: accountDetailsResult.success ? (accountDetailsResult.data || false) : false,
+      compliance: complianceResult.success ? (complianceResult.data || false) : false,
+      trainings: trainingsResult.success ? (trainingsResult.data || false) : false,
+      services: servicesResult.success ? (servicesResult.data || false) : false,
+      additionalCredentials: false, // Not implemented yet
+    };
+
+    // Return profile data with REAL-TIME calculated progress (not cached JSON!)
     return NextResponse.json({
       ...workerProfile,
       services,
       supportWorkerCategories,
+      documentsByService,
+      setupProgress: realTimeSetupProgress, // Override cached JSON with real-time calculation
     });
 
   } catch (error: any) {

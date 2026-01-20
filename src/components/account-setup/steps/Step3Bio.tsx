@@ -1,6 +1,6 @@
 /**
  * Step 3: Your Bio
- * Write a bio/introduction
+ * Write a bio/introduction with minimum 200 characters
  */
 
 import { TextArea } from "@/components/forms/fields";
@@ -11,9 +11,12 @@ interface Step3BioProps {
     bio: string;
   };
   onChange: (field: string, value: string) => void;
+  errors?: {
+    bio?: string;
+  };
 }
 
-export default function Step3Bio({ data, onChange }: Step3BioProps) {
+export default function Step3Bio({ data, onChange, errors }: Step3BioProps) {
   return (
     <StepContentWrapper>
       <div className="form-page-content">
@@ -25,8 +28,9 @@ export default function Step3Bio({ data, onChange }: Step3BioProps) {
             value={data.bio}
             onChange={(e) => onChange("bio", e.target.value)}
             rows={8}
-            helperText="Tell clients about yourself, your experience, and what makes you unique."
+            helperText="Tell clients about yourself, your experience, and what makes you unique. Minimum 200 characters required."
             placeholder="I'm passionate about helping people..."
+            error={errors?.bio}
           />
         </div>
       </div>

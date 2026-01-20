@@ -34,16 +34,7 @@ export async function GET(
         id: true,
         firstName: true,
         lastName: true,
-        experience: true,
-        introduction: true,
-        qualifications: true,
-        hasVehicle: true,
-        hobbies: true,
-        uniqueService: true,
-        whyEnjoyWork: true,
-        photos: true,
         location: true,
-        age: true,
         languages: true,
         workerServices: {
           select: {

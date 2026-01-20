@@ -13,9 +13,10 @@ import { put } from "@vercel/blob";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
+import { QUALIFICATION_TYPE_TO_NAME } from "@/utils/qualificationMapping";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
 
 export async function POST(request: Request) {
   try {
@@ -41,16 +42,16 @@ export async function POST(request: Request) {
     }
 
     // 3. Validate file
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
       return NextResponse.json(
-        { error: "Invalid file type. Only PDF, JPG, and PNG are allowed." },
+        { error: "Invalid file type. Only PDF, JPG, PNG, WebP, and HEIC are allowed." },
         { status: 400 }
       );
     }
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 10MB." },
+        { error: "File too large. Maximum size is 50MB." },
         { status: 400 }
       );
     }
@@ -97,10 +98,14 @@ export async function POST(request: Request) {
 
     if (existingDoc) {
       // Update existing document
-    
+      // Also fix the name if it was incorrect
+      const displayName = QUALIFICATION_TYPE_TO_NAME[documentType] ||
+        documentType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
       verificationReq = await authPrisma.verificationRequirement.update({
         where: { id: existingDoc.id },
         data: {
+          requirementName: displayName, // Fix name if it was wrong
           documentUrl: blob.url,
           documentUploadedAt: new Date(),
           status: "SUBMITTED",
@@ -116,14 +121,15 @@ export async function POST(request: Request) {
       });
     } else {
       // Create new document
- 
+      // Get proper display name from mapping instead of just capitalizing slug
+      const displayName = QUALIFICATION_TYPE_TO_NAME[documentType] ||
+        documentType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
       verificationReq = await authPrisma.verificationRequirement.create({
         data: {
           workerProfileId: workerProfile.id,
           requirementType: uniqueRequirementType,
-          requirementName: documentType.split('-').map(word =>
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' '),
+          requirementName: displayName,
           documentCategory: "SERVICE_QUALIFICATION",
           isRequired: false, // Will be determined by service requirements
           documentUrl: blob.url,

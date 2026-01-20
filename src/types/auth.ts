@@ -64,21 +64,6 @@ export type RegistrationDataBase = {
 export type WorkerRegistrationData = RegistrationDataBase & {
   role: UserRole.WORKER;
   location: string;
-  age: number;
-  gender: string;
-  languages: string[];
-  services: string[];
-  supportWorkerCategories?: string[];
-  experience: string;
-  introduction: string;
-  qualifications: string;
-  hasVehicle: string;
-  funFact: string;
-  hobbies: string;
-  uniqueService: string;
-  whyEnjoyWork: string;
-  additionalInfo?: string;
-  photos: File[];
 };
 
 /**

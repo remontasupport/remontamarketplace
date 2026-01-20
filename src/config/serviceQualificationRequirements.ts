@@ -62,6 +62,53 @@ export const SERVICE_QUALIFICATION_REQUIREMENTS: Record<string, ServiceQualifica
   ],
 
   /**
+   * Support Worker (High Intensity) Qualifications
+   * Uses the same qualifications as Support Worker
+   */
+  "Support Worker (High Intensity)": [
+    {
+      type: "cert3-aged-care",
+      name: "Certificate 3 Aged Care",
+      description: "Aged care qualification",
+    },
+    {
+      type: "cert3-disabilities",
+      name: "Certificate 3 in Disabilities",
+      description: "Disabilities support qualification",
+    },
+    {
+      type: "cert3-individual-support",
+      name: "Certificate 3 Individual Support",
+      description: "Individual support qualification",
+    },
+    {
+      type: "cert3-individual-support-aged-care",
+      name: "Certificate 3 Individual Support (Aged Care)",
+      description: "Individual support specializing in aged care",
+    },
+    {
+      type: "cert3-individual-support-disability",
+      name: "Certificate 3 Individual Support (Disability)",
+      description: "Individual support specializing in disability",
+    },
+    {
+      type: "cert3-home-community-care",
+      name: "Certificate 3 in Home and Community Care",
+      description: "Home and community care qualification",
+    },
+    {
+      type: "cert4-aged-care",
+      name: "Certificate 4 Aged Care",
+      description: "Advanced aged care qualification",
+    },
+    {
+      type: "cert4-disabilities",
+      name: "Certificate 4 in Disabilities",
+      description: "Advanced disabilities support qualification",
+    },
+  ],
+
+  /**
    * Therapeutic Supports Qualifications
    * TODO: Add when requirements are provided
    */

@@ -106,10 +106,10 @@ export default function ServiceDocumentsPage() {
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      alert("File size must be less than 50MB");
       return;
     }
 
@@ -278,7 +278,7 @@ export default function ServiceDocumentsPage() {
                 <input
                   type="file"
                   id={`upload-${id}`}
-                  accept="image/jpeg,image/jpg,image/png,application/pdf"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                   onChange={(e) => handleFileSelect(id, e.target.files?.[0] || null)}
                   className="hidden"
                 />
@@ -458,7 +458,7 @@ export default function ServiceDocumentsPage() {
                     Accepted File Formats
                   </h4>
                   <p className="text-xs sm:text-sm text-gray-700 font-poppins">
-                    PDF, JPG, or PNG files up to 10MB in size
+                    PDF, JPG, PNG, WebP, or HEIC files up to 50MB in size
                   </p>
                 </div>
               </div>

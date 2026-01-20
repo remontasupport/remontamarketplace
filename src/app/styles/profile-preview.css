@@ -1,0 +1,520 @@
+/* Profile Preview Page Styles */
+
+:root {
+  --brand-primary: #0C1628;
+  --brand-secondary: #E8F5F3;
+}
+
+.profile-preview-page {
+  background-color: #f9fafb;
+  width: 100%;
+  min-height: 100vh;
+  /* Prevent horizontal overflow */
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Back Button Section */
+.profile-preview-back-section {
+  background-color: #f9fafb;
+  padding: 16px 0;
+  border-bottom: none;
+}
+
+.profile-preview-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+}
+
+.profile-preview-back-button:hover {
+  background-color: #f3f4f6;
+}
+
+/* Top Banner */
+.profile-preview-banner {
+  background-color: #f9fafb;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-preview-banner-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #581c87;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #e9d5ff;
+}
+
+.profile-preview-banner-content svg {
+  flex-shrink: 0;
+}
+
+/* Profile Header */
+.profile-preview-header {
+  background-color: #f9fafb;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-preview-header-content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  background-color: var(--brand-primary);
+}
+
+.profile-preview-avatar {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background-color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-preview-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-preview-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 48px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+}
+
+.profile-preview-info {
+  flex: 1;
+  color: white;
+}
+
+.profile-preview-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.profile-preview-ndis-badge {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #10b981;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile-preview-roles {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+  color: white;
+  line-height: 1.5;
+}
+
+.profile-preview-member-since {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  margin: 0 0 20px 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.profile-preview-edit-btn {
+  background-color: var(--brand-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.profile-preview-edit-btn:hover {
+  background-color: #1a2942;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(12, 22, 40, 0.3);
+}
+
+.profile-preview-photo-link {
+  background: none;
+  border: none;
+  color: #14b8a6;
+  text-decoration: underline;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.profile-preview-photo-link:hover {
+  color: #0d9488;
+}
+
+.profile-preview-photo-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Profile Content */
+.profile-preview-content {
+  padding: 48px 24px;
+  background-color: white;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-top: none;
+  /* Ensure content doesn't overflow */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.profile-preview-section {
+  background-color: white;
+  padding: 32px 0;
+  margin-bottom: 0;
+  position: relative;
+  border-bottom: 1px solid #f3f4f6;
+  /* Ensure section doesn't overflow on mobile */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-preview-section:last-child {
+  border-bottom: none;
+}
+
+.profile-preview-section-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+}
+
+.profile-preview-edit-link {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  text-decoration: underline;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.profile-preview-edit-link:hover {
+  opacity: 0.8;
+}
+
+.profile-preview-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 16px 0 0 0;
+  /* Ensure text wraps on multiple lines */
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Two Column Grid */
+.profile-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  padding-top: 16px;
+}
+
+.profile-preview-column {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+@media (max-width: 768px) {
+  .profile-preview-grid {
+    /* Keep grid but single column */
+    display: grid;
+    grid-template-columns: 1fr;
+    /* Auto-place rows */
+    grid-auto-flow: row;
+  }
+
+  /* Make column wrappers transparent so sections become direct grid children */
+  .profile-preview-column {
+    display: contents !important;
+  }
+
+  /* About Me goes to row 1 */
+  .about-me-section {
+    grid-row: 1;
+  }
+
+  /* Services Offered goes to row 2 */
+  .services-offered-section {
+    grid-row: 2;
+  }
+
+  /* All other sections auto-place starting from row 3 */
+  .profile-preview-section:not(.about-me-section):not(.services-offered-section) {
+    grid-row: auto;
+  }
+}
+
+.profile-preview-subsection-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.3px;
+}
+
+.profile-preview-edit-link-small {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  text-decoration: underline;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.profile-preview-edit-link-small:hover {
+  opacity: 0.8;
+}
+
+/* Nested sections inside columns */
+.profile-preview-column .profile-preview-section {
+  background-color: transparent;
+  padding: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  position: relative;
+}
+
+/* Info Box */
+.profile-preview-info-box {
+  background-color: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.profile-preview-info-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #115e59;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.profile-preview-rate-prompt {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+}
+
+.profile-preview-add-btn {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-preview-add-btn::before {
+  content: "◉";
+  font-size: 16px;
+}
+
+.profile-preview-add-btn:hover {
+  opacity: 0.8;
+}
+
+/* Qualifications */
+.profile-preview-verified {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: #059669;
+  margin: 0 0 12px 0;
+}
+
+.profile-preview-qualification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-preview-qualification-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.profile-preview-checkmark {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Services Dropdown */
+.profile-preview-services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-preview-service-dropdown {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px 16px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-preview-service-dropdown:hover {
+  border-color: #d1d5db;
+  background-color: #f9fafb;
+}
+
+.profile-preview-service-summary {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: var(--brand-primary);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.profile-preview-service-summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-preview-service-dropdown[open] .profile-preview-service-summary {
+  margin-bottom: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-preview-header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profile-preview-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .profile-preview-name {
+    font-size: 24px;
+  }
+
+  .profile-preview-ndis-badge {
+    font-size: 13px;
+  }
+
+  .profile-preview-section-title {
+    font-size: 24px;
+  }
+
+  .profile-preview-subsection-title {
+    font-size: 20px;
+  }
+
+  .profile-preview-edit-link {
+    position: static;
+    margin-top: 12px;
+  }
+
+  .profile-preview-content {
+    padding: 32px 16px;
+  }
+
+  .profile-preview-banner-content {
+    padding: 0 16px;
+  }
+
+  .profile-preview-back-button {
+    padding: 8px 16px;
+  }
+
+  /* Ensure bio text wraps properly on mobile */
+  .profile-preview-text {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .profile-preview-section {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}

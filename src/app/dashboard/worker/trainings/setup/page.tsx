@@ -8,14 +8,18 @@
  */
 
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateTrainingSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicTrainingSteps";
+import { autoUpdateTrainingsCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 // Form data interface
 interface UploadedDocument {
@@ -56,11 +60,14 @@ function TrainingsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -116,16 +123,55 @@ function TrainingsSetupContent() {
 
     if (!session?.user?.id) return;
 
+    // Check if this is the final step
+    const isFinalStep = currentStep === STEPS.length;
+
     try {
+      // Show appropriate loading state BEFORE any async operations
+      if (isFinalStep) {
+        // Use flushSync to force immediate synchronous render
+        flushSync(() => {
+          setIsFinalSaving(true);
+        });
+      } else {
+        setIsNavigating(true);
+      }
+
       // Move to next step or finish
-      if (currentStep < STEPS.length) {
+      if (!isFinalStep) {
+        // Reset loading state before navigation
+        setIsNavigating(false);
+
+        // Navigate to next step
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/trainings/setup?step=${nextStepSlug}`);
       } else {
-        // Last step completed - redirect immediately
+        // LAST STEP COMPLETED - Wait for update with timeout (max 3 seconds)
+        try {
+          // Race between update and timeout - whichever finishes first
+          await Promise.race([
+            autoUpdateTrainingsCompletion(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+        } catch (err) {
+          // If timeout or error, continue anyway (dashboard will poll)
+          
+        }
+
+        // Invalidate cache to refresh data
+        queryClient.invalidateQueries({
+          queryKey: workerProfileKeys.all,
+        });
+
+        // Force Next.js to invalidate server cache and refetch on next navigation
+        router.refresh();
+
+        // Navigate (data should be updated now)
         router.push("/dashboard/worker");
       }
     } catch (error) {
+      setIsNavigating(false);
+      setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
     }
   };
@@ -153,10 +199,20 @@ function TrainingsSetupContent() {
     }
   }, [currentStepIndex, router, STEPS]);
 
+  // Extract primary service for role display
+  const primaryService = profileData?.services?.[0] || 'Support Worker';
+
   // Authentication is handled by layout - no need to check here
   if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
     return (
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: profileData?.firstName || 'Worker',
+          photo: profileData?.photos || null,
+          role: primaryService,
+        }}
+      >
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>
@@ -169,7 +225,14 @@ function TrainingsSetupContent() {
 
   if (!CurrentStepComponent || !currentStepData) {
     return (
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: profileData?.firstName || 'Worker',
+          photo: profileData?.photos || null,
+          role: primaryService,
+        }}
+      >
         <div className="form-page-container">
           <p className="loading-text">No trainings required at this time.</p>
         </div>
@@ -178,44 +241,54 @@ function TrainingsSetupContent() {
   }
 
   return (
-    <DashboardLayout showProfileCard={false}>
-      <StepContainer
-        currentStep={currentStep}
-        totalSteps={STEPS.length}
-        stepTitle={currentStepData.title}
-        sectionTitle="Trainings"
-        sectionNumber="4"
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onSkip={handleSkip}
-        isNextLoading={false}
-        nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
-        showSkip={false}
-      >
-        {/* Success Message */}
-        {successMessage && (
-          <div className="form-success-message">
-            {successMessage}
-          </div>
-        )}
+    <DashboardLayout
+      showProfileCard={false}
+      profileData={{
+        firstName: profileData?.firstName || 'Worker',
+        photo: profileData?.photos || null,
+        role: primaryService,
+      }}
+    >
+      {!isFinalSaving ? (
+        <StepContainer
+          currentStep={currentStep}
+          totalSteps={STEPS.length}
+          stepTitle={currentStepData.title}
+          sectionTitle="Trainings"
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onSkip={handleSkip}
+          isNextLoading={false}
+          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          showSkip={false}
+        >
+          {/* Success Message */}
+          {successMessage && (
+            <div className="form-success-message">
+              {successMessage}
+            </div>
+          )}
 
-        {/* General Error */}
-        {errors.general && (
-          <div className="form-error-message">
-            {errors.general}
-          </div>
-        )}
+          {/* General Error */}
+          {errors.general && (
+            <div className="form-error-message">
+              {errors.general}
+            </div>
+          )}
 
-        {/* Render current step */}
-        <CurrentStepComponent
-          data={formData}
-          onChange={handleFieldChange}
-          errors={errors}
-          // Pass additional props for dynamic components
-          requirement={currentStepData?.requirement}
-          apiEndpoint={currentStepData?.apiEndpoint}
-        />
-      </StepContainer>
+          {/* Render current step */}
+          <CurrentStepComponent
+            data={formData}
+            onChange={handleFieldChange}
+            errors={errors}
+            // Pass additional props for dynamic components
+            requirement={currentStepData?.requirement}
+            apiEndpoint={currentStepData?.apiEndpoint}
+          />
+        </StepContainer>
+      ) : (
+        <LoadingOverlay isOpen={isFinalSaving} message="Saving your trainings..." />
+      )}
     </DashboardLayout>
   );
 }
@@ -224,7 +297,14 @@ function TrainingsSetupContent() {
 export default function TrainingsSetupPage() {
   return (
     <Suspense fallback={
-      <DashboardLayout showProfileCard={false}>
+      <DashboardLayout
+        showProfileCard={false}
+        profileData={{
+          firstName: 'Worker',
+          photo: null,
+          role: 'Support Worker',
+        }}
+      >
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
         </div>

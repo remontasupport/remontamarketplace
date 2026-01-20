@@ -172,8 +172,6 @@ export async function searchWorkers(
       city: true,
       state: true,
       postalCode: true,
-      services: true,
-      supportWorkerCategories: true,
       languages: true,
       experience: true,
       introduction: true,
@@ -264,9 +262,9 @@ export async function getWorkerPhotos(workerId: string): Promise<string[]> {
     },
   });
 
-  // Photos are stored as JSON array
-  if (worker?.photos && Array.isArray(worker.photos)) {
-    return worker.photos as string[];
+  // Photos is now a single string URL (changed from array)
+  if (worker?.photos && typeof worker.photos === 'string') {
+    return [worker.photos]; // Return as array for backwards compatibility
   }
 
   return [];
@@ -292,8 +290,6 @@ export async function getWorkersByState(state: string) {
       location: true,
       city: true,
       state: true,
-      services: true,
-      supportWorkerCategories: true,
       introduction: true,
       photos: true,
     },
@@ -326,8 +322,6 @@ export async function getWorkersByCity(city: string) {
       location: true,
       city: true,
       state: true,
-      services: true,
-      supportWorkerCategories: true,
       introduction: true,
       photos: true,
     },

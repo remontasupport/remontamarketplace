@@ -53,7 +53,7 @@ export function CategorySubcategoriesDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-6xl max-h-[85vh] overflow-y-auto animate-slide-up"
+        className="max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-4rem)] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl max-h-[85vh] overflow-y-auto animate-slide-up"
         style={{
           willChange: 'transform, opacity',
           transform: 'translateZ(0)', // Force GPU acceleration
@@ -92,40 +92,13 @@ export function CategorySubcategoriesDialog({
                   >
                     {subcategory.name}
                   </Label>
-
-                  {/* Show registration requirements if applicable */}
-                  {subcategory.requiresRegistration && (
-                    <p className="text-xs text-amber-700 font-poppins mt-2 bg-amber-50 px-2 py-1 rounded">
-                      Requires {subcategory.requiresRegistration} registration
-                    </p>
-                  )}
-
-                  {/* Show additional documents required */}
-                  {subcategory.additionalDocuments && subcategory.additionalDocuments.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 font-poppins font-medium">Required documents:</p>
-                      <ul className="mt-1 space-y-1">
-                        {subcategory.additionalDocuments.slice(0, 3).map((doc) => (
-                          <li key={doc.id} className="text-xs text-gray-600 font-poppins flex items-start">
-                            <span className="mr-1">•</span>
-                            <span>{doc.name}</span>
-                          </li>
-                        ))}
-                        {subcategory.additionalDocuments.length > 3 && (
-                          <li className="text-xs text-gray-500 italic">
-                            +{subcategory.additionalDocuments.length - 3} more...
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"

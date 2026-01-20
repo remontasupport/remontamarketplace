@@ -29,9 +29,10 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { TextField, SelectField, NumberField } from "@/components/forms/fields";
+import { TextField, SelectField, DatePickerField } from "@/components/forms/fields";
 import StepContentWrapper from "../shared/StepContentWrapper";
 import { useDriverLicense, useIdentityDocuments, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
+import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 import Loader from "@/components/ui/Loader";
 
 // Storage keys for persisting user decisions
@@ -63,29 +64,28 @@ const clearDriverLicenseStorage = () => {
 
 interface Step4PersonalInfoProps {
   data: {
-    age: number | string;
+    dateOfBirth: string;
     gender: string;
-    languages: string[];
     hasVehicle: string;
   };
   onChange: (field: string, value: any) => void;
+  errors?: {
+    dateOfBirth?: string;
+    gender?: string;
+    hasVehicle?: string;
+  };
 }
 
 export default function Step4PersonalInfo({
   data,
   onChange,
+  errors,
 }: Step4PersonalInfoProps) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [languagesInput, setLanguagesInput] = useState(data.languages.join(", "));
-
-  // Sync local state when data.languages changes (e.g., when loading from database)
-  useEffect(() => {
-    setLanguagesInput(data.languages.join(", "));
-  }, [data.languages]);
 
   // Persistent state using sessionStorage (survives page refreshes)
   const [userDeclinedUseExisting, setUserDeclinedUseExisting] = useState(() =>
@@ -178,9 +178,9 @@ export default function Step4PersonalInfo({
       return;
     }
 
-    // Validate file size (10MB max to match identity documents)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError("File size must be less than 10MB");
+    // Validate file size (50MB max to match identity documents)
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError("File size must be less than 50MB");
       return;
     }
 
@@ -193,18 +193,12 @@ export default function Step4PersonalInfo({
       // Use a different document type for vehicle/driver access verification
       formData.append("documentType", "driver-license-vehicle");
 
-      // Reuse the identity documents API
-      const response = await fetch("/api/upload/identity-documents", {
-        method: "POST",
-        body: formData,
-      });
+      // Use server action instead of API endpoint
+      const result = await uploadComplianceDocument(formData);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Upload failed");
+      if (!result.success) {
+        throw new Error(result.error || "Upload failed");
       }
-
-      const result = await response.json();
 
       // Invalidate cache to refetch documents and update UI automatically
       await queryClient.invalidateQueries({
@@ -213,9 +207,9 @@ export default function Step4PersonalInfo({
 
       // Clear sessionStorage since user has now uploaded their own document
       clearDriverLicenseStorage();
-  
+
     } catch (error: any) {
-    
+
       setUploadError(error.message || "Failed to upload photo. Please try again.");
     } finally {
       setIsUploading(false);
@@ -240,16 +234,16 @@ export default function Step4PersonalInfo({
       <div className="form-page-content">
       <div className="form-column">
         <div className="account-form">
-          <NumberField
-            label="Age"
-            name="age"
-            value={data.age}
-            onChange={(e) => {
-              const value = e.target.value;
-              onChange("age", value === '' ? '' : parseInt(value, 10));
-            }}
-            min={18}
-            max={120}
+          <DatePickerField
+            label="Date of Birth"
+            name="dateOfBirth"
+            value={data.dateOfBirth}
+            onChange={(value) => onChange("dateOfBirth", value)}
+            error={errors?.dateOfBirth}
+            required
+            placeholder="Select your date of birth"
+            maxDate={new Date()} // Can't select future dates
+            minDate={new Date(1920, 0, 1)} // Minimum year 1920
           />
 
           <SelectField
@@ -258,31 +252,12 @@ export default function Step4PersonalInfo({
             value={data.gender}
             onChange={(e) => onChange("gender", e.target.value)}
             options={[
-              { label: "Male", value: "male" },
-              { label: "Female", value: "female" },
+              { label: "Male", value: "Male" },
+              { label: "Female", value: "Female" },
             ]}
-          />
-
-          {/* TODO: Add multi-select for languages */}
-          <TextField
-            label="Languages Spoken"
-            name="languages"
-            value={languagesInput}
-            onChange={(e) => {
-              // Update local state while typing
-              setLanguagesInput(e.target.value);
-            }}
-            onBlur={(e) => {
-              // Process into array when user finishes typing (on blur)
-              const languages = e.target.value
-                .split(/[,\s]+/) // Split by comma and/or space
-                .map(lang => lang.trim()) // Trim whitespace
-                .filter(lang => lang.length > 0); // Remove empty strings
-              onChange("languages", languages);
-              // Update display to show cleaned format
-              setLanguagesInput(languages.join(", "));
-            }}
-            helperText="Separate multiple languages with commas or spaces"
+            placeholder="Select an option"
+            required
+            error={errors?.gender}
           />
 
           <SelectField
@@ -294,7 +269,8 @@ export default function Step4PersonalInfo({
               { label: "Yes", value: "Yes" },
               { label: "No", value: "No" },
             ]}
-            placeholder=""
+            placeholder="Select an option"
+            error={errors?.hasVehicle}
           />
 
           {/* Driver's License / Vehicle Photo Upload */}
@@ -437,7 +413,7 @@ export default function Step4PersonalInfo({
                   {/* Hidden file input for replace */}
                   <input
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={handleVehiclePhotoUpload}
                     disabled={isUploading}
                     style={{ display: "none" }}
@@ -465,7 +441,7 @@ export default function Step4PersonalInfo({
                   </p>
                   <input
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={handleVehiclePhotoUpload}
                     disabled={isUploading}
                     style={{ display: "none" }}

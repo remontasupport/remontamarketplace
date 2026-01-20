@@ -8,14 +8,20 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
-  DocumentIcon
+  DocumentIcon,
+  XCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import {
   useSingleComplianceDocument,
   useUploadComplianceDocument,
+  useDeleteComplianceDocument,
 } from "@/hooks/queries/useComplianceDocuments";
 import "@/app/styles/requirements-setup.css";
 
@@ -82,35 +88,71 @@ export default function Step3WorkingWithChildren({
 }: Step3WorkingWithChildrenProps) {
   const { data: session } = useSession();
 
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isLinksOpen, setIsLinksOpen] = useState(false);
+
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    subtitle?: string;
+  }>({
+    isOpen: false,
+    title: "Upload Failed",
+    message: "",
+    subtitle: undefined,
+  });
+
+  const showErrorModal = (message: string, title: string = "Upload Failed", subtitle?: string) => {
+    setErrorModal({
+      isOpen: true,
+      title,
+      message,
+      subtitle,
+    });
+  };
+
+  const closeErrorModal = () => {
+    setErrorModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   // OPTIMIZED: Use React Query instead of manual fetch
+  // REFACTORED: Now uses generic compliance-documents endpoint
   const {
     data: documentData,
     isLoading,
-  } = useSingleComplianceDocument("/api/worker/working-with-children", "working-with-children");
+  } = useSingleComplianceDocument("/api/worker/compliance-documents", "working-with-children");
 
   const uploadMutation = useUploadComplianceDocument();
+  const deleteMutation = useDeleteComplianceDocument();
 
   const uploadedDocument = documentData?.document || null;
 
   const handleFileUpload = async (file: File) => {
     if (!session?.user?.id) {
-      alert("Session expired. Please refresh the page.");
+      showErrorModal("Session expired. Please refresh the page.", "Session Expired");
       return;
     }
 
     // Validate file type (images and PDFs only)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or PDF file");
+      showErrorModal(
+        "Invalid file type",
+        "Upload Failed",
+        "Please upload a JPG, PNG, or PDF file."
+      );
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      alert("File size must be less than 10MB");
+      showErrorModal(
+        "File is too large",
+        "Upload Failed",
+        "Maximum file size is 50MB. Please choose a smaller file."
+      );
       return;
     }
 
@@ -120,41 +162,98 @@ export default function Step3WorkingWithChildren({
         documentType: "working-with-children",
         apiEndpoint: "/api/upload/working-with-children",
       });
-
-      // Exit edit mode
-      setIsEditMode(false);
     } catch (error: any) {
-      alert(`Upload failed: ${error.message}`);
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Upload Failed",
+        "Please try again or contact support if the issue persists."
+      );
+    }
+  };
+
+  const handleFileDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!uploadedDocument?.id) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        documentId: uploadedDocument.id,
+        documentType: "working-with-children",
+        apiEndpoint: "/api/worker/working-with-children",
+      });
+
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      showErrorModal(
+        error.message || "Unknown error occurred",
+        "Delete Failed",
+        "Please try again or contact support if the issue persists."
+      );
     }
   };
 
   return (
-    <StepContentWrapper>
-      <div className="form-page-content">
+    <>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={closeErrorModal}
+        title={errorModal.title}
+        message={errorModal.message}
+        subtitle={errorModal.subtitle}
+      />
+
+      <StepContentWrapper>
+        <div className="form-page-content">
         {/* Left Column - Form */}
         <div className="form-column">
           <div className="account-form">
-            {/* State/Territory Links Section */}
-            <div className="mb-8">
-              <h4 className="text-lg font-poppins font-semibold text-gray-900 mb-4">
-                Working With Children Check - Apply by State/Territory
-              </h4>
-              <div className="space-y-3">
-                {STATE_LINKS.map((item) => (
-                  <div key={item.state}>
-                    <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
-                      {item.state}:
-                    </p>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
-                    >
-                      {item.url}
-                    </a>
+            {/* State/Territory Links Section - Collapsible Card */}
+            <div className="mb-8 mt-6">
+              <div
+                className="border border-gray-300 rounded-lg overflow-hidden cursor-pointer"
+                onClick={() => setIsLinksOpen(!isLinksOpen)}
+              >
+                <div className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <h4 className="text-base font-poppins font-semibold text-gray-900">
+                    View application links for your state/territory
+                  </h4>
+                  {isLinksOpen ? (
+                    <ChevronUpIcon className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <ChevronDownIcon className="w-5 h-5 text-gray-600" />
+                  )}
+                </div>
+                {isLinksOpen && (
+                  <div className="p-4 bg-white border-t border-gray-200">
+                    <div className="space-y-3">
+                      {STATE_LINKS.map((item) => (
+                        <div key={item.state}>
+                          <p className="text-sm font-poppins font-medium text-gray-900 mb-1">
+                            {item.state}:
+                          </p>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {item.url}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -183,47 +282,32 @@ export default function Step3WorkingWithChildren({
                     </div>
                   </div>
                 </div>
-              ) : uploadedDocument && !isEditMode ? (
+              ) : uploadedDocument ? (
                 // Show uploaded document preview
                 <div className="document-preview-container">
-                  {isPdfDocument(uploadedDocument.documentUrl) ? (
-                    <div className="document-preview-pdf">
-                      <DocumentIcon className="document-preview-pdf-icon" />
-                      <p className="document-preview-pdf-text">
-                        Working With Children Check
-                      </p>
+                  <div className="uploaded-document-item">
+                    <div className="uploaded-document-content">
+                      <DocumentIcon className="uploaded-document-icon" />
                       <a
                         href={uploadedDocument.documentUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins"
+                        className="uploaded-document-link"
                       >
-                        View PDF
+                        Working With Children Check
                       </a>
                     </div>
-                  ) : (
-                    <img
-                      src={uploadedDocument.documentUrl}
-                      alt="Working With Children Check"
-                      className="document-preview-image"
-                    />
-                  )}
-                  <button
-                    onClick={() => setIsEditMode(true)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#0C1628",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      padding: "0.5rem 0",
-                      fontFamily: "var(--font-poppins)",
-                      marginTop: "0.75rem"
-                    }}
-                  >
-                    Replace Document
-                  </button>
+                    <button
+                      onClick={handleFileDelete}
+                      className="uploaded-document-remove"
+                      title="Remove document"
+                    >
+                      <XCircleIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 font-poppins mt-2">
+                    Uploaded: {new Date(uploadedDocument.uploadedAt).toLocaleDateString()}
+                  </p>
                 </div>
               ) : (
                 // Show upload button
@@ -231,7 +315,7 @@ export default function Step3WorkingWithChildren({
                   <input
                     type="file"
                     id="wwc-file"
-                    accept="image/jpeg,image/jpg,image/png,application/pdf"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -261,7 +345,7 @@ export default function Step3WorkingWithChildren({
                     )}
                   </Button>
                   <p className="text-xs text-gray-500 font-poppins mt-2">
-                    Accepted formats: JPG, PNG, PDF (max 10MB)
+                    Accepted formats: JPG, PNG, WebP, HEIC, PDF (max 50MB)
                   </p>
                 </div>
               )}
@@ -271,7 +355,7 @@ export default function Step3WorkingWithChildren({
 
         {/* Right Column - Info Box */}
         <div className="info-column">
-          <div className="info-box">
+          <div className="info-box mt-6">
             <h3 className="info-box-title">About Working With Children Checks</h3>
             <p className="info-box-text">
               A Working With Children Check is a mandatory requirement for workers who will be working with children and young people. It ensures their suitability to work in child-related roles.
@@ -304,5 +388,6 @@ export default function Step3WorkingWithChildren({
         </div>
       </div>
     </StepContentWrapper>
+    </>
   );
 }
