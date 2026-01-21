@@ -463,7 +463,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\toton\\Desktop\\Remonta\\src\\generated\\auth-client",
+      "value": "C:\\Users\\Toton\\Desktop\\Remonta\\remontamarketplace\\src\\generated\\auth-client",
       "fromEnvVar": null
     },
     "config": {
@@ -481,7 +481,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\toton\\Desktop\\Remonta\\prisma\\auth-schema.prisma",
+    "sourceFilePath": "C:\\Users\\Toton\\Desktop\\Remonta\\remontamarketplace\\prisma\\auth-schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
