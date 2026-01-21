@@ -1,13 +1,9 @@
 /**
  * Coordinator Registration API Endpoint
  *
- * Production-ready registration for coordinators with:
- * - Zod validation
- * - Password hashing (bcrypt, 12 rounds)
- * - Duplicate email prevention (P2002 handling)
- * - Rate limiting
- * - Audit logging
- * - Transaction safety
+ * Creates User + CoordinatorProfile + Participant.
+ * - CoordinatorProfile: Coordinator's contact info (firstName, lastName, mobile, organization, clientTypes)
+ * - Participant: Participant details (personal info, services, location)
  *
  * POST /api/auth/register/coordinator
  *
@@ -18,6 +14,9 @@
  *   mobile: string,
  *   organization?: string,
  *   clientTypes: string[],
+ *   clientFirstName: string,
+ *   clientLastName: string,
+ *   clientDateOfBirth: string,
  *   servicesRequested: { [categoryId]: { categoryName, subCategories: [{id, name}] } },
  *   additionalInfo?: string,
  *   location: string,
@@ -95,7 +94,7 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // CREATE USER + COORDINATOR PROFILE (TRANSACTION)
+      // CREATE USER + COORDINATOR PROFILE + PARTICIPANT
       // ============================================
       let user;
       try {
@@ -107,15 +106,25 @@ export async function POST(request: Request) {
             status: 'ACTIVE',
             updatedAt: new Date(),
 
-            // Create coordinator profile in same transaction
+            // CoordinatorProfile: Coordinator's contact info only
             coordinatorProfile: {
               create: {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 mobile: data.mobile,
                 organization: data.organization || null,
-                location: data.location,
                 clientTypes: data.clientTypes,
+                updatedAt: new Date(),
+              },
+            },
+
+            // Participant: About the person needing support, services, location
+            participants: {
+              create: {
+                firstName: data.clientFirstName,
+                lastName: data.clientLastName,
+                dateOfBirth: new Date(data.clientDateOfBirth),
+                location: data.location,
                 servicesRequested: data.servicesRequested,
                 additionalInfo: data.additionalInfo || null,
                 updatedAt: new Date(),
@@ -124,6 +133,7 @@ export async function POST(request: Request) {
           },
           include: {
             coordinatorProfile: true,
+            participants: true,
           },
         });
       } catch (dbError: any) {

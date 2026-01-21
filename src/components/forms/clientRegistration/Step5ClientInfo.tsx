@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Control, FieldErrors } from "react-hook-form";
 import { ClientFormData } from "@/schema/clientFormSchema";
+import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 
 interface Step5ClientInfoProps {
   control: Control<ClientFormData>;
@@ -61,25 +62,20 @@ export function Step5ClientInfo({ control, errors }: Step5ClientInfoProps) {
       </div>
 
       {/* Date of Birth */}
-      <div>
-        <Label className="text-base font-poppins font-semibold text-gray-900">
-          Date of birth
-        </Label>
-        <Controller
-          name="clientDateOfBirth"
-          control={control}
-          render={({ field }) => (
-            <Input
-              type="date"
-              className="text-base font-poppins mt-2"
-              value={field.value}
-              onChange={(e) => field.onChange(e.target.value)}
-              onBlur={field.onBlur}
-            />
-          )}
-        />
-        {errors.clientDateOfBirth && <p className="text-red-500 text-sm font-poppins mt-1">{errors.clientDateOfBirth.message}</p>}
-      </div>
+      <Controller
+        name="clientDateOfBirth"
+        control={control}
+        render={({ field }) => (
+          <DatePickerField
+            label="Date of birth"
+            name="clientDateOfBirth"
+            value={field.value || ""}
+            onChange={field.onChange}
+            error={errors.clientDateOfBirth?.message}
+            required
+          />
+        )}
+      />
     </div>
   );
 }

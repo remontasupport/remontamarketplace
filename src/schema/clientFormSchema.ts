@@ -106,8 +106,8 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // Client info fields are required for client path only
-  if (data.completingFormAs === "client") {
+  // Client info fields are required for client and coordinator paths
+  if (data.completingFormAs === "client" || data.completingFormAs === "coordinator") {
     if (!data.clientFirstName || data.clientFirstName.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

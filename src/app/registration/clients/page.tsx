@@ -101,8 +101,8 @@ export default function ClientsRegistration() {
   // Calculate total steps based on path
   // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Client Info, Services, Address, Account)
   // Self (registering for myself): 6 steps (Who, Personal, Funding Type, Services, Address, Account)
-  // Coordinator path: 5 steps (Who, Personal, Services, Address, Account)
-  const TOTAL_STEPS = completingFormAs === "client" ? 7 : completingFormAs === "self" ? 6 : 5;
+  // Coordinator path: 6 steps (Who, Personal, Client Info, Services, Address, Account)
+  const TOTAL_STEPS = completingFormAs === "client" ? 7 : 6;
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
@@ -126,40 +126,36 @@ export default function ClientsRegistration() {
       case 3:
         // For client path: validate funding type and relationship
         // For self path: validate funding type only
-        // For coordinator: validate services
+        // For coordinator: validate client info
         if (completingFormAs === "client") {
           fieldsToValidate = ["fundingType", "relationshipToClient"];
         } else if (completingFormAs === "self") {
           fieldsToValidate = ["fundingType"];
         } else {
-          fieldsToValidate = ["servicesRequested"];
+          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
         }
         break;
       case 4:
-        // For client path: client info; for self path: services; for coordinator: location
+        // For client path: client info; for self/coordinator: services
         if (completingFormAs === "client") {
           fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
-        } else if (completingFormAs === "self") {
-          fieldsToValidate = ["servicesRequested"];
         } else {
-          fieldsToValidate = ["location"];
+          fieldsToValidate = ["servicesRequested"];
         }
         break;
       case 5:
-        // For client path: services; for self path: location; for coordinator: account setup
+        // For client path: services; for self/coordinator: location
         if (completingFormAs === "client") {
           fieldsToValidate = ["servicesRequested"];
-        } else if (completingFormAs === "self") {
-          fieldsToValidate = ["location"];
         } else {
-          fieldsToValidate = ["email", "password", "consent"];
+          fieldsToValidate = ["location"];
         }
         break;
       case 6:
-        // For client path: location; for self path: account setup
+        // For client path: location; for self/coordinator: account setup
         if (completingFormAs === "client") {
           fieldsToValidate = ["location"];
-        } else if (completingFormAs === "self") {
+        } else {
           fieldsToValidate = ["email", "password", "consent"];
         }
         break;
@@ -242,6 +238,9 @@ export default function ClientsRegistration() {
           mobile: data.phoneNumber,
           organization: data.organisationName || undefined,
           clientTypes: data.clientTypes || [],
+          clientFirstName: data.clientFirstName,
+          clientLastName: data.clientLastName,
+          clientDateOfBirth: data.clientDateOfBirth,
           servicesRequested,
           additionalInfo: data.additionalInformation || undefined,
           location: data.location,
@@ -338,10 +337,9 @@ export default function ClientsRegistration() {
 
   const onError = (formErrors: any) => {
     // Only show account setup errors if we're actually on the account setup step
-    // Account setup is: Step 5 (coordinator), Step 6 (self), Step 7 (client)
+    // Account setup is: Step 6 (coordinator/self), Step 7 (client)
     const isOnAccountSetupStep =
-      (completingFormAs === "coordinator" && currentStep === 5) ||
-      (completingFormAs === "self" && currentStep === 6) ||
+      ((completingFormAs === "coordinator" || completingFormAs === "self") && currentStep === 6) ||
       (completingFormAs === "client" && currentStep === 7);
 
     if (isOnAccountSetupStep) {
@@ -395,14 +393,18 @@ export default function ClientsRegistration() {
               <Step3FundingType control={control} errors={errors} showRelationship={false} />
             )}
 
+            {/* Step 3 - Client Info (Coordinator path - about the person needing support) */}
+            {currentStep === 3 && completingFormAs === "coordinator" && (
+              <Step5ClientInfo control={control} errors={errors} />
+            )}
+
             {/* Step 4 - Client Info (Client path only - right after funding type) */}
             {currentStep === 4 && completingFormAs === "client" && (
               <Step5ClientInfo control={control} errors={errors} />
             )}
 
-            {/* Services Requested - Step 3 (coordinator), Step 4 (self), Step 5 (client) */}
-            {((currentStep === 3 && completingFormAs === "coordinator") ||
-              (currentStep === 4 && completingFormAs === "self") ||
+            {/* Services Requested - Step 4 (coordinator/self), Step 5 (client) */}
+            {((currentStep === 4 && (completingFormAs === "coordinator" || completingFormAs === "self")) ||
               (currentStep === 5 && completingFormAs === "client")) && (
               <>
                 {categoriesLoading && (
@@ -429,16 +431,14 @@ export default function ClientsRegistration() {
               </>
             )}
 
-            {/* Address - Step 4 (coordinator), Step 5 (self), Step 6 (client) */}
-            {((currentStep === 4 && completingFormAs === "coordinator") ||
-              (currentStep === 5 && completingFormAs === "self") ||
+            {/* Address - Step 5 (coordinator/self), Step 6 (client) */}
+            {((currentStep === 5 && (completingFormAs === "coordinator" || completingFormAs === "self")) ||
               (currentStep === 6 && completingFormAs === "client")) && (
               <Step3Address control={control} errors={errors} />
             )}
 
-            {/* Account Setup - Step 5 (coordinator), Step 6 (self), Step 7 (client) */}
-            {((currentStep === 5 && completingFormAs === "coordinator") ||
-              (currentStep === 6 && completingFormAs === "self") ||
+            {/* Account Setup - Step 6 (coordinator/self), Step 7 (client) */}
+            {((currentStep === 6 && (completingFormAs === "coordinator" || completingFormAs === "self")) ||
               (currentStep === 7 && completingFormAs === "client")) && (
               <Step5AccountSetup control={control} errors={errors} showValidationErrors={showAccountSetupErrors} />
             )}
@@ -451,16 +451,21 @@ export default function ClientsRegistration() {
             )}
 
             <div className="flex justify-between pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={prevStep}
-                disabled={currentStep === 1 || isLoading}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </Button>
+              {/* Hide Previous button on Steps 1 and 2 - user must refresh to restart */}
+              {currentStep <= 2 ? (
+                <div />
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  disabled={isLoading}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+              )}
 
               {currentStep === TOTAL_STEPS ? (
                 <Button

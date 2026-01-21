@@ -54,7 +54,7 @@ const servicesRequestedSchema = z.record(z.string(), servicesCategorySchema);
 // ============================================
 
 export const coordinatorRegistrationSchema = z.object({
-  // Personal Information
+  // Personal Information (the coordinator)
   firstName: z.string().min(1, 'First name is required').trim(),
   lastName: z.string().min(1, 'Last name is required').trim(),
   mobile: phoneValidation,
@@ -62,6 +62,11 @@ export const coordinatorRegistrationSchema = z.object({
 
   // Coordinator-specific
   clientTypes: z.array(z.string()).min(1, 'Please select at least one client type'),
+
+  // Participant info (about the person needing support)
+  clientFirstName: z.string().min(1, 'First name is required').trim(),
+  clientLastName: z.string().min(1, 'Last name is required').trim(),
+  clientDateOfBirth: z.string().min(1, 'Date of birth is required'),
 
   // Services
   servicesRequested: servicesRequestedSchema,
