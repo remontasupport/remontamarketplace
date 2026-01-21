@@ -11,10 +11,11 @@ import { Eye, EyeOff } from "lucide-react";
 
 interface Step5AccountSetupProps {
   control: Control<ClientFormData>;
-  errors: FieldErrors<ClientFormData>;
+  errors?: FieldErrors<ClientFormData>;
+  showValidationErrors?: boolean;
 }
 
-export function Step5AccountSetup({ control, errors }: Step5AccountSetupProps) {
+export function Step5AccountSetup({ control, showValidationErrors = false }: Step5AccountSetupProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -40,7 +41,6 @@ export function Step5AccountSetup({ control, errors }: Step5AccountSetupProps) {
             />
           )}
         />
-        {errors.email && <p className="text-red-500 text-sm font-poppins mt-1">{errors.email.message}</p>}
       </div>
 
       {/* Password */}
@@ -48,33 +48,34 @@ export function Step5AccountSetup({ control, errors }: Step5AccountSetupProps) {
         <Label className="text-base font-poppins font-semibold text-gray-900">
           Password
         </Label>
-        <div className="relative mt-2">
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                className="text-base font-poppins pr-10"
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                onBlur={field.onBlur}
-              />
-            )}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        </div>
-        {errors.password && <p className="text-red-500 text-sm font-poppins mt-1">{errors.password.message}</p>}
-        <p className="text-sm text-gray-600 font-poppins mt-2">
-          Password must be at least 8 characters and contain uppercase, lowercase, and a number.
-        </p>
+        <Controller
+          name="password"
+          control={control}
+          render={({ field }) => (
+            <>
+              <div className="relative mt-2">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="text-base font-poppins pr-10"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 font-poppins mt-2">
+                Password must be at least 8 characters and contain uppercase, lowercase, and a number.
+              </p>
+            </>
+          )}
+        />
       </div>
 
       {/* Consent */}
@@ -99,7 +100,6 @@ export function Step5AccountSetup({ control, errors }: Step5AccountSetupProps) {
             </div>
           )}
         />
-        {errors.consent && <p className="text-red-500 text-sm font-poppins mt-2">{errors.consent.message}</p>}
       </div>
     </div>
   );

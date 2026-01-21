@@ -463,7 +463,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           width: 100%;
           max-width: 700px;
-          margin-top: 1rem;
+          margin-top: 11rem;
           box-sizing: border-box;
         }
 

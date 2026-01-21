@@ -5,11 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface Step3FundingTypeProps {
   control: Control<ClientFormData>;
-  errors: FieldErrors<ClientFormData>;
+  errors?: FieldErrors<ClientFormData>;
   showRelationship?: boolean;
 }
 
-export function Step3FundingType({ control, errors, showRelationship = true }: Step3FundingTypeProps) {
+export function Step3FundingType({ control, showRelationship = true }: Step3FundingTypeProps) {
   const fundingOptions = [
     { value: "ndis", label: "NDIS Participant (has an active NDIS plan)" },
     { value: "aged-care", label: "Aged Care Recipient" },
@@ -41,30 +41,32 @@ export function Step3FundingType({ control, errors, showRelationship = true }: S
           <Controller
             name="relationshipToClient"
             control={control}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="h-12 text-base font-poppins">
-                  <SelectValue placeholder="Select your relationship" />
-                </SelectTrigger>
-                <SelectContent>
-                  {relationshipOptions.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className="text-base font-poppins"
-                    >
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            render={({ field, fieldState }) => (
+              <>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger className="h-12 text-base font-poppins">
+                    <SelectValue placeholder="Select your relationship" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {relationshipOptions.map((option) => (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        className="text-base font-poppins"
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.isTouched && fieldState.error && (
+                  <p className="text-red-500 text-sm font-poppins mt-1">
+                    {fieldState.error.message}
+                  </p>
+                )}
+              </>
             )}
           />
-          {errors.relationshipToClient && (
-            <p className="text-red-500 text-sm font-poppins mt-1">
-              {errors.relationshipToClient.message}
-            </p>
-          )}
         </div>
       )}
 
@@ -76,37 +78,39 @@ export function Step3FundingType({ control, errors, showRelationship = true }: S
         <Controller
           name="fundingType"
           control={control}
-          render={({ field }) => (
-            <div className="space-y-3">
-              {fundingOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                    field.value === option.value
-                      ? "border-[#0C1628] bg-[#EDEFF3]"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    className="w-5 h-5 text-[#0C1628] border-gray-300 focus:ring-[#0C1628] cursor-pointer"
-                    value={option.value}
-                    checked={field.value === option.value}
-                    onChange={() => field.onChange(option.value)}
-                  />
-                  <span className="ml-3 text-base font-poppins text-gray-800">
-                    {option.label}
-                  </span>
-                </label>
-              ))}
-            </div>
+          render={({ field, fieldState }) => (
+            <>
+              <div className="space-y-3">
+                {fundingOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      field.value === option.value
+                        ? "border-[#0C1628] bg-[#EDEFF3]"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      className="w-5 h-5 text-[#0C1628] border-gray-300 focus:ring-[#0C1628] cursor-pointer"
+                      value={option.value}
+                      checked={field.value === option.value}
+                      onChange={() => field.onChange(option.value)}
+                    />
+                    <span className="ml-3 text-base font-poppins text-gray-800">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {fieldState.isTouched && fieldState.error && (
+                <p className="text-red-500 text-sm font-poppins mt-2">
+                  {fieldState.error.message}
+                </p>
+              )}
+            </>
           )}
         />
-        {errors.fundingType && (
-          <p className="text-red-500 text-sm font-poppins mt-2">
-            {errors.fundingType.message}
-          </p>
-        )}
       </div>
     </div>
   );

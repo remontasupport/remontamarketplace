@@ -11,7 +11,7 @@ import { fetchSuburbs } from "@/actions/suburbs";
 
 interface Step3AddressProps {
   control: Control<ClientFormData>;
-  errors: FieldErrors<ClientFormData>;
+  errors?: FieldErrors<ClientFormData>;
 }
 
 interface Suburb {
@@ -110,67 +110,71 @@ export function Step3Address({ control, errors }: Step3AddressProps) {
           />
         </div>
 
-        <div>
-          <Label className="text-lg font-poppins font-medium">
-            Postcode/Suburb<span className="text-red-500">*</span>
-          </Label>
-          <div className="relative mt-2" ref={dropdownRef}>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
-            {isLoading && (
-              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin z-10" />
-            )}
-            <Controller
-              name="location"
-              control={control}
-              render={({ field }) => (
-                <>
-                  <Input
-                    placeholder="Search"
-                    className="text-lg font-poppins pl-10 pr-10"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                    }}
-                    onFocus={() => {
-                      if (suburbs.length > 0) setShowDropdown(true);
-                    }}
-                  />
+        <Controller
+          name="location"
+          control={control}
+          render={({ field, fieldState }) => (
+            <div>
+              <Label className="text-lg font-poppins font-medium">
+                Postcode/Suburb<span className="text-red-500">*</span>
+              </Label>
+              <div className="relative mt-2" ref={dropdownRef}>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                {isLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin z-10" />
+                )}
+                <Input
+                  placeholder="Search"
+                  className="text-lg font-poppins pl-10 pr-10"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    // Clear the field value if user is typing (not selecting)
+                    if (field.value && e.target.value !== field.value) {
+                      field.onChange("");
+                    }
+                  }}
+                  onBlur={field.onBlur}
+                  onFocus={() => {
+                    if (suburbs.length > 0) setShowDropdown(true);
+                  }}
+                />
 
-                  {/* Dropdown */}
-                  {showDropdown && suburbs.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {suburbs.map((suburb, index) => (
-                        <button
-                          key={`${suburb.name}-${suburb.postcode}-${index}`}
-                          type="button"
-                          className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors border-b last:border-b-0 font-poppins"
-                          onClick={() => {
-                            const selectedValue = `${suburb.name}, ${suburb.state.abbreviation} ${suburb.postcode}`;
-                            // Set ref flag synchronously BEFORE updating search query
-                            isSelectedRef.current = true;
-                            setShowDropdown(false);
-                            setSuburbs([]);
-                            field.onChange(selectedValue);
-                            setSearchQuery(selectedValue);
-                          }}
-                        >
-                          <span className="text-gray-900 font-medium">
-                            {suburb.name}, {suburb.state.abbreviation} {suburb.postcode}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </>
+                {/* Dropdown */}
+                {showDropdown && suburbs.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {suburbs.map((suburb, index) => (
+                      <button
+                        key={`${suburb.name}-${suburb.postcode}-${index}`}
+                        type="button"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors border-b last:border-b-0 font-poppins"
+                        onClick={() => {
+                          const selectedValue = `${suburb.name}, ${suburb.state.abbreviation} ${suburb.postcode}`;
+                          // Set ref flag synchronously BEFORE updating search query
+                          isSelectedRef.current = true;
+                          setShowDropdown(false);
+                          setSuburbs([]);
+                          field.onChange(selectedValue);
+                          setSearchQuery(selectedValue);
+                        }}
+                      >
+                        <span className="text-gray-900 font-medium">
+                          {suburb.name}, {suburb.state.abbreviation} {suburb.postcode}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Error message outside the relative container to prevent icon misalignment */}
+              {fieldState.isTouched && fieldState.error && (
+                <p className="text-red-500 text-sm font-poppins mt-1">
+                  {fieldState.error.message}
+                </p>
               )}
-            />
-          </div>
-          {errors.location && (
-            <p className="text-red-500 text-sm font-poppins mt-1">
-              {errors.location.message}
-            </p>
+            </div>
           )}
-        </div>
+        />
       </div>
     </div>
   );

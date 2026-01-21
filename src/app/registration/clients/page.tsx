@@ -21,13 +21,14 @@ export default function ClientsRegistration() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAccountSetupErrors, setShowAccountSetupErrors] = useState(false);
 
   // Fetch categories from database
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
 
   const { control, handleSubmit, formState, trigger, getValues, watch, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
-    mode: "all",
+    mode: "onTouched",
     reValidateMode: "onChange",
     criteriaMode: "all",
     shouldFocusError: true,
@@ -106,6 +107,15 @@ export default function ClientsRegistration() {
     }
 
     const isValid = await trigger(fieldsToValidate, { shouldFocus: true });
+
+    // If validation fails, touch and dirty all fields to show error messages
+    if (!isValid) {
+      fieldsToValidate.forEach(field => {
+        const currentValue = getValues(field);
+        setValue(field, currentValue, { shouldTouch: true, shouldDirty: true });
+      });
+    }
+
     return isValid;
   };
 
@@ -113,8 +123,14 @@ export default function ClientsRegistration() {
     if (currentStep < TOTAL_STEPS) {
       const isValid = await validateCurrentStep(currentStep);
       if (isValid) {
+        // Reset account setup errors when navigating forward
+        setShowAccountSetupErrors(false);
         setCurrentStep(currentStep + 1);
       } else {
+        // Show account setup errors if validation fails on step 6 (client path)
+        if (currentStep === 6 && completingFormAs === "client") {
+          setShowAccountSetupErrors(true);
+        }
         // Scroll to error
         setTimeout(() => {
           const firstErrorElement = document.querySelector('.text-red-500');
@@ -128,6 +144,8 @@ export default function ClientsRegistration() {
 
   const prevStep = () => {
     if (currentStep > 1) {
+      // Reset account setup errors when navigating back
+      setShowAccountSetupErrors(false);
       setCurrentStep(currentStep - 1);
     }
   };
@@ -177,8 +195,43 @@ export default function ClientsRegistration() {
     );
   }
 
-  const onError = (errors: any) => {
-    // Errors are already displayed inline in the form
+  const onError = (formErrors: any) => {
+    // Only show account setup errors if we're actually on the account setup step
+    const isOnAccountSetupStep =
+      (completingFormAs === "coordinator" && currentStep === 5) ||
+      ((completingFormAs === "self" || completingFormAs === "client") && currentStep === 6);
+
+    if (isOnAccountSetupStep && completingFormAs !== "client") {
+      // Self/Coordinator path: show account setup errors only when on that step
+      setShowAccountSetupErrors(true);
+    }
+
+    // Only mark fields for the current (final) step as touched
+    let finalStepFields: (keyof ClientFormData)[] = [];
+
+    if (completingFormAs === "client") {
+      // Client path final step: client info
+      finalStepFields = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
+    } else {
+      // Self/Coordinator path final step: account setup
+      finalStepFields = ["email", "password", "consent"];
+    }
+
+    // Only touch and dirty fields that have errors AND are in the final step
+    finalStepFields.forEach(field => {
+      if (formErrors[field]) {
+        const currentValue = getValues(field);
+        setValue(field, currentValue, { shouldTouch: true, shouldDirty: true });
+      }
+    });
+
+    // Scroll to first error
+    setTimeout(() => {
+      const firstErrorElement = document.querySelector('.text-red-500');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   return (
@@ -245,7 +298,7 @@ export default function ClientsRegistration() {
             {/* Step 5/6 - Account Setup */}
             {((currentStep === 5 && completingFormAs === "coordinator") ||
               (currentStep === 6 && (completingFormAs === "client" || completingFormAs === "self"))) && (
-              <Step5AccountSetup control={control} errors={errors} />
+              <Step5AccountSetup control={control} errors={errors} showValidationErrors={showAccountSetupErrors} />
             )}
 
             {/* Step 7 - Client Info (Client path only) */}
