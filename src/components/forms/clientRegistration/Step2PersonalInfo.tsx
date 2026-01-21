@@ -8,6 +8,7 @@ import { ClientFormData } from "@/schema/clientFormSchema";
 import { EXPERIENCE_AREAS } from "@/components/profile-building/sections/ExperienceSection";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronDown, Check } from "lucide-react";
+import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 
 interface Step2PersonalInfoProps {
   control: Control<ClientFormData>;
@@ -61,6 +62,24 @@ export function Step2PersonalInfo({ control, errors, completingFormAs }: Step2Pe
         />
         {errors.lastName && <p className="text-red-500 text-sm font-poppins mt-1">{errors.lastName.message}</p>}
       </div>
+
+      {/* Date of Birth - Only shown for Self-managed clients */}
+      {completingFormAs === "self" && (
+        <Controller
+          name="dateOfBirth"
+          control={control}
+          render={({ field }) => (
+            <DatePickerField
+              label="Date of birth"
+              name="dateOfBirth"
+              value={field.value || ""}
+              onChange={field.onChange}
+              error={errors.dateOfBirth?.message}
+              required
+            />
+          )}
+        />
+      )}
 
       {/* Phone Number */}
       <div>

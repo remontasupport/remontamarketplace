@@ -117,6 +117,8 @@ export default function ClientsRegistration() {
         // Only validate clientTypes for coordinators
         if (completingFormAs === "coordinator") {
           fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
+        } else if (completingFormAs === "self") {
+          fieldsToValidate = ["firstName", "lastName", "dateOfBirth", "phoneNumber"];
         } else {
           fieldsToValidate = ["firstName", "lastName", "phoneNumber"];
         }
@@ -260,6 +262,7 @@ export default function ClientsRegistration() {
           isSelfManaged,
           fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
           relationshipToClient: isSelfManaged ? 'OTHER' : RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
+          dateOfBirth: isSelfManaged ? data.dateOfBirth : data.clientDateOfBirth,
           servicesRequested,
           additionalInfo: data.additionalInformation || undefined,
           location: data.location,

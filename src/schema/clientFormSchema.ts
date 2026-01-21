@@ -12,6 +12,7 @@ export const clientFormSchema = z.object({
   // Step 2 - Personal Information
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  dateOfBirth: z.string().optional(),
   email: z.string()
     .min(1, "Email address is required")
     .email("Please enter a valid email address"),
@@ -96,6 +97,15 @@ export const clientFormSchema = z.object({
     });
   }
 
+  // dateOfBirth is required for self path only
+  if (data.completingFormAs === "self" && (!data.dateOfBirth || data.dateOfBirth.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Date of birth is required",
+      path: ["dateOfBirth"],
+    });
+  }
+
   // Client info fields are required for client path only
   if (data.completingFormAs === "client") {
     if (!data.clientFirstName || data.clientFirstName.trim() === "") {
@@ -128,6 +138,7 @@ export const clientFormDefaults: ClientFormData = {
   completingFormAs: undefined as any,
   firstName: "",
   lastName: "",
+  dateOfBirth: "",
   email: "",
   phoneNumber: "",
   organisationName: "",

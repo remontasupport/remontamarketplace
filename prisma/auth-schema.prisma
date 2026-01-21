@@ -46,87 +46,58 @@ model AuditLog {
 }
 
 model ClientProfile {
-  id                   String            @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
-  userId               String            @unique(map: "client_profiles_new_userId_key")
-  firstName            String
-  lastName             String
-  mobile               String
-  location             String?
-  fundingType          FundingType?
-  relationshipToClient RelationshipType?
-  servicesRequested    Json?
-  additionalInfo       String?
-  isSelfManaged        Boolean           @default(false)
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @default(now()) @updatedAt
+  id        String   @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId    String   @unique(map: "client_profiles_new_userId_key")
+  firstName String
+  lastName  String
+  mobile    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([fundingType], map: "idx_client_profiles_fundingtype")
-  @@index([isSelfManaged], map: "idx_client_profiles_isselfmanaged")
-  @@index([location], map: "idx_client_profiles_location")
   @@index([userId], map: "idx_client_profiles_userid")
   @@map("client_profiles")
 }
 
 model CoordinatorProfile {
-  id                String   @id(map: "coordinator_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
-  userId            String   @unique(map: "coordinator_profiles_new_userId_key")
-  firstName         String
-  lastName          String
-  mobile            String
-  organization      String?
-  location          String?
-  clientTypes       String[] @default([])
-  servicesRequested Json?
-  additionalInfo    String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @default(now()) @updatedAt
+  id           String   @id(map: "coordinator_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId       String   @unique(map: "coordinator_profiles_new_userId_key")
+  firstName    String
+  lastName     String
+  mobile       String
+  organization String?
+  clientTypes  String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([location], map: "idx_coordinator_profiles_location")
   @@index([userId], map: "idx_coordinator_profiles_userid")
   @@map("coordinator_profiles")
 }
 
 model Participant {
-  id                           String              @id @default(cuid())
-  clientProfileId              String?             @unique
-  coordinatorProfileId         String?
-  personNeedingSupport         String
-  firstName                    String
-  lastName                     String
-  dateOfBirth                  DateTime
-  ndisNumber                   String              @unique
-  mobile                       String
-  email                        String?
-  streetAddress                String?
-  suburb                       String
-  state                        String
-  postalCode                   String
-  latitude                     Float?
-  longitude                    Float?
-  servicesRequest              String[]
-  disabilities                 String[]
-  supportNeeds                 String?
-  planManagerName              String?
-  planManagerEmail             String?
-  planManagerPhone             String?
-  emergencyContactName         String
-  emergencyContactRelationship String
-  emergencyContactMobile       String
-  representativeType           RepresentativeType?
-  createdAt                    DateTime            @default(now())
-  updatedAt                    DateTime            @updatedAt
+  id                   String            @id @default(cuid())
+  userId               String
+  firstName            String
+  lastName             String
+  dateOfBirth          DateTime
+  location             String?
+  fundingType          FundingType?
+  relationshipToClient RelationshipType?
+  isSelfManaged        Boolean           @default(false)
+  servicesRequested    Json?
+  additionalInfo       String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
-  @@index([clientProfileId])
-  @@index([coordinatorProfileId])
-  @@index([ndisNumber])
-  @@index([suburb])
-  @@index([state])
-  @@index([postalCode])
-  @@index([personNeedingSupport])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([location])
+  @@index([fundingType])
+  @@index([isSelfManaged])
   @@map("participants")
 }
 
@@ -165,6 +136,7 @@ model User {
   workerProfile        WorkerProfile?
   clientProfile        ClientProfile?
   coordinatorProfile   CoordinatorProfile?
+  participants         Participant[]
 
   @@index([email])
   @@index([resetPasswordToken])

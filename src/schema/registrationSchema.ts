@@ -101,6 +101,9 @@ export const clientRegistrationSchema = z.object({
   fundingType: fundingTypeEnum,
   relationshipToClient: relationshipTypeEnum,
 
+  // Participant info (for self-managed, this is the same as the person registering)
+  dateOfBirth: z.string().optional(),
+
   // Services
   servicesRequested: servicesRequestedSchema,
   additionalInfo: z.string().optional(),

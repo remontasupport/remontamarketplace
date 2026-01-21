@@ -152,12 +152,6 @@ exports.Prisma.ClientProfileScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   mobile: 'mobile',
-  location: 'location',
-  fundingType: 'fundingType',
-  relationshipToClient: 'relationshipToClient',
-  servicesRequested: 'servicesRequested',
-  additionalInfo: 'additionalInfo',
-  isSelfManaged: 'isSelfManaged',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -169,41 +163,23 @@ exports.Prisma.CoordinatorProfileScalarFieldEnum = {
   lastName: 'lastName',
   mobile: 'mobile',
   organization: 'organization',
-  location: 'location',
   clientTypes: 'clientTypes',
-  servicesRequested: 'servicesRequested',
-  additionalInfo: 'additionalInfo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ParticipantScalarFieldEnum = {
   id: 'id',
-  clientProfileId: 'clientProfileId',
-  coordinatorProfileId: 'coordinatorProfileId',
-  personNeedingSupport: 'personNeedingSupport',
+  userId: 'userId',
   firstName: 'firstName',
   lastName: 'lastName',
   dateOfBirth: 'dateOfBirth',
-  ndisNumber: 'ndisNumber',
-  mobile: 'mobile',
-  email: 'email',
-  streetAddress: 'streetAddress',
-  suburb: 'suburb',
-  state: 'state',
-  postalCode: 'postalCode',
-  latitude: 'latitude',
-  longitude: 'longitude',
-  servicesRequest: 'servicesRequest',
-  disabilities: 'disabilities',
-  supportNeeds: 'supportNeeds',
-  planManagerName: 'planManagerName',
-  planManagerEmail: 'planManagerEmail',
-  planManagerPhone: 'planManagerPhone',
-  emergencyContactName: 'emergencyContactName',
-  emergencyContactRelationship: 'emergencyContactRelationship',
-  emergencyContactMobile: 'emergencyContactMobile',
-  representativeType: 'representativeType',
+  location: 'location',
+  fundingType: 'fundingType',
+  relationshipToClient: 'relationshipToClient',
+  isSelfManaged: 'isSelfManaged',
+  servicesRequested: 'servicesRequested',
+  additionalInfo: 'additionalInfo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -429,15 +405,6 @@ exports.RelationshipType = exports.$Enums.RelationshipType = {
   LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
   SPOUSE_PARTNER: 'SPOUSE_PARTNER',
   CHILDREN: 'CHILDREN',
-  OTHER: 'OTHER'
-};
-
-exports.RepresentativeType = exports.$Enums.RepresentativeType = {
-  SELF: 'SELF',
-  PARENT: 'PARENT',
-  GUARDIAN: 'GUARDIAN',
-  FAMILY_MEMBER: 'FAMILY_MEMBER',
-  LEGAL_REPRESENTATIVE: 'LEGAL_REPRESENTATIVE',
   OTHER: 'OTHER'
 };
 

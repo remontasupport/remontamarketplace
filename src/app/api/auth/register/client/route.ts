@@ -5,7 +5,9 @@
  * - Self: Person registering for themselves (isSelfManaged: true)
  * - Client: Person registering on behalf of someone else (isSelfManaged: false)
  *
- * Creates User + ClientProfile only. Participant details are collected separately.
+ * Creates User + ClientProfile + Participant.
+ * - ClientProfile: User's contact info (firstName, lastName, mobile)
+ * - Participant: Participant details (personal info, services, location)
  *
  * POST /api/auth/register/client
  *
@@ -17,6 +19,7 @@
  *   isSelfManaged: boolean,
  *   fundingType: 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER',
  *   relationshipToClient: 'PARENT' | 'LEGAL_GUARDIAN' | 'SPOUSE_PARTNER' | 'CHILDREN' | 'OTHER',
+ *   dateOfBirth?: string,
  *   servicesRequested: { [categoryId]: { categoryName, subCategories: [{id, name}] } },
  *   additionalInfo?: string,
  *   location: string,
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // CREATE USER + CLIENT PROFILE
+      // CREATE USER + CLIENT PROFILE + PARTICIPANT
       // ============================================
       let user;
       try {
@@ -106,23 +109,35 @@ export async function POST(request: Request) {
             status: 'ACTIVE',
             updatedAt: new Date(),
 
+            // ClientProfile: User's contact info only
             clientProfile: {
               create: {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 mobile: data.mobile,
+                updatedAt: new Date(),
+              },
+            },
+
+            // Participant: About the person needing support, services, location
+            participants: {
+              create: {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
                 location: data.location,
                 fundingType: data.fundingType,
                 relationshipToClient: data.isSelfManaged ? 'OTHER' : data.relationshipToClient,
+                isSelfManaged: data.isSelfManaged,
                 servicesRequested: data.servicesRequested,
                 additionalInfo: data.additionalInfo || null,
-                isSelfManaged: data.isSelfManaged,
                 updatedAt: new Date(),
               },
             },
           },
           include: {
             clientProfile: true,
+            participants: true,
           },
         });
       } catch (dbError: any) {
