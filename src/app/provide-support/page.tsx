@@ -48,7 +48,7 @@ export default function JobsPage() {
               <p className="jobs-hero-description">
                 Support workers have a real impact on people’s lives. It’s a meaningful job that comes with both purpose and responsibility. Find out what being an independent support worker could mean for you.
               </p>
-              <Link href="https://forms.zohopublic.com.au/remontaservices1/form/ProfileSubmission/formperma/3FHPymU7Ch_tGMS79a3xgZgSw98Zx83NRDDxlE70MZo" className="jobs-hero-button">
+              <Link href="https://app.remontaservices.com.au/registration/worker" className="jobs-hero-button">
                 Get Started
               </Link>
             </div>
