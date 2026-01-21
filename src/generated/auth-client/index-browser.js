@@ -152,12 +152,14 @@ exports.Prisma.ClientProfileScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   mobile: 'mobile',
+  location: 'location',
+  fundingType: 'fundingType',
+  relationshipToClient: 'relationshipToClient',
+  servicesRequested: 'servicesRequested',
+  additionalInfo: 'additionalInfo',
+  isSelfManaged: 'isSelfManaged',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  postalCode: 'postalCode',
-  servicesRequest: 'servicesRequest',
-  streetAddress: 'streetAddress',
-  suburb: 'suburb'
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.CoordinatorProfileScalarFieldEnum = {
@@ -167,12 +169,12 @@ exports.Prisma.CoordinatorProfileScalarFieldEnum = {
   lastName: 'lastName',
   mobile: 'mobile',
   organization: 'organization',
+  location: 'location',
+  clientTypes: 'clientTypes',
+  servicesRequested: 'servicesRequested',
+  additionalInfo: 'additionalInfo',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  postalCode: 'postalCode',
-  servicesRequest: 'servicesRequest',
-  streetAddress: 'streetAddress',
-  suburb: 'suburb'
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ParticipantScalarFieldEnum = {
@@ -412,6 +414,22 @@ exports.AuditAction = exports.$Enums.AuditAction = {
   ROLE_CHANGE: 'ROLE_CHANGE',
   IMPERSONATION_START: 'IMPERSONATION_START',
   IMPERSONATION_END: 'IMPERSONATION_END'
+};
+
+exports.FundingType = exports.$Enums.FundingType = {
+  NDIS: 'NDIS',
+  AGED_CARE: 'AGED_CARE',
+  INSURANCE: 'INSURANCE',
+  PRIVATE: 'PRIVATE',
+  OTHER: 'OTHER'
+};
+
+exports.RelationshipType = exports.$Enums.RelationshipType = {
+  PARENT: 'PARENT',
+  LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
+  SPOUSE_PARTNER: 'SPOUSE_PARTNER',
+  CHILDREN: 'CHILDREN',
+  OTHER: 'OTHER'
 };
 
 exports.RepresentativeType = exports.$Enums.RepresentativeType = {

@@ -46,45 +46,47 @@ model AuditLog {
 }
 
 model ClientProfile {
-  id              String       @id @default(cuid())
-  userId          String       @unique
-  firstName       String
-  lastName        String
-  mobile          String
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime
-  postalCode      String?
-  servicesRequest String[]     @default([])
-  streetAddress   String?
-  suburb          String?
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  participant     Participant?
+  id                   String            @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId               String            @unique(map: "client_profiles_new_userId_key")
+  firstName            String
+  lastName             String
+  mobile               String
+  location             String?
+  fundingType          FundingType?
+  relationshipToClient RelationshipType?
+  servicesRequested    Json?
+  additionalInfo       String?
+  isSelfManaged        Boolean           @default(false)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @default(now()) @updatedAt
 
-  @@index([userId])
-  @@index([suburb])
-  @@index([postalCode])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([fundingType], map: "idx_client_profiles_fundingtype")
+  @@index([isSelfManaged], map: "idx_client_profiles_isselfmanaged")
+  @@index([location], map: "idx_client_profiles_location")
+  @@index([userId], map: "idx_client_profiles_userid")
   @@map("client_profiles")
 }
 
 model CoordinatorProfile {
-  id              String        @id @default(cuid())
-  userId          String        @unique
-  firstName       String
-  lastName        String
-  mobile          String
-  organization    String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime
-  postalCode      String?
-  servicesRequest String[]      @default([])
-  streetAddress   String?
-  suburb          String?
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  participants    Participant[]
+  id                String   @id(map: "coordinator_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId            String   @unique(map: "coordinator_profiles_new_userId_key")
+  firstName         String
+  lastName          String
+  mobile            String
+  organization      String?
+  location          String?
+  clientTypes       String[] @default([])
+  servicesRequested Json?
+  additionalInfo    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
 
-  @@index([userId])
-  @@index([suburb])
-  @@index([postalCode])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([location], map: "idx_coordinator_profiles_location")
+  @@index([userId], map: "idx_coordinator_profiles_userid")
   @@map("coordinator_profiles")
 }
 
@@ -117,8 +119,6 @@ model Participant {
   representativeType           RepresentativeType?
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
-  clientProfile                ClientProfile?      @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
-  coordinatorProfile           CoordinatorProfile? @relation(fields: [coordinatorProfileId], references: [id], onDelete: Cascade)
 
   @@index([clientProfileId])
   @@index([coordinatorProfileId])
@@ -146,25 +146,25 @@ model Session {
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model User {
-  id                   String              @id @default(cuid())
-  email                String              @unique
+  id                   String               @id @default(cuid())
+  email                String               @unique
   passwordHash         String
   role                 UserRole
-  status               AccountStatus       @default(ACTIVE)
-  resetPasswordToken   String?             @unique
+  status               AccountStatus        @default(ACTIVE)
+  resetPasswordToken   String?              @unique
   resetPasswordExpires DateTime?
-  failedLoginAttempts  Int                 @default(0)
+  failedLoginAttempts  Int                  @default(0)
   accountLockedUntil   DateTime?
   lastLoginAt          DateTime?
   lastLoginIp          String?
-  createdAt            DateTime            @default(now())
+  createdAt            DateTime             @default(now())
   updatedAt            DateTime
   accounts             Account[]
   auditLogs            AuditLog[]
-  clientProfile        ClientProfile?
-  coordinatorProfile   CoordinatorProfile?
   sessions             Session[]
   workerProfile        WorkerProfile?
+  clientProfile        ClientProfile?
+  coordinatorProfile   CoordinatorProfile?
 
   @@index([email])
   @@index([resetPasswordToken])
@@ -469,5 +469,21 @@ enum RepresentativeType {
   GUARDIAN
   FAMILY_MEMBER
   LEGAL_REPRESENTATIVE
+  OTHER
+}
+
+enum FundingType {
+  NDIS
+  AGED_CARE
+  INSURANCE
+  PRIVATE
+  OTHER
+}
+
+enum RelationshipType {
+  PARENT
+  LEGAL_GUARDIAN
+  SPOUSE_PARTNER
+  CHILDREN
   OTHER
 }

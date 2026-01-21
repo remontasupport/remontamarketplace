@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,69 @@ import { Step3Address } from "@/components/forms/clientRegistration/Step3Address
 import { Step5AccountSetup } from "@/components/forms/clientRegistration/Step5AccountSetup";
 import { Step5ClientInfo } from "@/components/forms/clientRegistration/Step5ClientInfo";
 import { clientFormSchema, type ClientFormData, clientFormDefaults } from "@/schema/clientFormSchema";
-import { useCategories } from "@/hooks/queries/useCategories";
+import { useCategories, Category } from "@/hooks/queries/useCategories";
+
+// ============================================
+// DATA TRANSFORMATION HELPERS
+// ============================================
+
+const FUNDING_TYPE_MAP: Record<string, string> = {
+  'ndis': 'NDIS',
+  'aged-care': 'AGED_CARE',
+  'insurance': 'INSURANCE',
+  'private': 'PRIVATE',
+  'other': 'OTHER',
+};
+
+const RELATIONSHIP_MAP: Record<string, string> = {
+  'parent': 'PARENT',
+  'legal-guardian': 'LEGAL_GUARDIAN',
+  'spouse-partner': 'SPOUSE_PARTNER',
+  'children': 'CHILDREN',
+  'other': 'OTHER',
+};
+
+/**
+ * Build servicesRequested object from form data
+ * Transforms category IDs and subcategory IDs into the API-expected format
+ */
+function buildServicesRequested(
+  selectedCategories: string[],
+  selectedSubcategories: string[],
+  categories: Category[]
+): Record<string, { categoryName: string; subCategories: { id: string; name: string }[] }> {
+  const result: Record<string, { categoryName: string; subCategories: { id: string; name: string }[] }> = {};
+
+  for (const categoryId of selectedCategories) {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) continue;
+
+    // Find selected subcategories for this category
+    const categorySubcategoryIds = category.subcategories?.map(s => s.id) || [];
+    const selectedSubs = selectedSubcategories.filter(id => categorySubcategoryIds.includes(id));
+
+    // Map to subcategory objects with id and name
+    const subCategories = selectedSubs.map(subId => {
+      const sub = category.subcategories?.find(s => s.id === subId);
+      return { id: subId, name: sub?.name || subId };
+    });
+
+    result[categoryId] = {
+      categoryName: category.name,
+      subCategories: subCategories.length > 0 ? subCategories : [],
+    };
+  }
+
+  return result;
+}
 
 export default function ClientsRegistration() {
+  const router = useRouter();
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [showAccountSetupErrors, setShowAccountSetupErrors] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Fetch categories from database
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
@@ -42,7 +99,7 @@ export default function ClientsRegistration() {
   const serviceSubcategories = watch("serviceSubcategories") || [];
 
   // Calculate total steps based on path
-  // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Services, Address, Account, Client Info)
+  // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Client Info, Services, Address, Account)
   // Self (registering for myself): 6 steps (Who, Personal, Funding Type, Services, Address, Account)
   // Coordinator path: 5 steps (Who, Personal, Services, Address, Account)
   const TOTAL_STEPS = completingFormAs === "client" ? 7 : completingFormAs === "self" ? 6 : 5;
@@ -77,31 +134,37 @@ export default function ClientsRegistration() {
         }
         break;
       case 4:
-        // For client/self path: services; for coordinator: location
-        if (completingFormAs === "client" || completingFormAs === "self") {
+        // For client path: client info; for self path: services; for coordinator: location
+        if (completingFormAs === "client") {
+          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
+        } else if (completingFormAs === "self") {
           fieldsToValidate = ["servicesRequested"];
         } else {
           fieldsToValidate = ["location"];
         }
         break;
       case 5:
-        // For client/self path: location; for coordinator: account setup
-        if (completingFormAs === "client" || completingFormAs === "self") {
+        // For client path: services; for self path: location; for coordinator: account setup
+        if (completingFormAs === "client") {
+          fieldsToValidate = ["servicesRequested"];
+        } else if (completingFormAs === "self") {
           fieldsToValidate = ["location"];
         } else {
           fieldsToValidate = ["email", "password", "consent"];
         }
         break;
       case 6:
-        // Client/self path: account setup
-        if (completingFormAs === "client" || completingFormAs === "self") {
+        // For client path: location; for self path: account setup
+        if (completingFormAs === "client") {
+          fieldsToValidate = ["location"];
+        } else if (completingFormAs === "self") {
           fieldsToValidate = ["email", "password", "consent"];
         }
         break;
       case 7:
-        // Client path only: client info (self path ends at step 6)
+        // Client path only: account setup
         if (completingFormAs === "client") {
-          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
+          fieldsToValidate = ["email", "password", "consent"];
         }
         break;
     }
@@ -123,14 +186,11 @@ export default function ClientsRegistration() {
     if (currentStep < TOTAL_STEPS) {
       const isValid = await validateCurrentStep(currentStep);
       if (isValid) {
-        // Reset account setup errors when navigating forward
+        // Reset errors when navigating forward
         setShowAccountSetupErrors(false);
+        setApiError(null);
         setCurrentStep(currentStep + 1);
       } else {
-        // Show account setup errors if validation fails on step 6 (client path)
-        if (currentStep === 6 && completingFormAs === "client") {
-          setShowAccountSetupErrors(true);
-        }
         // Scroll to error
         setTimeout(() => {
           const firstErrorElement = document.querySelector('.text-red-500');
@@ -153,11 +213,89 @@ export default function ClientsRegistration() {
   const onSubmit = async (data: ClientFormData) => {
     try {
       setIsLoading(true);
-      console.log("Client registration data:", data);
-      // TODO: Implement API call to register client
-      alert("Registration submitted! (API integration pending)");
+      setApiError(null);
+
+      if (!categories) {
+        throw new Error('Categories not loaded. Please refresh the page.');
+      }
+
+      // Build servicesRequested object from form data
+      const servicesRequested = buildServicesRequested(
+        data.servicesRequested,
+        data.serviceSubcategories || [],
+        categories
+      );
+
+      let endpoint: string;
+      let payload: Record<string, unknown>;
+      let successPath: string;
+
+      if (data.completingFormAs === 'coordinator') {
+        // Coordinator registration
+        endpoint = '/api/auth/register/coordinator';
+        successPath = '/registration/coordinator/success';
+        payload = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          mobile: data.phoneNumber,
+          organization: data.organisationName || undefined,
+          clientTypes: data.clientTypes || [],
+          servicesRequested,
+          additionalInfo: data.additionalInformation || undefined,
+          location: data.location,
+          email: data.email,
+          password: data.password,
+          consent: data.consent,
+        };
+      } else {
+        // Client or Self registration
+        endpoint = '/api/auth/register/client';
+        successPath = '/registration/clients/success';
+        const isSelfManaged = data.completingFormAs === 'self';
+
+        payload = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          mobile: data.phoneNumber,
+          isSelfManaged,
+          fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
+          relationshipToClient: isSelfManaged ? 'OTHER' : RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
+          servicesRequested,
+          additionalInfo: data.additionalInformation || undefined,
+          location: data.location,
+          email: data.email,
+          password: data.password,
+          consent: data.consent,
+        };
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error codes
+        if (response.status === 409) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
+        }
+        if (result.details) {
+          // Format validation errors
+          const errorMessages = Object.values(result.details).join(', ');
+          throw new Error(errorMessages || result.error || 'Registration failed');
+        }
+        throw new Error(result.error || result.message || 'Registration failed');
+      }
+
+      // Success - redirect to appropriate success page
+      router.push(successPath);
     } catch (error: any) {
-      alert(`Registration failed: ${error.message}`);
+      setApiError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -197,25 +335,18 @@ export default function ClientsRegistration() {
 
   const onError = (formErrors: any) => {
     // Only show account setup errors if we're actually on the account setup step
+    // Account setup is: Step 5 (coordinator), Step 6 (self), Step 7 (client)
     const isOnAccountSetupStep =
       (completingFormAs === "coordinator" && currentStep === 5) ||
-      ((completingFormAs === "self" || completingFormAs === "client") && currentStep === 6);
+      (completingFormAs === "self" && currentStep === 6) ||
+      (completingFormAs === "client" && currentStep === 7);
 
-    if (isOnAccountSetupStep && completingFormAs !== "client") {
-      // Self/Coordinator path: show account setup errors only when on that step
+    if (isOnAccountSetupStep) {
       setShowAccountSetupErrors(true);
     }
 
-    // Only mark fields for the current (final) step as touched
-    let finalStepFields: (keyof ClientFormData)[] = [];
-
-    if (completingFormAs === "client") {
-      // Client path final step: client info
-      finalStepFields = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
-    } else {
-      // Self/Coordinator path final step: account setup
-      finalStepFields = ["email", "password", "consent"];
-    }
+    // Final step for all paths is now account setup
+    const finalStepFields: (keyof ClientFormData)[] = ["email", "password", "consent"];
 
     // Only touch and dirty fields that have errors AND are in the final step
     finalStepFields.forEach(field => {
@@ -261,9 +392,15 @@ export default function ClientsRegistration() {
               <Step3FundingType control={control} errors={errors} showRelationship={false} />
             )}
 
-            {/* Step 3/4 - Services Requested */}
+            {/* Step 4 - Client Info (Client path only - right after funding type) */}
+            {currentStep === 4 && completingFormAs === "client" && (
+              <Step5ClientInfo control={control} errors={errors} />
+            )}
+
+            {/* Services Requested - Step 3 (coordinator), Step 4 (self), Step 5 (client) */}
             {((currentStep === 3 && completingFormAs === "coordinator") ||
-              (currentStep === 4 && (completingFormAs === "client" || completingFormAs === "self"))) && (
+              (currentStep === 4 && completingFormAs === "self") ||
+              (currentStep === 5 && completingFormAs === "client")) && (
               <>
                 {categoriesLoading && (
                   <div className="text-center py-4">
@@ -289,21 +426,25 @@ export default function ClientsRegistration() {
               </>
             )}
 
-            {/* Step 4/5 - Address */}
+            {/* Address - Step 4 (coordinator), Step 5 (self), Step 6 (client) */}
             {((currentStep === 4 && completingFormAs === "coordinator") ||
-              (currentStep === 5 && (completingFormAs === "client" || completingFormAs === "self"))) && (
+              (currentStep === 5 && completingFormAs === "self") ||
+              (currentStep === 6 && completingFormAs === "client")) && (
               <Step3Address control={control} errors={errors} />
             )}
 
-            {/* Step 5/6 - Account Setup */}
+            {/* Account Setup - Step 5 (coordinator), Step 6 (self), Step 7 (client) */}
             {((currentStep === 5 && completingFormAs === "coordinator") ||
-              (currentStep === 6 && (completingFormAs === "client" || completingFormAs === "self"))) && (
+              (currentStep === 6 && completingFormAs === "self") ||
+              (currentStep === 7 && completingFormAs === "client")) && (
               <Step5AccountSetup control={control} errors={errors} showValidationErrors={showAccountSetupErrors} />
             )}
 
-            {/* Step 7 - Client Info (Client path only) */}
-            {currentStep === 7 && completingFormAs === "client" && (
-              <Step5ClientInfo control={control} errors={errors} />
+            {/* API Error Display */}
+            {apiError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600 text-sm font-poppins">{apiError}</p>
+              </div>
             )}
 
             <div className="flex justify-between pt-6">
