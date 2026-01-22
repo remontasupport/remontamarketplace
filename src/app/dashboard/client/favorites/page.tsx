@@ -1,6 +1,6 @@
 /**
- * Client Dashboard - Server Component
- * Protected route - only accessible to users with CLIENT role
+ * Favorites Page
+ * View saved/favorite support workers
  */
 
 import { getServerSession } from "next-auth";
@@ -9,27 +9,21 @@ import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
 import { authPrisma } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
-import WorkerSearchResults from "@/components/dashboard/client/WorkerSearchResults";
 
-// Disable caching for this page - CRITICAL for security
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ClientDashboard() {
-  // Server-side session validation
+export default async function FavoritesPage() {
   const session = await getServerSession(authOptions);
 
-  // Redirect to login if no session
   if (!session || !session.user) {
     redirect("/login");
   }
 
-  // Redirect if wrong role (allow CLIENT and COORDINATOR)
   if (session.user.role !== UserRole.CLIENT && session.user.role !== UserRole.COORDINATOR) {
     redirect("/unauthorized");
   }
 
-  // Fetch user's first participant to get profile info
   const participant = await authPrisma.participant.findFirst({
     where: { userId: session.user.id },
     select: {
@@ -38,7 +32,6 @@ export default async function ClientDashboard() {
     },
   });
 
-  // For self-managed, use their own name; for clients, use a generic name for now
   const displayName = participant?.isSelfManaged
     ? participant.firstName
     : participant?.firstName || session.user.email?.split('@')[0] || 'User';
@@ -50,20 +43,13 @@ export default async function ClientDashboard() {
         photo: null,
       }}
     >
-      {/* Main Content */}
-      <div className="px-6 py-4 md:px-10 md:py-6 lg:px-12">
-        {/* Welcome Section */}
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900 mb-2">
-            Find Your Support Worker
-          </h1>
-          <p className="text-gray-600 font-poppins">
-            Search for qualified support workers in your area
-          </p>
-        </div>
-
-        {/* Search Results with integrated search bar */}
-        <WorkerSearchResults />
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold font-poppins text-gray-900 mb-4">
+          Favorites
+        </h1>
+        <p className="text-gray-600 font-poppins">
+          Your saved support workers will appear here. This feature is coming soon.
+        </p>
       </div>
     </ClientDashboardLayout>
   );
