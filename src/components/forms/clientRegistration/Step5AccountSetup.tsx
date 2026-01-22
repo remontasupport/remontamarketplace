@@ -5,17 +5,15 @@ import { Controller } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Control, FieldErrors } from "react-hook-form";
-import { ClientFormData } from "@/schema/clientFormSchema";
 import { Eye, EyeOff } from "lucide-react";
 
 interface Step5AccountSetupProps {
-  control: Control<ClientFormData>;
-  errors?: FieldErrors<ClientFormData>;
-  showValidationErrors?: boolean;
+  control: any;
+  errors: any;
+  showErrors: boolean;
 }
 
-export function Step5AccountSetup({ control, showValidationErrors = false }: Step5AccountSetupProps) {
+export function Step5AccountSetup({ control, errors, showErrors }: Step5AccountSetupProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -41,6 +39,9 @@ export function Step5AccountSetup({ control, showValidationErrors = false }: Ste
             />
           )}
         />
+        {showErrors && errors.email && (
+          <p className="text-red-500 text-sm font-poppins mt-1">{errors.email.message}</p>
+        )}
       </div>
 
       {/* Password */}
@@ -76,6 +77,9 @@ export function Step5AccountSetup({ control, showValidationErrors = false }: Ste
             </>
           )}
         />
+        {showErrors && errors.password && (
+          <p className="text-red-500 text-sm font-poppins mt-1">{errors.password.message}</p>
+        )}
       </div>
 
       {/* Consent */}
@@ -100,6 +104,9 @@ export function Step5AccountSetup({ control, showValidationErrors = false }: Ste
             </div>
           )}
         />
+        {showErrors && errors.consent && (
+          <p className="text-red-500 text-sm font-poppins mt-1">{errors.consent.message}</p>
+        )}
       </div>
     </div>
   );

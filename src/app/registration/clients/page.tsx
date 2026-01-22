@@ -77,15 +77,16 @@ export default function ClientsRegistration() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [showAccountSetupErrors, setShowAccountSetupErrors] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showAccountErrors, setShowAccountErrors] = useState(false);
+  const [isSubmitClicked, setIsSubmitClicked] = useState(false);
 
   // Fetch categories from database
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
 
   const { control, handleSubmit, formState, trigger, getValues, watch, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
-    mode: "onTouched",
+    mode: "all",
     reValidateMode: "onChange",
     criteriaMode: "all",
     shouldFocusError: true,
@@ -103,6 +104,11 @@ export default function ClientsRegistration() {
   // Self (registering for myself): 6 steps (Who, Personal, Funding Type, Services, Address, Account)
   // Coordinator path: 6 steps (Who, Personal, Client Info, Services, Address, Account)
   const TOTAL_STEPS = completingFormAs === "client" ? 7 : 6;
+
+  // Determine if we're on the account setup step
+  const isOnAccountSetupStep =
+    ((completingFormAs === "coordinator" || completingFormAs === "self") && currentStep === 6) ||
+    (completingFormAs === "client" && currentStep === 7);
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
@@ -184,9 +190,11 @@ export default function ClientsRegistration() {
     if (currentStep < TOTAL_STEPS) {
       const isValid = await validateCurrentStep(currentStep);
       if (isValid) {
-        // Reset errors when navigating forward
-        setShowAccountSetupErrors(false);
         setApiError(null);
+        // Reset account errors when navigating to account setup step
+        if (currentStep + 1 === TOTAL_STEPS) {
+          setShowAccountErrors(false);
+        }
         setCurrentStep(currentStep + 1);
       } else {
         // Scroll to error
@@ -202,8 +210,6 @@ export default function ClientsRegistration() {
 
   const prevStep = () => {
     if (currentStep > 1) {
-      // Reset account setup errors when navigating back
-      setShowAccountSetupErrors(false);
       setCurrentStep(currentStep - 1);
     }
   };
@@ -224,6 +230,11 @@ export default function ClientsRegistration() {
         categories
       );
 
+      // Build location string - concatenate street address with suburb if provided
+      const fullLocation = data.streetAddress?.trim()
+        ? `${data.streetAddress.trim()}, ${data.location}`
+        : data.location;
+
       let endpoint: string;
       let payload: Record<string, unknown>;
       let successPath: string;
@@ -243,7 +254,7 @@ export default function ClientsRegistration() {
           clientDateOfBirth: data.clientDateOfBirth,
           servicesRequested,
           additionalInfo: data.additionalInformation || undefined,
-          location: data.location,
+          location: fullLocation,
           email: data.email,
           password: data.password,
           consent: data.consent,
@@ -264,7 +275,7 @@ export default function ClientsRegistration() {
           dateOfBirth: isSelfManaged ? data.dateOfBirth : data.clientDateOfBirth,
           servicesRequested,
           additionalInfo: data.additionalInformation || undefined,
-          location: data.location,
+          location: fullLocation,
           email: data.email,
           password: data.password,
           consent: data.consent,
@@ -335,27 +346,12 @@ export default function ClientsRegistration() {
     );
   }
 
-  const onError = (formErrors: any) => {
-    // Only show account setup errors if we're actually on the account setup step
-    // Account setup is: Step 6 (coordinator/self), Step 7 (client)
-    const isOnAccountSetupStep =
-      ((completingFormAs === "coordinator" || completingFormAs === "self") && currentStep === 6) ||
-      (completingFormAs === "client" && currentStep === 7);
-
-    if (isOnAccountSetupStep) {
-      setShowAccountSetupErrors(true);
+  const onError = () => {
+    // Only show account setup errors if user explicitly clicked submit button
+    if (isOnAccountSetupStep && isSubmitClicked) {
+      setShowAccountErrors(true);
     }
-
-    // Final step for all paths is now account setup
-    const finalStepFields: (keyof ClientFormData)[] = ["email", "password", "consent"];
-
-    // Only touch and dirty fields that have errors AND are in the final step
-    finalStepFields.forEach(field => {
-      if (formErrors[field]) {
-        const currentValue = getValues(field);
-        setValue(field, currentValue, { shouldTouch: true, shouldDirty: true });
-      }
-    });
+    setIsSubmitClicked(false);
 
     // Scroll to first error
     setTimeout(() => {
@@ -395,7 +391,7 @@ export default function ClientsRegistration() {
 
             {/* Step 3 - Client Info (Coordinator path - about the person needing support) */}
             {currentStep === 3 && completingFormAs === "coordinator" && (
-              <Step5ClientInfo control={control} errors={errors} />
+              <Step5ClientInfo control={control} errors={errors} showAddMoreNote />
             )}
 
             {/* Step 4 - Client Info (Client path only - right after funding type) */}
@@ -438,9 +434,8 @@ export default function ClientsRegistration() {
             )}
 
             {/* Account Setup - Step 6 (coordinator/self), Step 7 (client) */}
-            {((currentStep === 6 && (completingFormAs === "coordinator" || completingFormAs === "self")) ||
-              (currentStep === 7 && completingFormAs === "client")) && (
-              <Step5AccountSetup control={control} errors={errors} showValidationErrors={showAccountSetupErrors} />
+            {isOnAccountSetupStep && (
+              <Step5AccountSetup control={control} errors={errors} showErrors={showAccountErrors} />
             )}
 
             {/* API Error Display */}
@@ -472,6 +467,7 @@ export default function ClientsRegistration() {
                   type="submit"
                   disabled={isLoading}
                   className="flex items-center gap-2"
+                  onClick={() => setIsSubmitClicked(true)}
                 >
                   {isLoading ? "Submitting..." : "Complete Signup"}
                 </Button>

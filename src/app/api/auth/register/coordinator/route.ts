@@ -124,6 +124,8 @@ export async function POST(request: Request) {
                 firstName: data.clientFirstName,
                 lastName: data.clientLastName,
                 dateOfBirth: new Date(data.clientDateOfBirth),
+                fundingType: 'OTHER',
+                relationshipToClient: 'OTHER',
                 location: data.location,
                 servicesRequested: data.servicesRequested,
                 additionalInfo: data.additionalInfo || null,

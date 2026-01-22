@@ -5,10 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Control, FieldErrors } from "react-hook-form";
 import { ClientFormData } from "@/schema/clientFormSchema";
-import { EXPERIENCE_AREAS } from "@/components/profile-building/sections/ExperienceSection";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronDown, Check } from "lucide-react";
 import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
+
+const CLIENT_TYPES = [
+  { id: "ndis", label: "NDIS Participant (has an active NDIS plan)" },
+  { id: "aged-care", label: "Aged Care Recipient" },
+  { id: "insurance", label: "Insurance-Funded Client (e.g. TAC, iCare, WorkCover)" },
+  { id: "private", label: "Private (self-funded) Client" },
+  { id: "other", label: "Other" },
+];
 
 interface Step2PersonalInfoProps {
   control: Control<ClientFormData>;
@@ -142,9 +149,9 @@ export function Step2PersonalInfo({ control, errors, completingFormAs }: Step2Pe
             control={control}
             render={({ field }) => {
               const selectedValues = field.value || [];
-              const selectedLabels = EXPERIENCE_AREAS
-                .filter(area => selectedValues.includes(area.id))
-                .map(area => area.label);
+              const selectedLabels = CLIENT_TYPES
+                .filter(type => selectedValues.includes(type.id))
+                .map(type => type.label);
 
               const handleToggle = (id: string) => {
                 const current = field.value || [];
@@ -172,23 +179,23 @@ export function Step2PersonalInfo({ control, errors, completingFormAs }: Step2Pe
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-2" align="start" side="bottom" avoidCollisions={false} sideOffset={4}>
                     <div className="space-y-1">
-                      {EXPERIENCE_AREAS.map((area) => (
+                      {CLIENT_TYPES.map((type) => (
                         <button
-                          key={area.id}
+                          key={type.id}
                           type="button"
-                          onClick={() => handleToggle(area.id)}
+                          onClick={() => handleToggle(type.id)}
                           className="flex items-center w-full px-2 py-2 text-sm rounded hover:bg-gray-100 transition-colors"
                         >
                           <div className={`w-4 h-4 border rounded mr-2 flex items-center justify-center ${
-                            selectedValues.includes(area.id)
+                            selectedValues.includes(type.id)
                               ? "bg-[#0C1628] border-[#0C1628]"
                               : "border-gray-300"
                           }`}>
-                            {selectedValues.includes(area.id) && (
+                            {selectedValues.includes(type.id) && (
                               <Check className="w-3 h-3 text-white" />
                             )}
                           </div>
-                          <span className="text-gray-700">{area.label}</span>
+                          <span className="text-gray-700">{type.label}</span>
                         </button>
                       ))}
                     </div>

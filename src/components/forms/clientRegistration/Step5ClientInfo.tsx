@@ -10,14 +10,22 @@ import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 interface Step5ClientInfoProps {
   control: Control<ClientFormData>;
   errors: FieldErrors<ClientFormData>;
+  showAddMoreNote?: boolean;
 }
 
-export function Step5ClientInfo({ control, errors }: Step5ClientInfoProps) {
+export function Step5ClientInfo({ control, errors, showAddMoreNote }: Step5ClientInfoProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-poppins font-semibold text-gray-900">
-        About the person needing support
-      </h2>
+      <div>
+        <h2 className="text-2xl font-poppins font-semibold text-gray-900">
+          About the person needing support
+        </h2>
+        {showAddMoreNote && (
+          <p className="text-sm text-gray-600 font-poppins mt-2">
+            You can add more clients to your profile later.
+          </p>
+        )}
+      </div>
 
       {/* First Name */}
       <div>

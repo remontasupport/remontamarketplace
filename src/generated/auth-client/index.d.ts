@@ -7323,7 +7323,7 @@ export namespace Prisma {
 
   export type ParticipantGroupByOutputType = {
     id: string
-    userId: string
+    userId: string | null
     firstName: string
     lastName: string
     dateOfBirth: Date
@@ -7368,7 +7368,7 @@ export namespace Prisma {
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7385,7 +7385,7 @@ export namespace Prisma {
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7402,7 +7402,7 @@ export namespace Prisma {
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectScalar = {
@@ -7423,23 +7423,23 @@ export namespace Prisma {
 
   export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "dateOfBirth" | "location" | "fundingType" | "relationshipToClient" | "isSelfManaged" | "servicesRequested" | "additionalInfo" | "createdAt" | "updatedAt", ExtArgs["result"]["participant"]>
   export type ParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }
   export type ParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }
   export type ParticipantIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }
 
   export type $ParticipantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Participant"
     objects: {
-      user: Prisma.$UserPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      userId: string
+      userId: string | null
       firstName: string
       lastName: string
       dateOfBirth: Date
@@ -7845,7 +7845,7 @@ export namespace Prisma {
    */
   export interface Prisma__ParticipantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends Participant$userArgs<ExtArgs> = {}>(args?: Subset<T, Participant$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8281,6 +8281,25 @@ export namespace Prisma {
      * Limit how many Participants to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Participant.user
+   */
+  export type Participant$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -23046,7 +23065,7 @@ export namespace Prisma {
     OR?: ParticipantWhereInput[]
     NOT?: ParticipantWhereInput | ParticipantWhereInput[]
     id?: StringFilter<"Participant"> | string
-    userId?: StringFilter<"Participant"> | string
+    userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
     dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
@@ -23058,12 +23077,12 @@ export namespace Prisma {
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
   export type ParticipantOrderByWithRelationInput = {
     id?: SortOrder
-    userId?: SortOrder
+    userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
@@ -23083,7 +23102,7 @@ export namespace Prisma {
     AND?: ParticipantWhereInput | ParticipantWhereInput[]
     OR?: ParticipantWhereInput[]
     NOT?: ParticipantWhereInput | ParticipantWhereInput[]
-    userId?: StringFilter<"Participant"> | string
+    userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
     dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
@@ -23095,12 +23114,12 @@ export namespace Prisma {
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }, "id">
 
   export type ParticipantOrderByWithAggregationInput = {
     id?: SortOrder
-    userId?: SortOrder
+    userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
@@ -23122,7 +23141,7 @@ export namespace Prisma {
     OR?: ParticipantScalarWhereWithAggregatesInput[]
     NOT?: ParticipantScalarWhereWithAggregatesInput | ParticipantScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Participant"> | string
-    userId?: StringWithAggregatesFilter<"Participant"> | string
+    userId?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     firstName?: StringWithAggregatesFilter<"Participant"> | string
     lastName?: StringWithAggregatesFilter<"Participant"> | string
     dateOfBirth?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
@@ -24531,12 +24550,12 @@ export namespace Prisma {
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutParticipantsInput
+    user?: UserCreateNestedOneWithoutParticipantsInput
   }
 
   export type ParticipantUncheckedCreateInput = {
     id?: string
-    userId: string
+    userId?: string | null
     firstName: string
     lastName: string
     dateOfBirth: Date | string
@@ -24563,12 +24582,12 @@ export namespace Prisma {
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutParticipantsNestedInput
+    user?: UserUpdateOneWithoutParticipantsNestedInput
   }
 
   export type ParticipantUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24584,7 +24603,7 @@ export namespace Prisma {
 
   export type ParticipantCreateManyInput = {
     id?: string
-    userId: string
+    userId?: string | null
     firstName: string
     lastName: string
     dateOfBirth: Date | string
@@ -24615,7 +24634,7 @@ export namespace Prisma {
 
   export type ParticipantUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27196,10 +27215,12 @@ export namespace Prisma {
     set?: boolean
   }
 
-  export type UserUpdateOneRequiredWithoutParticipantsNestedInput = {
+  export type UserUpdateOneWithoutParticipantsNestedInput = {
     create?: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
     connectOrCreate?: UserCreateOrConnectWithoutParticipantsInput
     upsert?: UserUpsertWithoutParticipantsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutParticipantsInput, UserUpdateWithoutParticipantsInput>, UserUncheckedUpdateWithoutParticipantsInput>
   }
@@ -29555,7 +29576,7 @@ export namespace Prisma {
     OR?: ParticipantScalarWhereInput[]
     NOT?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
     id?: StringFilter<"Participant"> | string
-    userId?: StringFilter<"Participant"> | string
+    userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
     dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
