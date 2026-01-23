@@ -81,10 +81,24 @@ export default function WorkerProfileView({
     (qual) => qual.status === 'approved'
   );
 
-  // Get all subcategories from services
-  const allSubcategories = services.flatMap(service =>
-    service.subcategories?.map((sub: any) => sub.subcategoryName) || []
+  // Filter services that have subcategories
+  const servicesWithSubcategories = services.filter(
+    service => service.subcategories && service.subcategories.length > 0
   );
+
+  // Transform category names to cleaner display names
+  const formatCategoryName = (categoryName: string): string => {
+    const categoryNameMap: Record<string, string> = {
+      "Support Worker": "Support Work",
+      "Nursing Services": "Nursing",
+      "Cleaning Services": "Cleaning",
+      "Therapeutic Supports": "Therapeutic",
+      "Home Modifications": "Home Modifications",
+      "Fitness and Rehabilitation": "Fitness & Rehabilitation",
+      "Home and Yard Maintenance": "Home & Yard Maintenance",
+    };
+    return categoryNameMap[categoryName] || categoryName;
+  };
 
   return (
     <div className="profile-preview-content">
@@ -388,12 +402,21 @@ export default function WorkerProfileView({
           {/* Services Offered */}
           <div className="profile-preview-section services-offered-section">
             <h3 className="profile-preview-subsection-title">Services offered</h3>
-            {allSubcategories.length > 0 ? (
-              <div className="profile-preview-qualification-list">
-                {allSubcategories.map((subcategoryName, index) => (
-                  <div key={index} className="profile-preview-qualification-item">
-                    <span className="profile-preview-checkmark" style={{ fontSize: '24px' }}>•</span>
-                    <span>{subcategoryName}</span>
+            {servicesWithSubcategories.length > 0 ? (
+              <div className="space-y-4">
+                {servicesWithSubcategories.map((service: any) => (
+                  <div key={service.categoryId || service.id}>
+                    <h4 className="text-base font-poppins font-semibold text-gray-900 mb-2">
+                      {formatCategoryName(service.categoryName)}
+                    </h4>
+                    <div className="profile-preview-qualification-list ml-2">
+                      {service.subcategories.map((sub: any, index: number) => (
+                        <div key={index} className="profile-preview-qualification-item">
+                          <span className="profile-preview-checkmark" style={{ fontSize: '24px' }}>•</span>
+                          <span>{sub.subcategoryName}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -405,10 +428,16 @@ export default function WorkerProfileView({
           </div>
 
           {/* Unique Service */}
-          {additionalInfo?.uniqueService && (
+          {additionalInfo?.uniqueService && Array.isArray(additionalInfo.uniqueService) && additionalInfo.uniqueService.length > 0 && (
             <div className="profile-preview-section">
               <h3 className="profile-preview-subsection-title">Unique Service</h3>
-              <p className="profile-preview-text">{additionalInfo.uniqueService}</p>
+              <div className="flex flex-wrap gap-2">
+                {additionalInfo.uniqueService.map((service: string, index: number) => (
+                  <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
+                    {service}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

@@ -41,6 +41,8 @@ export function useWorkerProfileData() {
       }
       throw new Error(result.error || "Failed to fetch worker profile");
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }
 

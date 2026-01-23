@@ -98,7 +98,7 @@ export default function PublicProfilePage({ params }: PageProps) {
             {/* Avatar */}
             <div className="profile-preview-avatar">
               {profile?.photos ? (
-                <img src={profile.photos} alt={`${profile.firstName} ${profile.lastName}`} />
+                <img src={profile.photos} alt={`${profile.firstName} ${profile.lastName?.[0]}.`} />
               ) : (
                 <div className="profile-preview-avatar-placeholder">
                   {initials}
@@ -109,7 +109,7 @@ export default function PublicProfilePage({ params }: PageProps) {
             {/* Profile Info */}
             <div className="profile-preview-info">
               <h1 className="profile-preview-name">
-                {profile.firstName} {profile.lastName}
+                {profile.firstName} {profile.lastName?.[0]}.
               </h1>
               <p className="profile-preview-ndis-badge">
                 ✅ NDIS Compliant

@@ -31,7 +31,7 @@ export default function WorkerCard({
 }: WorkerCardProps) {
   // Generate initials from name
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  const fullName = `${firstName} ${lastName}`
+  const displayName = `${firstName} ${lastName.charAt(0)}.`
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
@@ -41,7 +41,7 @@ export default function WorkerCard({
         {photo ? (
           <img
             src={photo}
-            alt={fullName}
+            alt={displayName}
             className="w-12 h-12 rounded-full object-cover flex-shrink-0"
           />
         ) : (
@@ -56,7 +56,7 @@ export default function WorkerCard({
         {/* Name, Role, NDIS Badge */}
         <div className="min-w-0 flex-1">
           <h3 className="font-poppins font-semibold text-gray-900 text-base truncate">
-            {fullName}
+            {displayName}
           </h3>
           <p className="font-poppins text-sm text-gray-600 truncate">
             {role}

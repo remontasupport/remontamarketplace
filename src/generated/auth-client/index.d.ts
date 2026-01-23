@@ -21048,7 +21048,6 @@ export namespace Prisma {
     nonSmoker: boolean | null
     petFriendly: boolean | null
     personality: string | null
-    uniqueService: string | null
     funFact: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -21061,7 +21060,6 @@ export namespace Prisma {
     nonSmoker: boolean | null
     petFriendly: boolean | null
     personality: string | null
-    uniqueService: string | null
     funFact: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -21099,7 +21097,6 @@ export namespace Prisma {
     nonSmoker?: true
     petFriendly?: true
     personality?: true
-    uniqueService?: true
     funFact?: true
     createdAt?: true
     updatedAt?: true
@@ -21112,7 +21109,6 @@ export namespace Prisma {
     nonSmoker?: true
     petFriendly?: true
     personality?: true
-    uniqueService?: true
     funFact?: true
     createdAt?: true
     updatedAt?: true
@@ -21228,7 +21224,7 @@ export namespace Prisma {
     nonSmoker: boolean | null
     petFriendly: boolean | null
     personality: string | null
-    uniqueService: string | null
+    uniqueService: string[]
     funFact: string | null
     availability: JsonValue | null
     bankAccount: JsonValue | null
@@ -21379,7 +21375,7 @@ export namespace Prisma {
       nonSmoker: boolean | null
       petFriendly: boolean | null
       personality: string | null
-      uniqueService: string | null
+      uniqueService: string[]
       funFact: string | null
       availability: Prisma.JsonValue | null
       bankAccount: Prisma.JsonValue | null
@@ -21823,7 +21819,7 @@ export namespace Prisma {
     readonly nonSmoker: FieldRef<"WorkerAdditionalInfo", 'Boolean'>
     readonly petFriendly: FieldRef<"WorkerAdditionalInfo", 'Boolean'>
     readonly personality: FieldRef<"WorkerAdditionalInfo", 'String'>
-    readonly uniqueService: FieldRef<"WorkerAdditionalInfo", 'String'>
+    readonly uniqueService: FieldRef<"WorkerAdditionalInfo", 'String[]'>
     readonly funFact: FieldRef<"WorkerAdditionalInfo", 'String'>
     readonly availability: FieldRef<"WorkerAdditionalInfo", 'Json'>
     readonly bankAccount: FieldRef<"WorkerAdditionalInfo", 'Json'>
@@ -24099,7 +24095,7 @@ export namespace Prisma {
     nonSmoker?: BoolNullableFilter<"WorkerAdditionalInfo"> | boolean | null
     petFriendly?: BoolNullableFilter<"WorkerAdditionalInfo"> | boolean | null
     personality?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
-    uniqueService?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
+    uniqueService?: StringNullableListFilter<"WorkerAdditionalInfo">
     funFact?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
     availability?: JsonNullableFilter<"WorkerAdditionalInfo">
     bankAccount?: JsonNullableFilter<"WorkerAdditionalInfo">
@@ -24123,7 +24119,7 @@ export namespace Prisma {
     nonSmoker?: SortOrderInput | SortOrder
     petFriendly?: SortOrderInput | SortOrder
     personality?: SortOrderInput | SortOrder
-    uniqueService?: SortOrderInput | SortOrder
+    uniqueService?: SortOrder
     funFact?: SortOrderInput | SortOrder
     availability?: SortOrderInput | SortOrder
     bankAccount?: SortOrderInput | SortOrder
@@ -24150,7 +24146,7 @@ export namespace Prisma {
     nonSmoker?: BoolNullableFilter<"WorkerAdditionalInfo"> | boolean | null
     petFriendly?: BoolNullableFilter<"WorkerAdditionalInfo"> | boolean | null
     personality?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
-    uniqueService?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
+    uniqueService?: StringNullableListFilter<"WorkerAdditionalInfo">
     funFact?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
     availability?: JsonNullableFilter<"WorkerAdditionalInfo">
     bankAccount?: JsonNullableFilter<"WorkerAdditionalInfo">
@@ -24174,7 +24170,7 @@ export namespace Prisma {
     nonSmoker?: SortOrderInput | SortOrder
     petFriendly?: SortOrderInput | SortOrder
     personality?: SortOrderInput | SortOrder
-    uniqueService?: SortOrderInput | SortOrder
+    uniqueService?: SortOrder
     funFact?: SortOrderInput | SortOrder
     availability?: SortOrderInput | SortOrder
     bankAccount?: SortOrderInput | SortOrder
@@ -24203,7 +24199,7 @@ export namespace Prisma {
     nonSmoker?: BoolNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | boolean | null
     petFriendly?: BoolNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | boolean | null
     personality?: StringNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | string | null
-    uniqueService?: StringNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | string | null
+    uniqueService?: StringNullableListFilter<"WorkerAdditionalInfo">
     funFact?: StringNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | string | null
     availability?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
     bankAccount?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
@@ -25713,7 +25709,7 @@ export namespace Prisma {
     nonSmoker?: boolean | null
     petFriendly?: boolean | null
     personality?: string | null
-    uniqueService?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -25737,7 +25733,7 @@ export namespace Prisma {
     nonSmoker?: boolean | null
     petFriendly?: boolean | null
     personality?: string | null
-    uniqueService?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -25759,7 +25755,7 @@ export namespace Prisma {
     nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
     petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
     personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -25783,7 +25779,7 @@ export namespace Prisma {
     nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
     petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
     personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -25806,7 +25802,7 @@ export namespace Prisma {
     nonSmoker?: boolean | null
     petFriendly?: boolean | null
     personality?: string | null
-    uniqueService?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -25828,7 +25824,7 @@ export namespace Prisma {
     nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
     petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
     personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -25851,7 +25847,7 @@ export namespace Prisma {
     nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
     petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
     personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -27087,7 +27083,6 @@ export namespace Prisma {
     nonSmoker?: SortOrder
     petFriendly?: SortOrder
     personality?: SortOrder
-    uniqueService?: SortOrder
     funFact?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -27100,7 +27095,6 @@ export namespace Prisma {
     nonSmoker?: SortOrder
     petFriendly?: SortOrder
     personality?: SortOrder
-    uniqueService?: SortOrder
     funFact?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28028,6 +28022,10 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type WorkerAdditionalInfoCreateuniqueServiceInput = {
+    set: string[]
+  }
+
   export type WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput = {
     create?: XOR<WorkerProfileCreateWithoutWorkerAdditionalInfoInput, WorkerProfileUncheckedCreateWithoutWorkerAdditionalInfoInput>
     connectOrCreate?: WorkerProfileCreateOrConnectWithoutWorkerAdditionalInfoInput
@@ -28055,6 +28053,11 @@ export namespace Prisma {
   }
 
   export type WorkerAdditionalInfoUpdateworkPreferencesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type WorkerAdditionalInfoUpdateuniqueServiceInput = {
     set?: string[]
     push?: string | string[]
   }
@@ -29817,7 +29820,7 @@ export namespace Prisma {
     nonSmoker?: boolean | null
     petFriendly?: boolean | null
     personality?: string | null
-    uniqueService?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -29839,7 +29842,7 @@ export namespace Prisma {
     nonSmoker?: boolean | null
     petFriendly?: boolean | null
     personality?: string | null
-    uniqueService?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -30000,7 +30003,7 @@ export namespace Prisma {
     nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
     petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
     personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
@@ -30022,7 +30025,7 @@ export namespace Prisma {
     nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
     petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
     personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
     availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue

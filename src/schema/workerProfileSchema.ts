@@ -379,12 +379,7 @@ export const updateWorkerInterestsDefaults: UpdateWorkerInterestsData = {
 
 // Schema: Update Worker About Me
 export const updateWorkerAboutMeSchema = z.object({
-  uniqueService: z.string()
-    .min(200, "Your unique service must be at least 200 characters long")
-    .max(1000, "Your unique service must be less than 1000 characters")
-    .refine((val) => val.trim().length >= 200, {
-      message: "Your unique service must contain at least 200 characters (excluding extra spaces)",
-    }),
+  uniqueService: z.array(z.string()).min(1, "Please select at least one unique service"),
   funFact: z.string()
     .min(50, "Fun fact about you must be at least 50 characters long")
     .max(1000, "Fun fact about you must be less than 1000 characters")
@@ -396,7 +391,7 @@ export const updateWorkerAboutMeSchema = z.object({
 export type UpdateWorkerAboutMeData = z.infer<typeof updateWorkerAboutMeSchema>;
 
 export const updateWorkerAboutMeDefaults: UpdateWorkerAboutMeData = {
-  uniqueService: "",
+  uniqueService: [],
   funFact: "",
 };
 

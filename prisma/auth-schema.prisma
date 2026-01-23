@@ -353,7 +353,7 @@ model WorkerAdditionalInfo {
   nonSmoker          Boolean?
   petFriendly        Boolean?
   personality        String?
-  uniqueService      String?
+  uniqueService      String[]      @default([])
   funFact            String?
   availability       Json?         @default("{}")
   bankAccount        Json?
