@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronUp, Users } from "lucide-react";
+import { ChevronUp, ChevronDown, Users } from "lucide-react";
 import { getQualificationDisplayName } from "@/utils/qualificationMapping";
 
 interface WorkerProfileViewProps {
@@ -26,6 +26,9 @@ export default function WorkerProfileView({
 
   // Service category expansion state
   const [expandedServices, setExpandedServices] = useState<Record<string, boolean>>({});
+
+  // Unique services expansion state
+  const [showAllUniqueServices, setShowAllUniqueServices] = useState(false);
 
   // Toggle service category expansion
   const toggleServiceExpansion = (categoryId: string) => {
@@ -430,12 +433,34 @@ export default function WorkerProfileView({
             <div className="profile-preview-section">
               <h3 className="profile-preview-subsection-title">Unique Service</h3>
               <div className="flex flex-wrap gap-2">
-                {additionalInfo.uniqueService.map((service: string, index: number) => (
+                {(showAllUniqueServices
+                  ? additionalInfo.uniqueService
+                  : additionalInfo.uniqueService.slice(0, 10)
+                ).map((service: string, index: number) => (
                   <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
                     {service}
                   </span>
                 ))}
               </div>
+              {additionalInfo.uniqueService.length > 10 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllUniqueServices(!showAllUniqueServices)}
+                  className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  {showAllUniqueServices ? (
+                    <>
+                      <ChevronUp className="w-4 h-4" />
+                      Show less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4" />
+                      Show {additionalInfo.uniqueService.length - 10} more
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           )}
 
