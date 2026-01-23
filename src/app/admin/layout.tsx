@@ -54,7 +54,7 @@ export default function AdminLayout({
       <main className="ml-64 min-h-screen">
         {children}
       </main>
-      <FloatingChatbot />
+      {/* <FloatingChatbot /> */}
     </div>
   );
 }

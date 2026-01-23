@@ -33,6 +33,9 @@ interface FilterParams {
   documentCategories?: string[]
   documentStatuses?: string[]
   requirementTypes?: string[]
+
+  // Experience filter (NEW)
+  experienceWith?: string[]
 }
 interface PaginatedResponse {
   success: boolean
@@ -386,6 +389,63 @@ const filterRegistry: Record<string, FilterBuilder> = {
       }
     };
   },
+
+  /**
+   * Experience With Filter (Multi-select)
+   * Filters workers who have experience in specific areas
+   * Queries WorkerAdditionalInfo.experience JSON column
+   *
+   * The experience column stores JSON like:
+   * {
+   *   "aged-care": { "isPersonal": false, "isProfessional": true, ... },
+   *   "disability": { "isPersonal": false, "isProfessional": true, ... },
+   *   ...
+   * }
+   *
+   * Frontend values map to JSON keys:
+   * - "Aged Care" → "aged-care"
+   * - "Chronic medical conditions" → "chronic-medical"
+   * - "Disability" → "disability"
+   * - "Mental health" → "mental-health"
+   * - "Working with Children" → "working-with-children"
+   *
+   * Logic: AND - workers must have ALL of the selected experience types
+   */
+  experienceWith: (params) => {
+    if (!params.experienceWith || params.experienceWith.length === 0) return null;
+
+    // Map frontend display names to database JSON keys
+    const experienceKeyMap: Record<string, string> = {
+      'Aged Care': 'aged-care',
+      'Chronic medical conditions': 'chronic-medical',
+      'Disability': 'disability',
+      'Mental health': 'mental-health',
+      'Working with Children': 'working-with-children',
+    };
+
+    // Build AND conditions - worker must have ALL selected experience types
+    const experienceConditions = params.experienceWith.map(exp => {
+      const jsonKey = experienceKeyMap[exp] || exp.toLowerCase().replace(/\s+/g, '-');
+      return {
+        workerAdditionalInfo: {
+          experience: {
+            path: [jsonKey],
+            not: Prisma.DbNull
+          }
+        }
+      };
+    });
+
+    // If only one experience type, return simple condition
+    if (experienceConditions.length === 1) {
+      return experienceConditions[0];
+    }
+
+    // Multiple experience types - use AND (worker must have ALL)
+    return {
+      AND: experienceConditions
+    };
+  },
 }
 
 // ============================================================================
@@ -659,6 +719,12 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     ? requirementTypesParam.split(',').map(t => t.trim()).filter(Boolean)
     : []
 
+  // Parse experience with filter (comma-separated)
+  const experienceWithParam = searchParams.get('experienceWith')
+  const experienceWith = experienceWithParam
+    ? experienceWithParam.split(',').map(e => e.trim()).filter(Boolean)
+    : []
+
   return {
     page,
     pageSize,
@@ -677,6 +743,7 @@ function parseFilterParams(searchParams: URLSearchParams): FilterParams {
     documentCategories,
     documentStatuses,
     requirementTypes,
+    experienceWith,
   }
 }
 
@@ -720,6 +787,9 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   }
   if (params.requirementTypes && params.requirementTypes.length > 0) {
     applied.requirementTypes = params.requirementTypes
+  }
+  if (params.experienceWith && params.experienceWith.length > 0) {
+    applied.experienceWith = params.experienceWith
   }
 
   return applied

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { Users, UserCheck, HeadphonesIcon, FileText, LogOut } from 'lucide-react'
+import { Users, UserCheck, HeadphonesIcon, FileText, LogOut, ClipboardCheck } from 'lucide-react'
 import { Suspense } from 'react'
 
 interface NavItem {
@@ -33,7 +33,13 @@ const navItems: NavItem[] = [
     icon: <HeadphonesIcon className="w-5 h-5" />,
   },
   {
-    label: 'Reports',
+    label: 'Check Compliance',
+    href: '/admin/manage?tab=check-compliance',
+    tab: 'check-compliance',
+    icon: <ClipboardCheck className="w-5 h-5" />,
+  },
+  {
+    label: 'Generate Reports',
     href: '/admin/manage?tab=reports',
     tab: 'reports',
     icon: <FileText className="w-5 h-5" />,
