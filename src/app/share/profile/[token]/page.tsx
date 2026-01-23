@@ -84,8 +84,14 @@ export default function PublicProfilePage({ params }: PageProps) {
     : "U";
 
   // Format services separated by slashes
+  // For Therapeutic Supports, show subcategory names; for others, show category name
   const servicesText = services && services.length > 0
-    ? services.map((service: any) => service.categoryName).join(" / ")
+    ? services.flatMap((service: any) => {
+        if (service.categoryName === "Therapeutic Supports" && service.subcategories?.length > 0) {
+          return service.subcategories.map((sub: any) => sub.subcategoryName);
+        }
+        return [service.categoryName];
+      }).join(" / ")
     : "Support Worker";
 
   return (
@@ -98,7 +104,7 @@ export default function PublicProfilePage({ params }: PageProps) {
             {/* Avatar */}
             <div className="profile-preview-avatar">
               {profile?.photos ? (
-                <img src={profile.photos} alt={`${profile.firstName} ${profile.lastName?.[0]}.`} />
+                <img src={profile.photos} alt={`${profile.firstName}, ${profile.lastName?.[0]}.`} />
               ) : (
                 <div className="profile-preview-avatar-placeholder">
                   {initials}
@@ -109,7 +115,7 @@ export default function PublicProfilePage({ params }: PageProps) {
             {/* Profile Info */}
             <div className="profile-preview-info">
               <h1 className="profile-preview-name">
-                {profile.firstName} {profile.lastName?.[0]}.
+                {profile.firstName}, {profile.lastName?.[0]}.
               </h1>
               <p className="profile-preview-ndis-badge">
                 ✅ NDIS Compliant
@@ -127,7 +133,8 @@ export default function PublicProfilePage({ params }: PageProps) {
           services={services}
           qualifications={qualifications}
           additionalInfo={additionalInfo}
-          isAdminView={true}
+          isAdminView={false}
+          isPublicView={true}
         />
       </div>
     </div>

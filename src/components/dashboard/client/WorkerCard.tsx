@@ -31,7 +31,7 @@ export default function WorkerCard({
 }: WorkerCardProps) {
   // Generate initials from name
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  const displayName = `${firstName} ${lastName.charAt(0)}.`
+  const displayName = `${firstName}, ${lastName.charAt(0)}.`
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">

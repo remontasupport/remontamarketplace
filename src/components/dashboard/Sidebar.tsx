@@ -298,8 +298,8 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
   // Handle both prop type (photo) and WorkerProfile type (photos)
   const photoUrl = (profileData && 'photo' in profileData ? profileData.photo : profileData?.photos) || '/images/profilePlaceHolder.png'
   const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
-  // Get role from either role field or first service in services array (primary service)
-  const displayRole = profileData?.role || (profileDataFromHook?.services?.[0]) || 'Support Worker'
+  // Get role from API's displayRole field (handles Therapeutic Supports subcategory names)
+  const displayRole = profileDataFromHook?.displayRole || profileData?.role || 'Support Worker'
 
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>

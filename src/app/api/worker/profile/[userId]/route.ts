@@ -84,6 +84,7 @@ export async function GET(
       select: {
         categoryName: true,
         subcategoryIds: true,
+        subcategoryNames: true,
       },
       orderBy: {
         createdAt: 'asc', // Get services in order they were added (primary first)
@@ -95,6 +96,12 @@ export async function GET(
 
     // Flatten all subcategory IDs into a single array
     supportWorkerCategories = workerServices.flatMap(ws => ws.subcategoryIds);
+
+    // Get display role - for Therapeutic Supports, show subcategory names
+    const firstService = workerServices[0];
+    const displayRole = firstService?.categoryName === 'Therapeutic Supports' && firstService?.subcategoryNames?.length > 0
+      ? firstService.subcategoryNames.join(' / ')
+      : firstService?.categoryName || 'Support Worker';
 
     // Fetch verification requirements to populate documentsByService
     const verificationRequirements = await authPrisma.verificationRequirement.findMany({
@@ -152,6 +159,7 @@ export async function GET(
       services,
       supportWorkerCategories,
       documentsByService,
+      displayRole,
       setupProgress: realTimeSetupProgress, // Override cached JSON with real-time calculation
     });
 

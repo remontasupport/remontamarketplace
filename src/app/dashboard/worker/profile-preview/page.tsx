@@ -150,8 +150,14 @@ function ProfilePreviewContent() {
     : "U";
 
   // Format services separated by slashes
+  // For Therapeutic Supports, show subcategory names; for others, show category name
   const servicesText = services && services.length > 0
-    ? services.map(service => service.categoryName).join(" / ")
+    ? services.flatMap((service: any) => {
+        if (service.categoryName === "Therapeutic Supports" && service.subcategories?.length > 0) {
+          return service.subcategories.map((sub: any) => sub.subcategoryName);
+        }
+        return [service.categoryName];
+      }).join(" / ")
     : "Support Worker";
 
   return (

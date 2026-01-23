@@ -11,6 +11,7 @@ interface WorkerProfileViewProps {
   qualifications: any[];
   additionalInfo: any;
   isAdminView?: boolean;
+  isPublicView?: boolean;
 }
 
 export default function WorkerProfileView({
@@ -18,7 +19,8 @@ export default function WorkerProfileView({
   services,
   qualifications,
   additionalInfo,
-  isAdminView = false
+  isAdminView = false,
+  isPublicView = false
 }: WorkerProfileViewProps) {
   const router = useRouter();
 
@@ -105,9 +107,9 @@ export default function WorkerProfileView({
       {/* About Section */}
       <div className="profile-preview-section">
         <h2 className="profile-preview-section-title">
-          {profile.firstName} {isAdminView ? profile.lastName : `${profile.lastName?.[0]}.`}
+          {isAdminView ? `${profile.firstName} ${profile.lastName}` : `${profile.firstName}, ${profile.lastName?.[0]}.`}
         </h2>
-        {!isAdminView && (
+        {!isAdminView && !isPublicView && (
           <button
             className="profile-preview-edit-link"
             onClick={() => router.push('/dashboard/worker/account/setup?step=bio')}
@@ -118,7 +120,7 @@ export default function WorkerProfileView({
         {profile.introduction ? (
           <p className="profile-preview-text">{profile.introduction}</p>
         ) : (
-          !isAdminView && (
+          !isAdminView && !isPublicView && (
             <p className="profile-preview-text text-gray-400 italic">
               No introduction provided yet. Click "Edit bio" to add your introduction.
             </p>

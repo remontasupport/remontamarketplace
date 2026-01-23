@@ -272,7 +272,7 @@ export default function SearchSupport() {
                       <div className="relative w-20 h-20 rounded-lg overflow-hidden">
                         <Image
                           src={contractor.profilePicture || '/images/profilePlaceHolder.png'}
-                          alt={`${contractor.firstName} ${contractor.lastName.charAt(0)}. - Support Worker`}
+                          alt={`${contractor.firstName}, ${contractor.lastName.charAt(0)}. - Support Worker`}
                           fill
                           className="object-cover"
                           sizes="80px"
@@ -293,7 +293,7 @@ export default function SearchSupport() {
                     <div className="flex-1 min-w-0">
                       {/* Name: First Name + Last Initial */}
                       <h3 className="text-2xl font-bold text-[#0C1628] font-cooper mb-1">
-                        {contractor.firstName} {contractor.lastName.charAt(0)}.
+                        {contractor.firstName}, {contractor.lastName.charAt(0)}.
                       </h3>
 
                       {/* Title Role */}
@@ -346,7 +346,7 @@ export default function SearchSupport() {
                         <div className="relative w-20 h-20 rounded-lg overflow-hidden">
                           <Image
                             src={contractor.profilePicture || '/images/profilePlaceHolder.png'}
-                            alt={`${contractor.firstName} ${contractor.lastName.charAt(0)}. - Support Worker`}
+                            alt={`${contractor.firstName}, ${contractor.lastName.charAt(0)}. - Support Worker`}
                             fill
                             className="object-cover"
                             sizes="80px"
@@ -367,7 +367,7 @@ export default function SearchSupport() {
                       <div className="flex-1 min-w-0">
                         {/* Name: First Name + Last Initial */}
                         <h3 className="text-2xl font-bold text-[#0C1628] font-cooper mb-1">
-                          {contractor.firstName} {contractor.lastName.charAt(0)}.
+                          {contractor.firstName}, {contractor.lastName.charAt(0)}.
                         </h3>
 
                         {/* Title Role */}
