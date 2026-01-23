@@ -83,9 +83,9 @@ export default function WorkerProfileView({
     (qual) => qual.status === 'approved'
   );
 
-  // Filter services that have subcategories
+  // Filter services that have subcategories, excluding Therapeutic Supports
   const servicesWithSubcategories = services.filter(
-    service => service.subcategories && service.subcategories.length > 0
+    service => service.subcategories && service.subcategories.length > 0 && service.categoryName !== 'Therapeutic Supports'
   );
 
   // Transform category names to cleaner display names
@@ -401,10 +401,10 @@ export default function WorkerProfileView({
             </div>
           )}
 
-          {/* Services Offered */}
-          <div className="profile-preview-section services-offered-section">
-            <h3 className="profile-preview-subsection-title">Services offered</h3>
-            {servicesWithSubcategories.length > 0 ? (
+          {/* Services Offered - Hidden for Therapeutic Supports only */}
+          {servicesWithSubcategories.length > 0 && (
+            <div className="profile-preview-section services-offered-section">
+              <h3 className="profile-preview-subsection-title">Services offered</h3>
               <div className="space-y-4">
                 {servicesWithSubcategories.map((service: any) => (
                   <div key={service.categoryId || service.id}>
@@ -422,12 +422,8 @@ export default function WorkerProfileView({
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="profile-preview-text text-gray-400 italic">
-                No services added yet. Add services in the services setup.
-              </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Unique Service */}
           {additionalInfo?.uniqueService && Array.isArray(additionalInfo.uniqueService) && additionalInfo.uniqueService.length > 0 && (
