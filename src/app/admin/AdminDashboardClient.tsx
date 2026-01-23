@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCategories } from '@/hooks/queries/useCategories'
-import { signOut } from 'next-auth/react'
 
 // ============================================================================
 // TYPES
@@ -306,14 +305,11 @@ export default function AdminDashboard() {
   // Fetch categories from database
   const { data: categories, isLoading: isCategoriesLoading } = useCategories()
 
-  // State for report generation - track which report is being generated
-  const [generatingReport, setGeneratingReport] = useState<'daily' | 'weekly' | null>(null)
-
   // State for filters (unified state) - Initialize from URL params if available
   const [filters, setFilters] = useState<ContractorsFilters>(() => {
     const defaultFilters: ContractorsFilters = {
       page: 1,
-      pageSize: 20,
+      pageSize: 6,
       search: '',
       sortBy: 'createdAt',
       sortOrder: 'desc',
@@ -554,38 +550,6 @@ export default function AdminDashboard() {
     setFilters(prev => ({ ...prev, search: searchInput, page: 1 }))
   }
 
-  const handleGenerateReport = async (reportType: 'daily' | 'weekly') => {
-    setGeneratingReport(reportType)
-    try {
-      const response = await fetch(`/api/admin/reports/${reportType}`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate ${reportType} report`)
-      }
-
-      // Get the filename from Content-Disposition header
-      const contentDisposition = response.headers.get('Content-Disposition')
-      const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
-      const filename = filenameMatch ? filenameMatch[1] : `${reportType}-report.pdf`
-
-      // Download the PDF
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-     
-      alert(`Failed to generate ${reportType} report. Please try again.`)
-    } finally {
-      setGeneratingReport(null)
-    }
-  }
-
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }))
   }
@@ -732,583 +696,386 @@ export default function AdminDashboard() {
   // ========================================
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage contractor profiles</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleGenerateReport('daily')}
-              disabled={generatingReport !== null}
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generatingReport === 'daily' ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-              Daily Report
-            </button>
-            <button
-              onClick={() => handleGenerateReport('weekly')}
-              disabled={generatingReport !== null}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generatingReport === 'weekly' ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              )}
-              Weekly Report
-            </button>
-            <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              Log Out
-            </button>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6 bg-white p-4 rounded-lg shadow">
-          <div className="flex flex-col gap-4">
-            {/* Search by Name/Email */}
-            <form onSubmit={handleSearch} className="flex gap-2 flex-1">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by name or mobile..."
-                className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        {/* Filters Sidebar */}
+        <aside className="w-[480px] bg-white border-r border-gray-200 min-h-screen sticky top-0 overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
               <button
-                type="submit"
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                onClick={() => {
+                  const finalLocation = suburbSearch.trim() || pendingFilters.location
+                  setFilters(prev => ({
+                    ...prev,
+                    location: finalLocation,
+                    typeOfSupport: pendingFilters.typeOfSupport,
+                    gender: pendingFilters.gender,
+                    hasVehicle: pendingFilters.hasVehicle,
+                    workerType: pendingFilters.workerType,
+                    languages: pendingFilters.languages,
+                    age: pendingFilters.age,
+                    within: pendingFilters.within,
+                    therapeuticSubcategories: pendingFilters.therapeuticSubcategories,
+                    page: 1
+                  }))
+                }}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
               >
-                Search
+                Apply Filters
               </button>
-            </form>
+            </div>
 
-            {/* Advanced Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              {/* Suburb or postcode with Autocomplete */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Suburb or postcode
-                </label>
-                <div className="relative" ref={suburbDropdownRef}>
-                  <input
-                    type="text"
-                    value={suburbSearch}
-                    onChange={(e) => setSuburbSearch(e.target.value)}
-                    onFocus={() => {
-                      if (suburbs.length > 0) setShowSuburbDropdown(true)
-                    }}
-                    placeholder="e.g. Queensland, NSW"
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                  {isLoadingSuburbs && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-indigo-600 border-r-transparent"></div>
-                    </div>
-                  )}
-
-                  {/* Suburb Dropdown */}
-                  {showSuburbDropdown && suburbs.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {suburbs.map((suburb: any, index: number) => (
-                        <button
-                          key={`${suburb.name}-${suburb.postcode}-${index}`}
-                          type="button"
-                          className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors border-b last:border-b-0 text-sm"
-                          onClick={() => {
-                            const selectedValue = `${suburb.name}, ${suburb.state.abbreviation} ${suburb.postcode}`
-                            isSuburbSelectedRef.current = true
-                            setShowSuburbDropdown(false)
-                            setSuburbs([])
-                            setPendingFilters(prev => ({ ...prev, location: selectedValue }))
-                            setSuburbSearch(selectedValue)
-                          }}
-                        >
-                          <span className="text-gray-900 font-medium">
-                            {suburb.name}, {suburb.state.abbreviation} {suburb.postcode}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Type of Support */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Type of Support
-                </label>
-                <select
-                  value={pendingFilters.typeOfSupport}
-                  onChange={(e) => setPendingFilters(prev => ({ ...prev, typeOfSupport: e.target.value }))}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                  disabled={isCategoriesLoading}
-                >
-                  <option value="all">All</option>
-                  {isCategoriesLoading ? (
-                    <option disabled>Loading services...</option>
-                  ) : (
-                    categories?.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-
-              {/* Gender */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Gender
-                </label>
-                <select
-                  value={pendingFilters.gender}
-                  onChange={(e) => setPendingFilters(prev => ({ ...prev, gender: e.target.value }))}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                >
-                  <option value="all">All</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
-
-              {/* Within (Distance) */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Within
-                </label>
-                <select
-                  value={pendingFilters.within}
-                  onChange={(e) => setPendingFilters(prev => ({ ...prev, within: e.target.value }))}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                >
-                  <option value="none">None</option>
-                  <option value="5">5 km</option>
-                  <option value="10">10 km</option>
-                  <option value="20">20 km</option>
-                  <option value="50">50 km</option>
-                </select>
-              </div>
-
-              {/* Search Button */}
-              <div className="flex flex-col justify-end">
-                <button
-                  onClick={() => {
-                    // Apply all pending filters and reset to first page
-                    // IMPORTANT: Use suburbSearch if user typed manually without selecting from dropdown
-                    const finalLocation = suburbSearch.trim() || pendingFilters.location
-
-                    setFilters(prev => ({
-                      ...prev,
-                      location: finalLocation,
-                      typeOfSupport: pendingFilters.typeOfSupport,
-                      gender: pendingFilters.gender,
-                      hasVehicle: pendingFilters.hasVehicle,
-                      workerType: pendingFilters.workerType,
-                      languages: pendingFilters.languages,
-                      age: pendingFilters.age,
-                      within: pendingFilters.within,
-                      therapeuticSubcategories: pendingFilters.therapeuticSubcategories,
-                      page: 1
-                    }))
+            {/* Suburb or postcode */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Suburb
+              </label>
+              <div className="relative" ref={suburbDropdownRef}>
+                <input
+                  type="text"
+                  value={suburbSearch}
+                  onChange={(e) => setSuburbSearch(e.target.value)}
+                  onFocus={() => {
+                    if (suburbs.length > 0) setShowSuburbDropdown(true)
                   }}
-                  className="rounded-md bg-gray-900 px-6 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 h-[42px]"
-                >
-                  Search
-                </button>
+                  placeholder="e.g. Queensland, NSW"
+                  className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                {isLoadingSuburbs && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-indigo-600 border-r-transparent"></div>
+                  </div>
+                )}
+
+                {/* Suburb Dropdown */}
+                {showSuburbDropdown && suburbs.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {suburbs.map((suburb: any, index: number) => (
+                      <button
+                        key={`${suburb.name}-${suburb.postcode}-${index}`}
+                        type="button"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors border-b last:border-b-0 text-sm"
+                        onClick={() => {
+                          const selectedValue = `${suburb.name}, ${suburb.state.abbreviation} ${suburb.postcode}`
+                          isSuburbSelectedRef.current = true
+                          setShowSuburbDropdown(false)
+                          setSuburbs([])
+                          setPendingFilters(prev => ({ ...prev, location: selectedValue }))
+                          setSuburbSearch(selectedValue)
+                        }}
+                      >
+                        <span className="text-gray-900 font-medium">
+                          {suburb.name}, {suburb.state.abbreviation} {suburb.postcode}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Languages and Age Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              {/* Languages - Multi-select with Search */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Languages
+            {/* Within (Distance) */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Within
+              </label>
+              <select
+                value={pendingFilters.within}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, within: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="none">Any distance</option>
+                <option value="5">5 km</option>
+                <option value="10">10 km</option>
+                <option value="20">20 km</option>
+                <option value="50">50 km</option>
+              </select>
+            </div>
+
+            {/* Type of Support */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Type of Support
+              </label>
+              <select
+                value={pendingFilters.typeOfSupport}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, typeOfSupport: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                disabled={isCategoriesLoading}
+              >
+                <option value="all">All</option>
+                {isCategoriesLoading ? (
+                  <option disabled>Loading services...</option>
+                ) : (
+                  categories?.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Therapeutic Subcategories (conditional) */}
+            {pendingFilters.typeOfSupport === 'Therapeutic Supports' && (
+              <div className="mb-4">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Therapeutic Subcategories
                 </label>
-                <div className="relative" ref={languageDropdownRef}>
-                  {/* Selected Languages Display */}
+                <div className="relative" ref={therapeuticSubcategoryDropdownRef}>
                   <div
-                    onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-                    className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
+                    onClick={() => setShowTherapeuticSubcategoryDropdown(!showTherapeuticSubcategoryDropdown)}
+                    className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm bg-white cursor-pointer"
                   >
-                    {pendingFilters.languages.length === 0 ? (
-                      <span className="text-gray-400">All languages</span>
+                    {pendingFilters.therapeuticSubcategories.length === 0 ? (
+                      <span className="text-gray-400">All subcategories</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
-                        {pendingFilters.languages.map((lang) => (
-                          <span
-                            key={lang}
-                            className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
-                          >
-                            {lang}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPendingFilters(prev => ({
-                                  ...prev,
-                                  languages: prev.languages.filter(l => l !== lang)
-                                }))
-                              }}
-                              className="hover:text-indigo-600"
+                        {pendingFilters.therapeuticSubcategories.map((subId) => {
+                          const sub = therapeuticSubcategories.find(s => s.id === subId)
+                          return (
+                            <span
+                              key={subId}
+                              className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
                             >
-                              ×
-                            </button>
-                          </span>
-                        ))}
+                              {sub?.name || subId}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPendingFilters(prev => ({
+                                    ...prev,
+                                    therapeuticSubcategories: prev.therapeuticSubcategories.filter(id => id !== subId)
+                                  }))
+                                }}
+                                className="hover:text-indigo-600"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
 
-                  {/* Dropdown */}
-                  {showLanguageDropdown && (
+                  {showTherapeuticSubcategoryDropdown && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                      {/* Search Input */}
                       <div className="p-2 border-b border-gray-200">
                         <input
                           type="text"
-                          placeholder="Search languages..."
-                          value={languageSearch}
-                          onChange={(e) => setLanguageSearch(e.target.value)}
+                          placeholder="Search subcategories..."
+                          value={therapeuticSubcategorySearch}
+                          onChange={(e) => setTherapeuticSubcategorySearch(e.target.value)}
                           className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           onClick={(e) => e.stopPropagation()}
                         />
                       </div>
-
-                      {/* Language List */}
                       <div className="max-h-48 overflow-y-auto">
-                        {filteredLanguages.map((language) => (
-                          <button
-                            key={language}
-                            type="button"
-                            onClick={() => {
-                              const isSelected = pendingFilters.languages.includes(language)
-                              setPendingFilters(prev => ({
-                                ...prev,
-                                languages: isSelected
-                                  ? prev.languages.filter(l => l !== language)
-                                  : [...prev.languages, language]
-                              }))
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                              pendingFilters.languages.includes(language)
-                                ? 'bg-indigo-50 text-indigo-700 font-medium'
-                                : ''
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span>{language}</span>
-                              {pendingFilters.languages.includes(language) && (
-                                <span className="text-indigo-600">✓</span>
-                              )}
-                            </div>
-                          </button>
-                        ))}
-                        {filteredLanguages.length === 0 && (
-                          <div className="px-4 py-3 text-gray-500 text-center text-sm">
-                            No languages found
-                          </div>
+                        {isLoadingTherapeuticSubcategories ? (
+                          <div className="px-4 py-3 text-gray-500 text-center text-sm">Loading...</div>
+                        ) : filteredTherapeuticSubcategories.length === 0 ? (
+                          <div className="px-4 py-3 text-gray-500 text-center text-sm">No subcategories found</div>
+                        ) : (
+                          filteredTherapeuticSubcategories.map((subcategory) => (
+                            <button
+                              key={subcategory.id}
+                              type="button"
+                              onClick={() => {
+                                const isSelected = pendingFilters.therapeuticSubcategories.includes(subcategory.id)
+                                setPendingFilters(prev => ({
+                                  ...prev,
+                                  therapeuticSubcategories: isSelected
+                                    ? prev.therapeuticSubcategories.filter(id => id !== subcategory.id)
+                                    : [...prev.therapeuticSubcategories, subcategory.id]
+                                }))
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                pendingFilters.therapeuticSubcategories.includes(subcategory.id)
+                                  ? 'bg-indigo-50 text-indigo-700 font-medium'
+                                  : ''
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span>{subcategory.name}</span>
+                                {pendingFilters.therapeuticSubcategories.includes(subcategory.id) && (
+                                  <span className="text-indigo-600">✓</span>
+                                )}
+                              </div>
+                            </button>
+                          ))
                         )}
                       </div>
                     </div>
                   )}
                 </div>
-                {/* Show Inactive Link */}
-                <button
-                  onClick={fetchInactiveWorkers}
-                  disabled={inactiveWorkersState.isLoading}
-                  className="mt-4 text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait text-left"
-                >
-                  {inactiveWorkersState.isLoading ? 'Loading...' : 'Show Inactive'}
-                </button>
               </div>
+            )}
 
-              {/* Therapeutic Subcategories - Multi-select with Search (only shown when Therapeutic Supports is selected) */}
-              {pendingFilters.typeOfSupport === 'Therapeutic Supports' && (
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">
-                    Therapeutic Subcategories
-                  </label>
-                  <div className="relative" ref={therapeuticSubcategoryDropdownRef}>
-                    {/* Selected Subcategories Display */}
-                    <div
-                      onClick={() => setShowTherapeuticSubcategoryDropdown(!showTherapeuticSubcategoryDropdown)}
-                      className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white cursor-pointer"
-                    >
-                      {pendingFilters.therapeuticSubcategories.length === 0 ? (
-                        <span className="text-gray-400">All subcategories</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {pendingFilters.therapeuticSubcategories.map((subId) => {
-                            const sub = therapeuticSubcategories.find(s => s.id === subId)
-                            return (
-                              <span
-                                key={subId}
-                                className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
-                              >
-                                {sub?.name || subId}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setPendingFilters(prev => ({
-                                      ...prev,
-                                      therapeuticSubcategories: prev.therapeuticSubcategories.filter(id => id !== subId)
-                                    }))
-                                  }}
-                                  className="hover:text-indigo-600"
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Dropdown */}
-                    {showTherapeuticSubcategoryDropdown && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                        {/* Search Input */}
-                        <div className="p-2 border-b border-gray-200">
-                          <input
-                            type="text"
-                            placeholder="Search subcategories..."
-                            value={therapeuticSubcategorySearch}
-                            onChange={(e) => setTherapeuticSubcategorySearch(e.target.value)}
-                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-
-                        {/* Subcategory List */}
-                        <div className="max-h-48 overflow-y-auto">
-                          {isLoadingTherapeuticSubcategories ? (
-                            <div className="px-4 py-3 text-gray-500 text-center text-sm">
-                              Loading subcategories...
-                            </div>
-                          ) : filteredTherapeuticSubcategories.length === 0 ? (
-                            <div className="px-4 py-3 text-gray-500 text-center text-sm">
-                              No subcategories found
-                            </div>
-                          ) : (
-                            filteredTherapeuticSubcategories.map((subcategory) => (
-                              <button
-                                key={subcategory.id}
-                                type="button"
-                                onClick={() => {
-                                  const isSelected = pendingFilters.therapeuticSubcategories.includes(subcategory.id)
-                                  setPendingFilters(prev => ({
-                                    ...prev,
-                                    therapeuticSubcategories: isSelected
-                                      ? prev.therapeuticSubcategories.filter(id => id !== subcategory.id)
-                                      : [...prev.therapeuticSubcategories, subcategory.id]
-                                  }))
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                                  pendingFilters.therapeuticSubcategories.includes(subcategory.id)
-                                    ? 'bg-indigo-50 text-indigo-700 font-medium'
-                                    : ''
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span>{subcategory.name}</span>
-                                  {pendingFilters.therapeuticSubcategories.includes(subcategory.id) && (
-                                    <span className="text-indigo-600">✓</span>
-                                  )}
-                                </div>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Age */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Age
-                </label>
-                <select
-                  value={pendingFilters.age}
-                  onChange={(e) => setPendingFilters(prev => ({ ...prev, age: e.target.value }))}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                >
-                  <option value="all">All</option>
-                  <option value="20-30">20-30</option>
-                  <option value="31-45">31-45</option>
-                  <option value="46-60">46-60</option>
-                  <option value="60+">60 above</option>
-                </select>
-              </div>
-
-              {/* Driver Access */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Driver Access
-                </label>
-                <select
-                  value={pendingFilters.hasVehicle}
-                  onChange={(e) => setPendingFilters(prev => ({ ...prev, hasVehicle: e.target.value }))}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                >
-                  <option value="all">All</option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
-              </div>
-
-              {/* Worker Type */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-700 mb-1">
-                  Worker Type
-                </label>
-                <select
-                  value={pendingFilters.workerType}
-                  onChange={(e) => setPendingFilters(prev => ({ ...prev, workerType: e.target.value }))}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                >
-                  <option value="all">All</option>
-                  <option value="Employee">Employee</option>
-                  <option value="Contractor">Contractor</option>
-                </select>
-              </div>
+            {/* Gender */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Gender
+              </label>
+              <select
+                value={pendingFilters.gender}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, gender: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="all">All</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
             </div>
 
-            {/* Document Filters Section - HIDDEN */}
-            {/* Uncomment this section to enable document filters
-            {!isLoadingFilters && filterOptions && (
-              <div className="mt-6 border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Document Filters</h3>
+            {/* Age */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Age
+              </label>
+              <select
+                value={pendingFilters.age}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, age: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="all">All</option>
+                <option value="20-30">20-30</option>
+                <option value="31-45">31-45</option>
+                <option value="46-60">46-60</option>
+                <option value="60+">60 above</option>
+              </select>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Document Status
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={pendingDocFilters.documentStatuses.length === 0}
-                          onChange={() => setPendingDocFilters(prev => ({ ...prev, documentStatuses: [] }))}
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                        <span className="ml-2 text-sm text-gray-700 font-medium">All</span>
-                      </label>
-                      {filterOptions.documentStatuses.map((status: any) => (
-                        <label key={status.value} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={pendingDocFilters.documentStatuses.includes(status.value)}
-                            onChange={(e) => {
-                              const isChecked = e.target.checked
-                              setPendingDocFilters(prev => ({
+            {/* Languages */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Languages
+              </label>
+              <div className="relative" ref={languageDropdownRef}>
+                <div
+                  onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                  className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm bg-white cursor-pointer"
+                >
+                  {pendingFilters.languages.length === 0 ? (
+                    <span className="text-gray-400">All languages</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {pendingFilters.languages.map((lang) => (
+                        <span
+                          key={lang}
+                          className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium"
+                        >
+                          {lang}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPendingFilters(prev => ({
                                 ...prev,
-                                documentStatuses: isChecked
-                                  ? [...prev.documentStatuses, status.value]
-                                  : prev.documentStatuses.filter(s => s !== status.value)
+                                languages: prev.languages.filter(l => l !== lang)
                               }))
                             }}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 text-sm text-gray-700">{status.label}</span>
-                        </label>
+                            className="hover:text-indigo-600"
+                          >
+                            ×
+                          </button>
+                        </span>
                       ))}
-                    </div>
-                  </div>
-
-                  {filterOptions.requirementTypes.length > 0 && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Requirement Types
-                      </label>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={pendingDocFilters.requirementTypes.length === 0}
-                            onChange={() => setPendingDocFilters(prev => ({ ...prev, requirementTypes: [] }))}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 text-sm text-gray-700 font-medium">All</span>
-                        </label>
-                        {filterOptions.requirementTypes.map((type: any) => (
-                          <label key={type.value} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={pendingDocFilters.requirementTypes.includes(type.value)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked
-                                setPendingDocFilters(prev => ({
-                                  ...prev,
-                                  requirementTypes: isChecked
-                                    ? [...prev.requirementTypes, type.value]
-                                    : prev.requirementTypes.filter(t => t !== type.value)
-                                }))
-                              }}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
-                            <span className="ml-2 text-sm text-gray-700">{type.label}</span>
-                          </label>
-                        ))}
-                      </div>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => {
-                      setFilters(prev => ({
-                        ...prev,
-                        documentCategories: pendingDocFilters.documentCategories,
-                        documentStatuses: pendingDocFilters.documentStatuses,
-                        requirementTypes: pendingDocFilters.requirementTypes,
-                        page: 1
-                      }))
-                    }}
-                    className="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Apply Document Filters
-                  </button>
-                </div>
+                {showLanguageDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    <div className="p-2 border-b border-gray-200">
+                      <input
+                        type="text"
+                        placeholder="Search languages..."
+                        value={languageSearch}
+                        onChange={(e) => setLanguageSearch(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {filteredLanguages.map((language) => (
+                        <button
+                          key={language}
+                          type="button"
+                          onClick={() => {
+                            const isSelected = pendingFilters.languages.includes(language)
+                            setPendingFilters(prev => ({
+                              ...prev,
+                              languages: isSelected
+                                ? prev.languages.filter(l => l !== language)
+                                : [...prev.languages, language]
+                            }))
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                            pendingFilters.languages.includes(language)
+                              ? 'bg-indigo-50 text-indigo-700 font-medium'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{language}</span>
+                            {pendingFilters.languages.includes(language) && (
+                              <span className="text-indigo-600">✓</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                      {filteredLanguages.length === 0 && (
+                        <div className="px-4 py-3 text-gray-500 text-center text-sm">No languages found</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-            */}
+            </div>
 
-            {/* Clear Filters Button */}
-            <div className="flex justify-end mt-4">
+
+            {/* Driver Access */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Driver Access
+              </label>
+              <select
+                value={pendingFilters.hasVehicle}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, hasVehicle: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="all">All</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+
+            {/* Worker Type */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Worker Type
+              </label>
+              <select
+                value={pendingFilters.workerType}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, workerType: e.target.value }))}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="all">All</option>
+                <option value="Employee">Employee</option>
+                <option value="Contractor">Contractor</option>
+              </select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-4 border-t border-gray-200">
               <button
                 onClick={() => {
                   setFilters({
                     page: 1,
-                    pageSize: 20,
+                    pageSize: 6,
                     search: '',
                     sortBy: 'createdAt',
                     sortOrder: 'desc',
@@ -1346,42 +1113,71 @@ export default function AdminDashboard() {
                   setLanguageSearch('')
                   setTherapeuticSubcategorySearch('')
                 }}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                className="w-full rounded-md bg-white px-4 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
                 Clear All Filters
+              </button>
+
+              <button
+                onClick={fetchInactiveWorkers}
+                disabled={inactiveWorkersState.isLoading}
+                className="w-full text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait py-2"
+              >
+                {inactiveWorkersState.isLoading ? 'Loading...' : 'Show Inactive Workers'}
               </button>
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
-              <p className="mt-2 text-sm text-gray-600">Loading contractors...</p>
-            </div>
+        {/* Main Content */}
+        <main className="flex-1 p-8">
+          {/* Results Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Results</h1>
+
+            {/* Name Search */}
+            <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search by name or mobile..."
+                className="flex-1 rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              <button
+                type="submit"
+                className="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Search
+              </button>
+            </form>
           </div>
-        )}
 
-        {/* Error State */}
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error loading contractors</h3>
-                <p className="mt-2 text-sm text-red-700">{error.message}</p>
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
+                <p className="mt-2 text-sm text-gray-600">Loading contractors...</p>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Table */}
-        {!isLoading && !error && data && (
-          <div className="bg-white shadow rounded-lg overflow-hidden">
+          {/* Error State */}
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error loading contractors</h3>
+                  <p className="mt-2 text-sm text-red-700">{error.message}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Table */}
+          {!isLoading && !error && data && (
+            <div className="bg-white shadow rounded-lg overflow-hidden">
             {/* Loading overlay while fetching */}
             {isFetching && (
               <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-600 animate-pulse"></div>
@@ -1573,6 +1369,7 @@ export default function AdminDashboard() {
             {renderPagination()}
           </div>
         )}
+        </main>
       </div>
 
       {/* Modal for contractor actions */}

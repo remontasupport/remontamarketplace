@@ -13,6 +13,7 @@
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Loader from "@/components/ui/Loader";
 import FloatingChatbot from "@/components/admin/FloatingChatbot";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default function AdminLayout({
   children,
@@ -48,9 +49,12 @@ export default function AdminLayout({
 
   // User is authenticated - render the page
   return (
-    <>
-      {children}
+    <div className="min-h-screen bg-gray-50">
+      <AdminSidebar />
+      <main className="ml-64 min-h-screen">
+        {children}
+      </main>
       <FloatingChatbot />
-    </>
+    </div>
   );
 }
