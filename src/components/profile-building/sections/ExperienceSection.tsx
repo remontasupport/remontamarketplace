@@ -80,8 +80,8 @@ const SPECIFIC_AREAS: { [key: string]: string[] } = {
   ],
 };
 
-const EXPERIENCE_AREAS = [
-  { id: "aged-care", label: "Aged care" },
+export const EXPERIENCE_AREAS = [
+  { id: "aged-care", label: "Aged Care" },
   { id: "chronic-medical", label: "Chronic medical conditions" },
   { id: "disability", label: "Disability" },
   { id: "mental-health", label: "Mental health" },

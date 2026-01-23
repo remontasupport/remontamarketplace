@@ -5,7 +5,8 @@
 export const COMMON_SERVICES = [
   "Daily Living Assistance",
   "Implementing strategies recommended by therapists (e.g., OT, psychologist)",
-  "Household Tasks",
+  "Domestic assistance and household tasks",
+  "Personal Care activities",
   "Social and Community access",
   "Capacity Building & Independence",
   "Assistance with social skills development and communication",

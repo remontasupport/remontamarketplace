@@ -186,6 +186,28 @@ export const RepresentativeType: {
 
 export type RepresentativeType = (typeof RepresentativeType)[keyof typeof RepresentativeType]
 
+
+export const FundingType: {
+  NDIS: 'NDIS',
+  AGED_CARE: 'AGED_CARE',
+  INSURANCE: 'INSURANCE',
+  PRIVATE: 'PRIVATE',
+  OTHER: 'OTHER'
+};
+
+export type FundingType = (typeof FundingType)[keyof typeof FundingType]
+
+
+export const RelationshipType: {
+  PARENT: 'PARENT',
+  LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
+  SPOUSE_PARTNER: 'SPOUSE_PARTNER',
+  CHILDREN: 'CHILDREN',
+  OTHER: 'OTHER'
+};
+
+export type RelationshipType = (typeof RelationshipType)[keyof typeof RelationshipType]
+
 }
 
 export type AccountStatus = $Enums.AccountStatus
@@ -215,6 +237,14 @@ export const VerificationStatus: typeof $Enums.VerificationStatus
 export type RepresentativeType = $Enums.RepresentativeType
 
 export const RepresentativeType: typeof $Enums.RepresentativeType
+
+export type FundingType = $Enums.FundingType
+
+export const FundingType: typeof $Enums.FundingType
+
+export type RelationshipType = $Enums.RelationshipType
+
+export const RelationshipType: typeof $Enums.RelationshipType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -2430,37 +2460,6 @@ export namespace Prisma {
 
 
   /**
-   * Count Type CoordinatorProfileCountOutputType
-   */
-
-  export type CoordinatorProfileCountOutputType = {
-    participants: number
-  }
-
-  export type CoordinatorProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    participants?: boolean | CoordinatorProfileCountOutputTypeCountParticipantsArgs
-  }
-
-  // Custom InputTypes
-  /**
-   * CoordinatorProfileCountOutputType without action
-   */
-  export type CoordinatorProfileCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CoordinatorProfileCountOutputType
-     */
-    select?: CoordinatorProfileCountOutputTypeSelect<ExtArgs> | null
-  }
-
-  /**
-   * CoordinatorProfileCountOutputType without action
-   */
-  export type CoordinatorProfileCountOutputTypeCountParticipantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: ParticipantWhereInput
-  }
-
-
-  /**
    * Count Type UserCountOutputType
    */
 
@@ -2468,12 +2467,14 @@ export namespace Prisma {
     accounts: number
     auditLogs: number
     sessions: number
+    participants: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | UserCountOutputTypeCountAccountsArgs
     auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+    participants?: boolean | UserCountOutputTypeCountParticipantsArgs
   }
 
   // Custom InputTypes
@@ -2506,6 +2507,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SessionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountParticipantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ParticipantWhereInput
   }
 
 
@@ -4964,9 +4972,6 @@ export namespace Prisma {
     mobile: string | null
     createdAt: Date | null
     updatedAt: Date | null
-    postalCode: string | null
-    streetAddress: string | null
-    suburb: string | null
   }
 
   export type ClientProfileMaxAggregateOutputType = {
@@ -4977,9 +4982,6 @@ export namespace Prisma {
     mobile: string | null
     createdAt: Date | null
     updatedAt: Date | null
-    postalCode: string | null
-    streetAddress: string | null
-    suburb: string | null
   }
 
   export type ClientProfileCountAggregateOutputType = {
@@ -4990,10 +4992,6 @@ export namespace Prisma {
     mobile: number
     createdAt: number
     updatedAt: number
-    postalCode: number
-    servicesRequest: number
-    streetAddress: number
-    suburb: number
     _all: number
   }
 
@@ -5006,9 +5004,6 @@ export namespace Prisma {
     mobile?: true
     createdAt?: true
     updatedAt?: true
-    postalCode?: true
-    streetAddress?: true
-    suburb?: true
   }
 
   export type ClientProfileMaxAggregateInputType = {
@@ -5019,9 +5014,6 @@ export namespace Prisma {
     mobile?: true
     createdAt?: true
     updatedAt?: true
-    postalCode?: true
-    streetAddress?: true
-    suburb?: true
   }
 
   export type ClientProfileCountAggregateInputType = {
@@ -5032,10 +5024,6 @@ export namespace Prisma {
     mobile?: true
     createdAt?: true
     updatedAt?: true
-    postalCode?: true
-    servicesRequest?: true
-    streetAddress?: true
-    suburb?: true
     _all?: true
   }
 
@@ -5119,10 +5107,6 @@ export namespace Prisma {
     mobile: string
     createdAt: Date
     updatedAt: Date
-    postalCode: string | null
-    servicesRequest: string[]
-    streetAddress: string | null
-    suburb: string | null
     _count: ClientProfileCountAggregateOutputType | null
     _min: ClientProfileMinAggregateOutputType | null
     _max: ClientProfileMaxAggregateOutputType | null
@@ -5150,12 +5134,7 @@ export namespace Prisma {
     mobile?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
-    participant?: boolean | ClientProfile$participantArgs<ExtArgs>
   }, ExtArgs["result"]["clientProfile"]>
 
   export type ClientProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -5166,10 +5145,6 @@ export namespace Prisma {
     mobile?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["clientProfile"]>
 
@@ -5181,10 +5156,6 @@ export namespace Prisma {
     mobile?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["clientProfile"]>
 
@@ -5196,16 +5167,11 @@ export namespace Prisma {
     mobile?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
   }
 
-  export type ClientProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "mobile" | "createdAt" | "updatedAt" | "postalCode" | "servicesRequest" | "streetAddress" | "suburb", ExtArgs["result"]["clientProfile"]>
+  export type ClientProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "mobile" | "createdAt" | "updatedAt", ExtArgs["result"]["clientProfile"]>
   export type ClientProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
-    participant?: boolean | ClientProfile$participantArgs<ExtArgs>
   }
   export type ClientProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5218,7 +5184,6 @@ export namespace Prisma {
     name: "ClientProfile"
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
-      participant: Prisma.$ParticipantPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5228,10 +5193,6 @@ export namespace Prisma {
       mobile: string
       createdAt: Date
       updatedAt: Date
-      postalCode: string | null
-      servicesRequest: string[]
-      streetAddress: string | null
-      suburb: string | null
     }, ExtArgs["result"]["clientProfile"]>
     composites: {}
   }
@@ -5627,7 +5588,6 @@ export namespace Prisma {
   export interface Prisma__ClientProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    participant<T extends ClientProfile$participantArgs<ExtArgs> = {}>(args?: Subset<T, ClientProfile$participantArgs<ExtArgs>>): Prisma__ParticipantClient<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5664,10 +5624,6 @@ export namespace Prisma {
     readonly mobile: FieldRef<"ClientProfile", 'String'>
     readonly createdAt: FieldRef<"ClientProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"ClientProfile", 'DateTime'>
-    readonly postalCode: FieldRef<"ClientProfile", 'String'>
-    readonly servicesRequest: FieldRef<"ClientProfile", 'String[]'>
-    readonly streetAddress: FieldRef<"ClientProfile", 'String'>
-    readonly suburb: FieldRef<"ClientProfile", 'String'>
   }
     
 
@@ -6064,25 +6020,6 @@ export namespace Prisma {
   }
 
   /**
-   * ClientProfile.participant
-   */
-  export type ClientProfile$participantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Participant
-     */
-    select?: ParticipantSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Participant
-     */
-    omit?: ParticipantOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: ParticipantInclude<ExtArgs> | null
-    where?: ParticipantWhereInput
-  }
-
-  /**
    * ClientProfile without action
    */
   export type ClientProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6120,9 +6057,6 @@ export namespace Prisma {
     organization: string | null
     createdAt: Date | null
     updatedAt: Date | null
-    postalCode: string | null
-    streetAddress: string | null
-    suburb: string | null
   }
 
   export type CoordinatorProfileMaxAggregateOutputType = {
@@ -6134,9 +6068,6 @@ export namespace Prisma {
     organization: string | null
     createdAt: Date | null
     updatedAt: Date | null
-    postalCode: string | null
-    streetAddress: string | null
-    suburb: string | null
   }
 
   export type CoordinatorProfileCountAggregateOutputType = {
@@ -6146,12 +6077,9 @@ export namespace Prisma {
     lastName: number
     mobile: number
     organization: number
+    clientTypes: number
     createdAt: number
     updatedAt: number
-    postalCode: number
-    servicesRequest: number
-    streetAddress: number
-    suburb: number
     _all: number
   }
 
@@ -6165,9 +6093,6 @@ export namespace Prisma {
     organization?: true
     createdAt?: true
     updatedAt?: true
-    postalCode?: true
-    streetAddress?: true
-    suburb?: true
   }
 
   export type CoordinatorProfileMaxAggregateInputType = {
@@ -6179,9 +6104,6 @@ export namespace Prisma {
     organization?: true
     createdAt?: true
     updatedAt?: true
-    postalCode?: true
-    streetAddress?: true
-    suburb?: true
   }
 
   export type CoordinatorProfileCountAggregateInputType = {
@@ -6191,12 +6113,9 @@ export namespace Prisma {
     lastName?: true
     mobile?: true
     organization?: true
+    clientTypes?: true
     createdAt?: true
     updatedAt?: true
-    postalCode?: true
-    servicesRequest?: true
-    streetAddress?: true
-    suburb?: true
     _all?: true
   }
 
@@ -6279,12 +6198,9 @@ export namespace Prisma {
     lastName: string
     mobile: string
     organization: string | null
+    clientTypes: string[]
     createdAt: Date
     updatedAt: Date
-    postalCode: string | null
-    servicesRequest: string[]
-    streetAddress: string | null
-    suburb: string | null
     _count: CoordinatorProfileCountAggregateOutputType | null
     _min: CoordinatorProfileMinAggregateOutputType | null
     _max: CoordinatorProfileMaxAggregateOutputType | null
@@ -6311,15 +6227,10 @@ export namespace Prisma {
     lastName?: boolean
     mobile?: boolean
     organization?: boolean
+    clientTypes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
-    participants?: boolean | CoordinatorProfile$participantsArgs<ExtArgs>
-    _count?: boolean | CoordinatorProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["coordinatorProfile"]>
 
   export type CoordinatorProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -6329,12 +6240,9 @@ export namespace Prisma {
     lastName?: boolean
     mobile?: boolean
     organization?: boolean
+    clientTypes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["coordinatorProfile"]>
 
@@ -6345,12 +6253,9 @@ export namespace Prisma {
     lastName?: boolean
     mobile?: boolean
     organization?: boolean
+    clientTypes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["coordinatorProfile"]>
 
@@ -6361,19 +6266,14 @@ export namespace Prisma {
     lastName?: boolean
     mobile?: boolean
     organization?: boolean
+    clientTypes?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    postalCode?: boolean
-    servicesRequest?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
   }
 
-  export type CoordinatorProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "mobile" | "organization" | "createdAt" | "updatedAt" | "postalCode" | "servicesRequest" | "streetAddress" | "suburb", ExtArgs["result"]["coordinatorProfile"]>
+  export type CoordinatorProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "mobile" | "organization" | "clientTypes" | "createdAt" | "updatedAt", ExtArgs["result"]["coordinatorProfile"]>
   export type CoordinatorProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
-    participants?: boolean | CoordinatorProfile$participantsArgs<ExtArgs>
-    _count?: boolean | CoordinatorProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CoordinatorProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -6386,7 +6286,6 @@ export namespace Prisma {
     name: "CoordinatorProfile"
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
-      participants: Prisma.$ParticipantPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -6395,12 +6294,9 @@ export namespace Prisma {
       lastName: string
       mobile: string
       organization: string | null
+      clientTypes: string[]
       createdAt: Date
       updatedAt: Date
-      postalCode: string | null
-      servicesRequest: string[]
-      streetAddress: string | null
-      suburb: string | null
     }, ExtArgs["result"]["coordinatorProfile"]>
     composites: {}
   }
@@ -6796,7 +6692,6 @@ export namespace Prisma {
   export interface Prisma__CoordinatorProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    participants<T extends CoordinatorProfile$participantsArgs<ExtArgs> = {}>(args?: Subset<T, CoordinatorProfile$participantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6832,12 +6727,9 @@ export namespace Prisma {
     readonly lastName: FieldRef<"CoordinatorProfile", 'String'>
     readonly mobile: FieldRef<"CoordinatorProfile", 'String'>
     readonly organization: FieldRef<"CoordinatorProfile", 'String'>
+    readonly clientTypes: FieldRef<"CoordinatorProfile", 'String[]'>
     readonly createdAt: FieldRef<"CoordinatorProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"CoordinatorProfile", 'DateTime'>
-    readonly postalCode: FieldRef<"CoordinatorProfile", 'String'>
-    readonly servicesRequest: FieldRef<"CoordinatorProfile", 'String[]'>
-    readonly streetAddress: FieldRef<"CoordinatorProfile", 'String'>
-    readonly suburb: FieldRef<"CoordinatorProfile", 'String'>
   }
     
 
@@ -7234,30 +7126,6 @@ export namespace Prisma {
   }
 
   /**
-   * CoordinatorProfile.participants
-   */
-  export type CoordinatorProfile$participantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Participant
-     */
-    select?: ParticipantSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Participant
-     */
-    omit?: ParticipantOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: ParticipantInclude<ExtArgs> | null
-    where?: ParticipantWhereInput
-    orderBy?: ParticipantOrderByWithRelationInput | ParticipantOrderByWithRelationInput[]
-    cursor?: ParticipantWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: ParticipantScalarFieldEnum | ParticipantScalarFieldEnum[]
-  }
-
-  /**
    * CoordinatorProfile without action
    */
   export type CoordinatorProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7282,208 +7150,100 @@ export namespace Prisma {
 
   export type AggregateParticipant = {
     _count: ParticipantCountAggregateOutputType | null
-    _avg: ParticipantAvgAggregateOutputType | null
-    _sum: ParticipantSumAggregateOutputType | null
     _min: ParticipantMinAggregateOutputType | null
     _max: ParticipantMaxAggregateOutputType | null
   }
 
-  export type ParticipantAvgAggregateOutputType = {
-    latitude: number | null
-    longitude: number | null
-  }
-
-  export type ParticipantSumAggregateOutputType = {
-    latitude: number | null
-    longitude: number | null
-  }
-
   export type ParticipantMinAggregateOutputType = {
     id: string | null
-    clientProfileId: string | null
-    coordinatorProfileId: string | null
-    personNeedingSupport: string | null
+    userId: string | null
     firstName: string | null
     lastName: string | null
     dateOfBirth: Date | null
-    ndisNumber: string | null
-    mobile: string | null
-    email: string | null
-    streetAddress: string | null
-    suburb: string | null
-    state: string | null
-    postalCode: string | null
-    latitude: number | null
-    longitude: number | null
-    supportNeeds: string | null
-    planManagerName: string | null
-    planManagerEmail: string | null
-    planManagerPhone: string | null
-    emergencyContactName: string | null
-    emergencyContactRelationship: string | null
-    emergencyContactMobile: string | null
-    representativeType: $Enums.RepresentativeType | null
+    location: string | null
+    fundingType: $Enums.FundingType | null
+    relationshipToClient: $Enums.RelationshipType | null
+    isSelfManaged: boolean | null
+    additionalInfo: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
   export type ParticipantMaxAggregateOutputType = {
     id: string | null
-    clientProfileId: string | null
-    coordinatorProfileId: string | null
-    personNeedingSupport: string | null
+    userId: string | null
     firstName: string | null
     lastName: string | null
     dateOfBirth: Date | null
-    ndisNumber: string | null
-    mobile: string | null
-    email: string | null
-    streetAddress: string | null
-    suburb: string | null
-    state: string | null
-    postalCode: string | null
-    latitude: number | null
-    longitude: number | null
-    supportNeeds: string | null
-    planManagerName: string | null
-    planManagerEmail: string | null
-    planManagerPhone: string | null
-    emergencyContactName: string | null
-    emergencyContactRelationship: string | null
-    emergencyContactMobile: string | null
-    representativeType: $Enums.RepresentativeType | null
+    location: string | null
+    fundingType: $Enums.FundingType | null
+    relationshipToClient: $Enums.RelationshipType | null
+    isSelfManaged: boolean | null
+    additionalInfo: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
   export type ParticipantCountAggregateOutputType = {
     id: number
-    clientProfileId: number
-    coordinatorProfileId: number
-    personNeedingSupport: number
+    userId: number
     firstName: number
     lastName: number
     dateOfBirth: number
-    ndisNumber: number
-    mobile: number
-    email: number
-    streetAddress: number
-    suburb: number
-    state: number
-    postalCode: number
-    latitude: number
-    longitude: number
-    servicesRequest: number
-    disabilities: number
-    supportNeeds: number
-    planManagerName: number
-    planManagerEmail: number
-    planManagerPhone: number
-    emergencyContactName: number
-    emergencyContactRelationship: number
-    emergencyContactMobile: number
-    representativeType: number
+    location: number
+    fundingType: number
+    relationshipToClient: number
+    isSelfManaged: number
+    servicesRequested: number
+    additionalInfo: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
 
-  export type ParticipantAvgAggregateInputType = {
-    latitude?: true
-    longitude?: true
-  }
-
-  export type ParticipantSumAggregateInputType = {
-    latitude?: true
-    longitude?: true
-  }
-
   export type ParticipantMinAggregateInputType = {
     id?: true
-    clientProfileId?: true
-    coordinatorProfileId?: true
-    personNeedingSupport?: true
+    userId?: true
     firstName?: true
     lastName?: true
     dateOfBirth?: true
-    ndisNumber?: true
-    mobile?: true
-    email?: true
-    streetAddress?: true
-    suburb?: true
-    state?: true
-    postalCode?: true
-    latitude?: true
-    longitude?: true
-    supportNeeds?: true
-    planManagerName?: true
-    planManagerEmail?: true
-    planManagerPhone?: true
-    emergencyContactName?: true
-    emergencyContactRelationship?: true
-    emergencyContactMobile?: true
-    representativeType?: true
+    location?: true
+    fundingType?: true
+    relationshipToClient?: true
+    isSelfManaged?: true
+    additionalInfo?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type ParticipantMaxAggregateInputType = {
     id?: true
-    clientProfileId?: true
-    coordinatorProfileId?: true
-    personNeedingSupport?: true
+    userId?: true
     firstName?: true
     lastName?: true
     dateOfBirth?: true
-    ndisNumber?: true
-    mobile?: true
-    email?: true
-    streetAddress?: true
-    suburb?: true
-    state?: true
-    postalCode?: true
-    latitude?: true
-    longitude?: true
-    supportNeeds?: true
-    planManagerName?: true
-    planManagerEmail?: true
-    planManagerPhone?: true
-    emergencyContactName?: true
-    emergencyContactRelationship?: true
-    emergencyContactMobile?: true
-    representativeType?: true
+    location?: true
+    fundingType?: true
+    relationshipToClient?: true
+    isSelfManaged?: true
+    additionalInfo?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type ParticipantCountAggregateInputType = {
     id?: true
-    clientProfileId?: true
-    coordinatorProfileId?: true
-    personNeedingSupport?: true
+    userId?: true
     firstName?: true
     lastName?: true
     dateOfBirth?: true
-    ndisNumber?: true
-    mobile?: true
-    email?: true
-    streetAddress?: true
-    suburb?: true
-    state?: true
-    postalCode?: true
-    latitude?: true
-    longitude?: true
-    servicesRequest?: true
-    disabilities?: true
-    supportNeeds?: true
-    planManagerName?: true
-    planManagerEmail?: true
-    planManagerPhone?: true
-    emergencyContactName?: true
-    emergencyContactRelationship?: true
-    emergencyContactMobile?: true
-    representativeType?: true
+    location?: true
+    fundingType?: true
+    relationshipToClient?: true
+    isSelfManaged?: true
+    servicesRequested?: true
+    additionalInfo?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -7527,18 +7287,6 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Select which fields to average
-    **/
-    _avg?: ParticipantAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: ParticipantSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
      * Select which fields to find the minimum value
     **/
     _min?: ParticipantMinAggregateInputType
@@ -7569,44 +7317,25 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ParticipantCountAggregateInputType | true
-    _avg?: ParticipantAvgAggregateInputType
-    _sum?: ParticipantSumAggregateInputType
     _min?: ParticipantMinAggregateInputType
     _max?: ParticipantMaxAggregateInputType
   }
 
   export type ParticipantGroupByOutputType = {
     id: string
-    clientProfileId: string | null
-    coordinatorProfileId: string | null
-    personNeedingSupport: string
+    userId: string | null
     firstName: string
     lastName: string
     dateOfBirth: Date
-    ndisNumber: string
-    mobile: string
-    email: string | null
-    streetAddress: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude: number | null
-    longitude: number | null
-    servicesRequest: string[]
-    disabilities: string[]
-    supportNeeds: string | null
-    planManagerName: string | null
-    planManagerEmail: string | null
-    planManagerPhone: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType: $Enums.RepresentativeType | null
+    location: string | null
+    fundingType: $Enums.FundingType | null
+    relationshipToClient: $Enums.RelationshipType | null
+    isSelfManaged: boolean
+    servicesRequested: JsonValue | null
+    additionalInfo: string | null
     createdAt: Date
     updatedAt: Date
     _count: ParticipantCountAggregateOutputType | null
-    _avg: ParticipantAvgAggregateOutputType | null
-    _sum: ParticipantSumAggregateOutputType | null
     _min: ParticipantMinAggregateOutputType | null
     _max: ParticipantMaxAggregateOutputType | null
   }
@@ -7627,181 +7356,99 @@ export namespace Prisma {
 
   export type ParticipantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    clientProfileId?: boolean
-    coordinatorProfileId?: boolean
-    personNeedingSupport?: boolean
+    userId?: boolean
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    ndisNumber?: boolean
-    mobile?: boolean
-    email?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
-    state?: boolean
-    postalCode?: boolean
-    latitude?: boolean
-    longitude?: boolean
-    servicesRequest?: boolean
-    disabilities?: boolean
-    supportNeeds?: boolean
-    planManagerName?: boolean
-    planManagerEmail?: boolean
-    planManagerPhone?: boolean
-    emergencyContactName?: boolean
-    emergencyContactRelationship?: boolean
-    emergencyContactMobile?: boolean
-    representativeType?: boolean
+    location?: boolean
+    fundingType?: boolean
+    relationshipToClient?: boolean
+    isSelfManaged?: boolean
+    servicesRequested?: boolean
+    additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    clientProfile?: boolean | Participant$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | Participant$coordinatorProfileArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    clientProfileId?: boolean
-    coordinatorProfileId?: boolean
-    personNeedingSupport?: boolean
+    userId?: boolean
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    ndisNumber?: boolean
-    mobile?: boolean
-    email?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
-    state?: boolean
-    postalCode?: boolean
-    latitude?: boolean
-    longitude?: boolean
-    servicesRequest?: boolean
-    disabilities?: boolean
-    supportNeeds?: boolean
-    planManagerName?: boolean
-    planManagerEmail?: boolean
-    planManagerPhone?: boolean
-    emergencyContactName?: boolean
-    emergencyContactRelationship?: boolean
-    emergencyContactMobile?: boolean
-    representativeType?: boolean
+    location?: boolean
+    fundingType?: boolean
+    relationshipToClient?: boolean
+    isSelfManaged?: boolean
+    servicesRequested?: boolean
+    additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    clientProfile?: boolean | Participant$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | Participant$coordinatorProfileArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    clientProfileId?: boolean
-    coordinatorProfileId?: boolean
-    personNeedingSupport?: boolean
+    userId?: boolean
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    ndisNumber?: boolean
-    mobile?: boolean
-    email?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
-    state?: boolean
-    postalCode?: boolean
-    latitude?: boolean
-    longitude?: boolean
-    servicesRequest?: boolean
-    disabilities?: boolean
-    supportNeeds?: boolean
-    planManagerName?: boolean
-    planManagerEmail?: boolean
-    planManagerPhone?: boolean
-    emergencyContactName?: boolean
-    emergencyContactRelationship?: boolean
-    emergencyContactMobile?: boolean
-    representativeType?: boolean
+    location?: boolean
+    fundingType?: boolean
+    relationshipToClient?: boolean
+    isSelfManaged?: boolean
+    servicesRequested?: boolean
+    additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    clientProfile?: boolean | Participant$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | Participant$coordinatorProfileArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectScalar = {
     id?: boolean
-    clientProfileId?: boolean
-    coordinatorProfileId?: boolean
-    personNeedingSupport?: boolean
+    userId?: boolean
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    ndisNumber?: boolean
-    mobile?: boolean
-    email?: boolean
-    streetAddress?: boolean
-    suburb?: boolean
-    state?: boolean
-    postalCode?: boolean
-    latitude?: boolean
-    longitude?: boolean
-    servicesRequest?: boolean
-    disabilities?: boolean
-    supportNeeds?: boolean
-    planManagerName?: boolean
-    planManagerEmail?: boolean
-    planManagerPhone?: boolean
-    emergencyContactName?: boolean
-    emergencyContactRelationship?: boolean
-    emergencyContactMobile?: boolean
-    representativeType?: boolean
+    location?: boolean
+    fundingType?: boolean
+    relationshipToClient?: boolean
+    isSelfManaged?: boolean
+    servicesRequested?: boolean
+    additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientProfileId" | "coordinatorProfileId" | "personNeedingSupport" | "firstName" | "lastName" | "dateOfBirth" | "ndisNumber" | "mobile" | "email" | "streetAddress" | "suburb" | "state" | "postalCode" | "latitude" | "longitude" | "servicesRequest" | "disabilities" | "supportNeeds" | "planManagerName" | "planManagerEmail" | "planManagerPhone" | "emergencyContactName" | "emergencyContactRelationship" | "emergencyContactMobile" | "representativeType" | "createdAt" | "updatedAt", ExtArgs["result"]["participant"]>
+  export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "dateOfBirth" | "location" | "fundingType" | "relationshipToClient" | "isSelfManaged" | "servicesRequested" | "additionalInfo" | "createdAt" | "updatedAt", ExtArgs["result"]["participant"]>
   export type ParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    clientProfile?: boolean | Participant$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | Participant$coordinatorProfileArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }
   export type ParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    clientProfile?: boolean | Participant$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | Participant$coordinatorProfileArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }
   export type ParticipantIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    clientProfile?: boolean | Participant$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | Participant$coordinatorProfileArgs<ExtArgs>
+    user?: boolean | Participant$userArgs<ExtArgs>
   }
 
   export type $ParticipantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Participant"
     objects: {
-      clientProfile: Prisma.$ClientProfilePayload<ExtArgs> | null
-      coordinatorProfile: Prisma.$CoordinatorProfilePayload<ExtArgs> | null
+      user: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      clientProfileId: string | null
-      coordinatorProfileId: string | null
-      personNeedingSupport: string
+      userId: string | null
       firstName: string
       lastName: string
       dateOfBirth: Date
-      ndisNumber: string
-      mobile: string
-      email: string | null
-      streetAddress: string | null
-      suburb: string
-      state: string
-      postalCode: string
-      latitude: number | null
-      longitude: number | null
-      servicesRequest: string[]
-      disabilities: string[]
-      supportNeeds: string | null
-      planManagerName: string | null
-      planManagerEmail: string | null
-      planManagerPhone: string | null
-      emergencyContactName: string
-      emergencyContactRelationship: string
-      emergencyContactMobile: string
-      representativeType: $Enums.RepresentativeType | null
+      location: string | null
+      fundingType: $Enums.FundingType | null
+      relationshipToClient: $Enums.RelationshipType | null
+      isSelfManaged: boolean
+      servicesRequested: Prisma.JsonValue | null
+      additionalInfo: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["participant"]>
@@ -8198,8 +7845,7 @@ export namespace Prisma {
    */
   export interface Prisma__ParticipantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    clientProfile<T extends Participant$clientProfileArgs<ExtArgs> = {}>(args?: Subset<T, Participant$clientProfileArgs<ExtArgs>>): Prisma__ClientProfileClient<$Result.GetResult<Prisma.$ClientProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-    coordinatorProfile<T extends Participant$coordinatorProfileArgs<ExtArgs> = {}>(args?: Subset<T, Participant$coordinatorProfileArgs<ExtArgs>>): Prisma__CoordinatorProfileClient<$Result.GetResult<Prisma.$CoordinatorProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    user<T extends Participant$userArgs<ExtArgs> = {}>(args?: Subset<T, Participant$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8230,31 +7876,16 @@ export namespace Prisma {
    */
   interface ParticipantFieldRefs {
     readonly id: FieldRef<"Participant", 'String'>
-    readonly clientProfileId: FieldRef<"Participant", 'String'>
-    readonly coordinatorProfileId: FieldRef<"Participant", 'String'>
-    readonly personNeedingSupport: FieldRef<"Participant", 'String'>
+    readonly userId: FieldRef<"Participant", 'String'>
     readonly firstName: FieldRef<"Participant", 'String'>
     readonly lastName: FieldRef<"Participant", 'String'>
     readonly dateOfBirth: FieldRef<"Participant", 'DateTime'>
-    readonly ndisNumber: FieldRef<"Participant", 'String'>
-    readonly mobile: FieldRef<"Participant", 'String'>
-    readonly email: FieldRef<"Participant", 'String'>
-    readonly streetAddress: FieldRef<"Participant", 'String'>
-    readonly suburb: FieldRef<"Participant", 'String'>
-    readonly state: FieldRef<"Participant", 'String'>
-    readonly postalCode: FieldRef<"Participant", 'String'>
-    readonly latitude: FieldRef<"Participant", 'Float'>
-    readonly longitude: FieldRef<"Participant", 'Float'>
-    readonly servicesRequest: FieldRef<"Participant", 'String[]'>
-    readonly disabilities: FieldRef<"Participant", 'String[]'>
-    readonly supportNeeds: FieldRef<"Participant", 'String'>
-    readonly planManagerName: FieldRef<"Participant", 'String'>
-    readonly planManagerEmail: FieldRef<"Participant", 'String'>
-    readonly planManagerPhone: FieldRef<"Participant", 'String'>
-    readonly emergencyContactName: FieldRef<"Participant", 'String'>
-    readonly emergencyContactRelationship: FieldRef<"Participant", 'String'>
-    readonly emergencyContactMobile: FieldRef<"Participant", 'String'>
-    readonly representativeType: FieldRef<"Participant", 'RepresentativeType'>
+    readonly location: FieldRef<"Participant", 'String'>
+    readonly fundingType: FieldRef<"Participant", 'FundingType'>
+    readonly relationshipToClient: FieldRef<"Participant", 'RelationshipType'>
+    readonly isSelfManaged: FieldRef<"Participant", 'Boolean'>
+    readonly servicesRequested: FieldRef<"Participant", 'Json'>
+    readonly additionalInfo: FieldRef<"Participant", 'String'>
     readonly createdAt: FieldRef<"Participant", 'DateTime'>
     readonly updatedAt: FieldRef<"Participant", 'DateTime'>
   }
@@ -8653,41 +8284,22 @@ export namespace Prisma {
   }
 
   /**
-   * Participant.clientProfile
+   * Participant.user
    */
-  export type Participant$clientProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Participant$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the ClientProfile
+     * Select specific fields to fetch from the User
      */
-    select?: ClientProfileSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the ClientProfile
+     * Omit specific fields from the User
      */
-    omit?: ClientProfileOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: ClientProfileInclude<ExtArgs> | null
-    where?: ClientProfileWhereInput
-  }
-
-  /**
-   * Participant.coordinatorProfile
-   */
-  export type Participant$coordinatorProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CoordinatorProfile
-     */
-    select?: CoordinatorProfileSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CoordinatorProfile
-     */
-    omit?: CoordinatorProfileOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CoordinatorProfileInclude<ExtArgs> | null
-    where?: CoordinatorProfileWhereInput
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -10031,10 +9643,11 @@ export namespace Prisma {
     updatedAt?: boolean
     accounts?: boolean | User$accountsArgs<ExtArgs>
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
-    clientProfile?: boolean | User$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | User$coordinatorProfileArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     workerProfile?: boolean | User$workerProfileArgs<ExtArgs>
+    clientProfile?: boolean | User$clientProfileArgs<ExtArgs>
+    coordinatorProfile?: boolean | User$coordinatorProfileArgs<ExtArgs>
+    participants?: boolean | User$participantsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -10090,10 +9703,11 @@ export namespace Prisma {
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accounts?: boolean | User$accountsArgs<ExtArgs>
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
-    clientProfile?: boolean | User$clientProfileArgs<ExtArgs>
-    coordinatorProfile?: boolean | User$coordinatorProfileArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     workerProfile?: boolean | User$workerProfileArgs<ExtArgs>
+    clientProfile?: boolean | User$clientProfileArgs<ExtArgs>
+    coordinatorProfile?: boolean | User$coordinatorProfileArgs<ExtArgs>
+    participants?: boolean | User$participantsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -10104,10 +9718,11 @@ export namespace Prisma {
     objects: {
       accounts: Prisma.$AccountPayload<ExtArgs>[]
       auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
-      clientProfile: Prisma.$ClientProfilePayload<ExtArgs> | null
-      coordinatorProfile: Prisma.$CoordinatorProfilePayload<ExtArgs> | null
       sessions: Prisma.$SessionPayload<ExtArgs>[]
       workerProfile: Prisma.$WorkerProfilePayload<ExtArgs> | null
+      clientProfile: Prisma.$ClientProfilePayload<ExtArgs> | null
+      coordinatorProfile: Prisma.$CoordinatorProfilePayload<ExtArgs> | null
+      participants: Prisma.$ParticipantPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -10519,10 +10134,11 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     accounts<T extends User$accountsArgs<ExtArgs> = {}>(args?: Subset<T, User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    clientProfile<T extends User$clientProfileArgs<ExtArgs> = {}>(args?: Subset<T, User$clientProfileArgs<ExtArgs>>): Prisma__ClientProfileClient<$Result.GetResult<Prisma.$ClientProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-    coordinatorProfile<T extends User$coordinatorProfileArgs<ExtArgs> = {}>(args?: Subset<T, User$coordinatorProfileArgs<ExtArgs>>): Prisma__CoordinatorProfileClient<$Result.GetResult<Prisma.$CoordinatorProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workerProfile<T extends User$workerProfileArgs<ExtArgs> = {}>(args?: Subset<T, User$workerProfileArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    clientProfile<T extends User$clientProfileArgs<ExtArgs> = {}>(args?: Subset<T, User$clientProfileArgs<ExtArgs>>): Prisma__ClientProfileClient<$Result.GetResult<Prisma.$ClientProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    coordinatorProfile<T extends User$coordinatorProfileArgs<ExtArgs> = {}>(args?: Subset<T, User$coordinatorProfileArgs<ExtArgs>>): Prisma__CoordinatorProfileClient<$Result.GetResult<Prisma.$CoordinatorProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    participants<T extends User$participantsArgs<ExtArgs> = {}>(args?: Subset<T, User$participantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11001,44 +10617,6 @@ export namespace Prisma {
   }
 
   /**
-   * User.clientProfile
-   */
-  export type User$clientProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the ClientProfile
-     */
-    select?: ClientProfileSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the ClientProfile
-     */
-    omit?: ClientProfileOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: ClientProfileInclude<ExtArgs> | null
-    where?: ClientProfileWhereInput
-  }
-
-  /**
-   * User.coordinatorProfile
-   */
-  export type User$coordinatorProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the CoordinatorProfile
-     */
-    select?: CoordinatorProfileSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the CoordinatorProfile
-     */
-    omit?: CoordinatorProfileOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CoordinatorProfileInclude<ExtArgs> | null
-    where?: CoordinatorProfileWhereInput
-  }
-
-  /**
    * User.sessions
    */
   export type User$sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11079,6 +10657,68 @@ export namespace Prisma {
      */
     include?: WorkerProfileInclude<ExtArgs> | null
     where?: WorkerProfileWhereInput
+  }
+
+  /**
+   * User.clientProfile
+   */
+  export type User$clientProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ClientProfile
+     */
+    select?: ClientProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ClientProfile
+     */
+    omit?: ClientProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClientProfileInclude<ExtArgs> | null
+    where?: ClientProfileWhereInput
+  }
+
+  /**
+   * User.coordinatorProfile
+   */
+  export type User$coordinatorProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CoordinatorProfile
+     */
+    select?: CoordinatorProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CoordinatorProfile
+     */
+    omit?: CoordinatorProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CoordinatorProfileInclude<ExtArgs> | null
+    where?: CoordinatorProfileWhereInput
+  }
+
+  /**
+   * User.participants
+   */
+  export type User$participantsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Participant
+     */
+    select?: ParticipantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Participant
+     */
+    omit?: ParticipantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ParticipantInclude<ExtArgs> | null
+    where?: ParticipantWhereInput
+    orderBy?: ParticipantOrderByWithRelationInput | ParticipantOrderByWithRelationInput[]
+    cursor?: ParticipantWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ParticipantScalarFieldEnum | ParticipantScalarFieldEnum[]
   }
 
   /**
@@ -22656,11 +22296,7 @@ export namespace Prisma {
     lastName: 'lastName',
     mobile: 'mobile',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    postalCode: 'postalCode',
-    servicesRequest: 'servicesRequest',
-    streetAddress: 'streetAddress',
-    suburb: 'suburb'
+    updatedAt: 'updatedAt'
   };
 
   export type ClientProfileScalarFieldEnum = (typeof ClientProfileScalarFieldEnum)[keyof typeof ClientProfileScalarFieldEnum]
@@ -22673,12 +22309,9 @@ export namespace Prisma {
     lastName: 'lastName',
     mobile: 'mobile',
     organization: 'organization',
+    clientTypes: 'clientTypes',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    postalCode: 'postalCode',
-    servicesRequest: 'servicesRequest',
-    streetAddress: 'streetAddress',
-    suburb: 'suburb'
+    updatedAt: 'updatedAt'
   };
 
   export type CoordinatorProfileScalarFieldEnum = (typeof CoordinatorProfileScalarFieldEnum)[keyof typeof CoordinatorProfileScalarFieldEnum]
@@ -22686,31 +22319,16 @@ export namespace Prisma {
 
   export const ParticipantScalarFieldEnum: {
     id: 'id',
-    clientProfileId: 'clientProfileId',
-    coordinatorProfileId: 'coordinatorProfileId',
-    personNeedingSupport: 'personNeedingSupport',
+    userId: 'userId',
     firstName: 'firstName',
     lastName: 'lastName',
     dateOfBirth: 'dateOfBirth',
-    ndisNumber: 'ndisNumber',
-    mobile: 'mobile',
-    email: 'email',
-    streetAddress: 'streetAddress',
-    suburb: 'suburb',
-    state: 'state',
-    postalCode: 'postalCode',
-    latitude: 'latitude',
-    longitude: 'longitude',
-    servicesRequest: 'servicesRequest',
-    disabilities: 'disabilities',
-    supportNeeds: 'supportNeeds',
-    planManagerName: 'planManagerName',
-    planManagerEmail: 'planManagerEmail',
-    planManagerPhone: 'planManagerPhone',
-    emergencyContactName: 'emergencyContactName',
-    emergencyContactRelationship: 'emergencyContactRelationship',
-    emergencyContactMobile: 'emergencyContactMobile',
-    representativeType: 'representativeType',
+    location: 'location',
+    fundingType: 'fundingType',
+    relationshipToClient: 'relationshipToClient',
+    isSelfManaged: 'isSelfManaged',
+    servicesRequested: 'servicesRequested',
+    additionalInfo: 'additionalInfo',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -23037,30 +22655,37 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
+   * Reference to a field of type 'FundingType'
    */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+  export type EnumFundingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FundingType'>
     
 
 
   /**
-   * Reference to a field of type 'Float[]'
+   * Reference to a field of type 'FundingType[]'
    */
-  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+  export type ListEnumFundingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FundingType[]'>
     
 
 
   /**
-   * Reference to a field of type 'RepresentativeType'
+   * Reference to a field of type 'RelationshipType'
    */
-  export type EnumRepresentativeTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RepresentativeType'>
+  export type EnumRelationshipTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RelationshipType'>
     
 
 
   /**
-   * Reference to a field of type 'RepresentativeType[]'
+   * Reference to a field of type 'RelationshipType[]'
    */
-  export type ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RepresentativeType[]'>
+  export type ListEnumRelationshipTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RelationshipType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -23093,13 +22718,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-  /**
    * Reference to a field of type 'RequirementStatus'
    */
   export type EnumRequirementStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RequirementStatus'>
@@ -23124,6 +22742,20 @@ export namespace Prisma {
    * Reference to a field of type 'DocumentCategory[]'
    */
   export type ListEnumDocumentCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentCategory[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -23299,12 +22931,7 @@ export namespace Prisma {
     mobile?: StringFilter<"ClientProfile"> | string
     createdAt?: DateTimeFilter<"ClientProfile"> | Date | string
     updatedAt?: DateTimeFilter<"ClientProfile"> | Date | string
-    postalCode?: StringNullableFilter<"ClientProfile"> | string | null
-    servicesRequest?: StringNullableListFilter<"ClientProfile">
-    streetAddress?: StringNullableFilter<"ClientProfile"> | string | null
-    suburb?: StringNullableFilter<"ClientProfile"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
-    participant?: XOR<ParticipantNullableScalarRelationFilter, ParticipantWhereInput> | null
   }
 
   export type ClientProfileOrderByWithRelationInput = {
@@ -23315,12 +22942,7 @@ export namespace Prisma {
     mobile?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrderInput | SortOrder
-    servicesRequest?: SortOrder
-    streetAddress?: SortOrderInput | SortOrder
-    suburb?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
-    participant?: ParticipantOrderByWithRelationInput
   }
 
   export type ClientProfileWhereUniqueInput = Prisma.AtLeast<{
@@ -23334,12 +22956,7 @@ export namespace Prisma {
     mobile?: StringFilter<"ClientProfile"> | string
     createdAt?: DateTimeFilter<"ClientProfile"> | Date | string
     updatedAt?: DateTimeFilter<"ClientProfile"> | Date | string
-    postalCode?: StringNullableFilter<"ClientProfile"> | string | null
-    servicesRequest?: StringNullableListFilter<"ClientProfile">
-    streetAddress?: StringNullableFilter<"ClientProfile"> | string | null
-    suburb?: StringNullableFilter<"ClientProfile"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
-    participant?: XOR<ParticipantNullableScalarRelationFilter, ParticipantWhereInput> | null
   }, "id" | "userId">
 
   export type ClientProfileOrderByWithAggregationInput = {
@@ -23350,10 +22967,6 @@ export namespace Prisma {
     mobile?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrderInput | SortOrder
-    servicesRequest?: SortOrder
-    streetAddress?: SortOrderInput | SortOrder
-    suburb?: SortOrderInput | SortOrder
     _count?: ClientProfileCountOrderByAggregateInput
     _max?: ClientProfileMaxOrderByAggregateInput
     _min?: ClientProfileMinOrderByAggregateInput
@@ -23370,10 +22983,6 @@ export namespace Prisma {
     mobile?: StringWithAggregatesFilter<"ClientProfile"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ClientProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ClientProfile"> | Date | string
-    postalCode?: StringNullableWithAggregatesFilter<"ClientProfile"> | string | null
-    servicesRequest?: StringNullableListFilter<"ClientProfile">
-    streetAddress?: StringNullableWithAggregatesFilter<"ClientProfile"> | string | null
-    suburb?: StringNullableWithAggregatesFilter<"ClientProfile"> | string | null
   }
 
   export type CoordinatorProfileWhereInput = {
@@ -23386,14 +22995,10 @@ export namespace Prisma {
     lastName?: StringFilter<"CoordinatorProfile"> | string
     mobile?: StringFilter<"CoordinatorProfile"> | string
     organization?: StringNullableFilter<"CoordinatorProfile"> | string | null
+    clientTypes?: StringNullableListFilter<"CoordinatorProfile">
     createdAt?: DateTimeFilter<"CoordinatorProfile"> | Date | string
     updatedAt?: DateTimeFilter<"CoordinatorProfile"> | Date | string
-    postalCode?: StringNullableFilter<"CoordinatorProfile"> | string | null
-    servicesRequest?: StringNullableListFilter<"CoordinatorProfile">
-    streetAddress?: StringNullableFilter<"CoordinatorProfile"> | string | null
-    suburb?: StringNullableFilter<"CoordinatorProfile"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
-    participants?: ParticipantListRelationFilter
   }
 
   export type CoordinatorProfileOrderByWithRelationInput = {
@@ -23403,14 +23008,10 @@ export namespace Prisma {
     lastName?: SortOrder
     mobile?: SortOrder
     organization?: SortOrderInput | SortOrder
+    clientTypes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrderInput | SortOrder
-    servicesRequest?: SortOrder
-    streetAddress?: SortOrderInput | SortOrder
-    suburb?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
-    participants?: ParticipantOrderByRelationAggregateInput
   }
 
   export type CoordinatorProfileWhereUniqueInput = Prisma.AtLeast<{
@@ -23423,14 +23024,10 @@ export namespace Prisma {
     lastName?: StringFilter<"CoordinatorProfile"> | string
     mobile?: StringFilter<"CoordinatorProfile"> | string
     organization?: StringNullableFilter<"CoordinatorProfile"> | string | null
+    clientTypes?: StringNullableListFilter<"CoordinatorProfile">
     createdAt?: DateTimeFilter<"CoordinatorProfile"> | Date | string
     updatedAt?: DateTimeFilter<"CoordinatorProfile"> | Date | string
-    postalCode?: StringNullableFilter<"CoordinatorProfile"> | string | null
-    servicesRequest?: StringNullableListFilter<"CoordinatorProfile">
-    streetAddress?: StringNullableFilter<"CoordinatorProfile"> | string | null
-    suburb?: StringNullableFilter<"CoordinatorProfile"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
-    participants?: ParticipantListRelationFilter
   }, "id" | "userId">
 
   export type CoordinatorProfileOrderByWithAggregationInput = {
@@ -23440,12 +23037,9 @@ export namespace Prisma {
     lastName?: SortOrder
     mobile?: SortOrder
     organization?: SortOrderInput | SortOrder
+    clientTypes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrderInput | SortOrder
-    servicesRequest?: SortOrder
-    streetAddress?: SortOrderInput | SortOrder
-    suburb?: SortOrderInput | SortOrder
     _count?: CoordinatorProfileCountOrderByAggregateInput
     _max?: CoordinatorProfileMaxOrderByAggregateInput
     _min?: CoordinatorProfileMinOrderByAggregateInput
@@ -23461,12 +23055,9 @@ export namespace Prisma {
     lastName?: StringWithAggregatesFilter<"CoordinatorProfile"> | string
     mobile?: StringWithAggregatesFilter<"CoordinatorProfile"> | string
     organization?: StringNullableWithAggregatesFilter<"CoordinatorProfile"> | string | null
+    clientTypes?: StringNullableListFilter<"CoordinatorProfile">
     createdAt?: DateTimeWithAggregatesFilter<"CoordinatorProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CoordinatorProfile"> | Date | string
-    postalCode?: StringNullableWithAggregatesFilter<"CoordinatorProfile"> | string | null
-    servicesRequest?: StringNullableListFilter<"CoordinatorProfile">
-    streetAddress?: StringNullableWithAggregatesFilter<"CoordinatorProfile"> | string | null
-    suburb?: StringNullableWithAggregatesFilter<"CoordinatorProfile"> | string | null
   }
 
   export type ParticipantWhereInput = {
@@ -23474,140 +23065,75 @@ export namespace Prisma {
     OR?: ParticipantWhereInput[]
     NOT?: ParticipantWhereInput | ParticipantWhereInput[]
     id?: StringFilter<"Participant"> | string
-    clientProfileId?: StringNullableFilter<"Participant"> | string | null
-    coordinatorProfileId?: StringNullableFilter<"Participant"> | string | null
-    personNeedingSupport?: StringFilter<"Participant"> | string
+    userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
     dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
-    ndisNumber?: StringFilter<"Participant"> | string
-    mobile?: StringFilter<"Participant"> | string
-    email?: StringNullableFilter<"Participant"> | string | null
-    streetAddress?: StringNullableFilter<"Participant"> | string | null
-    suburb?: StringFilter<"Participant"> | string
-    state?: StringFilter<"Participant"> | string
-    postalCode?: StringFilter<"Participant"> | string
-    latitude?: FloatNullableFilter<"Participant"> | number | null
-    longitude?: FloatNullableFilter<"Participant"> | number | null
-    servicesRequest?: StringNullableListFilter<"Participant">
-    disabilities?: StringNullableListFilter<"Participant">
-    supportNeeds?: StringNullableFilter<"Participant"> | string | null
-    planManagerName?: StringNullableFilter<"Participant"> | string | null
-    planManagerEmail?: StringNullableFilter<"Participant"> | string | null
-    planManagerPhone?: StringNullableFilter<"Participant"> | string | null
-    emergencyContactName?: StringFilter<"Participant"> | string
-    emergencyContactRelationship?: StringFilter<"Participant"> | string
-    emergencyContactMobile?: StringFilter<"Participant"> | string
-    representativeType?: EnumRepresentativeTypeNullableFilter<"Participant"> | $Enums.RepresentativeType | null
+    location?: StringNullableFilter<"Participant"> | string | null
+    fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
+    relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFilter<"Participant"> | boolean
+    servicesRequested?: JsonNullableFilter<"Participant">
+    additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
-    clientProfile?: XOR<ClientProfileNullableScalarRelationFilter, ClientProfileWhereInput> | null
-    coordinatorProfile?: XOR<CoordinatorProfileNullableScalarRelationFilter, CoordinatorProfileWhereInput> | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
   export type ParticipantOrderByWithRelationInput = {
     id?: SortOrder
-    clientProfileId?: SortOrderInput | SortOrder
-    coordinatorProfileId?: SortOrderInput | SortOrder
-    personNeedingSupport?: SortOrder
+    userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    ndisNumber?: SortOrder
-    mobile?: SortOrder
-    email?: SortOrderInput | SortOrder
-    streetAddress?: SortOrderInput | SortOrder
-    suburb?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
-    latitude?: SortOrderInput | SortOrder
-    longitude?: SortOrderInput | SortOrder
-    servicesRequest?: SortOrder
-    disabilities?: SortOrder
-    supportNeeds?: SortOrderInput | SortOrder
-    planManagerName?: SortOrderInput | SortOrder
-    planManagerEmail?: SortOrderInput | SortOrder
-    planManagerPhone?: SortOrderInput | SortOrder
-    emergencyContactName?: SortOrder
-    emergencyContactRelationship?: SortOrder
-    emergencyContactMobile?: SortOrder
-    representativeType?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    fundingType?: SortOrderInput | SortOrder
+    relationshipToClient?: SortOrderInput | SortOrder
+    isSelfManaged?: SortOrder
+    servicesRequested?: SortOrderInput | SortOrder
+    additionalInfo?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    clientProfile?: ClientProfileOrderByWithRelationInput
-    coordinatorProfile?: CoordinatorProfileOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
   }
 
   export type ParticipantWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    clientProfileId?: string
-    ndisNumber?: string
     AND?: ParticipantWhereInput | ParticipantWhereInput[]
     OR?: ParticipantWhereInput[]
     NOT?: ParticipantWhereInput | ParticipantWhereInput[]
-    coordinatorProfileId?: StringNullableFilter<"Participant"> | string | null
-    personNeedingSupport?: StringFilter<"Participant"> | string
+    userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
     dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
-    mobile?: StringFilter<"Participant"> | string
-    email?: StringNullableFilter<"Participant"> | string | null
-    streetAddress?: StringNullableFilter<"Participant"> | string | null
-    suburb?: StringFilter<"Participant"> | string
-    state?: StringFilter<"Participant"> | string
-    postalCode?: StringFilter<"Participant"> | string
-    latitude?: FloatNullableFilter<"Participant"> | number | null
-    longitude?: FloatNullableFilter<"Participant"> | number | null
-    servicesRequest?: StringNullableListFilter<"Participant">
-    disabilities?: StringNullableListFilter<"Participant">
-    supportNeeds?: StringNullableFilter<"Participant"> | string | null
-    planManagerName?: StringNullableFilter<"Participant"> | string | null
-    planManagerEmail?: StringNullableFilter<"Participant"> | string | null
-    planManagerPhone?: StringNullableFilter<"Participant"> | string | null
-    emergencyContactName?: StringFilter<"Participant"> | string
-    emergencyContactRelationship?: StringFilter<"Participant"> | string
-    emergencyContactMobile?: StringFilter<"Participant"> | string
-    representativeType?: EnumRepresentativeTypeNullableFilter<"Participant"> | $Enums.RepresentativeType | null
+    location?: StringNullableFilter<"Participant"> | string | null
+    fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
+    relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFilter<"Participant"> | boolean
+    servicesRequested?: JsonNullableFilter<"Participant">
+    additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
-    clientProfile?: XOR<ClientProfileNullableScalarRelationFilter, ClientProfileWhereInput> | null
-    coordinatorProfile?: XOR<CoordinatorProfileNullableScalarRelationFilter, CoordinatorProfileWhereInput> | null
-  }, "id" | "clientProfileId" | "ndisNumber">
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }, "id">
 
   export type ParticipantOrderByWithAggregationInput = {
     id?: SortOrder
-    clientProfileId?: SortOrderInput | SortOrder
-    coordinatorProfileId?: SortOrderInput | SortOrder
-    personNeedingSupport?: SortOrder
+    userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    ndisNumber?: SortOrder
-    mobile?: SortOrder
-    email?: SortOrderInput | SortOrder
-    streetAddress?: SortOrderInput | SortOrder
-    suburb?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
-    latitude?: SortOrderInput | SortOrder
-    longitude?: SortOrderInput | SortOrder
-    servicesRequest?: SortOrder
-    disabilities?: SortOrder
-    supportNeeds?: SortOrderInput | SortOrder
-    planManagerName?: SortOrderInput | SortOrder
-    planManagerEmail?: SortOrderInput | SortOrder
-    planManagerPhone?: SortOrderInput | SortOrder
-    emergencyContactName?: SortOrder
-    emergencyContactRelationship?: SortOrder
-    emergencyContactMobile?: SortOrder
-    representativeType?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    fundingType?: SortOrderInput | SortOrder
+    relationshipToClient?: SortOrderInput | SortOrder
+    isSelfManaged?: SortOrder
+    servicesRequested?: SortOrderInput | SortOrder
+    additionalInfo?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: ParticipantCountOrderByAggregateInput
-    _avg?: ParticipantAvgOrderByAggregateInput
     _max?: ParticipantMaxOrderByAggregateInput
     _min?: ParticipantMinOrderByAggregateInput
-    _sum?: ParticipantSumOrderByAggregateInput
   }
 
   export type ParticipantScalarWhereWithAggregatesInput = {
@@ -23615,31 +23141,16 @@ export namespace Prisma {
     OR?: ParticipantScalarWhereWithAggregatesInput[]
     NOT?: ParticipantScalarWhereWithAggregatesInput | ParticipantScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Participant"> | string
-    clientProfileId?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    coordinatorProfileId?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    personNeedingSupport?: StringWithAggregatesFilter<"Participant"> | string
+    userId?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     firstName?: StringWithAggregatesFilter<"Participant"> | string
     lastName?: StringWithAggregatesFilter<"Participant"> | string
     dateOfBirth?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
-    ndisNumber?: StringWithAggregatesFilter<"Participant"> | string
-    mobile?: StringWithAggregatesFilter<"Participant"> | string
-    email?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    streetAddress?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    suburb?: StringWithAggregatesFilter<"Participant"> | string
-    state?: StringWithAggregatesFilter<"Participant"> | string
-    postalCode?: StringWithAggregatesFilter<"Participant"> | string
-    latitude?: FloatNullableWithAggregatesFilter<"Participant"> | number | null
-    longitude?: FloatNullableWithAggregatesFilter<"Participant"> | number | null
-    servicesRequest?: StringNullableListFilter<"Participant">
-    disabilities?: StringNullableListFilter<"Participant">
-    supportNeeds?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    planManagerName?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    planManagerEmail?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    planManagerPhone?: StringNullableWithAggregatesFilter<"Participant"> | string | null
-    emergencyContactName?: StringWithAggregatesFilter<"Participant"> | string
-    emergencyContactRelationship?: StringWithAggregatesFilter<"Participant"> | string
-    emergencyContactMobile?: StringWithAggregatesFilter<"Participant"> | string
-    representativeType?: EnumRepresentativeTypeNullableWithAggregatesFilter<"Participant"> | $Enums.RepresentativeType | null
+    location?: StringNullableWithAggregatesFilter<"Participant"> | string | null
+    fundingType?: EnumFundingTypeNullableWithAggregatesFilter<"Participant"> | $Enums.FundingType | null
+    relationshipToClient?: EnumRelationshipTypeNullableWithAggregatesFilter<"Participant"> | $Enums.RelationshipType | null
+    isSelfManaged?: BoolWithAggregatesFilter<"Participant"> | boolean
+    servicesRequested?: JsonNullableWithAggregatesFilter<"Participant">
+    additionalInfo?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
   }
@@ -23718,10 +23229,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     auditLogs?: AuditLogListRelationFilter
-    clientProfile?: XOR<ClientProfileNullableScalarRelationFilter, ClientProfileWhereInput> | null
-    coordinatorProfile?: XOR<CoordinatorProfileNullableScalarRelationFilter, CoordinatorProfileWhereInput> | null
     sessions?: SessionListRelationFilter
     workerProfile?: XOR<WorkerProfileNullableScalarRelationFilter, WorkerProfileWhereInput> | null
+    clientProfile?: XOR<ClientProfileNullableScalarRelationFilter, ClientProfileWhereInput> | null
+    coordinatorProfile?: XOR<CoordinatorProfileNullableScalarRelationFilter, CoordinatorProfileWhereInput> | null
+    participants?: ParticipantListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -23740,10 +23252,11 @@ export namespace Prisma {
     updatedAt?: SortOrder
     accounts?: AccountOrderByRelationAggregateInput
     auditLogs?: AuditLogOrderByRelationAggregateInput
-    clientProfile?: ClientProfileOrderByWithRelationInput
-    coordinatorProfile?: CoordinatorProfileOrderByWithRelationInput
     sessions?: SessionOrderByRelationAggregateInput
     workerProfile?: WorkerProfileOrderByWithRelationInput
+    clientProfile?: ClientProfileOrderByWithRelationInput
+    coordinatorProfile?: CoordinatorProfileOrderByWithRelationInput
+    participants?: ParticipantOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -23765,10 +23278,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     accounts?: AccountListRelationFilter
     auditLogs?: AuditLogListRelationFilter
-    clientProfile?: XOR<ClientProfileNullableScalarRelationFilter, ClientProfileWhereInput> | null
-    coordinatorProfile?: XOR<CoordinatorProfileNullableScalarRelationFilter, CoordinatorProfileWhereInput> | null
     sessions?: SessionListRelationFilter
     workerProfile?: XOR<WorkerProfileNullableScalarRelationFilter, WorkerProfileWhereInput> | null
+    clientProfile?: XOR<ClientProfileNullableScalarRelationFilter, ClientProfileWhereInput> | null
+    coordinatorProfile?: XOR<CoordinatorProfileNullableScalarRelationFilter, CoordinatorProfileWhereInput> | null
+    participants?: ParticipantListRelationFilter
   }, "id" | "email" | "resetPasswordToken">
 
   export type UserOrderByWithAggregationInput = {
@@ -24877,13 +24391,8 @@ export namespace Prisma {
     lastName: string
     mobile: string
     createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
+    updatedAt?: Date | string
     user: UserCreateNestedOneWithoutClientProfileInput
-    participant?: ParticipantCreateNestedOneWithoutClientProfileInput
   }
 
   export type ClientProfileUncheckedCreateInput = {
@@ -24893,12 +24402,7 @@ export namespace Prisma {
     lastName: string
     mobile: string
     createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    participant?: ParticipantUncheckedCreateNestedOneWithoutClientProfileInput
+    updatedAt?: Date | string
   }
 
   export type ClientProfileUpdateInput = {
@@ -24908,12 +24412,7 @@ export namespace Prisma {
     mobile?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneRequiredWithoutClientProfileNestedInput
-    participant?: ParticipantUpdateOneWithoutClientProfileNestedInput
   }
 
   export type ClientProfileUncheckedUpdateInput = {
@@ -24924,11 +24423,6 @@ export namespace Prisma {
     mobile?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    participant?: ParticipantUncheckedUpdateOneWithoutClientProfileNestedInput
   }
 
   export type ClientProfileCreateManyInput = {
@@ -24938,11 +24432,7 @@ export namespace Prisma {
     lastName: string
     mobile: string
     createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
+    updatedAt?: Date | string
   }
 
   export type ClientProfileUpdateManyMutationInput = {
@@ -24952,10 +24442,6 @@ export namespace Prisma {
     mobile?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ClientProfileUncheckedUpdateManyInput = {
@@ -24966,10 +24452,6 @@ export namespace Prisma {
     mobile?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CoordinatorProfileCreateInput = {
@@ -24978,14 +24460,10 @@ export namespace Prisma {
     lastName: string
     mobile: string
     organization?: string | null
+    clientTypes?: CoordinatorProfileCreateclientTypesInput | string[]
     createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
+    updatedAt?: Date | string
     user: UserCreateNestedOneWithoutCoordinatorProfileInput
-    participants?: ParticipantCreateNestedManyWithoutCoordinatorProfileInput
   }
 
   export type CoordinatorProfileUncheckedCreateInput = {
@@ -24995,13 +24473,9 @@ export namespace Prisma {
     lastName: string
     mobile: string
     organization?: string | null
+    clientTypes?: CoordinatorProfileCreateclientTypesInput | string[]
     createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    participants?: ParticipantUncheckedCreateNestedManyWithoutCoordinatorProfileInput
+    updatedAt?: Date | string
   }
 
   export type CoordinatorProfileUpdateInput = {
@@ -25010,14 +24484,10 @@ export namespace Prisma {
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
     organization?: NullableStringFieldUpdateOperationsInput | string | null
+    clientTypes?: CoordinatorProfileUpdateclientTypesInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneRequiredWithoutCoordinatorProfileNestedInput
-    participants?: ParticipantUpdateManyWithoutCoordinatorProfileNestedInput
   }
 
   export type CoordinatorProfileUncheckedUpdateInput = {
@@ -25027,13 +24497,9 @@ export namespace Prisma {
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
     organization?: NullableStringFieldUpdateOperationsInput | string | null
+    clientTypes?: CoordinatorProfileUpdateclientTypesInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    participants?: ParticipantUncheckedUpdateManyWithoutCoordinatorProfileNestedInput
   }
 
   export type CoordinatorProfileCreateManyInput = {
@@ -25043,12 +24509,9 @@ export namespace Prisma {
     lastName: string
     mobile: string
     organization?: string | null
+    clientTypes?: CoordinatorProfileCreateclientTypesInput | string[]
     createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
+    updatedAt?: Date | string
   }
 
   export type CoordinatorProfileUpdateManyMutationInput = {
@@ -25057,12 +24520,9 @@ export namespace Prisma {
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
     organization?: NullableStringFieldUpdateOperationsInput | string | null
+    clientTypes?: CoordinatorProfileUpdateclientTypesInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CoordinatorProfileUncheckedUpdateManyInput = {
@@ -25072,225 +24532,118 @@ export namespace Prisma {
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
     organization?: NullableStringFieldUpdateOperationsInput | string | null
+    clientTypes?: CoordinatorProfileUpdateclientTypesInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ParticipantCreateInput = {
     id?: string
-    personNeedingSupport: string
     firstName: string
     lastName: string
     dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
+    location?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    isSelfManaged?: boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    clientProfile?: ClientProfileCreateNestedOneWithoutParticipantInput
-    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutParticipantsInput
+    user?: UserCreateNestedOneWithoutParticipantsInput
   }
 
   export type ParticipantUncheckedCreateInput = {
     id?: string
-    clientProfileId?: string | null
-    coordinatorProfileId?: string | null
-    personNeedingSupport: string
+    userId?: string | null
     firstName: string
     lastName: string
     dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
+    location?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    isSelfManaged?: boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ParticipantUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    clientProfile?: ClientProfileUpdateOneWithoutParticipantNestedInput
-    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutParticipantsNestedInput
+    user?: UserUpdateOneWithoutParticipantsNestedInput
   }
 
   export type ParticipantUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    clientProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    coordinatorProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ParticipantCreateManyInput = {
     id?: string
-    clientProfileId?: string | null
-    coordinatorProfileId?: string | null
-    personNeedingSupport: string
+    userId?: string | null
     firstName: string
     lastName: string
     dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
+    location?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    isSelfManaged?: boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type ParticipantUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ParticipantUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    clientProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    coordinatorProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -25366,10 +24719,11 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -25388,10 +24742,11 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -25410,10 +24765,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -25432,10 +24788,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -26788,19 +26145,6 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type StringNullableListFilter<$PrismaModel = never> = {
-    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    has?: string | StringFieldRefInput<$PrismaModel> | null
-    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
-    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
-    isEmpty?: boolean
-  }
-
-  export type ParticipantNullableScalarRelationFilter = {
-    is?: ParticipantWhereInput | null
-    isNot?: ParticipantWhereInput | null
-  }
-
   export type ClientProfileCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
@@ -26809,10 +26153,6 @@ export namespace Prisma {
     mobile?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrder
-    servicesRequest?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
   }
 
   export type ClientProfileMaxOrderByAggregateInput = {
@@ -26823,9 +26163,6 @@ export namespace Prisma {
     mobile?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
   }
 
   export type ClientProfileMinOrderByAggregateInput = {
@@ -26836,19 +26173,14 @@ export namespace Prisma {
     mobile?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
   }
 
-  export type ParticipantListRelationFilter = {
-    every?: ParticipantWhereInput
-    some?: ParticipantWhereInput
-    none?: ParticipantWhereInput
-  }
-
-  export type ParticipantOrderByRelationAggregateInput = {
-    _count?: SortOrder
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
   }
 
   export type CoordinatorProfileCountOrderByAggregateInput = {
@@ -26858,12 +26190,9 @@ export namespace Prisma {
     lastName?: SortOrder
     mobile?: SortOrder
     organization?: SortOrder
+    clientTypes?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrder
-    servicesRequest?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
   }
 
   export type CoordinatorProfileMaxOrderByAggregateInput = {
@@ -26875,9 +26204,6 @@ export namespace Prisma {
     organization?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
   }
 
   export type CoordinatorProfileMinOrderByAggregateInput = {
@@ -26889,162 +26215,99 @@ export namespace Prisma {
     organization?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    postalCode?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
   }
 
-  export type FloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  export type EnumFundingTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFundingTypeNullableFilter<$PrismaModel> | $Enums.FundingType | null
   }
 
-  export type EnumRepresentativeTypeNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.RepresentativeType | EnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRepresentativeTypeNullableFilter<$PrismaModel> | $Enums.RepresentativeType | null
+  export type EnumRelationshipTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
   }
 
-  export type ClientProfileNullableScalarRelationFilter = {
-    is?: ClientProfileWhereInput | null
-    isNot?: ClientProfileWhereInput | null
-  }
-
-  export type CoordinatorProfileNullableScalarRelationFilter = {
-    is?: CoordinatorProfileWhereInput | null
-    isNot?: CoordinatorProfileWhereInput | null
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type ParticipantCountOrderByAggregateInput = {
     id?: SortOrder
-    clientProfileId?: SortOrder
-    coordinatorProfileId?: SortOrder
-    personNeedingSupport?: SortOrder
+    userId?: SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    ndisNumber?: SortOrder
-    mobile?: SortOrder
-    email?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
-    servicesRequest?: SortOrder
-    disabilities?: SortOrder
-    supportNeeds?: SortOrder
-    planManagerName?: SortOrder
-    planManagerEmail?: SortOrder
-    planManagerPhone?: SortOrder
-    emergencyContactName?: SortOrder
-    emergencyContactRelationship?: SortOrder
-    emergencyContactMobile?: SortOrder
-    representativeType?: SortOrder
+    location?: SortOrder
+    fundingType?: SortOrder
+    relationshipToClient?: SortOrder
+    isSelfManaged?: SortOrder
+    servicesRequested?: SortOrder
+    additionalInfo?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type ParticipantAvgOrderByAggregateInput = {
-    latitude?: SortOrder
-    longitude?: SortOrder
-  }
-
   export type ParticipantMaxOrderByAggregateInput = {
     id?: SortOrder
-    clientProfileId?: SortOrder
-    coordinatorProfileId?: SortOrder
-    personNeedingSupport?: SortOrder
+    userId?: SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    ndisNumber?: SortOrder
-    mobile?: SortOrder
-    email?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
-    supportNeeds?: SortOrder
-    planManagerName?: SortOrder
-    planManagerEmail?: SortOrder
-    planManagerPhone?: SortOrder
-    emergencyContactName?: SortOrder
-    emergencyContactRelationship?: SortOrder
-    emergencyContactMobile?: SortOrder
-    representativeType?: SortOrder
+    location?: SortOrder
+    fundingType?: SortOrder
+    relationshipToClient?: SortOrder
+    isSelfManaged?: SortOrder
+    additionalInfo?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ParticipantMinOrderByAggregateInput = {
     id?: SortOrder
-    clientProfileId?: SortOrder
-    coordinatorProfileId?: SortOrder
-    personNeedingSupport?: SortOrder
+    userId?: SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    ndisNumber?: SortOrder
-    mobile?: SortOrder
-    email?: SortOrder
-    streetAddress?: SortOrder
-    suburb?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
-    supportNeeds?: SortOrder
-    planManagerName?: SortOrder
-    planManagerEmail?: SortOrder
-    planManagerPhone?: SortOrder
-    emergencyContactName?: SortOrder
-    emergencyContactRelationship?: SortOrder
-    emergencyContactMobile?: SortOrder
-    representativeType?: SortOrder
+    location?: SortOrder
+    fundingType?: SortOrder
+    relationshipToClient?: SortOrder
+    isSelfManaged?: SortOrder
+    additionalInfo?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type ParticipantSumOrderByAggregateInput = {
-    latitude?: SortOrder
-    longitude?: SortOrder
+  export type EnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFundingTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.FundingType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
   }
 
-  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+  export type EnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RelationshipType | null
     _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
   }
 
-  export type EnumRepresentativeTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.RepresentativeType | EnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRepresentativeTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RepresentativeType | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumRepresentativeTypeNullableFilter<$PrismaModel>
-    _max?: NestedEnumRepresentativeTypeNullableFilter<$PrismaModel>
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type SessionCountOrderByAggregateInput = {
@@ -27130,6 +26393,22 @@ export namespace Prisma {
     isNot?: WorkerProfileWhereInput | null
   }
 
+  export type ClientProfileNullableScalarRelationFilter = {
+    is?: ClientProfileWhereInput | null
+    isNot?: ClientProfileWhereInput | null
+  }
+
+  export type CoordinatorProfileNullableScalarRelationFilter = {
+    is?: CoordinatorProfileWhereInput | null
+    isNot?: CoordinatorProfileWhereInput | null
+  }
+
+  export type ParticipantListRelationFilter = {
+    every?: ParticipantWhereInput
+    some?: ParticipantWhereInput
+    none?: ParticipantWhereInput
+  }
+
   export type AccountOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -27139,6 +26418,10 @@ export namespace Prisma {
   }
 
   export type SessionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ParticipantOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -27248,11 +26531,6 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type EnumRequirementStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RequirementStatus | EnumRequirementStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RequirementStatus[] | ListEnumRequirementStatusFieldRefInput<$PrismaModel>
@@ -27339,14 +26617,6 @@ export namespace Prisma {
     notes?: SortOrder
   }
 
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type EnumRequirementStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.RequirementStatus | EnumRequirementStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RequirementStatus[] | ListEnumRequirementStatusFieldRefInput<$PrismaModel>
@@ -27388,6 +26658,17 @@ export namespace Prisma {
     identifier?: SortOrder
     token?: SortOrder
     expires?: SortOrder
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type VerificationRequirementListRelationFilter = {
@@ -27521,6 +26802,22 @@ export namespace Prisma {
     age?: SortOrder
     latitude?: SortOrder
     longitude?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type CategoryDocumentListRelationFilter = {
@@ -27863,31 +27160,10 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAuditLogsInput, UserUpdateWithoutAuditLogsInput>, UserUncheckedUpdateWithoutAuditLogsInput>
   }
 
-  export type ClientProfileCreateservicesRequestInput = {
-    set: string[]
-  }
-
   export type UserCreateNestedOneWithoutClientProfileInput = {
     create?: XOR<UserCreateWithoutClientProfileInput, UserUncheckedCreateWithoutClientProfileInput>
     connectOrCreate?: UserCreateOrConnectWithoutClientProfileInput
     connect?: UserWhereUniqueInput
-  }
-
-  export type ParticipantCreateNestedOneWithoutClientProfileInput = {
-    create?: XOR<ParticipantCreateWithoutClientProfileInput, ParticipantUncheckedCreateWithoutClientProfileInput>
-    connectOrCreate?: ParticipantCreateOrConnectWithoutClientProfileInput
-    connect?: ParticipantWhereUniqueInput
-  }
-
-  export type ParticipantUncheckedCreateNestedOneWithoutClientProfileInput = {
-    create?: XOR<ParticipantCreateWithoutClientProfileInput, ParticipantUncheckedCreateWithoutClientProfileInput>
-    connectOrCreate?: ParticipantCreateOrConnectWithoutClientProfileInput
-    connect?: ParticipantWhereUniqueInput
-  }
-
-  export type ClientProfileUpdateservicesRequestInput = {
-    set?: string[]
-    push?: string | string[]
   }
 
   export type UserUpdateOneRequiredWithoutClientProfileNestedInput = {
@@ -27898,27 +27174,7 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutClientProfileInput, UserUpdateWithoutClientProfileInput>, UserUncheckedUpdateWithoutClientProfileInput>
   }
 
-  export type ParticipantUpdateOneWithoutClientProfileNestedInput = {
-    create?: XOR<ParticipantCreateWithoutClientProfileInput, ParticipantUncheckedCreateWithoutClientProfileInput>
-    connectOrCreate?: ParticipantCreateOrConnectWithoutClientProfileInput
-    upsert?: ParticipantUpsertWithoutClientProfileInput
-    disconnect?: ParticipantWhereInput | boolean
-    delete?: ParticipantWhereInput | boolean
-    connect?: ParticipantWhereUniqueInput
-    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutClientProfileInput, ParticipantUpdateWithoutClientProfileInput>, ParticipantUncheckedUpdateWithoutClientProfileInput>
-  }
-
-  export type ParticipantUncheckedUpdateOneWithoutClientProfileNestedInput = {
-    create?: XOR<ParticipantCreateWithoutClientProfileInput, ParticipantUncheckedCreateWithoutClientProfileInput>
-    connectOrCreate?: ParticipantCreateOrConnectWithoutClientProfileInput
-    upsert?: ParticipantUpsertWithoutClientProfileInput
-    disconnect?: ParticipantWhereInput | boolean
-    delete?: ParticipantWhereInput | boolean
-    connect?: ParticipantWhereUniqueInput
-    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutClientProfileInput, ParticipantUpdateWithoutClientProfileInput>, ParticipantUncheckedUpdateWithoutClientProfileInput>
-  }
-
-  export type CoordinatorProfileCreateservicesRequestInput = {
+  export type CoordinatorProfileCreateclientTypesInput = {
     set: string[]
   }
 
@@ -27928,21 +27184,7 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
-  export type ParticipantCreateNestedManyWithoutCoordinatorProfileInput = {
-    create?: XOR<ParticipantCreateWithoutCoordinatorProfileInput, ParticipantUncheckedCreateWithoutCoordinatorProfileInput> | ParticipantCreateWithoutCoordinatorProfileInput[] | ParticipantUncheckedCreateWithoutCoordinatorProfileInput[]
-    connectOrCreate?: ParticipantCreateOrConnectWithoutCoordinatorProfileInput | ParticipantCreateOrConnectWithoutCoordinatorProfileInput[]
-    createMany?: ParticipantCreateManyCoordinatorProfileInputEnvelope
-    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-  }
-
-  export type ParticipantUncheckedCreateNestedManyWithoutCoordinatorProfileInput = {
-    create?: XOR<ParticipantCreateWithoutCoordinatorProfileInput, ParticipantUncheckedCreateWithoutCoordinatorProfileInput> | ParticipantCreateWithoutCoordinatorProfileInput[] | ParticipantUncheckedCreateWithoutCoordinatorProfileInput[]
-    connectOrCreate?: ParticipantCreateOrConnectWithoutCoordinatorProfileInput | ParticipantCreateOrConnectWithoutCoordinatorProfileInput[]
-    createMany?: ParticipantCreateManyCoordinatorProfileInputEnvelope
-    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-  }
-
-  export type CoordinatorProfileUpdateservicesRequestInput = {
+  export type CoordinatorProfileUpdateclientTypesInput = {
     set?: string[]
     push?: string | string[]
   }
@@ -27955,94 +27197,32 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCoordinatorProfileInput, UserUpdateWithoutCoordinatorProfileInput>, UserUncheckedUpdateWithoutCoordinatorProfileInput>
   }
 
-  export type ParticipantUpdateManyWithoutCoordinatorProfileNestedInput = {
-    create?: XOR<ParticipantCreateWithoutCoordinatorProfileInput, ParticipantUncheckedCreateWithoutCoordinatorProfileInput> | ParticipantCreateWithoutCoordinatorProfileInput[] | ParticipantUncheckedCreateWithoutCoordinatorProfileInput[]
-    connectOrCreate?: ParticipantCreateOrConnectWithoutCoordinatorProfileInput | ParticipantCreateOrConnectWithoutCoordinatorProfileInput[]
-    upsert?: ParticipantUpsertWithWhereUniqueWithoutCoordinatorProfileInput | ParticipantUpsertWithWhereUniqueWithoutCoordinatorProfileInput[]
-    createMany?: ParticipantCreateManyCoordinatorProfileInputEnvelope
-    set?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    disconnect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    delete?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    update?: ParticipantUpdateWithWhereUniqueWithoutCoordinatorProfileInput | ParticipantUpdateWithWhereUniqueWithoutCoordinatorProfileInput[]
-    updateMany?: ParticipantUpdateManyWithWhereWithoutCoordinatorProfileInput | ParticipantUpdateManyWithWhereWithoutCoordinatorProfileInput[]
-    deleteMany?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
+  export type UserCreateNestedOneWithoutParticipantsInput = {
+    create?: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutParticipantsInput
+    connect?: UserWhereUniqueInput
   }
 
-  export type ParticipantUncheckedUpdateManyWithoutCoordinatorProfileNestedInput = {
-    create?: XOR<ParticipantCreateWithoutCoordinatorProfileInput, ParticipantUncheckedCreateWithoutCoordinatorProfileInput> | ParticipantCreateWithoutCoordinatorProfileInput[] | ParticipantUncheckedCreateWithoutCoordinatorProfileInput[]
-    connectOrCreate?: ParticipantCreateOrConnectWithoutCoordinatorProfileInput | ParticipantCreateOrConnectWithoutCoordinatorProfileInput[]
-    upsert?: ParticipantUpsertWithWhereUniqueWithoutCoordinatorProfileInput | ParticipantUpsertWithWhereUniqueWithoutCoordinatorProfileInput[]
-    createMany?: ParticipantCreateManyCoordinatorProfileInputEnvelope
-    set?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    disconnect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    delete?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
-    update?: ParticipantUpdateWithWhereUniqueWithoutCoordinatorProfileInput | ParticipantUpdateWithWhereUniqueWithoutCoordinatorProfileInput[]
-    updateMany?: ParticipantUpdateManyWithWhereWithoutCoordinatorProfileInput | ParticipantUpdateManyWithWhereWithoutCoordinatorProfileInput[]
-    deleteMany?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
+  export type NullableEnumFundingTypeFieldUpdateOperationsInput = {
+    set?: $Enums.FundingType | null
   }
 
-  export type ParticipantCreateservicesRequestInput = {
-    set: string[]
+  export type NullableEnumRelationshipTypeFieldUpdateOperationsInput = {
+    set?: $Enums.RelationshipType | null
   }
 
-  export type ParticipantCreatedisabilitiesInput = {
-    set: string[]
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
-  export type ClientProfileCreateNestedOneWithoutParticipantInput = {
-    create?: XOR<ClientProfileCreateWithoutParticipantInput, ClientProfileUncheckedCreateWithoutParticipantInput>
-    connectOrCreate?: ClientProfileCreateOrConnectWithoutParticipantInput
-    connect?: ClientProfileWhereUniqueInput
-  }
-
-  export type CoordinatorProfileCreateNestedOneWithoutParticipantsInput = {
-    create?: XOR<CoordinatorProfileCreateWithoutParticipantsInput, CoordinatorProfileUncheckedCreateWithoutParticipantsInput>
-    connectOrCreate?: CoordinatorProfileCreateOrConnectWithoutParticipantsInput
-    connect?: CoordinatorProfileWhereUniqueInput
-  }
-
-  export type NullableFloatFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
-  export type ParticipantUpdateservicesRequestInput = {
-    set?: string[]
-    push?: string | string[]
-  }
-
-  export type ParticipantUpdatedisabilitiesInput = {
-    set?: string[]
-    push?: string | string[]
-  }
-
-  export type NullableEnumRepresentativeTypeFieldUpdateOperationsInput = {
-    set?: $Enums.RepresentativeType | null
-  }
-
-  export type ClientProfileUpdateOneWithoutParticipantNestedInput = {
-    create?: XOR<ClientProfileCreateWithoutParticipantInput, ClientProfileUncheckedCreateWithoutParticipantInput>
-    connectOrCreate?: ClientProfileCreateOrConnectWithoutParticipantInput
-    upsert?: ClientProfileUpsertWithoutParticipantInput
-    disconnect?: ClientProfileWhereInput | boolean
-    delete?: ClientProfileWhereInput | boolean
-    connect?: ClientProfileWhereUniqueInput
-    update?: XOR<XOR<ClientProfileUpdateToOneWithWhereWithoutParticipantInput, ClientProfileUpdateWithoutParticipantInput>, ClientProfileUncheckedUpdateWithoutParticipantInput>
-  }
-
-  export type CoordinatorProfileUpdateOneWithoutParticipantsNestedInput = {
-    create?: XOR<CoordinatorProfileCreateWithoutParticipantsInput, CoordinatorProfileUncheckedCreateWithoutParticipantsInput>
-    connectOrCreate?: CoordinatorProfileCreateOrConnectWithoutParticipantsInput
-    upsert?: CoordinatorProfileUpsertWithoutParticipantsInput
-    disconnect?: CoordinatorProfileWhereInput | boolean
-    delete?: CoordinatorProfileWhereInput | boolean
-    connect?: CoordinatorProfileWhereUniqueInput
-    update?: XOR<XOR<CoordinatorProfileUpdateToOneWithWhereWithoutParticipantsInput, CoordinatorProfileUpdateWithoutParticipantsInput>, CoordinatorProfileUncheckedUpdateWithoutParticipantsInput>
+  export type UserUpdateOneWithoutParticipantsNestedInput = {
+    create?: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutParticipantsInput
+    upsert?: UserUpsertWithoutParticipantsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutParticipantsInput, UserUpdateWithoutParticipantsInput>, UserUncheckedUpdateWithoutParticipantsInput>
   }
 
   export type UserCreateNestedOneWithoutSessionsInput = {
@@ -28073,6 +27253,19 @@ export namespace Prisma {
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
   }
 
+  export type SessionCreateNestedManyWithoutUserInput = {
+    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
+    createMany?: SessionCreateManyUserInputEnvelope
+    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutUserInput = {
+    create?: XOR<WorkerProfileCreateWithoutUserInput, WorkerProfileUncheckedCreateWithoutUserInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutUserInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
   export type ClientProfileCreateNestedOneWithoutUserInput = {
     create?: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: ClientProfileCreateOrConnectWithoutUserInput
@@ -28085,17 +27278,11 @@ export namespace Prisma {
     connect?: CoordinatorProfileWhereUniqueInput
   }
 
-  export type SessionCreateNestedManyWithoutUserInput = {
-    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
-    createMany?: SessionCreateManyUserInputEnvelope
-    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-  }
-
-  export type WorkerProfileCreateNestedOneWithoutUserInput = {
-    create?: XOR<WorkerProfileCreateWithoutUserInput, WorkerProfileUncheckedCreateWithoutUserInput>
-    connectOrCreate?: WorkerProfileCreateOrConnectWithoutUserInput
-    connect?: WorkerProfileWhereUniqueInput
+  export type ParticipantCreateNestedManyWithoutUserInput = {
+    create?: XOR<ParticipantCreateWithoutUserInput, ParticipantUncheckedCreateWithoutUserInput> | ParticipantCreateWithoutUserInput[] | ParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ParticipantCreateOrConnectWithoutUserInput | ParticipantCreateOrConnectWithoutUserInput[]
+    createMany?: ParticipantCreateManyUserInputEnvelope
+    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
   }
 
   export type AccountUncheckedCreateNestedManyWithoutUserInput = {
@@ -28112,6 +27299,19 @@ export namespace Prisma {
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
   }
 
+  export type SessionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
+    createMany?: SessionCreateManyUserInputEnvelope
+    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
+  }
+
+  export type WorkerProfileUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<WorkerProfileCreateWithoutUserInput, WorkerProfileUncheckedCreateWithoutUserInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutUserInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
   export type ClientProfileUncheckedCreateNestedOneWithoutUserInput = {
     create?: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: ClientProfileCreateOrConnectWithoutUserInput
@@ -28124,17 +27324,11 @@ export namespace Prisma {
     connect?: CoordinatorProfileWhereUniqueInput
   }
 
-  export type SessionUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
-    createMany?: SessionCreateManyUserInputEnvelope
-    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-  }
-
-  export type WorkerProfileUncheckedCreateNestedOneWithoutUserInput = {
-    create?: XOR<WorkerProfileCreateWithoutUserInput, WorkerProfileUncheckedCreateWithoutUserInput>
-    connectOrCreate?: WorkerProfileCreateOrConnectWithoutUserInput
-    connect?: WorkerProfileWhereUniqueInput
+  export type ParticipantUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<ParticipantCreateWithoutUserInput, ParticipantUncheckedCreateWithoutUserInput> | ParticipantCreateWithoutUserInput[] | ParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ParticipantCreateOrConnectWithoutUserInput | ParticipantCreateOrConnectWithoutUserInput[]
+    createMany?: ParticipantCreateManyUserInputEnvelope
+    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
   }
 
   export type EnumUserRoleFieldUpdateOperationsInput = {
@@ -28185,26 +27379,6 @@ export namespace Prisma {
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
   }
 
-  export type ClientProfileUpdateOneWithoutUserNestedInput = {
-    create?: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
-    connectOrCreate?: ClientProfileCreateOrConnectWithoutUserInput
-    upsert?: ClientProfileUpsertWithoutUserInput
-    disconnect?: ClientProfileWhereInput | boolean
-    delete?: ClientProfileWhereInput | boolean
-    connect?: ClientProfileWhereUniqueInput
-    update?: XOR<XOR<ClientProfileUpdateToOneWithWhereWithoutUserInput, ClientProfileUpdateWithoutUserInput>, ClientProfileUncheckedUpdateWithoutUserInput>
-  }
-
-  export type CoordinatorProfileUpdateOneWithoutUserNestedInput = {
-    create?: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
-    connectOrCreate?: CoordinatorProfileCreateOrConnectWithoutUserInput
-    upsert?: CoordinatorProfileUpsertWithoutUserInput
-    disconnect?: CoordinatorProfileWhereInput | boolean
-    delete?: CoordinatorProfileWhereInput | boolean
-    connect?: CoordinatorProfileWhereUniqueInput
-    update?: XOR<XOR<CoordinatorProfileUpdateToOneWithWhereWithoutUserInput, CoordinatorProfileUpdateWithoutUserInput>, CoordinatorProfileUncheckedUpdateWithoutUserInput>
-  }
-
   export type SessionUpdateManyWithoutUserNestedInput = {
     create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
@@ -28227,6 +27401,40 @@ export namespace Prisma {
     delete?: WorkerProfileWhereInput | boolean
     connect?: WorkerProfileWhereUniqueInput
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutUserInput, WorkerProfileUpdateWithoutUserInput>, WorkerProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ClientProfileUpdateOneWithoutUserNestedInput = {
+    create?: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
+    connectOrCreate?: ClientProfileCreateOrConnectWithoutUserInput
+    upsert?: ClientProfileUpsertWithoutUserInput
+    disconnect?: ClientProfileWhereInput | boolean
+    delete?: ClientProfileWhereInput | boolean
+    connect?: ClientProfileWhereUniqueInput
+    update?: XOR<XOR<ClientProfileUpdateToOneWithWhereWithoutUserInput, ClientProfileUpdateWithoutUserInput>, ClientProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type CoordinatorProfileUpdateOneWithoutUserNestedInput = {
+    create?: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
+    connectOrCreate?: CoordinatorProfileCreateOrConnectWithoutUserInput
+    upsert?: CoordinatorProfileUpsertWithoutUserInput
+    disconnect?: CoordinatorProfileWhereInput | boolean
+    delete?: CoordinatorProfileWhereInput | boolean
+    connect?: CoordinatorProfileWhereUniqueInput
+    update?: XOR<XOR<CoordinatorProfileUpdateToOneWithWhereWithoutUserInput, CoordinatorProfileUpdateWithoutUserInput>, CoordinatorProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ParticipantUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ParticipantCreateWithoutUserInput, ParticipantUncheckedCreateWithoutUserInput> | ParticipantCreateWithoutUserInput[] | ParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ParticipantCreateOrConnectWithoutUserInput | ParticipantCreateOrConnectWithoutUserInput[]
+    upsert?: ParticipantUpsertWithWhereUniqueWithoutUserInput | ParticipantUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ParticipantCreateManyUserInputEnvelope
+    set?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    disconnect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    delete?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    update?: ParticipantUpdateWithWhereUniqueWithoutUserInput | ParticipantUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ParticipantUpdateManyWithWhereWithoutUserInput | ParticipantUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
   }
 
   export type AccountUncheckedUpdateManyWithoutUserNestedInput = {
@@ -28257,26 +27465,6 @@ export namespace Prisma {
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
   }
 
-  export type ClientProfileUncheckedUpdateOneWithoutUserNestedInput = {
-    create?: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
-    connectOrCreate?: ClientProfileCreateOrConnectWithoutUserInput
-    upsert?: ClientProfileUpsertWithoutUserInput
-    disconnect?: ClientProfileWhereInput | boolean
-    delete?: ClientProfileWhereInput | boolean
-    connect?: ClientProfileWhereUniqueInput
-    update?: XOR<XOR<ClientProfileUpdateToOneWithWhereWithoutUserInput, ClientProfileUpdateWithoutUserInput>, ClientProfileUncheckedUpdateWithoutUserInput>
-  }
-
-  export type CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput = {
-    create?: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
-    connectOrCreate?: CoordinatorProfileCreateOrConnectWithoutUserInput
-    upsert?: CoordinatorProfileUpsertWithoutUserInput
-    disconnect?: CoordinatorProfileWhereInput | boolean
-    delete?: CoordinatorProfileWhereInput | boolean
-    connect?: CoordinatorProfileWhereUniqueInput
-    update?: XOR<XOR<CoordinatorProfileUpdateToOneWithWhereWithoutUserInput, CoordinatorProfileUpdateWithoutUserInput>, CoordinatorProfileUncheckedUpdateWithoutUserInput>
-  }
-
   export type SessionUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
@@ -28301,14 +27489,44 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutUserInput, WorkerProfileUpdateWithoutUserInput>, WorkerProfileUncheckedUpdateWithoutUserInput>
   }
 
+  export type ClientProfileUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
+    connectOrCreate?: ClientProfileCreateOrConnectWithoutUserInput
+    upsert?: ClientProfileUpsertWithoutUserInput
+    disconnect?: ClientProfileWhereInput | boolean
+    delete?: ClientProfileWhereInput | boolean
+    connect?: ClientProfileWhereUniqueInput
+    update?: XOR<XOR<ClientProfileUpdateToOneWithWhereWithoutUserInput, ClientProfileUpdateWithoutUserInput>, ClientProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
+    connectOrCreate?: CoordinatorProfileCreateOrConnectWithoutUserInput
+    upsert?: CoordinatorProfileUpsertWithoutUserInput
+    disconnect?: CoordinatorProfileWhereInput | boolean
+    delete?: CoordinatorProfileWhereInput | boolean
+    connect?: CoordinatorProfileWhereUniqueInput
+    update?: XOR<XOR<CoordinatorProfileUpdateToOneWithWhereWithoutUserInput, CoordinatorProfileUpdateWithoutUserInput>, CoordinatorProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ParticipantUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<ParticipantCreateWithoutUserInput, ParticipantUncheckedCreateWithoutUserInput> | ParticipantCreateWithoutUserInput[] | ParticipantUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: ParticipantCreateOrConnectWithoutUserInput | ParticipantCreateOrConnectWithoutUserInput[]
+    upsert?: ParticipantUpsertWithWhereUniqueWithoutUserInput | ParticipantUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: ParticipantCreateManyUserInputEnvelope
+    set?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    disconnect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    delete?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    connect?: ParticipantWhereUniqueInput | ParticipantWhereUniqueInput[]
+    update?: ParticipantUpdateWithWhereUniqueWithoutUserInput | ParticipantUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: ParticipantUpdateManyWithWhereWithoutUserInput | ParticipantUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
+  }
+
   export type WorkerProfileCreateNestedOneWithoutVerificationRequirementsInput = {
     create?: XOR<WorkerProfileCreateWithoutVerificationRequirementsInput, WorkerProfileUncheckedCreateWithoutVerificationRequirementsInput>
     connectOrCreate?: WorkerProfileCreateOrConnectWithoutVerificationRequirementsInput
     connect?: WorkerProfileWhereUniqueInput
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type EnumRequirementStatusFieldUpdateOperationsInput = {
@@ -28380,6 +27598,14 @@ export namespace Prisma {
   export type WorkerProfileUpdatelanguagesInput = {
     set?: string[]
     push?: string | string[]
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput = {
@@ -29017,37 +28243,51 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type NestedEnumRepresentativeTypeNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.RepresentativeType | EnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRepresentativeTypeNullableFilter<$PrismaModel> | $Enums.RepresentativeType | null
+  export type NestedEnumFundingTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFundingTypeNullableFilter<$PrismaModel> | $Enums.FundingType | null
   }
 
-  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
+  export type NestedEnumRelationshipTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
   }
 
-  export type NestedEnumRepresentativeTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.RepresentativeType | EnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RepresentativeType[] | ListEnumRepresentativeTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRepresentativeTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RepresentativeType | null
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedEnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFundingTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.FundingType | null
     _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumRepresentativeTypeNullableFilter<$PrismaModel>
-    _max?: NestedEnumRepresentativeTypeNullableFilter<$PrismaModel>
+    _min?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RelationshipType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumUserRoleFilter<$PrismaModel = never> = {
@@ -29136,11 +28376,6 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type NestedEnumRequirementStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RequirementStatus | EnumRequirementStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RequirementStatus[] | ListEnumRequirementStatusFieldRefInput<$PrismaModel>
@@ -29153,14 +28388,6 @@ export namespace Prisma {
     in?: $Enums.DocumentCategory[] | ListEnumDocumentCategoryFieldRefInput<$PrismaModel> | null
     notIn?: $Enums.DocumentCategory[] | ListEnumDocumentCategoryFieldRefInput<$PrismaModel> | null
     not?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel> | $Enums.DocumentCategory | null
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumRequirementStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -29181,6 +28408,22 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel>
     _max?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
@@ -29211,10 +28454,11 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt: Date | string
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccountsInput = {
@@ -29232,10 +28476,11 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccountsInput = {
@@ -29269,10 +28514,11 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -29290,10 +28536,11 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAuditLogsInput = {
@@ -29311,10 +28558,11 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -29332,10 +28580,11 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -29369,10 +28618,11 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -29390,10 +28640,11 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutClientProfileInput = {
@@ -29412,9 +28663,10 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutClientProfileInput = {
@@ -29433,79 +28685,15 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
-    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutClientProfileInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutClientProfileInput, UserUncheckedCreateWithoutClientProfileInput>
-  }
-
-  export type ParticipantCreateWithoutClientProfileInput = {
-    id?: string
-    personNeedingSupport: string
-    firstName: string
-    lastName: string
-    dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutParticipantsInput
-  }
-
-  export type ParticipantUncheckedCreateWithoutClientProfileInput = {
-    id?: string
-    coordinatorProfileId?: string | null
-    personNeedingSupport: string
-    firstName: string
-    lastName: string
-    dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type ParticipantCreateOrConnectWithoutClientProfileInput = {
-    where: ParticipantWhereUniqueInput
-    create: XOR<ParticipantCreateWithoutClientProfileInput, ParticipantUncheckedCreateWithoutClientProfileInput>
   }
 
   export type UserUpsertWithoutClientProfileInput = {
@@ -29535,9 +28723,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutClientProfileInput = {
@@ -29556,80 +28745,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
-    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
-  }
-
-  export type ParticipantUpsertWithoutClientProfileInput = {
-    update: XOR<ParticipantUpdateWithoutClientProfileInput, ParticipantUncheckedUpdateWithoutClientProfileInput>
-    create: XOR<ParticipantCreateWithoutClientProfileInput, ParticipantUncheckedCreateWithoutClientProfileInput>
-    where?: ParticipantWhereInput
-  }
-
-  export type ParticipantUpdateToOneWithWhereWithoutClientProfileInput = {
-    where?: ParticipantWhereInput
-    data: XOR<ParticipantUpdateWithoutClientProfileInput, ParticipantUncheckedUpdateWithoutClientProfileInput>
-  }
-
-  export type ParticipantUpdateWithoutClientProfileInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutParticipantsNestedInput
-  }
-
-  export type ParticipantUncheckedUpdateWithoutClientProfileInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    coordinatorProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCoordinatorProfileInput = {
@@ -29648,9 +28767,10 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
     sessions?: SessionCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoordinatorProfileInput = {
@@ -29669,84 +28789,15 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
-    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoordinatorProfileInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutCoordinatorProfileInput, UserUncheckedCreateWithoutCoordinatorProfileInput>
-  }
-
-  export type ParticipantCreateWithoutCoordinatorProfileInput = {
-    id?: string
-    personNeedingSupport: string
-    firstName: string
-    lastName: string
-    dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    clientProfile?: ClientProfileCreateNestedOneWithoutParticipantInput
-  }
-
-  export type ParticipantUncheckedCreateWithoutCoordinatorProfileInput = {
-    id?: string
-    clientProfileId?: string | null
-    personNeedingSupport: string
-    firstName: string
-    lastName: string
-    dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type ParticipantCreateOrConnectWithoutCoordinatorProfileInput = {
-    where: ParticipantWhereUniqueInput
-    create: XOR<ParticipantCreateWithoutCoordinatorProfileInput, ParticipantUncheckedCreateWithoutCoordinatorProfileInput>
-  }
-
-  export type ParticipantCreateManyCoordinatorProfileInputEnvelope = {
-    data: ParticipantCreateManyCoordinatorProfileInput | ParticipantCreateManyCoordinatorProfileInput[]
-    skipDuplicates?: boolean
   }
 
   export type UserUpsertWithoutCoordinatorProfileInput = {
@@ -29776,9 +28827,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
     sessions?: SessionUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoordinatorProfileInput = {
@@ -29797,207 +28849,114 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
-    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type ParticipantUpsertWithWhereUniqueWithoutCoordinatorProfileInput = {
-    where: ParticipantWhereUniqueInput
-    update: XOR<ParticipantUpdateWithoutCoordinatorProfileInput, ParticipantUncheckedUpdateWithoutCoordinatorProfileInput>
-    create: XOR<ParticipantCreateWithoutCoordinatorProfileInput, ParticipantUncheckedCreateWithoutCoordinatorProfileInput>
-  }
-
-  export type ParticipantUpdateWithWhereUniqueWithoutCoordinatorProfileInput = {
-    where: ParticipantWhereUniqueInput
-    data: XOR<ParticipantUpdateWithoutCoordinatorProfileInput, ParticipantUncheckedUpdateWithoutCoordinatorProfileInput>
-  }
-
-  export type ParticipantUpdateManyWithWhereWithoutCoordinatorProfileInput = {
-    where: ParticipantScalarWhereInput
-    data: XOR<ParticipantUpdateManyMutationInput, ParticipantUncheckedUpdateManyWithoutCoordinatorProfileInput>
-  }
-
-  export type ParticipantScalarWhereInput = {
-    AND?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
-    OR?: ParticipantScalarWhereInput[]
-    NOT?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
-    id?: StringFilter<"Participant"> | string
-    clientProfileId?: StringNullableFilter<"Participant"> | string | null
-    coordinatorProfileId?: StringNullableFilter<"Participant"> | string | null
-    personNeedingSupport?: StringFilter<"Participant"> | string
-    firstName?: StringFilter<"Participant"> | string
-    lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
-    ndisNumber?: StringFilter<"Participant"> | string
-    mobile?: StringFilter<"Participant"> | string
-    email?: StringNullableFilter<"Participant"> | string | null
-    streetAddress?: StringNullableFilter<"Participant"> | string | null
-    suburb?: StringFilter<"Participant"> | string
-    state?: StringFilter<"Participant"> | string
-    postalCode?: StringFilter<"Participant"> | string
-    latitude?: FloatNullableFilter<"Participant"> | number | null
-    longitude?: FloatNullableFilter<"Participant"> | number | null
-    servicesRequest?: StringNullableListFilter<"Participant">
-    disabilities?: StringNullableListFilter<"Participant">
-    supportNeeds?: StringNullableFilter<"Participant"> | string | null
-    planManagerName?: StringNullableFilter<"Participant"> | string | null
-    planManagerEmail?: StringNullableFilter<"Participant"> | string | null
-    planManagerPhone?: StringNullableFilter<"Participant"> | string | null
-    emergencyContactName?: StringFilter<"Participant"> | string
-    emergencyContactRelationship?: StringFilter<"Participant"> | string
-    emergencyContactMobile?: StringFilter<"Participant"> | string
-    representativeType?: EnumRepresentativeTypeNullableFilter<"Participant"> | $Enums.RepresentativeType | null
-    createdAt?: DateTimeFilter<"Participant"> | Date | string
-    updatedAt?: DateTimeFilter<"Participant"> | Date | string
-  }
-
-  export type ClientProfileCreateWithoutParticipantInput = {
+  export type UserCreateWithoutParticipantsInput = {
     id?: string
-    firstName: string
-    lastName: string
-    mobile: string
+    email: string
+    passwordHash: string
+    role: $Enums.UserRole
+    status?: $Enums.AccountStatus
+    resetPasswordToken?: string | null
+    resetPasswordExpires?: Date | string | null
+    failedLoginAttempts?: number
+    accountLockedUntil?: Date | string | null
+    lastLoginAt?: Date | string | null
+    lastLoginIp?: string | null
     createdAt?: Date | string
     updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    user: UserCreateNestedOneWithoutClientProfileInput
+    accounts?: AccountCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
   }
 
-  export type ClientProfileUncheckedCreateWithoutParticipantInput = {
+  export type UserUncheckedCreateWithoutParticipantsInput = {
     id?: string
-    userId: string
-    firstName: string
-    lastName: string
-    mobile: string
+    email: string
+    passwordHash: string
+    role: $Enums.UserRole
+    status?: $Enums.AccountStatus
+    resetPasswordToken?: string | null
+    resetPasswordExpires?: Date | string | null
+    failedLoginAttempts?: number
+    accountLockedUntil?: Date | string | null
+    lastLoginAt?: Date | string | null
+    lastLoginIp?: string | null
     createdAt?: Date | string
     updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
+    accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
+    coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
   }
 
-  export type ClientProfileCreateOrConnectWithoutParticipantInput = {
-    where: ClientProfileWhereUniqueInput
-    create: XOR<ClientProfileCreateWithoutParticipantInput, ClientProfileUncheckedCreateWithoutParticipantInput>
+  export type UserCreateOrConnectWithoutParticipantsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
   }
 
-  export type CoordinatorProfileCreateWithoutParticipantsInput = {
-    id?: string
-    firstName: string
-    lastName: string
-    mobile: string
-    organization?: string | null
-    createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    user: UserCreateNestedOneWithoutCoordinatorProfileInput
+  export type UserUpsertWithoutParticipantsInput = {
+    update: XOR<UserUpdateWithoutParticipantsInput, UserUncheckedUpdateWithoutParticipantsInput>
+    create: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
+    where?: UserWhereInput
   }
 
-  export type CoordinatorProfileUncheckedCreateWithoutParticipantsInput = {
-    id?: string
-    userId: string
-    firstName: string
-    lastName: string
-    mobile: string
-    organization?: string | null
-    createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
+  export type UserUpdateToOneWithWhereWithoutParticipantsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutParticipantsInput, UserUncheckedUpdateWithoutParticipantsInput>
   }
 
-  export type CoordinatorProfileCreateOrConnectWithoutParticipantsInput = {
-    where: CoordinatorProfileWhereUniqueInput
-    create: XOR<CoordinatorProfileCreateWithoutParticipantsInput, CoordinatorProfileUncheckedCreateWithoutParticipantsInput>
-  }
-
-  export type ClientProfileUpsertWithoutParticipantInput = {
-    update: XOR<ClientProfileUpdateWithoutParticipantInput, ClientProfileUncheckedUpdateWithoutParticipantInput>
-    create: XOR<ClientProfileCreateWithoutParticipantInput, ClientProfileUncheckedCreateWithoutParticipantInput>
-    where?: ClientProfileWhereInput
-  }
-
-  export type ClientProfileUpdateToOneWithWhereWithoutParticipantInput = {
-    where?: ClientProfileWhereInput
-    data: XOR<ClientProfileUpdateWithoutParticipantInput, ClientProfileUncheckedUpdateWithoutParticipantInput>
-  }
-
-  export type ClientProfileUpdateWithoutParticipantInput = {
+  export type UserUpdateWithoutParticipantsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    status?: EnumAccountStatusFieldUpdateOperationsInput | $Enums.AccountStatus
+    resetPasswordToken?: NullableStringFieldUpdateOperationsInput | string | null
+    resetPasswordExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedLoginAttempts?: IntFieldUpdateOperationsInput | number
+    accountLockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastLoginIp?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    user?: UserUpdateOneRequiredWithoutClientProfileNestedInput
+    accounts?: AccountUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
   }
 
-  export type ClientProfileUncheckedUpdateWithoutParticipantInput = {
+  export type UserUncheckedUpdateWithoutParticipantsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    status?: EnumAccountStatusFieldUpdateOperationsInput | $Enums.AccountStatus
+    resetPasswordToken?: NullableStringFieldUpdateOperationsInput | string | null
+    resetPasswordExpires?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    failedLoginAttempts?: IntFieldUpdateOperationsInput | number
+    accountLockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastLoginIp?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type CoordinatorProfileUpsertWithoutParticipantsInput = {
-    update: XOR<CoordinatorProfileUpdateWithoutParticipantsInput, CoordinatorProfileUncheckedUpdateWithoutParticipantsInput>
-    create: XOR<CoordinatorProfileCreateWithoutParticipantsInput, CoordinatorProfileUncheckedCreateWithoutParticipantsInput>
-    where?: CoordinatorProfileWhereInput
-  }
-
-  export type CoordinatorProfileUpdateToOneWithWhereWithoutParticipantsInput = {
-    where?: CoordinatorProfileWhereInput
-    data: XOR<CoordinatorProfileUpdateWithoutParticipantsInput, CoordinatorProfileUncheckedUpdateWithoutParticipantsInput>
-  }
-
-  export type CoordinatorProfileUpdateWithoutParticipantsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    user?: UserUpdateOneRequiredWithoutCoordinatorProfileNestedInput
-  }
-
-  export type CoordinatorProfileUncheckedUpdateWithoutParticipantsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
+    accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
+    clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
+    coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -30016,9 +28975,10 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
     clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
     coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
-    workerProfile?: WorkerProfileCreateNestedOneWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -30037,9 +28997,10 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
     clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
     coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
-    workerProfile?: WorkerProfileUncheckedCreateNestedOneWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -30074,9 +29035,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
     clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
     coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
-    workerProfile?: WorkerProfileUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -30095,9 +29057,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
     clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
     coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
-    workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -30164,74 +29127,6 @@ export namespace Prisma {
   export type AuditLogCreateManyUserInputEnvelope = {
     data: AuditLogCreateManyUserInput | AuditLogCreateManyUserInput[]
     skipDuplicates?: boolean
-  }
-
-  export type ClientProfileCreateWithoutUserInput = {
-    id?: string
-    firstName: string
-    lastName: string
-    mobile: string
-    createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    participant?: ParticipantCreateNestedOneWithoutClientProfileInput
-  }
-
-  export type ClientProfileUncheckedCreateWithoutUserInput = {
-    id?: string
-    firstName: string
-    lastName: string
-    mobile: string
-    createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: ClientProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    participant?: ParticipantUncheckedCreateNestedOneWithoutClientProfileInput
-  }
-
-  export type ClientProfileCreateOrConnectWithoutUserInput = {
-    where: ClientProfileWhereUniqueInput
-    create: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
-  }
-
-  export type CoordinatorProfileCreateWithoutUserInput = {
-    id?: string
-    firstName: string
-    lastName: string
-    mobile: string
-    organization?: string | null
-    createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    participants?: ParticipantCreateNestedManyWithoutCoordinatorProfileInput
-  }
-
-  export type CoordinatorProfileUncheckedCreateWithoutUserInput = {
-    id?: string
-    firstName: string
-    lastName: string
-    mobile: string
-    organization?: string | null
-    createdAt?: Date | string
-    updatedAt: Date | string
-    postalCode?: string | null
-    servicesRequest?: CoordinatorProfileCreateservicesRequestInput | string[]
-    streetAddress?: string | null
-    suburb?: string | null
-    participants?: ParticipantUncheckedCreateNestedManyWithoutCoordinatorProfileInput
-  }
-
-  export type CoordinatorProfileCreateOrConnectWithoutUserInput = {
-    where: CoordinatorProfileWhereUniqueInput
-    create: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
   }
 
   export type SessionCreateWithoutUserInput = {
@@ -30335,6 +29230,96 @@ export namespace Prisma {
     create: XOR<WorkerProfileCreateWithoutUserInput, WorkerProfileUncheckedCreateWithoutUserInput>
   }
 
+  export type ClientProfileCreateWithoutUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    mobile: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClientProfileUncheckedCreateWithoutUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    mobile: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClientProfileCreateOrConnectWithoutUserInput = {
+    where: ClientProfileWhereUniqueInput
+    create: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
+  }
+
+  export type CoordinatorProfileCreateWithoutUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    mobile: string
+    organization?: string | null
+    clientTypes?: CoordinatorProfileCreateclientTypesInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CoordinatorProfileUncheckedCreateWithoutUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    mobile: string
+    organization?: string | null
+    clientTypes?: CoordinatorProfileCreateclientTypesInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CoordinatorProfileCreateOrConnectWithoutUserInput = {
+    where: CoordinatorProfileWhereUniqueInput
+    create: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
+  }
+
+  export type ParticipantCreateWithoutUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    dateOfBirth: Date | string
+    location?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    isSelfManaged?: boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParticipantUncheckedCreateWithoutUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    dateOfBirth: Date | string
+    location?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    isSelfManaged?: boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParticipantCreateOrConnectWithoutUserInput = {
+    where: ParticipantWhereUniqueInput
+    create: XOR<ParticipantCreateWithoutUserInput, ParticipantUncheckedCreateWithoutUserInput>
+  }
+
+  export type ParticipantCreateManyUserInputEnvelope = {
+    data: ParticipantCreateManyUserInput | ParticipantCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AccountUpsertWithWhereUniqueWithoutUserInput = {
     where: AccountWhereUniqueInput
     update: XOR<AccountUpdateWithoutUserInput, AccountUncheckedUpdateWithoutUserInput>
@@ -30396,86 +29381,6 @@ export namespace Prisma {
     userAgent?: StringNullableFilter<"AuditLog"> | string | null
     metadata?: JsonNullableFilter<"AuditLog">
     createdAt?: DateTimeFilter<"AuditLog"> | Date | string
-  }
-
-  export type ClientProfileUpsertWithoutUserInput = {
-    update: XOR<ClientProfileUpdateWithoutUserInput, ClientProfileUncheckedUpdateWithoutUserInput>
-    create: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
-    where?: ClientProfileWhereInput
-  }
-
-  export type ClientProfileUpdateToOneWithWhereWithoutUserInput = {
-    where?: ClientProfileWhereInput
-    data: XOR<ClientProfileUpdateWithoutUserInput, ClientProfileUncheckedUpdateWithoutUserInput>
-  }
-
-  export type ClientProfileUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    participant?: ParticipantUpdateOneWithoutClientProfileNestedInput
-  }
-
-  export type ClientProfileUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: ClientProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    participant?: ParticipantUncheckedUpdateOneWithoutClientProfileNestedInput
-  }
-
-  export type CoordinatorProfileUpsertWithoutUserInput = {
-    update: XOR<CoordinatorProfileUpdateWithoutUserInput, CoordinatorProfileUncheckedUpdateWithoutUserInput>
-    create: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
-    where?: CoordinatorProfileWhereInput
-  }
-
-  export type CoordinatorProfileUpdateToOneWithWhereWithoutUserInput = {
-    where?: CoordinatorProfileWhereInput
-    data: XOR<CoordinatorProfileUpdateWithoutUserInput, CoordinatorProfileUncheckedUpdateWithoutUserInput>
-  }
-
-  export type CoordinatorProfileUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    participants?: ParticipantUpdateManyWithoutCoordinatorProfileNestedInput
-  }
-
-  export type CoordinatorProfileUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    organization?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
-    servicesRequest?: CoordinatorProfileUpdateservicesRequestInput | string[]
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: NullableStringFieldUpdateOperationsInput | string | null
-    participants?: ParticipantUncheckedUpdateManyWithoutCoordinatorProfileNestedInput
   }
 
   export type SessionUpsertWithWhereUniqueWithoutUserInput = {
@@ -30586,6 +29491,103 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+  }
+
+  export type ClientProfileUpsertWithoutUserInput = {
+    update: XOR<ClientProfileUpdateWithoutUserInput, ClientProfileUncheckedUpdateWithoutUserInput>
+    create: XOR<ClientProfileCreateWithoutUserInput, ClientProfileUncheckedCreateWithoutUserInput>
+    where?: ClientProfileWhereInput
+  }
+
+  export type ClientProfileUpdateToOneWithWhereWithoutUserInput = {
+    where?: ClientProfileWhereInput
+    data: XOR<ClientProfileUpdateWithoutUserInput, ClientProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ClientProfileUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClientProfileUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CoordinatorProfileUpsertWithoutUserInput = {
+    update: XOR<CoordinatorProfileUpdateWithoutUserInput, CoordinatorProfileUncheckedUpdateWithoutUserInput>
+    create: XOR<CoordinatorProfileCreateWithoutUserInput, CoordinatorProfileUncheckedCreateWithoutUserInput>
+    where?: CoordinatorProfileWhereInput
+  }
+
+  export type CoordinatorProfileUpdateToOneWithWhereWithoutUserInput = {
+    where?: CoordinatorProfileWhereInput
+    data: XOR<CoordinatorProfileUpdateWithoutUserInput, CoordinatorProfileUncheckedUpdateWithoutUserInput>
+  }
+
+  export type CoordinatorProfileUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    clientTypes?: CoordinatorProfileUpdateclientTypesInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CoordinatorProfileUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    organization?: NullableStringFieldUpdateOperationsInput | string | null
+    clientTypes?: CoordinatorProfileUpdateclientTypesInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParticipantUpsertWithWhereUniqueWithoutUserInput = {
+    where: ParticipantWhereUniqueInput
+    update: XOR<ParticipantUpdateWithoutUserInput, ParticipantUncheckedUpdateWithoutUserInput>
+    create: XOR<ParticipantCreateWithoutUserInput, ParticipantUncheckedCreateWithoutUserInput>
+  }
+
+  export type ParticipantUpdateWithWhereUniqueWithoutUserInput = {
+    where: ParticipantWhereUniqueInput
+    data: XOR<ParticipantUpdateWithoutUserInput, ParticipantUncheckedUpdateWithoutUserInput>
+  }
+
+  export type ParticipantUpdateManyWithWhereWithoutUserInput = {
+    where: ParticipantScalarWhereInput
+    data: XOR<ParticipantUpdateManyMutationInput, ParticipantUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type ParticipantScalarWhereInput = {
+    AND?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
+    OR?: ParticipantScalarWhereInput[]
+    NOT?: ParticipantScalarWhereInput | ParticipantScalarWhereInput[]
+    id?: StringFilter<"Participant"> | string
+    userId?: StringNullableFilter<"Participant"> | string | null
+    firstName?: StringFilter<"Participant"> | string
+    lastName?: StringFilter<"Participant"> | string
+    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
+    location?: StringNullableFilter<"Participant"> | string | null
+    fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
+    relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFilter<"Participant"> | boolean
+    servicesRequested?: JsonNullableFilter<"Participant">
+    additionalInfo?: StringNullableFilter<"Participant"> | string | null
+    createdAt?: DateTimeFilter<"Participant"> | Date | string
+    updatedAt?: DateTimeFilter<"Participant"> | Date | string
   }
 
   export type WorkerProfileCreateWithoutVerificationRequirementsInput = {
@@ -30867,9 +29869,10 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    sessions?: SessionCreateNestedManyWithoutUserInput
     clientProfile?: ClientProfileCreateNestedOneWithoutUserInput
     coordinatorProfile?: CoordinatorProfileCreateNestedOneWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
+    participants?: ParticipantCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWorkerProfileInput = {
@@ -30888,9 +29891,10 @@ export namespace Prisma {
     updatedAt: Date | string
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     clientProfile?: ClientProfileUncheckedCreateNestedOneWithoutUserInput
     coordinatorProfile?: CoordinatorProfileUncheckedCreateNestedOneWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    participants?: ParticipantUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWorkerProfileInput = {
@@ -31054,9 +30058,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    sessions?: SessionUpdateManyWithoutUserNestedInput
     clientProfile?: ClientProfileUpdateOneWithoutUserNestedInput
     coordinatorProfile?: CoordinatorProfileUpdateOneWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
+    participants?: ParticipantUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWorkerProfileInput = {
@@ -31075,9 +30080,10 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
     coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    participants?: ParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type WorkerServiceUpsertWithWhereUniqueWithoutWorkerProfileInput = {
@@ -31950,126 +30956,6 @@ export namespace Prisma {
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
-  export type ParticipantCreateManyCoordinatorProfileInput = {
-    id?: string
-    clientProfileId?: string | null
-    personNeedingSupport: string
-    firstName: string
-    lastName: string
-    dateOfBirth: Date | string
-    ndisNumber: string
-    mobile: string
-    email?: string | null
-    streetAddress?: string | null
-    suburb: string
-    state: string
-    postalCode: string
-    latitude?: number | null
-    longitude?: number | null
-    servicesRequest?: ParticipantCreateservicesRequestInput | string[]
-    disabilities?: ParticipantCreatedisabilitiesInput | string[]
-    supportNeeds?: string | null
-    planManagerName?: string | null
-    planManagerEmail?: string | null
-    planManagerPhone?: string | null
-    emergencyContactName: string
-    emergencyContactRelationship: string
-    emergencyContactMobile: string
-    representativeType?: $Enums.RepresentativeType | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type ParticipantUpdateWithoutCoordinatorProfileInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    clientProfile?: ClientProfileUpdateOneWithoutParticipantNestedInput
-  }
-
-  export type ParticipantUncheckedUpdateWithoutCoordinatorProfileInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    clientProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type ParticipantUncheckedUpdateManyWithoutCoordinatorProfileInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    clientProfileId?: NullableStringFieldUpdateOperationsInput | string | null
-    personNeedingSupport?: StringFieldUpdateOperationsInput | string
-    firstName?: StringFieldUpdateOperationsInput | string
-    lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    ndisNumber?: StringFieldUpdateOperationsInput | string
-    mobile?: StringFieldUpdateOperationsInput | string
-    email?: NullableStringFieldUpdateOperationsInput | string | null
-    streetAddress?: NullableStringFieldUpdateOperationsInput | string | null
-    suburb?: StringFieldUpdateOperationsInput | string
-    state?: StringFieldUpdateOperationsInput | string
-    postalCode?: StringFieldUpdateOperationsInput | string
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    servicesRequest?: ParticipantUpdateservicesRequestInput | string[]
-    disabilities?: ParticipantUpdatedisabilitiesInput | string[]
-    supportNeeds?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerName?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    planManagerPhone?: NullableStringFieldUpdateOperationsInput | string | null
-    emergencyContactName?: StringFieldUpdateOperationsInput | string
-    emergencyContactRelationship?: StringFieldUpdateOperationsInput | string
-    emergencyContactMobile?: StringFieldUpdateOperationsInput | string
-    representativeType?: NullableEnumRepresentativeTypeFieldUpdateOperationsInput | $Enums.RepresentativeType | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type AccountCreateManyUserInput = {
     id?: string
     type: string
@@ -32098,6 +30984,21 @@ export namespace Prisma {
     sessionToken: string
     expires: Date | string
     impersonatedBy?: string | null
+  }
+
+  export type ParticipantCreateManyUserInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    dateOfBirth: Date | string
+    location?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    isSelfManaged?: boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type AccountUpdateWithoutUserInput = {
@@ -32188,6 +31089,51 @@ export namespace Prisma {
     sessionToken?: StringFieldUpdateOperationsInput | string
     expires?: DateTimeFieldUpdateOperationsInput | Date | string
     impersonatedBy?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ParticipantUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParticipantUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ParticipantUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
+    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type VerificationRequirementCreateManyWorkerProfileInput = {

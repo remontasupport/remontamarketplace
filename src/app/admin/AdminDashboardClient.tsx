@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCategories } from '@/hooks/queries/useCategories'
 import { signOut } from 'next-auth/react'
@@ -32,6 +32,7 @@ interface Contractor {
   createdAt: string
   updatedAt: string
   distance?: number // Only present when distance filtering is active
+  isActive: boolean
 }
 
 interface PaginatedResponse {
@@ -135,71 +136,44 @@ async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedR
 function parseFiltersFromURL(searchParams: URLSearchParams): Partial<ContractorsFilters> {
   const filters: Partial<ContractorsFilters> = {}
 
-  // Pagination
-  const page = searchParams.get('page')
-  if (page) filters.page = parseInt(page, 10) || 1
+  // Integer filters with default fallback
+  const intFilters = [
+    { key: 'page', fallback: 1 },
+    { key: 'pageSize', fallback: 20 },
+  ] as const
 
-  const pageSize = searchParams.get('pageSize')
-  if (pageSize) filters.pageSize = parseInt(pageSize, 10) || 20
+  intFilters.forEach(({ key, fallback }) => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, number>)[key] = parseInt(value, 10) || fallback
+  })
 
-  // Search
-  const search = searchParams.get('search')
-  if (search) filters.search = search
+  // Simple string filters (direct assignment)
+  const stringFilters = [
+    'search', 'sortBy', 'location', 'typeOfSupport',
+    'gender', 'hasVehicle', 'workerType', 'age', 'within'
+  ] as const
 
-  // Sort
-  const sortBy = searchParams.get('sortBy')
-  if (sortBy) filters.sortBy = sortBy
+  stringFilters.forEach(key => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, string>)[key] = value
+  })
 
+  // Validated sortOrder (must be 'asc' or 'desc')
   const sortOrder = searchParams.get('sortOrder')
-  if (sortOrder && (sortOrder === 'asc' || sortOrder === 'desc')) {
+  if (sortOrder === 'asc' || sortOrder === 'desc') {
     filters.sortOrder = sortOrder
   }
 
-  // Location
-  const location = searchParams.get('location')
-  if (location) filters.location = location
+  // Array filters (comma-separated)
+  const arrayFilters = [
+    'languages', 'therapeuticSubcategories',
+    'documentCategories', 'documentStatuses', 'requirementTypes'
+  ] as const
 
-  // Type of Support
-  const typeOfSupport = searchParams.get('typeOfSupport')
-  if (typeOfSupport) filters.typeOfSupport = typeOfSupport
-
-  // Gender
-  const gender = searchParams.get('gender')
-  if (gender) filters.gender = gender
-
-  // Has Vehicle (Driver Access)
-  const hasVehicle = searchParams.get('hasVehicle')
-  if (hasVehicle) filters.hasVehicle = hasVehicle
-
-  // Worker Type
-  const workerType = searchParams.get('workerType')
-  if (workerType) filters.workerType = workerType
-
-  // Languages (array)
-  const languages = searchParams.get('languages')
-  if (languages) filters.languages = languages.split(',').filter(Boolean)
-
-  // Age
-  const age = searchParams.get('age')
-  if (age) filters.age = age
-
-  // Within (distance)
-  const within = searchParams.get('within')
-  if (within) filters.within = within
-
-  // Therapeutic subcategories (array)
-  const therapeuticSubcategories = searchParams.get('therapeuticSubcategories')
-  if (therapeuticSubcategories) filters.therapeuticSubcategories = therapeuticSubcategories.split(',').filter(Boolean)
-
-  // Document filters (arrays)
-  const documentCategories = searchParams.get('documentCategories')
-  if (documentCategories) filters.documentCategories = documentCategories.split(',').filter(Boolean)
-
-  const documentStatuses = searchParams.get('documentStatuses')
-  if (documentStatuses) filters.documentStatuses = documentStatuses.split(',').filter(Boolean)
-
-  const requirementTypes = searchParams.get('requirementTypes')
-  if (requirementTypes) filters.requirementTypes = requirementTypes.split(',').filter(Boolean)
+  arrayFilters.forEach(key => {
+    const value = searchParams.get(key)
+    if (value) (filters as Record<string, string[]>)[key] = value.split(',').filter(Boolean)
+  })
 
   return filters
 }
@@ -211,84 +185,58 @@ function parseFiltersFromURL(searchParams: URLSearchParams): Partial<Contractors
 function buildURLFromFilters(filters: ContractorsFilters): string {
   const params = new URLSearchParams()
 
-  // Always include page (unless it's 1)
-  if (filters.page && filters.page !== 1) {
-    params.set('page', filters.page.toString())
-  }
+  // Integer filters with default values to skip
+  const intFilters = [
+    { key: 'page', defaultValue: 1 },
+    { key: 'pageSize', defaultValue: 20 },
+  ] as const
 
-  // Include pageSize only if not default
-  if (filters.pageSize && filters.pageSize !== 20) {
-    params.set('pageSize', filters.pageSize.toString())
-  }
+  intFilters.forEach(({ key, defaultValue }) => {
+    const value = filters[key]
+    if (value && value !== defaultValue) {
+      params.set(key, value.toString())
+    }
+  })
 
-  // Search
-  if (filters.search) {
-    params.set('search', filters.search)
-  }
+  // String filters with no default (truthy check only)
+  const stringFilters = ['search', 'location'] as const
 
-  // Sort (only if not default)
-  if (filters.sortBy && filters.sortBy !== 'createdAt') {
-    params.set('sortBy', filters.sortBy)
-  }
-  if (filters.sortOrder && filters.sortOrder !== 'desc') {
-    params.set('sortOrder', filters.sortOrder)
-  }
+  stringFilters.forEach(key => {
+    const value = filters[key]
+    if (value) params.set(key, value)
+  })
 
-  // Location
-  if (filters.location) {
-    params.set('location', filters.location)
-  }
+  // String filters with specific default values to skip
+  const stringFiltersWithDefaults = [
+    { key: 'sortBy', defaultValue: 'createdAt' },
+    { key: 'sortOrder', defaultValue: 'desc' },
+    { key: 'typeOfSupport', defaultValue: 'all' },
+    { key: 'gender', defaultValue: 'all' },
+    { key: 'hasVehicle', defaultValue: 'all' },
+    { key: 'workerType', defaultValue: 'all' },
+    { key: 'age', defaultValue: 'all' },
+    { key: 'within', defaultValue: 'none' },
+  ] as const
 
-  // Type of Support (only if not 'all')
-  if (filters.typeOfSupport && filters.typeOfSupport !== 'all') {
-    params.set('typeOfSupport', filters.typeOfSupport)
-  }
+  stringFiltersWithDefaults.forEach(({ key, defaultValue }) => {
+    const value = filters[key]
+    if (value && value !== defaultValue) {
+      params.set(key, value)
+    }
+  })
 
-  // Gender (only if not 'all')
-  if (filters.gender && filters.gender !== 'all') {
-    params.set('gender', filters.gender)
-  }
+  // Array filters (join with comma)
+  const arrayFilters = [
+    'languages', 'therapeuticSubcategories',
+    'documentCategories', 'documentStatuses', 'requirementTypes'
+  ] as const
 
-  // Has Vehicle / Driver Access (only if not 'all')
-  if (filters.hasVehicle && filters.hasVehicle !== 'all') {
-    params.set('hasVehicle', filters.hasVehicle)
-  }
-
-  // Worker Type (only if not 'all')
-  if (filters.workerType && filters.workerType !== 'all') {
-    params.set('workerType', filters.workerType)
-  }
-
-  // Languages (array)
-  if (filters.languages && filters.languages.length > 0) {
-    params.set('languages', filters.languages.join(','))
-  }
-
-  // Age (only if not 'all')
-  if (filters.age && filters.age !== 'all') {
-    params.set('age', filters.age)
-  }
-
-  // Within/Distance (only if not 'none')
-  if (filters.within && filters.within !== 'none') {
-    params.set('within', filters.within)
-  }
-
-  // Therapeutic subcategories (array)
-  if (filters.therapeuticSubcategories && filters.therapeuticSubcategories.length > 0) {
-    params.set('therapeuticSubcategories', filters.therapeuticSubcategories.join(','))
-  }
-
-  // Document filters (arrays)
-  if (filters.documentCategories && filters.documentCategories.length > 0) {
-    params.set('documentCategories', filters.documentCategories.join(','))
-  }
-  if (filters.documentStatuses && filters.documentStatuses.length > 0) {
-    params.set('documentStatuses', filters.documentStatuses.join(','))
-  }
-  if (filters.requirementTypes && filters.requirementTypes.length > 0) {
-    params.set('requirementTypes', filters.requirementTypes.join(','))
-  }
+  arrayFilters.forEach(key => {
+    const value = filters[key]
+    if (value && value.length > 0) {
+      params.set(key, value.join(','))
+    }
+  })
 
   const queryString = params.toString()
   return queryString ? `?${queryString}` : ''
@@ -326,6 +274,34 @@ function formatTravelTime(distanceKm: number): string {
 export default function AdminDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
+
+  // Mutation for toggling worker status
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ contractorId, isActive }: { contractorId: string; isActive: boolean }) => {
+      console.log('[Toggle Status] Sending request:', { contractorId, isActive })
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive })
+      })
+      const data = await response.json()
+      console.log('[Toggle Status] Response:', data)
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update status')
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      console.log('[Toggle Status] Success:', data)
+      // Invalidate and refetch contractors list
+      queryClient.invalidateQueries({ queryKey: ['contractors'] })
+    },
+    onError: (error) => {
+      console.error('[Toggle Status] Error:', error)
+      alert('Failed to update worker status: ' + error.message)
+    }
+  })
 
   // Fetch categories from database
   const { data: categories, isLoading: isCategoriesLoading } = useCategories()
@@ -390,10 +366,17 @@ export default function AdminDashboard() {
     requirementTypes: [] as string[],
   })
 
-  // Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  // Contractor modal state (isModalOpen derived from selectedContractor !== null)
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
   const [showContactInfo, setShowContactInfo] = useState(false)
+  const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
+
+  // Inactive workers modal state (grouped)
+  const [inactiveWorkersState, setInactiveWorkersState] = useState({
+    isOpen: false,
+    workers: [] as Contractor[],
+    isLoading: false,
+  })
 
   // Suburb autocomplete states
   const [suburbSearch, setSuburbSearch] = useState('')
@@ -455,34 +438,18 @@ export default function AdminDashboard() {
     fetchFilterOptions()
   }, [])
 
-  // Close suburb dropdown when clicking outside
+  // Close all dropdowns when clicking outside (combined handler)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (suburbDropdownRef.current && !suburbDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+
+      if (suburbDropdownRef.current && !suburbDropdownRef.current.contains(target)) {
         setShowSuburbDropdown(false)
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Close language dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
         setShowLanguageDropdown(false)
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Close therapeutic subcategory dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(event.target as Node)) {
+      if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(target)) {
         setShowTherapeuticSubcategoryDropdown(false)
       }
     }
@@ -557,21 +524,6 @@ export default function AdminDashboard() {
     const timeoutId = setTimeout(fetchSuburbs, 300) // Debounce for 300ms
     return () => clearTimeout(timeoutId)
   }, [suburbSearch])
-
-  // Sync pendingFilters when actual filters change (e.g., from URL navigation)
-  useEffect(() => {
-    setPendingFilters({
-      location: filters.location,
-      typeOfSupport: filters.typeOfSupport,
-      gender: filters.gender,
-      hasVehicle: filters.hasVehicle,
-      workerType: filters.workerType,
-      languages: filters.languages,
-      age: filters.age,
-      within: filters.within,
-      therapeuticSubcategories: filters.therapeuticSubcategories,
-    })
-  }, [filters.location, filters.typeOfSupport, filters.gender, filters.hasVehicle, filters.workerType, filters.languages, filters.age, filters.within, filters.therapeuticSubcategories])
 
   // Sync filters to URL whenever they change
   useEffect(() => {
@@ -648,9 +600,51 @@ export default function AdminDashboard() {
   }
 
   const closeModal = () => {
-    setIsModalOpen(false)
     setSelectedContractor(null)
     setShowContactInfo(false)
+  }
+
+  const fetchInactiveWorkers = async () => {
+    setInactiveWorkersState(prev => ({ ...prev, isLoading: true }))
+    try {
+      const response = await fetch('/api/admin/contractors/inactive')
+      const result = await response.json()
+      if (result.success) {
+        setInactiveWorkersState({ isOpen: true, workers: result.data, isLoading: false })
+      } else {
+        setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
+        alert('Failed to fetch inactive workers: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error fetching inactive workers:', error)
+      setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
+      alert('Failed to fetch inactive workers')
+    }
+  }
+
+  const reactivateWorker = async (contractorId: string) => {
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true })
+      })
+      const result = await response.json()
+      if (result.success) {
+        // Remove from inactive list
+        setInactiveWorkersState(prev => ({
+          ...prev,
+          workers: prev.workers.filter(w => w.id !== contractorId)
+        }))
+        // Refresh main list
+        queryClient.invalidateQueries({ queryKey: ['contractors'] })
+      } else {
+        alert('Failed to reactivate worker: ' + result.error)
+      }
+    } catch (error) {
+      console.error('Error reactivating worker:', error)
+      alert('Failed to reactivate worker')
+    }
   }
 
   // ========================================
@@ -1037,6 +1031,14 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </div>
+                {/* Show Inactive Link */}
+                <button
+                  onClick={fetchInactiveWorkers}
+                  disabled={inactiveWorkersState.isLoading}
+                  className="mt-4 text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait text-left"
+                >
+                  {inactiveWorkersState.isLoading ? 'Loading...' : 'Show Inactive'}
+                </button>
               </div>
 
               {/* Therapeutic Subcategories - Multi-select with Search (only shown when Therapeutic Supports is selected) */}
@@ -1437,11 +1439,8 @@ export default function AdminDashboard() {
                     data.data.map((contractor) => (
                       <tr
                         key={contractor.id}
-                        onClick={() => {
-                          setSelectedContractor(contractor)
-                          setIsModalOpen(true)
-                        }}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors">
+                        onClick={() => setSelectedContractor(contractor)}
+                        className={`hover:bg-gray-50 cursor-pointer transition-colors ${!contractor.isActive ? 'opacity-50' : ''}`}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -1461,8 +1460,48 @@ export default function AdminDashboard() {
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {contractor.firstName} {contractor.lastName}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {contractor.firstName} {contractor.lastName}
+                                </span>
+                                {/* Active Status with Toggle on Click */}
+                                <div className="flex items-center gap-1">
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowToggleForContractor(
+                                        showToggleForContractor === contractor.id ? null : contractor.id
+                                      );
+                                    }}
+                                    className="text-xs text-green-700 font-medium cursor-pointer select-none px-2 py-0.5 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
+                                  >
+                                    Active
+                                  </span>
+                                  {showToggleForContractor === contractor.id && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleStatusMutation.mutate({
+                                          contractorId: contractor.id,
+                                          isActive: !contractor.isActive
+                                        })
+                                      }}
+                                      disabled={toggleStatusMutation.isPending}
+                                      className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                                        contractor.isActive ? 'bg-green-500' : 'bg-gray-300'
+                                      } ${toggleStatusMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
+                                      role="switch"
+                                      aria-checked={contractor.isActive}
+                                      title={contractor.isActive ? 'Click to deactivate' : 'Click to activate'}
+                                    >
+                                      <span
+                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                          contractor.isActive ? 'translate-x-4' : 'translate-x-0'
+                                        }`}
+                                      />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                               {contractor.mobile && (
                                 <div className="text-sm text-gray-500">
@@ -1537,7 +1576,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Modal for contractor actions */}
-      {isModalOpen && selectedContractor && (
+      {selectedContractor && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
@@ -1695,6 +1734,88 @@ export default function AdminDashboard() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inactive Workers Modal */}
+      {inactiveWorkersState.isOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
+          ></div>
+
+          {/* Modal */}
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div
+              className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Inactive Workers ({inactiveWorkersState.workers.length})
+                </h3>
+                <button
+                  onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="overflow-y-auto max-h-[60vh] p-6">
+                {inactiveWorkersState.workers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No inactive workers found
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {inactiveWorkersState.workers.map((worker) => (
+                      <div
+                        key={worker.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          {worker.photos ? (
+                            <img
+                              className="h-10 w-10 rounded-full object-cover"
+                              src={worker.photos}
+                              alt=""
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                              <span className="text-gray-600 font-medium text-sm">
+                                {worker.firstName?.[0]}{worker.lastName?.[0]}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {worker.firstName} {worker.lastName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {worker.email || worker.mobile || 'No contact info'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => reactivateWorker(worker.id)}
+                          className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
+                        >
+                          Reactivate
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
