@@ -22,6 +22,14 @@ const ReportsPage = dynamic(
   }
 )
 
+const CheckCompliancePage = dynamic(
+  () => import('./CheckComplianceContent'),
+  {
+    ssr: false,
+    loading: () => <PageLoader />
+  }
+)
+
 function PageLoader() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -43,7 +51,7 @@ function ManageContent() {
       case 'support-coordinators':
         return <SupportCoordinatorsPlaceholder />
       case 'check-compliance':
-        return <CheckCompliancePlaceholder />
+        return <CheckCompliancePage />
       case 'reports':
         return <ReportsPage />
       default:
@@ -81,22 +89,6 @@ function SupportCoordinatorsPlaceholder() {
         </div>
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <p className="text-gray-500">Support coordinators management coming soon...</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CheckCompliancePlaceholder() {
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Check Compliance</h1>
-          <p className="mt-2 text-sm text-gray-600">Review and verify worker compliance status</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500">Compliance checking coming soon...</p>
         </div>
       </div>
     </div>

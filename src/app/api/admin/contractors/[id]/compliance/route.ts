@@ -3,6 +3,102 @@ import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 
+// ============================================================================
+// DOCUMENT CATEGORIZATION
+// ============================================================================
+
+/**
+ * Essential Checks - Mandatory compliance documents
+ */
+const ESSENTIAL_CHECKS_TYPES = [
+  'police-check',
+  'worker-screening-check',
+  'ndis-screening-check',
+  'working-with-children',
+  'right-to-work',
+]
+
+/**
+ * Modules - Training documents
+ */
+const MODULES_TYPES = [
+  'ndis-training',
+  'ndis-induction-module',
+  'ndis-worker-orientation',
+  'effective-communication',
+  'safe-enjoyable-meals',
+  'infection-control',
+  'first-aid-cpr',
+  'manual-handling',
+  'medication-training',
+  'behaviour-support',
+]
+
+/**
+ * Insurance document types (for service-specific detection)
+ */
+const INSURANCE_TYPES = [
+  'car-insurance',
+  'public-liability-10m',
+  'professional-indemnity',
+]
+
+/**
+ * Categorize a document into one of 5 categories:
+ * 1. essentialChecks - Mandatory compliance (police check, WWCC, etc.)
+ * 2. modules - Training documents
+ * 3. certifications - Qualifications and service-specific non-insurance docs
+ * 4. identity - Primary and secondary ID documents
+ * 5. insurances - Insurance documents
+ */
+function categorizeDocument(doc: {
+  requirementType: string
+  documentCategory: string | null
+}): 'essentialChecks' | 'modules' | 'certifications' | 'identity' | 'insurances' {
+  const { requirementType, documentCategory } = doc
+
+  // 1. Identity - Check documentCategory first (PRIMARY or SECONDARY)
+  if (documentCategory === 'PRIMARY' || documentCategory === 'SECONDARY') {
+    return 'identity'
+  }
+
+  // 2. Check if it's a service-specific document (contains ':')
+  if (requirementType.includes(':')) {
+    const docType = requirementType.split(':')[1] // Get the part after ':'
+
+    // Check if it's an insurance type
+    if (INSURANCE_TYPES.includes(docType)) {
+      return 'insurances'
+    }
+
+    // Otherwise it's a certification/qualification
+    return 'certifications'
+  }
+
+  // 3. Essential Checks
+  if (ESSENTIAL_CHECKS_TYPES.includes(requirementType)) {
+    return 'essentialChecks'
+  }
+
+  // 4. Modules (Training)
+  if (MODULES_TYPES.includes(requirementType)) {
+    return 'modules'
+  }
+
+  // 5. Check for standalone insurance types
+  if (INSURANCE_TYPES.includes(requirementType)) {
+    return 'insurances'
+  }
+
+  // 6. SERVICE_QUALIFICATION category goes to certifications
+  if (documentCategory === 'SERVICE_QUALIFICATION') {
+    return 'certifications'
+  }
+
+  // Default to certifications for any unmatched documents
+  return 'certifications'
+}
+
 /**
  * GET /api/admin/contractors/:id/compliance
  * Fetch all compliance documents for a worker profile
@@ -44,23 +140,29 @@ export async function GET(
         notes: true,
         rejectionReason: true,
         documentCategory: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
       orderBy: [
-        { documentCategory: 'asc' },
         { createdAt: 'desc' }
       ]
     })
 
-    // Group documents by category
-    const groupedDocuments = {
-      PRIMARY: documents.filter(doc => doc.documentCategory === 'PRIMARY'),
-      SECONDARY: documents.filter(doc => doc.documentCategory === 'SECONDARY'),
-      WORKING_RIGHTS: documents.filter(doc => doc.documentCategory === 'WORKING_RIGHTS'),
-      SERVICE_QUALIFICATION: documents.filter(doc => doc.documentCategory === 'SERVICE_QUALIFICATION'),
-      OTHER: documents.filter(doc => !doc.documentCategory)
+    // Group documents by the 5 categories
+    const categorizedDocuments = {
+      essentialChecks: [] as typeof documents,
+      modules: [] as typeof documents,
+      certifications: [] as typeof documents,
+      identity: [] as typeof documents,
+      insurances: [] as typeof documents,
     }
+
+    // Categorize each document
+    documents.forEach(doc => {
+      const category = categorizeDocument(doc)
+      categorizedDocuments[category].push(doc)
+    })
 
     // Calculate statistics
     const stats = {
@@ -72,12 +174,37 @@ export async function GET(
       expired: documents.filter(d => d.status === 'EXPIRED').length,
     }
 
+    // Calculate stats per category
+    const categoryStats = {
+      essentialChecks: {
+        total: categorizedDocuments.essentialChecks.length,
+        approved: categorizedDocuments.essentialChecks.filter(d => d.status === 'APPROVED').length,
+      },
+      modules: {
+        total: categorizedDocuments.modules.length,
+        approved: categorizedDocuments.modules.filter(d => d.status === 'APPROVED').length,
+      },
+      certifications: {
+        total: categorizedDocuments.certifications.length,
+        approved: categorizedDocuments.certifications.filter(d => d.status === 'APPROVED').length,
+      },
+      identity: {
+        total: categorizedDocuments.identity.length,
+        approved: categorizedDocuments.identity.filter(d => d.status === 'APPROVED').length,
+      },
+      insurances: {
+        total: categorizedDocuments.insurances.length,
+        approved: categorizedDocuments.insurances.filter(d => d.status === 'APPROVED').length,
+      },
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         documents,
-        groupedDocuments,
-        stats
+        categorizedDocuments,
+        stats,
+        categoryStats,
       }
     })
 
