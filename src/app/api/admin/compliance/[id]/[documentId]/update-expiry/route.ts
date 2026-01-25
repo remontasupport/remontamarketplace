@@ -4,7 +4,7 @@ import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 
 /**
- * POST /api/admin/contractors/:id/compliance/:documentId/update-expiry
+ * POST /api/admin/compliance/:id/:documentId/update-expiry
  * Update expiration date for a compliance document
  */
 export async function POST(

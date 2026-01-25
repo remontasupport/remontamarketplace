@@ -4,8 +4,8 @@ import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 
 /**
- * POST /api/admin/contractors/:id/compliance/:documentId/reset
- * Reset a compliance document back to SUBMITTED status for re-review
+ * POST /api/admin/compliance/:id/:documentId/approve
+ * Approve a compliance document
  */
 export async function POST(
   request: NextRequest,
@@ -36,10 +36,19 @@ export async function POST(
       )
     }
 
-    // Only allow resetting from APPROVED or REJECTED status
-    if (document.status !== 'APPROVED' && document.status !== 'REJECTED') {
+    // If already approved, no need to update
+    if (document.status === 'APPROVED') {
+      return NextResponse.json({
+        success: true,
+        message: 'Document is already approved',
+        data: document,
+      })
+    }
+
+    // Check if document can be approved (must be SUBMITTED or REJECTED)
+    if (document.status !== 'SUBMITTED' && document.status !== 'REJECTED') {
       return NextResponse.json(
-        { success: false, error: `Document cannot be reset. Current status: ${document.status}` },
+        { success: false, error: `Document cannot be approved from ${document.status} status` },
         { status: 400 }
       )
     }
@@ -50,26 +59,23 @@ export async function POST(
 
     const now = new Date()
 
-    // Reset the document to SUBMITTED status
+    // Update the document to APPROVED status
     const updatedDocument = await prisma.verificationRequirement.update({
       where: { id: documentId },
       data: {
-        status: 'SUBMITTED',
+        status: 'APPROVED',
+        approvedAt: now,
         reviewedAt: now,
         reviewedBy: adminEmail,
-        approvedAt: null,
-        rejectedAt: null,
-        rejectionReason: null,
-        notes: document.notes
-          ? `${document.notes}\n[${now.toISOString()}] Reset to review by ${adminEmail}`
-          : `[${now.toISOString()}] Reset to review by ${adminEmail}`,
+        rejectedAt: null, // Clear rejection date if it was previously rejected
+        rejectionReason: null, // Clear rejection reason
         updatedAt: now,
       },
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Document reset to review successfully',
+      message: 'Document approved successfully',
       data: updatedDocument,
     })
 
@@ -80,7 +86,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to reset document',
+        error: 'Failed to approve document',
         message: errorMsg,
       },
       { status: 500 }

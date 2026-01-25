@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { Users, UserCheck, HeadphonesIcon, FileText, LogOut, ClipboardCheck } from 'lucide-react'
 import { Suspense } from 'react'
@@ -48,9 +48,14 @@ const navItems: NavItem[] = [
 
 function SidebarContent() {
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const currentTab = searchParams.get('tab') || 'contractors'
 
   const isActive = (tab: string) => {
+    // Check if on /admin/compliance/[id] route - only highlight Check Compliance tab
+    if (pathname.startsWith('/admin/compliance/')) {
+      return tab === 'check-compliance'
+    }
     return currentTab === tab
   }
 

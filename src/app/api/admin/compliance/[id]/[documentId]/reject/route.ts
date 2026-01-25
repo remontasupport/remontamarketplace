@@ -4,7 +4,7 @@ import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 
 /**
- * POST /api/admin/contractors/:id/compliance/:documentId/reject
+ * POST /api/admin/compliance/:id/:documentId/reject
  * Reject a compliance document with a reason
  */
 export async function POST(

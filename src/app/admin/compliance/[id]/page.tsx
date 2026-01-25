@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { ChevronDown, ChevronRight, FileText, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { ChevronDown, ChevronRight, FileText, CheckCircle, XCircle, Clock, AlertCircle, ArrowLeft } from 'lucide-react'
 
 interface VerificationDocument {
   id: string
@@ -95,7 +96,6 @@ const CATEGORY_CONFIG: Record<CategoryKey, { title: string; description: string;
 const CATEGORY_ORDER: CategoryKey[] = ['essentialChecks', 'modules', 'certifications', 'identity', 'insurances']
 
 export default function CompliancePage() {
-  const router = useRouter()
   const params = useParams()
   const contractorId = params.id as string
 
@@ -119,7 +119,7 @@ export default function CompliancePage() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/compliance`)
+      const response = await fetch(`/api/admin/compliance/${contractorId}`)
       const result = await response.json()
 
       if (result.success) {
@@ -157,7 +157,7 @@ export default function CompliancePage() {
 
     setIsSubmitting(true)
     try {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/compliance/${document.id}/approve`, {
+      const response = await fetch(`/api/admin/compliance/${contractorId}/${document.id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
@@ -192,7 +192,7 @@ export default function CompliancePage() {
 
     setIsSubmitting(true)
     try {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/compliance/${selectedDocument.id}/reject`, {
+      const response = await fetch(`/api/admin/compliance/${contractorId}/${selectedDocument.id}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rejectionReason: rejectionReason.trim() }),
@@ -222,7 +222,7 @@ export default function CompliancePage() {
 
     setIsSubmitting(true)
     try {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/compliance/${document.id}/reset`, {
+      const response = await fetch(`/api/admin/compliance/${contractorId}/${document.id}/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
@@ -260,7 +260,7 @@ export default function CompliancePage() {
   const handleSaveExpiry = async (documentId: string) => {
     setIsSubmitting(true)
     try {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/compliance/${documentId}/update-expiry`, {
+      const response = await fetch(`/api/admin/compliance/${contractorId}/${documentId}/update-expiry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -539,12 +539,12 @@ export default function CompliancePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
             <p className="text-red-600">{error || 'Failed to load compliance data'}</p>
-            <button
-              onClick={() => router.back()}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            <Link
+              href="/admin/manage?tab=check-compliance"
+              className="mt-4 inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              Go Back
-            </button>
+              Back to Check Compliance
+            </Link>
           </div>
         </div>
       </div>
@@ -556,15 +556,13 @@ export default function CompliancePage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
+          <Link
+            href="/admin/manage?tab=check-compliance"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Dashboard
-          </button>
+            <ArrowLeft className="w-5 h-5" />
+            Back to Check Compliance
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900">Compliance Documents</h1>
           <p className="mt-2 text-sm text-gray-600">Review and manage worker verification documents</p>
         </div>

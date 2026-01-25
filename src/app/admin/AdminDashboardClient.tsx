@@ -1412,7 +1412,7 @@ export default function AdminDashboard() {
                             </a>
 
                             <a
-                              href={`/admin/contractors/${contractor.id}/compliance`}
+                              href={`/admin/compliance/${contractor.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}

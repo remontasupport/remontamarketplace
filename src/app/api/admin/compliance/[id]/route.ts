@@ -100,7 +100,7 @@ function categorizeDocument(doc: {
 }
 
 /**
- * GET /api/admin/contractors/:id/compliance
+ * GET /api/admin/compliance/:id
  * Fetch all compliance documents for a worker profile
  */
 export async function GET(

@@ -14,9 +14,10 @@ export async function GET(request: NextRequest) {
     await requireRole(UserRole.ADMIN)
 
     // Fast query: Get distinct worker profiles that have SUBMITTED documents
-    // Using a subquery approach for better performance
+    // Exclude workers who are already verified (isPublished: true)
     const workersWithSubmittedDocs = await prisma.workerProfile.findMany({
       where: {
+        isPublished: false,
         verificationRequirements: {
           some: {
             status: 'SUBMITTED'
