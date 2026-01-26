@@ -8,6 +8,7 @@ import { useSession } from 'next-auth/react'
 import {
   HomeIcon,
   UsersIcon,
+  PlusCircleIcon,
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
@@ -33,6 +34,12 @@ const menuItems: MenuItem[] = [
     name: 'Participants',
     href: '/dashboard/client/participants',
     icon: UsersIcon,
+  },
+  {
+    id: 'request-service',
+    name: 'Request A Service',
+    href: '/dashboard/client/request-service',
+    icon: PlusCircleIcon,
   },
   {
     id: 'bookings',
