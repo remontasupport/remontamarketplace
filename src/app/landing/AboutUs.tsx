@@ -21,7 +21,7 @@ export default function AboutUs() {
 
           {/* Main Heading */}
           <h2 className="section-title scroll-animate fade-up" data-delay="1">
-            NDIS Registered Matching Platform
+            A Better Way to Find the Right Support
           </h2>
         </div>
 
@@ -62,14 +62,15 @@ export default function AboutUs() {
                 <span className="section-badge">ABOUT US</span>
               </div>
               <div className="section-title">
-                NDIS Registered Matching Platform
+                A Better Way to Find the Right Support
 
               </div>
             </div>
 
             {/* Description */}
             <p className="about-description scroll-animate fade-up" data-delay="1">
-              Remonta is a fully registered NDIS matching platform delivering high quality support services across Australia. We meet all compliance and audit standards set by the NDIS Commission, ensuring every participant receives safe, reliable and accountable care. We give you the freedom to choose and control your support, combined with the safeguards and reliability of a NDIS matching platform :
+              Remonta helps bring participants, families, support coordinators, and support workers together in a way that feels simple and reliable. 
+              As an NDIS-registered organisation, we focus on making sure connections are safe, compliant, and built around real needs, while giving people the freedom to choose the support that works best for them :
             </p>
 
             {/* Services List */}
