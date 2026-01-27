@@ -20,14 +20,14 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
+  title: "Remonta | NDIS Matching Platform for Care Services",
   description: "Connecting NDIS participants with quality support workers across Australia",
   metadataBase: new URL('https://www.remontaservices.com.au'),
   verification: {
     google: 'pkvtMiFCtvuWhEd32fXDKjtML0IybbTSGZontVmXDCE',
   },
   openGraph: {
-    title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
+    title: "Remonta | NDIS Matching Platform for Care Services",
     description: "Connecting NDIS participants with quality support workers across Australia",
     url: 'https://www.remontaservices.com.au',
     siteName: 'Remonta Services',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
         url: '/logo/logo-icon-dark.png',
         width: 500,
         height: 500,
-        alt: 'Remonta - NDIS Service Provider Australia',
+        alt: 'Remonta - NDIS Matching Platform',
       },
     ],
     locale: 'en_AU',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
+    title: "Remonta | NDIS Matching Platform for Care Services",
     description: "Connecting NDIS participants with quality support workers across Australia",
     images: ['/logo/logo-icon-dark.png'],
   },
@@ -177,7 +177,7 @@ export default function RootLayout({
     ],
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
-      "name": "NDIS Support Services",
+      "name": "NDIS Matching Platform",
       "itemListElement": [
         {
           "@type": "Offer",

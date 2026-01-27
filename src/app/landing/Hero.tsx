@@ -44,11 +44,12 @@ export default function Hero() {
       <div className="hero-container">
         <div className="hero-content">
           <h1 className="hero-title scroll-animate fade-up">
-            Your Trusted, Ethical and Reliable NDIS service provider
+            Your Trusted, Ethical and Reliable Care Matching Platform
           </h1>
 
           <p className="hero-description scroll-animate fade-up" data-delay="1">
-           We are proud to be a registered NDIS disability and aged care provider helping people who need assistance make meaningful connections with the highest quality carers in their local area.
+           Getting the right support starts with the right match.
+           We help connect people with trusted support workers and service providers in their local area.
           </p>
 
           {/* Buttons */}
@@ -78,8 +79,8 @@ export default function Hero() {
                 className="hero-ndis-logo-desktop"
               />
               <div className="hero-ndis-text-desktop">
-                <span>Registered </span>
-                <span>NDIS provider</span>
+                <span>Care Matching</span>
+                <span>Platform</span>
               </div>
             </div>
           </div>

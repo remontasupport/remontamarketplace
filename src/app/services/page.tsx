@@ -80,10 +80,10 @@ export default function ServicesPage() {
                 />
                 <div>
                   <p className="text-sm md:text-base font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
-                    Registered
+                    Care Matching
                   </p>
                   <p className="text-sm md:text-base font-poppins" style={{ color: BRAND_COLORS.PRIMARY }}>
-                    NDIS provider
+                    Platform
                   </p>
                 </div>
               </div>
