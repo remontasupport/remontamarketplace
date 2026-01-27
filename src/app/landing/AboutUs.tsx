@@ -21,11 +21,7 @@ export default function AboutUs() {
 
           {/* Main Heading */}
           <h2 className="section-title scroll-animate fade-up" data-delay="1">
-<<<<<<< HEAD
             NDIS Registered Matching Platform
-=======
-            NDIS Care Registered Support Services Provider
->>>>>>> 0044806259f4d3569e9165bc8cf5f6cb43333b3e
           </h2>
         </div>
 
@@ -66,11 +62,8 @@ export default function AboutUs() {
                 <span className="section-badge">ABOUT US</span>
               </div>
               <div className="section-title">
-<<<<<<< HEAD
                 NDIS Registered Matching Platform
-=======
-                NDIS Registered Care Support Services Provider
->>>>>>> 0044806259f4d3569e9165bc8cf5f6cb43333b3e
+
               </div>
             </div>
 
