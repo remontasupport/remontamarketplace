@@ -103,11 +103,16 @@ export async function GET(
       ? firstService.subcategoryNames.join(' / ')
       : firstService?.categoryName || 'Support Worker';
 
-    // Fetch verification requirements to populate documentsByService
+    // Fetch verification requirements to populate documentsByService and contract document
     const verificationRequirements = await authPrisma.verificationRequirement.findMany({
       where: { workerProfileId: workerProfile.id },
       select: {
+        id: true,
         requirementType: true,
+        requirementName: true,
+        documentUrl: true,
+        documentUploadedAt: true,
+        createdAt: true,
         metadata: true,
       },
     });
@@ -160,6 +165,7 @@ export async function GET(
       supportWorkerCategories,
       documentsByService,
       displayRole,
+      verificationRequirements, // Include for contract document lookup
       setupProgress: realTimeSetupProgress, // Override cached JSON with real-time calculation
     });
 

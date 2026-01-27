@@ -121,7 +121,7 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Worker Type Filter
-   * Queries JSON column: abn = {"workerEngagementType":{"type":"abn"|"tfn","value":"..."}}
+   * Queries JSON column: abn = {"workerEngagementType":{"type":"abn"|"tfn","signed":true}}
    * Employee = type is "tfn", Contractor = type is "abn"
    */
   workerType: (params) => {

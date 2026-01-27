@@ -260,6 +260,37 @@ export async function GET(request: Request) {
     const insurance = Array.from(groupedRequirements.get('insurance')?.values() || []);
     const transport = Array.from(groupedRequirements.get('transport')?.values() || []);
 
+    // Add Code of Conduct steps after ABN contractor step (mandatory for all workers)
+    // Find the position after ABN contractor step
+    const abnIndex = baseCompliance.findIndex((doc: any) => doc.id === 'abn-contractor');
+    const codeOfConductSteps = [
+      {
+        id: 'code-of-conduct-part1',
+        name: 'Code of Conduct (Part 1)',
+        category: 'COMPLIANCE',
+        description: 'Read and understand the Remonta Code of Conduct - Part 1 of 2',
+        hasExpiration: false,
+        documentType: 'REQUIRED',
+        serviceCategory: 'All Services',
+      },
+      {
+        id: 'code-of-conduct-part2',
+        name: 'Code of Conduct (Part 2)',
+        category: 'COMPLIANCE',
+        description: 'Read, sign and acknowledge the Remonta Code of Conduct - Part 2 of 2',
+        hasExpiration: false,
+        documentType: 'REQUIRED',
+        serviceCategory: 'All Services',
+      },
+    ];
+
+    // Insert Code of Conduct steps after ABN contractor step, or at the end if not found
+    if (abnIndex !== -1) {
+      baseCompliance.splice(abnIndex + 1, 0, ...codeOfConductSteps);
+    } else {
+      baseCompliance.push(...codeOfConductSteps);
+    }
+
     // OPTIMIZED: Add aggressive HTTP caching for instant subsequent loads (like 100 Points ID)
     return NextResponse.json({
       success: true,

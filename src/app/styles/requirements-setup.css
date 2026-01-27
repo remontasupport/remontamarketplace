@@ -544,3 +544,357 @@
     transform: translate(-50%, -50%);
   }
 }
+
+/* =====================================================
+   CODE OF CONDUCT STYLES
+   ===================================================== */
+
+/* Code of Conduct Header */
+.code-of-conduct-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.code-of-conduct-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.code-of-conduct-part-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Purpose Section */
+.code-of-conduct-purpose {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.code-of-conduct-purpose-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.code-of-conduct-purpose-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9375rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Sections Container */
+.code-of-conduct-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Individual Section */
+.code-of-conduct-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background-color: #ffffff;
+}
+
+.code-of-conduct-section-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.code-of-conduct-section-content {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.code-of-conduct-item {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.5;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.code-of-conduct-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--brand-teal);
+  font-weight: bold;
+}
+
+/* Continue Notice */
+.code-of-conduct-continue-notice {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+}
+
+.code-of-conduct-continue-notice p {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #1e40af;
+  margin: 0;
+  text-align: center;
+}
+
+/* Acknowledgment Section */
+.code-of-conduct-acknowledgment {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 0.5rem;
+}
+
+.code-of-conduct-acknowledgment-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 0.75rem 0;
+}
+
+.code-of-conduct-acknowledgment-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9375rem;
+  color: #78350f;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Signature Section */
+.code-of-conduct-signature-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Already Signed Status */
+.code-of-conduct-signed-status {
+  padding: 1rem;
+}
+
+.signed-status-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 0.5rem;
+}
+
+.signed-status-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #166534;
+  margin: 0;
+}
+
+.signed-status-date {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #15803d;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Signature Field */
+.signature-field {
+  margin-bottom: 1.5rem;
+}
+
+.signature-label {
+  display: block;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.signature-pad-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 150px;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.signature-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.signature-actions {
+  margin-top: 0.5rem;
+}
+
+.signature-clear-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signature-clear-btn:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.signature-clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.signature-error {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #dc2626;
+  margin-top: 0.5rem;
+}
+
+/* Date Field */
+.signature-date-field {
+  margin-bottom: 1.5rem;
+}
+
+.signature-date-input {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9375rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 200px;
+  color: #111827;
+  background-color: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.signature-date-input:focus {
+  outline: none;
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+/* Save Button */
+.signature-save-section {
+  margin-top: 1rem;
+}
+
+.signature-save-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--brand-primary);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.signature-save-btn:hover:not(:disabled) {
+  background-color: #1a2942;
+}
+
+.signature-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading-spinner-small {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Mobile Responsive - Code of Conduct */
+@media (max-width: 768px) {
+  .code-of-conduct-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .code-of-conduct-title {
+    font-size: 1.25rem;
+  }
+
+  .code-of-conduct-section {
+    padding: 0.875rem 1rem;
+  }
+
+  .code-of-conduct-section-title {
+    font-size: 0.9375rem;
+  }
+
+  .code-of-conduct-item {
+    font-size: 0.8125rem;
+  }
+
+  .signature-pad-container {
+    height: 120px;
+  }
+
+  .signature-save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

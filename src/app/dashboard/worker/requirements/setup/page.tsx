@@ -32,7 +32,20 @@ interface UploadedDocument {
 
 interface WorkerEngagementType {
   type: "abn" | "tfn";
-  value: string;
+  value?: string; // Optional - only used for form input, not saved to DB
+  signed?: boolean; // Optional - indicates contract was signed (from DB)
+}
+
+interface ContractDocument {
+  id: string;
+  documentUrl: string;
+  uploadedAt: string;
+}
+
+interface CodeOfConductDocument {
+  id: string;
+  documentUrl: string;
+  uploadedAt: string;
 }
 
 interface FormData {
@@ -40,7 +53,14 @@ interface FormData {
   identityDocuments: UploadedDocument[];
   // Worker engagement type (ABN/TFN)
   workerEngagementType: WorkerEngagementType | null;
+  // Contract document (uploaded)
+  contractDocument: ContractDocument | null;
+  // Code of Conduct
+  codeOfConductSignature: string | null;
+  codeOfConductDate: string | null;
+  codeOfConductDocument: CodeOfConductDocument | null;
 }
+
 
 function MandatoryRequirementsSetupContent() {
   const { data: session, status } = useSession();
@@ -85,6 +105,10 @@ function MandatoryRequirementsSetupContent() {
   const [formData, setFormData] = useState<FormData>({
     identityDocuments: [],
     workerEngagementType: null,
+    contractDocument: null,
+    codeOfConductSignature: null,
+    codeOfConductDate: null,
+    codeOfConductDocument: null,
   });
 
   // Populate form data ONLY on initial load
@@ -99,9 +123,43 @@ function MandatoryRequirementsSetupContent() {
         }
       }
 
+      // Load contract document from verificationRequirements
+      let contractDocument: ContractDocument | null = null;
+      let codeOfConductDocument: CodeOfConductDocument | null = null;
+
+      if (profileData.verificationRequirements && Array.isArray(profileData.verificationRequirements)) {
+        // Find contract document
+        const contractReq = profileData.verificationRequirements.find(
+          (req: any) => req.requirementType === "contract-of-agreement"
+        );
+        if (contractReq?.documentUrl) {
+          contractDocument = {
+            id: contractReq.id,
+            documentUrl: contractReq.documentUrl,
+            uploadedAt: contractReq.documentUploadedAt || contractReq.createdAt,
+          };
+        }
+
+        // Find code of conduct document
+        const codeOfConductReq = profileData.verificationRequirements.find(
+          (req: any) => req.requirementType === "code-of-conduct"
+        );
+        if (codeOfConductReq?.documentUrl) {
+          codeOfConductDocument = {
+            id: codeOfConductReq.id,
+            documentUrl: codeOfConductReq.documentUrl,
+            uploadedAt: codeOfConductReq.documentUploadedAt || codeOfConductReq.createdAt,
+          };
+        }
+      }
+
       setFormData({
         identityDocuments: [], // Will be loaded from VerificationRequirement table
         workerEngagementType,
+        contractDocument,
+        codeOfConductSignature: null,
+        codeOfConductDate: null,
+        codeOfConductDocument,
       });
       hasInitializedFormData.current = true;
     }
@@ -128,18 +186,32 @@ function MandatoryRequirementsSetupContent() {
     const newErrors: Record<string, string> = {};
 
     // Validate ABN/TFN if this is the ABN step
+    // Skip validation if contract is already uploaded (value not needed after upload)
     if (currentStepData?.documentId === "abn-contractor") {
-      const engagement = formData.workerEngagementType;
-      if (engagement?.type === "abn") {
-        const digits = engagement.value.replace(/\s/g, "");
-        if (!digits || digits.length !== 11) {
-          newErrors.workerEngagementType = "Please enter a valid 11-digit ABN";
+      const isContractUploaded = !!formData.contractDocument?.documentUrl;
+
+      // Only validate ABN/TFN number if contract is NOT uploaded yet
+      if (!isContractUploaded) {
+        const engagement = formData.workerEngagementType;
+        if (engagement?.type === "abn") {
+          const digits = (engagement.value || "").replace(/\s/g, "");
+          if (!digits || digits.length !== 11) {
+            newErrors.workerEngagementType = "Please enter a valid 11-digit ABN";
+          }
+        } else if (engagement?.type === "tfn") {
+          const digits = (engagement.value || "").replace(/\s/g, "");
+          if (!digits || digits.length !== 9) {
+            newErrors.workerEngagementType = "Please enter a valid 9-digit TFN";
+          }
         }
-      } else if (engagement?.type === "tfn") {
-        const digits = engagement.value.replace(/\s/g, "");
-        if (!digits || digits.length !== 9) {
-          newErrors.workerEngagementType = "Please enter a valid 9-digit TFN";
-        }
+      }
+    }
+
+    // Validate Code of Conduct Part 2 - require signature
+    if (currentStepData?.documentId === "code-of-conduct-part2") {
+      const isAlreadySigned = !!formData.codeOfConductDocument?.documentUrl;
+      if (!isAlreadySigned) {
+        newErrors.codeOfConductSignature = "Please sign and save the Code of Conduct acknowledgment before proceeding.";
       }
     }
 
@@ -155,6 +227,17 @@ function MandatoryRequirementsSetupContent() {
     }
 
     if (!session?.user?.id) return;
+
+    // Check if this is the ABN/TFN step and contract needs to be uploaded
+    if (currentStepData?.documentId === "abn-contractor") {
+      // Check if contract document is uploaded
+      const isContractUploaded = !!formData.contractDocument?.documentUrl;
+
+      if (!isContractUploaded) {
+        setErrors({ contractDocument: "Please upload the contract before proceeding." });
+        return; // Don't proceed until contract is uploaded
+      }
+    }
 
     // Check if this is the final step
     const isFinalStep = currentStep === STEPS.length;
@@ -174,13 +257,17 @@ function MandatoryRequirementsSetupContent() {
       const needsSaving = currentStepData?.documentId === "abn-contractor";
 
       // Save worker engagement type if needed (await it to ensure it completes before navigation)
+      // Only save the type and signed status, not the actual ABN/TFN value
       if (needsSaving && formData.workerEngagementType) {
         await updateProfileMutation.mutateAsync({
           userId: session.user.id,
           step: currentStep,
           data: {
             abn: {
-              workerEngagementType: formData.workerEngagementType,
+              workerEngagementType: {
+                type: formData.workerEngagementType.type,
+                signed: true,
+              },
             },
           },
         });

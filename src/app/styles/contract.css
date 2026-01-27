@@ -1,0 +1,577 @@
+/**
+ * Contract Page Styles
+ * Clean, document-like styling for contract viewing and signing
+ */
+
+/* ============================================
+   CONTRACT PAGE LAYOUT
+   ============================================ */
+
+.contract-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 2rem 1rem;
+}
+
+.contract-page-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* ============================================
+   CONTRACT HEADER
+   ============================================ */
+
+.contract-header {
+  background-color: #ffffff;
+  color: #0C1628;
+  padding: 2rem;
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.contract-header-logo {
+  display: none;
+}
+
+.contract-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.5px;
+}
+
+.contract-subtitle {
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 0;
+  color: #666666;
+}
+
+/* ============================================
+   CONTRACT PREAMBLE
+   ============================================ */
+
+.contract-preamble {
+  padding: 2rem;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.preamble-intro {
+  margin-bottom: 1.5rem;
+}
+
+.preamble-text {
+  font-size: 1rem;
+  color: #333333;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.6;
+}
+
+.preamble-required {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.preamble-field {
+  margin-top: 0.5rem;
+}
+
+.preamble-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #333333;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.preamble-input:focus {
+  outline: none;
+  border-color: #0C1628;
+  box-shadow: 0 0 0 3px rgba(12, 22, 40, 0.1);
+}
+
+.preamble-input::placeholder {
+  color: #9ca3af;
+}
+
+.preamble-date-input {
+  max-width: 200px;
+}
+
+.preamble-parties {
+  margin-top: 1.5rem;
+}
+
+.preamble-label {
+  font-size: 0.95rem;
+  color: #666666;
+  margin: 0 0 1rem 0;
+  font-style: italic;
+}
+
+.preamble-company {
+  padding: 1rem 1.25rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.preamble-company-name {
+  font-size: 1rem;
+  color: #0C1628;
+  margin: 0 0 0.25rem 0;
+}
+
+.preamble-company-role {
+  font-size: 0.9rem;
+  color: #666666;
+  margin: 0 0 0.5rem 0;
+}
+
+.preamble-company-address {
+  font-size: 0.9rem;
+  color: #555555;
+  margin: 0;
+}
+
+.preamble-separator {
+  font-size: 0.95rem;
+  color: #666666;
+  margin: 1.25rem 0;
+  font-style: italic;
+  text-align: center;
+}
+
+.preamble-party-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.preamble-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.preamble-field-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333333;
+}
+
+/* ============================================
+   CONTRACT CONTENT
+   ============================================ */
+
+.contract-content {
+  padding: 2rem;
+}
+
+.contract-section {
+  margin-bottom: 1.5rem;
+}
+
+.contract-section:last-child {
+  margin-bottom: 0;
+}
+
+.contract-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0C1628;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.contract-section-content {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #333333;
+}
+
+.contract-section-content p {
+  margin: 0 0 0.5rem 0;
+}
+
+.contract-section-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Bullet point styling */
+.contract-bullet {
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.contract-bullet::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 0.6em;
+  width: 4px;
+  height: 4px;
+  background-color: #0C1628;
+  border-radius: 50%;
+}
+
+/* Sub-items (a, b, c) */
+.contract-sub-item {
+  padding-left: 1.5rem;
+  font-style: normal;
+}
+
+/* ============================================
+   CLOSING STATEMENT
+   ============================================ */
+
+.contract-closing {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  border-left: 4px solid #0C1628;
+}
+
+.contract-closing p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #333333;
+  margin: 0;
+}
+
+/* ============================================
+   SIGNATURE SECTION
+   ============================================ */
+
+.contract-signature-section {
+  padding: 2rem;
+  border-top: 1px solid #e5e5e5;
+  background-color: #fafafa;
+}
+
+.signature-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0C1628;
+  margin: 0 0 1rem 0;
+}
+
+.signature-pad-container {
+  margin-bottom: 1.5rem;
+}
+
+.signature-pad-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555555;
+  margin-bottom: 0.5rem;
+}
+
+.signature-pad-wrapper {
+  position: relative;
+  border: 2px dashed #cccccc;
+  border-radius: 6px;
+  background-color: #ffffff;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.signature-pad-wrapper:hover {
+  border-color: #999999;
+}
+
+.signature-pad-wrapper.has-signature {
+  border-style: solid;
+  border-color: #0C1628;
+}
+
+.signature-canvas {
+  display: block;
+  width: 100%;
+  height: 150px;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.signature-pad-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999999;
+  font-size: 0.9rem;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.signature-pad-wrapper.has-signature .signature-pad-placeholder {
+  opacity: 0;
+}
+
+.signature-pad-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.signature-clear-btn {
+  background: none;
+  border: none;
+  color: #666666;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.signature-clear-btn:hover {
+  color: #333333;
+}
+
+/* Signature Date Field */
+.signature-date-field {
+  margin-bottom: 1.5rem;
+}
+
+.signature-date-field .preamble-field-label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.signature-date-field .preamble-date-input {
+  max-width: 200px;
+}
+
+/* ============================================
+   AGREEMENT CHECKBOX
+   ============================================ */
+
+.contract-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #e5e5e5;
+}
+
+.contract-agreement input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: #0C1628;
+}
+
+.contract-agreement-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #333333;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+
+.contract-submit-section {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.contract-submit-btn {
+  background-color: #0C1628;
+  color: #ffffff;
+  border: none;
+  padding: 1rem 3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.contract-submit-btn:hover:not(:disabled) {
+  background-color: #1a2a4a;
+}
+
+.contract-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   SUCCESS STATE
+   ============================================ */
+
+.contract-success {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.contract-success-icon {
+  width: 80px;
+  height: 80px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem auto;
+}
+
+.contract-success-icon svg {
+  width: 40px;
+  height: 40px;
+  color: #ffffff;
+}
+
+.contract-success-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0C1628;
+  margin: 0 0 0.75rem 0;
+}
+
+.contract-success-message {
+  font-size: 1rem;
+  color: #666666;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.contract-success-close-btn {
+  background-color: #0C1628;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.contract-success-close-btn:hover {
+  background-color: #1a2a4a;
+}
+
+/* ============================================
+   ERROR STATE
+   ============================================ */
+
+.contract-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+
+.contract-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 768px) {
+  .contract-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .contract-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .contract-title {
+    font-size: 1.5rem;
+  }
+
+  .contract-preamble {
+    padding: 1.5rem 1rem;
+  }
+
+  .preamble-date-input {
+    max-width: 100%;
+  }
+
+  .contract-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .contract-signature-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .signature-canvas {
+    height: 120px;
+  }
+
+  .contract-submit-btn {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .contract-page {
+    background-color: #ffffff;
+    padding: 0;
+  }
+
+  .contract-page-container {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .contract-header {
+    border-bottom: 2px solid #000000;
+  }
+
+  .contract-preamble {
+    background-color: #ffffff;
+    border-bottom: 1px solid #000000;
+  }
+
+  .preamble-input {
+    border: none;
+    border-bottom: 1px solid #000000;
+    border-radius: 0;
+    padding: 0.25rem 0;
+  }
+
+  .contract-signature-section {
+    display: none;
+  }
+
+  .signature-pad-actions,
+  .contract-submit-section {
+    display: none;
+  }
+}

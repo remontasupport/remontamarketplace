@@ -29,7 +29,7 @@ export type ActionResponse<T = any> = {
 /**
  * Server Action: Update worker's ABN or TFN (Worker Engagement Type)
  * Uses Zod schema validation and rate limiting
- * Stores as JSON: { workerEngagementType: { type: "abn" | "tfn", value: "..." } }
+ * Stores as JSON: { workerEngagementType: { type: "abn" | "tfn", signed: true } }
  */
 export async function updateWorkerABN(
   data: UpdateWorkerABNData
@@ -242,6 +242,22 @@ const DOCUMENT_CONFIGS: Record<string, DocumentConfig> = {
     folder: "certificates",
   },
 
+  // Contract of Agreement (ABN/TFN)
+  "contract-of-agreement": {
+    name: "Contract of Agreement",
+    category: null,
+    isRequired: false,
+    folder: "contracts",
+  },
+
+  // Code of Conduct Acknowledgment
+  "code-of-conduct": {
+    name: "Code of Conduct Acknowledgment",
+    category: null,
+    isRequired: true,
+    folder: "code-of-conduct",
+  },
+
   // Other Requirements
   "other-requirement": {
     name: "Other Document",
@@ -299,6 +315,17 @@ export async function uploadComplianceDocument(
     const documentType = formData.get("documentType") as string | null;
     const documentName = formData.get("documentName") as string | null;
     const expiryDate = formData.get("expiryDate") as string | null;
+    const metadataStr = formData.get("metadata") as string | null;
+
+    // Parse metadata JSON if provided
+    let metadata: Record<string, any> | null = null;
+    if (metadataStr) {
+      try {
+        metadata = JSON.parse(metadataStr);
+      } catch (e) {
+        // Invalid JSON, ignore metadata
+      }
+    }
 
   
 
@@ -425,6 +452,8 @@ export async function uploadComplianceDocument(
             status: "SUBMITTED",
             submittedAt: new Date(),
             updatedAt: new Date(),
+            // Store metadata if provided (e.g., signature date for Code of Conduct)
+            metadata: metadata || undefined,
             // Reset review fields when re-uploading
             reviewedAt: null,
             reviewedBy: null,
@@ -448,6 +477,8 @@ export async function uploadComplianceDocument(
             status: "SUBMITTED",
             submittedAt: new Date(),
             updatedAt: new Date(),
+            // Store metadata if provided (e.g., signature date for Code of Conduct)
+            metadata: metadata || undefined,
           },
         });
       }

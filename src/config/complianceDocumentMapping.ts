@@ -19,6 +19,8 @@ import Step4NDISTrainingsMultiple from "@/components/requirements-setup/steps/St
 import Step5InfectionControl from "@/components/requirements-setup/steps/Step5InfectionControl";
 import Step0WorkerScreeningCheck from "@/components/requirements-setup/steps/Step0WorkerScreeningCheck";
 import StepRightToWork from "@/components/requirements-setup/steps/StepRightToWork";
+import StepCodeOfConductPart1 from "@/components/requirements-setup/steps/StepCodeOfConductPart1";
+import StepCodeOfConductPart2 from "@/components/requirements-setup/steps/StepCodeOfConductPart2";
 
 // Account-setup components (reused for compliance)
 import Step6ABN from "@/components/account-setup/steps/Step6ABN";
@@ -117,6 +119,25 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
     documentId: "right-to-work",
     component: StepRightToWork,
     apiEndpoint: "/api/worker/compliance-documents",
+  },
+
+  // ========================================
+  // CODE OF CONDUCT
+  // ========================================
+
+  // Code of Conduct Part 1 - Sections 1-6 (read-only, no upload required)
+  "code-of-conduct-part1": {
+    documentId: "code-of-conduct-part1",
+    component: StepCodeOfConductPart1,
+    // No upload needed for Part 1 - just reading
+  },
+
+  // Code of Conduct Part 2 - Sections 7-12 + Signature
+  "code-of-conduct-part2": {
+    documentId: "code-of-conduct-part2",
+    component: StepCodeOfConductPart2,
+    apiEndpoint: "/api/worker/compliance-documents",
+    uploadDocumentType: "code-of-conduct",
   },
 };
 

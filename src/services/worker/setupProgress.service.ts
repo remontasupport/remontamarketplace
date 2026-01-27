@@ -421,6 +421,11 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       }
     }
 
+    // CRITICAL: Always include Code of Conduct (mandatory for all workers)
+    // These are programmatically added in the API, not from database
+    baseComplianceIds.add('code-of-conduct-part1');
+    baseComplianceIds.add('code-of-conduct-part2');
+
     if (baseComplianceIds.size === 0) {
       // No base compliance requirements for these services
  
@@ -470,16 +475,20 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
         isDocumentComplete = hasPrimary && hasSecondary;
 
       }
-      // Special case: abn-contractor (check WorkerProfile.abn JSON field)
+      // Special case: abn-contractor (check contract-of-agreement upload)
       else if (requiredDocId === 'abn-contractor') {
-        // abn is now JSON: { workerEngagementType: { type: "abn" | "tfn", value: "..." } }
-        if (workerProfile.abn && typeof workerProfile.abn === 'object') {
-          const abnData = workerProfile.abn as { workerEngagementType?: { type: string; value: string } };
-          const engagement = abnData.workerEngagementType;
-          isDocumentComplete = !!(engagement?.type && engagement?.value?.trim().length > 0);
-        } else {
-          isDocumentComplete = false;
-        }
+        // Check if contract document is uploaded
+        isDocumentComplete = uploadedDocTypes.has('contract-of-agreement');
+      }
+      // Special case: code-of-conduct-part1 (no upload required, auto-complete)
+      else if (requiredDocId === 'code-of-conduct-part1') {
+        // Part 1 is read-only, just viewing is enough
+        // Completion is determined by whether Part 2 signature is uploaded
+        isDocumentComplete = true;
+      }
+      // Special case: code-of-conduct-part2 (check code-of-conduct signature upload)
+      else if (requiredDocId === 'code-of-conduct-part2') {
+        isDocumentComplete = uploadedDocTypes.has('code-of-conduct');
       }
       // Special case: ndis-screening-check (can be stored as worker-screening-check)
       else if (requiredDocId === 'ndis-screening-check') {
@@ -1486,6 +1495,10 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
         }
       }
 
+      // CRITICAL: Always include Code of Conduct (mandatory for all workers)
+      baseComplianceIds.add('code-of-conduct-part1');
+      baseComplianceIds.add('code-of-conduct-part2');
+
       if (baseComplianceIds.size > 0) {
         // Check each required document
         const uploadedDocTypes = new Set(
@@ -1507,14 +1520,14 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
             const hasSecondary = workerProfile.verificationRequirements.some(req => req.documentCategory === 'SECONDARY');
             isDocumentComplete = hasPrimary && hasSecondary;
           } else if (requiredDocId === 'abn-contractor') {
-            // abn is JSON: { workerEngagementType: { type: "abn" | "tfn", value: "..." } }
-            if (workerProfile.abn && typeof workerProfile.abn === 'object') {
-              const abnData = workerProfile.abn as { workerEngagementType?: { type: string; value: string } };
-              const engagement = abnData.workerEngagementType;
-              isDocumentComplete = !!(engagement?.type && engagement?.value?.trim().length > 0);
-            } else {
-              isDocumentComplete = false;
-            }
+            // Check if contract document is uploaded
+            isDocumentComplete = uploadedDocTypes.has('contract-of-agreement');
+          } else if (requiredDocId === 'code-of-conduct-part1') {
+            // Part 1 is read-only, auto-complete
+            isDocumentComplete = true;
+          } else if (requiredDocId === 'code-of-conduct-part2') {
+            // Check if code of conduct signature is uploaded
+            isDocumentComplete = uploadedDocTypes.has('code-of-conduct');
           } else if (requiredDocId === 'ndis-screening-check') {
             isDocumentComplete = uploadedDocTypes.has('ndis-screening-check') ||
                                 uploadedDocTypes.has('worker-screening-check') ||
