@@ -45,6 +45,7 @@ export default function Hero() {
         <div className="hero-content">
           <h1 className="hero-title scroll-animate fade-up">
             Your Trusted, Ethical and Reliable Care Matching Platform
+
           </h1>
 
           <p className="hero-description scroll-animate fade-up" data-delay="1">

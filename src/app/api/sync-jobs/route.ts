@@ -72,11 +72,11 @@ export async function POST(request: NextRequest) {
     console.log('[Sync Jobs] Starting job sync from Zoho...')
 
     // ============================================
-    // 3. FETCH: Get jobs from Zoho (Matching stage)
+    // 3. FETCH: Get jobs from Zoho (Recruitment End stage)
     // ============================================
     let matchingDeals
     try {
-      matchingDeals = await zohoService.getDealsByStage('Matching')
+      matchingDeals = await zohoService.getDealsByStage('Recruitment End')
       console.log(`[Sync Jobs] Fetched ${matchingDeals.length} deals from Zoho`)
     } catch (error) {
       console.error('[Sync Jobs] Failed to fetch from Zoho:', error)
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
             dealName: deal.Deal_Name || 'Untitled Job',
             title: deal.Job_Title || null,
             description: deal.Description || null,
-            stage: deal.Stage || 'Matching',
+            stage: deal.Stage || 'Recruitment End',
 
             // Location
             suburbs: deal.Suburbs || null,
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
             postedAt: deal.Created_Time ? new Date(deal.Created_Time) : null,
 
             // Status
-            active: true, // In "Matching" stage = active
+            active: true, // In "Recruitment End" stage = active
             requiredMoreWorker: parseBoolean(deal.Required_More_Worker),
             anotherContractorNeeded: parseBoolean(deal.Another_Contractor_Needed),
 
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
       }
 
       // ============================================
-      // 6. DEACTIVATE: Jobs no longer in "Matching"
+      // 6. DEACTIVATE: Jobs no longer in "Recruitment End"
       // ============================================
       const deactivated = await prisma.job.updateMany({
         where: {

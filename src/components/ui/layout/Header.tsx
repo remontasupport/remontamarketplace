@@ -248,7 +248,7 @@ export default function Header() {
             <button
               className={`auth-button signup-button ${isScrolled ? 'scrolled' : ''}`}
               onClick={() => {
-                setSignUpModalOpen(true);
+                setSignUpModalOpen(!signUpModalOpen);
                 setTimeout(() => setOpenDropdown(null), 100);
               }}
             >
@@ -372,6 +372,7 @@ export default function Header() {
 
                 {/* Login and Sign Up buttons for mobile */}
                 <div className="mobile-auth-section">
+                  {/* Login Button */}
                   <button
                     className="mobile-auth-button mobile-login-button"
                     onClick={() => handleMobileNavigation('https://app.remontaservices.com.au/login')}

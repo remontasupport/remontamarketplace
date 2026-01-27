@@ -76,21 +76,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Test 3: Fetch Deals with "Matching" stage only
+    // Test 3: Fetch Deals with "Recruitment End" stage only
     results.tests.push({
-      name: 'Zoho Deals Access (Matching Stage)',
+      name: 'Zoho Deals Access (Recruitment End Stage)',
       status: 'checking',
     })
 
     try {
-      // Fetch only deals with "Matching" stage
-      const matchingDeals = await zohoService.getDealsByStage('Matching')
+      // Fetch only deals with "Recruitment End" stage
+      const matchingDeals = await zohoService.getDealsByStage('Recruitment End')
 
       results.tests[2].status = 'passed'
       results.tests[2].details = {
         totalMatchingDeals: matchingDeals.length,
-        message: 'Successfully fetched deals from Zoho (Matching stage only)',
-        filterApplied: 'Stage = "Matching"',
+        message: 'Successfully fetched deals from Zoho (Recruitment End stage only)',
+        filterApplied: 'Stage = "Recruitment End"',
         deals: matchingDeals.map(deal => ({
           id: deal.id,
           dealName: deal.Deal_Name,
