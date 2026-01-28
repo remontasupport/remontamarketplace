@@ -44,17 +44,28 @@ const INSURANCE_TYPES = [
 ]
 
 /**
- * Categorize a document into one of 5 categories:
+ * Contract document types
+ */
+const CONTRACT_TYPES = [
+  'code-of-conduct',
+  'code-of-conduct-part1',
+  'code-of-conduct-part2',
+  'contract-of-agreement',
+]
+
+/**
+ * Categorize a document into one of 6 categories:
  * 1. essentialChecks - Mandatory compliance (police check, WWCC, etc.)
  * 2. modules - Training documents
  * 3. certifications - Qualifications and service-specific non-insurance docs
  * 4. identity - Primary and secondary ID documents
  * 5. insurances - Insurance documents
+ * 6. contracts - Code of Conduct and Contract of Agreement
  */
 function categorizeDocument(doc: {
   requirementType: string
   documentCategory: string | null
-}): 'essentialChecks' | 'modules' | 'certifications' | 'identity' | 'insurances' {
+}): 'essentialChecks' | 'modules' | 'certifications' | 'identity' | 'insurances' | 'contracts' {
   const { requirementType, documentCategory } = doc
 
   // 1. Identity - Check documentCategory first (PRIMARY or SECONDARY)
@@ -90,7 +101,12 @@ function categorizeDocument(doc: {
     return 'insurances'
   }
 
-  // 6. SERVICE_QUALIFICATION category goes to certifications
+  // 6. Check for contract types (Code of Conduct, Contract of Agreement)
+  if (CONTRACT_TYPES.includes(requirementType)) {
+    return 'contracts'
+  }
+
+  // 7. SERVICE_QUALIFICATION category goes to certifications
   if (documentCategory === 'SERVICE_QUALIFICATION') {
     return 'certifications'
   }
@@ -149,13 +165,14 @@ export async function GET(
       ]
     })
 
-    // Group documents by the 5 categories
+    // Group documents by the 6 categories
     const categorizedDocuments = {
       essentialChecks: [] as typeof documents,
       modules: [] as typeof documents,
       certifications: [] as typeof documents,
       identity: [] as typeof documents,
       insurances: [] as typeof documents,
+      contracts: [] as typeof documents,
     }
 
     // Categorize each document
@@ -195,6 +212,10 @@ export async function GET(
       insurances: {
         total: categorizedDocuments.insurances.length,
         approved: categorizedDocuments.insurances.filter(d => d.status === 'APPROVED').length,
+      },
+      contracts: {
+        total: categorizedDocuments.contracts.length,
+        approved: categorizedDocuments.contracts.filter(d => d.status === 'APPROVED').length,
       },
     }
 

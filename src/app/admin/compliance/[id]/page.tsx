@@ -45,6 +45,7 @@ interface ComplianceData {
     certifications: VerificationDocument[]
     identity: VerificationDocument[]
     insurances: VerificationDocument[]
+    contracts: VerificationDocument[]
   }
   stats: {
     total: number
@@ -60,10 +61,11 @@ interface ComplianceData {
     certifications: CategoryStats
     identity: CategoryStats
     insurances: CategoryStats
+    contracts: CategoryStats
   }
 }
 
-type CategoryKey = 'essentialChecks' | 'modules' | 'certifications' | 'identity' | 'insurances'
+type CategoryKey = 'essentialChecks' | 'modules' | 'certifications' | 'identity' | 'insurances' | 'contracts'
 
 const CATEGORY_CONFIG: Record<CategoryKey, { title: string; description: string; icon: string }> = {
   essentialChecks: {
@@ -91,9 +93,14 @@ const CATEGORY_CONFIG: Record<CategoryKey, { title: string; description: string;
     description: 'Insurance and liability documents',
     icon: '🛡️',
   },
+  contracts: {
+    title: 'Contracts',
+    description: 'Code of Conduct and Contract of Agreement',
+    icon: '📝',
+  },
 }
 
-const CATEGORY_ORDER: CategoryKey[] = ['essentialChecks', 'modules', 'certifications', 'identity', 'insurances']
+const CATEGORY_ORDER: CategoryKey[] = ['essentialChecks', 'modules', 'certifications', 'identity', 'insurances', 'contracts']
 
 export default function CompliancePage() {
   const params = useParams()
