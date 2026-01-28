@@ -110,6 +110,12 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
     component: Step5InfectionControl,
   },
 
+  // Infection Control (alternative ID) - Maps to same component
+  "infection-control": {
+    documentId: "infection-control",
+    component: Step5InfectionControl,
+  },
+
   // ========================================
   // WORKING RIGHTS DOCUMENTS
   // ========================================

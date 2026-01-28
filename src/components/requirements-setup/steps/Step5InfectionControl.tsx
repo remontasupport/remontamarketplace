@@ -13,8 +13,6 @@ import ErrorModal from "@/components/ui/ErrorModal";
 import {
   ArrowUpTrayIcon,
   DocumentIcon,
-  CheckCircleIcon,
-  PlusCircleIcon,
   XCircleIcon
 } from "@heroicons/react/24/outline";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
@@ -40,19 +38,6 @@ interface UploadedDocument {
   uploadedAt: string;
 }
 
-// Helper to check if document is a PDF
-const isPdfDocument = (url: string) => {
-  return url.toLowerCase().endsWith('.pdf') || url.includes('.pdf?');
-};
-
-// Required and Recommended Modules
-const REQUIRED_MODULE = "Basics of Infection Prevention and Control";
-
-const RECOMMENDED_MODULES = [
-  "Hand Hygiene for Clinical Healthcare Workers",
-  "Hand Hygiene for Non-Clinical Healthcare Workers",
-  "Hand Dermatitis",
-];
 
 export default function Step5InfectionControl({
   data,
@@ -177,44 +162,14 @@ export default function Step5InfectionControl({
                 Complete the following modules at:
               </p>
               <a
-                href="https://www.safetyandquality.gov.au/our-work/infection-prevention-and-control/hygiene-and-infection-prevention-and-control-elearning-modules"
+                href="https://www.safetyandquality.gov.au/our-work/infection-prevention-and-control/hand-hygiene-and-infection-prevention-and-control-elearning-modules"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all mb-4 block"
               >
-                https://www.safetyandquality.gov.au/our-work/infection-prevention-and-control/hygiene-and-infection-prevention-and-control-elearning-modules
+                https://www.safetyandquality.gov.au/our-work/infection-prevention-and-control/hand-hygiene-and-infection-prevention-and-control-elearning-modules
               </a>
 
-              {/* Required Module */}
-              <div className="mt-6 mb-4">
-                <h5 className="text-sm font-poppins font-semibold text-gray-900 mb-2">
-                  Required Module:
-                </h5>
-                <div className="flex items-start gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm font-poppins text-gray-900">
-                    {REQUIRED_MODULE}
-                  </p>
-                </div>
-              </div>
-
-              {/* Recommended Modules */}
-              <div className="mt-6">
-                <p className="text-sm font-poppins text-gray-700 mb-3">
-                  We also <strong>recommend completing</strong> the following additional modules to further strengthen your knowledge and safety practices:
-                </p>
-                <h5 className="text-sm font-poppins font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <PlusCircleIcon className="w-5 h-5 text-gray-600" />
-                  Recommended Modules:
-                </h5>
-                <div className="space-y-2 ml-7">
-                  {RECOMMENDED_MODULES.map((module, index) => (
-                    <p key={index} className="text-sm font-poppins text-gray-700">
-                      • {module}
-                    </p>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Upload Section */}
