@@ -8,6 +8,8 @@
  * Creates User + ClientProfile + Participant.
  * - ClientProfile: User's contact info (firstName, lastName, mobile)
  * - Participant: Participant details (personal info, services, location)
+ *   - For self-managed: uses firstName/lastName from the registering user
+ *   - For client path: uses clientFirstName/clientLastName from "About the person needing support"
  *
  * POST /api/auth/register/client
  *
@@ -20,6 +22,8 @@
  *   fundingType: 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER',
  *   relationshipToClient: 'PARENT' | 'LEGAL_GUARDIAN' | 'SPOUSE_PARTNER' | 'CHILDREN' | 'OTHER',
  *   dateOfBirth?: string,
+ *   clientFirstName?: string,  // Required when isSelfManaged is false
+ *   clientLastName?: string,   // Required when isSelfManaged is false
  *   servicesRequested: { [categoryId]: { categoryName, subCategories: [{id, name}] } },
  *   additionalInfo?: string,
  *   location: string,
@@ -120,10 +124,12 @@ export async function POST(request: Request) {
             },
 
             // Participant: About the person needing support, services, location
+            // For self-managed: use user's own name
+            // For client path: use clientFirstName/clientLastName from "About the person needing support" step
             participants: {
               create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
+                firstName: data.isSelfManaged ? data.firstName : (data.clientFirstName || data.firstName),
+                lastName: data.isSelfManaged ? data.lastName : (data.clientLastName || data.lastName),
                 dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
                 location: data.location,
                 fundingType: data.fundingType,

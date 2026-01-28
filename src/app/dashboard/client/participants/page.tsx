@@ -27,17 +27,22 @@ export default async function ParticipantsPage() {
     redirect("/unauthorized");
   }
 
-  const participant = await authPrisma.participant.findFirst({
-    where: { userId: session.user.id },
-    select: {
-      firstName: true,
-      isSelfManaged: true,
-    },
-  });
+  // Fetch user's profile based on role for sidebar display
+  let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const displayName = participant?.isSelfManaged
-    ? participant.firstName
-    : participant?.firstName || session.user.email?.split('@')[0] || 'User';
+  if (session.user.role === UserRole.CLIENT) {
+    const clientProfile = await authPrisma.clientProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    });
+    displayName = clientProfile?.firstName || displayName;
+  } else if (session.user.role === UserRole.COORDINATOR) {
+    const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    });
+    displayName = coordinatorProfile?.firstName || displayName;
+  }
 
   // Mock participants data - replace with actual data from database
   const participants = [

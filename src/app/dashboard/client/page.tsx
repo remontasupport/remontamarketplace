@@ -29,19 +29,22 @@ export default async function ClientDashboard() {
     redirect("/unauthorized");
   }
 
-  // Fetch user's first participant to get profile info
-  const participant = await authPrisma.participant.findFirst({
-    where: { userId: session.user.id },
-    select: {
-      firstName: true,
-      isSelfManaged: true,
-    },
-  });
+  // Fetch user's profile based on role
+  let displayName = session.user.email?.split('@')[0] || 'User';
 
-  // For self-managed, use their own name; for clients, use a generic name for now
-  const displayName = participant?.isSelfManaged
-    ? participant.firstName
-    : participant?.firstName || session.user.email?.split('@')[0] || 'User';
+  if (session.user.role === UserRole.CLIENT) {
+    const clientProfile = await authPrisma.clientProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    });
+    displayName = clientProfile?.firstName || displayName;
+  } else if (session.user.role === UserRole.COORDINATOR) {
+    const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    });
+    displayName = coordinatorProfile?.firstName || displayName;
+  }
 
   return (
     <ClientDashboardLayout

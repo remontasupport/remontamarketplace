@@ -9,10 +9,7 @@ import {
   HomeIcon,
   UsersIcon,
   PlusCircleIcon,
-  CalendarDaysIcon,
-  ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
-  HeartIcon,
 } from '@heroicons/react/24/outline'
 
 interface MenuItem {
@@ -40,24 +37,6 @@ const menuItems: MenuItem[] = [
     name: 'Request A Service',
     href: '/dashboard/client/request-service',
     icon: PlusCircleIcon,
-  },
-  {
-    id: 'bookings',
-    name: 'Bookings',
-    href: '/dashboard/client/bookings',
-    icon: CalendarDaysIcon,
-  },
-  {
-    id: 'messages',
-    name: 'Messages',
-    href: '/dashboard/client/messages',
-    icon: ChatBubbleLeftRightIcon,
-  },
-  {
-    id: 'favorites',
-    name: 'Favorites',
-    href: '/dashboard/client/favorites',
-    icon: HeartIcon,
   },
 ]
 

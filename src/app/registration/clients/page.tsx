@@ -273,6 +273,11 @@ export default function ClientsRegistration() {
           fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
           relationshipToClient: isSelfManaged ? 'OTHER' : RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
           dateOfBirth: isSelfManaged ? data.dateOfBirth : data.clientDateOfBirth,
+          // For client path (not self-managed), include participant's name
+          ...(isSelfManaged ? {} : {
+            clientFirstName: data.clientFirstName,
+            clientLastName: data.clientLastName,
+          }),
           servicesRequested,
           additionalInfo: data.additionalInformation || undefined,
           location: fullLocation,

@@ -107,7 +107,10 @@ export const clientRegistrationSchema = z.object({
   relationshipToClient: relationshipTypeEnum,
 
   // Participant info (for self-managed, this is the same as the person registering)
+  // For client path (not self-managed), these are from "About the person needing support" step
   dateOfBirth: z.string().optional(),
+  clientFirstName: z.string().trim().optional(),
+  clientLastName: z.string().trim().optional(),
 
   // Services
   servicesRequested: servicesRequestedSchema,
