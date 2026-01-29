@@ -2,6 +2,7 @@
  * Code of Conduct Content Configuration
  * Contains the full text of Remonta Code of Conduct
  * Split into two parts for easier reading and signing
+ * Applies to All Workers – Employees, Contractors & Contractor Personnel
  */
 
 export interface CodeOfConductSection {
@@ -11,97 +12,121 @@ export interface CodeOfConductSection {
 
 export interface CodeOfConductContent {
   title: string;
+  subtitle?: string;
   purpose: string;
   sections: CodeOfConductSection[];
 }
 
 /**
- * Part 1: Sections 1-6
+ * Part 1: Purpose, NDIS Code of Conduct, and Sections 1-6
+ * - NDIS Code of Conduct
  * - Professionalism
- * - Respect and Dignity
- * - Client-Centered Care and Support
+ * - Respect, Dignity, and Inclusion
+ * - Client-Centred Care and Support
  * - Privacy, Confidentiality, and Data Protection
- * - Compliance with Policies, Procedures, and NDIS Practice Standards
+ * - Compliance with Policies, Procedures, and Standards
  * - Health and Safety Obligations
  */
 export const CODE_OF_CONDUCT_PART1: CodeOfConductContent = {
   title: "Remonta Code of Conduct",
+  subtitle: "(Applies to All Workers – Employees, Contractors & Contractor Personnel)",
   purpose:
-    "This Code of Conduct applies to all workers, including contractors and their employees, engaged with Remonta. It sets clear expectations for professional behavior, compliance with NDIS standards, safety, and ethical service delivery. This Code ensures the protection, safety, and dignity of clients, in alignment with NDIS Practice Standards and our internal policies.",
+    "This Code of Conduct applies to all workers engaged with Remonta, including employees, independent contractors, and any personnel engaged by contractors.\n\nRemonta operates as a care services platform and is also a registered provider under the National Disability Insurance Scheme (NDIS). Remonta connects clients and participants with workers and service providers while maintaining strong compliance, safeguarding, and quality assurance frameworks.\n\nThis Code of Conduct incorporates and adopts the NDIS Code of Conduct and applies to all NDIS-related services delivered through Remonta.\n\nThe purpose of this Code is to:\n• set clear expectations for professional behaviour and ethical service delivery;\n• ensure the safety, dignity, and rights of clients and participants; and\n• meet Remonta's obligations under the NDIS Practice Standards, applicable laws, and regulatory requirements.\n\nCompliance with this Code is a condition of engagement and continued participation on the Remonta platform.",
   sections: [
+    {
+      title: "NDIS Code of Conduct",
+      content: [
+        "As a registered NDIS provider, Remonta requires all workers to comply with the NDIS Code of Conduct. Workers must:",
+        "Act with respect for individual rights to freedom of expression, self-determination, and decision-making;",
+        "Respect the privacy of people with disability;",
+        "Provide supports and services in a safe and competent manner, with care and skill;",
+        "Act with integrity, honesty, and transparency;",
+        "Promptly raise and respond to concerns that may impact the quality or safety of supports;",
+        "Prevent and respond to violence, abuse, neglect, exploitation, and sexual misconduct; and",
+        "Take all reasonable steps to prevent breaches of this Code.",
+        "Breaches of the NDIS Code of Conduct may result in disciplinary action, termination of engagement, and mandatory reporting to the NDIS Quality and Safeguards Commission where required.",
+      ],
+    },
     {
       title: "1. Professionalism",
       content: [
-        "All workers must perform their duties with integrity, honesty, and commitment to delivering high-quality services.",
-        "Maintain professionalism in interactions with clients, colleagues, and stakeholders at all times.",
-        "Workers must be punctual, reliable, and provide prior notice if unable to attend or complete scheduled tasks.",
-        "Dress in a manner appropriate for the services provided and adhere to any uniform policies where applicable.",
+        "All workers must:",
+        "Perform their duties with integrity, honesty, and professionalism;",
+        "Communicate respectfully with clients, families, colleagues, and stakeholders;",
+        "Be punctual, reliable, and provide timely notice if unable to attend or complete scheduled work;",
+        "Present themselves appropriately for the services provided, including adherence to any identification or branding requirements issued by Remonta.",
+        "Unprofessional conduct may result in suspension, removal from assignments, or termination of engagement.",
       ],
     },
     {
-      title: "2. Respect and Dignity",
+      title: "2. Respect, Dignity, and Inclusion",
       content: [
-        "Treat all clients, their families, and fellow workers with respect and dignity, regardless of their background, culture, gender, religion, or disability.",
-        "Respect clients' rights to make decisions about their own lives and services.",
-        "Provide services that support client independence, empowerment, and choice in line with NDIS values.",
-        "Harassment, discrimination, or abusive behavior of any kind will not be tolerated.",
+        "Workers must:",
+        "Treat all clients and participants with respect and dignity at all times;",
+        "Respect cultural, religious, gender, and personal differences;",
+        "Support participant choice, independence, and control in line with NDIS values;",
+        "Maintain appropriate professional boundaries.",
+        "Harassment, discrimination, intimidation, or abusive behaviour of any kind will not be tolerated.",
       ],
     },
     {
-      title: "3. Client-Centered Care and Support",
+      title: "3. Client-Centred Care and Support",
       content: [
-        "Always prioritize the well-being, safety, and individual preferences of clients.",
-        "Workers must adhere to individualized care and support plans, ensuring services are tailored to each client's specific needs and goals.",
-        "Encourage and enable clients to participate actively in decisions affecting their care and service delivery.",
-        "Provide services that are in line with the NDIS Practice Standards, ensuring clients receive high-quality care that fosters independence and dignity.",
+        "Workers must:",
+        "Prioritise the safety, wellbeing, and individual needs of each client or participant;",
+        "Follow individual support plans, service agreements, and lawful instructions relevant to the assignment;",
+        "Support participants to actively participate in decisions affecting their care;",
+        "Deliver services in line with the NDIS Practice Standards and Remonta's quality expectations.",
       ],
     },
     {
       title: "4. Privacy, Confidentiality, and Data Protection",
       content: [
-        "All workers must maintain the confidentiality of client information, in accordance with NDIS requirements and privacy laws.",
-        "Sensitive client information must not be disclosed to unauthorized persons, and should only be shared for legitimate service delivery purposes.",
-        "Workers must comply with Remonta's data protection policies and the Privacy Act 1988, ensuring that personal information is securely stored, shared only when necessary, and disposed of correctly.",
-        "Any breaches of confidentiality or data security must be reported immediately and may result in disciplinary action.",
+        "All workers must:",
+        "Maintain strict confidentiality of client, participant, and Company information;",
+        "Comply with the Privacy Act 1988 (Cth) and Remonta data protection policies;",
+        "Only access, use, or disclose information where authorised and necessary for service delivery;",
+        "Securely store and appropriately dispose of records and information.",
+        "Any actual or suspected privacy breach must be reported immediately.",
       ],
     },
     {
-      title: "5. Compliance with Policies, Procedures, and NDIS Practice Standards",
+      title: "5. Compliance with Policies, Procedures, and Standards",
       content: [
-        "All workers must adhere to Remonta policies and procedures, including but not limited to:",
-        "Workplace Health and Safety (WHS): Use PPE when required, follow safety protocols, and ensure all tools and equipment are properly maintained.",
-        "Incident Management: Report incidents, injuries, and near-misses in accordance with the Incident Management Policy, and ensure that follow-up actions are taken.",
-        "Risk Management: Follow established risk management protocols to identify, assess, and mitigate risks to clients, themselves, and others.",
-        "Complaints Management: Handle client complaints according to the Complaints Management Policy, ensuring proper documentation and resolution.",
-        "Workers must comply with all relevant NDIS Practice Standards, including:",
-        "Rights and Responsibilities of NDIS participants",
-        "Service Delivery in line with client-centered care",
-        "Risk and Safeguards related to client well-being and safety",
+        "Workers must comply with all Remonta policies and procedures, including but not limited to:",
+        "Workplace Health and Safety (WHS) – use PPE, follow safety protocols, and maintain equipment;",
+        "Incident Management – promptly report incidents, injuries, near misses, and concerns;",
+        "Risk Management – identify and mitigate risks to clients, themselves, and others;",
+        "Complaints Management – respond appropriately and document complaints in line with policy.",
+        "Workers must comply with all applicable NDIS Practice Standards, including those relating to:",
+        "Rights and responsibilities of participants;",
+        "Safe and effective service delivery;",
+        "Safeguards and risk controls.",
       ],
     },
     {
       title: "6. Health and Safety Obligations",
       content: [
-        "All workers are responsible for maintaining a safe working environment by:",
-        "Taking reasonable care of their own health and safety, and ensuring actions do not pose risks to others.",
-        "Using and maintaining Personal Protective Equipment (PPE) as required.",
-        "Ensuring that all tools and equipment used in service delivery are properly maintained and safe to use.",
-        "Completing Job Safety Analysis (JSA) and Safe Work Method Statements (SWMS) where necessary.",
-        "Workers must immediately report any hazards, incidents, or injuries in accordance with the Incident Management Policy and cooperate in incident investigations.",
-        "Workers must adhere to WHS regulations to prevent harm to clients, colleagues, and themselves.",
+        "All workers are responsible for:",
+        "Taking reasonable care of their own health and safety and that of others;",
+        "Using and maintaining PPE where required;",
+        "Ensuring tools and equipment are safe and fit for purpose;",
+        "Completing Job Safety Analysis (JSA) and Safe Work Method Statements (SWMS) where required.",
+        "Hazards, incidents, or injuries must be reported immediately in accordance with Remonta policies.",
       ],
     },
   ],
 };
 
 /**
- * Part 2: Sections 7-12
+ * Part 2: Sections 7-13
  * - Mandatory Checks, Qualifications, and Compliance
  * - Training and Continuous Learning
  * - Conflict of Interest
  * - Reporting, Accountability, and Documentation
  * - Safeguarding Participants
  * - Commitment to NDIS Values
+ * - Breaches and Consequences
  */
 export const CODE_OF_CONDUCT_PART2: CodeOfConductContent = {
   title: "Remonta Code of Conduct",
@@ -110,67 +135,80 @@ export const CODE_OF_CONDUCT_PART2: CodeOfConductContent = {
     {
       title: "7. Mandatory Checks, Qualifications, and Compliance",
       content: [
-        "All workers must maintain and update their mandatory checks and qualifications, including:",
-        "NDIS Worker Screening Check",
-        "Working with Children Check (if applicable)",
-        "Police Check (National Criminal History Check)",
-        "First Aid and CPR Certification (if applicable)",
-        "Any other qualifications relevant to the services provided",
-        "Workers must submit valid and current proof of these checks and qualifications before commencing work with Remonta.",
-        "Workers are responsible for ensuring that all qualifications and certifications remain up-to-date and must provide updates promptly when certifications are renewed or reissued.",
-        "Failure to maintain valid checks and certifications may result in the suspension or termination of work assignments.",
+        "All workers must maintain current and valid:",
+        "NDIS Worker Screening Check (where applicable);",
+        "Working with Children Check (where applicable);",
+        "National Police Check;",
+        "First Aid and CPR certification (where applicable);",
+        "relevant qualifications, licences, and training.",
+        "Workers must provide evidence of compliance prior to commencing work and promptly update records when renewed.",
+        "Failure to maintain compliance may result in suspension or termination.",
       ],
     },
     {
       title: "8. Training and Continuous Learning",
       content: [
-        "All workers must complete the following mandatory training programs:",
-        "NDIS Worker Orientation Module",
-        "Supporting Effective Communication",
-        "New Worker NDIS Induction Module",
-        "Infection Prevention and Control",
-        "Worker Code of Conduct Module",
-        "Food Safety Training (if applicable)",
-        "Workers are encouraged to pursue additional training opportunities to enhance their skills and knowledge in line with evolving industry standards.",
-        "Workers must stay up to date with changes to policies, procedures, and NDIS standards, completing any required additional training as mandated by Remonta.",
+        "Workers must complete all mandatory training required by Remonta, including:",
+        "NDIS Worker Orientation Module;",
+        "Supporting Effective Communication;",
+        "New Worker NDIS Induction Module;",
+        "Infection Prevention and Control;",
+        "Worker Code of Conduct Module;",
+        "Food Safety Training (where applicable).",
+        "Workers are expected to remain up to date with changes to policies, procedures, and NDIS requirements.",
       ],
     },
     {
       title: "9. Conflict of Interest",
       content: [
-        "Workers must disclose any potential or actual conflicts of interest that may interfere with their responsibilities or compromise the quality of services provided.",
-        "Workers must avoid any personal, financial, or other conflicts that could affect their ability to act in the best interests of clients or Remonta.",
-        "Any conflict of interest must be reported to management as soon as it is identified.",
+        "Workers must:",
+        "Disclose any actual or potential conflicts of interest;",
+        "Avoid situations that compromise professional judgment or service quality;",
+        "Not use their position for personal, financial, or improper gain.",
+        "Conflicts must be reported as soon as identified.",
       ],
     },
     {
       title: "10. Reporting, Accountability, and Documentation",
       content: [
-        "All workers must report incidents, accidents, or breaches of this Code of Conduct to their supervisor immediately.",
-        "Workers are responsible for the accurate and timely completion of all required documentation, including:",
-        "Progress Notes",
-        "Service Delivery Logs",
-        "Incident Reports",
-        "Support Plan Review Reports",
-        "Risk Management Plans",
-        "Client Satisfaction Surveys",
-        "Capacity Building Reports",
-        "All documentation must be submitted in line with Remonta's reporting timelines. Failure to comply may result in delayed payment or disciplinary action.",
+        "Workers must accurately and promptly complete all required documentation, including:",
+        "Progress notes;",
+        "Service delivery logs;",
+        "Incident reports;",
+        "Support plan review reports;",
+        "Risk management plans;",
+        "Client satisfaction surveys;",
+        "Capacity building reports.",
+        "Failure to meet reporting obligations may result in delayed payment, suspension, or disciplinary action.",
       ],
     },
     {
       title: "11. Safeguarding Participants",
       content: [
-        "All workers must be committed to the safety and well-being of NDIS participants, taking proactive steps to safeguard vulnerable individuals from abuse, neglect, or exploitation.",
-        "Workers must be familiar with and adhere to the safeguarding policies, reporting any concerns immediately through the appropriate channels.",
-        "Maintain professional boundaries at all times and ensure that participants' rights to safety and dignity are upheld.",
+        "All workers must:",
+        "Take proactive steps to safeguard participants from abuse, neglect, exploitation, or harm;",
+        "Maintain professional boundaries at all times;",
+        "Report safeguarding concerns immediately through appropriate channels.",
+        "Remonta has zero tolerance for abuse, neglect, or exploitation.",
       ],
     },
     {
       title: "12. Commitment to NDIS Values",
       content: [
-        "All workers must respect and uphold the principles of the NDIS, including supporting the independence, rights, and participation of people with disabilities in society.",
-        "Workers must provide services that are inclusive, empowering, and respectful of the diverse needs and abilities of NDIS participants.",
+        "Workers must uphold the principles of the NDIS by:",
+        "Supporting independence, choice, and control;",
+        "Promoting inclusion and participation;",
+        "Delivering services that respect the rights and dignity of people with disability.",
+      ],
+    },
+    {
+      title: "13. Breaches and Consequences",
+      content: [
+        "Breaches of this Code of Conduct may result in:",
+        "Additional training or corrective action;",
+        "Suspension or removal from assignments or the platform;",
+        "Termination of employment or contractual engagement;",
+        "Mandatory reporting to regulators where required.",
       ],
     },
   ],
@@ -187,4 +225,4 @@ export function getCodeOfConductContent(part: 1 | 2): CodeOfConductContent {
  * Acknowledgment statement for signature
  */
 export const CODE_OF_CONDUCT_ACKNOWLEDGMENT =
-  "I have read and understood the Remonta Code of Conduct. I agree to comply with all requirements and understand that failure to do so may result in disciplinary action, including termination of my engagement with Remonta.";
+  "All workers must acknowledge that they have read, understood, and agree to comply with this Code of Conduct as a condition of engagement with Remonta.";
