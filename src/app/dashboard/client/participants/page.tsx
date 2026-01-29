@@ -9,7 +9,7 @@ import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
 import { authPrisma } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
-import ParticipantCard from "@/components/dashboard/client/ParticipantCard";
+import ParticipantsMasterDetail from "@/components/dashboard/client/ParticipantsMasterDetail";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
@@ -44,37 +44,70 @@ export default async function ParticipantsPage() {
     displayName = coordinatorProfile?.firstName || displayName;
   }
 
-  // Mock participants data - replace with actual data from database
-  const participants = [
-    {
-      id: "1",
-      name: "Maria Waston",
-      preferredName: "Maria",
+  // Fetch participants connected to this client from the database
+  const participantsData = await authPrisma.participant.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Transform database data to match ParticipantCard interface
+  const participants = participantsData.map((p) => {
+    // Calculate age from date of birth
+    // p.dateOfBirth is already a Date object from Prisma
+    const today = new Date();
+    const birthDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : new Date(p.dateOfBirth);
+    let age: number | undefined = undefined;
+
+    if (birthDate && !isNaN(birthDate.getTime())) {
+      age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+    }
+
+    // Extract service names from servicesRequested JSON
+    // Structure: { "category-id": { categoryName: string, subCategories: [{ id, name }] } }
+    let services: string[] = [];
+    if (p.servicesRequested && typeof p.servicesRequested === 'object') {
+      const servicesObj = p.servicesRequested as Record<string, { categoryName?: string; subCategories?: { id: string; name: string }[] }>;
+      services = Object.values(servicesObj).flatMap((category) => {
+        const categoryServices: string[] = [];
+        if (category.categoryName) {
+          categoryServices.push(category.categoryName);
+        }
+        if (category.subCategories && Array.isArray(category.subCategories)) {
+          category.subCategories.forEach((sub) => {
+            if (sub.name) categoryServices.push(sub.name);
+          });
+        }
+        return categoryServices;
+      });
+    }
+
+    // Format start date
+    const startDate = p.createdAt.toLocaleDateString('en-AU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    return {
+      id: p.id,
+      name: `${p.firstName} ${p.lastName}`,
+      preferredName: p.firstName,
       photo: null,
-      gender: "Female",
-      age: 28,
-      location: "Newtown, NSW 2042",
-      services: ["Support Worker", "Personal Care", "Transport"],
-      frequency: "Weekly",
-      startDate: "20 Jan, 2023",
-      status: "Active",
-      hoursPerWeek: 10,
-    },
-    {
-      id: "2",
-      name: "John Smith",
-      preferredName: "Johnny",
-      photo: null,
-      gender: "Male",
-      age: 45,
-      location: "Sydney, NSW 2000",
-      services: ["Therapeutic Supports", "Nursing Services"],
-      frequency: "Fortnightly",
-      startDate: "15 Feb, 2023",
-      status: "Pending",
-      hoursPerWeek: 5,
-    },
-  ];
+      gender: undefined,
+      age,
+      location: p.location || undefined,
+      services: services.length > 0 ? services : undefined,
+      startDate,
+      hoursPerWeek: undefined,
+      fundingType: p.fundingType || undefined,
+      relationshipToClient: p.relationshipToClient || undefined,
+      additionalInfo: p.additionalInfo || undefined,
+    };
+  });
 
   return (
     <ClientDashboardLayout
@@ -85,7 +118,7 @@ export default async function ParticipantsPage() {
     >
       <div className="p-6 md:p-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
               Participants
@@ -103,33 +136,8 @@ export default async function ParticipantsPage() {
           </Link>
         </div>
 
-        {/* Participants List */}
-        {participants.length > 0 ? (
-          <div className="space-y-4">
-            {participants.map((p) => (
-              <ParticipantCard key={p.id} participant={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Plus className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
-              No participants yet
-            </h3>
-            <p className="text-gray-600 font-poppins mb-6">
-              Add your first participant to get started with requesting support services.
-            </p>
-            <Link
-              href="/dashboard/client/request-service"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium font-poppins hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Add Participant
-            </Link>
-          </div>
-        )}
+        {/* Master-Detail Layout */}
+        <ParticipantsMasterDetail participants={participants} />
       </div>
     </ClientDashboardLayout>
   );

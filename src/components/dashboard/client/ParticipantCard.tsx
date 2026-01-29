@@ -13,9 +13,7 @@ interface ParticipantCardProps {
     age?: number;
     location?: string;
     services?: string[];
-    frequency?: string;
     startDate?: string;
-    status?: string;
     hoursPerWeek?: number;
   };
 }
@@ -30,9 +28,7 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
     age,
     location,
     services,
-    frequency,
     startDate,
-    status,
     hoursPerWeek,
   } = participant;
 
@@ -43,12 +39,6 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
     .join("")
     .toUpperCase()
     .slice(0, 2);
-
-  const statusColors: Record<string, string> = {
-    active: "text-green-600",
-    pending: "text-amber-600",
-    inactive: "text-gray-500",
-  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
@@ -107,7 +97,7 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
           <div>
             <p className="text-sm text-gray-500 font-poppins">Age</p>
             <p className="text-base font-medium text-gray-900 font-poppins">
-              {age ? `${age} years` : "Not specified"}
+              {typeof age === 'number' ? `${age} years` : "Not specified"}
             </p>
           </div>
 
@@ -116,22 +106,6 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
             <p className="text-sm text-gray-500 font-poppins">Location</p>
             <p className="text-base font-medium text-gray-900 font-poppins">
               {location || "Not specified"}
-            </p>
-          </div>
-
-          {/* Status */}
-          <div>
-            <p className="text-sm text-gray-500 font-poppins">Status</p>
-            <p className={`text-base font-medium font-poppins capitalize ${statusColors[status?.toLowerCase() || ""] || "text-gray-900"}`}>
-              {status || "Pending"}
-            </p>
-          </div>
-
-          {/* Frequency */}
-          <div>
-            <p className="text-sm text-gray-500 font-poppins">Frequency</p>
-            <p className="text-base font-medium text-gray-900 font-poppins capitalize">
-              {frequency || "Not specified"}
             </p>
           </div>
 
