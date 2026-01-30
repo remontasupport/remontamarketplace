@@ -1,6 +1,5 @@
 "use client";
 
-import { List } from "lucide-react";
 import { useRequestService } from "../RequestServiceContext";
 import StepNavigation from "../StepNavigation";
 
@@ -10,7 +9,7 @@ interface SupportDetailsData {
 
 export default function SupportDetailsSection() {
   const { formData, updateFormData } = useRequestService();
-  const { supportDetailsData, selectedCategories, selectedSubcategories } = formData;
+  const { supportDetailsData } = formData;
 
   const updateField = <K extends keyof SupportDetailsData>(field: K, value: SupportDetailsData[K]) => {
     updateFormData("supportDetailsData", {
@@ -18,9 +17,6 @@ export default function SupportDetailsSection() {
       [field]: value,
     });
   };
-
-  // Combine categories and subcategories for display
-  const allSelectedServices = [...selectedCategories, ...selectedSubcategories];
 
   return (
     <div className="section-card">
@@ -44,35 +40,6 @@ export default function SupportDetailsSection() {
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
               placeholder="E.g. personal carer for an adult"
             />
-          </div>
-
-          {/* Support description */}
-          <div>
-            <label className="block text-gray-900 font-medium font-poppins mb-2">
-              Support description
-            </label>
-            <p className="text-gray-600 text-sm font-poppins mb-4">
-              To help you find a good match with the right worker, we've created a support description based on the details you provided.
-            </p>
-
-            {allSelectedServices.length > 0 ? (
-              <div className="border-2 border-gray-200 rounded-lg p-4">
-                <div className="space-y-3">
-                  {allSelectedServices.map((service, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <List className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700 font-poppins">{service}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
-                <p className="text-gray-500 font-poppins text-sm">
-                  No services selected yet. Go back to the "What" step to select the services you need.
-                </p>
-              </div>
-            )}
           </div>
         </div>
 

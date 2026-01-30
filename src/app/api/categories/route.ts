@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { authPrisma } from '@/lib/auth-prisma';
 
+// Define the preferred order of categories
+const CATEGORY_ORDER = [
+  'Support Worker',
+  'Support Worker (High Intensity)',
+  'Therapeutic Supports',
+  'Nursing Services',
+  'Cleaning Services',
+  'Home and Yard Maintenance',
+];
+
 export async function GET() {
   try {
     // Fetch all categories with their documents and subcategories
@@ -23,9 +33,6 @@ export async function GET() {
             name: 'asc',
           },
         },
-      },
-      orderBy: {
-        name: 'asc',
       },
     });
 
@@ -78,8 +85,25 @@ export async function GET() {
       };
     });
 
+    // Sort categories by the preferred order
+    const sortedCategories = formattedCategories.sort((a, b) => {
+      const indexA = CATEGORY_ORDER.indexOf(a.name);
+      const indexB = CATEGORY_ORDER.indexOf(b.name);
+
+      // If both are in the order list, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      // If only a is in the list, it comes first
+      if (indexA !== -1) return -1;
+      // If only b is in the list, it comes first
+      if (indexB !== -1) return 1;
+      // If neither is in the list, sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
+
     // OPTIMIZED: Add HTTP caching headers for faster subsequent loads
-    return NextResponse.json(formattedCategories, {
+    return NextResponse.json(sortedCategories, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },

@@ -10,8 +10,6 @@ import { UserRole } from "@/types/auth";
 import { authPrisma } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
 import ParticipantsMasterDetail from "@/components/dashboard/client/ParticipantsMasterDetail";
-import Link from "next/link";
-import { Plus } from "lucide-react";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -116,7 +114,6 @@ export default async function ParticipantsPage() {
       location,
       services: services.length > 0 ? services : undefined,
       startDate,
-      hoursPerWeek: undefined,
       fundingType: p.fundingType || undefined,
       relationshipToClient: p.relationshipToClient || undefined,
       conditions: p.conditions.length > 0 ? p.conditions : undefined,
@@ -137,22 +134,13 @@ export default async function ParticipantsPage() {
     >
       <div className="p-6 md:p-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
-              Participants
-            </h1>
-            <p className="text-gray-600 font-poppins mt-1">
-              Manage the participants you support
-            </p>
-          </div>
-          <Link
-            href="/dashboard/client/request-service"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium font-poppins hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Participant
-          </Link>
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
+            Participants
+          </h1>
+          <p className="text-gray-600 font-poppins mt-1">
+            Manage the participants you support
+          </p>
         </div>
 
         {/* Master-Detail Layout */}

@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Pencil, MapPin, Calendar, Clock, User, Heart } from "lucide-react";
+import Link from "next/link";
+import { Pencil, MapPin, Calendar, User, Heart, Cake } from "lucide-react";
 
 interface ParticipantDetailPanelProps {
   participant: {
@@ -11,10 +12,10 @@ interface ParticipantDetailPanelProps {
     photo?: string | null;
     gender?: string;
     age?: number;
+    dateOfBirth?: string | null;
     location?: string;
     services?: string[];
     startDate?: string;
-    hoursPerWeek?: number;
     fundingType?: string;
     relationshipToClient?: string;
     additionalInfo?: string;
@@ -50,14 +51,24 @@ export default function ParticipantDetailPanel({
     photo,
     gender,
     age,
+    dateOfBirth,
     location,
     services,
-    startDate,
-    hoursPerWeek,
-    fundingType,
     relationshipToClient,
     additionalInfo,
   } = participant;
+
+  // Format date of birth for display
+  const formatDateOfBirth = (dob?: string | null) => {
+    if (!dob) return "Not specified";
+    const date = new Date(dob);
+    if (isNaN(date.getTime())) return "Not specified";
+    return date.toLocaleDateString('en-AU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
 
   const displayName = preferredName || name;
   const initials = displayName
@@ -112,24 +123,25 @@ export default function ParticipantDetailPanel({
             </div>
           </div>
 
-          {/* Edit Button */}
-          <button
-            onClick={onEditClick}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium font-poppins hover:bg-indigo-700 transition-colors"
-          >
-            <Pencil className="w-4 h-4" />
-            Edit Profile
-          </button>
-        </div>
-
-        {/* Funding Type Badge */}
-        {fundingType && (
-          <div className="mt-4">
-            <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-              {fundingType}
-            </span>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onEditClick}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium font-poppins transition-colors"
+              style={{ backgroundColor: '#F8E8D8', color: '#0C1628' }}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit Profile
+            </button>
+            <Link
+              href={`/dashboard/client/request-service/edit/${participant.id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium font-poppins text-white transition-colors hover:opacity-90"
+              style={{ backgroundColor: '#0C1628' }}
+            >
+              Modify Request
+            </Link>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Content */}
@@ -168,11 +180,11 @@ export default function ParticipantDetailPanel({
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Clock className="w-5 h-5 text-gray-400" />
+              <Cake className="w-5 h-5 text-gray-400" />
               <div>
-                <p className="text-xs text-gray-500 font-poppins">Hours/Week</p>
+                <p className="text-xs text-gray-500 font-poppins">Date of Birth</p>
                 <p className="text-sm font-medium text-gray-900 font-poppins">
-                  {hoursPerWeek ? `${hoursPerWeek} hrs` : "Not specified"}
+                  {formatDateOfBirth(dateOfBirth)}
                 </p>
               </div>
             </div>

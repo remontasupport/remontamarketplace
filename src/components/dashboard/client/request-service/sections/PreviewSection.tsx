@@ -49,8 +49,7 @@ const frequencyLabels: Record<string, string> = {
 export default function PreviewSection() {
   const { formData, submitError } = useRequestService();
   const {
-    selectedCategories,
-    selectedSubcategories,
+    services,
     selectedLocation,
     whenData,
     detailsData,
@@ -61,7 +60,7 @@ export default function PreviewSection() {
 
   const participantName = detailsData.firstName || "Participant";
   const participantFullName = `${detailsData.firstName} ${detailsData.lastName}`.trim() || "Participant";
-  const allServices = [...selectedCategories, ...selectedSubcategories];
+  const hasServices = Object.keys(services).length > 0;
 
   // Format time for display
   const formatTime = (time: string) => {
@@ -93,10 +92,7 @@ export default function PreviewSection() {
                   {participantName.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div>
-                <p className="font-medium text-gray-900 font-poppins">{participantName}</p>
-                <p className="text-sm text-gray-500 font-poppins">Support is managed by {participantName}</p>
-              </div>
+              <p className="font-medium text-gray-900 font-poppins">{participantName}</p>
             </div>
           </div>
 
@@ -121,13 +117,22 @@ export default function PreviewSection() {
               </div>
             )}
 
-            {/* Services */}
-            {allServices.length > 0 && (
-              <div className="space-y-2">
-                {allServices.map((service, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-700 font-poppins">{service}</span>
+            {/* Services - Categorized */}
+            {hasServices && (
+              <div className="space-y-4">
+                {Object.values(services).map((category, index) => (
+                  <div key={index}>
+                    <p className="font-medium text-gray-900 font-poppins">{category.categoryName}</p>
+                    {category.subCategories && category.subCategories.length > 0 && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        {category.subCategories.map((sub, subIndex) => (
+                          <div key={subIndex} className="flex items-start gap-2">
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-600 font-poppins">{sub.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

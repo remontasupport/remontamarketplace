@@ -8,7 +8,6 @@ interface ParticipantListItemProps {
     photo?: string | null;
     location?: string;
     services?: string[];
-    fundingType?: string;
   };
   isSelected: boolean;
   onClick: () => void;
@@ -19,7 +18,7 @@ export default function ParticipantListItem({
   isSelected,
   onClick,
 }: ParticipantListItemProps) {
-  const { name, preferredName, photo, location, services, fundingType } = participant;
+  const { name, preferredName, photo, location, services } = participant;
 
   const displayName = preferredName || name;
   const initials = displayName
@@ -66,18 +65,13 @@ export default function ParticipantListItem({
           )}
 
           {/* Tags row */}
-          <div className="flex flex-wrap gap-1 mt-2">
-            {fundingType && (
-              <span className="inline-block px-2 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                {fundingType}
-              </span>
-            )}
-            {services && services.length > 0 && (
+          {services && services.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
               <span className="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
                 {services.length} service{services.length > 1 ? "s" : ""}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </button>

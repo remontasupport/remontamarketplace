@@ -20,17 +20,17 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   {
     id: "what",
-    label: "What",
+    label: "Services",
     href: "/dashboard/client/request-service?section=what",
   },
   {
     id: "where",
-    label: "Where",
+    label: "Location",
     href: "/dashboard/client/request-service?section=where",
   },
   {
     id: "when",
-    label: "When",
+    label: "Schedule",
     href: "/dashboard/client/request-service?section=when",
   },
   {
@@ -45,24 +45,24 @@ const menuItems: MenuItem[] = [
       },
       {
         id: "details",
-        label: "Basic information",
+        label: "Participant",
         href: "/dashboard/client/request-service?section=details",
       },
       {
         id: "diagnoses",
-        label: "Diagnoses, conditions or disabilities",
+        label: "Conditions",
         href: "/dashboard/client/request-service?section=diagnoses",
       },
       {
         id: "preferences",
-        label: "Preferences",
+        label: "Worker preferences",
         href: "/dashboard/client/request-service?section=preferences",
       },
     ],
   },
   {
     id: "preview",
-    label: "Preview",
+    label: "Review & Submit",
     href: "/dashboard/client/request-service?section=preview",
   },
 ];

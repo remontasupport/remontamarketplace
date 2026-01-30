@@ -44,17 +44,32 @@ const participantSchema = z.object({
 // DETAILS SCHEMA
 // ============================================
 
+// Preferred day can be a string (old format) or an object with times (new format)
+const preferredDaySchema = z.union([
+  z.string(),
+  z.object({
+    day: z.string(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+  }),
+])
+
 const schedulingPrefsSchema = z.object({
-  preferredDays: z.array(z.string()).optional(),
+  preferredDays: z.array(preferredDaySchema).optional(),
   preferredTimes: z.array(z.string()).optional(),
   startDate: z.string().optional(),
-  frequency: z.enum(['one-time', 'weekly', 'fortnightly', 'monthly', 'ongoing']).optional(),
+  startPreference: z.string().optional(),
+  frequency: z.enum(['one-time', 'weekly', 'fortnightly', 'monthly', 'ongoing', 'as-needed']).optional(),
+  sessionsPerWeek: z.number().optional(),
+  hoursPerWeek: z.number().optional(),
+  scheduling: z.string().optional(),
 })
 
 const detailsSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   schedulingPrefs: schedulingPrefsSchema.optional(),
+  preferredWorkerGender: z.string().optional(),
   specialRequirements: z.string().optional(),
 })
 

@@ -115,14 +115,14 @@ export interface StepConfig {
 }
 
 export const STEPS: StepConfig[] = [
-  { id: "what", label: "What", section: "what" },
-  { id: "where", label: "Where", section: "where" },
-  { id: "when", label: "When", section: "when" },
+  { id: "what", label: "Services", section: "what" },
+  { id: "where", label: "Location", section: "where" },
+  { id: "when", label: "Schedule", section: "when" },
   { id: "support-details", label: "Support details", section: "support-details", parentId: "details" },
-  { id: "details", label: "Basic information", section: "details", parentId: "details" },
-  { id: "diagnoses", label: "Diagnoses", section: "diagnoses", parentId: "details" },
-  { id: "preferences", label: "Preferences", section: "preferences", parentId: "details" },
-  { id: "preview", label: "Preview", section: "preview" },
+  { id: "details", label: "Participant", section: "details", parentId: "details" },
+  { id: "diagnoses", label: "Conditions", section: "diagnoses", parentId: "details" },
+  { id: "preferences", label: "Worker preferences", section: "preferences", parentId: "details" },
+  { id: "preview", label: "Review & Submit", section: "preview" },
 ];
 
 interface RequestServiceContextType {
@@ -388,10 +388,57 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     router.push(`/dashboard/client/request-service?section=${prevStep.section}`);
   }, [canGoPrevious, currentStep, router]);
 
+  // Validate all steps and return first error with step index
+  const validateAllSteps = useCallback((): { isValid: boolean; error: string | null; stepIndex: number | null } => {
+    // Step 0: Services (what)
+    if (formData.selectedCategories.length === 0) {
+      return { isValid: false, error: "Please select at least one service", stepIndex: 0 };
+    }
+
+    // Step 1: Location (where)
+    if (!formData.locationData.suburb || !formData.locationData.state || !formData.locationData.postalCode) {
+      return { isValid: false, error: "Please select a location", stepIndex: 1 };
+    }
+
+    // Step 2: Schedule (when)
+    if (!formData.whenData.startPreference) {
+      return { isValid: false, error: "Please select when you'd like to start", stepIndex: 2 };
+    }
+
+    // Step 3: Support details
+    if (!formData.supportDetailsData.jobTitle.trim()) {
+      return { isValid: false, error: "Please enter a job title", stepIndex: 3 };
+    }
+
+    // Step 4: Participant details
+    if (!formData.detailsData.firstName.trim()) {
+      return { isValid: false, error: "Please enter the participant's first name", stepIndex: 4 };
+    }
+    if (!formData.detailsData.lastName.trim()) {
+      return { isValid: false, error: "Please enter the participant's last name", stepIndex: 4 };
+    }
+    if (!formData.detailsData.gender) {
+      return { isValid: false, error: "Please select the participant's gender", stepIndex: 4 };
+    }
+
+    return { isValid: true, error: null, stepIndex: null };
+  }, [formData]);
+
   // Submit request
   const submitRequest = useCallback(async (): Promise<boolean> => {
     setIsSubmitting(true);
     setSubmitError(null);
+
+    // Validate all steps before submission
+    const validation = validateAllSteps();
+    if (!validation.isValid && validation.error && validation.stepIndex !== null) {
+      setSubmitError(validation.error);
+      setIsSubmitting(false);
+      // Navigate to the step with the error
+      const errorStep = STEPS[validation.stepIndex];
+      router.push(`/dashboard/client/request-service?section=${errorStep.section}`);
+      return false;
+    }
 
     try {
       // Build location string
@@ -423,12 +470,23 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
           title: formData.supportDetailsData.jobTitle,
           description: formData.whenData.additionalNotes || undefined,
           schedulingPrefs: {
-            preferredDays: Object.entries(formData.whenData.preferredDays)
-              .filter(([_, schedule]) => schedule.enabled)
-              .map(([day]) => day.charAt(0).toUpperCase() + day.slice(1)),
+            preferredDays: formData.whenData.scheduling === "preferred"
+              ? Object.entries(formData.whenData.preferredDays)
+                  .filter(([_, schedule]) => schedule.enabled)
+                  .map(([day, schedule]) => ({
+                    day: day.charAt(0).toUpperCase() + day.slice(1),
+                    startTime: schedule.startTime || undefined,
+                    endTime: schedule.endTime || undefined,
+                  }))
+              : undefined,
             frequency: formData.whenData.frequency as "one-time" | "weekly" | "fortnightly" | "monthly" | "ongoing",
-            startDate: formData.whenData.specificDate || undefined,
+            sessionsPerWeek: formData.whenData.sessionsPerWeek,
+            hoursPerWeek: formData.whenData.hoursPerWeek,
+            scheduling: formData.whenData.scheduling || undefined,
+            startPreference: formData.whenData.startPreference || undefined,
+            startDate: formData.whenData.startPreference === "specific-date" ? formData.whenData.specificDate : undefined,
           },
+          preferredWorkerGender: formData.preferencesData.preferredGender || undefined,
           specialRequirements: formData.preferencesData.preferredQualities || undefined,
         },
         // Location as string
@@ -466,7 +524,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, router]);
+  }, [formData, router, validateAllSteps]);
 
   const value: RequestServiceContextType = {
     formData,
