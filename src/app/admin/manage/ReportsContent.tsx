@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 
-export default function ReportsContent() {
-  const [generatingReport, setGeneratingReport] = useState<'daily' | 'weekly' | null>(null)
+type ReportType = 'daily' | 'weekly' | 'worker-statistics'
 
-  const handleGenerateReport = async (reportType: 'daily' | 'weekly') => {
+export default function ReportsContent() {
+  const [generatingReport, setGeneratingReport] = useState<ReportType | null>(null)
+
+  const handleGenerateReport = async (reportType: ReportType) => {
     setGeneratingReport(reportType)
     try {
       const response = await fetch(`/api/admin/reports/${reportType}`)
@@ -47,7 +49,7 @@ export default function ReportsContent() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Reports</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Daily Report Card */}
             <div className="border border-gray-200 rounded-lg p-6 hover:border-green-300 transition-colors">
               <div className="flex items-start gap-4">
@@ -99,6 +101,40 @@ export default function ReportsContent() {
                     className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {generatingReport === 'weekly' ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Worker Statistics Report Card */}
+            <div className="border border-gray-200 rounded-lg p-6 hover:border-purple-300 transition-colors">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900">Worker Statistics</h3>
+                  <p className="text-sm text-gray-500 mt-1">Workers by service, weekly breakdown since start of year</p>
+                  <button
+                    onClick={() => handleGenerateReport('worker-statistics')}
+                    disabled={generatingReport !== null}
+                    className="mt-4 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {generatingReport === 'worker-statistics' ? (
                       <>
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
                         Generating...
