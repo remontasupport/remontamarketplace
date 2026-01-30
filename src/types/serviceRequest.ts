@@ -1,4 +1,28 @@
-// Types for ServiceRequest JSON fields
+// Types for ServiceRequest and Participant
+
+// ============================================
+// PARTICIPANT TYPE (matches Prisma model)
+// ============================================
+
+export type FundingType = 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER'
+
+export type Participant = {
+  id: string
+  userId?: string | null
+  firstName: string
+  lastName: string
+  dateOfBirth?: Date | null
+  gender?: string | null
+  fundingType?: FundingType | null
+  conditions: string[]
+  additionalInfo?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+// ============================================
+// SERVICE REQUEST TYPES
+// ============================================
 
 export type ServiceRequestServices = {
   [categoryId: string]: {
@@ -8,15 +32,6 @@ export type ServiceRequestServices = {
       name: string
     }[]
   }
-}
-
-export type ServiceRequestParticipant = {
-  participantId?: string
-  firstName: string
-  lastName: string
-  dateOfBirth?: string
-  fundingType?: 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER'
-  relationshipToClient?: string
 }
 
 export type ServiceRequestDetails = {
@@ -29,13 +44,6 @@ export type ServiceRequestDetails = {
     frequency?: 'one-time' | 'weekly' | 'fortnightly' | 'monthly' | 'ongoing'
   }
   specialRequirements?: string
-}
-
-export type ServiceRequestLocation = {
-  suburb: string
-  state: string
-  postalCode: string
-  fullAddress?: string
 }
 
 export type ServiceRequestAssignedWorker = {
@@ -59,13 +67,36 @@ export type ServiceRequestStatus =
 export type ServiceRequest = {
   id: string
   requesterId: string
-  participant: ServiceRequestParticipant
+  participantId: string
+  participant?: Participant // Included when using Prisma include
   services: ServiceRequestServices
   details: ServiceRequestDetails
-  location: ServiceRequestLocation
+  location: string
   zohoRecordId?: string | null
   assignedWorker?: ServiceRequestAssignedWorker | null
   status: ServiceRequestStatus
   createdAt: Date
   updatedAt: Date
+}
+
+// ============================================
+// API INPUT TYPES
+// ============================================
+
+// For creating a service request with a new participant
+export type CreateServiceRequestInput = {
+  // Participant fields
+  participant: {
+    firstName: string
+    lastName: string
+    dateOfBirth?: string
+    gender?: string
+    fundingType?: FundingType
+    conditions?: string[]
+    additionalInfo?: string
+  }
+  // Service request fields
+  services: ServiceRequestServices
+  details: ServiceRequestDetails
+  location: string
 }

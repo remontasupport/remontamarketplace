@@ -174,11 +174,10 @@ exports.Prisma.ParticipantScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   dateOfBirth: 'dateOfBirth',
-  location: 'location',
+  gender: 'gender',
   fundingType: 'fundingType',
   relationshipToClient: 'relationshipToClient',
-  isSelfManaged: 'isSelfManaged',
-  servicesRequested: 'servicesRequested',
+  conditions: 'conditions',
   additionalInfo: 'additionalInfo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -353,7 +352,7 @@ exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
 exports.Prisma.ServiceRequestScalarFieldEnum = {
   id: 'id',
   requesterId: 'requesterId',
-  participant: 'participant',
+  participantId: 'participantId',
   services: 'services',
   details: 'details',
   location: 'location',

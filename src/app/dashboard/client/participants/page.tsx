@@ -45,32 +45,38 @@ export default async function ParticipantsPage() {
   }
 
   // Fetch participants connected to this client from the database
+  // Include the serviceRequest to get services and location
   const participantsData = await authPrisma.participant.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: 'desc' },
+    include: {
+      serviceRequest: true,
+    },
   });
 
   // Transform database data to match ParticipantCard interface
   const participants = participantsData.map((p) => {
     // Calculate age from date of birth
-    // p.dateOfBirth is already a Date object from Prisma
     const today = new Date();
-    const birthDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : new Date(p.dateOfBirth);
     let age: number | undefined = undefined;
 
-    if (birthDate && !isNaN(birthDate.getTime())) {
-      age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
+    if (p.dateOfBirth) {
+      const birthDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : new Date(p.dateOfBirth);
+      if (!isNaN(birthDate.getTime())) {
+        age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
       }
     }
 
-    // Extract service names from servicesRequested JSON
+    // Extract service names from serviceRequest.services JSON
     // Structure: { "category-id": { categoryName: string, subCategories: [{ id, name }] } }
     let services: string[] = [];
-    if (p.servicesRequested && typeof p.servicesRequested === 'object') {
-      const servicesObj = p.servicesRequested as Record<string, { categoryName?: string; subCategories?: { id: string; name: string }[] }>;
+    const servicesData = p.serviceRequest?.services;
+    if (servicesData && typeof servicesData === 'object') {
+      const servicesObj = servicesData as Record<string, { categoryName?: string; subCategories?: { id: string; name: string }[] }>;
       services = Object.values(servicesObj).flatMap((category) => {
         const categoryServices: string[] = [];
         if (category.categoryName) {
@@ -85,6 +91,9 @@ export default async function ParticipantsPage() {
       });
     }
 
+    // Get location from serviceRequest
+    const location = p.serviceRequest?.location || undefined;
+
     // Format start date
     const startDate = p.createdAt.toLocaleDateString('en-AU', {
       day: 'numeric',
@@ -92,20 +101,30 @@ export default async function ParticipantsPage() {
       year: 'numeric',
     });
 
+    // Format dateOfBirth for edit form
+    const dateOfBirthString = p.dateOfBirth
+      ? p.dateOfBirth.toISOString().split("T")[0]
+      : null;
+
     return {
       id: p.id,
       name: `${p.firstName} ${p.lastName}`,
       preferredName: p.firstName,
       photo: null,
-      gender: undefined,
+      gender: p.gender || undefined,
       age,
-      location: p.location || undefined,
+      location,
       services: services.length > 0 ? services : undefined,
       startDate,
       hoursPerWeek: undefined,
       fundingType: p.fundingType || undefined,
       relationshipToClient: p.relationshipToClient || undefined,
+      conditions: p.conditions.length > 0 ? p.conditions : undefined,
       additionalInfo: p.additionalInfo || undefined,
+      // Raw data for edit form
+      firstName: p.firstName,
+      lastName: p.lastName,
+      dateOfBirth: dateOfBirthString,
     };
   });
 

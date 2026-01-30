@@ -7,7 +7,7 @@
 import { z } from 'zod'
 
 // ============================================
-// SERVICES SCHEMA (matches ServiceRequestServices type)
+// SERVICES SCHEMA
 // ============================================
 
 const subCategorySchema = z.object({
@@ -17,7 +17,7 @@ const subCategorySchema = z.object({
 
 const serviceCategorySchema = z.object({
   categoryName: z.string(),
-  subCategories: z.array(subCategorySchema).min(1, 'At least one subcategory is required'),
+  subCategories: z.array(subCategorySchema),
 })
 
 const servicesSchema = z
@@ -27,20 +27,21 @@ const servicesSchema = z
   })
 
 // ============================================
-// PARTICIPANT SCHEMA (matches ServiceRequestParticipant type)
+// PARTICIPANT SCHEMA (for creating new participant)
 // ============================================
 
 const participantSchema = z.object({
-  participantId: z.string().optional(),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   dateOfBirth: z.string().optional(),
+  gender: z.string().optional(),
   fundingType: z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']).optional(),
-  relationshipToClient: z.string().optional(),
+  conditions: z.array(z.string()).optional().default([]),
+  additionalInfo: z.string().optional(),
 })
 
 // ============================================
-// DETAILS SCHEMA (matches ServiceRequestDetails type)
+// DETAILS SCHEMA
 // ============================================
 
 const schedulingPrefsSchema = z.object({
@@ -58,17 +59,6 @@ const detailsSchema = z.object({
 })
 
 // ============================================
-// LOCATION SCHEMA (matches ServiceRequestLocation type)
-// ============================================
-
-const locationSchema = z.object({
-  suburb: z.string().min(1, 'Suburb is required'),
-  state: z.string().min(1, 'State is required'),
-  postalCode: z.string().min(1, 'Postal code is required'),
-  fullAddress: z.string().optional(),
-})
-
-// ============================================
 // CREATE SERVICE REQUEST SCHEMA
 // ============================================
 
@@ -76,7 +66,7 @@ export const createServiceRequestSchema = z.object({
   participant: participantSchema,
   services: servicesSchema,
   details: detailsSchema,
-  location: locationSchema,
+  location: z.string().min(1, 'Location is required'),
 })
 
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>
@@ -86,10 +76,11 @@ export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchem
 // ============================================
 
 export const updateServiceRequestSchema = z.object({
-  participant: participantSchema.optional(),
+  // Can update participant fields
+  participant: participantSchema.partial().optional(),
   services: servicesSchema.optional(),
-  details: detailsSchema.optional(),
-  location: locationSchema.optional(),
+  details: detailsSchema.partial().optional(),
+  location: z.string().min(1).optional(),
   status: z.enum(['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
 })
 

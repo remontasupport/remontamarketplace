@@ -1,9 +1,10 @@
 /**
  * Coordinator Registration API Endpoint
  *
- * Creates User + CoordinatorProfile + Participant.
+ * Creates User + CoordinatorProfile + Participant + ServiceRequest.
  * - CoordinatorProfile: Coordinator's contact info (firstName, lastName, mobile, organization, clientTypes)
- * - Participant: Participant details (personal info, services, location)
+ * - Participant: Person needing support (personal info)
+ * - ServiceRequest: Services needed, location, details
  *
  * POST /api/auth/register/coordinator
  *
@@ -94,49 +95,80 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // CREATE USER + COORDINATOR PROFILE + PARTICIPANT
+      // PREPARE DATA
+      // ============================================
+      // Build a default job title from services
+      const serviceNames = Object.values(data.servicesRequested || {}).map(s => s.categoryName);
+      const defaultJobTitle = serviceNames.length > 0
+        ? `Support needed: ${serviceNames.join(', ')}`
+        : 'Support request';
+
+      // ============================================
+      // CREATE USER + COORDINATOR PROFILE + PARTICIPANT + SERVICE REQUEST
       // ============================================
       let user;
       try {
-        user = await authPrisma.user.create({
-          data: {
-            email: data.email, // Already normalized by Zod transform
-            passwordHash,
-            role: 'COORDINATOR',
-            status: 'ACTIVE',
-            updatedAt: new Date(),
+        user = await authPrisma.$transaction(async (tx) => {
+          // 1. Create User with CoordinatorProfile
+          const createdUser = await tx.user.create({
+            data: {
+              email: data.email,
+              passwordHash,
+              role: 'COORDINATOR',
+              status: 'ACTIVE',
+              updatedAt: new Date(),
 
-            // CoordinatorProfile: Coordinator's contact info only
-            coordinatorProfile: {
-              create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                mobile: data.mobile,
-                organization: data.organization || null,
-                clientTypes: data.clientTypes,
-                updatedAt: new Date(),
+              // CoordinatorProfile: Coordinator's contact info only
+              coordinatorProfile: {
+                create: {
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  mobile: data.mobile,
+                  organization: data.organization || null,
+                  clientTypes: data.clientTypes,
+                  updatedAt: new Date(),
+                },
               },
             },
-
-            // Participant: About the person needing support, services, location
-            participants: {
-              create: {
-                firstName: data.clientFirstName,
-                lastName: data.clientLastName,
-                dateOfBirth: new Date(data.clientDateOfBirth),
-                fundingType: 'OTHER',
-                relationshipToClient: 'OTHER',
-                location: data.location,
-                servicesRequested: data.servicesRequested,
-                additionalInfo: data.additionalInfo || null,
-                updatedAt: new Date(),
-              },
+            include: {
+              coordinatorProfile: true,
             },
-          },
-          include: {
-            coordinatorProfile: true,
-            participants: true,
-          },
+          });
+
+          // 2. Create Participant
+          const participant = await tx.participant.create({
+            data: {
+              userId: createdUser.id,
+              firstName: data.clientFirstName,
+              lastName: data.clientLastName,
+              dateOfBirth: new Date(data.clientDateOfBirth),
+              gender: null,
+              fundingType: 'OTHER',
+              conditions: [],
+              additionalInfo: data.additionalInfo || null,
+            },
+          });
+
+          // 3. Create ServiceRequest linked to Participant
+          const serviceRequest = await tx.serviceRequest.create({
+            data: {
+              requesterId: createdUser.id,
+              participantId: participant.id,
+              services: data.servicesRequested || {},
+              details: {
+                title: defaultJobTitle,
+                description: data.additionalInfo || undefined,
+              },
+              location: data.location,
+              status: 'PENDING',
+            },
+          });
+
+          return {
+            ...createdUser,
+            participants: [participant],
+            serviceRequests: [serviceRequest],
+          };
         });
       } catch (dbError: any) {
         // Handle unique constraint violation (duplicate email)

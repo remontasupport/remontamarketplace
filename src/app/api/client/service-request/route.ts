@@ -1,7 +1,7 @@
 /**
  * Service Request API
  *
- * POST /api/client/service-request - Create a new service request
+ * POST /api/client/service-request - Create a new service request with participant
  * GET /api/client/service-request - Get service requests for the current user
  *
  * SECURITY:
@@ -22,7 +22,7 @@ import {
 } from '@/schema/serviceRequestSchema'
 
 // ============================================================================
-// POST - Create Service Request
+// POST - Create Service Request (with new Participant)
 // ============================================================================
 
 export async function POST(request: NextRequest) {
@@ -59,17 +59,9 @@ export async function POST(request: NextRequest) {
     // 4. Parse and validate request body
     const body = await request.json()
 
-    // Debug logging
-    console.log('=== SERVICE REQUEST DEBUG ===')
-    console.log('Raw body received:', JSON.stringify(body, null, 2))
-
     const validationResult = createServiceRequestSchema.safeParse(body)
 
     if (!validationResult.success) {
-      console.log('Validation failed!')
-      console.log('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2))
-      console.log('Formatted errors:', JSON.stringify(formatZodErrors(validationResult.error), null, 2))
-
       return NextResponse.json(
         {
           success: false,
@@ -80,21 +72,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Validation passed!')
-    console.log('Validated data:', JSON.stringify(validationResult.data, null, 2))
-
     const data = validationResult.data
 
-    // 5. Create service request
-    const serviceRequest = await authPrisma.serviceRequest.create({
-      data: {
-        requesterId: session.user.id,
-        participant: data.participant,
-        services: data.services,
-        details: data.details,
-        location: data.location,
-        status: 'PENDING',
-      },
+    // 5. Create Participant and ServiceRequest in a transaction
+    const result = await authPrisma.$transaction(async (tx) => {
+      // Create the participant first
+      const participant = await tx.participant.create({
+        data: {
+          userId: session.user.id,
+          firstName: data.participant.firstName,
+          lastName: data.participant.lastName,
+          dateOfBirth: data.participant.dateOfBirth
+            ? new Date(data.participant.dateOfBirth)
+            : null,
+          gender: data.participant.gender || null,
+          fundingType: data.participant.fundingType || null,
+          conditions: data.participant.conditions || [],
+          additionalInfo: data.participant.additionalInfo || null,
+        },
+      })
+
+      // Create the service request linked to the participant
+      const serviceRequest = await tx.serviceRequest.create({
+        data: {
+          requesterId: session.user.id,
+          participantId: participant.id,
+          services: data.services,
+          details: data.details,
+          location: data.location,
+          status: 'PENDING',
+        },
+        include: {
+          participant: true,
+        },
+      })
+
+      return serviceRequest
     })
 
     // 6. Audit log (fire-and-forget)
@@ -102,10 +115,11 @@ export async function POST(request: NextRequest) {
       .create({
         data: {
           userId: session.user.id,
-          action: 'PROFILE_UPDATE', // Using existing action type
+          action: 'PROFILE_UPDATE',
           metadata: {
             type: 'SERVICE_REQUEST_CREATED',
-            serviceRequestId: serviceRequest.id,
+            serviceRequestId: result.id,
+            participantId: result.participantId,
             services: Object.keys(data.services),
           },
         },
@@ -119,7 +133,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: 'Service request created successfully',
-        data: serviceRequest,
+        data: result,
       },
       { status: 201 }
     )
@@ -195,6 +209,9 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
+        include: {
+          participant: true,
+        },
       }),
     ])
 

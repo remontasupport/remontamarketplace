@@ -7266,10 +7266,9 @@ export namespace Prisma {
     firstName: string | null
     lastName: string | null
     dateOfBirth: Date | null
-    location: string | null
+    gender: string | null
     fundingType: $Enums.FundingType | null
     relationshipToClient: $Enums.RelationshipType | null
-    isSelfManaged: boolean | null
     additionalInfo: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -7281,10 +7280,9 @@ export namespace Prisma {
     firstName: string | null
     lastName: string | null
     dateOfBirth: Date | null
-    location: string | null
+    gender: string | null
     fundingType: $Enums.FundingType | null
     relationshipToClient: $Enums.RelationshipType | null
-    isSelfManaged: boolean | null
     additionalInfo: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -7296,11 +7294,10 @@ export namespace Prisma {
     firstName: number
     lastName: number
     dateOfBirth: number
-    location: number
+    gender: number
     fundingType: number
     relationshipToClient: number
-    isSelfManaged: number
-    servicesRequested: number
+    conditions: number
     additionalInfo: number
     createdAt: number
     updatedAt: number
@@ -7314,10 +7311,9 @@ export namespace Prisma {
     firstName?: true
     lastName?: true
     dateOfBirth?: true
-    location?: true
+    gender?: true
     fundingType?: true
     relationshipToClient?: true
-    isSelfManaged?: true
     additionalInfo?: true
     createdAt?: true
     updatedAt?: true
@@ -7329,10 +7325,9 @@ export namespace Prisma {
     firstName?: true
     lastName?: true
     dateOfBirth?: true
-    location?: true
+    gender?: true
     fundingType?: true
     relationshipToClient?: true
-    isSelfManaged?: true
     additionalInfo?: true
     createdAt?: true
     updatedAt?: true
@@ -7344,11 +7339,10 @@ export namespace Prisma {
     firstName?: true
     lastName?: true
     dateOfBirth?: true
-    location?: true
+    gender?: true
     fundingType?: true
     relationshipToClient?: true
-    isSelfManaged?: true
-    servicesRequested?: true
+    conditions?: true
     additionalInfo?: true
     createdAt?: true
     updatedAt?: true
@@ -7432,12 +7426,11 @@ export namespace Prisma {
     userId: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date
-    location: string | null
+    dateOfBirth: Date | null
+    gender: string | null
     fundingType: $Enums.FundingType | null
     relationshipToClient: $Enums.RelationshipType | null
-    isSelfManaged: boolean
-    servicesRequested: JsonValue | null
+    conditions: string[]
     additionalInfo: string | null
     createdAt: Date
     updatedAt: Date
@@ -7466,15 +7459,15 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    location?: boolean
+    gender?: boolean
     fundingType?: boolean
     relationshipToClient?: boolean
-    isSelfManaged?: boolean
-    servicesRequested?: boolean
+    conditions?: boolean
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | Participant$userArgs<ExtArgs>
+    serviceRequest?: boolean | Participant$serviceRequestArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7483,11 +7476,10 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    location?: boolean
+    gender?: boolean
     fundingType?: boolean
     relationshipToClient?: boolean
-    isSelfManaged?: boolean
-    servicesRequested?: boolean
+    conditions?: boolean
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7500,11 +7492,10 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    location?: boolean
+    gender?: boolean
     fundingType?: boolean
     relationshipToClient?: boolean
-    isSelfManaged?: boolean
-    servicesRequested?: boolean
+    conditions?: boolean
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -7517,19 +7508,19 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     dateOfBirth?: boolean
-    location?: boolean
+    gender?: boolean
     fundingType?: boolean
     relationshipToClient?: boolean
-    isSelfManaged?: boolean
-    servicesRequested?: boolean
+    conditions?: boolean
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "dateOfBirth" | "location" | "fundingType" | "relationshipToClient" | "isSelfManaged" | "servicesRequested" | "additionalInfo" | "createdAt" | "updatedAt", ExtArgs["result"]["participant"]>
+  export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "dateOfBirth" | "gender" | "fundingType" | "relationshipToClient" | "conditions" | "additionalInfo" | "createdAt" | "updatedAt", ExtArgs["result"]["participant"]>
   export type ParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | Participant$userArgs<ExtArgs>
+    serviceRequest?: boolean | Participant$serviceRequestArgs<ExtArgs>
   }
   export type ParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | Participant$userArgs<ExtArgs>
@@ -7542,18 +7533,18 @@ export namespace Prisma {
     name: "Participant"
     objects: {
       user: Prisma.$UserPayload<ExtArgs> | null
+      serviceRequest: Prisma.$ServiceRequestPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       userId: string | null
       firstName: string
       lastName: string
-      dateOfBirth: Date
-      location: string | null
+      dateOfBirth: Date | null
+      gender: string | null
       fundingType: $Enums.FundingType | null
       relationshipToClient: $Enums.RelationshipType | null
-      isSelfManaged: boolean
-      servicesRequested: Prisma.JsonValue | null
+      conditions: string[]
       additionalInfo: string | null
       createdAt: Date
       updatedAt: Date
@@ -7952,6 +7943,7 @@ export namespace Prisma {
   export interface Prisma__ParticipantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends Participant$userArgs<ExtArgs> = {}>(args?: Subset<T, Participant$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    serviceRequest<T extends Participant$serviceRequestArgs<ExtArgs> = {}>(args?: Subset<T, Participant$serviceRequestArgs<ExtArgs>>): Prisma__ServiceRequestClient<$Result.GetResult<Prisma.$ServiceRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7986,11 +7978,10 @@ export namespace Prisma {
     readonly firstName: FieldRef<"Participant", 'String'>
     readonly lastName: FieldRef<"Participant", 'String'>
     readonly dateOfBirth: FieldRef<"Participant", 'DateTime'>
-    readonly location: FieldRef<"Participant", 'String'>
+    readonly gender: FieldRef<"Participant", 'String'>
     readonly fundingType: FieldRef<"Participant", 'FundingType'>
     readonly relationshipToClient: FieldRef<"Participant", 'RelationshipType'>
-    readonly isSelfManaged: FieldRef<"Participant", 'Boolean'>
-    readonly servicesRequested: FieldRef<"Participant", 'Json'>
+    readonly conditions: FieldRef<"Participant", 'String[]'>
     readonly additionalInfo: FieldRef<"Participant", 'String'>
     readonly createdAt: FieldRef<"Participant", 'DateTime'>
     readonly updatedAt: FieldRef<"Participant", 'DateTime'>
@@ -8406,6 +8397,25 @@ export namespace Prisma {
      */
     include?: UserInclude<ExtArgs> | null
     where?: UserWhereInput
+  }
+
+  /**
+   * Participant.serviceRequest
+   */
+  export type Participant$serviceRequestArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceRequest
+     */
+    select?: ServiceRequestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ServiceRequest
+     */
+    omit?: ServiceRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
+    where?: ServiceRequestWhereInput
   }
 
   /**
@@ -22359,6 +22369,8 @@ export namespace Prisma {
   export type ServiceRequestMinAggregateOutputType = {
     id: string | null
     requesterId: string | null
+    participantId: string | null
+    location: string | null
     zohoRecordId: string | null
     status: $Enums.ServiceRequestStatus | null
     createdAt: Date | null
@@ -22368,6 +22380,8 @@ export namespace Prisma {
   export type ServiceRequestMaxAggregateOutputType = {
     id: string | null
     requesterId: string | null
+    participantId: string | null
+    location: string | null
     zohoRecordId: string | null
     status: $Enums.ServiceRequestStatus | null
     createdAt: Date | null
@@ -22377,7 +22391,7 @@ export namespace Prisma {
   export type ServiceRequestCountAggregateOutputType = {
     id: number
     requesterId: number
-    participant: number
+    participantId: number
     services: number
     details: number
     location: number
@@ -22393,6 +22407,8 @@ export namespace Prisma {
   export type ServiceRequestMinAggregateInputType = {
     id?: true
     requesterId?: true
+    participantId?: true
+    location?: true
     zohoRecordId?: true
     status?: true
     createdAt?: true
@@ -22402,6 +22418,8 @@ export namespace Prisma {
   export type ServiceRequestMaxAggregateInputType = {
     id?: true
     requesterId?: true
+    participantId?: true
+    location?: true
     zohoRecordId?: true
     status?: true
     createdAt?: true
@@ -22411,7 +22429,7 @@ export namespace Prisma {
   export type ServiceRequestCountAggregateInputType = {
     id?: true
     requesterId?: true
-    participant?: true
+    participantId?: true
     services?: true
     details?: true
     location?: true
@@ -22498,10 +22516,10 @@ export namespace Prisma {
   export type ServiceRequestGroupByOutputType = {
     id: string
     requesterId: string
-    participant: JsonValue
+    participantId: string
     services: JsonValue
     details: JsonValue
-    location: JsonValue
+    location: string
     zohoRecordId: string | null
     assignedWorker: JsonValue | null
     status: $Enums.ServiceRequestStatus
@@ -22529,7 +22547,7 @@ export namespace Prisma {
   export type ServiceRequestSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     requesterId?: boolean
-    participant?: boolean
+    participantId?: boolean
     services?: boolean
     details?: boolean
     location?: boolean
@@ -22538,12 +22556,13 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["serviceRequest"]>
 
   export type ServiceRequestSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     requesterId?: boolean
-    participant?: boolean
+    participantId?: boolean
     services?: boolean
     details?: boolean
     location?: boolean
@@ -22552,12 +22571,13 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["serviceRequest"]>
 
   export type ServiceRequestSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     requesterId?: boolean
-    participant?: boolean
+    participantId?: boolean
     services?: boolean
     details?: boolean
     location?: boolean
@@ -22566,12 +22586,13 @@ export namespace Prisma {
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["serviceRequest"]>
 
   export type ServiceRequestSelectScalar = {
     id?: boolean
     requesterId?: boolean
-    participant?: boolean
+    participantId?: boolean
     services?: boolean
     details?: boolean
     location?: boolean
@@ -22582,18 +22603,29 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ServiceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "requesterId" | "participant" | "services" | "details" | "location" | "zohoRecordId" | "assignedWorker" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceRequest"]>
+  export type ServiceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "requesterId" | "participantId" | "services" | "details" | "location" | "zohoRecordId" | "assignedWorker" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceRequest"]>
+  export type ServiceRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }
+  export type ServiceRequestIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }
+  export type ServiceRequestIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    participant?: boolean | ParticipantDefaultArgs<ExtArgs>
+  }
 
   export type $ServiceRequestPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ServiceRequest"
-    objects: {}
+    objects: {
+      participant: Prisma.$ParticipantPayload<ExtArgs>
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       requesterId: string
-      participant: Prisma.JsonValue
+      participantId: string
       services: Prisma.JsonValue
       details: Prisma.JsonValue
-      location: Prisma.JsonValue
+      location: string
       zohoRecordId: string | null
       assignedWorker: Prisma.JsonValue | null
       status: $Enums.ServiceRequestStatus
@@ -22993,6 +23025,7 @@ export namespace Prisma {
    */
   export interface Prisma__ServiceRequestClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    participant<T extends ParticipantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ParticipantDefaultArgs<ExtArgs>>): Prisma__ParticipantClient<$Result.GetResult<Prisma.$ParticipantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -23024,10 +23057,10 @@ export namespace Prisma {
   interface ServiceRequestFieldRefs {
     readonly id: FieldRef<"ServiceRequest", 'String'>
     readonly requesterId: FieldRef<"ServiceRequest", 'String'>
-    readonly participant: FieldRef<"ServiceRequest", 'Json'>
+    readonly participantId: FieldRef<"ServiceRequest", 'String'>
     readonly services: FieldRef<"ServiceRequest", 'Json'>
     readonly details: FieldRef<"ServiceRequest", 'Json'>
-    readonly location: FieldRef<"ServiceRequest", 'Json'>
+    readonly location: FieldRef<"ServiceRequest", 'String'>
     readonly zohoRecordId: FieldRef<"ServiceRequest", 'String'>
     readonly assignedWorker: FieldRef<"ServiceRequest", 'Json'>
     readonly status: FieldRef<"ServiceRequest", 'ServiceRequestStatus'>
@@ -23050,6 +23083,10 @@ export namespace Prisma {
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
+    /**
      * Filter, which ServiceRequest to fetch.
      */
     where: ServiceRequestWhereUniqueInput
@@ -23068,6 +23105,10 @@ export namespace Prisma {
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
+    /**
      * Filter, which ServiceRequest to fetch.
      */
     where: ServiceRequestWhereUniqueInput
@@ -23085,6 +23126,10 @@ export namespace Prisma {
      * Omit specific fields from the ServiceRequest
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
     /**
      * Filter, which ServiceRequest to fetch.
      */
@@ -23134,6 +23179,10 @@ export namespace Prisma {
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
+    /**
      * Filter, which ServiceRequest to fetch.
      */
     where?: ServiceRequestWhereInput
@@ -23182,6 +23231,10 @@ export namespace Prisma {
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
+    /**
      * Filter, which ServiceRequests to fetch.
      */
     where?: ServiceRequestWhereInput
@@ -23225,6 +23278,10 @@ export namespace Prisma {
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
+    /**
      * The data needed to create a ServiceRequest.
      */
     data: XOR<ServiceRequestCreateInput, ServiceRequestUncheckedCreateInput>
@@ -23258,6 +23315,10 @@ export namespace Prisma {
      */
     data: ServiceRequestCreateManyInput | ServiceRequestCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -23272,6 +23333,10 @@ export namespace Prisma {
      * Omit specific fields from the ServiceRequest
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
     /**
      * The data needed to update a ServiceRequest.
      */
@@ -23324,6 +23389,10 @@ export namespace Prisma {
      * Limit how many ServiceRequests to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -23338,6 +23407,10 @@ export namespace Prisma {
      * Omit specific fields from the ServiceRequest
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
     /**
      * The filter to search for the ServiceRequest to update in case it exists.
      */
@@ -23364,6 +23437,10 @@ export namespace Prisma {
      * Omit specific fields from the ServiceRequest
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
     /**
      * Filter which ServiceRequest to delete.
      */
@@ -23396,6 +23473,10 @@ export namespace Prisma {
      * Omit specific fields from the ServiceRequest
      */
     omit?: ServiceRequestOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceRequestInclude<ExtArgs> | null
   }
 
 
@@ -23478,11 +23559,10 @@ export namespace Prisma {
     firstName: 'firstName',
     lastName: 'lastName',
     dateOfBirth: 'dateOfBirth',
-    location: 'location',
+    gender: 'gender',
     fundingType: 'fundingType',
     relationshipToClient: 'relationshipToClient',
-    isSelfManaged: 'isSelfManaged',
-    servicesRequested: 'servicesRequested',
+    conditions: 'conditions',
     additionalInfo: 'additionalInfo',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -23696,7 +23776,7 @@ export namespace Prisma {
   export const ServiceRequestScalarFieldEnum: {
     id: 'id',
     requesterId: 'requesterId',
-    participant: 'participant',
+    participantId: 'participantId',
     services: 'services',
     details: 'details',
     location: 'location',
@@ -23862,13 +23942,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
-    
-
-
-  /**
    * Reference to a field of type 'UserRole'
    */
   export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
@@ -23893,6 +23966,13 @@ export namespace Prisma {
    * Reference to a field of type 'AccountStatus[]'
    */
   export type ListEnumAccountStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -24261,16 +24341,16 @@ export namespace Prisma {
     userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
-    location?: StringNullableFilter<"Participant"> | string | null
+    dateOfBirth?: DateTimeNullableFilter<"Participant"> | Date | string | null
+    gender?: StringNullableFilter<"Participant"> | string | null
     fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
     relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFilter<"Participant"> | boolean
-    servicesRequested?: JsonNullableFilter<"Participant">
+    conditions?: StringNullableListFilter<"Participant">
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    serviceRequest?: XOR<ServiceRequestNullableScalarRelationFilter, ServiceRequestWhereInput> | null
   }
 
   export type ParticipantOrderByWithRelationInput = {
@@ -24278,16 +24358,16 @@ export namespace Prisma {
     userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
-    dateOfBirth?: SortOrder
-    location?: SortOrderInput | SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
+    gender?: SortOrderInput | SortOrder
     fundingType?: SortOrderInput | SortOrder
     relationshipToClient?: SortOrderInput | SortOrder
-    isSelfManaged?: SortOrder
-    servicesRequested?: SortOrderInput | SortOrder
+    conditions?: SortOrder
     additionalInfo?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
+    serviceRequest?: ServiceRequestOrderByWithRelationInput
   }
 
   export type ParticipantWhereUniqueInput = Prisma.AtLeast<{
@@ -24298,16 +24378,16 @@ export namespace Prisma {
     userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
-    location?: StringNullableFilter<"Participant"> | string | null
+    dateOfBirth?: DateTimeNullableFilter<"Participant"> | Date | string | null
+    gender?: StringNullableFilter<"Participant"> | string | null
     fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
     relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFilter<"Participant"> | boolean
-    servicesRequested?: JsonNullableFilter<"Participant">
+    conditions?: StringNullableListFilter<"Participant">
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    serviceRequest?: XOR<ServiceRequestNullableScalarRelationFilter, ServiceRequestWhereInput> | null
   }, "id">
 
   export type ParticipantOrderByWithAggregationInput = {
@@ -24315,12 +24395,11 @@ export namespace Prisma {
     userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
-    dateOfBirth?: SortOrder
-    location?: SortOrderInput | SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
+    gender?: SortOrderInput | SortOrder
     fundingType?: SortOrderInput | SortOrder
     relationshipToClient?: SortOrderInput | SortOrder
-    isSelfManaged?: SortOrder
-    servicesRequested?: SortOrderInput | SortOrder
+    conditions?: SortOrder
     additionalInfo?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -24337,12 +24416,11 @@ export namespace Prisma {
     userId?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     firstName?: StringWithAggregatesFilter<"Participant"> | string
     lastName?: StringWithAggregatesFilter<"Participant"> | string
-    dateOfBirth?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
-    location?: StringNullableWithAggregatesFilter<"Participant"> | string | null
+    dateOfBirth?: DateTimeNullableWithAggregatesFilter<"Participant"> | Date | string | null
+    gender?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     fundingType?: EnumFundingTypeNullableWithAggregatesFilter<"Participant"> | $Enums.FundingType | null
     relationshipToClient?: EnumRelationshipTypeNullableWithAggregatesFilter<"Participant"> | $Enums.RelationshipType | null
-    isSelfManaged?: BoolWithAggregatesFilter<"Participant"> | boolean
-    servicesRequested?: JsonNullableWithAggregatesFilter<"Participant">
+    conditions?: StringNullableListFilter<"Participant">
     additionalInfo?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
@@ -25411,21 +25489,22 @@ export namespace Prisma {
     NOT?: ServiceRequestWhereInput | ServiceRequestWhereInput[]
     id?: StringFilter<"ServiceRequest"> | string
     requesterId?: StringFilter<"ServiceRequest"> | string
-    participant?: JsonFilter<"ServiceRequest">
+    participantId?: StringFilter<"ServiceRequest"> | string
     services?: JsonFilter<"ServiceRequest">
     details?: JsonFilter<"ServiceRequest">
-    location?: JsonFilter<"ServiceRequest">
+    location?: StringFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
+    participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
   }
 
   export type ServiceRequestOrderByWithRelationInput = {
     id?: SortOrder
     requesterId?: SortOrder
-    participant?: SortOrder
+    participantId?: SortOrder
     services?: SortOrder
     details?: SortOrder
     location?: SortOrder
@@ -25434,29 +25513,31 @@ export namespace Prisma {
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    participant?: ParticipantOrderByWithRelationInput
   }
 
   export type ServiceRequestWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    participantId?: string
     zohoRecordId?: string
     AND?: ServiceRequestWhereInput | ServiceRequestWhereInput[]
     OR?: ServiceRequestWhereInput[]
     NOT?: ServiceRequestWhereInput | ServiceRequestWhereInput[]
     requesterId?: StringFilter<"ServiceRequest"> | string
-    participant?: JsonFilter<"ServiceRequest">
     services?: JsonFilter<"ServiceRequest">
     details?: JsonFilter<"ServiceRequest">
-    location?: JsonFilter<"ServiceRequest">
+    location?: StringFilter<"ServiceRequest"> | string
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
-  }, "id" | "zohoRecordId">
+    participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
+  }, "id" | "participantId" | "zohoRecordId">
 
   export type ServiceRequestOrderByWithAggregationInput = {
     id?: SortOrder
     requesterId?: SortOrder
-    participant?: SortOrder
+    participantId?: SortOrder
     services?: SortOrder
     details?: SortOrder
     location?: SortOrder
@@ -25476,10 +25557,10 @@ export namespace Prisma {
     NOT?: ServiceRequestScalarWhereWithAggregatesInput | ServiceRequestScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"ServiceRequest"> | string
     requesterId?: StringWithAggregatesFilter<"ServiceRequest"> | string
-    participant?: JsonWithAggregatesFilter<"ServiceRequest">
+    participantId?: StringWithAggregatesFilter<"ServiceRequest"> | string
     services?: JsonWithAggregatesFilter<"ServiceRequest">
     details?: JsonWithAggregatesFilter<"ServiceRequest">
-    location?: JsonWithAggregatesFilter<"ServiceRequest">
+    location?: StringWithAggregatesFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableWithAggregatesFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableWithAggregatesFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusWithAggregatesFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
@@ -25816,16 +25897,16 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
-    location?: string | null
+    dateOfBirth?: Date | string | null
+    gender?: string | null
     fundingType?: $Enums.FundingType | null
     relationshipToClient?: $Enums.RelationshipType | null
-    isSelfManaged?: boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantCreateconditionsInput | string[]
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user?: UserCreateNestedOneWithoutParticipantsInput
+    serviceRequest?: ServiceRequestCreateNestedOneWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateInput = {
@@ -25833,31 +25914,31 @@ export namespace Prisma {
     userId?: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
-    location?: string | null
+    dateOfBirth?: Date | string | null
+    gender?: string | null
     fundingType?: $Enums.FundingType | null
     relationshipToClient?: $Enums.RelationshipType | null
-    isSelfManaged?: boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantCreateconditionsInput | string[]
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    serviceRequest?: ServiceRequestUncheckedCreateNestedOneWithoutParticipantInput
   }
 
   export type ParticipantUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneWithoutParticipantsNestedInput
+    serviceRequest?: ServiceRequestUpdateOneWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateInput = {
@@ -25865,15 +25946,15 @@ export namespace Prisma {
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    serviceRequest?: ServiceRequestUncheckedUpdateOneWithoutParticipantNestedInput
   }
 
   export type ParticipantCreateManyInput = {
@@ -25881,12 +25962,11 @@ export namespace Prisma {
     userId?: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
-    location?: string | null
+    dateOfBirth?: Date | string | null
+    gender?: string | null
     fundingType?: $Enums.FundingType | null
     relationshipToClient?: $Enums.RelationshipType | null
-    isSelfManaged?: boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantCreateconditionsInput | string[]
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -25896,12 +25976,11 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25912,12 +25991,11 @@ export namespace Prisma {
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27138,24 +27216,24 @@ export namespace Prisma {
   export type ServiceRequestCreateInput = {
     id?: string
     requesterId: string
-    participant: JsonNullValueInput | InputJsonValue
     services: JsonNullValueInput | InputJsonValue
     details: JsonNullValueInput | InputJsonValue
-    location: JsonNullValueInput | InputJsonValue
+    location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+    participant: ParticipantCreateNestedOneWithoutServiceRequestInput
   }
 
   export type ServiceRequestUncheckedCreateInput = {
     id?: string
     requesterId: string
-    participant: JsonNullValueInput | InputJsonValue
+    participantId: string
     services: JsonNullValueInput | InputJsonValue
     details: JsonNullValueInput | InputJsonValue
-    location: JsonNullValueInput | InputJsonValue
+    location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.ServiceRequestStatus
@@ -27166,24 +27244,24 @@ export namespace Prisma {
   export type ServiceRequestUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     requesterId?: StringFieldUpdateOperationsInput | string
-    participant?: JsonNullValueInput | InputJsonValue
     services?: JsonNullValueInput | InputJsonValue
     details?: JsonNullValueInput | InputJsonValue
-    location?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    participant?: ParticipantUpdateOneRequiredWithoutServiceRequestNestedInput
   }
 
   export type ServiceRequestUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     requesterId?: StringFieldUpdateOperationsInput | string
-    participant?: JsonNullValueInput | InputJsonValue
+    participantId?: StringFieldUpdateOperationsInput | string
     services?: JsonNullValueInput | InputJsonValue
     details?: JsonNullValueInput | InputJsonValue
-    location?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
@@ -27194,10 +27272,10 @@ export namespace Prisma {
   export type ServiceRequestCreateManyInput = {
     id?: string
     requesterId: string
-    participant: JsonNullValueInput | InputJsonValue
+    participantId: string
     services: JsonNullValueInput | InputJsonValue
     details: JsonNullValueInput | InputJsonValue
-    location: JsonNullValueInput | InputJsonValue
+    location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.ServiceRequestStatus
@@ -27208,10 +27286,9 @@ export namespace Prisma {
   export type ServiceRequestUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     requesterId?: StringFieldUpdateOperationsInput | string
-    participant?: JsonNullValueInput | InputJsonValue
     services?: JsonNullValueInput | InputJsonValue
     details?: JsonNullValueInput | InputJsonValue
-    location?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
@@ -27222,10 +27299,10 @@ export namespace Prisma {
   export type ServiceRequestUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     requesterId?: StringFieldUpdateOperationsInput | string
-    participant?: JsonNullValueInput | InputJsonValue
+    participantId?: StringFieldUpdateOperationsInput | string
     services?: JsonNullValueInput | InputJsonValue
     details?: JsonNullValueInput | InputJsonValue
-    location?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
@@ -27590,6 +27667,17 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type EnumFundingTypeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
@@ -27604,9 +27692,9 @@ export namespace Prisma {
     not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
+  export type ServiceRequestNullableScalarRelationFilter = {
+    is?: ServiceRequestWhereInput | null
+    isNot?: ServiceRequestWhereInput | null
   }
 
   export type ParticipantCountOrderByAggregateInput = {
@@ -27615,11 +27703,10 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    location?: SortOrder
+    gender?: SortOrder
     fundingType?: SortOrder
     relationshipToClient?: SortOrder
-    isSelfManaged?: SortOrder
-    servicesRequested?: SortOrder
+    conditions?: SortOrder
     additionalInfo?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -27631,10 +27718,9 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    location?: SortOrder
+    gender?: SortOrder
     fundingType?: SortOrder
     relationshipToClient?: SortOrder
-    isSelfManaged?: SortOrder
     additionalInfo?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -27646,13 +27732,26 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     dateOfBirth?: SortOrder
-    location?: SortOrder
+    gender?: SortOrder
     fundingType?: SortOrder
     relationshipToClient?: SortOrder
-    isSelfManaged?: SortOrder
     additionalInfo?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type EnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -27673,14 +27772,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
     _max?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type SessionCountOrderByAggregateInput = {
@@ -27719,17 +27810,6 @@ export namespace Prisma {
     in?: $Enums.AccountStatus[] | ListEnumAccountStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.AccountStatus[] | ListEnumAccountStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumAccountStatusFilter<$PrismaModel> | $Enums.AccountStatus
-  }
-
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -27874,20 +27954,6 @@ export namespace Prisma {
     _max?: NestedEnumAccountStatusFilter<$PrismaModel>
   }
 
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -27902,6 +27968,11 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type EnumRequirementStatusFilter<$PrismaModel = never> = {
@@ -27988,6 +28059,14 @@ export namespace Prisma {
     updatedAt?: SortOrder
     documentCategory?: SortOrder
     notes?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type EnumRequirementStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -28507,10 +28586,15 @@ export namespace Prisma {
     not?: NestedEnumServiceRequestStatusFilter<$PrismaModel> | $Enums.ServiceRequestStatus
   }
 
+  export type ParticipantScalarRelationFilter = {
+    is?: ParticipantWhereInput
+    isNot?: ParticipantWhereInput
+  }
+
   export type ServiceRequestCountOrderByAggregateInput = {
     id?: SortOrder
     requesterId?: SortOrder
-    participant?: SortOrder
+    participantId?: SortOrder
     services?: SortOrder
     details?: SortOrder
     location?: SortOrder
@@ -28524,6 +28608,8 @@ export namespace Prisma {
   export type ServiceRequestMaxOrderByAggregateInput = {
     id?: SortOrder
     requesterId?: SortOrder
+    participantId?: SortOrder
+    location?: SortOrder
     zohoRecordId?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
@@ -28533,6 +28619,8 @@ export namespace Prisma {
   export type ServiceRequestMinOrderByAggregateInput = {
     id?: SortOrder
     requesterId?: SortOrder
+    participantId?: SortOrder
+    location?: SortOrder
     zohoRecordId?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
@@ -28666,10 +28754,30 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCoordinatorProfileInput, UserUpdateWithoutCoordinatorProfileInput>, UserUncheckedUpdateWithoutCoordinatorProfileInput>
   }
 
+  export type ParticipantCreateconditionsInput = {
+    set: string[]
+  }
+
   export type UserCreateNestedOneWithoutParticipantsInput = {
     create?: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
     connectOrCreate?: UserCreateOrConnectWithoutParticipantsInput
     connect?: UserWhereUniqueInput
+  }
+
+  export type ServiceRequestCreateNestedOneWithoutParticipantInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
+    connect?: ServiceRequestWhereUniqueInput
+  }
+
+  export type ServiceRequestUncheckedCreateNestedOneWithoutParticipantInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
+    connect?: ServiceRequestWhereUniqueInput
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type NullableEnumFundingTypeFieldUpdateOperationsInput = {
@@ -28680,8 +28788,9 @@ export namespace Prisma {
     set?: $Enums.RelationshipType | null
   }
 
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
+  export type ParticipantUpdateconditionsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type UserUpdateOneWithoutParticipantsNestedInput = {
@@ -28692,6 +28801,26 @@ export namespace Prisma {
     delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutParticipantsInput, UserUpdateWithoutParticipantsInput>, UserUncheckedUpdateWithoutParticipantsInput>
+  }
+
+  export type ServiceRequestUpdateOneWithoutParticipantNestedInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
+    upsert?: ServiceRequestUpsertWithoutParticipantInput
+    disconnect?: ServiceRequestWhereInput | boolean
+    delete?: ServiceRequestWhereInput | boolean
+    connect?: ServiceRequestWhereUniqueInput
+    update?: XOR<XOR<ServiceRequestUpdateToOneWithWhereWithoutParticipantInput, ServiceRequestUpdateWithoutParticipantInput>, ServiceRequestUncheckedUpdateWithoutParticipantInput>
+  }
+
+  export type ServiceRequestUncheckedUpdateOneWithoutParticipantNestedInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
+    upsert?: ServiceRequestUpsertWithoutParticipantInput
+    disconnect?: ServiceRequestWhereInput | boolean
+    delete?: ServiceRequestWhereInput | boolean
+    connect?: ServiceRequestWhereUniqueInput
+    update?: XOR<XOR<ServiceRequestUpdateToOneWithWhereWithoutParticipantInput, ServiceRequestUpdateWithoutParticipantInput>, ServiceRequestUncheckedUpdateWithoutParticipantInput>
   }
 
   export type UserCreateNestedOneWithoutSessionsInput = {
@@ -28806,10 +28935,6 @@ export namespace Prisma {
 
   export type EnumAccountStatusFieldUpdateOperationsInput = {
     set?: $Enums.AccountStatus
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -28996,6 +29121,10 @@ export namespace Prisma {
     create?: XOR<WorkerProfileCreateWithoutVerificationRequirementsInput, WorkerProfileUncheckedCreateWithoutVerificationRequirementsInput>
     connectOrCreate?: WorkerProfileCreateOrConnectWithoutVerificationRequirementsInput
     connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type EnumRequirementStatusFieldUpdateOperationsInput = {
@@ -29545,8 +29674,22 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutWorkerAdditionalInfoInput, WorkerProfileUpdateWithoutWorkerAdditionalInfoInput>, WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput>
   }
 
+  export type ParticipantCreateNestedOneWithoutServiceRequestInput = {
+    create?: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestInput
+    connect?: ParticipantWhereUniqueInput
+  }
+
   export type EnumServiceRequestStatusFieldUpdateOperationsInput = {
     set?: $Enums.ServiceRequestStatus
+  }
+
+  export type ParticipantUpdateOneRequiredWithoutServiceRequestNestedInput = {
+    create?: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestInput
+    upsert?: ParticipantUpsertWithoutServiceRequestInput
+    connect?: ParticipantWhereUniqueInput
+    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutServiceRequestInput, ParticipantUpdateWithoutServiceRequestInput>, ParticipantUncheckedUpdateWithoutServiceRequestInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -29725,6 +29868,17 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedEnumFundingTypeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
@@ -29739,9 +29893,18 @@ export namespace Prisma {
     not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -29764,14 +29927,6 @@ export namespace Prisma {
     _max?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
   }
 
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type NestedEnumUserRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.UserRole | EnumUserRoleFieldRefInput<$PrismaModel>
     in?: $Enums.UserRole[] | ListEnumUserRoleFieldRefInput<$PrismaModel>
@@ -29784,17 +29939,6 @@ export namespace Prisma {
     in?: $Enums.AccountStatus[] | ListEnumAccountStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.AccountStatus[] | ListEnumAccountStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumAccountStatusFilter<$PrismaModel> | $Enums.AccountStatus
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedEnumUserRoleWithAggregatesFilter<$PrismaModel = never> = {
@@ -29815,20 +29959,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAccountStatusFilter<$PrismaModel>
     _max?: NestedEnumAccountStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -29858,6 +29988,11 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedEnumRequirementStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RequirementStatus | EnumRequirementStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RequirementStatus[] | ListEnumRequirementStatusFieldRefInput<$PrismaModel>
@@ -29870,6 +30005,14 @@ export namespace Prisma {
     in?: $Enums.DocumentCategory[] | ListEnumDocumentCategoryFieldRefInput<$PrismaModel> | null
     notIn?: $Enums.DocumentCategory[] | ListEnumDocumentCategoryFieldRefInput<$PrismaModel> | null
     not?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel> | $Enums.DocumentCategory | null
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumRequirementStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -30426,6 +30569,37 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
   }
 
+  export type ServiceRequestCreateWithoutParticipantInput = {
+    id?: string
+    requesterId: string
+    services: JsonNullValueInput | InputJsonValue
+    details: JsonNullValueInput | InputJsonValue
+    location: string
+    zohoRecordId?: string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.ServiceRequestStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiceRequestUncheckedCreateWithoutParticipantInput = {
+    id?: string
+    requesterId: string
+    services: JsonNullValueInput | InputJsonValue
+    details: JsonNullValueInput | InputJsonValue
+    location: string
+    zohoRecordId?: string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.ServiceRequestStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiceRequestCreateOrConnectWithoutParticipantInput = {
+    where: ServiceRequestWhereUniqueInput
+    create: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+  }
+
   export type UserUpsertWithoutParticipantsInput = {
     update: XOR<UserUpdateWithoutParticipantsInput, UserUncheckedUpdateWithoutParticipantsInput>
     create: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
@@ -30479,6 +30653,43 @@ export namespace Prisma {
     workerProfile?: WorkerProfileUncheckedUpdateOneWithoutUserNestedInput
     clientProfile?: ClientProfileUncheckedUpdateOneWithoutUserNestedInput
     coordinatorProfile?: CoordinatorProfileUncheckedUpdateOneWithoutUserNestedInput
+  }
+
+  export type ServiceRequestUpsertWithoutParticipantInput = {
+    update: XOR<ServiceRequestUpdateWithoutParticipantInput, ServiceRequestUncheckedUpdateWithoutParticipantInput>
+    create: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+    where?: ServiceRequestWhereInput
+  }
+
+  export type ServiceRequestUpdateToOneWithWhereWithoutParticipantInput = {
+    where?: ServiceRequestWhereInput
+    data: XOR<ServiceRequestUpdateWithoutParticipantInput, ServiceRequestUncheckedUpdateWithoutParticipantInput>
+  }
+
+  export type ServiceRequestUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestUncheckedUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -30806,30 +31017,30 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
-    location?: string | null
+    dateOfBirth?: Date | string | null
+    gender?: string | null
     fundingType?: $Enums.FundingType | null
     relationshipToClient?: $Enums.RelationshipType | null
-    isSelfManaged?: boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantCreateconditionsInput | string[]
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    serviceRequest?: ServiceRequestCreateNestedOneWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutUserInput = {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
-    location?: string | null
+    dateOfBirth?: Date | string | null
+    gender?: string | null
     fundingType?: $Enums.FundingType | null
     relationshipToClient?: $Enums.RelationshipType | null
-    isSelfManaged?: boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantCreateconditionsInput | string[]
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    serviceRequest?: ServiceRequestUncheckedCreateNestedOneWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutUserInput = {
@@ -31101,12 +31312,11 @@ export namespace Prisma {
     userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
-    location?: StringNullableFilter<"Participant"> | string | null
+    dateOfBirth?: DateTimeNullableFilter<"Participant"> | Date | string | null
+    gender?: StringNullableFilter<"Participant"> | string | null
     fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
     relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFilter<"Participant"> | boolean
-    servicesRequested?: JsonNullableFilter<"Participant">
+    conditions?: StringNullableListFilter<"Participant">
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
@@ -32478,6 +32688,82 @@ export namespace Prisma {
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
+  export type ParticipantCreateWithoutServiceRequestInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    dateOfBirth?: Date | string | null
+    gender?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    conditions?: ParticipantCreateconditionsInput | string[]
+    additionalInfo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user?: UserCreateNestedOneWithoutParticipantsInput
+  }
+
+  export type ParticipantUncheckedCreateWithoutServiceRequestInput = {
+    id?: string
+    userId?: string | null
+    firstName: string
+    lastName: string
+    dateOfBirth?: Date | string | null
+    gender?: string | null
+    fundingType?: $Enums.FundingType | null
+    relationshipToClient?: $Enums.RelationshipType | null
+    conditions?: ParticipantCreateconditionsInput | string[]
+    additionalInfo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ParticipantCreateOrConnectWithoutServiceRequestInput = {
+    where: ParticipantWhereUniqueInput
+    create: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
+  }
+
+  export type ParticipantUpsertWithoutServiceRequestInput = {
+    update: XOR<ParticipantUpdateWithoutServiceRequestInput, ParticipantUncheckedUpdateWithoutServiceRequestInput>
+    create: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
+    where?: ParticipantWhereInput
+  }
+
+  export type ParticipantUpdateToOneWithWhereWithoutServiceRequestInput = {
+    where?: ParticipantWhereInput
+    data: XOR<ParticipantUpdateWithoutServiceRequestInput, ParticipantUncheckedUpdateWithoutServiceRequestInput>
+  }
+
+  export type ParticipantUpdateWithoutServiceRequestInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    conditions?: ParticipantUpdateconditionsInput | string[]
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneWithoutParticipantsNestedInput
+  }
+
+  export type ParticipantUncheckedUpdateWithoutServiceRequestInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
+    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    conditions?: ParticipantUpdateconditionsInput | string[]
+    additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AccountCreateManyUserInput = {
     id?: string
     type: string
@@ -32512,12 +32798,11 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
-    location?: string | null
+    dateOfBirth?: Date | string | null
+    gender?: string | null
     fundingType?: $Enums.FundingType | null
     relationshipToClient?: $Enums.RelationshipType | null
-    isSelfManaged?: boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantCreateconditionsInput | string[]
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -32617,42 +32902,41 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    serviceRequest?: ServiceRequestUpdateOneWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    serviceRequest?: ServiceRequestUncheckedUpdateOneWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
     relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
-    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
-    servicesRequested?: NullableJsonNullValueInput | InputJsonValue
+    conditions?: ParticipantUpdateconditionsInput | string[]
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -393,21 +393,32 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     setIsSubmitting(true);
     setSubmitError(null);
 
-    console.log('=== SUBMIT REQUEST DEBUG ===');
-    console.log('Current formData:', JSON.stringify(formData, null, 2));
-
     try {
+      // Build location string
+      const locationParts = [
+        formData.locationData.suburb,
+        formData.locationData.state,
+        formData.locationData.postalCode,
+      ].filter(Boolean);
+      const locationString = formData.locationData.fullAddress || locationParts.join(", ");
+
       // Build the API payload
       const payload = {
+        // Participant data
         participant: {
           firstName: formData.detailsData.firstName,
           lastName: formData.detailsData.lastName,
           dateOfBirth: formData.detailsData.dobYear && formData.detailsData.dobMonth && formData.detailsData.dobDay
             ? `${formData.detailsData.dobYear}-${formData.detailsData.dobMonth.padStart(2, "0")}-${formData.detailsData.dobDay.padStart(2, "0")}`
             : undefined,
-          fundingType: "NDIS" as const, // Default, can be made dynamic
+          gender: formData.detailsData.gender || undefined,
+          fundingType: "NDIS" as const,
+          conditions: formData.selectedConditions,
+          additionalInfo: formData.whenData.additionalNotes || undefined,
         },
+        // Services
         services: formData.services,
+        // Details
         details: {
           title: formData.supportDetailsData.jobTitle,
           description: formData.whenData.additionalNotes || undefined,
@@ -420,15 +431,9 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
           },
           specialRequirements: formData.preferencesData.preferredQualities || undefined,
         },
-        location: {
-          suburb: formData.locationData.suburb,
-          state: formData.locationData.state,
-          postalCode: formData.locationData.postalCode,
-          fullAddress: formData.locationData.fullAddress || undefined,
-        },
+        // Location as string
+        location: locationString,
       };
-
-      console.log('Built payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch("/api/client/service-request", {
         method: "POST",
@@ -438,11 +443,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
 
       const result = await response.json();
 
-      console.log('API Response status:', response.status);
-      console.log('API Response body:', JSON.stringify(result, null, 2));
-
       if (!response.ok) {
-        console.log('Request failed:', result);
         throw new Error(result.error || "Failed to submit request");
       }
 

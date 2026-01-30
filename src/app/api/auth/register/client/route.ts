@@ -5,11 +5,10 @@
  * - Self: Person registering for themselves (isSelfManaged: true)
  * - Client: Person registering on behalf of someone else (isSelfManaged: false)
  *
- * Creates User + ClientProfile + Participant.
+ * Creates User + ClientProfile + Participant + ServiceRequest.
  * - ClientProfile: User's contact info (firstName, lastName, mobile)
- * - Participant: Participant details (personal info, services, location)
- *   - For self-managed: uses firstName/lastName from the registering user
- *   - For client path: uses clientFirstName/clientLastName from "About the person needing support"
+ * - Participant: Person needing support (personal info)
+ * - ServiceRequest: Services needed, location, details
  *
  * POST /api/auth/register/client
  *
@@ -101,50 +100,82 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // CREATE USER + CLIENT PROFILE + PARTICIPANT
+      // PREPARE DATA
+      // ============================================
+      const participantFirstName = data.isSelfManaged ? data.firstName : (data.clientFirstName || data.firstName);
+      const participantLastName = data.isSelfManaged ? data.lastName : (data.clientLastName || data.lastName);
+
+      // Build a default job title from services
+      const serviceNames = Object.values(data.servicesRequested || {}).map(s => s.categoryName);
+      const defaultJobTitle = serviceNames.length > 0
+        ? `Support needed: ${serviceNames.join(', ')}`
+        : 'Support request';
+
+      // ============================================
+      // CREATE USER + CLIENT PROFILE + PARTICIPANT + SERVICE REQUEST
       // ============================================
       let user;
       try {
-        user = await authPrisma.user.create({
-          data: {
-            email: data.email,
-            passwordHash,
-            role: 'CLIENT',
-            status: 'ACTIVE',
-            updatedAt: new Date(),
+        user = await authPrisma.$transaction(async (tx) => {
+          // 1. Create User with ClientProfile
+          const createdUser = await tx.user.create({
+            data: {
+              email: data.email,
+              passwordHash,
+              role: 'CLIENT',
+              status: 'ACTIVE',
+              updatedAt: new Date(),
 
-            // ClientProfile: User's contact info only
-            clientProfile: {
-              create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                mobile: data.mobile,
-                updatedAt: new Date(),
+              // ClientProfile: User's contact info only
+              clientProfile: {
+                create: {
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  mobile: data.mobile,
+                  updatedAt: new Date(),
+                },
               },
             },
-
-            // Participant: About the person needing support, services, location
-            // For self-managed: use user's own name
-            // For client path: use clientFirstName/clientLastName from "About the person needing support" step
-            participants: {
-              create: {
-                firstName: data.isSelfManaged ? data.firstName : (data.clientFirstName || data.firstName),
-                lastName: data.isSelfManaged ? data.lastName : (data.clientLastName || data.lastName),
-                dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
-                location: data.location,
-                fundingType: data.fundingType,
-                relationshipToClient: data.isSelfManaged ? 'OTHER' : data.relationshipToClient,
-                isSelfManaged: data.isSelfManaged,
-                servicesRequested: data.servicesRequested,
-                additionalInfo: data.additionalInfo || null,
-                updatedAt: new Date(),
-              },
+            include: {
+              clientProfile: true,
             },
-          },
-          include: {
-            clientProfile: true,
-            participants: true,
-          },
+          });
+
+          // 2. Create Participant
+          const participant = await tx.participant.create({
+            data: {
+              userId: createdUser.id,
+              firstName: participantFirstName,
+              lastName: participantLastName,
+              dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+              gender: null,
+              fundingType: data.fundingType,
+              relationshipToClient: data.isSelfManaged ? null : data.relationshipToClient,
+              conditions: [],
+              additionalInfo: data.additionalInfo || null,
+            },
+          });
+
+          // 3. Create ServiceRequest linked to Participant
+          const serviceRequest = await tx.serviceRequest.create({
+            data: {
+              requesterId: createdUser.id,
+              participantId: participant.id,
+              services: data.servicesRequested || {},
+              details: {
+                title: defaultJobTitle,
+                description: data.additionalInfo || undefined,
+              },
+              location: data.location,
+              status: 'PENDING',
+            },
+          });
+
+          return {
+            ...createdUser,
+            participants: [participant],
+            serviceRequests: [serviceRequest],
+          };
         });
       } catch (dbError: any) {
         // Handle unique constraint violation (duplicate email)

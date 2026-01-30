@@ -82,22 +82,20 @@ model Participant {
   userId               String?
   firstName            String
   lastName             String
-  dateOfBirth          DateTime
-  location             String?
+  dateOfBirth          DateTime?
+  gender               String?
   fundingType          FundingType?
   relationshipToClient RelationshipType?
-  isSelfManaged        Boolean           @default(false)
-  servicesRequested    Json?
+  conditions           String[]          @default([])
   additionalInfo       String?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  serviceRequest ServiceRequest?
 
   @@index([userId])
-  @@index([location])
   @@index([fundingType])
-  @@index([isSelfManaged])
   @@map("participants")
 }
 
@@ -384,20 +382,21 @@ model worker_services_backup_20260108 {
 model ServiceRequest {
   id             String               @id @default(cuid())
 
-  // Who requested (just the ID for querying)
+  // Who requested
   requesterId    String
 
-  // Participant info (JSON)
-  participant    Json
+  // Link to participant
+  participantId  String               @unique
+  participant    Participant          @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   // Services requested (JSON)
   services       Json
 
-  // Request details (JSON)
+  // Request details (JSON) - title, scheduling, preferences
   details        Json
 
-  // Location (JSON)
-  location       Json
+  // Location (string)
+  location       String
 
   // Zoho
   zohoRecordId   String?              @unique

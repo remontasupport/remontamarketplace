@@ -52,9 +52,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 3. Fetch service request
+    // 3. Fetch service request with participant
     const serviceRequest = await authPrisma.serviceRequest.findUnique({
       where: { id },
+      include: {
+        participant: true,
+      },
     })
 
     if (!serviceRequest) {
@@ -131,6 +134,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // 4. Fetch existing service request
     const existingRequest = await authPrisma.serviceRequest.findUnique({
       where: { id },
+      include: { participant: true },
     })
 
     if (!existingRequest) {
@@ -177,15 +181,38 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const data = validationResult.data
 
-    // 8. Update service request
-    const updatedRequest = await authPrisma.serviceRequest.update({
-      where: { id },
-      data: {
-        ...(data.participant && { participant: data.participant }),
-        ...(data.services && { services: data.services }),
-        ...(data.details && { details: data.details }),
-        ...(data.location && { location: data.location }),
-      },
+    // 8. Update in a transaction
+    const updatedRequest = await authPrisma.$transaction(async (tx) => {
+      // Update participant if provided
+      if (data.participant && existingRequest.participantId) {
+        await tx.participant.update({
+          where: { id: existingRequest.participantId },
+          data: {
+            ...(data.participant.firstName && { firstName: data.participant.firstName }),
+            ...(data.participant.lastName && { lastName: data.participant.lastName }),
+            ...(data.participant.dateOfBirth && { dateOfBirth: new Date(data.participant.dateOfBirth) }),
+            ...(data.participant.gender !== undefined && { gender: data.participant.gender }),
+            ...(data.participant.fundingType && { fundingType: data.participant.fundingType }),
+            ...(data.participant.conditions && { conditions: data.participant.conditions }),
+            ...(data.participant.additionalInfo !== undefined && { additionalInfo: data.participant.additionalInfo }),
+          },
+        })
+      }
+
+      // Update service request
+      const updated = await tx.serviceRequest.update({
+        where: { id },
+        data: {
+          ...(data.services && { services: data.services }),
+          ...(data.details && { details: data.details }),
+          ...(data.location && { location: data.location }),
+        },
+        include: {
+          participant: true,
+        },
+      })
+
+      return updated
     })
 
     // 9. Audit log (fire-and-forget)
@@ -296,6 +323,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: {
         status: 'CANCELLED',
+      },
+      include: {
+        participant: true,
       },
     })
 
