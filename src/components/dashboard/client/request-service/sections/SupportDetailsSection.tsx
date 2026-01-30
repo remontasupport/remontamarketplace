@@ -1,26 +1,19 @@
 "use client";
 
 import { List } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface SupportDetailsData {
   jobTitle: string;
 }
 
-interface SupportDetailsSectionProps {
-  supportDetailsData: SupportDetailsData;
-  onSupportDetailsDataChange: (data: SupportDetailsData) => void;
-  selectedCategories: string[];
-  selectedSubcategories: string[];
-}
+export default function SupportDetailsSection() {
+  const { formData, updateFormData } = useRequestService();
+  const { supportDetailsData, selectedCategories, selectedSubcategories } = formData;
 
-export default function SupportDetailsSection({
-  supportDetailsData,
-  onSupportDetailsDataChange,
-  selectedCategories,
-  selectedSubcategories,
-}: SupportDetailsSectionProps) {
   const updateField = <K extends keyof SupportDetailsData>(field: K, value: SupportDetailsData[K]) => {
-    onSupportDetailsDataChange({
+    updateFormData("supportDetailsData", {
       ...supportDetailsData,
       [field]: value,
     });
@@ -112,6 +105,9 @@ export default function SupportDetailsSection({
           </div>
         </div>
       </div>
+
+      {/* Navigation */}
+      <StepNavigation />
     </div>
   );
 }

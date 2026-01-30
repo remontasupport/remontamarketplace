@@ -2,6 +2,8 @@
 
 import { MapPin, Check, X, Pencil } from "lucide-react";
 import Link from "next/link";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface DaySchedule {
   enabled: boolean;
@@ -17,46 +19,6 @@ interface PreferredDays {
   friday: DaySchedule;
   saturday: DaySchedule;
   sunday: DaySchedule;
-}
-
-interface WhenData {
-  frequency: string;
-  sessionsPerWeek: number;
-  hoursPerWeek: number;
-  startPreference: string;
-  specificDate: string;
-  scheduling: string;
-  preferredDays: PreferredDays;
-  additionalNotes: string;
-}
-
-interface DetailsData {
-  fullName: string;
-  preferredName: string;
-  gender: string;
-  dobDay: string;
-  dobMonth: string;
-  dobYear: string;
-}
-
-interface PreferencesData {
-  preferredGender: string;
-  preferredQualities: string;
-}
-
-interface SupportDetailsData {
-  jobTitle: string;
-}
-
-interface PreviewSectionProps {
-  selectedCategories: string[];
-  selectedSubcategories: string[];
-  selectedLocation: string;
-  whenData: WhenData;
-  detailsData: DetailsData;
-  selectedConditions: string[];
-  preferencesData: PreferencesData;
-  supportDetailsData: SupportDetailsData;
 }
 
 const daysOfWeek = [
@@ -84,17 +46,21 @@ const frequencyLabels: Record<string, string> = {
   "as-needed": "As needed",
 };
 
-export default function PreviewSection({
-  selectedCategories,
-  selectedSubcategories,
-  selectedLocation,
-  whenData,
-  detailsData,
-  selectedConditions,
-  preferencesData,
-  supportDetailsData,
-}: PreviewSectionProps) {
-  const participantName = detailsData.preferredName || detailsData.fullName || "Participant";
+export default function PreviewSection() {
+  const { formData, submitError } = useRequestService();
+  const {
+    selectedCategories,
+    selectedSubcategories,
+    selectedLocation,
+    whenData,
+    detailsData,
+    selectedConditions,
+    preferencesData,
+    supportDetailsData,
+  } = formData;
+
+  const participantName = detailsData.firstName || "Participant";
+  const participantFullName = `${detailsData.firstName} ${detailsData.lastName}`.trim() || "Participant";
   const allServices = [...selectedCategories, ...selectedSubcategories];
 
   // Format time for display
@@ -200,7 +166,7 @@ export default function PreviewSection({
                   <p className="font-medium text-gray-900 font-poppins mb-3">Available days and times:</p>
                   <div className="space-y-2">
                     {daysOfWeek.map(({ key, label }) => {
-                      const daySchedule = whenData.preferredDays[key];
+                      const daySchedule = whenData.preferredDays[key as keyof PreferredDays];
                       return (
                         <div key={key} className="flex items-center gap-3">
                           {daySchedule.enabled ? (
@@ -291,15 +257,15 @@ export default function PreviewSection({
             </div>
           </div>
 
-          {/* Post Button */}
-          <div className="border-t border-gray-200 pt-6">
-            <button
-              type="button"
-              className="w-full sm:w-auto px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg font-poppins transition-colors"
-            >
-              Post your request
-            </button>
-          </div>
+          {/* Submit Error */}
+          {submitError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 font-poppins">{submitError}</p>
+            </div>
+          )}
+
+          {/* Navigation with Submit Button */}
+          <StepNavigation nextLabel="Post your request" />
         </div>
 
         {/* Right side - What happens next */}

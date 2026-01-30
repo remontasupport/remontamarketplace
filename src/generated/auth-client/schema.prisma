@@ -381,6 +381,51 @@ model worker_services_backup_20260108 {
   @@ignore
 }
 
+model ServiceRequest {
+  id String @id @default(cuid())
+
+  // Who requested (just the ID for querying)
+  requesterId String
+
+  // Participant info (JSON)
+  participant Json
+
+  // Services requested (JSON)
+  services Json
+
+  // Request details (JSON)
+  details Json
+
+  // Location (JSON)
+  location Json
+
+  // Zoho
+  zohoRecordId String? @unique
+
+  // Worker assignment from Zoho (JSON)
+  assignedWorker Json?
+
+  // Status
+  status ServiceRequestStatus @default(PENDING)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("service_requests")
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  MATCHED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
 enum AccountStatus {
   ACTIVE
   SUSPENDED

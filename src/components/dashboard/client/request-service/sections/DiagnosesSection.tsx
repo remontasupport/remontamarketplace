@@ -1,6 +1,8 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 const conditionsList = [
   "Acquired Brain Injury",
@@ -36,20 +38,18 @@ const conditionsList = [
   "Other",
 ];
 
-interface DiagnosesSectionProps {
-  selectedConditions: string[];
-  onConditionsChange: (conditions: string[]) => void;
-}
+export default function DiagnosesSection() {
+  const { formData, updateFormData } = useRequestService();
+  const { selectedConditions } = formData;
 
-export default function DiagnosesSection({
-  selectedConditions,
-  onConditionsChange,
-}: DiagnosesSectionProps) {
   const toggleCondition = (condition: string) => {
     if (selectedConditions.includes(condition)) {
-      onConditionsChange(selectedConditions.filter((c) => c !== condition));
+      updateFormData(
+        "selectedConditions",
+        selectedConditions.filter((c) => c !== condition)
+      );
     } else {
-      onConditionsChange([...selectedConditions, condition]);
+      updateFormData("selectedConditions", [...selectedConditions, condition]);
     }
   };
 
@@ -100,6 +100,9 @@ export default function DiagnosesSection({
           </div>
         </div>
       </div>
+
+      {/* Navigation */}
+      <StepNavigation />
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Check } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface DaySchedule {
   enabled: boolean;
@@ -30,11 +32,6 @@ interface WhenData {
   additionalNotes: string;
 }
 
-interface WhenSectionProps {
-  whenData: WhenData;
-  onWhenDataChange: (data: WhenData) => void;
-}
-
 const frequencyOptions = [
   { value: "weekly", label: "Weekly" },
   { value: "fortnightly", label: "Fortnightly" },
@@ -53,14 +50,14 @@ const daysOfWeek = [
   { key: "sunday", label: "Sunday" },
 ] as const;
 
-export default function WhenSection({
-  whenData,
-  onWhenDataChange,
-}: WhenSectionProps) {
+export default function WhenSection() {
+  const { formData, updateFormData } = useRequestService();
+  const { whenData } = formData;
+
   const [isFrequencyOpen, setIsFrequencyOpen] = useState(false);
 
   const updateField = <K extends keyof WhenData>(field: K, value: WhenData[K]) => {
-    onWhenDataChange({
+    updateFormData("whenData", {
       ...whenData,
       [field]: value,
     });
@@ -225,7 +222,7 @@ export default function WhenSection({
         {/* When would you like the support to start? */}
         <div>
           <label className="block text-gray-900 font-medium font-poppins mb-3">
-            When would you like the support to start? (optional)
+            When would you like the support to start?
           </label>
           <div className="space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -370,6 +367,9 @@ export default function WhenSection({
           />
         </div>
       </div>
+
+      {/* Navigation */}
+      <StepNavigation />
     </div>
   );
 }

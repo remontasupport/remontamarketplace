@@ -1,3 +1,5 @@
+export * from './serviceRequest'
+
 export type UserRole = 'CLIENT' | 'SUPPORT_WORKER' | 'ADMIN'
 
 export type MatchStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED'

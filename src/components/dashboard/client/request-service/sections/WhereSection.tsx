@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface Suburb {
   name: string;
@@ -11,15 +13,10 @@ interface Suburb {
   };
 }
 
-interface WhereSectionProps {
-  selectedLocation: string;
-  onLocationChange: (location: string) => void;
-}
+export default function WhereSection() {
+  const { formData, updateFormData } = useRequestService();
+  const { selectedLocation, locationData } = formData;
 
-export default function WhereSection({
-  selectedLocation,
-  onLocationChange,
-}: WhereSectionProps) {
   const [searchQuery, setSearchQuery] = useState(selectedLocation);
   const [suburbs, setSuburbs] = useState<Suburb[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +88,15 @@ export default function WhereSection({
     setShowDropdown(false);
     setSuburbs([]);
     setSearchQuery(selectedValue);
-    onLocationChange(selectedValue);
+
+    // Update both the display value and structured location data
+    updateFormData("selectedLocation", selectedValue);
+    updateFormData("locationData", {
+      suburb: suburb.name,
+      state: suburb.state.abbreviation,
+      postalCode: String(suburb.postcode),
+      fullAddress: selectedValue,
+    });
   };
 
   return (
@@ -146,6 +151,9 @@ export default function WhereSection({
           </p>
         </div>
       )}
+
+      {/* Navigation */}
+      <StepNavigation />
     </div>
   );
 }

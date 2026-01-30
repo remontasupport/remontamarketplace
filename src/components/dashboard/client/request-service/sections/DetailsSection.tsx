@@ -2,19 +2,16 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface DetailsData {
-  fullName: string;
-  preferredName: string;
+  firstName: string;
+  lastName: string;
   gender: string;
   dobDay: string;
   dobMonth: string;
   dobYear: string;
-}
-
-interface DetailsSectionProps {
-  detailsData: DetailsData;
-  onDetailsDataChange: (data: DetailsData) => void;
 }
 
 const genderOptions = [
@@ -26,14 +23,14 @@ const genderOptions = [
   { value: "other", label: "Other" },
 ];
 
-export default function DetailsSection({
-  detailsData,
-  onDetailsDataChange,
-}: DetailsSectionProps) {
+export default function DetailsSection() {
+  const { formData, updateFormData } = useRequestService();
+  const { detailsData } = formData;
+
   const [isGenderOpen, setIsGenderOpen] = useState(false);
 
   const updateField = <K extends keyof DetailsData>(field: K, value: DetailsData[K]) => {
-    onDetailsDataChange({
+    updateFormData("detailsData", {
       ...detailsData,
       [field]: value,
     });
@@ -54,24 +51,31 @@ export default function DetailsSection({
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left side - Form fields */}
         <div className="flex-1 space-y-6">
-          {/* Participant Name */}
-          <div>
-            <span className="text-gray-900 font-medium font-poppins text-lg">
-              {detailsData.fullName || "Participant Name"}
-            </span>
-          </div>
-
-          {/* Preferred Name */}
+          {/* First Name */}
           <div>
             <label className="block text-gray-900 font-medium font-poppins mb-2">
-              Preferred name
+              First name
             </label>
             <input
               type="text"
-              value={detailsData.preferredName}
-              onChange={(e) => updateField("preferredName", e.target.value)}
+              value={detailsData.firstName}
+              onChange={(e) => updateField("firstName", e.target.value)}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
-              placeholder="Enter preferred name"
+              placeholder="Enter first name"
+            />
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <label className="block text-gray-900 font-medium font-poppins mb-2">
+              Last name
+            </label>
+            <input
+              type="text"
+              value={detailsData.lastName}
+              onChange={(e) => updateField("lastName", e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
+              placeholder="Enter last name"
             />
           </div>
 
@@ -116,7 +120,7 @@ export default function DetailsSection({
           {/* Date of Birth */}
           <div>
             <label className="block text-gray-900 font-medium font-poppins mb-3">
-              Date of birth
+              Date of birth (optional)
             </label>
             <div className="flex gap-3">
               <div>
@@ -195,6 +199,9 @@ export default function DetailsSection({
           </div>
         </div>
       </div>
+
+      {/* Navigation */}
+      <StepNavigation />
     </div>
   );
 }

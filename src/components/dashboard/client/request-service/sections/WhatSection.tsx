@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface Subcategory {
   id: string;
@@ -23,23 +25,14 @@ interface OtherServices {
   };
 }
 
-interface WhatSectionProps {
-  selectedCategories: string[];
-  selectedSubcategories: string[];
-  otherServices: OtherServices;
-  onCategoryChange: (categories: string[]) => void;
-  onSubcategoryChange: (subcategories: string[]) => void;
-  onOtherServicesChange: (otherServices: OtherServices) => void;
-}
+export default function WhatSection() {
+  const { formData, updateFormData } = useRequestService();
+  const {
+    selectedCategories,
+    selectedSubcategories,
+    otherServices,
+  } = formData;
 
-export default function WhatSection({
-  selectedCategories,
-  selectedSubcategories,
-  otherServices,
-  onCategoryChange,
-  onSubcategoryChange,
-  onOtherServicesChange,
-}: WhatSectionProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,34 +57,73 @@ export default function WhatSection({
     fetchCategories();
   }, []);
 
+  // Build services object for API whenever selections change
+  useEffect(() => {
+    const services: {
+      [categoryId: string]: {
+        categoryName: string;
+        subCategories: { id: string; name: string }[];
+      };
+    } = {};
+
+    selectedCategories.forEach((categoryId) => {
+      const category = categories.find((c) => c.id === categoryId);
+      if (category) {
+        const selectedSubs = category.subcategories
+          .filter((sub) => selectedSubcategories.includes(sub.id))
+          .map((sub) => ({ id: sub.id, name: sub.name }));
+
+        // Include "Other" if selected
+        const otherData = otherServices[categoryId];
+        if (otherData?.selected && otherData.text) {
+          selectedSubs.push({ id: `other-${categoryId}`, name: otherData.text });
+        }
+
+        services[categoryId] = {
+          categoryName: category.name,
+          subCategories: selectedSubs.length > 0 ? selectedSubs : category.subcategories.map((s) => ({ id: s.id, name: s.name })),
+        };
+      }
+    });
+
+    updateFormData("services", services);
+  }, [selectedCategories, selectedSubcategories, otherServices, categories, updateFormData]);
+
   const toggleCategory = (categoryId: string) => {
     if (selectedCategories.includes(categoryId)) {
       // Remove category and its subcategories
-      onCategoryChange(selectedCategories.filter((id) => id !== categoryId));
+      updateFormData(
+        "selectedCategories",
+        selectedCategories.filter((id) => id !== categoryId)
+      );
       const category = categories.find((c) => c.id === categoryId);
       if (category) {
         const subcategoryIds = category.subcategories.map((s) => s.id);
-        onSubcategoryChange(
+        updateFormData(
+          "selectedSubcategories",
           selectedSubcategories.filter((id) => !subcategoryIds.includes(id))
         );
       }
     } else {
       // Add category
-      onCategoryChange([...selectedCategories, categoryId]);
+      updateFormData("selectedCategories", [...selectedCategories, categoryId]);
     }
   };
 
   const toggleSubcategory = (subcategoryId: string) => {
     if (selectedSubcategories.includes(subcategoryId)) {
-      onSubcategoryChange(selectedSubcategories.filter((id) => id !== subcategoryId));
+      updateFormData(
+        "selectedSubcategories",
+        selectedSubcategories.filter((id) => id !== subcategoryId)
+      );
     } else {
-      onSubcategoryChange([...selectedSubcategories, subcategoryId]);
+      updateFormData("selectedSubcategories", [...selectedSubcategories, subcategoryId]);
     }
   };
 
   const toggleOther = (categoryId: string) => {
     const current = otherServices[categoryId];
-    onOtherServicesChange({
+    updateFormData("otherServices", {
       ...otherServices,
       [categoryId]: {
         selected: !current?.selected,
@@ -101,7 +133,7 @@ export default function WhatSection({
   };
 
   const updateOtherText = (categoryId: string, text: string) => {
-    onOtherServicesChange({
+    updateFormData("otherServices", {
       ...otherServices,
       [categoryId]: {
         selected: true,
@@ -311,6 +343,9 @@ export default function WhatSection({
           </p>
         </div>
       )}
+
+      {/* Navigation */}
+      <StepNavigation showPrevious={false} />
     </div>
   );
 }

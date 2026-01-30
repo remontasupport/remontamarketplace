@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Info } from "lucide-react";
+import { useRequestService } from "../RequestServiceContext";
+import StepNavigation from "../StepNavigation";
 
 interface PreferencesData {
   preferredGender: string;
   preferredQualities: string;
-}
-
-interface PreferencesSectionProps {
-  preferencesData: PreferencesData;
-  onPreferencesDataChange: (data: PreferencesData) => void;
 }
 
 const genderOptions = [
@@ -20,15 +17,15 @@ const genderOptions = [
   { value: "non-binary", label: "Non-binary workers only" },
 ];
 
-export default function PreferencesSection({
-  preferencesData,
-  onPreferencesDataChange,
-}: PreferencesSectionProps) {
+export default function PreferencesSection() {
+  const { formData, updateFormData } = useRequestService();
+  const { preferencesData } = formData;
+
   const [isGenderOpen, setIsGenderOpen] = useState(false);
   const [isExamplesOpen, setIsExamplesOpen] = useState(true);
 
   const updateField = <K extends keyof PreferencesData>(field: K, value: PreferencesData[K]) => {
-    onPreferencesDataChange({
+    updateFormData("preferencesData", {
       ...preferencesData,
       [field]: value,
     });
@@ -169,6 +166,9 @@ export default function PreferencesSection({
           </div>
         </div>
       </div>
+
+      {/* Navigation */}
+      <StepNavigation />
     </div>
   );
 }
