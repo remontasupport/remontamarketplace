@@ -13,8 +13,8 @@ export default function RequestServiceLayout({ children, currentSection }: Reque
     <div className="profile-edit-container">
       {/* Main Content Grid */}
       <div className="profile-edit-grid">
-        {/* Left: Menu */}
-        <div className="profile-edit-sidebar">
+        {/* Left: Menu - Hidden on mobile */}
+        <div className="profile-edit-sidebar hide-on-mobile">
           <RequestServiceMenu currentSection={currentSection} />
         </div>
 

@@ -507,7 +507,7 @@ export default function EditServiceRequestPage({
     switch (STEPS[currentStep].id) {
       case "services":
         return (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
               Services Requested
             </h2>
@@ -536,8 +536,8 @@ export default function EditServiceRequestPage({
                     </div>
                     {isSelected && category.subcategories.length > 0 && (
                       <div className="mt-2 ml-8 pl-4 border-l-2 border-indigo-200">
-                        <p className="text-sm text-gray-600 mb-2 font-poppins">Select specific services (optional):</p>
-                        <div className="flex flex-wrap gap-2">
+                        <p className="text-sm text-gray-600 mb-2 font-poppins">Select specific services:</p>
+                        <div className="flex flex-wrap justify-start gap-1.5 sm:gap-2">
                           {category.subcategories.map((sub) => {
                             const isSubSelected = selectedSubcategories.includes(sub.id);
                             return (
@@ -545,11 +545,11 @@ export default function EditServiceRequestPage({
                                 key={sub.id}
                                 type="button"
                                 onClick={() => toggleSubcategory(sub.id)}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-poppins transition-all ${
+                                className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs sm:text-sm font-poppins transition-all ${
                                   isSubSelected ? "bg-indigo-100 border-indigo-300 text-indigo-900" : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
                                 }`}
                               >
-                                {isSubSelected && <Check className="w-3 h-3" />}
+                                {isSubSelected && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                                 {sub.name}
                               </button>
                             );
@@ -566,7 +566,7 @@ export default function EditServiceRequestPage({
 
       case "location":
         return (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 font-poppins mb-2">Location</h2>
             <p className="text-gray-600 font-poppins text-sm mb-6">
               The starting suburb where support will take place. Start typing the suburb or postcode and select from the list.
@@ -620,7 +620,7 @@ export default function EditServiceRequestPage({
 
       case "when":
         return (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 font-poppins mb-6">Frequency, dates and times</h2>
             <div className="space-y-8">
               {/* Frequency */}
@@ -773,7 +773,7 @@ export default function EditServiceRequestPage({
 
       case "preferences":
         return (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 font-poppins mb-6">Preferences</h2>
             <div className="space-y-8">
               {/* Preferred gender */}
@@ -886,7 +886,7 @@ export default function EditServiceRequestPage({
             <ArrowLeft className="w-4 h-4" />
             Back to Participants
           </button>
-          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
+          <h1 className="text-xl md:text-2xl font-semibold font-poppins text-gray-900">
             Modify Service Request
           </h1>
           {serviceRequest?.participant && (
@@ -896,8 +896,8 @@ export default function EditServiceRequestPage({
           )}
         </div>
 
-        {/* Step Indicator */}
-        <div className="mb-6">
+        {/* Step Indicator - Hidden on mobile */}
+        <div className="hidden md:block mb-6">
           <div className="flex items-center gap-2">
             {STEPS.map((step, index) => (
               <div key={step.id} className="flex items-center">
@@ -928,12 +928,12 @@ export default function EditServiceRequestPage({
         {renderStepContent()}
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 mt-6">
           <button
             type="button"
             onClick={currentStep === 0 ? () => router.back() : goToPreviousStep}
             disabled={isSaving}
-            className="px-5 py-2.5 text-gray-700 font-medium font-poppins border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 text-gray-700 font-medium font-poppins border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             {currentStep === 0 ? "Cancel" : "Previous"}
           </button>
@@ -941,7 +941,7 @@ export default function EditServiceRequestPage({
             type="button"
             onClick={currentStep === STEPS.length - 1 ? handleSave : goToNextStep}
             disabled={isSaving}
-            className="px-5 py-2.5 text-white font-medium font-poppins rounded-lg transition-colors hover:opacity-90 disabled:opacity-50"
+            className="w-full sm:w-auto px-5 py-2.5 text-white font-medium font-poppins rounded-lg transition-colors hover:opacity-90 disabled:opacity-50"
             style={{ backgroundColor: "#0C1628" }}
           >
             {isSaving ? "Saving..." : currentStep === STEPS.length - 1 ? "Save Changes" : "Next"}

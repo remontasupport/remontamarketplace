@@ -50,53 +50,49 @@ export default function StepNavigation({
   return (
     <div className="mt-8 space-y-4">
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-gray-200">
         {/* Previous Button */}
-        <div>
-          {showPrevious && canGoPrevious && !isFirstStep && (
-            <button
-              type="button"
-              onClick={handlePrevious}
-              className="flex items-center gap-2 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </button>
-          )}
-        </div>
+        {showPrevious && canGoPrevious && !isFirstStep && (
+          <button
+            type="button"
+            onClick={handlePrevious}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </button>
+        )}
 
         {/* Next/Submit Button */}
-        <div className="ml-auto">
-          {showNext && (
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={isSubmitting}
-              className={`
-                flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors
-                ${isLastStep
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                }
-                ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""}
-              `}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : isLastStep ? (
-                nextLabel || "Submit Request"
-              ) : (
-                <>
-                  {nextLabel || "Next"}
-                  <ChevronRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          )}
-        </div>
+        {showNext && (
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={isSubmitting}
+            className={`
+              w-full sm:w-auto sm:ml-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors
+              ${isLastStep
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white"
+              }
+              ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""}
+            `}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Submitting...
+              </>
+            ) : isLastStep ? (
+              nextLabel || "Submit Request"
+            ) : (
+              <>
+                {nextLabel || "Next"}
+                <ChevronRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

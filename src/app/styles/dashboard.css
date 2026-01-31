@@ -865,6 +865,12 @@
   color: #111827;
 }
 
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.25rem;
+  }
+}
+
 .add-btn {
   width: 1.5rem;
   height: 1.5rem;

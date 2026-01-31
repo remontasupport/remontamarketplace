@@ -9,6 +9,7 @@ import {
   HomeIcon,
   UsersIcon,
   PlusCircleIcon,
+  ClipboardDocumentListIcon,
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline'
 
@@ -37,6 +38,12 @@ const menuItems: MenuItem[] = [
     name: 'Request A Service',
     href: '/dashboard/client/request-service',
     icon: PlusCircleIcon,
+  },
+  {
+    id: 'manage-request',
+    name: 'Manage Request',
+    href: '/dashboard/client/manage-request',
+    icon: ClipboardDocumentListIcon,
   },
 ]
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, ChevronDown, Check, Plus } from "lucide-react";
+import { BRAND_COLORS } from "@/lib/constants";
 
 interface ParticipantData {
   id: string;
@@ -192,16 +193,16 @@ export default function EditParticipantModal({
       />
 
       {/* Modal container - centered relative to content area (accounting for 64px header) */}
-      <div className="fixed inset-0 flex items-center justify-center p-10 md:pt-27 pointer-events-none">
-        <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl pointer-events-auto flex flex-col">
+      <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 md:p-10 md:pt-27 pointer-events-none">
+        <div className="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-xl pointer-events-auto flex flex-col mt-18 sm:mt-2">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 flex-shrink-0">
-            <h2 className="text-xl font-semibold text-gray-900 font-poppins">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4 flex-shrink-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-poppins pr-4">
               Edit Participant Profile
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-1"
             >
               <X className="w-6 h-6" />
             </button>
@@ -209,7 +210,7 @@ export default function EditParticipantModal({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-            <div className="px-6 py-6 overflow-y-auto flex-1">
+            <div className="px-4 sm:px-6 py-4 sm:py-6 overflow-y-auto flex-1">
               {/* 2-column grid for desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* First Name */}
@@ -468,19 +469,20 @@ export default function EditParticipantModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 border-t border-gray-200 px-6 py-4 flex-shrink-0 bg-white">
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 border-t border-gray-200 px-4 sm:px-6 py-4 flex-shrink-0 bg-white">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-5 py-2.5 text-gray-700 font-medium font-poppins border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 text-gray-700 font-medium font-poppins border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-5 py-2.5 bg-indigo-600 text-white font-medium font-poppins rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto px-5 py-2.5 text-white font-medium font-poppins rounded-lg transition-colors disabled:opacity-50 hover:opacity-90"
+                style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
               >
                 {isLoading ? "Saving..." : "Save Changes"}
               </button>

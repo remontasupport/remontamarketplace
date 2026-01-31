@@ -809,6 +809,11 @@
     gap: 1rem;
   }
 
+  /* Hide sidebar menu on mobile */
+  .profile-edit-sidebar.hide-on-mobile {
+    display: none !important;
+  }
+
   .profile-edit-main {
     padding: 1.5rem;
     /* Remove min-height to prevent squeeze flicker */

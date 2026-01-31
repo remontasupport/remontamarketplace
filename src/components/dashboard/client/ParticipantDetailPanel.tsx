@@ -86,11 +86,11 @@ export default function ParticipantDetailPanel({
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden h-full">
       {/* Header */}
-      <div className="p-6 border-b border-gray-100">
-        <div className="flex items-start justify-between">
+      <div className="p-4 sm:p-6 border-b border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
               {photo ? (
                 <Image
                   src={photo}
@@ -100,7 +100,7 @@ export default function ParticipantDetailPanel({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 text-2xl font-semibold">
+                <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 text-xl sm:text-2xl font-semibold">
                   {initials}
                 </div>
               )}
@@ -108,7 +108,7 @@ export default function ParticipantDetailPanel({
 
             {/* Name & Location */}
             <div>
-              <h2 className="text-2xl font-semibold text-gray-900 font-poppins">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 font-poppins">
                 {displayName}
               </h2>
               {preferredName && preferredName !== name && (
@@ -124,10 +124,10 @@ export default function ParticipantDetailPanel({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={onEditClick}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium font-poppins transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins transition-colors"
               style={{ backgroundColor: '#F8E8D8', color: '#0C1628' }}
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -135,7 +135,7 @@ export default function ParticipantDetailPanel({
             </button>
             <Link
               href={`/dashboard/client/request-service/edit/${participant.id}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium font-poppins text-white transition-colors hover:opacity-90"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins text-white transition-colors hover:opacity-90"
               style={{ backgroundColor: '#0C1628' }}
             >
               Modify Request
@@ -145,13 +145,13 @@ export default function ParticipantDetailPanel({
       </div>
 
       {/* Content */}
-      <div className="p-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 400px)" }}>
+      <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 400px)" }}>
         {/* Personal Details Section */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 font-poppins">
             Personal Details
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <User className="w-5 h-5 text-gray-400" />
               <div>

@@ -149,7 +149,41 @@ export default function ParticipantsMasterDetail({
 
   return (
     <>
-      <div className="flex gap-6 h-[calc(100vh-220px)] min-h-[500px]">
+      {/* Mobile Layout */}
+      <div className="lg:hidden">
+        {/* Show list when no participant selected, or show detail with back button */}
+        {!selectedId ? (
+          <div className="space-y-3">
+            {participants.map((participant) => (
+              <ParticipantListItem
+                key={participant.id}
+                participant={participant}
+                isSelected={false}
+                onClick={() => setSelectedId(participant.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div>
+            <button
+              onClick={() => setSelectedId(null)}
+              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 font-poppins"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to list
+            </button>
+            <ParticipantDetailPanel
+              participant={selectedParticipant}
+              onEditClick={handleEditClick}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="hidden lg:flex gap-6 h-[calc(100vh-220px)] min-h-[500px]">
         {/* Left Panel - List */}
         <div className="w-80 flex-shrink-0 flex flex-col">
           <div className="flex-1 overflow-y-auto space-y-3 pr-2">
