@@ -1,6 +1,6 @@
 /**
- * Participants Management Page
- * Allows clients to add/edit participants they manage
+ * Participants Management Page for Support Coordinators
+ * Allows support coordinators to add/edit participants they manage
  */
 
 import { getServerSession } from "next-auth";
@@ -14,28 +14,27 @@ import ParticipantsMasterDetail from "@/components/dashboard/client/Participants
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ParticipantsPage() {
+export default async function SupportCoordinatorsParticipantsPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
     redirect("/login");
   }
 
-  if (session.user.role !== UserRole.CLIENT) {
+  if (session.user.role !== UserRole.COORDINATOR) {
     redirect("/unauthorized");
   }
 
-  // Fetch client's profile for sidebar display and check if self-managed
+  // Fetch coordinator's profile for sidebar display
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const clientProfile = await authPrisma.clientProfile.findUnique({
+  const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
-  displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
+  displayName = coordinatorProfile?.firstName || displayName;
 
-  // Fetch participants connected to this client from the database
+  // Fetch participants connected to this coordinator from the database
   // Include the serviceRequest to get services and location
   const participantsData = await authPrisma.participant.findMany({
     where: { userId: session.user.id },
@@ -124,26 +123,25 @@ export default async function ParticipantsPage() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
+      basePath="/dashboard/supportcoordinators"
+      roleLabel="Support Coordinator"
     >
       <div className="p-6 md:p-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
-            {isSelfManaged ? 'My Profile' : 'Participants'}
+            Participants
           </h1>
           <p className="text-gray-600 font-poppins mt-1">
-            {isSelfManaged
-              ? 'View and manage your profile and service request'
-              : 'Manage the participants you support'}
+            Manage the participants you support
           </p>
         </div>
 
         {/* Master-Detail Layout */}
         <ParticipantsMasterDetail
           participants={participants}
-          showRelationship={!isSelfManaged}
-          isSelfManaged={isSelfManaged}
+          showRelationship={false}
+          basePath="/dashboard/supportcoordinators"
         />
       </div>
     </ClientDashboardLayout>

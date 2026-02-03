@@ -88,7 +88,7 @@ export type CoordinatorRegistrationData = RegistrationDataBase & {
 export type DashboardPath = {
   [UserRole.WORKER]: "/dashboard/worker";
   [UserRole.CLIENT]: "/dashboard/client";
-  [UserRole.COORDINATOR]: "/dashboard/coordinator";
+  [UserRole.COORDINATOR]: "/dashboard/supportcoordinators";
   [UserRole.ADMIN]: "/admin";
 };
 
@@ -98,7 +98,7 @@ export type DashboardPath = {
 export const ROLE_REDIRECTS: DashboardPath = {
   [UserRole.WORKER]: "/dashboard/worker",
   [UserRole.CLIENT]: "/dashboard/client",
-  [UserRole.COORDINATOR]: "/dashboard/coordinator",
+  [UserRole.COORDINATOR]: "/dashboard/supportcoordinators",
   [UserRole.ADMIN]: "/admin",
 };
 

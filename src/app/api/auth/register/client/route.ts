@@ -126,12 +126,13 @@ export async function POST(request: Request) {
               status: 'ACTIVE',
               updatedAt: new Date(),
 
-              // ClientProfile: User's contact info only
+              // ClientProfile: User's contact info and self-managed status
               clientProfile: {
                 create: {
                   firstName: data.firstName,
                   lastName: data.lastName,
                   mobile: data.mobile,
+                  isSelfManaged: data.isSelfManaged,
                   updatedAt: new Date(),
                 },
               },

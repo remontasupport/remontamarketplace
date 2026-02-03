@@ -31,10 +31,16 @@ export interface ParticipantData {
 
 interface ParticipantsMasterDetailProps {
   participants: ParticipantData[];
+  showRelationship?: boolean;
+  basePath?: string;
+  isSelfManaged?: boolean;
 }
 
 export default function ParticipantsMasterDetail({
   participants: initialParticipants,
+  showRelationship = true,
+  basePath = '/dashboard/client',
+  isSelfManaged = false,
 }: ParticipantsMasterDetailProps) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
@@ -131,18 +137,22 @@ export default function ParticipantsMasterDetail({
           <Plus className="w-8 h-8 text-gray-400" />
         </div>
         <h3 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
-          No participants yet
+          {isSelfManaged ? "Profile not found" : "No participants yet"}
         </h3>
         <p className="text-gray-600 font-poppins mb-6">
-          Add your first participant to get started with requesting support services.
+          {isSelfManaged
+            ? "Your profile information could not be loaded. Please contact support."
+            : "Add your first participant to get started with requesting support services."}
         </p>
-        <Link
-          href="/dashboard/client/request-service"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium font-poppins hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Add Participant
-        </Link>
+        {!isSelfManaged && (
+          <Link
+            href={`${basePath}/request-service`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium font-poppins hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Add Participant
+          </Link>
+        )}
       </div>
     );
   }
@@ -177,6 +187,8 @@ export default function ParticipantsMasterDetail({
             <ParticipantDetailPanel
               participant={selectedParticipant}
               onEditClick={handleEditClick}
+              showRelationship={showRelationship}
+              basePath={basePath}
             />
           </div>
         )}
@@ -203,6 +215,8 @@ export default function ParticipantsMasterDetail({
           <ParticipantDetailPanel
             participant={selectedParticipant}
             onEditClick={handleEditClick}
+            showRelationship={showRelationship}
+            basePath={basePath}
           />
         </div>
       </div>
@@ -213,6 +227,7 @@ export default function ParticipantsMasterDetail({
         onClose={() => setIsEditModalOpen(false)}
         participant={getEditData()}
         onSave={handleSaveParticipant}
+        showRelationship={showRelationship}
       />
     </>
   );

@@ -5076,6 +5076,7 @@ export namespace Prisma {
     firstName: string | null
     lastName: string | null
     mobile: string | null
+    isSelfManaged: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5086,6 +5087,7 @@ export namespace Prisma {
     firstName: string | null
     lastName: string | null
     mobile: string | null
+    isSelfManaged: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5096,6 +5098,7 @@ export namespace Prisma {
     firstName: number
     lastName: number
     mobile: number
+    isSelfManaged: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5108,6 +5111,7 @@ export namespace Prisma {
     firstName?: true
     lastName?: true
     mobile?: true
+    isSelfManaged?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5118,6 +5122,7 @@ export namespace Prisma {
     firstName?: true
     lastName?: true
     mobile?: true
+    isSelfManaged?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5128,6 +5133,7 @@ export namespace Prisma {
     firstName?: true
     lastName?: true
     mobile?: true
+    isSelfManaged?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5211,6 +5217,7 @@ export namespace Prisma {
     firstName: string
     lastName: string
     mobile: string
+    isSelfManaged: boolean
     createdAt: Date
     updatedAt: Date
     _count: ClientProfileCountAggregateOutputType | null
@@ -5238,6 +5245,7 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     mobile?: boolean
+    isSelfManaged?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5249,6 +5257,7 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     mobile?: boolean
+    isSelfManaged?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5260,6 +5269,7 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     mobile?: boolean
+    isSelfManaged?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5271,11 +5281,12 @@ export namespace Prisma {
     firstName?: boolean
     lastName?: boolean
     mobile?: boolean
+    isSelfManaged?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ClientProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "mobile" | "createdAt" | "updatedAt", ExtArgs["result"]["clientProfile"]>
+  export type ClientProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "mobile" | "isSelfManaged" | "createdAt" | "updatedAt", ExtArgs["result"]["clientProfile"]>
   export type ClientProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -5297,6 +5308,7 @@ export namespace Prisma {
       firstName: string
       lastName: string
       mobile: string
+      isSelfManaged: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["clientProfile"]>
@@ -5728,6 +5740,7 @@ export namespace Prisma {
     readonly firstName: FieldRef<"ClientProfile", 'String'>
     readonly lastName: FieldRef<"ClientProfile", 'String'>
     readonly mobile: FieldRef<"ClientProfile", 'String'>
+    readonly isSelfManaged: FieldRef<"ClientProfile", 'Boolean'>
     readonly createdAt: FieldRef<"ClientProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"ClientProfile", 'DateTime'>
   }
@@ -23531,6 +23544,7 @@ export namespace Prisma {
     firstName: 'firstName',
     lastName: 'lastName',
     mobile: 'mobile',
+    isSelfManaged: 'isSelfManaged',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -23914,6 +23928,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'FundingType'
    */
   export type EnumFundingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FundingType'>
@@ -23966,13 +23987,6 @@ export namespace Prisma {
    * Reference to a field of type 'AccountStatus[]'
    */
   export type ListEnumAccountStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccountStatus[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -24202,6 +24216,7 @@ export namespace Prisma {
     firstName?: StringFilter<"ClientProfile"> | string
     lastName?: StringFilter<"ClientProfile"> | string
     mobile?: StringFilter<"ClientProfile"> | string
+    isSelfManaged?: BoolFilter<"ClientProfile"> | boolean
     createdAt?: DateTimeFilter<"ClientProfile"> | Date | string
     updatedAt?: DateTimeFilter<"ClientProfile"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -24213,6 +24228,7 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
+    isSelfManaged?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -24227,6 +24243,7 @@ export namespace Prisma {
     firstName?: StringFilter<"ClientProfile"> | string
     lastName?: StringFilter<"ClientProfile"> | string
     mobile?: StringFilter<"ClientProfile"> | string
+    isSelfManaged?: BoolFilter<"ClientProfile"> | boolean
     createdAt?: DateTimeFilter<"ClientProfile"> | Date | string
     updatedAt?: DateTimeFilter<"ClientProfile"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -24238,6 +24255,7 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
+    isSelfManaged?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: ClientProfileCountOrderByAggregateInput
@@ -24254,6 +24272,7 @@ export namespace Prisma {
     firstName?: StringWithAggregatesFilter<"ClientProfile"> | string
     lastName?: StringWithAggregatesFilter<"ClientProfile"> | string
     mobile?: StringWithAggregatesFilter<"ClientProfile"> | string
+    isSelfManaged?: BoolWithAggregatesFilter<"ClientProfile"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"ClientProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ClientProfile"> | Date | string
   }
@@ -25746,6 +25765,7 @@ export namespace Prisma {
     firstName: string
     lastName: string
     mobile: string
+    isSelfManaged?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutClientProfileInput
@@ -25757,6 +25777,7 @@ export namespace Prisma {
     firstName: string
     lastName: string
     mobile: string
+    isSelfManaged?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -25766,6 +25787,7 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutClientProfileNestedInput
@@ -25777,6 +25799,7 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -25787,6 +25810,7 @@ export namespace Prisma {
     firstName: string
     lastName: string
     mobile: string
+    isSelfManaged?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -25796,6 +25820,7 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -25806,6 +25831,7 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27595,12 +27621,18 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type ClientProfileCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
+    isSelfManaged?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -27611,6 +27643,7 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
+    isSelfManaged?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -27621,8 +27654,17 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
+    isSelfManaged?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type StringNullableListFilter<$PrismaModel = never> = {
@@ -27970,11 +28012,6 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type EnumRequirementStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RequirementStatus | EnumRequirementStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RequirementStatus[] | ListEnumRequirementStatusFieldRefInput<$PrismaModel>
@@ -28059,14 +28096,6 @@ export namespace Prisma {
     updatedAt?: SortOrder
     documentCategory?: SortOrder
     notes?: SortOrder
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type EnumRequirementStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -28723,6 +28752,10 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type UserUpdateOneRequiredWithoutClientProfileNestedInput = {
     create?: XOR<UserCreateWithoutClientProfileInput, UserUncheckedCreateWithoutClientProfileInput>
     connectOrCreate?: UserCreateOrConnectWithoutClientProfileInput
@@ -29121,10 +29154,6 @@ export namespace Prisma {
     create?: XOR<WorkerProfileCreateWithoutVerificationRequirementsInput, WorkerProfileUncheckedCreateWithoutVerificationRequirementsInput>
     connectOrCreate?: WorkerProfileCreateOrConnectWithoutVerificationRequirementsInput
     connect?: WorkerProfileWhereUniqueInput
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type EnumRequirementStatusFieldUpdateOperationsInput = {
@@ -29868,6 +29897,19 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -29988,11 +30030,6 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type NestedEnumRequirementStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RequirementStatus | EnumRequirementStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RequirementStatus[] | ListEnumRequirementStatusFieldRefInput<$PrismaModel>
@@ -30005,14 +30042,6 @@ export namespace Prisma {
     in?: $Enums.DocumentCategory[] | ListEnumDocumentCategoryFieldRefInput<$PrismaModel> | null
     notIn?: $Enums.DocumentCategory[] | ListEnumDocumentCategoryFieldRefInput<$PrismaModel> | null
     not?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel> | $Enums.DocumentCategory | null
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumRequirementStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -30968,6 +30997,7 @@ export namespace Prisma {
     firstName: string
     lastName: string
     mobile: string
+    isSelfManaged?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -30977,6 +31007,7 @@ export namespace Prisma {
     firstName: string
     lastName: string
     mobile: string
+    isSelfManaged?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31242,6 +31273,7 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31251,6 +31283,7 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
+    isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

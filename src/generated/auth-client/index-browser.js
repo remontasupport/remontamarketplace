@@ -152,6 +152,7 @@ exports.Prisma.ClientProfileScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   mobile: 'mobile',
+  isSelfManaged: 'isSelfManaged',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

@@ -16,7 +16,7 @@ import {
 interface MenuItem {
   id: string
   name: string
-  href: string
+  path: string // relative path (e.g., '' for dashboard, '/participants' for participants)
   icon: React.ComponentType<{ className?: string }>
 }
 
@@ -24,25 +24,25 @@ const menuItems: MenuItem[] = [
   {
     id: 'dashboard',
     name: 'Dashboard',
-    href: '/dashboard/client',
+    path: '',
     icon: HomeIcon,
   },
   {
     id: 'participants',
     name: 'Participants',
-    href: '/dashboard/client/participants',
+    path: '/participants',
     icon: UsersIcon,
   },
   {
     id: 'request-service',
     name: 'Request A Service',
-    href: '/dashboard/client/request-service',
+    path: '/request-service',
     icon: PlusCircleIcon,
   },
   {
     id: 'manage-request',
     name: 'Manage Request',
-    href: '/dashboard/client/manage-request',
+    path: '/manage-request',
     icon: ClipboardDocumentListIcon,
   },
 ]
@@ -54,12 +54,18 @@ interface ClientSidebarProps {
     firstName: string
     photo: string | null
   }
+  basePath?: string // Base path for navigation (e.g., '/dashboard/client' or '/dashboard/supportcoordinators')
+  roleLabel?: string // Label to show in profile section (e.g., 'Client' or 'Support Coordinator')
+  isSelfManaged?: boolean // If true, show "My Profile" instead of "Participants" and hide add participant
 }
 
 export default function ClientSidebar({
   isMobileOpen = false,
   onClose,
-  profileData
+  profileData,
+  basePath = '/dashboard/client',
+  roleLabel,
+  isSelfManaged = false
 }: ClientSidebarProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
@@ -68,6 +74,17 @@ export default function ClientSidebar({
   // Get profile photo URL or use placeholder
   const photoUrl = profileData?.photo || '/images/profilePlaceHolder.png'
   const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'User'
+
+  // Determine role label - use prop if provided, otherwise derive from session
+  const displayRoleLabel = roleLabel || (session?.user?.role === 'COORDINATOR' ? 'Support Coordinator' : 'Client')
+
+  // Build menu items based on whether client is self-managed
+  const dynamicMenuItems = menuItems.map(item => {
+    if (item.id === 'participants' && isSelfManaged) {
+      return { ...item, name: 'My Profile' }
+    }
+    return item
+  })
 
   // Handle link click on mobile - close menu
   const handleLinkClick = () => {
@@ -97,7 +114,7 @@ export default function ClientSidebar({
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Logo - Only visible on mobile */}
       <div className="sidebar-logo-mobile">
-        <Link href="/dashboard/client" onClick={handleLinkClick}>
+        <Link href={basePath} onClick={handleLinkClick}>
           <Image
             src="/logo/logo.svg"
             alt="Remonta"
@@ -123,7 +140,7 @@ export default function ClientSidebar({
         </div>
         <div className="sidebar-profile-info">
           <h4 className="sidebar-profile-name">{displayName}</h4>
-          <p className="sidebar-profile-role">Client</p>
+          <p className="sidebar-profile-role">{displayRoleLabel}</p>
         </div>
       </div>
 
@@ -131,16 +148,22 @@ export default function ClientSidebar({
       <nav className="sidebar-nav">
         <div className="nav-section">
           <ul className="nav-list">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href
+            {dynamicMenuItems.map((item) => {
+              // Hide "Request A Service" for self-managed clients (they already have their request)
+              if (item.id === 'request-service' && isSelfManaged) {
+                return null
+              }
+
+              const href = `${basePath}${item.path}`
+              const isActive = pathname === href
               const ItemIcon = item.icon
 
               return (
                 <li key={item.id}>
                   <Link
-                    href={item.href}
+                    href={href}
                     className={`nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => handleNavClick(item.href)}
+                    onClick={() => handleNavClick(href)}
                   >
                     <ItemIcon className="nav-icon" />
                     <span>{item.name}</span>
@@ -154,7 +177,7 @@ export default function ClientSidebar({
         {/* Account Button */}
         <div className="sidebar-account-section">
           <Link
-            href="/dashboard/client/account"
+            href={`${basePath}/account`}
             className="sidebar-account-button"
             onClick={handleLinkClick}
           >

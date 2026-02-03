@@ -33,15 +33,10 @@ export default withAuth(
     }
 
     if (path.startsWith("/dashboard/client") && token?.role !== UserRole.CLIENT) {
-      
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
-    if (
-      path.startsWith("/dashboard/coordinator") &&
-      token?.role !== UserRole.COORDINATOR
-    ) {
-
+    if (path.startsWith("/dashboard/supportcoordinators") && token?.role !== UserRole.COORDINATOR) {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 

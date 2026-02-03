@@ -34,6 +34,7 @@ interface EditParticipantModalProps {
   onClose: () => void;
   participant: ParticipantData | null;
   onSave: (data: ParticipantData) => Promise<void>;
+  showRelationship?: boolean;
 }
 
 const genderOptions = [
@@ -59,6 +60,7 @@ export default function EditParticipantModal({
   onClose,
   participant,
   onSave,
+  showRelationship = true,
 }: EditParticipantModalProps) {
   const [formData, setFormData] = useState<ParticipantData>({
     id: "",
@@ -306,55 +308,57 @@ export default function EditParticipantModal({
                 </div>
 
                 {/* Relationship */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
-                    Relationship
-                  </label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsRelationshipOpen(!isRelationshipOpen);
-                        setIsGenderOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
-                    >
-                      <span
-                        className={formData.relationshipToClient ? "text-gray-900" : "text-gray-500"}
+                {showRelationship && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
+                      Relationship
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsRelationshipOpen(!isRelationshipOpen);
+                          setIsGenderOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
                       >
-                        {selectedRelationshipLabel}
-                      </span>
-                      <ChevronDown
-                        className={`w-5 h-5 text-gray-400 transition-transform ${
-                          isRelationshipOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                    {isRelationshipOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg">
-                        {relationshipOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateField("relationshipToClient", option.value);
-                              setIsRelationshipOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
-                              formData.relationshipToClient === option.value
-                                ? "bg-indigo-50 text-indigo-900"
-                                : "text-gray-900"
+                        <span
+                          className={formData.relationshipToClient ? "text-gray-900" : "text-gray-500"}
+                        >
+                          {selectedRelationshipLabel}
+                        </span>
+                        <ChevronDown
+                          className={`w-5 h-5 text-gray-400 transition-transform ${
+                            isRelationshipOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {isRelationshipOpen && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg">
+                          {relationshipOptions.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateField("relationshipToClient", option.value);
+                                setIsRelationshipOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
+                                formData.relationshipToClient === option.value
+                                  ? "bg-indigo-50 text-indigo-900"
+                                  : "text-gray-900"
                             }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Conditions/Disabilities - full width */}
                 <div className="md:col-span-2">

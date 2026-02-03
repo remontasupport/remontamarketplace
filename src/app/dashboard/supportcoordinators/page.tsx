@@ -1,6 +1,6 @@
 /**
- * Client Dashboard - Server Component
- * Protected route - only accessible to users with CLIENT role
+ * Support Coordinators Dashboard - Server Component
+ * Protected route - only accessible to users with COORDINATOR role
  */
 
 import { getServerSession } from "next-auth";
@@ -15,7 +15,7 @@ import WorkerSearchResults from "@/components/dashboard/client/WorkerSearchResul
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ClientDashboard() {
+export default async function SupportCoordinatorsDashboard() {
   // Server-side session validation
   const session = await getServerSession(authOptions);
 
@@ -24,20 +24,19 @@ export default async function ClientDashboard() {
     redirect("/login");
   }
 
-  // Redirect if wrong role (only CLIENT allowed)
-  if (session.user.role !== UserRole.CLIENT) {
+  // Redirect if wrong role (only COORDINATOR allowed)
+  if (session.user.role !== UserRole.COORDINATOR) {
     redirect("/unauthorized");
   }
 
-  // Fetch client's profile and check if self-managed
+  // Fetch coordinator's profile
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const clientProfile = await authPrisma.clientProfile.findUnique({
+  const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
-  displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
+  displayName = coordinatorProfile?.firstName || displayName;
 
   return (
     <ClientDashboardLayout
@@ -45,7 +44,8 @@ export default async function ClientDashboard() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
+      basePath="/dashboard/supportcoordinators"
+      roleLabel="Support Coordinator"
     >
       {/* Main Content */}
       <div className="px-6 py-4 md:px-10 md:py-6 lg:px-12">

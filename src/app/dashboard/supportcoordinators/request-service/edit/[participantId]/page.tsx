@@ -110,6 +110,8 @@ const defaultDaySchedule: DaySchedule = {
   endTime: "",
 };
 
+const BASE_PATH = "/dashboard/supportcoordinators";
+
 export default function EditServiceRequestPage({
   params,
 }: {
@@ -126,7 +128,6 @@ export default function EditServiceRequestPage({
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [serviceRequest, setServiceRequest] = useState<ServiceRequestData | null>(null);
-  const [isSelfManaged, setIsSelfManaged] = useState(false);
 
   // Form state - Services
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -192,7 +193,6 @@ export default function EditServiceRequestPage({
         const participantData = await participantRes.json();
 
         setCategories(categoriesData);
-        setIsSelfManaged(participantData.isSelfManaged ?? false);
 
         const sr = participantData.data?.serviceRequest;
         if (sr) {
@@ -495,7 +495,7 @@ export default function EditServiceRequestPage({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to update request");
 
-      router.push("/dashboard/client/participants");
+      router.push(`${BASE_PATH}/participants`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save changes");
@@ -866,14 +866,18 @@ export default function EditServiceRequestPage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
+      <ClientDashboardLayout profileData={{ firstName: displayName, photo: null }} basePath={BASE_PATH} roleLabel="Support Coordinator">
+        <div className="p-6 md:p-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          </div>
+        </div>
+      </ClientDashboardLayout>
     );
   }
 
   return (
-    <ClientDashboardLayout profileData={{ firstName: displayName, photo: null }} isSelfManaged={isSelfManaged}>
+    <ClientDashboardLayout profileData={{ firstName: displayName, photo: null }} basePath={BASE_PATH} roleLabel="Support Coordinator">
       <div className="p-6 md:p-8 max-w-4xl">
         {/* Header */}
         <div className="mb-6">

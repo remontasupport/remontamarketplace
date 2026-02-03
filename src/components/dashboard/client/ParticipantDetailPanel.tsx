@@ -22,11 +22,15 @@ interface ParticipantDetailPanelProps {
     conditions?: string[];
   } | null;
   onEditClick?: () => void;
+  showRelationship?: boolean;
+  basePath?: string;
 }
 
 export default function ParticipantDetailPanel({
   participant,
   onEditClick,
+  showRelationship = true,
+  basePath = '/dashboard/client',
 }: ParticipantDetailPanelProps) {
   if (!participant) {
     return (
@@ -134,7 +138,7 @@ export default function ParticipantDetailPanel({
               Edit Profile
             </button>
             <Link
-              href={`/dashboard/client/request-service/edit/${participant.id}`}
+              href={`${basePath}/request-service/edit/${participant.id}`}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins text-white transition-colors hover:opacity-90"
               style={{ backgroundColor: '#0C1628' }}
             >
@@ -170,15 +174,17 @@ export default function ParticipantDetailPanel({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Heart className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500 font-poppins">Relationship</p>
-                <p className="text-sm font-medium text-gray-900 font-poppins">
-                  {formatRelationship(relationshipToClient)}
-                </p>
+            {showRelationship && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <Heart className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-xs text-gray-500 font-poppins">Relationship</p>
+                  <p className="text-sm font-medium text-gray-900 font-poppins">
+                    {formatRelationship(relationshipToClient)}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Cake className="w-5 h-5 text-gray-400" />
               <div>

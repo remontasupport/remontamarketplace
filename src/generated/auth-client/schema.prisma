@@ -46,13 +46,14 @@ model AuditLog {
 }
 
 model ClientProfile {
-  id        String   @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
-  userId    String   @unique(map: "client_profiles_new_userId_key")
-  firstName String
-  lastName  String
-  mobile    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id            String   @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId        String   @unique(map: "client_profiles_new_userId_key")
+  firstName     String
+  lastName      String
+  mobile        String
+  isSelfManaged Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -1,5 +1,5 @@
 /**
- * Manage Request Page
+ * Manage Request Page for Support Coordinators
  * Displays service requests with participant, workers, and status
  */
 
@@ -14,28 +14,27 @@ import ManageRequestTable from "@/components/dashboard/client/ManageRequestTable
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ManageRequestPage() {
+export default async function SupportCoordinatorsManageRequestPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
     redirect("/login");
   }
 
-  if (session.user.role !== UserRole.CLIENT) {
+  if (session.user.role !== UserRole.COORDINATOR) {
     redirect("/unauthorized");
   }
 
-  // Fetch client's profile for sidebar display
+  // Fetch coordinator's profile for sidebar display
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const clientProfile = await authPrisma.clientProfile.findUnique({
+  const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
-  displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
+  displayName = coordinatorProfile?.firstName || displayName;
 
-  // Fetch service requests for this user with participant data
+  // Fetch service requests for this coordinator with participant data
   const serviceRequests = await authPrisma.serviceRequest.findMany({
     where: { requesterId: session.user.id },
     orderBy: { createdAt: 'desc' },
@@ -59,7 +58,8 @@ export default async function ManageRequestPage() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
+      basePath="/dashboard/supportcoordinators"
+      roleLabel="Support Coordinator"
     >
       <div className="p-6 md:p-8">
         {/* Header */}
