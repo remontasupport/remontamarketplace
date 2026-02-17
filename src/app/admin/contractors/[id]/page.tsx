@@ -720,64 +720,60 @@ export default function WorkerDetailPage() {
               </div>
 
               {/* HOBBIES */}
-              {hobbies && (
-                <div className="quote-section">
-                  <h3 className="quote-title">Hobbies</h3>
-                  <p className="quote-text">
-                    "<span
-                      contentEditable={isEditMode}
-                      suppressContentEditableWarning
-                      onFocus={(e) => {
-                        const range = document.createRange()
-                        range.selectNodeContents(e.currentTarget)
-                        const selection = window.getSelection()
-                        selection?.removeAllRanges()
-                        selection?.addRange(range)
-                      }}
-                      onBlur={(e) => setEditableHobbies(e.currentTarget.textContent || '')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          e.currentTarget.blur()
-                        }
-                      }}
-                      className="editable-field editable-field-white"
-                    >
-                      {hobbies}
-                    </span>"
-                  </p>
-                </div>
-              )}
+              <div className="quote-section">
+                <h3 className="quote-title">Hobbies</h3>
+                <p className="quote-text">
+                  "<span
+                    contentEditable={isEditMode}
+                    suppressContentEditableWarning
+                    onFocus={(e) => {
+                      const range = document.createRange()
+                      range.selectNodeContents(e.currentTarget)
+                      const selection = window.getSelection()
+                      selection?.removeAllRanges()
+                      selection?.addRange(range)
+                    }}
+                    onBlur={(e) => setEditableHobbies(e.currentTarget.textContent || '')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.currentTarget.blur()
+                      }
+                    }}
+                    className="editable-field editable-field-white"
+                  >
+                    {hobbies || 'Placeholder'}
+                  </span>"
+                </p>
+              </div>
 
               {/* WHAT MAKES YOUR SERVICES UNIQUE */}
-              {uniqueService && (
-                <div className="quote-section">
-                  <h3 className="quote-title">What makes your services unique?</h3>
-                  <p className="quote-text">
-                    "<span
-                      contentEditable={isEditMode}
-                      suppressContentEditableWarning
-                      onFocus={(e) => {
-                        const range = document.createRange()
-                        range.selectNodeContents(e.currentTarget)
-                        const selection = window.getSelection()
-                        selection?.removeAllRanges()
-                        selection?.addRange(range)
-                      }}
-                      onBlur={(e) => setEditableUniqueService(e.currentTarget.textContent || '')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          e.currentTarget.blur()
-                        }
-                      }}
-                      className="editable-field editable-field-white"
-                    >
-                      {uniqueService}
-                    </span>"
-                  </p>
-                </div>
-              )}
+              <div className="quote-section">
+                <h3 className="quote-title">What makes your services unique?</h3>
+                <p className="quote-text">
+                  "<span
+                    contentEditable={isEditMode}
+                    suppressContentEditableWarning
+                    onFocus={(e) => {
+                      const range = document.createRange()
+                      range.selectNodeContents(e.currentTarget)
+                      const selection = window.getSelection()
+                      selection?.removeAllRanges()
+                      selection?.addRange(range)
+                    }}
+                    onBlur={(e) => setEditableUniqueService(e.currentTarget.textContent || '')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.currentTarget.blur()
+                      }
+                    }}
+                    className="editable-field editable-field-white"
+                  >
+                    {uniqueService || 'Placeholder'}
+                  </span>"
+                </p>
+              </div>
 
               {/* WHY DO YOU ENJOY YOUR WORK */}
               <div className="quote-section">
