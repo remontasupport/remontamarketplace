@@ -15,6 +15,7 @@ export interface WorkerRegistrationJobData {
 
   // Worker details
   location?: string;
+  photo?: string; // Profile photo URL
 
   // Services
   services?: string[]; // Selected service category IDs

@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       lastName,
       mobile,
       location,
+      photo,
       services,
       supportWorkerCategories,
     } = body;
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
       lastName,
       mobile,
       location,
+      photo,
       services,
       supportWorkerCategories,
       geocodedLocation: undefined, // Will be geocoded in background

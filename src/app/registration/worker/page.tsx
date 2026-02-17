@@ -24,6 +24,11 @@ export default function ContractorOnboarding() {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [emailExistsError, setEmailExistsError] = useState<string>("");
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+
+  // Ref to store the photo upload promise resolver
+  const photoUploadResolverRef = useRef<(() => void) | null>(null);
+  const photoUploadPromiseRef = useRef<Promise<void> | null>(null);
 
   // Fetch categories from database with caching
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
@@ -70,7 +75,7 @@ export default function ContractorOnboarding() {
   const watchedServices = currentStep === 3 ? watch("services") : getValues("services");
   const watchedSupportWorkerCategories = currentStep === 3 ? watch("supportWorkerCategories") : getValues("supportWorkerCategories");
   const watchedConsentProfileShare = currentStep === 4 ? watch("consentProfileShare") : getValues("consentProfileShare");
-  const watchedConsentMarketing = currentStep === 4 ? watch("consentMarketing") : getValues("consentMarketing");
+  const watchedPhoto = currentStep === 4 ? watch("photo") : getValues("photo");
 
   const validateCurrentStep = async (step: number) => {
     const fieldsToValidate = getStepValidationFields(step);
@@ -91,6 +96,29 @@ export default function ContractorOnboarding() {
       : [...currentServices, service];
     setValue("services", updatedServices, { shouldValidate: true });
   }, [setValue, getValues]);
+
+  const handlePhotoChange = useCallback((photoUrl: string | null) => {
+    setValue("photo", photoUrl || "");
+  }, [setValue]);
+
+  // Track photo upload state
+  const handlePhotoUploadStart = useCallback(() => {
+    setIsPhotoUploading(true);
+    // Create a new promise that will be resolved when upload completes
+    photoUploadPromiseRef.current = new Promise((resolve) => {
+      photoUploadResolverRef.current = resolve;
+    });
+  }, []);
+
+  const handlePhotoUploadEnd = useCallback(() => {
+    setIsPhotoUploading(false);
+    // Resolve the promise to signal upload is complete
+    if (photoUploadResolverRef.current) {
+      photoUploadResolverRef.current();
+      photoUploadResolverRef.current = null;
+      photoUploadPromiseRef.current = null;
+    }
+  }, []);
 
   const nextStep = async () => {
     if (currentStep < TOTAL_STEPS) {
@@ -168,6 +196,13 @@ export default function ContractorOnboarding() {
   const onSubmit = async (data: ContractorFormData) => {
     try {
       setIsLoading(true);
+
+      // Wait for photo upload to complete if one is in progress
+      if (photoUploadPromiseRef.current) {
+        await photoUploadPromiseRef.current;
+        // Get the latest form data after upload completes
+        data = getValues();
+      }
 
       // Submit registration (processes immediately)
       const response = await fetchWithRetry('/api/auth/register-async', {
@@ -303,7 +338,10 @@ export default function ContractorOnboarding() {
               <Step7Photos
                 errors={errors}
                 watchedConsentProfileShare={watchedConsentProfileShare}
-                watchedConsentMarketing={watchedConsentMarketing}
+                currentPhoto={watchedPhoto}
+                onPhotoChange={handlePhotoChange}
+                onPhotoUploadStart={handlePhotoUploadStart}
+                onPhotoUploadEnd={handlePhotoUploadEnd}
                 setValue={setValue}
                 trigger={trigger}
               />
@@ -327,7 +365,9 @@ export default function ContractorOnboarding() {
                   disabled={isLoading}
                   className="flex items-center gap-2"
                 >
-                  {isLoading ? "Submitting..." : "Complete Signup"}
+                  {isLoading
+                    ? (isPhotoUploading ? "Uploading photo..." : "Submitting...")
+                    : "Complete Signup"}
                 </Button>
               ) : (
                 <Button

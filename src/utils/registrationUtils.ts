@@ -5,7 +5,7 @@ const STEP_VALIDATION_FIELDS: Record<number, (keyof ContractorFormData)[]> = {
   1: ["location"],
   2: ["firstName", "lastName", "email", "mobile", "password"],
   3: ["services"],
-  4: ["consentProfileShare"],
+  4: ["photo", "consentProfileShare"],
 };
 
 export const getStepValidationFields = (step: number): (keyof ContractorFormData)[] => {

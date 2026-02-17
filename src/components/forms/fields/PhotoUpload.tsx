@@ -18,6 +18,8 @@ interface PhotoUploadProps {
   currentPhoto?: string | null;
   onPhotoChange: (photoUrl: string | null) => void;
   onPhotoSave?: (photoUrl: string) => Promise<void>; // Optional callback to save to DB
+  onUploadStart?: () => void; // Called when upload starts
+  onUploadEnd?: () => void; // Called when upload ends (success or failure)
   maxSizeMB?: number;
   error?: string;
 }
@@ -26,6 +28,8 @@ export default function PhotoUpload({
   currentPhoto,
   onPhotoChange,
   onPhotoSave,
+  onUploadStart,
+  onUploadEnd,
   maxSizeMB = 50,
   error,
 }: PhotoUploadProps) {
@@ -95,6 +99,9 @@ export default function PhotoUpload({
     // Convert cropped blob URL to File
     try {
       setIsUploading(true);
+      // Notify parent that upload is starting
+      onUploadStart?.();
+
       const croppedFile = await blobUrlToFile(croppedImageUrl, selectedFile?.name || 'cropped-photo.jpg');
 
       // Show preview of cropped image
@@ -135,6 +142,8 @@ export default function PhotoUpload({
       onPhotoChange(null);
     } finally {
       setIsUploading(false);
+      // Notify parent that upload has ended
+      onUploadEnd?.();
       // Clean up blob URLs
       if (selectedImageUrl) {
         URL.revokeObjectURL(selectedImageUrl);

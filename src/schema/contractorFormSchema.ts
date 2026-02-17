@@ -37,9 +37,9 @@ export const contractorFormSchema = z.object({
   services: z.array(z.string()).min(1, "Please select at least one service"),
   supportWorkerCategories: z.array(z.string()).optional(),
 
-  // Step 4 - Consent
+  // Step 4 - Photo & Consent
+  photo: z.string().min(1, "Profile photo is required"),
   consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
-  consentMarketing: z.boolean().optional(),
 
   // Optional fields
   availability: z.string().optional(),
@@ -59,6 +59,6 @@ export const contractorFormDefaults = {
   location: "",
   availability: "",
   startDate: "",
+  photo: "",
   consentProfileShare: false,
-  consentMarketing: false,
 };
