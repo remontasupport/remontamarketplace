@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       photo,
       services,
       supportWorkerCategories,
+      zohoLeadId,
     } = body;
 
     // ============================================
@@ -107,6 +108,27 @@ export async function POST(request: Request) {
     if (!result.success) {
       throw new Error(result.error || 'Registration failed');
     }
+
+    // ============================================
+    // N8N WEBHOOK (server-to-server)
+    // ============================================
+    fetch("https://n8n.srv1137899.hstgr.cloud/webhook/4b03c15d-f903-43c4-9633-27d1719deb44", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        workerProfileId: result.workerProfileId,
+        firstName,
+        lastName,
+        email: normalizedEmail,
+        mobile,
+        location,
+        services,
+        supportWorkerCategories,
+        ...(zohoLeadId ? { zohoLeadId } : {}),
+      }),
+    }).catch(() => {
+      // Silently fail - not critical
+    });
 
     // ============================================
     // SUCCESS RESPONSE TO USER

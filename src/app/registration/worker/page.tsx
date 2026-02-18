@@ -230,21 +230,6 @@ function ContractorOnboarding() {
         return;
       }
 
-      // Send form data to n8n webhook for automation
-      try {
-        await fetch("https://n8n.srv1137899.hstgr.cloud/webhook/4b03c15d-f903-43c4-9633-27d1719deb44", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...data,
-            workerProfileId: result.user?.workerProfileId,
-            ...(zohoLeadId ? { zohoLeadId } : {}),
-          }),
-        });
-      } catch {
-        // Webhook failure does not block registration
-      }
-
       // Registration successful - redirect to success page
       window.location.href = `/registration/worker/success`;
     } catch (error: any) {
