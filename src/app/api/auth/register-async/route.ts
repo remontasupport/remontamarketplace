@@ -117,6 +117,7 @@ export async function POST(request: Request) {
         message: 'Registration successful! Please check your email to verify your account.',
         user: {
           id: result.userId,
+          workerProfileId: result.workerProfileId,
           email: normalizedEmail,
         },
       },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,9 @@ import { fetchWithRetry } from "@/utils/apiRetry";
 
 
 export default function ContractorOnboarding() {
+  const searchParams = useSearchParams();
+  const zohoLeadId = searchParams.get("id");
+
   const [showWelcome, setShowWelcome] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [forceUpdate, setForceUpdate] = useState(0);
@@ -210,7 +214,7 @@ export default function ContractorOnboarding() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, ...(zohoLeadId ? { zohoLeadId } : {}) }),
       }, {
         maxRetries: 3,
         initialDelay: 1000,
@@ -224,6 +228,21 @@ export default function ContractorOnboarding() {
         alert(`Registration failed: ${result.error}`);
         setIsLoading(false);
         return;
+      }
+
+      // Send form data to n8n webhook for automation
+      try {
+        await fetch("https://n8n.srv1137899.hstgr.cloud/webhook/4b03c15d-f903-43c4-9633-27d1719deb44", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            workerProfileId: result.user?.workerProfileId,
+            ...(zohoLeadId ? { zohoLeadId } : {}),
+          }),
+        });
+      } catch {
+        // Webhook failure does not block registration
       }
 
       // Registration successful - redirect to success page

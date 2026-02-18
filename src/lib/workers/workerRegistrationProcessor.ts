@@ -18,7 +18,7 @@ import type { WorkerRegistrationJobData } from '@/types/workerRegistration';
  */
 export async function processWorkerRegistration(
   data: WorkerRegistrationJobData
-): Promise<{ success: boolean; userId?: string; error?: string }> {
+): Promise<{ success: boolean; userId?: string; workerProfileId?: string; error?: string }> {
   try {
     const {
       email,
@@ -266,6 +266,7 @@ export async function processWorkerRegistration(
     return {
       success: true,
       userId: user.id,
+      workerProfileId: user.workerProfile!.id,
     };
   } catch (error: any) {
     
