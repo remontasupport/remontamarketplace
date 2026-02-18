@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +19,7 @@ import { useCategories, transformCategoriesToServiceOptions } from "@/hooks/quer
 import { fetchWithRetry } from "@/utils/apiRetry";
 
 
-export default function ContractorOnboarding() {
+function ContractorOnboarding() {
   const searchParams = useSearchParams();
   const zohoLeadId = searchParams.get("id");
 
@@ -403,5 +403,13 @@ export default function ContractorOnboarding() {
         </Card>
       </div>
     </form>
+  );
+}
+
+export default function ContractorOnboardingPage() {
+  return (
+    <Suspense>
+      <ContractorOnboarding />
+    </Suspense>
   );
 }
