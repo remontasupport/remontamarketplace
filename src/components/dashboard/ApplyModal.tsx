@@ -88,7 +88,7 @@ function ApplyModalContent({ jobTitle, jobId, onClose, onApplied, initialStep = 
   /* ── Backdrop (shared) ── */
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4"
       style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >

@@ -1,5 +1,13 @@
 /* Dashboard Layout Styles */
 
+.hide-scrollbar {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE / Edge */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;                /* Chrome / Safari */
+}
+
 /* Brand Colors */
 :root {
   --brand-primary: #0C1628;

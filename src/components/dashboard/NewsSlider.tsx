@@ -146,7 +146,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
     <div className="news-slider-wrapper">
       <div className="section-header-main">
         <div className="flex items-center gap-3 flex-wrap">
-          <h3 className="section-title-main">Available Jobs</h3>
+          <h3 className="section-title-main">{filteredJobs.length} Available Job{filteredJobs.length !== 1 ? 's' : ''}</h3>
 
           {/* Service filter dropdown */}
           <select
@@ -208,12 +208,46 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
             {searchArea && <> in <span className="font-medium text-gray-700">{searchArea}</span></>}.
           </p>
         </div>
-      ) : (
+      ) : isMobile ? (
+        /* ── Mobile: horizontal scroll-snap, one card at a time ── */
         <div
-          className={[
-            isMobile ? "course-cards-grid news-swipeable" : "course-cards-grid",
-            animClass,
-          ].join(' ')}
+          style={{
+            display: 'flex',
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            gap: '1rem',
+            paddingBottom: '0.5rem',
+            scrollbarWidth: 'none',
+          }}
+          // hide scrollbar on webkit
+          className="hide-scrollbar"
+        >
+          {filteredJobs.map((job) => {
+            const title =
+              job.recruitmentTitle ||
+              [job.service, [job.city, job.state].filter(Boolean).join(', ')].filter(Boolean).join(' - ') ||
+              'Support Work';
+            return (
+              <div key={job.id} style={{ flexShrink: 0, width: '100%', scrollSnapAlign: 'start' }}>
+                <JobCard
+                  job={job}
+                  applied={localAppliedIds.has(job.id)}
+                  onApply={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('apply', job.id);
+                    router.replace(`${pathname}?${params.toString()}`);
+                    setApplyJob({ title, jobId: job.id });
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* ── Desktop: paginated grid ── */
+        <div
+          className={['course-cards-grid', animClass].join(' ')}
           onAnimationEnd={() => setAnimClass('')}
         >
           {visibleJobs.map((job) => {
