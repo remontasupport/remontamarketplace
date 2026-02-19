@@ -152,6 +152,7 @@ exports.Prisma.ClientProfileScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   mobile: 'mobile',
+  isSelfManaged: 'isSelfManaged',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -175,6 +176,8 @@ exports.Prisma.ParticipantScalarFieldEnum = {
   lastName: 'lastName',
   dateOfBirth: 'dateOfBirth',
   location: 'location',
+  gender: 'gender',
+  conditions: 'conditions',
   fundingType: 'fundingType',
   relationshipToClient: 'relationshipToClient',
   isSelfManaged: 'isSelfManaged',
@@ -327,6 +330,25 @@ exports.Prisma.WorkerServiceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.JobScalarFieldEnum = {
+  id: 'id',
+  zohoId: 'zohoId',
+  status: 'status',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  recruitmentTitle: 'recruitmentTitle',
+  service: 'service',
+  description: 'description',
+  jobDescription: 'jobDescription',
+  city: 'city',
+  state: 'state',
+  postedAt: 'postedAt',
+  active: 'active',
+  lastSyncedAt: 'lastSyncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   id: 'id',
   workerProfileId: 'workerProfileId',
@@ -350,6 +372,20 @@ exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ServiceRequestScalarFieldEnum = {
+  id: 'id',
+  requesterId: 'requesterId',
+  participantId: 'participantId',
+  services: 'services',
+  details: 'details',
+  location: 'location',
+  zohoRecordId: 'zohoRecordId',
+  assignedWorker: 'assignedWorker',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -357,6 +393,10 @@ exports.Prisma.SortOrder = {
 
 exports.Prisma.NullableJsonNullValueInput = {
   DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -437,6 +477,14 @@ exports.DocumentCategory = exports.$Enums.DocumentCategory = {
   SERVICE_QUALIFICATION: 'SERVICE_QUALIFICATION'
 };
 
+exports.ServiceRequestStatus = exports.$Enums.ServiceRequestStatus = {
+  PENDING: 'PENDING',
+  MATCHED: 'MATCHED',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
   Account: 'Account',
   AuditLog: 'AuditLog',
@@ -454,7 +502,9 @@ exports.Prisma.ModelName = {
   CategoryDocument: 'CategoryDocument',
   SubcategoryDocument: 'SubcategoryDocument',
   WorkerService: 'WorkerService',
-  WorkerAdditionalInfo: 'WorkerAdditionalInfo'
+  Job: 'Job',
+  WorkerAdditionalInfo: 'WorkerAdditionalInfo',
+  ServiceRequest: 'ServiceRequest'
 };
 
 /**

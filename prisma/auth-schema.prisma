@@ -46,17 +46,19 @@ model AuditLog {
 }
 
 model ClientProfile {
-  id        String   @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
-  userId    String   @unique(map: "client_profiles_new_userId_key")
-  firstName String
-  lastName  String
-  mobile    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id            String   @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId        String   @unique(map: "client_profiles_new_userId_key")
+  firstName     String
+  lastName      String
+  mobile        String
+  isSelfManaged Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "idx_client_profiles_userid")
+  @@index([isSelfManaged])
   @@map("client_profiles")
 }
 
@@ -84,6 +86,8 @@ model Participant {
   lastName             String
   dateOfBirth          DateTime
   location             String?
+  gender               String?
+  conditions           String[]          @default([])
   fundingType          FundingType?
   relationshipToClient RelationshipType?
   isSelfManaged        Boolean           @default(false)
@@ -91,6 +95,8 @@ model Participant {
   additionalInfo       String?
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
+
+  serviceRequest ServiceRequest?
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -339,6 +345,47 @@ model WorkerService {
   @@map("worker_services")
 }
 
+model Job {
+  id             String    @id @default(cuid())
+  zohoId         String    @unique              // Zoho Lead ID — upsert key
+
+  // Lead Info
+  status         String                         // Lead_Status e.g. "Recruitment End"
+  firstName      String?                        // First_Name
+  lastName       String?                        // Last_Name
+
+  // Job Details
+  recruitmentTitle String?                      // Recruitment_Title (custom field)
+  service          String?                      // Service (custom field)
+  description      String?                      // Description
+  jobDescription   String?                      // Job_Description (custom field)
+
+  // Location
+  city           String?                        // City
+  state          String?                        // State (QLD, NSW, etc.)
+
+  // Dates
+  postedAt       DateTime?                      // Created_Time from Zoho
+
+  // Status
+  active         Boolean   @default(true)       // false = hidden from frontend
+
+  // System
+  lastSyncedAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([active])
+  @@index([active, postedAt])
+  @@index([active, state])
+  @@index([active, city])
+  @@index([zohoId])
+  @@index([postedAt])
+  @@index([state])
+  @@index([city])
+  @@map("jobs")
+}
+
 model WorkerAdditionalInfo {
   id                 String        @id(map: "worker_additional_info_new_pkey") @default(cuid())
   workerProfileId    String        @unique
@@ -458,4 +505,33 @@ enum RelationshipType {
   SPOUSE_PARTNER
   CHILDREN
   OTHER
+}
+
+model ServiceRequest {
+  id             String               @id @default(cuid())
+  requesterId    String
+  participantId  String               @unique
+  services       Json
+  details        Json
+  location       String
+  zohoRecordId   String?              @unique
+  assignedWorker Json?
+  status         ServiceRequestStatus @default(PENDING)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("service_requests")
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  MATCHED
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
