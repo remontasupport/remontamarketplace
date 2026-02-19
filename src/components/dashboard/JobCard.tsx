@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 interface Job {
   id: string
   zohoId: string
@@ -11,6 +15,7 @@ interface Job {
 }
 
 export default function JobCard({ job, onApply, applied = false }: { job: Job; onApply: () => void; applied?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
   const location = [job.city, job.state].filter(Boolean).join(', ') || 'Remote'
 
   const title =
@@ -75,9 +80,15 @@ export default function JobCard({ job, onApply, applied = false }: { job: Job; o
           <p className="text-sm font-semibold text-gray-900 mb-1">
             Job Description:
           </p>
-          <p className="text-sm text-gray-600 line-clamp-4">
+          <p className={`text-sm text-gray-600 ${expanded ? '' : 'line-clamp-4'}`}>
             {job.jobDescription}
           </p>
+          <button
+            onClick={() => setExpanded(prev => !prev)}
+            className="mt-1 text-xs font-medium text-teal-600 hover:text-teal-700 cursor-pointer transition-colors"
+          >
+            {expanded ? 'See Less' : 'See More'}
+          </button>
         </div>
       )}
 
