@@ -14,6 +14,7 @@ export type ProfilePreviewResponse = {
   success: boolean;
   message?: string;
   data?: {
+    workerProfileId: string;
     // From worker_profiles table
     profile: {
       firstName: string | null;
@@ -190,6 +191,7 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
     return {
       success: true,
       data: {
+        workerProfileId: workerProfile.id,
         profile: {
           firstName: workerProfile.firstName,
           lastName: workerProfile.lastName,

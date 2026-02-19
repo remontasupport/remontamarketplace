@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
@@ -9,15 +9,18 @@ import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import Loader from "@/components/ui/Loader";
 import "@/app/styles/profile-preview.css";
 
+const N8N_WEBHOOK_URL = "https://n8n.srv1137899.hstgr.cloud/webhook-test/ea912076-f38d-4484-bd05-40e6cb5ae6c1";
+
 interface ApplyModalProps {
   jobTitle: string;
   jobId: string;
+  jobZohoId: string;
   onClose: () => void;
   onApplied: () => void;
   initialStep?: 'prompt' | 'profile';
 }
 
-function ApplyModalContent({ jobTitle, jobId, onClose, onApplied, initialStep = 'prompt' }: ApplyModalProps) {
+function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, initialStep = 'prompt' }: ApplyModalProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const applyJobId = searchParams.get('apply');
@@ -39,6 +42,20 @@ function ApplyModalContent({ jobTitle, jobId, onClose, onApplied, initialStep = 
         setSubmitError(data.error ?? 'Something went wrong. Please try again.');
         return;
       }
+
+      // Fire-and-forget webhook — does not block or fail the apply flow
+      const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ');
+      const workerProfileId = profileData?.workerProfileId ?? '';
+      fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          workerProfileId,
+          zohoId: jobZohoId,
+        }),
+      }).catch(() => {}); // silently ignore webhook errors
+
       onApplied();
     } catch {
       setSubmitError('Network error. Please try again.');
@@ -215,6 +232,13 @@ function ApplyModalContent({ jobTitle, jobId, onClose, onApplied, initialStep = 
                   const params = new URLSearchParams();
                   if (applyJobId) params.set('applyJobId', applyJobId);
                   params.set('applyJobTitle', encodeURIComponent(jobTitle));
+                  // Persist context so it survives section-to-section navigation
+                  sessionStorage.setItem(
+                    'remonta_apply_context',
+                    // Prefer the URL param; fall back to the jobId prop so the
+                    // stored value is never an empty string.
+                    JSON.stringify({ applyJobId: applyJobId ?? jobId, applyJobTitle: jobTitle })
+                  );
                   router.push(`/dashboard/worker/profile-building?${params.toString()}`);
                 }}
                 className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -238,8 +262,10 @@ function ApplyModalContent({ jobTitle, jobId, onClose, onApplied, initialStep = 
 
 export default function ApplyModal(props: ApplyModalProps) {
   return (
-    <QueryProvider>
-      <ApplyModalContent {...props} />
-    </QueryProvider>
+    <Suspense>
+      <QueryProvider>
+        <ApplyModalContent {...props} />
+      </QueryProvider>
+    </Suspense>
   );
 }

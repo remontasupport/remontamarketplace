@@ -51,7 +51,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
   const [animClass, setAnimClass] = useState('');
   const [selectedService, setSelectedService] = useState('');
   const [searchArea, setSearchArea] = useState('');
-  const [applyJob, setApplyJob] = useState<{ title: string; jobId: string; initialStep?: 'prompt' | 'profile' } | null>(null);
+  const [applyJob, setApplyJob] = useState<{ title: string; jobId: string; jobZohoId: string; initialStep?: 'prompt' | 'profile' } | null>(null);
   // Optimistic set — merges server-fetched applied IDs with any applied this session
   const [localAppliedIds, setLocalAppliedIds] = useState<Set<string>>(() => new Set(appliedJobIds));
 
@@ -65,7 +65,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
       job.recruitmentTitle ||
       [job.service, [job.city, job.state].filter(Boolean).join(', ')].filter(Boolean).join(' - ') ||
       'Support Work';
-    setApplyJob({ title, jobId: job.id, initialStep: 'profile' });
+    setApplyJob({ title, jobId: job.id, jobZohoId: job.zohoId, initialStep: 'profile' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobs]);
 
@@ -264,7 +264,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
                   const params = new URLSearchParams(searchParams.toString());
                   params.set('apply', job.id);
                   router.replace(`${pathname}?${params.toString()}`);
-                  setApplyJob({ title, jobId: job.id });
+                  setApplyJob({ title, jobId: job.id, jobZohoId: job.zohoId });
                 }}
               />
             );
@@ -278,6 +278,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
       <ApplyModal
         jobTitle={applyJob.title}
         jobId={applyJob.jobId}
+        jobZohoId={applyJob.jobZohoId}
         initialStep={applyJob.initialStep}
         onClose={() => {
           const params = new URLSearchParams(searchParams.toString());
@@ -287,6 +288,8 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
           setApplyJob(null);
         }}
         onApplied={() => {
+          // Apply is complete — safe to clear the persisted context now.
+          sessionStorage.removeItem('remonta_apply_context');
           setLocalAppliedIds((prev) => new Set([...prev, applyJob.jobId]));
           const params = new URLSearchParams(searchParams.toString());
           params.delete('apply');

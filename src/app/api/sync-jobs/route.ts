@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { zohoService } from '@/lib/zoho'
 import { authPrisma } from '@/lib/auth-prisma'
+import { invalidateCache, CACHE_KEYS } from '@/lib/redis'
 
 // ── In-memory mutex — prevents concurrent syncs ───────────────────────────
 let isSyncing = false
@@ -116,6 +117,13 @@ export async function POST(request: NextRequest) {
 
     lastSyncTime = syncTimestamp.toISOString()
     const duration = Date.now() - startTime
+
+    // Bust the shared jobs cache so the next dashboard load reflects the
+    // freshly-synced data. Fire-and-forget — a miss here just means workers
+    // see the previous list until the 2-hour TTL expires naturally.
+    invalidateCache(CACHE_KEYS.activeJobs()).catch((err) =>
+      console.error('[SYNC-JOBS] Failed to invalidate jobs cache:', err)
+    );
 
     return NextResponse.json({
       success:   true,

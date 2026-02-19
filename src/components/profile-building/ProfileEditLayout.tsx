@@ -57,7 +57,13 @@ export default function ProfileEditLayout({ children, currentSection, applyJobId
           {inApplyFlow && (
             <button
               className="profile-preview-button"
-              onClick={() => router.push(`/dashboard/worker?apply=${applyJobId}`)}
+              onClick={() => {
+                // Do NOT remove sessionStorage here — the user may use the
+                // browser back button to return to profile-building, and we
+                // need the context to still be available as a fallback.
+                // It is cleared only after a successful apply (in NewsSlider).
+                router.push(`/dashboard/worker?apply=${applyJobId}`);
+              }}
               style={{ background: BRAND_COLORS.TERTIARY, color: BRAND_COLORS.PRIMARY }}
             >
               <svg className="profile-preview-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">

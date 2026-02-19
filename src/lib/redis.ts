@@ -30,6 +30,8 @@ export const CACHE_TTL = {
   WORKER_PROFILE: 300,     // 5 minutes - profile data can change (services, photos, personal info)
   COMPLETION_STATUS: 60,   // 1 minute - completion status changes frequently as users complete steps
   SESSION_DATA: 900,       // 15 minutes - session data
+  ACTIVE_JOBS: 7200,       // 2 hours safety-net TTL — explicit invalidation on every sync is the
+                           // primary freshness mechanism; this is just a backstop if it fails
 } as const;
 
 // Cache key generators
@@ -40,6 +42,8 @@ export const CACHE_KEYS = {
   user: (email: string) => `user:${CACHE_VERSION}:${email.toLowerCase()}`,
   workerProfile: (userId: string) => `worker_profile:${CACHE_VERSION}:${userId}`,
   completionStatus: (userId: string) => `completion_status:${CACHE_VERSION}:${userId}`,
+  // Shared across ALL users — one entry, invalidated on every sync-jobs run
+  activeJobs: () => `active_jobs:${CACHE_VERSION}`,
 } as const;
 
 /**
