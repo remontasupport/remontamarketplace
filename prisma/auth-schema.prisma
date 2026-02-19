@@ -375,6 +375,8 @@ model Job {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  applications   JobApplication[]
+
   @@index([active])
   @@index([active, postedAt])
   @@index([active, state])
@@ -384,6 +386,28 @@ model Job {
   @@index([state])
   @@index([city])
   @@map("jobs")
+}
+
+model JobApplication {
+  id        String               @id @default(cuid())
+  jobId     String
+  workerId  String                              // references User.id
+  status    JobApplicationStatus @default(PENDING)
+  appliedAt DateTime             @default(now())
+  updatedAt DateTime             @default(now()) @updatedAt
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, workerId])
+  @@index([workerId])
+  @@index([jobId])
+  @@index([workerId, status])
+  @@map("job_applications")
+}
+
+enum JobApplicationStatus {
+  PENDING
+  WITHDRAWN
 }
 
 model WorkerAdditionalInfo {

@@ -349,6 +349,15 @@ exports.Prisma.JobScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.JobApplicationScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  workerId: 'workerId',
+  status: 'status',
+  appliedAt: 'appliedAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   id: 'id',
   workerProfileId: 'workerProfileId',
@@ -477,6 +486,11 @@ exports.DocumentCategory = exports.$Enums.DocumentCategory = {
   SERVICE_QUALIFICATION: 'SERVICE_QUALIFICATION'
 };
 
+exports.JobApplicationStatus = exports.$Enums.JobApplicationStatus = {
+  PENDING: 'PENDING',
+  WITHDRAWN: 'WITHDRAWN'
+};
+
 exports.ServiceRequestStatus = exports.$Enums.ServiceRequestStatus = {
   PENDING: 'PENDING',
   MATCHED: 'MATCHED',
@@ -503,6 +517,7 @@ exports.Prisma.ModelName = {
   SubcategoryDocument: 'SubcategoryDocument',
   WorkerService: 'WorkerService',
   Job: 'Job',
+  JobApplication: 'JobApplication',
   WorkerAdditionalInfo: 'WorkerAdditionalInfo',
   ServiceRequest: 'ServiceRequest'
 };

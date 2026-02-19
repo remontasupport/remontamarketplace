@@ -26,6 +26,8 @@ import Loader from "@/components/ui/Loader";
 function ProfileBuildingContent() {
   const searchParams = useSearchParams();
   const section = searchParams.get("section") || "preferred-hours";
+  const applyJobId = searchParams.get("applyJobId");
+  const applyJobTitle = searchParams.get("applyJobTitle");
   const { data: session } = useSession();
 
   // Fetch worker profile for dynamic role
@@ -81,7 +83,11 @@ function ProfileBuildingContent() {
       }}
     >
       <QueryProvider>
-        <ProfileEditLayout currentSection={section}>
+        <ProfileEditLayout
+          currentSection={section}
+          applyJobId={applyJobId}
+          applyJobTitle={applyJobTitle ? decodeURIComponent(applyJobTitle) : null}
+        >
           {renderSection()}
         </ProfileEditLayout>
       </QueryProvider>

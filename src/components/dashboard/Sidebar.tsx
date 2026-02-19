@@ -15,7 +15,8 @@ import {
   PencilIcon,
   Cog6ToothIcon,
   DocumentTextIcon,
-  WrenchScrewdriverIcon
+  WrenchScrewdriverIcon,
+  BriefcaseIcon,
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
@@ -410,8 +411,16 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
           )
         })}
 
-        {/* Account Button */}
+        {/* My Jobs + Account */}
         <div className="sidebar-account-section">
+          <Link
+            href="/dashboard/worker/my-jobs"
+            className={`sidebar-account-button ${pathname === '/dashboard/worker/my-jobs' ? 'active' : ''}`}
+            onClick={handleLinkClick}
+          >
+            <BriefcaseIcon className="sidebar-account-icon" />
+            <span>My Jobs</span>
+          </Link>
           <Link href="/dashboard/worker/account" className="sidebar-account-button" onClick={handleLinkClick}>
             <Cog6ToothIcon className="sidebar-account-icon" />
             <span>Account</span>

@@ -147,9 +147,9 @@ export default async function WorkerDashboard() {
         <div className="hero-decoration hero-decoration-2"></div>
       </div>
 
-      {/* News Section - Streaming with Suspense */}
+      {/* Jobs Section - Streaming with Suspense */}
       <div style={{ marginTop: '0' }}>
-        <Suspense fallback={<NewsSlider articles={[]} isLoading={true} />}>
+        <Suspense fallback={<NewsSlider jobs={[]} isLoading={true} />}>
           <NewsSliderAsync />
         </Suspense>
       </div>
