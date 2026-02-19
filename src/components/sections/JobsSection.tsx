@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import useSWR from 'swr'
-import { Users, MapPin } from 'lucide-react'
+import { Users, MapPin, X } from 'lucide-react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Grid } from 'swiper/modules'
 import 'swiper/css'
@@ -47,6 +48,8 @@ const fetcher = async (url: string) => {
 }
 
 export default function JobsSection() {
+  const [modalOpen, setModalOpen] = useState(false)
+
   // Use SWR with caching and revalidation strategy
   const { data: jobs, error, isLoading } = useSWR<Job[]>('/api/jobs', fetcher, {
     dedupingInterval: 300000, // Cache for 5 minutes (300,000 ms)
@@ -171,9 +174,7 @@ export default function JobsSection() {
                         </div>
                       )}
 
-                      <Link href="/registration/worker">
-                        <button className="job-apply-button">Apply Now</button>
-                      </Link>
+                      <button className="job-apply-button" onClick={() => setModalOpen(true)}>Apply Now</button>
                     </div>
                   </SwiperSlide>
                 )
@@ -194,6 +195,28 @@ export default function JobsSection() {
           </div>
         )}
       </div>
+
+      {/* Apply Now Modal */}
+      {modalOpen && (
+        <div className="job-modal-overlay" onClick={() => setModalOpen(false)}>
+          <div className="job-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="job-modal-close" onClick={() => setModalOpen(false)}>
+              <X size={20} />
+            </button>
+            <h2 className="job-modal-title">Join Remonta</h2>
+            <p className="job-modal-subtitle">Create an account to apply for this role.</p>
+            <Link href="https://app.remontaservices.com.au/registration/worker" className="job-modal-signup-button">
+              Sign Up
+            </Link>
+            <p className="job-modal-signin-text">
+              Already a member?{' '}
+              <Link href="https://app.remontaservices.com.au/login" className="job-modal-signin-link">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

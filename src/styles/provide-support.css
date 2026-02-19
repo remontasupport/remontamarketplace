@@ -1481,3 +1481,98 @@
     min-height: 500px;
   }
 }
+
+/* Apply Now Modal */
+.job-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.job-modal {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.job-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  transition: color 0.2s;
+}
+
+.job-modal-close:hover {
+  color: var(--brand-primary);
+}
+
+.job-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  margin: 0;
+}
+
+.job-modal-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+  text-align: center;
+}
+
+.job-modal-signup-button {
+  width: 100%;
+  background-color: var(--brand-primary);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.3s, color 0.3s;
+  font-family: var(--font-sans);
+  display: block;
+}
+
+.job-modal-signup-button:hover {
+  background-color: var(--brand-secondary);
+  color: var(--brand-primary);
+}
+
+.job-modal-signin-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.job-modal-signin-link {
+  color: var(--brand-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.job-modal-signin-link:hover {
+  text-decoration: underline;
+}
