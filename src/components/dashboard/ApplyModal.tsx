@@ -45,13 +45,13 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
 
       // Fire-and-forget webhook — does not block or fail the apply flow
       const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ');
-      const workerProfileId = profileData?.workerProfileId ?? '';
+      const userId = profileData?.userId ?? '';
       fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName,
-          workerProfileId,
+          userId,
           zohoId: jobZohoId,
         }),
       }).catch(() => {}); // silently ignore webhook errors
@@ -241,13 +241,14 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
                   );
                   router.push(`/dashboard/worker/profile-building?${params.toString()}`);
                 }}
-                className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                disabled={isLoading}
+                className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 Edit My Profile
               </button>
               <button
                 onClick={handleApply}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isLoading}
                 className="px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Applying…' : 'Apply'}
