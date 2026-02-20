@@ -1,37 +1,40 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useState } from 'react'
 import useSWR from 'swr'
 import { Users, MapPin, X } from 'lucide-react'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Navigation, Grid } from 'swiper/modules'
+import { Navigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
-import 'swiper/css/grid'
 
-// Job type from database
+const SERVICE_OPTIONS = [
+  'Support Work',
+  'Cleaning',
+  'Gardening',
+  'Physiotherapy',
+  'Occupational Therapy',
+  'Exercise Physiology',
+  'Psychology',
+  'Behavioural Support',
+  'Social Work',
+  'Speech Pathology',
+  'Personal Training',
+  'Nursing (RN/EN)',
+  'Home Modifications',
+]
+
+// Job type matching https://app.remontaservices.com.au/api/jobs
 type Job = {
   id: string
   zohoId: string
-  dealName: string
-  title: string | null
-  description: string | null
-  stage: string
-  suburbs: string | null
+  recruitmentTitle: string
+  service: string
+  jobDescription: string
+  city: string | null
   state: string | null
-  serviceAvailed: string | null
-  serviceRequirements: string | null
-  disabilities: string | null
-  behaviouralConcerns: string | null
-  culturalConsiderations: string | null
-  language: string | null
-  religion: string | null
-  age: string | null
-  gender: string | null
-  hobbies: string | null
   postedAt: string | null
-  active: boolean
   createdAt: string
 }
 
@@ -47,16 +50,109 @@ const fetcher = async (url: string) => {
   return data.jobs
 }
 
+// Split array into chunks of n
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
+function JobCard({ job, onApply }: { job: Job; onApply: () => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const location = [job.city, job.state].filter(Boolean).join(', ') || 'Remote'
+  const postedDate = job.postedAt
+    ? new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+  return (
+    <div className="job-card">
+      <div className="job-card-header">
+        <div className="job-card-logo">
+          <Users size={24} />
+        </div>
+
+        <div className="job-card-info">
+          <div className="job-card-title-row">
+            <div>
+              <h3 className="job-card-title">{job.recruitmentTitle}</h3>
+            </div>
+          </div>
+
+          <div className="job-card-location">
+            <MapPin size={20} />
+            <span>{location}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="job-card-badges">
+        <span className="job-badge job-badge-active">{job.service}</span>
+      </div>
+
+      <div className="job-card-meta">
+        <div className="job-card-meta-item">
+          <span><span className="job-card-meta-label">Posted:</span> {postedDate}</span>
+        </div>
+      </div>
+
+      <div className="job-card-description-section">
+        <p className="job-card-description-label">Job Description:</p>
+        <p className={`job-card-description${expanded ? ' job-card-description--expanded' : ''}`}>
+          {job.jobDescription || 'No description available'}
+        </p>
+        <button className="job-card-see-more" onClick={() => setExpanded(!expanded)}>
+          {expanded ? 'See less' : 'See more'}
+        </button>
+      </div>
+
+      <button className="job-apply-button" onClick={onApply}>Apply Now</button>
+    </div>
+  )
+}
+
 export default function JobsSection() {
   const [modalOpen, setModalOpen] = useState(false)
+  const [selectedService, setSelectedService] = useState('')
+  const [searchArea, setSearchArea] = useState('')
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
+  const [isMobile, setIsMobile] = useState(false)
 
-  // Use SWR with caching and revalidation strategy
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const { data: jobs, error, isLoading } = useSWR<Job[]>('/api/jobs', fetcher, {
-    dedupingInterval: 300000, // Cache for 5 minutes (300,000 ms)
-    revalidateOnFocus: true, // Revalidate when user focuses the window
-    revalidateOnReconnect: true, // Revalidate when user reconnects
-    refreshInterval: 0, // Don't auto-refresh (only manual revalidation)
+    dedupingInterval: 300000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    refreshInterval: 0,
   })
+
+  // Filter + sort
+  const filteredJobs = (jobs ?? [])
+    .filter((job) => {
+      const matchesService = selectedService
+        ? job.service?.toLowerCase().includes(selectedService.toLowerCase())
+        : true
+      const matchesArea = searchArea
+        ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
+          job.state?.toLowerCase().includes(searchArea.toLowerCase())
+        : true
+      return matchesService && matchesArea
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.postedAt ?? a.createdAt).getTime()
+      const dateB = new Date(b.postedAt ?? b.createdAt).getTime()
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
+    })
+
+  // Mobile: 1 card per slide — Desktop: 4 cards (2×2 grid) per slide
+  const pages = chunkArray(filteredJobs, isMobile ? 1 : 4)
 
   return (
     <section className="jobs-section">
@@ -74,125 +170,104 @@ export default function JobsSection() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0C1628]"></div>
           </div>
-        ) : !jobs || jobs.length === 0 ? (
-          <div className="jobs-empty">
-            <h2 className="jobs-empty-title">No Active Jobs</h2>
-            <p className="jobs-empty-text">
-              There are currently no active job postings. Please check back soon!
-            </p>
-          </div>
         ) : (
-          <div className="jobs-slider-container">
-            <Swiper
-              modules={[Navigation, Grid]}
-              navigation={{
-                nextEl: '.jobs-swiper-button-next',
-                prevEl: '.jobs-swiper-button-prev',
-              }}
-              grid={{
-                rows: 2,
-                fill: 'row'
-              }}
-              slidesPerView={2}
-              spaceBetween={30}
-              className="jobs-swiper"
-              breakpoints={{
-                0: {
-                  slidesPerView: 1,
-                  grid: {
-                    rows: 1,
-                    fill: 'row'
-                  },
-                  spaceBetween: 20
-                },
-                768: {
-                  slidesPerView: 2,
-                  grid: {
-                    rows: 2,
-                    fill: 'row'
-                  },
-                  spaceBetween: 30
-                }
-              }}
-            >
-              {jobs.map((job) => {
-                // Format location
-                const location = [job.suburbs, job.state].filter(Boolean).join(', ') || 'Remote'
+          <>
+            {/* Filter bar */}
+            <div className="jobs-filter-bar">
+              <span className="jobs-filter-count">
+                <strong>{filteredJobs.length}</strong> Available Job{filteredJobs.length !== 1 ? 's' : ''}
+              </span>
 
-                // Format posted date
-                const postedDate = job.postedAt
-                  ? new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  : new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              <div className="jobs-filter-controls">
+                {/* Service dropdown */}
+                <select
+                  value={selectedService}
+                  onChange={(e) => setSelectedService(e.target.value)}
+                  className="jobs-filter-select"
+                >
+                  <option value="">All Services</option>
+                  {SERVICE_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
 
-                return (
-                  <SwiperSlide key={job.id}>
-                    <div className="job-card">
-                      <div className="job-card-header">
-                        <div className="job-card-logo">
-                          <Users size={24} />
-                        </div>
+                {/* Area search */}
+                <div className="jobs-filter-search-wrapper">
+                  <span className="jobs-filter-search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                  </span>
+                  <input
+                    type="text"
+                    value={searchArea}
+                    onChange={(e) => setSearchArea(e.target.value)}
+                    placeholder="Search by area..."
+                    className="jobs-filter-search"
+                  />
+                </div>
 
-                        <div className="job-card-info">
-                          <div className="job-card-title-row">
-                            <div>
-                              <h3 className="job-card-title">
-                                {job.serviceAvailed || 'Support Work'} - {location}
-                              </h3>
-                            </div>
-                          </div>
-
-                          <div className="job-card-location">
-                            <MapPin size={20} />
-                            <span>{location}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="job-card-badges">
-                        {job.active && (
-                          <span className="job-badge job-badge-active">Active</span>
-                        )}
-                      </div>
-
-                      <div className="job-card-meta">
-                        <div className="job-card-meta-item">
-                          <span><span className="job-card-meta-label">Posted:</span> {postedDate}</span>
-                        </div>
-                      </div>
-
-                      <div className="job-card-description-section">
-                        <p className="job-card-description-label">Job Description:</p>
-                        <p className="job-card-description">{job.description || 'No description available'}</p>
-                      </div>
-
-                      {job.serviceRequirements && (
-                        <div className="job-card-certificates">
-                          <p className="job-card-certificates-label">What They Are Looking For:</p>
-                          <p className="job-card-certificates-text">
-                            {job.serviceRequirements}
-                          </p>
-                        </div>
-                      )}
-
-                      <button className="job-apply-button" onClick={() => setModalOpen(true)}>Apply Now</button>
-                    </div>
-                  </SwiperSlide>
-                )
-              })}
-            </Swiper>
-
-            {/* Custom Navigation Arrows */}
-            <div className="jobs-swiper-button-prev">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-              </svg>
+                {/* Sort order */}
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                  className="jobs-filter-select"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                </select>
+              </div>
             </div>
-            <div className="jobs-swiper-button-next">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </div>
-          </div>
+
+            {/* Jobs or empty state */}
+            {filteredJobs.length === 0 ? (
+              <div className="jobs-empty">
+                <h2 className="jobs-empty-title">No Jobs Found</h2>
+                <p className="jobs-empty-text">
+                  No jobs found
+                  {selectedService && <> for <strong>{selectedService}</strong></>}
+                  {searchArea && <> in <strong>{searchArea}</strong></>}.
+                </p>
+              </div>
+            ) : (
+              <div className="jobs-slider-container">
+                {/* Prev arrow */}
+                <div className="jobs-swiper-button-prev">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </div>
+
+                <Swiper
+                  modules={[Navigation]}
+                  navigation={{
+                    nextEl: '.jobs-swiper-button-next',
+                    prevEl: '.jobs-swiper-button-prev',
+                  }}
+                  slidesPerView={1}
+                  spaceBetween={0}
+                  className="jobs-swiper"
+                >
+                  {pages.map((pageJobs, pageIndex) => (
+                    <SwiperSlide key={pageIndex}>
+                      <div className="jobs-cards-grid">
+                        {pageJobs.map((job) => (
+                          <JobCard key={job.id} job={job} onApply={() => setModalOpen(true)} />
+                        ))}
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+
+                {/* Next arrow */}
+                <div className="jobs-swiper-button-next">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

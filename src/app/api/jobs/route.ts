@@ -1,60 +1,25 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/jobs
  *
- * Public endpoint to fetch active job listings
- * Used by the provide-support page to display jobs
- *
- * No authentication required (read-only, public data)
+ * Proxies job listings from the Remonta app API (server-side, no CORS issues).
+ * Used by the provide-support page to display jobs.
  */
 export async function GET() {
   try {
-    // Fetch only active jobs from database
-    const jobs = await prisma.job.findMany({
-      where: {
-        active: true, // Only show active jobs
-      },
-      orderBy: {
-        postedAt: 'desc', // Newest first
-      },
-      select: {
-        id: true,
-        zohoId: true,
-        dealName: true,
-        title: true,
-        description: true,
-        stage: true,
-
-        // Location
-        suburbs: true,
-        state: true,
-
-        // Service info
-        serviceAvailed: true,
-        serviceRequirements: true,
-
-        // Requirements
-        disabilities: true,
-        behaviouralConcerns: true,
-        culturalConsiderations: true,
-        language: true,
-        religion: true,
-
-        // Personal preferences
-        age: true,
-        gender: true,
-        hobbies: true,
-
-        // Dates
-        postedAt: true,
-
-        // Additional
-        active: true,
-        createdAt: true,
-      }
+    const response = await fetch('https://app.remontaservices.com.au/api/jobs', {
+      cache: 'no-store',
     })
+
+    if (!response.ok) {
+      throw new Error(`External API responded with status ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    // Handle both array response and { success, jobs } response formats
+    const jobs = Array.isArray(data) ? data : data.jobs ?? []
 
     return NextResponse.json({
       success: true,
