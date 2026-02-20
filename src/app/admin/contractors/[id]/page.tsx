@@ -113,7 +113,7 @@ export default function WorkerDetailPage() {
     setShowCropModal(false)
   }, [])
 
-  // Handle PDF download - optimized client-side generation
+  // Handle JPEG download - optimized client-side generation
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
   const handleDownloadPDF = useCallback(async () => {
     try {
@@ -122,18 +122,16 @@ export default function WorkerDetailPage() {
       // Wait a bit for any pending renders
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Dynamically import libraries
-      const { toPng } = await import('html-to-image')
-      const { jsPDF } = await import('jspdf')
+      // Dynamically import library
+      const { toJpeg } = await import('html-to-image')
 
       // Get the profile card element
       const element = document.querySelector('.profile-card') as HTMLElement
       if (!element) {
-       
         throw new Error('Profile card not found')
       }
 
-      // Temporarily hide the "Change Photo" button for PDF
+      // Temporarily hide the "Change Photo" button for download
       const changePhotoOverlay = document.querySelector('.photo-change-overlay') as HTMLElement
       const originalDisplay = changePhotoOverlay?.style.display
       if (changePhotoOverlay) {
@@ -143,61 +141,65 @@ export default function WorkerDetailPage() {
       // Store original styles
       const originalBoxShadow = element.style.boxShadow
       const originalBorderRadius = element.style.borderRadius
+      const originalBackground = element.style.background
 
-      // Remove visual effects for cleaner PDF
+      // Remove visual effects for cleaner image
       element.style.boxShadow = 'none'
       element.style.borderRadius = '0'
+      // Override the card's white background with the actual column colors so any
+      // gap at the very top (html-to-image rendering quirk) shows the correct colors
+      // instead of white. Left 35% = blue-gray, right 65% = dark navy.
+      element.style.background = 'linear-gradient(to right, #B1C3CD 35%, #0C1628 35%)'
 
- 
+      // Scroll element into view for accurate capture
+      element.scrollIntoView({ block: 'start', behavior: 'instant' })
+      await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Generate PNG from HTML with high quality
-      const dataUrl = await toPng(element, {
-        quality: 1.0,
+      // Explicitly set heights so columns fill the full card (fixes white-space issue
+      // when parent uses aspect-ratio instead of a definite height)
+      const cardHeight = element.offsetHeight
+      const contentEl = element.querySelector('.profile-content') as HTMLElement
+      const leftCol = element.querySelector('.profile-left-column') as HTMLElement
+      const rightCol = element.querySelector('.profile-right-column') as HTMLElement
+
+      const prevContentH = contentEl?.style.height ?? ''
+      const prevLeftH = leftCol?.style.height ?? ''
+      const prevRightH = rightCol?.style.height ?? ''
+
+      if (contentEl) contentEl.style.height = `${cardHeight}px`
+      if (leftCol) leftCol.style.height = `${cardHeight}px`
+      if (rightCol) rightCol.style.height = `${cardHeight}px`
+
+      // Generate JPEG from HTML with high quality
+      const dataUrl = await toJpeg(element, {
+        quality: 0.95,
         pixelRatio: 3,
         backgroundColor: '#ffffff',
       })
 
+      // Restore heights
+      if (contentEl) contentEl.style.height = prevContentH
+      if (leftCol) leftCol.style.height = prevLeftH
+      if (rightCol) rightCol.style.height = prevRightH
 
       // Restore original styles
       element.style.boxShadow = originalBoxShadow
       element.style.borderRadius = originalBorderRadius
+      element.style.background = originalBackground
       if (changePhotoOverlay) {
         changePhotoOverlay.style.display = originalDisplay || ''
       }
 
-      // Get image dimensions
-      const img = window.document.createElement('img')
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve()
-        img.onerror = () => reject(new Error('Failed to load image'))
-        img.src = dataUrl
-      })
+      // Download JPEG
+      const fileName = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.jpeg`
+      const link = document.createElement('a')
+      link.download = fileName
+      link.href = dataUrl
+      link.click()
 
-      // Create PDF with A4 dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      })
-
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-
-      // Since we adjusted the card to A4 ratio, it should fit perfectly
-      // Fill the entire page
-      pdf.addImage(dataUrl, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST')
-
-      // Download PDF
-      const fileName = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.pdf`
-    
-      pdf.save(fileName)
-
-     
     } catch (error) {
-     
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      alert(`Failed to generate PDF: ${errorMsg}\n\nPlease check the console for details.`)
+      alert(`Failed to generate image: ${errorMsg}\n\nPlease check the console for details.`)
     } finally {
       setIsDownloadingPDF(false)
     }
@@ -353,12 +355,12 @@ export default function WorkerDetailPage() {
               {isDownloadingPDF ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
-                  <span>Generating PDF...</span>
+                  <span>Generating JPEG...</span>
                 </>
               ) : (
                 <>
                   <Download className="w-5 h-5" />
-                  <span>Download PDF Profile</span>
+                  <span>Download JPEG Profile</span>
                 </>
               )}
             </button>
