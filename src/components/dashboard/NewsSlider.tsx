@@ -51,6 +51,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
   const [animClass, setAnimClass] = useState('');
   const [selectedService, setSelectedService] = useState('');
   const [searchArea, setSearchArea] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [applyJob, setApplyJob] = useState<{ title: string; jobId: string; jobZohoId: string; initialStep?: 'prompt' | 'profile' } | null>(null);
   // Optimistic set — merges server-fetched applied IDs with any applied this session
   const [localAppliedIds, setLocalAppliedIds] = useState<Set<string>>(() => new Set(appliedJobIds));
@@ -96,19 +97,25 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
     );
   }
 
-  // Filter jobs by selected service and/or area search
-  const filteredJobs = jobs.filter((job) => {
-    const matchesService = selectedService
-      ? job.service?.toLowerCase().includes(selectedService.toLowerCase())
-      : true;
+  // Filter jobs by selected service and/or area search, then sort
+  const filteredJobs = jobs
+    .filter((job) => {
+      const matchesService = selectedService
+        ? job.service?.toLowerCase().includes(selectedService.toLowerCase())
+        : true;
 
-    const matchesArea = searchArea
-      ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
-        job.state?.toLowerCase().includes(searchArea.toLowerCase())
-      : true;
+      const matchesArea = searchArea
+        ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
+          job.state?.toLowerCase().includes(searchArea.toLowerCase())
+        : true;
 
-    return matchesService && matchesArea;
-  });
+      return matchesService && matchesArea;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.postedAt ?? a.createdAt).getTime();
+      const dateB = new Date(b.postedAt ?? b.createdAt).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   const showNavigation = filteredJobs.length > CARDS_PER_PAGE && !isMobile;
   const visibleJobs = isMobile
@@ -177,6 +184,19 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
               className="text-sm border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent w-40"
             />
           </div>
+
+          {/* Sort order dropdown */}
+          <select
+            value={sortOrder}
+            onChange={(e) => {
+              setSortOrder(e.target.value as 'newest' | 'oldest');
+              setCurrentIndex(0);
+            }}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
         </div>
 
         {showNavigation && (

@@ -28,6 +28,11 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const handleCancel = () => {
+    sessionStorage.removeItem('remonta_apply_context');
+    onClose();
+  };
+
   const handleApply = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
@@ -144,10 +149,10 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
               Review your profile and stand out from other support workers
             </button>
             <button
-              onClick={onClose}
+              onClick={handleCancel}
               className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
-              Maybe later
+              Cancel
             </button>
           </div>
         </div>
@@ -227,6 +232,13 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
               <p className="text-xs text-red-500 flex-1">{submitError}</p>
             )}
             <div className="flex items-center gap-3 ml-auto">
+              <button
+                onClick={handleCancel}
+                disabled={isSubmitting}
+                className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => {
                   const params = new URLSearchParams();

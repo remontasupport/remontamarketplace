@@ -45,7 +45,7 @@ export default function ProfileEditLayout({ children, currentSection, applyJobId
             <path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.5.03 12.5.03c-1.65 0-3.1.7-4.14 1.8L7 3.15l-1.36-1.3C4.6.7 3.15 0 1.5 0 .67 0 0 .67 0 1.5v1C0 3.33.67 4 1.5 4H4L2.17 5.83A.996.996 0 002 6.5V8c0 .55.45 1 1 1h7v9c0 1.1.9 2 2 2s2-.9 2-2v-9h5c1.1 0 2-.9 2-2V8c0-.55-.45-1-1-1zm-8-4c.83 0 1.5.67 1.5 1.5S12.83 5 12 5s-1.5-.67-1.5-1.5S11.17 2 12 2z"/>
           </svg>
           <span>
-            Applying for: <strong>{applyJobTitle}</strong> — update your profile and hit Apply Now when ready
+            Applying for: <strong>{applyJobTitle}</strong> — update your profile, Review it and hit Apply Now when ready.
           </span>
         </div>
       )}
