@@ -9,7 +9,7 @@ import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import Loader from "@/components/ui/Loader";
 import "@/app/styles/profile-preview.css";
 
-const N8N_WEBHOOK_URL = "https://n8n.srv1137899.hstgr.cloud/webhook-test/ea912076-f38d-4484-bd05-40e6cb5ae6c1";
+const N8N_WEBHOOK_URL = "https://n8n.srv1137899.hstgr.cloud/webhook/ea912076-f38d-4484-bd05-40e6cb5ae6c1";
 
 interface ApplyModalProps {
   jobTitle: string;
