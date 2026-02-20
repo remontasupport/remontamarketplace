@@ -24,7 +24,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
   const router = useRouter();
   const searchParams = useSearchParams();
   const applyJobId = searchParams.get('apply');
-  const [step, setStep] = useState<'prompt' | 'profile'>(initialStep);
+  const [step, setStep] = useState<'prompt' | 'profile' | 'success'>(initialStep);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -61,7 +61,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
         }),
       }).catch(() => {}); // silently ignore webhook errors
 
-      onApplied();
+      setStep('success');
     } catch {
       setSubmitError('Network error. Please try again.');
     } finally {
@@ -76,14 +76,14 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // Close on Escape key
+  // Close on Escape key (not on success step)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && step !== 'success') onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, step]);
 
   const { profile, services, qualifications, additionalInfo } = profileData ?? {};
 
@@ -112,7 +112,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
     <div
       className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4"
       style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget && step !== 'success') onClose(); }}
     >
       {/* ── STEP 1: Prompt dialog ── */}
       {step === 'prompt' && (
@@ -153,6 +153,32 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
               className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── STEP 3: Success confirmation ── */}
+      {step === 'success' && (
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+          <div className="px-6 py-10 flex flex-col items-center gap-5 text-center">
+            {/* Checkmark icon */}
+            <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="text-lg font-semibold text-gray-900">Application Sent!</h2>
+              <p className="text-sm text-gray-600 max-w-xs leading-relaxed">
+                Your application has been sent to the client. We'll be in touch to confirm your availability — please keep an eye on your phone.
+              </p>
+            </div>
+            <button
+              onClick={onApplied}
+              className="w-full px-6 py-3 rounded-2xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors cursor-pointer"
+            >
+              Got it
             </button>
           </div>
         </div>
