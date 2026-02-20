@@ -1,5 +1,11 @@
 {
   "buildCommand": "npx prisma generate && npx prisma generate --schema=prisma/auth-schema.prisma && next build",
+  "crons": [
+    {
+      "path": "/api/cron/sync-jobs",
+      "schedule": "0 * * * *"
+    }
+  ],
   "functions": {
     "app/**/*.tsx": {
       "includeFiles": "{src/generated/**,node_modules/@prisma/client/**,node_modules/.prisma/**}"
