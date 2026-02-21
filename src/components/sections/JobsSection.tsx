@@ -12,17 +12,7 @@ import 'swiper/css/navigation'
 const SERVICE_OPTIONS = [
   'Support Work',
   'Cleaning',
-  'Gardening',
-  'Physiotherapy',
-  'Occupational Therapy',
-  'Exercise Physiology',
-  'Psychology',
-  'Behavioural Support',
-  'Social Work',
-  'Speech Pathology',
-  'Personal Training',
-  'Nursing (RN/EN)',
-  'Home Modifications',
+  'Yard Maintenance',
 ]
 
 // Job type matching https://app.remontaservices.com.au/api/jobs
@@ -116,6 +106,7 @@ export default function JobsSection() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedService, setSelectedService] = useState('')
   const [searchArea, setSearchArea] = useState('')
+  const [resolvedState, setResolvedState] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
   const [isMobile, setIsMobile] = useState(false)
 
@@ -125,6 +116,24 @@ export default function JobsSection() {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Debounced geocode lookup — resolves suburb/city to Australian state
+  useEffect(() => {
+    setResolvedState(null)
+    if (!searchArea.trim()) return
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(searchArea)}`)
+        const { state } = await res.json()
+        setResolvedState(state ?? null)
+      } catch {
+        // silently fail — direct substring match still works
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchArea])
 
   const { data: jobs, error, isLoading } = useSWR<Job[]>('/api/jobs', fetcher, {
     dedupingInterval: 300000,
@@ -141,7 +150,9 @@ export default function JobsSection() {
         : true
       const matchesArea = searchArea
         ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
-          job.state?.toLowerCase().includes(searchArea.toLowerCase())
+          job.state?.toLowerCase().includes(searchArea.toLowerCase()) ||
+          (resolvedState != null &&
+            job.state?.toLowerCase().includes(resolvedState.toLowerCase()))
         : true
       return matchesService && matchesArea
     })
