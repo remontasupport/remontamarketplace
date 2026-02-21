@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,8 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const applyJobId = searchParams.get("apply");
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,11 +34,14 @@ export default function LoginPage() {
   // Auto-redirect if user is already authenticated
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
-      const redirectPath = getRedirectPathForRole(session.user.role);
+      let redirectPath = getRedirectPathForRole(session.user.role);
+      if (applyJobId && session.user.role === "WORKER") {
+        redirectPath += `?apply=${applyJobId}`;
+      }
       // Use window.location.href for immediate redirect (works even in background tabs)
       window.location.href = redirectPath;
     }
-  }, [status, session, router]);
+  }, [status, session, router, applyJobId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +68,10 @@ export default function LoginPage() {
 
       if (session?.user?.role) {
         // Redirect based on role
-        const redirectPath = getRedirectPathForRole(session.user.role);
+        let redirectPath = getRedirectPathForRole(session.user.role);
+        if (applyJobId && session.user.role === "WORKER") {
+          redirectPath += `?apply=${applyJobId}`;
+        }
 
         router.push(redirectPath);
         router.refresh();
