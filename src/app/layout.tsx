@@ -31,11 +31,11 @@ export const viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
+  title: "Remonta | Care Matching Platform | NDIS, Aged Care & Community Services",
   description: "Connecting NDIS participants with quality support workers across Australia",
   metadataBase: new URL('https://www.remontaservices.com.au'),
   openGraph: {
-    title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
+    title: "Remonta | Care Matching Platform | NDIS, Aged Care & Community Services",
     description: "Connecting NDIS participants with quality support workers across Australia",
     url: 'https://www.remontaservices.com.au',
     siteName: 'Remonta Services',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
         url: '/logo/logo-icon-dark.png',
         width: 500,
         height: 500,
-        alt: 'Remonta - NDIS Service Provider Australia',
+        alt: 'Remonta - Care Matching Platform',
       },
     ],
     locale: 'en_AU',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Remonta | NDIS Service Provider Australia | Trusted NDIS Support Work",
+    title: "Remonta | Care Matching Platform | NDIS, Aged Care & Community Services",
     description: "Connecting NDIS participants with quality support workers across Australia",
     images: ['/logo/logo-icon-dark.png'],
   },
