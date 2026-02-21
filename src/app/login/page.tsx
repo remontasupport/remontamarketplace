@@ -7,7 +7,7 @@
  * Automatically redirects to the appropriate dashboard based on user role
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -20,7 +20,7 @@ import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { getRedirectPathForRole } from "@/types/auth";
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const applyJobId = searchParams.get("apply");
@@ -111,7 +111,7 @@ export default function LoginPage() {
             <Link href="https://www.remontaservices.com.au/">
             <Image
               src="/logo/logo.svg"
-            
+
               alt="Remonta Logo"
               width={180}
               height={60}
@@ -119,7 +119,7 @@ export default function LoginPage() {
               className="h-auto"
             />
             </Link>
-            
+
           </div>
           <CardTitle className="text-3xl font-cooper text-gray-900 text-center">
             Welcome Back
@@ -257,5 +257,13 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
