@@ -77,7 +77,7 @@ export default function StatsSection() {
       icon: Award
     },
     {
-      percentage: "4,500+",
+      percentage: "16,500+",
       description: "Supported by Remonta",
       icon: Heart
     },
