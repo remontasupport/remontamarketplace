@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           description:      lead['Description']       ? String(lead['Description'])       : null,
           jobDescription:   lead['Job_Description']   ? String(lead['Job_Description'])   : null,
           city:             lead['City']              ? String(lead['City'])              : null,
-          state:            lead['State']             ? String(lead['State'])             : null,
+          state:            lead['State_1']           ? String(lead['State_1'])           : null,
           postedAt:         lead['Created_Time']      ? new Date(String(lead['Created_Time'])) : null,
           active:           true,
           lastSyncedAt:     syncTimestamp,

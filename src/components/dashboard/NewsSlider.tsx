@@ -51,6 +51,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
   const [animClass, setAnimClass] = useState('');
   const [selectedService, setSelectedService] = useState('');
   const [searchArea, setSearchArea] = useState('');
+  const [resolvedState, setResolvedState] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [applyJob, setApplyJob] = useState<{ title: string; jobId: string; jobZohoId: string; initialStep?: 'prompt' | 'profile' } | null>(null);
   // Optimistic set — merges server-fetched applied IDs with any applied this session
@@ -81,6 +82,24 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Debounced geocode lookup — resolves suburb/city to Australian state
+  useEffect(() => {
+    setResolvedState(null);
+    if (!searchArea.trim()) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(searchArea)}`);
+        const { state } = await res.json();
+        setResolvedState(state ?? null);
+      } catch {
+        // silently fail — direct substring match still works
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchArea]);
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
@@ -106,7 +125,9 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
 
       const matchesArea = searchArea
         ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
-          job.state?.toLowerCase().includes(searchArea.toLowerCase())
+          job.state?.toLowerCase().includes(searchArea.toLowerCase()) ||
+          (resolvedState != null &&
+            job.state?.toLowerCase().includes(resolvedState.toLowerCase()))
         : true;
 
       return matchesService && matchesArea;

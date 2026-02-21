@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       Service:           lead['Service'],
       Description:       lead['Description'],
       Job_Description:   lead['Job_Description'],
-      State:             lead['State'],
+      State_1:           lead['State_1'],
       City:              lead['City'],
     }))
 
