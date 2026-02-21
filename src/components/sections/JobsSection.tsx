@@ -49,7 +49,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks
 }
 
-function JobCard({ job, onApply }: { job: Job; onApply: () => void }) {
+function JobCard({ job, onApply }: { job: Job; onApply: (jobId: string) => void }) {
   const [expanded, setExpanded] = useState(false)
   const location = [job.city, job.state].filter(Boolean).join(', ') || 'Remote'
   const postedDate = job.postedAt
@@ -97,13 +97,14 @@ function JobCard({ job, onApply }: { job: Job; onApply: () => void }) {
         </button>
       </div>
 
-      <button className="job-apply-button" onClick={onApply}>Apply Now</button>
+      <button className="job-apply-button" onClick={() => onApply(job.id)}>Apply Now</button>
     </div>
   )
 }
 
 export default function JobsSection() {
   const [modalOpen, setModalOpen] = useState(false)
+  const [applyJobId, setApplyJobId] = useState<string | null>(null)
   const [selectedService, setSelectedService] = useState('')
   const [searchArea, setSearchArea] = useState('')
   const [resolvedState, setResolvedState] = useState<string | null>(null)
@@ -263,7 +264,7 @@ export default function JobsSection() {
                     <SwiperSlide key={pageIndex}>
                       <div className="jobs-cards-grid">
                         {pageJobs.map((job) => (
-                          <JobCard key={job.id} job={job} onApply={() => setModalOpen(true)} />
+                          <JobCard key={job.id} job={job} onApply={(id) => { setApplyJobId(id); setModalOpen(true) }} />
                         ))}
                       </div>
                     </SwiperSlide>
@@ -291,12 +292,18 @@ export default function JobsSection() {
             </button>
             <h2 className="job-modal-title">Join Remonta</h2>
             <p className="job-modal-subtitle">Create an account to apply for this role.</p>
-            <Link href="https://app.remontaservices.com.au/registration/worker" className="job-modal-signup-button">
+            <Link
+              href={`https://app.remontaservices.com.au/registration/worker${applyJobId ? `?apply=${applyJobId}` : ''}`}
+              className="job-modal-signup-button"
+            >
               Sign Up
             </Link>
             <p className="job-modal-signin-text">
               Already a member?{' '}
-              <Link href="https://app.remontaservices.com.au/login" className="job-modal-signin-link">
+              <Link
+                href={`https://app.remontaservices.com.au/login${applyJobId ? `?apply=${applyJobId}` : ''}`}
+                className="job-modal-signin-link"
+              >
                 Sign in
               </Link>
             </p>
