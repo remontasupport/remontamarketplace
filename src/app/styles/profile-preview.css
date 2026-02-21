@@ -73,7 +73,7 @@
 
 /* Profile Header */
 .profile-preview-header {
-  background-color: #f9fafb;
+  background-color: var(--brand-primary);
   padding: 0;
   display: flex;
   justify-content: center;

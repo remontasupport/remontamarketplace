@@ -24,8 +24,15 @@ export default function WorkerProfileView({
 }: WorkerProfileViewProps) {
   const router = useRouter();
 
-  // Service category expansion state
-  const [expandedServices, setExpandedServices] = useState<Record<string, boolean>>({});
+  // Service category expansion state — open by default if category has data
+  const [expandedServices, setExpandedServices] = useState<Record<string, boolean>>(() => {
+    if (!additionalInfo?.experience || typeof additionalInfo.experience !== 'object') return {};
+    return Object.fromEntries(
+      Object.entries(additionalInfo.experience)
+        .filter(([, data]: [string, any]) => data?.description)
+        .map(([categoryId]) => [categoryId, true])
+    );
+  });
 
   // Unique services expansion state
   const [showAllUniqueServices, setShowAllUniqueServices] = useState(false);
@@ -110,7 +117,7 @@ export default function WorkerProfileView({
       {/* About Section */}
       <div className="profile-preview-section">
         <h2 className="profile-preview-section-title">
-          {isAdminView ? `${profile.firstName} ${profile.lastName}` : `${profile.firstName}, ${profile.lastName?.[0]}.`}
+          {`${profile.firstName}, ${profile.lastName?.[0]}.`}
         </h2>
         {!isAdminView && !isPublicView && (
           <button

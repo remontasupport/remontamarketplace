@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from 'react';
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Share2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Download, ChevronDown, Share2, Copy, Check } from "lucide-react";
 import Loader from "@/components/ui/Loader";
 import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import { getWorkerProfilePreview } from "@/services/worker/profilePreview.service";
@@ -22,10 +22,24 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
+  const [isDownloadingJPEG, setIsDownloadingJPEG] = useState(false);
+  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+  const downloadDropdownRef = useRef<HTMLDivElement>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState<string>("");
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+
+  // Close download dropdown on outside click
+  React.useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (downloadDropdownRef.current && !downloadDropdownRef.current.contains(e.target as Node)) {
+        setShowDownloadDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   React.useEffect(() => {
     const fetchProfile = async () => {
@@ -112,6 +126,11 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       const originalBoxShadow = element.style.boxShadow;
       const originalBorderRadius = element.style.borderRadius;
 
+      // Hide header buttons during capture
+      const headerSection = element.querySelector('.profile-preview-back-section') as HTMLElement | null;
+      const originalHeaderDisplay = headerSection?.style.display ?? '';
+      if (headerSection) headerSection.style.display = 'none';
+
       // Remove visual effects for cleaner PDF
       element.style.boxShadow = 'none';
       element.style.borderRadius = '0';
@@ -126,6 +145,7 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       // Restore original styles
       element.style.boxShadow = originalBoxShadow;
       element.style.borderRadius = originalBorderRadius;
+      if (headerSection) headerSection.style.display = originalHeaderDisplay;
 
       // Get image dimensions
       const img = window.document.createElement('img');
@@ -162,6 +182,53 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       alert(`Failed to generate PDF: ${errorMsg}`);
     } finally {
       setIsDownloadingPDF(false);
+    }
+  }, [profileData?.profile?.firstName, profileData?.profile?.lastName]);
+
+  // Handle JPEG download
+  const handleDownloadJPEG = useCallback(async () => {
+    try {
+      setShowDownloadDropdown(false);
+      setIsDownloadingJPEG(true);
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const { toJpeg } = await import('html-to-image');
+
+      const element = document.querySelector('.profile-preview-page') as HTMLElement;
+      if (!element) throw new Error('Profile page not found');
+
+      const originalBoxShadow = element.style.boxShadow;
+      const originalBorderRadius = element.style.borderRadius;
+
+      // Hide header buttons during capture
+      const headerSection = element.querySelector('.profile-preview-back-section') as HTMLElement | null;
+      const originalHeaderDisplay = headerSection?.style.display ?? '';
+      if (headerSection) headerSection.style.display = 'none';
+
+      element.style.boxShadow = 'none';
+      element.style.borderRadius = '0';
+
+      const dataUrl = await toJpeg(element, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      });
+
+      element.style.boxShadow = originalBoxShadow;
+      element.style.borderRadius = originalBorderRadius;
+      if (headerSection) headerSection.style.display = originalHeaderDisplay;
+
+      const link = document.createElement('a');
+      link.download = `${profileData?.profile?.firstName}_${profileData?.profile?.lastName}_Profile.jpeg`;
+      link.href = dataUrl;
+      link.click();
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate JPEG: ${errorMsg}`);
+    } finally {
+      setIsDownloadingJPEG(false);
     }
   }, [profileData?.profile?.firstName, profileData?.profile?.lastName]);
 
@@ -235,24 +302,46 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
               )}
             </button>
 
-            {/* Download PDF Button */}
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isDownloadingPDF}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDownloadingPDF ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
-                  <span>Generating PDF...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  <span>Download PDF</span>
-                </>
+            {/* Download Dropdown */}
+            <div className="relative" ref={downloadDropdownRef}>
+              <button
+                onClick={() => setShowDownloadDropdown(prev => !prev)}
+                disabled={isDownloadingPDF || isDownloadingJPEG}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDownloadingPDF || isDownloadingJPEG ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                    <span>{isDownloadingPDF ? 'Generating PDF...' : 'Generating JPEG...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    <span>Download</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+
+              {showDownloadDropdown && !isDownloadingPDF && !isDownloadingJPEG && (
+                <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-10">
+                  <button
+                    onClick={() => { setShowDownloadDropdown(false); handleDownloadPDF(); }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4 text-indigo-600" />
+                    PDF
+                  </button>
+                  <button
+                    onClick={handleDownloadJPEG}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4 text-indigo-600" />
+                    JPEG
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
           </div>
         </div>
 
@@ -273,7 +362,7 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
             {/* Profile Info */}
             <div className="profile-preview-info">
               <h1 className="profile-preview-name">
-                {profile.firstName} {profile.lastName}
+                {profile.firstName}, {profile.lastName?.[0]}.
               </h1>
               <p className="profile-preview-roles">
                 {servicesText}
