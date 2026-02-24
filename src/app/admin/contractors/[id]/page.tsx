@@ -191,7 +191,8 @@ export default function WorkerDetailPage() {
       }
 
       // Download JPEG
-      const fileName = `${data?.data?.firstName}_${data?.data?.lastName}_Profile.jpeg`
+      const lastInitial = data?.data?.lastName?.charAt(0) ?? '';
+      const fileName = `${data?.data?.firstName}${lastInitial}_Profile.jpeg`
       const link = document.createElement('a')
       link.download = fileName
       link.href = dataUrl

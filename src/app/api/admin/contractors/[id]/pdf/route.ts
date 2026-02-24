@@ -81,7 +81,7 @@ export async function GET(
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${worker.firstName}_${worker.lastName}_Profile.pdf"`,
+        'Content-Disposition': `attachment; filename="${worker.firstName}${worker.lastName?.charAt(0) ?? ''}_Profile.pdf"`,
         'Content-Length': buffer.length.toString(),
       },
     })

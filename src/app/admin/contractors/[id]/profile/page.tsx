@@ -174,7 +174,8 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
 
       // Download PDF
-      const fileName = `${profileData?.profile?.firstName}_${profileData?.profile?.lastName}_Profile.pdf`;
+      const lastInitial = profileData?.profile?.lastName?.charAt(0) ?? '';
+      const fileName = `${profileData?.profile?.firstName}${lastInitial}_Profile.pdf`;
       pdf.save(fileName);
 
     } catch (error) {
@@ -220,7 +221,8 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       if (headerSection) headerSection.style.display = originalHeaderDisplay;
 
       const link = document.createElement('a');
-      link.download = `${profileData?.profile?.firstName}_${profileData?.profile?.lastName}_Profile.jpeg`;
+      const lastInitialJpeg = profileData?.profile?.lastName?.charAt(0) ?? '';
+      link.download = `${profileData?.profile?.firstName}${lastInitialJpeg}_Profile.jpeg`;
       link.href = dataUrl;
       link.click();
 
