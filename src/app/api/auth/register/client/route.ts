@@ -208,6 +208,8 @@ export async function POST(request: Request) {
       // ============================================
       // SUCCESS RESPONSE
       // ============================================
+      const participant = user.participants[0];
+
       return NextResponse.json(
         {
           success: true,
@@ -217,6 +219,14 @@ export async function POST(request: Request) {
             email: user.email,
             role: user.role,
             status: user.status,
+          },
+          participant: {
+            id: participant.id,
+            firstName: participant.firstName,
+            lastName: participant.lastName,
+            dateOfBirth: participant.dateOfBirth,
+            fundingType: participant.fundingType,
+            relationshipToClient: participant.relationshipToClient,
           },
           registrationType: data.isSelfManaged ? 'self' : 'client',
         },
