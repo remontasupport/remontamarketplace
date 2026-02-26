@@ -222,17 +222,14 @@ export function Step3ServicesRequested({
         {/* Additional Information */}
         <div className="pt-4">
           <Label className="text-base font-poppins font-semibold text-gray-900">
-            Additional Information
+            Additional Information <span className="text-red-500">*</span>
           </Label>
-          <p className="text-sm text-gray-600 font-poppins mt-1">
-            Optional
-          </p>
           <Controller
             name="additionalInformation"
             control={control}
             render={({ field }) => (
               <textarea
-                placeholder="Any additional details about your service requirements..."
+                placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
                 className="w-full mt-2 p-3 text-base font-poppins border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
                 rows={4}
                 value={field.value || ""}
@@ -241,6 +238,9 @@ export function Step3ServicesRequested({
               />
             )}
           />
+          {errors.additionalInformation && (
+            <p className="text-red-500 text-sm font-poppins mt-1">{errors.additionalInformation.message}</p>
+          )}
         </div>
       </div>
     </>

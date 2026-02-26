@@ -39,7 +39,7 @@ export const clientFormSchema = z.object({
 
   servicesRequested: z.array(z.string()).min(1, "Please select at least one service"),
   serviceSubcategories: z.array(z.string()).optional(),
-  additionalInformation: z.string().optional(),
+  additionalInformation: z.string().min(1, "Additional information is required"),
 
   // Step 4 - Location Information
   streetAddress: z.string().optional(),

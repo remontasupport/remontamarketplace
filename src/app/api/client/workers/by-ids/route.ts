@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] })
     }
 
-    // 3. Query WorkerProfile by userId
+    // 3. Query WorkerProfile by userId (assignedWorker stores User IDs)
     const workerProfiles = await authPrisma.workerProfile.findMany({
       where: { userId: { in: ids } },
       select: {
@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
         return [
           w.userId,
           {
-            id: w.userId,
+            id: w.userId,       // User.id — consistent key for fetching & select
+            userId: w.userId,   // User.id — used for profile page link
             firstName: w.firstName,
             lastName: w.lastName,
             photo: w.photos || null,
@@ -81,7 +82,8 @@ export async function GET(request: NextRequest) {
       })
     )
 
-    // 5. Return in same order as requested IDs (deduplicated)
+    // 5. Return in same order as requested IDs (deduplicated, keyed by userId)
+    console.log('[by-ids] profiles found:', workerProfiles.length, workerProfiles.map(w => ({ id: w.id, userId: w.userId })))
     const uniqueIds = [...new Set(ids)]
     const data = uniqueIds.map((id) => workerMap.get(id)).filter(Boolean)
 

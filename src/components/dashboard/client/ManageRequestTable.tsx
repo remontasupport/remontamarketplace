@@ -8,7 +8,8 @@ import Loader from '@/components/ui/Loader'
 type ServiceRequestStatus = 'PENDING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
 
 interface Worker {
-  id: string
+  id: string       // User.id (userId) — used for fetching, selecting, and profile link
+  userId: string
   firstName: string
   lastName: string
   photo: string | null
@@ -95,7 +96,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
     // If a worker was already selected, only fetch that one worker
     const idsToFetch = request.selectedWorker
       ? [request.selectedWorker]
-      : request.assignedWorkerIds
+      : (request.assignedWorkerIds ?? [])
 
     if (idsToFetch.length === 0) return
 
@@ -435,7 +436,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                           </button>
                         )}
                         <a
-                          href={`/workers/${worker.id}/profile`}
+                          href={`/workers/${worker.userId}/profile`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 text-sm font-medium font-poppins rounded-lg border transition-colors hover:bg-gray-50"

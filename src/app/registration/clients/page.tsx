@@ -253,7 +253,7 @@ export default function ClientsRegistration() {
           clientLastName: data.clientLastName,
           clientDateOfBirth: data.clientDateOfBirth,
           servicesRequested,
-          additionalInfo: data.additionalInformation || undefined,
+          additionalInfo: data.additionalInformation,
           location: fullLocation,
           email: data.email,
           password: data.password,
@@ -279,7 +279,7 @@ export default function ClientsRegistration() {
             clientLastName: data.clientLastName,
           }),
           servicesRequested,
-          additionalInfo: data.additionalInformation || undefined,
+          additionalInfo: data.additionalInformation,
           location: fullLocation,
           email: data.email,
           password: data.password,
@@ -312,7 +312,7 @@ export default function ClientsRegistration() {
 
       // Fire n8n webhook (non-blocking — won't break registration if it fails)
       const { password: _omit, ...safePayload } = payload as Record<string, unknown>;
-      fetch('https://n8n.srv1137899.hstgr.cloud/webhook-test/fd8d4515-8711-4178-a91f-34ac41f1c0b2', {
+      fetch('https://n8n.srv1137899.hstgr.cloud/webhook/fd8d4515-8711-4178-a91f-34ac41f1c0b2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
