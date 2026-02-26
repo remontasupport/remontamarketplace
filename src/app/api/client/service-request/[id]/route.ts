@@ -318,11 +318,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 7. Cancel the request (soft delete - update status)
+    // 7. Cancel the request (soft delete - update status) and clear selected worker
     const cancelledRequest = await authPrisma.serviceRequest.update({
       where: { id },
       data: {
         status: 'CANCELLED',
+        selectedWorker: null,
       },
       include: {
         participant: true,

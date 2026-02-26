@@ -175,10 +175,13 @@ exports.Prisma.ParticipantScalarFieldEnum = {
   firstName: 'firstName',
   lastName: 'lastName',
   dateOfBirth: 'dateOfBirth',
+  location: 'location',
   gender: 'gender',
+  conditions: 'conditions',
   fundingType: 'fundingType',
   relationshipToClient: 'relationshipToClient',
-  conditions: 'conditions',
+  isSelfManaged: 'isSelfManaged',
+  servicesRequested: 'servicesRequested',
   additionalInfo: 'additionalInfo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -327,6 +330,34 @@ exports.Prisma.WorkerServiceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.JobScalarFieldEnum = {
+  id: 'id',
+  zohoId: 'zohoId',
+  status: 'status',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  recruitmentTitle: 'recruitmentTitle',
+  service: 'service',
+  description: 'description',
+  jobDescription: 'jobDescription',
+  city: 'city',
+  state: 'state',
+  postedAt: 'postedAt',
+  active: 'active',
+  lastSyncedAt: 'lastSyncedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.JobApplicationScalarFieldEnum = {
+  id: 'id',
+  jobId: 'jobId',
+  workerId: 'workerId',
+  status: 'status',
+  appliedAt: 'appliedAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   id: 'id',
   workerProfileId: 'workerProfileId',
@@ -359,6 +390,7 @@ exports.Prisma.ServiceRequestScalarFieldEnum = {
   location: 'location',
   zohoRecordId: 'zohoRecordId',
   assignedWorker: 'assignedWorker',
+  selectedWorker: 'selectedWorker',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -455,6 +487,11 @@ exports.DocumentCategory = exports.$Enums.DocumentCategory = {
   SERVICE_QUALIFICATION: 'SERVICE_QUALIFICATION'
 };
 
+exports.JobApplicationStatus = exports.$Enums.JobApplicationStatus = {
+  PENDING: 'PENDING',
+  WITHDRAWN: 'WITHDRAWN'
+};
+
 exports.ServiceRequestStatus = exports.$Enums.ServiceRequestStatus = {
   PENDING: 'PENDING',
   MATCHED: 'MATCHED',
@@ -480,6 +517,8 @@ exports.Prisma.ModelName = {
   CategoryDocument: 'CategoryDocument',
   SubcategoryDocument: 'SubcategoryDocument',
   WorkerService: 'WorkerService',
+  Job: 'Job',
+  JobApplication: 'JobApplication',
   WorkerAdditionalInfo: 'WorkerAdditionalInfo',
   ServiceRequest: 'ServiceRequest'
 };

@@ -44,14 +44,20 @@ export default async function ManageRequestPage() {
     },
   });
 
-  // Transform data for the table
-  const requests = serviceRequests.map((sr) => ({
-    id: sr.id,
-    participantName: `${sr.participant.firstName} ${sr.participant.lastName}`,
-    location: sr.location,
-    assignedWorker: sr.assignedWorker as { name?: string; count?: number } | null,
-    status: sr.status,
-  }));
+  // Transform data for the table — pass raw user IDs, modal fetches via API
+  const requests = serviceRequests.map((sr) => {
+    const workerIds = sr.assignedWorker as string[] | null;
+    const assignedWorkerIds = Array.isArray(workerIds) ? [...new Set(workerIds)] : [];
+
+    return {
+      id: sr.id,
+      participantName: `${sr.participant.firstName} ${sr.participant.lastName}`,
+      location: sr.location,
+      assignedWorkerIds,
+      selectedWorker: sr.selectedWorker ?? null,
+      status: sr.status,
+    };
+  });
 
   return (
     <ClientDashboardLayout
