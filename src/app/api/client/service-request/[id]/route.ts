@@ -189,39 +189,35 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const data = validationResult.data
 
-    // 8. Update in a transaction
-    const updatedRequest = await authPrisma.$transaction(async (tx) => {
-      // Update participant if provided
-      if (data.participant && existingRequest.participantId) {
-        await tx.participant.update({
-          where: { id: existingRequest.participantId },
-          data: {
-            ...(data.participant.firstName && { firstName: data.participant.firstName }),
-            ...(data.participant.lastName && { lastName: data.participant.lastName }),
-            ...(data.participant.dateOfBirth && { dateOfBirth: new Date(data.participant.dateOfBirth) }),
-            ...(data.participant.gender !== undefined && { gender: data.participant.gender }),
-            ...(data.participant.fundingType && { fundingType: data.participant.fundingType }),
-            ...(data.participant.conditions && { conditions: data.participant.conditions }),
-            ...(data.participant.additionalInfo !== undefined && { additionalInfo: data.participant.additionalInfo }),
-          },
-        })
-      }
-
-      // Update service request
-      const updated = await tx.serviceRequest.update({
-        where: { id },
+    // 8. Update sequentially (avoid $transaction — Neon's PgBouncer pooler doesn't support interactive transactions)
+    // Update participant if provided
+    if (data.participant && existingRequest.participantId) {
+      await authPrisma.participant.update({
+        where: { id: existingRequest.participantId },
         data: {
-          ...(data.services && { services: data.services }),
-          ...(data.details && { details: data.details }),
-          ...(data.location && { location: data.location }),
-          ...(data.status && { status: data.status }),
-        },
-        include: {
-          participant: true,
+          ...(data.participant.firstName && { firstName: data.participant.firstName }),
+          ...(data.participant.lastName && { lastName: data.participant.lastName }),
+          ...(data.participant.dateOfBirth && { dateOfBirth: new Date(data.participant.dateOfBirth) }),
+          ...(data.participant.gender !== undefined && { gender: data.participant.gender }),
+          ...(data.participant.fundingType && { fundingType: data.participant.fundingType }),
+          ...(data.participant.conditions && { conditions: data.participant.conditions }),
+          ...(data.participant.additionalInfo !== undefined && { additionalInfo: data.participant.additionalInfo }),
         },
       })
+    }
 
-      return updated
+    // Update service request
+    const updatedRequest = await authPrisma.serviceRequest.update({
+      where: { id },
+      data: {
+        ...(data.services && { services: data.services }),
+        ...(data.details && { details: data.details }),
+        ...(data.location && { location: data.location }),
+        ...(data.status && { status: data.status }),
+      },
+      include: {
+        participant: true,
+      },
     })
 
     // 9. Audit log (fire-and-forget)

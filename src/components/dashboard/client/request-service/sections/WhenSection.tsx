@@ -23,8 +23,8 @@ interface PreferredDays {
 
 interface WhenData {
   frequency: string;
-  sessionsPerWeek: number;
-  hoursPerWeek: number;
+  sessionsPerPeriod: number;
+  hoursPerPeriod: number;
   startPreference: string;
   specificDate: string;
   scheduling: string;
@@ -37,7 +37,6 @@ const frequencyOptions = [
   { value: "fortnightly", label: "Fortnightly" },
   { value: "monthly", label: "Monthly" },
   { value: "one-time", label: "One-time" },
-  { value: "as-needed", label: "As needed" },
 ];
 
 const daysOfWeek = [
@@ -64,26 +63,26 @@ export default function WhenSection() {
   };
 
   const incrementSessions = () => {
-    if (whenData.sessionsPerWeek < 14) {
-      updateField("sessionsPerWeek", whenData.sessionsPerWeek + 1);
+    if (whenData.sessionsPerPeriod < 14) {
+      updateField("sessionsPerPeriod", whenData.sessionsPerPeriod + 1);
     }
   };
 
   const decrementSessions = () => {
-    if (whenData.sessionsPerWeek > 1) {
-      updateField("sessionsPerWeek", whenData.sessionsPerWeek - 1);
+    if (whenData.sessionsPerPeriod > 1) {
+      updateField("sessionsPerPeriod", whenData.sessionsPerPeriod - 1);
     }
   };
 
   const incrementHours = () => {
-    if (whenData.hoursPerWeek < 168) {
-      updateField("hoursPerWeek", whenData.hoursPerWeek + 0.5);
+    if (whenData.hoursPerPeriod < 168) {
+      updateField("hoursPerPeriod", whenData.hoursPerPeriod + 0.5);
     }
   };
 
   const decrementHours = () => {
-    if (whenData.hoursPerWeek > 0.5) {
-      updateField("hoursPerWeek", whenData.hoursPerWeek - 0.5);
+    if (whenData.hoursPerPeriod > 0.5) {
+      updateField("hoursPerPeriod", whenData.hoursPerPeriod - 0.5);
     }
   };
 
@@ -142,6 +141,7 @@ export default function WhenSection() {
                     type="button"
                     onClick={() => {
                       updateField("frequency", option.value);
+                      if (option.value === "one-time") updateField("sessionsPerPeriod", 1);
                       setIsFrequencyOpen(false);
                     }}
                     className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
@@ -156,10 +156,16 @@ export default function WhenSection() {
           </div>
         </div>
 
-        {/* How many support sessions per week? */}
+        {/* How many support sessions per period? */}
         <div>
           <label className="block text-gray-900 font-medium font-poppins mb-2">
-            How many support sessions per week?
+            {whenData.frequency === "fortnightly"
+              ? "How many support sessions per fortnight?"
+              : whenData.frequency === "monthly"
+              ? "How many support sessions per month?"
+              : whenData.frequency === "one-time"
+              ? "How many support sessions do you need in total?"
+              : "How many support sessions per week?"}
           </label>
           <div className="flex items-center w-28 border-2 border-gray-200 rounded-lg overflow-hidden">
             <button
@@ -171,8 +177,8 @@ export default function WhenSection() {
             </button>
             <input
               type="number"
-              value={whenData.sessionsPerWeek}
-              onChange={(e) => updateField("sessionsPerWeek", Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
+              value={whenData.sessionsPerPeriod}
+              onChange={(e) => updateField("sessionsPerPeriod", Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
               className="flex-1 text-left py-2 font-poppins text-gray-900 focus:outline-none w-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               min="1"
               max="14"
@@ -187,10 +193,16 @@ export default function WhenSection() {
           </div>
         </div>
 
-        {/* Estimated total hours per week? */}
+        {/* Estimated total hours per period? */}
         <div>
           <label className="block text-gray-900 font-medium font-poppins mb-2">
-            Estimated total hours per week?
+            {whenData.frequency === "fortnightly"
+              ? "Estimated total hours per fortnight?"
+              : whenData.frequency === "monthly"
+              ? "Estimated total hours per month?"
+              : whenData.frequency === "one-time"
+              ? "Estimated total hours for this job?"
+              : "Estimated total hours per week?"}
           </label>
           <div className="flex items-center w-28 border-2 border-gray-200 rounded-lg overflow-hidden">
             <button
@@ -202,8 +214,8 @@ export default function WhenSection() {
             </button>
             <input
               type="number"
-              value={whenData.hoursPerWeek}
-              onChange={(e) => updateField("hoursPerWeek", Math.max(0.5, Math.min(168, parseFloat(e.target.value) || 0.5)))}
+              value={whenData.hoursPerPeriod}
+              onChange={(e) => updateField("hoursPerPeriod", Math.max(0.5, Math.min(168, parseFloat(e.target.value) || 0.5)))}
               className="flex-1 text-left py-2 font-poppins text-gray-900 focus:outline-none w-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               min="0.5"
               max="168"

@@ -34,9 +34,9 @@ export default async function SupportCoordinatorsManageRequestPage() {
   });
   displayName = coordinatorProfile?.firstName || displayName;
 
-  // Fetch service requests for this coordinator with participant data
+  // Fetch service requests for this coordinator with participant data (exclude ARCHIVED)
   const serviceRequests = await authPrisma.serviceRequest.findMany({
-    where: { requesterId: session.user.id },
+    where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
     orderBy: { createdAt: 'desc' },
     include: {
       participant: true,

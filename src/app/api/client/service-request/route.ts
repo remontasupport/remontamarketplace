@@ -74,40 +74,35 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data
 
-    // 5. Create Participant and ServiceRequest in a transaction
-    const result = await authPrisma.$transaction(async (tx) => {
-      // Create the participant first
-      const participant = await tx.participant.create({
-        data: {
-          userId: session.user.id,
-          firstName: data.participant.firstName,
-          lastName: data.participant.lastName,
-          dateOfBirth: data.participant.dateOfBirth
-            ? new Date(data.participant.dateOfBirth)
-            : null,
-          gender: data.participant.gender || null,
-          fundingType: data.participant.fundingType || null,
-          conditions: data.participant.conditions || [],
-          additionalInfo: data.participant.additionalInfo || null,
-        },
-      })
+    // 5. Create Participant then ServiceRequest sequentially
+    // (avoid $transaction — Neon's PgBouncer pooler doesn't support interactive transactions)
+    const participant = await authPrisma.participant.create({
+      data: {
+        userId: session.user.id,
+        firstName: data.participant.firstName,
+        lastName: data.participant.lastName,
+        dateOfBirth: data.participant.dateOfBirth
+          ? new Date(data.participant.dateOfBirth)
+          : null,
+        gender: data.participant.gender || null,
+        fundingType: data.participant.fundingType || null,
+        conditions: data.participant.conditions || [],
+        additionalInfo: data.participant.additionalInfo || null,
+      },
+    })
 
-      // Create the service request linked to the participant
-      const serviceRequest = await tx.serviceRequest.create({
-        data: {
-          requesterId: session.user.id,
-          participantId: participant.id,
-          services: data.services,
-          details: data.details,
-          location: data.location,
-          status: 'PENDING',
-        },
-        include: {
-          participant: true,
-        },
-      })
-
-      return serviceRequest
+    const result = await authPrisma.serviceRequest.create({
+      data: {
+        requesterId: session.user.id,
+        participantId: participant.id,
+        services: data.services,
+        details: data.details,
+        location: data.location,
+        status: 'PENDING',
+      },
+      include: {
+        participant: true,
+      },
     })
 
     // 6. Audit log (fire-and-forget)

@@ -32,8 +32,8 @@ interface PreferredDays {
 
 interface WhenData {
   frequency: string;
-  sessionsPerWeek: number;
-  hoursPerWeek: number;
+  sessionsPerPeriod: number;
+  hoursPerPeriod: number;
   startPreference: string;
   specificDate: string;
   scheduling: string;
@@ -175,8 +175,8 @@ const initialFormData: FormData = {
   // Step 3: When
   whenData: {
     frequency: "weekly",
-    sessionsPerWeek: 1,
-    hoursPerWeek: 2.5,
+    sessionsPerPeriod: 1,
+    hoursPerPeriod: 2.5,
     startPreference: "",
     specificDate: "",
     scheduling: "",
@@ -480,8 +480,8 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
                   }))
               : undefined,
             frequency: formData.whenData.frequency as "one-time" | "weekly" | "fortnightly" | "monthly" | "ongoing",
-            sessionsPerWeek: formData.whenData.sessionsPerWeek,
-            hoursPerWeek: formData.whenData.hoursPerWeek,
+            sessionsPerPeriod: formData.whenData.sessionsPerPeriod,
+            hoursPerPeriod: formData.whenData.hoursPerPeriod,
             scheduling: formData.whenData.scheduling || undefined,
             startPreference: formData.whenData.startPreference || undefined,
             startDate: formData.whenData.startPreference === "specific-date" ? formData.whenData.specificDate : undefined,

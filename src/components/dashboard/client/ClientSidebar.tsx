@@ -88,7 +88,7 @@ export default function ClientSidebar({
   // Build menu items based on whether client is self-managed
   const dynamicMenuItems = menuItems.map(item => {
     if (item.id === 'participants' && isSelfManaged) {
-      return { ...item, name: 'My Profile' }
+      return { ...item, name: 'Client' }
     }
     return item
   })
@@ -156,10 +156,6 @@ export default function ClientSidebar({
         <div className="nav-section">
           <ul className="nav-list">
             {dynamicMenuItems.map((item) => {
-              // Hide "Request A Service" for self-managed clients (they already have their request)
-              if (item.id === 'request-service' && isSelfManaged) {
-                return null
-              }
 
               const href = `${basePath}${item.path}`
               const isActive = pathname === href

@@ -84,7 +84,6 @@ const frequencyOptions = [
   { value: "fortnightly", label: "Fortnightly" },
   { value: "monthly", label: "Monthly" },
   { value: "one-time", label: "One-time" },
-  { value: "as-needed", label: "As needed" },
 ];
 
 const daysOfWeek = [
@@ -144,8 +143,8 @@ export default function EditServiceRequestPage({
 
   // Form state - When
   const [frequency, setFrequency] = useState("weekly");
-  const [sessionsPerWeek, setSessionsPerWeek] = useState(1);
-  const [hoursPerWeek, setHoursPerWeek] = useState(2.5);
+  const [sessionsPerPeriod, setSessionsPerPeriod] = useState(1);
+  const [hoursPerPeriod, setHoursPerPeriod] = useState(2.5);
   const [startPreference, setStartPreference] = useState("");
   const [specificDate, setSpecificDate] = useState("");
   const [scheduling, setScheduling] = useState("");
@@ -228,8 +227,10 @@ export default function EditServiceRequestPage({
           const details = sr.details || {};
           const schedulingPrefs = details.schedulingPrefs || {};
           if (schedulingPrefs.frequency) setFrequency(schedulingPrefs.frequency);
-          if (schedulingPrefs.sessionsPerWeek) setSessionsPerWeek(schedulingPrefs.sessionsPerWeek);
-          if (schedulingPrefs.hoursPerWeek) setHoursPerWeek(schedulingPrefs.hoursPerWeek);
+          if (schedulingPrefs.sessionsPerPeriod) setSessionsPerPeriod(schedulingPrefs.sessionsPerPeriod);
+          else if (schedulingPrefs.sessionsPerWeek) setSessionsPerPeriod(schedulingPrefs.sessionsPerWeek);
+          if (schedulingPrefs.hoursPerPeriod) setHoursPerPeriod(schedulingPrefs.hoursPerPeriod);
+          else if (schedulingPrefs.hoursPerWeek) setHoursPerPeriod(schedulingPrefs.hoursPerWeek);
           if (schedulingPrefs.scheduling) {
             setScheduling(schedulingPrefs.scheduling);
           }
@@ -480,8 +481,8 @@ export default function EditServiceRequestPage({
                     }))
                 : undefined,
               frequency,
-              sessionsPerWeek,
-              hoursPerWeek,
+              sessionsPerPeriod,
+              hoursPerPeriod,
               scheduling: scheduling || undefined,
               startPreference: startPreference || undefined,
               startDate: startPreference === "specific-date" ? specificDate : undefined,
@@ -643,7 +644,7 @@ export default function EditServiceRequestPage({
                         <button
                           key={option.value}
                           type="button"
-                          onClick={() => { setFrequency(option.value); setIsFrequencyOpen(false); }}
+                          onClick={() => { setFrequency(option.value); if (option.value === "one-time") setSessionsPerPeriod(1); setIsFrequencyOpen(false); }}
                           className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${frequency === option.value ? "bg-indigo-50 text-indigo-900" : "text-gray-900"}`}
                         >
                           {option.label}
@@ -654,40 +655,44 @@ export default function EditServiceRequestPage({
                 </div>
               </div>
 
-              {/* Sessions per week */}
+              {/* Sessions per period */}
               <div>
-                <label className="block text-gray-900 font-medium font-poppins mb-2">How many support sessions per week?</label>
+                <label className="block text-gray-900 font-medium font-poppins mb-2">
+                  {frequency === "fortnightly" ? "How many support sessions per fortnight?" : frequency === "monthly" ? "How many support sessions per month?" : frequency === "one-time" ? "How many support sessions do you need in total?" : "How many support sessions per week?"}
+                </label>
                 <div className="flex items-center w-28 border-2 border-gray-200 rounded-lg overflow-hidden">
-                  <button type="button" onClick={() => sessionsPerWeek > 1 && setSessionsPerWeek(sessionsPerWeek - 1)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
+                  <button type="button" onClick={() => sessionsPerPeriod > 1 && setSessionsPerPeriod(sessionsPerPeriod - 1)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
                     <ChevronDown className="w-4 h-4" />
                   </button>
                   <input
                     type="number"
-                    value={sessionsPerWeek}
-                    onChange={(e) => setSessionsPerWeek(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
+                    value={sessionsPerPeriod}
+                    onChange={(e) => setSessionsPerPeriod(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
                     className="flex-1 text-center py-2 font-poppins text-gray-900 focus:outline-none w-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
-                  <button type="button" onClick={() => sessionsPerWeek < 14 && setSessionsPerWeek(sessionsPerWeek + 1)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
+                  <button type="button" onClick={() => sessionsPerPeriod < 14 && setSessionsPerPeriod(sessionsPerPeriod + 1)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
                     <ChevronUp className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Hours per week */}
+              {/* Hours per period */}
               <div>
-                <label className="block text-gray-900 font-medium font-poppins mb-2">Estimated total hours per week?</label>
+                <label className="block text-gray-900 font-medium font-poppins mb-2">
+                  {frequency === "fortnightly" ? "Estimated total hours per fortnight?" : frequency === "monthly" ? "Estimated total hours per month?" : frequency === "one-time" ? "Estimated total hours for this job?" : "Estimated total hours per week?"}
+                </label>
                 <div className="flex items-center w-28 border-2 border-gray-200 rounded-lg overflow-hidden">
-                  <button type="button" onClick={() => hoursPerWeek > 0.5 && setHoursPerWeek(hoursPerWeek - 0.5)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
+                  <button type="button" onClick={() => hoursPerPeriod > 0.5 && setHoursPerPeriod(hoursPerPeriod - 0.5)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
                     <ChevronDown className="w-4 h-4" />
                   </button>
                   <input
                     type="number"
-                    value={hoursPerWeek}
-                    onChange={(e) => setHoursPerWeek(Math.max(0.5, Math.min(168, parseFloat(e.target.value) || 0.5)))}
+                    value={hoursPerPeriod}
+                    onChange={(e) => setHoursPerPeriod(Math.max(0.5, Math.min(168, parseFloat(e.target.value) || 0.5)))}
                     className="flex-1 text-center py-2 font-poppins text-gray-900 focus:outline-none w-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     step="0.5"
                   />
-                  <button type="button" onClick={() => hoursPerWeek < 168 && setHoursPerWeek(hoursPerWeek + 0.5)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
+                  <button type="button" onClick={() => hoursPerPeriod < 168 && setHoursPerPeriod(hoursPerPeriod + 0.5)} className="px-2 py-2 text-gray-500 hover:bg-gray-100">
                     <ChevronUp className="w-4 h-4" />
                   </button>
                 </div>
@@ -886,7 +891,7 @@ export default function EditServiceRequestPage({
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-poppins mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Participants
+            Back
           </button>
           <h1 className="text-xl md:text-2xl font-semibold font-poppins text-gray-900">
             Modify Service Request
