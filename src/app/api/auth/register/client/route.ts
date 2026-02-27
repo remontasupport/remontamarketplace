@@ -151,7 +151,7 @@ export async function POST(request: Request) {
               dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
               gender: null,
               fundingType: data.fundingType,
-              relationshipToClient: data.isSelfManaged ? null : data.relationshipToClient,
+              relationshipToClient: data.relationshipToClient || null,
               conditions: [],
               additionalInfo: data.additionalInfo || null,
             },
@@ -177,6 +177,9 @@ export async function POST(request: Request) {
             participants: [participant],
             serviceRequests: [serviceRequest],
           };
+        }, {
+          maxWait: 10000, // wait up to 10s to acquire a connection
+          timeout: 20000, // allow up to 20s for the transaction (handles Neon cold starts)
         });
       } catch (dbError: any) {
         // Handle unique constraint violation (duplicate email)

@@ -95,21 +95,12 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // PREPARE DATA
-      // ============================================
-      // Build a default job title from services
-      const serviceNames = Object.values(data.servicesRequested || {}).map(s => s.categoryName);
-      const defaultJobTitle = serviceNames.length > 0
-        ? `Support needed: ${serviceNames.join(', ')}`
-        : 'Support request';
-
-      // ============================================
-      // CREATE USER + COORDINATOR PROFILE + PARTICIPANT + SERVICE REQUEST
+      // CREATE USER + COORDINATOR PROFILE
+      // (Participants and ServiceRequests are created later from the coordinator's dashboard)
       // ============================================
       let user;
       try {
         user = await authPrisma.$transaction(async (tx) => {
-          // 1. Create User with CoordinatorProfile
           const createdUser = await tx.user.create({
             data: {
               email: data.email,
@@ -118,7 +109,6 @@ export async function POST(request: Request) {
               status: 'ACTIVE',
               updatedAt: new Date(),
 
-              // CoordinatorProfile: Coordinator's contact info only
               coordinatorProfile: {
                 create: {
                   firstName: data.firstName,
@@ -135,40 +125,10 @@ export async function POST(request: Request) {
             },
           });
 
-          // 2. Create Participant
-          const participant = await tx.participant.create({
-            data: {
-              userId: createdUser.id,
-              firstName: data.clientFirstName,
-              lastName: data.clientLastName,
-              dateOfBirth: new Date(data.clientDateOfBirth),
-              gender: null,
-              fundingType: 'OTHER',
-              conditions: [],
-              additionalInfo: data.additionalInfo || null,
-            },
-          });
-
-          // 3. Create ServiceRequest linked to Participant
-          const serviceRequest = await tx.serviceRequest.create({
-            data: {
-              requesterId: createdUser.id,
-              participantId: participant.id,
-              services: data.servicesRequested || {},
-              details: {
-                title: defaultJobTitle,
-                description: data.additionalInfo || undefined,
-              },
-              location: data.location,
-              status: 'PENDING',
-            },
-          });
-
-          return {
-            ...createdUser,
-            participants: [participant],
-            serviceRequests: [serviceRequest],
-          };
+          return createdUser;
+        }, {
+          maxWait: 10000,
+          timeout: 20000,
         });
       } catch (dbError: any) {
         // Handle unique constraint violation (duplicate email)
@@ -200,8 +160,6 @@ export async function POST(request: Request) {
       // ============================================
       // SUCCESS RESPONSE
       // ============================================
-      const participant = user.participants[0];
-
       return NextResponse.json(
         {
           success: true,
@@ -211,13 +169,6 @@ export async function POST(request: Request) {
             email: user.email,
             role: user.role,
             status: user.status,
-          },
-          participant: {
-            id: participant.id,
-            firstName: participant.firstName,
-            lastName: participant.lastName,
-            dateOfBirth: participant.dateOfBirth,
-            fundingType: participant.fundingType,
           },
         },
         { status: 201 }

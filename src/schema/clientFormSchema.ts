@@ -57,7 +57,7 @@ export const clientFormSchema = z.object({
 
   // Step 3 - Relationship to Client (only for client path, part of funding type step)
   relationshipToClient: z.enum(
-    ["parent", "legal-guardian", "spouse-partner", "children", "other"],
+    ["parent", "legal-guardian", "spouse-partner", "children", "other", "myself"],
     {
       required_error: "Please select your relationship to the client/participant",
     }
@@ -88,8 +88,8 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // relationshipToClient is required for client path only
-  if (data.completingFormAs === "client" && !data.relationshipToClient) {
+  // relationshipToClient is required for self and client paths
+  if ((data.completingFormAs === "self" || data.completingFormAs === "client") && !data.relationshipToClient) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Please select your relationship to the client/participant",
@@ -106,8 +106,8 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // Client info fields are required for client and coordinator paths
-  if (data.completingFormAs === "client" || data.completingFormAs === "coordinator") {
+  // Client info fields are required for client path only (coordinator adds client later from dashboard)
+  if (data.completingFormAs === "client") {
     if (!data.clientFirstName || data.clientFirstName.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { XMarkIcon, MapPinIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+import { XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
 import Loader from '@/components/ui/Loader'
 
-type ServiceRequestStatus = 'PENDING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
+type ServiceRequestStatus = 'PENDING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
 
 interface Worker {
   id: string       // User.id (userId) — used for fetching, selecting, and profile link
@@ -35,7 +35,7 @@ interface ManageRequestTableProps {
 
 const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: string; textColor: string; dotColor: string }> = {
   PENDING: {
-    label: 'Pending',
+    label: 'Matching',
     bgColor: 'bg-yellow-50',
     textColor: 'text-yellow-700',
     dotColor: 'bg-yellow-500',
@@ -64,9 +64,13 @@ const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: strin
     textColor: 'text-red-700',
     dotColor: 'bg-red-500',
   },
+  ARCHIVED: {
+    label: 'Archived',
+    bgColor: 'bg-gray-50',
+    textColor: 'text-gray-400',
+    dotColor: 'bg-gray-400',
+  },
 }
-
-const CANCELLABLE: ServiceRequestStatus[] = ['PENDING', 'MATCHED', 'ACTIVE']
 
 export default function ManageRequestTable({ requests: initialRequests }: ManageRequestTableProps) {
   const [requests, setRequests] = useState(initialRequests)
@@ -74,20 +78,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
   const [workers, setWorkers] = useState<Worker[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSelecting, setIsSelecting] = useState<string | null>(null)
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
-  const [isCancelling, setIsCancelling] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  const [isArchiving, setIsArchiving] = useState<string | null>(null)
 
   const openModal = async (request: ServiceRequest) => {
     setSelectedRequest(request)
@@ -146,25 +137,22 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
     }
   }
 
-  const handleCancel = async (requestId: string) => {
-    setIsCancelling(requestId)
-    setOpenDropdown(null)
+  const handleArchive = async (requestId: string) => {
+    setIsArchiving(requestId)
     try {
-      const res = await fetch(`/api/client/service-request/${requestId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/client/service-request/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ARCHIVED' }),
+      })
       const json = await res.json()
       if (json.success) {
-        setRequests((prev) =>
-          prev.map((r) =>
-            r.id === requestId
-              ? { ...r, status: 'CANCELLED' as ServiceRequestStatus, selectedWorker: null }
-              : r
-          )
-        )
+        setRequests((prev) => prev.filter((r) => r.id !== requestId))
       }
     } catch {
       // silently fail
     } finally {
-      setIsCancelling(null)
+      setIsArchiving(null)
     }
   }
 
@@ -191,44 +179,32 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
               key={request.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
             >
-              {/* Header: Participant + Status */}
+              {/* Header: Participant + Status + Archive */}
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="font-medium text-gray-900 font-poppins">
                     {request.participantName}
                   </p>
-                  <p className="text-sm text-gray-500 font-poppins">
-                    {request.location}
-                  </p>
                 </div>
-                <div className="relative flex-shrink-0" ref={openDropdown === request.id ? dropdownRef : undefined}>
-                  <button
-                    onClick={() => CANCELLABLE.includes(request.status) && setOpenDropdown(openDropdown === request.id ? null : request.id)}
-                    disabled={isCancelling === request.id}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins ${status.bgColor} ${status.textColor} ${CANCELLABLE.includes(request.status) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-                  >
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`}></span>
-                    {isCancelling === request.id ? 'Cancelling...' : status.label}
-                    {CANCELLABLE.includes(request.status) && (
-                      <ChevronDownIcon className="w-3 h-3" />
-                    )}
+                    {status.label}
+                  </span>
+                  <button
+                    onClick={() => handleArchive(request.id)}
+                    disabled={isArchiving === request.id}
+                    className="text-xs font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                  >
+                    {isArchiving === request.id ? 'Archiving...' : 'Archive'}
                   </button>
-                  {openDropdown === request.id && CANCELLABLE.includes(request.status) && (
-                    <div className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                      <button
-                        onClick={() => handleCancel(request.id)}
-                        className="w-full text-left px-4 py-2 text-sm font-poppins text-red-600 hover:bg-red-50 rounded-lg"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
 
               <button
                 onClick={() => openModal(request)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins bg-green-50 text-green-700 hover:opacity-80 transition-opacity cursor-pointer"
+                disabled={!request.selectedWorker && request.assignedWorkerIds.length === 0}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins transition-opacity ${!request.selectedWorker && request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                 {request.selectedWorker ? "View Your Worker's Profile" : 'Choose Your Worker'}
@@ -239,19 +215,21 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
       </div>
 
       {/* Desktop Table Layout */}
-      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200">
+        <div>
           <table className="w-full">
             <thead>
               <tr style={{ backgroundColor: BRAND_COLORS.TERTIARY }}>
-                <th className="px-6 py-4 text-left text-sm font-medium font-poppins text-gray-900">
+                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
                   Participant
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-medium font-poppins text-gray-900">
+                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
                   Workers
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-medium font-poppins text-gray-900">
+                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
                   Status
+                </th>
+                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
                 </th>
               </tr>
             </thead>
@@ -263,22 +241,20 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                 return (
                   <tr key={request.id} className="hover:bg-gray-50 transition-colors">
                     {/* Participant Column */}
-                    <td className="px-6 py-5">
-                      <div>
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex flex-col items-center">
                         <p className="font-medium text-gray-900 font-poppins">
                           {request.participantName}
-                        </p>
-                        <p className="text-sm text-gray-500 font-poppins">
-                          {request.location}
                         </p>
                       </div>
                     </td>
 
                     {/* Workers Column */}
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5 text-center">
                       <button
                         onClick={() => openModal(request)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins bg-green-50 text-green-700 hover:opacity-80 transition-opacity cursor-pointer"
+                        disabled={!request.selectedWorker && request.assignedWorkerIds.length === 0}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins transition-opacity ${!request.selectedWorker && request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
                       >
                         <span className="w-2 h-2 rounded-full bg-green-500" />
                         {request.selectedWorker ? "View Your Worker's Profile" : 'Choose Your Worker'}
@@ -286,30 +262,22 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                     </td>
 
                     {/* Status Column */}
-                    <td className="px-6 py-5">
-                      <div className="relative inline-block" ref={openDropdown === request.id ? dropdownRef : undefined}>
-                        <button
-                          onClick={() => CANCELLABLE.includes(request.status) && setOpenDropdown(openDropdown === request.id ? null : request.id)}
-                          disabled={isCancelling === request.id}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins ${status.bgColor} ${status.textColor} ${CANCELLABLE.includes(request.status) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
-                        >
-                          <span className={`w-2 h-2 rounded-full ${status.dotColor}`}></span>
-                          {isCancelling === request.id ? 'Cancelling...' : status.label}
-                          {CANCELLABLE.includes(request.status) && (
-                            <ChevronDownIcon className="w-3 h-3" />
-                          )}
-                        </button>
-                        {openDropdown === request.id && CANCELLABLE.includes(request.status) && (
-                          <div className="absolute left-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                            <button
-                              onClick={() => handleCancel(request.id)}
-                              className="w-full text-left px-4 py-2 text-sm font-poppins text-red-600 hover:bg-red-50 rounded-lg"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                    <td className="px-6 py-5 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
+                        <span className={`w-2 h-2 rounded-full ${status.dotColor}`}></span>
+                        {status.label}
+                      </span>
+                    </td>
+
+                    {/* Archive Column */}
+                    <td className="px-6 py-5 text-center">
+                      <button
+                        onClick={() => handleArchive(request.id)}
+                        disabled={isArchiving === request.id}
+                        className="text-sm font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                      >
+                        {isArchiving === request.id ? 'Archiving...' : 'Archive'}
+                      </button>
                     </td>
                   </tr>
                 )

@@ -37,7 +37,7 @@ export default async function ManageRequestPage() {
 
   // Fetch service requests for this user with participant data
   const serviceRequests = await authPrisma.serviceRequest.findMany({
-    where: { requesterId: session.user.id },
+    where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
     orderBy: { createdAt: 'desc' },
     include: {
       participant: true,

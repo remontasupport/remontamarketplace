@@ -36,6 +36,7 @@ const RELATIONSHIP_MAP: Record<string, string> = {
   'spouse-partner': 'SPOUSE_PARTNER',
   'children': 'CHILDREN',
   'other': 'OTHER',
+  'myself': 'MYSELF',
 };
 
 /**
@@ -103,11 +104,12 @@ export default function ClientsRegistration() {
   // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Client Info, Services, Address, Account)
   // Self (registering for myself): 6 steps (Who, Personal, Funding Type, Services, Address, Account)
   // Coordinator path: 6 steps (Who, Personal, Client Info, Services, Address, Account)
-  const TOTAL_STEPS = completingFormAs === "client" ? 7 : 6;
+  const TOTAL_STEPS = completingFormAs === "client" ? 7 : completingFormAs === "coordinator" ? 3 : 6;
 
   // Determine if we're on the account setup step
   const isOnAccountSetupStep =
-    ((completingFormAs === "coordinator" || completingFormAs === "self") && currentStep === 6) ||
+    (completingFormAs === "coordinator" && currentStep === 3) ||
+    (completingFormAs === "self" && currentStep === 6) ||
     (completingFormAs === "client" && currentStep === 7);
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
@@ -130,19 +132,15 @@ export default function ClientsRegistration() {
         }
         break;
       case 3:
-        // For client path: validate funding type and relationship
-        // For self path: validate funding type only
-        // For coordinator: validate client info
-        if (completingFormAs === "client") {
-          fieldsToValidate = ["fundingType", "relationshipToClient"];
-        } else if (completingFormAs === "self") {
-          fieldsToValidate = ["fundingType"];
+        // coordinator: account setup | self: funding type + relationship | client: funding type + relationship
+        if (completingFormAs === "coordinator") {
+          fieldsToValidate = ["email", "password", "consent"];
         } else {
-          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
+          fieldsToValidate = ["fundingType", "relationshipToClient"];
         }
         break;
       case 4:
-        // For client path: client info; for self/coordinator: services
+        // self: services | client: client info
         if (completingFormAs === "client") {
           fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
         } else {
@@ -150,7 +148,7 @@ export default function ClientsRegistration() {
         }
         break;
       case 5:
-        // For client path: services; for self/coordinator: location
+        // self: location | client: services
         if (completingFormAs === "client") {
           fieldsToValidate = ["servicesRequested"];
         } else {
@@ -158,7 +156,7 @@ export default function ClientsRegistration() {
         }
         break;
       case 6:
-        // For client path: location; for self/coordinator: account setup
+        // self: account setup | client: location
         if (completingFormAs === "client") {
           fieldsToValidate = ["location"];
         } else {
@@ -249,12 +247,6 @@ export default function ClientsRegistration() {
           mobile: data.phoneNumber,
           organization: data.organisationName || undefined,
           clientTypes: data.clientTypes || [],
-          clientFirstName: data.clientFirstName,
-          clientLastName: data.clientLastName,
-          clientDateOfBirth: data.clientDateOfBirth,
-          servicesRequested,
-          additionalInfo: data.additionalInformation,
-          location: fullLocation,
           email: data.email,
           password: data.password,
           consent: data.consent,
@@ -271,7 +263,7 @@ export default function ClientsRegistration() {
           mobile: data.phoneNumber,
           isSelfManaged,
           fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
-          relationshipToClient: isSelfManaged ? 'OTHER' : RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
+          relationshipToClient: RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
           dateOfBirth: isSelfManaged ? data.dateOfBirth : data.clientDateOfBirth,
           // For client path (not self-managed), include participant's name
           ...(isSelfManaged ? {} : {
@@ -302,7 +294,7 @@ export default function ClientsRegistration() {
         if (response.status === 409) {
           throw new Error('An account with this email already exists. Please try logging in instead.');
         }
-        if (result.details) {
+        if (result.details && typeof result.details === 'object') {
           // Format validation errors
           const errorMessages = Object.values(result.details).join(', ');
           throw new Error(errorMessages || result.error || 'Registration failed');
@@ -405,21 +397,21 @@ export default function ClientsRegistration() {
               <Step3FundingType control={control} errors={errors} showRelationship={true} />
             )}
             {currentStep === 3 && completingFormAs === "self" && (
-              <Step3FundingType control={control} errors={errors} showRelationship={false} />
+              <Step3FundingType control={control} errors={errors} showRelationship={true} />
             )}
 
-            {/* Step 3 - Client Info (Coordinator path - about the person needing support) */}
-            {currentStep === 3 && completingFormAs === "coordinator" && (
+            {/* Step 3 - Client Info (Coordinator path) — removed, coordinators add clients from dashboard */}
+            {/* {currentStep === 3 && completingFormAs === "coordinator" && (
               <Step5ClientInfo control={control} errors={errors} showAddMoreNote />
-            )}
+            )} */}
 
             {/* Step 4 - Client Info (Client path only - right after funding type) */}
             {currentStep === 4 && completingFormAs === "client" && (
               <Step5ClientInfo control={control} errors={errors} />
             )}
 
-            {/* Services Requested - Step 4 (coordinator/self), Step 5 (client) */}
-            {((currentStep === 4 && (completingFormAs === "coordinator" || completingFormAs === "self")) ||
+            {/* Services Requested - Step 4 (self), Step 5 (client) */}
+            {((currentStep === 4 && completingFormAs === "self") ||
               (currentStep === 5 && completingFormAs === "client")) && (
               <>
                 {categoriesLoading && (
@@ -446,8 +438,8 @@ export default function ClientsRegistration() {
               </>
             )}
 
-            {/* Address - Step 5 (coordinator/self), Step 6 (client) */}
-            {((currentStep === 5 && (completingFormAs === "coordinator" || completingFormAs === "self")) ||
+            {/* Address - Step 5 (self), Step 6 (client) */}
+            {((currentStep === 5 && completingFormAs === "self") ||
               (currentStep === 6 && completingFormAs === "client")) && (
               <Step3Address control={control} errors={errors} />
             )}

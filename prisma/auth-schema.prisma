@@ -528,6 +528,7 @@ enum RelationshipType {
   LEGAL_GUARDIAN
   SPOUSE_PARTNER
   CHILDREN
+  MYSELF
   OTHER
 }
 

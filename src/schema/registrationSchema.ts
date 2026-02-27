@@ -63,18 +63,6 @@ export const coordinatorRegistrationSchema = z.object({
   // Coordinator-specific
   clientTypes: z.array(z.string()).min(1, 'Please select at least one client type'),
 
-  // Participant info (about the person needing support)
-  clientFirstName: z.string().min(1, 'First name is required').trim(),
-  clientLastName: z.string().min(1, 'Last name is required').trim(),
-  clientDateOfBirth: z.string().min(1, 'Date of birth is required'),
-
-  // Services
-  servicesRequested: servicesRequestedSchema,
-  additionalInfo: z.string().optional(),
-
-  // Location
-  location: z.string().min(1, 'Location is required'),
-
   // Account
   email: emailValidation,
   password: passwordValidation,
@@ -93,7 +81,7 @@ export type CoordinatorRegistrationInput = z.infer<typeof coordinatorRegistratio
 // ============================================
 
 export const fundingTypeEnum = z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']);
-export const relationshipTypeEnum = z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'OTHER']);
+export const relationshipTypeEnum = z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'OTHER', 'MYSELF']);
 
 export const clientRegistrationSchema = z.object({
   // Personal Information (the person registering)

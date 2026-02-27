@@ -11,6 +11,7 @@ import {
   PlusCircleIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
+  ArchiveBoxIcon,
 } from '@heroicons/react/24/outline'
 
 interface MenuItem {
@@ -44,6 +45,12 @@ const menuItems: MenuItem[] = [
     name: 'Manage Request',
     path: '/manage-request',
     icon: ClipboardDocumentListIcon,
+  },
+  {
+    id: 'archived',
+    name: 'Archived',
+    path: '/archived',
+    icon: ArchiveBoxIcon,
   },
 ]
 

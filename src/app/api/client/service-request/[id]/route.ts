@@ -152,7 +152,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 6. Check if request can be updated (only PENDING requests)
+    // 6. Parse request body
+    const body = await request.json()
+
+    // Handle archive as a separate path — uses raw SQL to bypass Prisma enum validation
+    if (body?.status === 'ARCHIVED') {
+      await authPrisma.$executeRaw`UPDATE service_requests SET status = 'ARCHIVED'::"ServiceRequestStatus", "updatedAt" = NOW() WHERE id = ${id}`
+      return NextResponse.json({ success: true, message: 'Request archived successfully' })
+    }
+
+    // For all other updates, only allow PENDING requests
     if (existingRequest.status !== 'PENDING') {
       return NextResponse.json(
         {
@@ -164,8 +173,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 7. Parse and validate request body
-    const body = await request.json()
+    // 7. Validate request body
     const validationResult = updateServiceRequestSchema.safeParse(body)
 
     if (!validationResult.success) {
@@ -206,6 +214,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           ...(data.services && { services: data.services }),
           ...(data.details && { details: data.details }),
           ...(data.location && { location: data.location }),
+          ...(data.status && { status: data.status }),
         },
         include: {
           participant: true,
@@ -286,7 +295,50 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 4. Fetch existing service request
+    // 4. Fetch status + ownership via raw SQL (handles ARCHIVED which Prisma enum doesn't support)
+    const [statusRow] = await authPrisma.$queryRaw<{ status: string; requesterId: string }[]>`
+      SELECT status, "requesterId" FROM service_requests WHERE id = ${id}
+    `
+
+    if (!statusRow) {
+      return NextResponse.json(
+        { success: false, error: 'Service request not found' },
+        { status: 404 }
+      )
+    }
+
+    // 5. Check ownership
+    if (statusRow.requesterId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    // 6. If ARCHIVED — hard delete the entire record
+    if (statusRow.status === 'ARCHIVED') {
+      await authPrisma.$executeRaw`DELETE FROM service_requests WHERE id = ${id}`
+
+      authPrisma.auditLog
+        .create({
+          data: {
+            userId: session.user.id,
+            action: 'PROFILE_UPDATE',
+            metadata: {
+              type: 'SERVICE_REQUEST_DELETED',
+              serviceRequestId: id,
+            },
+          },
+        })
+        .catch(() => {})
+
+      return NextResponse.json({
+        success: true,
+        message: 'Service request deleted permanently',
+      })
+    }
+
+    // 7. For non-archived: fetch full record with Prisma for the cancel flow
     const existingRequest = await authPrisma.serviceRequest.findUnique({
       where: { id },
     })
@@ -298,15 +350,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 5. Check ownership
-    if (existingRequest.requesterId !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
-    }
-
-    // 6. Check if request can be cancelled
+    // 8. Check if request can be cancelled
     if (existingRequest.status === 'COMPLETED' || existingRequest.status === 'CANCELLED') {
       return NextResponse.json(
         {
@@ -318,7 +362,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 7. Cancel the request (soft delete - update status) and clear selected worker
+    // 9. Cancel the request (soft delete - update status) and clear selected worker
     const cancelledRequest = await authPrisma.serviceRequest.update({
       where: { id },
       data: {
@@ -330,7 +374,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       },
     })
 
-    // 8. Audit log (fire-and-forget)
+    // 10. Audit log (fire-and-forget)
     authPrisma.auditLog
       .create({
         data: {
@@ -344,7 +388,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       })
       .catch(() => {})
 
-    // 9. Return response
+    // 11. Return response
     return NextResponse.json({
       success: true,
       message: 'Service request cancelled successfully',

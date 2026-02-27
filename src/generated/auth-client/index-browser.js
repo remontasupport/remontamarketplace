@@ -455,6 +455,7 @@ exports.RelationshipType = exports.$Enums.RelationshipType = {
   LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
   SPOUSE_PARTNER: 'SPOUSE_PARTNER',
   CHILDREN: 'CHILDREN',
+  MYSELF: 'MYSELF',
   OTHER: 'OTHER'
 };
 

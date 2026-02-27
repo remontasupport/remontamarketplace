@@ -60,6 +60,9 @@ const schedulingPrefsSchema = z.object({
   startDate: z.string().optional(),
   startPreference: z.string().optional(),
   frequency: z.enum(['one-time', 'weekly', 'fortnightly', 'monthly', 'ongoing', 'as-needed']).optional(),
+  sessionsPerPeriod: z.number().optional(),
+  hoursPerPeriod: z.number().optional(),
+  // legacy field names kept for backward compatibility
   sessionsPerWeek: z.number().optional(),
   hoursPerWeek: z.number().optional(),
   scheduling: z.string().optional(),
@@ -96,7 +99,7 @@ export const updateServiceRequestSchema = z.object({
   services: servicesSchema.optional(),
   details: detailsSchema.partial().optional(),
   location: z.string().min(1).optional(),
-  status: z.enum(['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
+  status: z.enum(['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'ARCHIVED']).optional(),
 })
 
 export type UpdateServiceRequestInput = z.infer<typeof updateServiceRequestSchema>
