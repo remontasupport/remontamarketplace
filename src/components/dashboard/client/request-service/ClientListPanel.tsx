@@ -20,8 +20,8 @@ export default function ClientListPanel() {
   const { selectedParticipantId, selectParticipant, clearSelectedParticipant } = useRequestService();
   const pathname = usePathname();
   const clientsPath = pathname.includes("supportcoordinators")
-    ? "/dashboard/supportcoordinators/clients"
-    : "/dashboard/client/clients";
+    ? "/dashboard/supportcoordinators"
+    : "/dashboard/client";
 
   useEffect(() => {
     fetch("/api/client/participants")

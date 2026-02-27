@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
   HomeIcon,
-  UsersIcon,
+  MagnifyingGlassIcon,
   PlusCircleIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
@@ -30,10 +30,10 @@ const menuItems: MenuItem[] = [
     icon: HomeIcon,
   },
   {
-    id: 'participants',
-    name: 'Clients',
-    path: '/clients',
-    icon: UsersIcon,
+    id: 'find-worker',
+    name: 'Find Worker',
+    path: '/find-worker',
+    icon: MagnifyingGlassIcon,
   },
   {
     id: 'request-service',
