@@ -37,13 +37,13 @@ export const clientFormSchema = z.object({
     }
   ).optional(),
 
-  servicesRequested: z.array(z.string()),
+  servicesRequested: z.array(z.string()).optional(),
   serviceSubcategories: z.array(z.string()).optional(),
-  additionalInformation: z.string(),
+  additionalInformation: z.string().optional(),
 
   // Step 4 - Location Information
   streetAddress: z.string().optional(),
-  location: z.string(),
+  location: z.string().optional(),
 
   // Step 5 - Account Setup
   password: z.string()
@@ -70,31 +70,6 @@ export const clientFormSchema = z.object({
 
   // Additional fields will be added as more steps are defined
 }).superRefine((data, ctx) => {
-  // These fields are only required for non-coordinator paths
-  if (data.completingFormAs !== "coordinator") {
-    if (!data.servicesRequested || data.servicesRequested.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please select at least one service",
-        path: ["servicesRequested"],
-      });
-    }
-    if (!data.additionalInformation || data.additionalInformation.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Additional information is required",
-        path: ["additionalInformation"],
-      });
-    }
-    if (!data.location || data.location.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please enter a valid Suburb",
-        path: ["location"],
-      });
-    }
-  }
-
   // clientTypes is required for coordinator path only
   if (data.completingFormAs === "coordinator" && (!data.clientTypes || data.clientTypes.length === 0)) {
     ctx.addIssue({
@@ -104,7 +79,7 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // fundingType is required for client path only (self path defaults to OTHER)
+  // fundingType is required for client path only
   if (data.completingFormAs === "client" && !data.fundingType) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -113,38 +88,13 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // relationshipToClient is required for self and client paths
-  if ((data.completingFormAs === "self" || data.completingFormAs === "client") && !data.relationshipToClient) {
+  // relationshipToClient is required for client path only
+  if (data.completingFormAs === "client" && !data.relationshipToClient) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Please select your relationship to the client/participant",
       path: ["relationshipToClient"],
     });
-  }
-
-  // Client info fields are required for both self and client paths
-  if (data.completingFormAs === "self" || data.completingFormAs === "client") {
-    if (!data.clientFirstName || data.clientFirstName.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "First name is required",
-        path: ["clientFirstName"],
-      });
-    }
-    if (!data.clientLastName || data.clientLastName.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Last name is required",
-        path: ["clientLastName"],
-      });
-    }
-    if (!data.clientDateOfBirth || data.clientDateOfBirth.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Date of birth is required",
-        path: ["clientDateOfBirth"],
-      });
-    }
   }
 });
 

@@ -5,7 +5,7 @@ import StepNavigation from "../StepNavigation";
 
 export default function SupportDetailsSection() {
   const { formData, updateFormData } = useRequestService();
-  const { supportDetailsData } = formData;
+  const { supportDetailsData, whatAdditionalInfo } = formData;
 
   return (
     <div className="section-card">
@@ -30,6 +30,23 @@ export default function SupportDetailsSection() {
               }
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
               placeholder="E.g. personal carer for an adult"
+            />
+          </div>
+
+          {/* Additional Information */}
+          <div>
+            <label className="block text-gray-900 font-medium font-poppins mb-2">
+              Additional Information <span className="text-red-500">*</span>
+            </label>
+            <p className="text-gray-600 text-sm font-poppins mb-3">
+              Describe the support needed and any relevant background about the participant.
+            </p>
+            <textarea
+              value={whatAdditionalInfo}
+              onChange={(e) => updateFormData("whatAdditionalInfo", e.target.value)}
+              rows={4}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none resize-none"
+              placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
             />
           </div>
         </div>

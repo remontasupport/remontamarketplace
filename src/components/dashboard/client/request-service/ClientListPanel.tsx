@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRequestService } from "./RequestServiceContext";
 import { BRAND_COLORS } from "@/lib/constants";
 
@@ -15,7 +17,11 @@ interface Participant {
 export default function ClientListPanel() {
   const [clients, setClients] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
-  const { selectedParticipantId, selectParticipant } = useRequestService();
+  const { selectedParticipantId, selectParticipant, clearSelectedParticipant } = useRequestService();
+  const pathname = usePathname();
+  const clientsPath = pathname.includes("supportcoordinators")
+    ? "/dashboard/supportcoordinators/clients"
+    : "/dashboard/client/clients";
 
   useEffect(() => {
     fetch("/api/client/participants")
@@ -26,6 +32,16 @@ export default function ClientListPanel() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Clear stale selection if the selected participant no longer exists in the loaded list
+  useEffect(() => {
+    if (!loading && selectedParticipantId) {
+      const stillExists = clients.some((c) => c.id === selectedParticipantId);
+      if (!stillExists) {
+        clearSelectedParticipant();
+      }
+    }
+  }, [loading, clients, selectedParticipantId, clearSelectedParticipant]);
 
   return (
     <div className="additional-details-menu" style={{ padding: "1rem 1.25rem" }}>
@@ -210,6 +226,26 @@ export default function ClientListPanel() {
             );
           })}
         </div>
+      )}
+
+      {/* Add Client link */}
+      {!loading && (
+        <Link
+          href={clientsPath}
+          style={{
+            display: "block",
+            marginTop: "0.625rem",
+            fontSize: "0.75rem",
+            color: BRAND_COLORS.PRIMARY,
+            fontFamily: "var(--font-poppins, sans-serif)",
+            fontWeight: 500,
+            textAlign: "center",
+            textDecoration: "underline",
+            textUnderlineOffset: "2px",
+          }}
+        >
+          + Add Client
+        </Link>
       )}
     </div>
   );

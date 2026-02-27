@@ -348,6 +348,9 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
         if (!formData.supportDetailsData.jobTitle.trim()) {
           errors.push("Please enter a job title");
         }
+        if (!formData.whatAdditionalInfo.trim()) {
+          errors.push("Please provide additional information about the support needed");
+        }
         break;
 
       case "preferences":
@@ -434,6 +437,9 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     if (!formData.supportDetailsData.jobTitle.trim()) {
       return { isValid: false, error: "Please enter a job title", stepIndex: 3 };
     }
+    if (!formData.whatAdditionalInfo.trim()) {
+      return { isValid: false, error: "Please provide additional information about the support needed", stepIndex: 3 };
+    }
 
     // Require a selected client
     if (!selectedParticipantId) {
@@ -484,7 +490,8 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
         // Details
         details: {
           title: formData.supportDetailsData.jobTitle,
-          description: formData.whatAdditionalInfo || formData.whenData.additionalNotes || undefined,
+          description: formData.whatAdditionalInfo || undefined,
+          scheduleNotes: formData.whenData.additionalNotes || undefined,
           schedulingPrefs: {
             preferredDays: formData.whenData.scheduling === "preferred"
               ? Object.entries(formData.whenData.preferredDays)

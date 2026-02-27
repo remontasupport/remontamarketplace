@@ -95,25 +95,12 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // PREPARE DATA
-      // ============================================
-      // Participant name comes from "About the person needing support" step for both self and client paths
-      const participantFirstName = data.clientFirstName || data.firstName;
-      const participantLastName = data.clientLastName || data.lastName;
-
-      // Build a default job title from services
-      const serviceNames = Object.values(data.servicesRequested || {}).map(s => s.categoryName);
-      const defaultJobTitle = serviceNames.length > 0
-        ? `Support needed: ${serviceNames.join(', ')}`
-        : 'Support request';
-
-      // ============================================
-      // CREATE USER + CLIENT PROFILE + PARTICIPANT + SERVICE REQUEST
+      // CREATE USER + CLIENT PROFILE
       // ============================================
       let user;
       try {
         user = await authPrisma.$transaction(async (tx) => {
-          // 1. Create User with ClientProfile
+          // Create User with ClientProfile
           const createdUser = await tx.user.create({
             data: {
               email: data.email,
@@ -137,41 +124,7 @@ export async function POST(request: Request) {
             },
           });
 
-          // 2. Create Participant
-          const participant = await tx.participant.create({
-            data: {
-              userId: createdUser.id,
-              firstName: participantFirstName,
-              lastName: participantLastName,
-              dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-              gender: null,
-              fundingType: data.fundingType,
-              relationshipToClient: data.relationshipToClient || null,
-              conditions: [],
-              additionalInfo: data.additionalInfo || null,
-            },
-          });
-
-          // 3. Create ServiceRequest linked to Participant
-          const serviceRequest = await tx.serviceRequest.create({
-            data: {
-              requesterId: createdUser.id,
-              participantId: participant.id,
-              services: data.servicesRequested || {},
-              details: {
-                title: defaultJobTitle,
-                description: data.additionalInfo || undefined,
-              },
-              location: data.location,
-              status: 'PENDING',
-            },
-          });
-
-          return {
-            ...createdUser,
-            participants: [participant],
-            serviceRequests: [serviceRequest],
-          };
+          return createdUser;
         }, {
           maxWait: 10000, // wait up to 10s to acquire a connection
           timeout: 20000, // allow up to 20s for the transaction (handles Neon cold starts)
@@ -196,7 +149,6 @@ export async function POST(request: Request) {
           action: 'LOGIN_SUCCESS',
           metadata: {
             registrationType: 'CLIENT',
-            fundingType: data.fundingType,
           },
         },
       }).catch(() => {
@@ -206,8 +158,6 @@ export async function POST(request: Request) {
       // ============================================
       // SUCCESS RESPONSE
       // ============================================
-      const participant = user.participants[0];
-
       return NextResponse.json(
         {
           success: true,
@@ -217,14 +167,6 @@ export async function POST(request: Request) {
             email: user.email,
             role: user.role,
             status: user.status,
-          },
-          participant: {
-            id: participant.id,
-            firstName: participant.firstName,
-            lastName: participant.lastName,
-            dateOfBirth: participant.dateOfBirth,
-            fundingType: participant.fundingType,
-            relationshipToClient: participant.relationshipToClient,
           },
           registrationType: 'client',
         },

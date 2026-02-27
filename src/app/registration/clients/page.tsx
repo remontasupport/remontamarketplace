@@ -11,12 +11,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Step1WhoIsCompleting } from "@/components/forms/clientRegistration/Step1WhoIsCompleting";
 import { Step2PersonalInfo } from "@/components/forms/clientRegistration/Step2PersonalInfo";
 import { Step3FundingType } from "@/components/forms/clientRegistration/Step3FundingType";
-import { Step3ServicesRequested } from "@/components/forms/clientRegistration/Step3ServicesRequested";
-import { Step3Address } from "@/components/forms/clientRegistration/Step3Address";
 import { Step5AccountSetup } from "@/components/forms/clientRegistration/Step5AccountSetup";
-import { Step5ClientInfo } from "@/components/forms/clientRegistration/Step5ClientInfo";
 import { clientFormSchema, type ClientFormData, clientFormDefaults } from "@/schema/clientFormSchema";
-import { useCategories, Category } from "@/hooks/queries/useCategories";
 
 // ============================================
 // DATA TRANSFORMATION HELPERS
@@ -39,40 +35,6 @@ const RELATIONSHIP_MAP: Record<string, string> = {
   'myself': 'MYSELF',
 };
 
-/**
- * Build servicesRequested object from form data
- * Transforms category IDs and subcategory IDs into the API-expected format
- */
-function buildServicesRequested(
-  selectedCategories: string[],
-  selectedSubcategories: string[],
-  categories: Category[]
-): Record<string, { categoryName: string; subCategories: { id: string; name: string }[] }> {
-  const result: Record<string, { categoryName: string; subCategories: { id: string; name: string }[] }> = {};
-
-  for (const categoryId of selectedCategories) {
-    const category = categories.find(c => c.id === categoryId);
-    if (!category) continue;
-
-    // Find selected subcategories for this category
-    const categorySubcategoryIds = category.subcategories?.map(s => s.id) || [];
-    const selectedSubs = selectedSubcategories.filter(id => categorySubcategoryIds.includes(id));
-
-    // Map to subcategory objects with id and name
-    const subCategories = selectedSubs.map(subId => {
-      const sub = category.subcategories?.find(s => s.id === subId);
-      return { id: subId, name: sub?.name || subId };
-    });
-
-    result[categoryId] = {
-      categoryName: category.name,
-      subCategories: subCategories.length > 0 ? subCategories : [],
-    };
-  }
-
-  return result;
-}
-
 export default function ClientsRegistration() {
   const router = useRouter();
   const [showWelcome, setShowWelcome] = useState(true);
@@ -81,9 +43,6 @@ export default function ClientsRegistration() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [showAccountErrors, setShowAccountErrors] = useState(false);
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
-
-  // Fetch categories from database
-  const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useCategories();
 
   const { control, handleSubmit, formState, trigger, getValues, watch, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
@@ -98,19 +57,15 @@ export default function ClientsRegistration() {
 
   // Watch completingFormAs to determine total steps
   const completingFormAs = watch("completingFormAs");
-  const serviceSubcategories = watch("serviceSubcategories") || [];
 
   // Calculate total steps based on path
-  // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Client Info, Services, Address, Account)
-  // Self (registering for myself): 6 steps (Who, Personal, About Person, Services, Address, Account)
+  // Client (assisting someone): 4 steps (Who, Personal, Funding Type + Relationship, Account)
+  // Self (registering for myself): 3 steps (Who, Personal, Account)
   // Coordinator path: 3 steps (Who, Personal, Account)
-  const TOTAL_STEPS = completingFormAs === "coordinator" ? 3 : completingFormAs === "client" ? 7 : 6;
+  const TOTAL_STEPS = completingFormAs === "client" ? 4 : 3;
 
   // Determine if we're on the account setup step
-  const isOnAccountSetupStep =
-    (completingFormAs === "coordinator" && currentStep === 3) ||
-    (completingFormAs === "self" && currentStep === 6) ||
-    (completingFormAs === "client" && currentStep === 7);
+  const isOnAccountSetupStep = currentStep === TOTAL_STEPS;
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
@@ -122,53 +77,22 @@ export default function ClientsRegistration() {
         fieldsToValidate = ["completingFormAs"];
         break;
       case 2:
-        // Only validate clientTypes for coordinators
         if (completingFormAs === "coordinator") {
           fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
         } else {
-          // self and client paths: DOB is captured in the "About person" step (step 4)
           fieldsToValidate = ["firstName", "lastName", "phoneNumber"];
         }
         break;
       case 3:
-        if (completingFormAs === "coordinator") {
-          fieldsToValidate = ["email", "password", "consent"];
-        } else if (completingFormAs === "self") {
-          // self: "About the person needing support" (no funding type step)
-          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth", "relationshipToClient"];
-        } else {
+        if (completingFormAs === "client") {
           // client: funding type + relationship
           fieldsToValidate = ["fundingType", "relationshipToClient"];
+        } else {
+          // self/coordinator: account setup
+          fieldsToValidate = ["email", "password", "consent"];
         }
         break;
       case 4:
-        if (completingFormAs === "client") {
-          // client: "About the person needing support"
-          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
-        } else if (completingFormAs === "self") {
-          // self: services requested
-          fieldsToValidate = ["servicesRequested"];
-        }
-        break;
-      case 5:
-        if (completingFormAs === "client") {
-          // client: services requested
-          fieldsToValidate = ["servicesRequested"];
-        } else if (completingFormAs === "self") {
-          // self: address/location
-          fieldsToValidate = ["location"];
-        }
-        break;
-      case 6:
-        if (completingFormAs === "client") {
-          // client: address/location
-          fieldsToValidate = ["location"];
-        } else if (completingFormAs === "self") {
-          // self: account setup
-          fieldsToValidate = ["email", "password", "consent"];
-        }
-        break;
-      case 7:
         // client only: account setup
         fieldsToValidate = ["email", "password", "consent"];
         break;
@@ -220,22 +144,6 @@ export default function ClientsRegistration() {
       setIsLoading(true);
       setApiError(null);
 
-      if (!categories) {
-        throw new Error('Categories not loaded. Please refresh the page.');
-      }
-
-      // Build servicesRequested object from form data
-      const servicesRequested = buildServicesRequested(
-        data.servicesRequested,
-        data.serviceSubcategories || [],
-        categories
-      );
-
-      // Build location string - concatenate street address with suburb if provided
-      const fullLocation = data.streetAddress?.trim()
-        ? `${data.streetAddress.trim()}, ${data.location}`
-        : data.location;
-
       let endpoint: string;
       let payload: Record<string, unknown>;
       let successPath: string;
@@ -262,14 +170,8 @@ export default function ClientsRegistration() {
           firstName: data.firstName,
           lastName: data.lastName,
           mobile: data.phoneNumber,
-          fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
-          relationshipToClient: RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
-          dateOfBirth: data.clientDateOfBirth,
-          clientFirstName: data.clientFirstName,
-          clientLastName: data.clientLastName,
-          servicesRequested,
-          additionalInfo: data.additionalInformation,
-          location: fullLocation,
+          fundingType: data.fundingType ? FUNDING_TYPE_MAP[data.fundingType] : undefined,
+          relationshipToClient: data.relationshipToClient ? RELATIONSHIP_MAP[data.relationshipToClient] : undefined,
           email: data.email,
           password: data.password,
           consent: data.consent,
@@ -389,56 +291,12 @@ export default function ClientsRegistration() {
               <Step2PersonalInfo control={control} errors={errors} completingFormAs={completingFormAs} />
             )}
 
-            {/* Step 3 - About the person needing support (self path) */}
-            {currentStep === 3 && completingFormAs === "self" && (
-              <Step5ClientInfo control={control} errors={errors} mode="self" />
-            )}
-
             {/* Step 3 - Funding Type + Relationship (client path only) */}
             {currentStep === 3 && completingFormAs === "client" && (
               <Step3FundingType control={control} errors={errors} showRelationship={true} />
             )}
 
-            {/* Step 4 - About the person needing support (client path only) */}
-            {currentStep === 4 && completingFormAs === "client" && (
-              <Step5ClientInfo control={control} errors={errors} />
-            )}
-
-            {/* Services Requested - Step 4 (self), Step 5 (client) */}
-            {((currentStep === 4 && completingFormAs === "self") ||
-              (currentStep === 5 && completingFormAs === "client")) && (
-              <>
-                {categoriesLoading && (
-                  <div className="text-center py-4">
-                    <p className="text-gray-600 font-poppins">Loading services...</p>
-                  </div>
-                )}
-                {categoriesError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <p className="text-red-600 text-sm font-poppins">
-                      Failed to load services. Please refresh the page.
-                    </p>
-                  </div>
-                )}
-                {!categoriesLoading && !categoriesError && categories && (
-                  <Step3ServicesRequested
-                    control={control}
-                    errors={errors}
-                    categories={categories}
-                    setValue={setValue}
-                    serviceSubcategories={serviceSubcategories}
-                  />
-                )}
-              </>
-            )}
-
-            {/* Address - Step 5 (self), Step 6 (client) */}
-            {((currentStep === 5 && completingFormAs === "self") ||
-              (currentStep === 6 && completingFormAs === "client")) && (
-              <Step3Address control={control} errors={errors} />
-            )}
-
-            {/* Account Setup - Step 3 (coordinator), Step 6 (self), Step 7 (client) */}
+            {/* Account Setup - Step 3 (self/coordinator), Step 4 (client) */}
             {isOnAccountSetupStep && (
               <Step5AccountSetup control={control} errors={errors} showErrors={showAccountErrors} />
             )}

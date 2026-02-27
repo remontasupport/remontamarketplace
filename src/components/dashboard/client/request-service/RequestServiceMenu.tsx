@@ -107,7 +107,7 @@ export default function RequestServiceMenu({ currentSection }: RequestServiceMen
               {itemDisabled ? (
                 <span
                   className={`additional-details-item ${item.subItems && isInDetailsSection ? "font-medium" : ""}`}
-                  style={{ opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" }}
+                  style={{ cursor: "not-allowed" }}
                 >
                   <div className="additional-details-radio">
                   </div>
@@ -136,7 +136,7 @@ export default function RequestServiceMenu({ currentSection }: RequestServiceMen
                       <span
                         key={subItem.id}
                         className="additional-details-item text-sm"
-                        style={{ opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" }}
+                        style={{ cursor: "not-allowed" }}
                       >
                         <div className="additional-details-radio" style={{ width: '12px', height: '12px' }} />
                         <span className="additional-details-item-label">{subItem.label}</span>

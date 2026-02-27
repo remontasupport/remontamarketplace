@@ -52,6 +52,7 @@ interface ServiceRequestData {
   details: {
     title?: string;
     description?: string;
+    scheduleNotes?: string;
     schedulingPrefs?: {
       preferredDays?: (string | { day: string; startTime?: string; endTime?: string })[];
       frequency?: string;
@@ -266,9 +267,9 @@ export default function EditServiceRequestPage({
             });
             setPreferredDays(updatedDays);
           }
-          if (details.description) setAdditionalNotes(details.description);
+          if (details.scheduleNotes) setAdditionalNotes(details.scheduleNotes);
 
-          // Pre-populate Additional Info (participant context — stored in description)
+          // Pre-populate Additional Info (services step)
           if (details.description) setAdditionalInfo(details.description);
 
           // Pre-populate Preferences
@@ -480,7 +481,8 @@ export default function EditServiceRequestPage({
           location,
           details: {
             title: `Support needed: ${Object.values(services).map(s => s.categoryName).join(", ")}`,
-            description: additionalInfo || additionalNotes || undefined,
+            description: additionalInfo || undefined,
+            scheduleNotes: additionalNotes || undefined,
             schedulingPrefs: {
               preferredDays: scheduling === "preferred"
                 ? Object.entries(preferredDays)

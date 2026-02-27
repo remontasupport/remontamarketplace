@@ -89,22 +89,21 @@ export const clientRegistrationSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').trim(),
   mobile: phoneValidation,
 
-  // Client-specific
-  fundingType: fundingTypeEnum,
-  relationshipToClient: relationshipTypeEnum,
+  // Client-specific (optional — only captured on client path)
+  fundingType: fundingTypeEnum.optional(),
+  relationshipToClient: relationshipTypeEnum.optional(),
 
-  // Participant info (for self-managed, this is the same as the person registering)
-  // For client path (not self-managed), these are from "About the person needing support" step
+  // Participant info
   dateOfBirth: z.string().optional(),
   clientFirstName: z.string().trim().optional(),
   clientLastName: z.string().trim().optional(),
 
-  // Services
-  servicesRequested: servicesRequestedSchema,
+  // Services (optional — participants created from dashboard)
+  servicesRequested: servicesRequestedSchema.optional(),
   additionalInfo: z.string().optional(),
 
-  // Location
-  location: z.string().min(1, 'Location is required'),
+  // Location (optional)
+  location: z.string().optional(),
 
   // Account
   email: emailValidation,
