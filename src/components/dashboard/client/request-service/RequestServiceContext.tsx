@@ -8,7 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 // ============================================================================
 // TYPES
@@ -156,6 +156,8 @@ interface RequestServiceContextType {
   isSubmitting: boolean;
   submitError: string | null;
   submitRequest: () => Promise<boolean>;
+  submitSuccess: boolean;
+  submittedParticipantId: string | null;
 
   // Validation
   validateCurrentStep: () => boolean;
@@ -267,7 +269,12 @@ interface RequestServiceProviderProps {
 export function RequestServiceProvider({ children }: RequestServiceProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const currentSection = searchParams.get("section") || "what";
+
+  const basePath = pathname.includes("supportcoordinators")
+    ? "/dashboard/supportcoordinators/request-service"
+    : "/dashboard/client/request-service";
 
   // Form state
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -275,6 +282,8 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submittedParticipantId, setSubmittedParticipantId] = useState<string | null>(null);
 
   // Get current step index
   const currentStep = STEPS.findIndex((step) => step.section === currentSection);
@@ -401,15 +410,15 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     }
 
     const nextStep = STEPS[currentStep + 1];
-    router.push(`/dashboard/client/request-service?section=${nextStep.section}`);
-  }, [canGoNext, currentStep, completedSteps, router]);
+    router.push(`${basePath}?section=${nextStep.section}`);
+  }, [canGoNext, currentStep, completedSteps, router, basePath]);
 
   const goToPrevious = useCallback(() => {
     if (!canGoPrevious) return;
 
     const prevStep = STEPS[currentStep - 1];
-    router.push(`/dashboard/client/request-service?section=${prevStep.section}`);
-  }, [canGoPrevious, currentStep, router]);
+    router.push(`${basePath}?section=${prevStep.section}`);
+  }, [canGoPrevious, currentStep, router, basePath]);
 
   // Validate all steps and return first error with step index
   const validateAllSteps = useCallback((): { isValid: boolean; error: string | null; stepIndex: number | null } => {
@@ -459,7 +468,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
       setIsSubmitting(false);
       // Navigate to the step with the error
       const errorStep = STEPS[validation.stepIndex];
-      router.push(`/dashboard/client/request-service?section=${errorStep.section}`);
+      router.push(`${basePath}?section=${errorStep.section}`);
       return false;
     }
 
@@ -548,12 +557,9 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
         localStorage.removeItem(STORAGE_KEY);
       }
 
-      // Reset form state
-      setFormData(initialFormData);
-      setCompletedSteps([]);
-
-      // Redirect to success page or requests list
-      router.push("/dashboard/client?tab=requests&success=true");
+      // Show success modal with the submitted participant ID
+      setSubmittedParticipantId(result.data?.participantId || null);
+      setSubmitSuccess(true);
 
       return true;
     } catch (error) {
@@ -562,7 +568,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, router, validateAllSteps]);
+  }, [formData, router, validateAllSteps, basePath]);
 
   const value: RequestServiceContextType = {
     formData,
@@ -578,6 +584,8 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     isSubmitting,
     submitError,
     submitRequest,
+    submitSuccess,
+    submittedParticipantId,
     validateCurrentStep,
     getStepErrors,
   };

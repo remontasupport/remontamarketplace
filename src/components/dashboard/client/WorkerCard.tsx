@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { MapPinIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/constants'
 
@@ -30,6 +31,16 @@ export default function WorkerCard({
   onViewProfile,
   onContact,
 }: WorkerCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isClamped, setIsClamped] = useState(false)
+  const bioRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    if (bioRef.current) {
+      setIsClamped(bioRef.current.scrollHeight > bioRef.current.clientHeight)
+    }
+  }, [bio])
+
   // Generate initials from name
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   const displayName = `${firstName}, ${lastName.charAt(0)}.`
@@ -75,9 +86,24 @@ export default function WorkerCard({
       </div>
 
       {/* Bio */}
-      <p className="font-poppins text-sm text-gray-600 mb-3 line-clamp-2">
-        {bio}
-      </p>
+      <div className="mb-3">
+        <p
+          ref={bioRef}
+          className={`font-poppins text-sm text-gray-600 ${!isExpanded ? 'line-clamp-3' : ''}`}
+        >
+          {bio}
+        </p>
+        {(isClamped || isExpanded) && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="font-poppins text-xs font-medium mt-1 hover:underline"
+            style={{ color: BRAND_COLORS.PRIMARY }}
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        )}
+      </div>
 
       {/* Skills Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -96,22 +122,6 @@ export default function WorkerCard({
         )}
       </div>
 
-      {/* Footer: Buttons */}
-      <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-gray-100">
-        <button
-          onClick={() => onViewProfile?.(id)}
-          className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg font-poppins text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          View Profile
-        </button>
-        <button
-          onClick={() => onContact?.(id)}
-          className="w-full sm:w-auto px-4 py-2 rounded-lg font-poppins text-sm font-medium hover:opacity-80 transition-colors"
-          style={{ backgroundColor: BRAND_COLORS.TERTIARY, color: BRAND_COLORS.PRIMARY }}
-        >
-          Contact
-        </button>
-      </div>
     </div>
   )
 }

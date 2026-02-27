@@ -130,6 +130,13 @@ function buildWhereClause(params: SearchParams): Prisma.WorkerProfileWhereInput 
     lastName: { not: '' },
   });
 
+  // Default listing only: filter out workers without a bio/introduction
+  const isDefaultListing = !params.search && !params.location && !params.services?.length;
+  if (isDefaultListing) {
+    conditions.push({ introduction: { not: null } });
+    conditions.push({ introduction: { not: '' } });
+  }
+
   // Text search (name)
   if (params.search) {
     const searchTerm = params.search;

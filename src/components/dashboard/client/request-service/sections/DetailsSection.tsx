@@ -31,7 +31,11 @@ const relationshipOptions = [
   { value: "OTHER", label: "Other" },
 ];
 
-export default function DetailsSection() {
+interface DetailsSectionProps {
+  hideRelationship?: boolean;
+}
+
+export default function DetailsSection({ hideRelationship = false }: DetailsSectionProps) {
   const { formData, updateFormData } = useRequestService();
   const { detailsData } = formData;
 
@@ -92,42 +96,44 @@ export default function DetailsSection() {
         {/* Left side - Form fields */}
         <div className="flex-1 space-y-6">
           {/* Relationship to Client */}
-          <div>
-            <label className="block text-gray-900 font-medium font-poppins mb-2">
-              Relationship to Client <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
-              >
-                <span className={detailsData.relationshipToClient ? "text-gray-900" : "text-gray-500"}>
-                  {relationshipOptions.find(o => o.value === detailsData.relationshipToClient)?.label || "Select your relationship"}
-                </span>
-                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isRelationshipOpen ? "rotate-180" : ""}`} />
-              </button>
-              {isRelationshipOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg">
-                  {relationshipOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        updateField("relationshipToClient", option.value);
-                        setIsRelationshipOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
-                        detailsData.relationshipToClient === option.value ? "bg-indigo-50 text-indigo-900" : "text-gray-900"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+          {!hideRelationship && (
+            <div>
+              <label className="block text-gray-900 font-medium font-poppins mb-2">
+                Relationship to Client <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
+                  className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
+                >
+                  <span className={detailsData.relationshipToClient ? "text-gray-900" : "text-gray-500"}>
+                    {relationshipOptions.find(o => o.value === detailsData.relationshipToClient)?.label || "Select your relationship"}
+                  </span>
+                  <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isRelationshipOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isRelationshipOpen && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg">
+                    {relationshipOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          updateField("relationshipToClient", option.value);
+                          setIsRelationshipOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
+                          detailsData.relationshipToClient === option.value ? "bg-indigo-50 text-indigo-900" : "text-gray-900"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* First Name */}
           <div>

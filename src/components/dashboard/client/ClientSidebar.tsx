@@ -17,7 +17,7 @@ import {
 interface MenuItem {
   id: string
   name: string
-  path: string // relative path (e.g., '' for dashboard, '/participants' for participants)
+  path: string // relative path (e.g., '' for dashboard, '/clients' for clients)
   icon: React.ComponentType<{ className?: string }>
 }
 
@@ -30,8 +30,8 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 'participants',
-    name: 'Participants',
-    path: '/participants',
+    name: 'Clients',
+    path: '/clients',
     icon: UsersIcon,
   },
   {
@@ -78,17 +78,24 @@ export default function ClientSidebar({
   const { data: session } = useSession()
   const [isNavigating, setIsNavigating] = useState(false)
 
-  // Get profile photo URL or use placeholder
-  const photoUrl = profileData?.photo || '/images/profilePlaceHolder.png'
+  const photoUrl = profileData?.photo || null
   const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'User'
+
+  // Generate initials from display name for avatar fallback
+  const initials = displayName
+    .split(' ')
+    .map((w: string) => w.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('')
 
   // Determine role label - use prop if provided, otherwise derive from session
   const displayRoleLabel = roleLabel || (session?.user?.role === 'COORDINATOR' ? 'Support Coordinator' : 'Client')
 
-  // Build menu items based on whether client is self-managed
+  // Build menu items based on whether client is self-managed or coordinator path
   const dynamicMenuItems = menuItems.map(item => {
-    if (item.id === 'participants' && isSelfManaged) {
-      return { ...item, name: 'Client' }
+    if (item.id === 'participants') {
+      if (isSelfManaged) return { ...item, name: 'Client' }
+      if (basePath.includes('supportcoordinators')) return { ...item, name: 'Clients' }
     }
     return item
   })
@@ -136,14 +143,32 @@ export default function ClientSidebar({
       {/* Profile Section */}
       <div className="sidebar-profile-section">
         <div className="sidebar-profile-avatar">
-          <Image
-            src={photoUrl}
-            alt={displayName}
-            width={64}
-            height={64}
-            className="sidebar-profile-img"
-            unoptimized={photoUrl?.includes('blob.vercel-storage.com')}
-          />
+          {photoUrl ? (
+            <Image
+              src={photoUrl}
+              alt={displayName}
+              width={64}
+              height={64}
+              className="sidebar-profile-img"
+              unoptimized={photoUrl.includes('blob.vercel-storage.com')}
+            />
+          ) : (
+            <div
+              style={{
+                backgroundColor: '#f97316',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                color: '#fff',
+                fontSize: '1rem',
+              }}
+            >
+              {initials}
+            </div>
+          )}
         </div>
         <div className="sidebar-profile-info">
           <h4 className="sidebar-profile-name">{displayName}</h4>

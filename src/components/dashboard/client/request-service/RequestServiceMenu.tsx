@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useRequestService, STEPS } from "./RequestServiceContext";
 
 interface SubMenuItem {
@@ -17,56 +18,6 @@ interface MenuItem {
   subItems?: SubMenuItem[];
 }
 
-const menuItems: MenuItem[] = [
-  {
-    id: "what",
-    label: "Services",
-    href: "/dashboard/client/request-service?section=what",
-  },
-  {
-    id: "where",
-    label: "Location",
-    href: "/dashboard/client/request-service?section=where",
-  },
-  {
-    id: "when",
-    label: "Schedule",
-    href: "/dashboard/client/request-service?section=when",
-  },
-  {
-    id: "details",
-    label: "Details",
-    href: "/dashboard/client/request-service?section=support-details",
-    subItems: [
-      {
-        id: "support-details",
-        label: "Support details",
-        href: "/dashboard/client/request-service?section=support-details",
-      },
-      {
-        id: "details",
-        label: "Client Info",
-        href: "/dashboard/client/request-service?section=details",
-      },
-      {
-        id: "diagnoses",
-        label: "Conditions",
-        href: "/dashboard/client/request-service?section=diagnoses",
-      },
-      {
-        id: "preferences",
-        label: "Worker preferences",
-        href: "/dashboard/client/request-service?section=preferences",
-      },
-    ],
-  },
-  {
-    id: "preview",
-    label: "Review & Submit",
-    href: "/dashboard/client/request-service?section=preview",
-  },
-];
-
 // All detail sub-section IDs for checking if we're in the details group
 const detailsSectionIds = ["support-details", "details", "diagnoses", "preferences"];
 
@@ -76,6 +27,60 @@ interface RequestServiceMenuProps {
 
 export default function RequestServiceMenu({ currentSection }: RequestServiceMenuProps) {
   const { completedSteps } = useRequestService();
+  const pathname = usePathname();
+  const basePath = pathname.includes("supportcoordinators")
+    ? "/dashboard/supportcoordinators/request-service"
+    : "/dashboard/client/request-service";
+
+  const menuItems: MenuItem[] = [
+    {
+      id: "what",
+      label: "Services",
+      href: `${basePath}?section=what`,
+    },
+    {
+      id: "where",
+      label: "Location",
+      href: `${basePath}?section=where`,
+    },
+    {
+      id: "when",
+      label: "Schedule",
+      href: `${basePath}?section=when`,
+    },
+    {
+      id: "details",
+      label: "Details",
+      href: `${basePath}?section=support-details`,
+      subItems: [
+        {
+          id: "support-details",
+          label: "Support details",
+          href: `${basePath}?section=support-details`,
+        },
+        {
+          id: "details",
+          label: "Client Info",
+          href: `${basePath}?section=details`,
+        },
+        {
+          id: "diagnoses",
+          label: "Conditions",
+          href: `${basePath}?section=diagnoses`,
+        },
+        {
+          id: "preferences",
+          label: "Worker preferences",
+          href: `${basePath}?section=preferences`,
+        },
+      ],
+    },
+    {
+      id: "preview",
+      label: "Review & Submit",
+      href: `${basePath}?section=preview`,
+    },
+  ];
 
   const isInDetailsSection = detailsSectionIds.includes(currentSection);
 

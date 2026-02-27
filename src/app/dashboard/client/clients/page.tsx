@@ -1,6 +1,6 @@
 /**
- * Participants Management Page for Support Coordinators
- * Allows support coordinators to add/edit participants they manage
+ * Participants Management Page
+ * Allows clients to add/edit participants they manage
  */
 
 import { getServerSession } from "next-auth";
@@ -14,35 +14,62 @@ import ParticipantsMasterDetail from "@/components/dashboard/client/Participants
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function SupportCoordinatorsParticipantsPage() {
+export default async function ParticipantsPage() {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {
     redirect("/login");
   }
 
-  if (session.user.role !== UserRole.COORDINATOR) {
+  if (session.user.role !== UserRole.CLIENT) {
     redirect("/unauthorized");
   }
 
-  // Fetch coordinator's profile for sidebar display
+  // Fetch client's profile for sidebar display and check if self-managed
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
+  const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true },
+    select: { firstName: true, isSelfManaged: true },
   });
-  displayName = coordinatorProfile?.firstName || displayName;
+  displayName = clientProfile?.firstName || displayName;
+  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
-  // Fetch participants connected to this coordinator from the database
-  // Include the serviceRequest to get services and location
-  const participantsData = await authPrisma.participant.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      serviceRequest: true,
-    },
-  });
+  // Use raw SQL to avoid Prisma enum error when service request status is ARCHIVED
+  type RawParticipantRow = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date | null;
+    gender: string | null;
+    fundingType: string | null;
+    relationshipToClient: string | null;
+    conditions: string[];
+    additionalInfo: string | null;
+    createdAt: Date;
+    srServices: Record<string, unknown> | null;
+    srLocation: string | null;
+  };
+
+  const participantsData = await authPrisma.$queryRaw<RawParticipantRow[]>`
+    SELECT
+      p.id,
+      p."firstName",
+      p."lastName",
+      p."dateOfBirth",
+      p.gender,
+      p."fundingType",
+      p."relationshipToClient",
+      p.conditions,
+      p."additionalInfo",
+      p."createdAt",
+      sr.services   AS "srServices",
+      sr.location   AS "srLocation"
+    FROM participants p
+    LEFT JOIN service_requests sr ON sr."participantId" = p.id
+    WHERE p."userId" = ${session.user.id}
+    ORDER BY p."createdAt" DESC
+  `;
 
   // Transform database data to match ParticipantCard interface
   const participants = participantsData.map((p) => {
@@ -50,21 +77,19 @@ export default async function SupportCoordinatorsParticipantsPage() {
     const today = new Date();
     let age: number | undefined = undefined;
 
-    if (p.dateOfBirth) {
-      const birthDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : new Date(p.dateOfBirth);
-      if (!isNaN(birthDate.getTime())) {
-        age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
+    const dobForAge = p.dateOfBirth instanceof Date ? p.dateOfBirth : (p.dateOfBirth ? new Date(p.dateOfBirth) : null);
+    if (dobForAge && !isNaN(dobForAge.getTime())) {
+      age = today.getFullYear() - dobForAge.getFullYear();
+      const monthDiff = today.getMonth() - dobForAge.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobForAge.getDate())) {
+        age--;
       }
     }
 
-    // Extract service names from serviceRequest.services JSON
+    // Extract service names from srServices JSON
     // Structure: { "category-id": { categoryName: string, subCategories: [{ id, name }] } }
     let services: string[] = [];
-    const servicesData = p.serviceRequest?.services;
+    const servicesData = p.srServices;
     if (servicesData && typeof servicesData === 'object') {
       const servicesObj = servicesData as Record<string, { categoryName?: string; subCategories?: { id: string; name: string }[] }>;
       services = Object.values(servicesObj).flatMap((category) => {
@@ -81,19 +106,21 @@ export default async function SupportCoordinatorsParticipantsPage() {
       });
     }
 
-    // Get location from serviceRequest
-    const location = p.serviceRequest?.location || undefined;
+    // Get location from service request
+    const location = p.srLocation || undefined;
 
-    // Format start date
-    const startDate = p.createdAt.toLocaleDateString('en-AU', {
+    // Format start date (raw SQL may return string or Date)
+    const createdAtDate = p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt);
+    const startDate = createdAtDate.toLocaleDateString('en-AU', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
 
     // Format dateOfBirth for edit form
-    const dateOfBirthString = p.dateOfBirth
-      ? p.dateOfBirth.toISOString().split("T")[0]
+    const dobDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : (p.dateOfBirth ? new Date(p.dateOfBirth) : null);
+    const dateOfBirthString = dobDate && !isNaN(dobDate.getTime())
+      ? dobDate.toISOString().split("T")[0]
       : null;
 
     return {
@@ -123,25 +150,26 @@ export default async function SupportCoordinatorsParticipantsPage() {
         firstName: displayName,
         photo: null,
       }}
-      basePath="/dashboard/supportcoordinators"
-      roleLabel="Support Coordinator"
+      isSelfManaged={isSelfManaged}
     >
       <div className="p-6 md:p-8">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
-            Participants
+            {isSelfManaged ? 'My Profile' : 'Clients'}
           </h1>
           <p className="text-gray-600 font-poppins mt-1">
-            Manage the participants you support
+            {isSelfManaged
+              ? 'View and manage your profile and service request'
+              : 'Manage the participants you support'}
           </p>
         </div>
 
         {/* Master-Detail Layout */}
         <ParticipantsMasterDetail
           participants={participants}
-          showRelationship={false}
-          basePath="/dashboard/supportcoordinators"
+          showRelationship={!isSelfManaged}
+          isSelfManaged={isSelfManaged}
         />
       </div>
     </ClientDashboardLayout>

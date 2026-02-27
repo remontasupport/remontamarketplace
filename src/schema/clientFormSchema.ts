@@ -37,13 +37,13 @@ export const clientFormSchema = z.object({
     }
   ).optional(),
 
-  servicesRequested: z.array(z.string()).min(1, "Please select at least one service"),
+  servicesRequested: z.array(z.string()),
   serviceSubcategories: z.array(z.string()).optional(),
-  additionalInformation: z.string().min(1, "Additional information is required"),
+  additionalInformation: z.string(),
 
   // Step 4 - Location Information
   streetAddress: z.string().optional(),
-  location: z.string().min(1, "Please enter a valid Suburb"),
+  location: z.string(),
 
   // Step 5 - Account Setup
   password: z.string()
@@ -70,6 +70,31 @@ export const clientFormSchema = z.object({
 
   // Additional fields will be added as more steps are defined
 }).superRefine((data, ctx) => {
+  // These fields are only required for non-coordinator paths
+  if (data.completingFormAs !== "coordinator") {
+    if (!data.servicesRequested || data.servicesRequested.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please select at least one service",
+        path: ["servicesRequested"],
+      });
+    }
+    if (!data.additionalInformation || data.additionalInformation.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Additional information is required",
+        path: ["additionalInformation"],
+      });
+    }
+    if (!data.location || data.location.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please enter a valid Suburb",
+        path: ["location"],
+      });
+    }
+  }
+
   // clientTypes is required for coordinator path only
   if (data.completingFormAs === "coordinator" && (!data.clientTypes || data.clientTypes.length === 0)) {
     ctx.addIssue({

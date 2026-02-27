@@ -161,6 +161,9 @@ export default function EditServiceRequestPage({
   });
   const [additionalNotes, setAdditionalNotes] = useState("");
 
+  // Form state - Additional Info (services step)
+  const [additionalInfo, setAdditionalInfo] = useState("");
+
   // Form state - Preferences
   const [preferredGender, setPreferredGender] = useState("");
   const [preferredQualities, setPreferredQualities] = useState("");
@@ -267,6 +270,9 @@ export default function EditServiceRequestPage({
             setPreferredDays(updatedDays);
           }
           if (details.description) setAdditionalNotes(details.description);
+
+          // Pre-populate Additional Info (services step)
+          if (details.specialRequirements) setAdditionalInfo(details.specialRequirements);
 
           // Pre-populate Preferences
           if (details.preferredWorkerGender) setPreferredGender(details.preferredWorkerGender);
@@ -435,6 +441,11 @@ export default function EditServiceRequestPage({
       setCurrentStep(0);
       return;
     }
+    if (!additionalInfo.trim()) {
+      setError("Please provide additional information");
+      setCurrentStep(0);
+      return;
+    }
     if (!location.trim()) {
       setError("Please enter a location");
       setCurrentStep(1);
@@ -491,7 +502,7 @@ export default function EditServiceRequestPage({
               startDate: startPreference === "specific-date" ? specificDate : undefined,
             },
             preferredWorkerGender: preferredGender || undefined,
-            specialRequirements: preferredQualities || undefined,
+            specialRequirements: additionalInfo || preferredQualities || undefined,
           },
         }),
       });
@@ -499,7 +510,7 @@ export default function EditServiceRequestPage({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to update request");
 
-      router.push("/dashboard/client/participants");
+      router.push("/dashboard/client/clients");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save changes");
@@ -566,6 +577,23 @@ export default function EditServiceRequestPage({
                   </div>
                 );
               })}
+            </div>
+
+            {/* Additional Information */}
+            <div className="mt-6">
+              <label className="block text-gray-900 font-semibold font-poppins mb-1">
+                Additional Information <span className="text-red-500">*</span>
+              </label>
+              <p className="text-gray-500 text-sm font-poppins mb-3">
+                Provide any additional context about the participant&apos;s needs.
+              </p>
+              <textarea
+                value={additionalInfo}
+                onChange={(e) => setAdditionalInfo(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none resize-none"
+                placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
+              />
             </div>
           </div>
         );
@@ -773,7 +801,7 @@ export default function EditServiceRequestPage({
 
               {/* Additional notes */}
               <div>
-                <label className="block text-gray-900 font-medium font-poppins mb-2">Anything else? (optional)</label>
+                <label className="block text-gray-900 font-medium font-poppins mb-2">Additional Info (optional)</label>
                 <p className="text-gray-500 text-sm font-poppins mb-2">Add detail about how flexible your days and times are and your preferences.</p>
                 <textarea value={additionalNotes} onChange={(e) => setAdditionalNotes(e.target.value)} rows={4} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none resize-y" placeholder="Enter any additional details..." />
               </div>

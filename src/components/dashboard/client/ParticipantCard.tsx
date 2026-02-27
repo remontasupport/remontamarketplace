@@ -76,7 +76,7 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
 
           {/* Edit Profile Button */}
           <Link
-            href={`/dashboard/client/participants/${id}/edit`}
+            href={`/dashboard/client/clients/${id}/edit`}
             className="mt-4 px-4 py-2 border-2 border-orange-500 text-orange-500 rounded-full text-sm font-medium font-poppins hover:bg-orange-50 transition-colors"
           >
             Edit Profile

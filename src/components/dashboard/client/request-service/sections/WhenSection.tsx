@@ -362,10 +362,10 @@ export default function WhenSection() {
           </div>
         </div>
 
-        {/* Anything else? */}
+        {/* Additional Info */}
         <div>
           <label className="block text-gray-900 font-medium font-poppins mb-2">
-            Anything else? (optional)
+            Additional Info (optional)
           </label>
           <p className="text-gray-500 text-sm font-poppins mb-2">
             Add detail about how flexible your days and times are and your preferences.
