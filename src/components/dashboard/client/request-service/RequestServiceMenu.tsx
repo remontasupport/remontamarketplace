@@ -19,14 +19,15 @@ interface MenuItem {
 }
 
 // All detail sub-section IDs for checking if we're in the details group
-const detailsSectionIds = ["support-details", "details", "diagnoses", "preferences"];
+const detailsSectionIds = ["support-details", "preferences"];
 
 interface RequestServiceMenuProps {
   currentSection: string;
 }
 
 export default function RequestServiceMenu({ currentSection }: RequestServiceMenuProps) {
-  const { completedSteps } = useRequestService();
+  const { completedSteps, selectedParticipantId } = useRequestService();
+  const hasClient = !!selectedParticipantId;
   const pathname = usePathname();
   const basePath = pathname.includes("supportcoordinators")
     ? "/dashboard/supportcoordinators/request-service"
@@ -57,16 +58,6 @@ export default function RequestServiceMenu({ currentSection }: RequestServiceMen
           id: "support-details",
           label: "Support details",
           href: `${basePath}?section=support-details`,
-        },
-        {
-          id: "details",
-          label: "Client Info",
-          href: `${basePath}?section=details`,
-        },
-        {
-          id: "diagnoses",
-          label: "Conditions",
-          href: `${basePath}?section=diagnoses`,
         },
         {
           id: "preferences",
@@ -109,17 +100,30 @@ export default function RequestServiceMenu({ currentSection }: RequestServiceMen
             ? item.subItems.every((sub) => isStepCompleted(sub.id))
             : isStepCompleted(item.id);
 
+          const itemDisabled = !hasClient;
+
           return (
             <div key={item.id}>
-              <Link
-                href={item.href}
-                className={`additional-details-item ${isActive && !item.subItems ? "active" : ""} ${item.subItems && isInDetailsSection ? "font-medium" : ""}`}
-              >
-                <div className={`additional-details-radio ${completed ? "completed" : ""}`}>
-                  {completed && <Check className="w-3 h-3 text-white" />}
-                </div>
-                <span className="additional-details-item-label">{item.label}</span>
-              </Link>
+              {itemDisabled ? (
+                <span
+                  className={`additional-details-item ${item.subItems && isInDetailsSection ? "font-medium" : ""}`}
+                  style={{ opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" }}
+                >
+                  <div className="additional-details-radio">
+                  </div>
+                  <span className="additional-details-item-label">{item.label}</span>
+                </span>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={`additional-details-item ${isActive && !item.subItems ? "active" : ""} ${item.subItems && isInDetailsSection ? "font-medium" : ""}`}
+                >
+                  <div className={`additional-details-radio ${completed ? "completed" : ""}`}>
+                    {completed && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="additional-details-item-label">{item.label}</span>
+                </Link>
+              )}
 
               {/* Sub-items */}
               {item.subItems && isInDetailsSection && (
@@ -128,7 +132,16 @@ export default function RequestServiceMenu({ currentSection }: RequestServiceMen
                     const isSubActive = currentSection === subItem.id;
                     const subCompleted = isStepCompleted(subItem.id);
 
-                    return (
+                    return itemDisabled ? (
+                      <span
+                        key={subItem.id}
+                        className="additional-details-item text-sm"
+                        style={{ opacity: 0.4, cursor: "not-allowed", pointerEvents: "none" }}
+                      >
+                        <div className="additional-details-radio" style={{ width: '12px', height: '12px' }} />
+                        <span className="additional-details-item-label">{subItem.label}</span>
+                      </span>
+                    ) : (
                       <Link
                         key={subItem.id}
                         href={subItem.href}

@@ -7,18 +7,15 @@ import { RequestServiceProvider, useRequestService } from "@/components/dashboar
 import WhatSection from "@/components/dashboard/client/request-service/sections/WhatSection";
 import WhereSection from "@/components/dashboard/client/request-service/sections/WhereSection";
 import WhenSection from "@/components/dashboard/client/request-service/sections/WhenSection";
-import DetailsSection from "@/components/dashboard/client/request-service/sections/DetailsSection";
-import DiagnosesSection from "@/components/dashboard/client/request-service/sections/DiagnosesSection";
 import PreferencesSection from "@/components/dashboard/client/request-service/sections/PreferencesSection";
 import SupportDetailsSection from "@/components/dashboard/client/request-service/sections/SupportDetailsSection";
 import PreviewSection from "@/components/dashboard/client/request-service/sections/PreviewSection";
 
 interface Props {
   displayName: string;
-  isSelfManaged: boolean;
 }
 
-function RequestServiceContent({ displayName, isSelfManaged }: Props) {
+function RequestServiceContent({ displayName }: Props) {
   const { currentSection } = useRequestService();
 
   const renderSection = () => {
@@ -27,8 +24,6 @@ function RequestServiceContent({ displayName, isSelfManaged }: Props) {
       case "where":       return <WhereSection />;
       case "when":        return <WhenSection />;
       case "support-details": return <SupportDetailsSection />;
-      case "details":     return <DetailsSection />;
-      case "diagnoses":   return <DiagnosesSection />;
       case "preferences": return <PreferencesSection />;
       case "preview":     return <PreviewSection />;
       default:            return <WhatSection />;
@@ -38,7 +33,6 @@ function RequestServiceContent({ displayName, isSelfManaged }: Props) {
   return (
     <ClientDashboardLayout
       profileData={{ firstName: displayName, photo: null }}
-      isSelfManaged={isSelfManaged}
     >
       <RequestServiceLayout currentSection={currentSection}>
         {renderSection()}
@@ -47,13 +41,12 @@ function RequestServiceContent({ displayName, isSelfManaged }: Props) {
   );
 }
 
-export default function RequestServiceClient({ displayName, isSelfManaged }: Props) {
+export default function RequestServiceClient({ displayName }: Props) {
   return (
     <Suspense
       fallback={
         <ClientDashboardLayout
           profileData={{ firstName: displayName, photo: null }}
-          isSelfManaged={isSelfManaged}
         >
           <div className="profile-edit-container" style={{ opacity: 0.6 }}>
             <div className="profile-edit-grid">
@@ -71,7 +64,7 @@ export default function RequestServiceClient({ displayName, isSelfManaged }: Pro
       }
     >
       <RequestServiceProvider>
-        <RequestServiceContent displayName={displayName} isSelfManaged={isSelfManaged} />
+        <RequestServiceContent displayName={displayName} />
       </RequestServiceProvider>
     </Suspense>
   );

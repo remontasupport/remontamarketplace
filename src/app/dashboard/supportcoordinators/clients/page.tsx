@@ -153,21 +153,12 @@ export default async function SupportCoordinatorsParticipantsPage() {
       roleLabel="Support Coordinator"
     >
       <div className="p-6 md:p-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
-            Clients
-          </h1>
-          <p className="text-gray-600 font-poppins mt-1">
-            Manage the participants you support
-          </p>
-        </div>
-
-        {/* Master-Detail Layout */}
         <ParticipantsMasterDetail
           participants={participants}
           showRelationship={false}
           basePath="/dashboard/supportcoordinators"
+          title="Clients"
+          subtitle="Manage the participants you support"
         />
       </div>
     </ClientDashboardLayout>

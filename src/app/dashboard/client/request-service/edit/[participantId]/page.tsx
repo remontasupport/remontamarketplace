@@ -128,7 +128,6 @@ export default function EditServiceRequestPage({
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [serviceRequest, setServiceRequest] = useState<ServiceRequestData | null>(null);
-  const [isSelfManaged, setIsSelfManaged] = useState(false);
 
   // Form state - Services
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -197,7 +196,6 @@ export default function EditServiceRequestPage({
         const participantData = await participantRes.json();
 
         setCategories(categoriesData);
-        setIsSelfManaged(participantData.isSelfManaged ?? false);
 
         const sr = participantData.data?.serviceRequest;
         if (sr) {
@@ -909,7 +907,7 @@ export default function EditServiceRequestPage({
   }
 
   return (
-    <ClientDashboardLayout profileData={{ firstName: displayName, photo: null }} isSelfManaged={isSelfManaged}>
+    <ClientDashboardLayout profileData={{ firstName: displayName, photo: null }}>
       <div className="p-6 md:p-8 max-w-4xl">
         {/* Header */}
         <div className="mb-6">

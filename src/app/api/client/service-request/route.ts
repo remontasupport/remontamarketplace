@@ -74,23 +74,48 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data
 
-    // 5. Create Participant then ServiceRequest sequentially
-    // (avoid $transaction — Neon's PgBouncer pooler doesn't support interactive transactions)
-    const participant = await authPrisma.participant.create({
-      data: {
-        userId: session.user.id,
-        firstName: data.participant.firstName,
-        lastName: data.participant.lastName,
-        dateOfBirth: data.participant.dateOfBirth
-          ? new Date(data.participant.dateOfBirth)
-          : null,
-        gender: data.participant.gender || null,
-        fundingType: data.participant.fundingType || null,
-        relationshipToClient: data.participant.relationshipToClient || null,
-        conditions: data.participant.conditions || [],
-        additionalInfo: data.participant.additionalInfo || null,
-      },
-    })
+    // 5. Resolve participant — use existing or create new
+    let participant: { id: string }
+
+    if (data.participantId) {
+      // Use existing participant (verify ownership)
+      const existing = await authPrisma.participant.findUnique({
+        where: { id: data.participantId },
+        select: { id: true, userId: true },
+      })
+
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: 'Participant not found' },
+          { status: 404 }
+        )
+      }
+
+      if (existing.userId !== session.user.id) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden' },
+          { status: 403 }
+        )
+      }
+
+      participant = existing
+    } else {
+      // Create new participant
+      const pd = data.participant!
+      participant = await authPrisma.participant.create({
+        data: {
+          userId: session.user.id,
+          firstName: pd.firstName,
+          lastName: pd.lastName,
+          dateOfBirth: pd.dateOfBirth ? new Date(pd.dateOfBirth) : null,
+          gender: pd.gender || null,
+          fundingType: pd.fundingType || null,
+          relationshipToClient: pd.relationshipToClient || null,
+          conditions: pd.conditions || [],
+          additionalInfo: pd.additionalInfo || null,
+        },
+      })
+    }
 
     const result = await authPrisma.serviceRequest.create({
       data: {

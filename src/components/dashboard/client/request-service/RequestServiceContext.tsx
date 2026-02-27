@@ -41,16 +41,6 @@ interface WhenData {
   additionalNotes: string;
 }
 
-interface DetailsData {
-  firstName: string;
-  lastName: string;
-  gender: string;
-  dobDay: string;
-  dobMonth: string;
-  dobYear: string;
-  relationshipToClient: string;
-}
-
 interface PreferencesData {
   preferredGender: string;
   preferredQualities: string;
@@ -58,16 +48,6 @@ interface PreferencesData {
 
 interface SupportDetailsData {
   jobTitle: string;
-  fundingType: string;
-  // NDIS-specific fields
-  managementType: string;
-  planManagerName: string;
-  invoiceEmail: string;
-  emailToCC: string;
-  ndisNumber: string;
-  planStartDate: string;
-  planEndDate: string;
-  ndisDob: string;
 }
 
 interface OtherServices {
@@ -108,13 +88,7 @@ export interface FormData {
   // Step 4: Support Details
   supportDetailsData: SupportDetailsData;
 
-  // Step 5: Details (Basic Information)
-  detailsData: DetailsData;
-
-  // Step 6: Diagnoses
-  selectedConditions: string[];
-
-  // Step 7: Preferences
+  // Step 5: Preferences
   preferencesData: PreferencesData;
 }
 
@@ -131,16 +105,25 @@ export const STEPS: StepConfig[] = [
   { id: "where", label: "Location", section: "where" },
   { id: "when", label: "Schedule", section: "when" },
   { id: "support-details", label: "Support details", section: "support-details", parentId: "details" },
-  { id: "details", label: "Participant", section: "details", parentId: "details" },
-  { id: "diagnoses", label: "Conditions", section: "diagnoses", parentId: "details" },
   { id: "preferences", label: "Worker preferences", section: "preferences", parentId: "details" },
   { id: "preview", label: "Review & Submit", section: "preview" },
 ];
+
+export interface SelectedParticipantData {
+  firstName: string;
+  lastName: string;
+}
 
 interface RequestServiceContextType {
   // Form data
   formData: FormData;
   updateFormData: <K extends keyof FormData>(key: K, value: FormData[K]) => void;
+
+  // Selected client
+  selectedParticipantId: string | null;
+  selectedParticipantName: string | null;
+  selectParticipant: (id: string, data: SelectedParticipantData) => void;
+  clearSelectedParticipant: () => void;
 
   // Navigation
   currentStep: number;
@@ -210,32 +193,9 @@ const initialFormData: FormData = {
   // Step 4: Support Details
   supportDetailsData: {
     jobTitle: "",
-    fundingType: "",
-    managementType: "",
-    planManagerName: "",
-    invoiceEmail: "",
-    emailToCC: "",
-    ndisNumber: "",
-    planStartDate: "",
-    planEndDate: "",
-    ndisDob: "",
   },
 
-  // Step 5: Details
-  detailsData: {
-    firstName: "",
-    lastName: "",
-    relationshipToClient: "",
-    gender: "",
-    dobDay: "",
-    dobMonth: "",
-    dobYear: "",
-  },
-
-  // Step 6: Diagnoses
-  selectedConditions: [],
-
-  // Step 7: Preferences
+  // Step 5: Preferences
   preferencesData: {
     preferredGender: "",
     preferredQualities: "",
@@ -285,6 +245,10 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submittedParticipantId, setSubmittedParticipantId] = useState<string | null>(null);
 
+  // Selected client
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
+  const [selectedParticipantName, setSelectedParticipantName] = useState<string | null>(null);
+
   // Get current step index
   const currentStep = STEPS.findIndex((step) => step.section === currentSection);
 
@@ -297,6 +261,10 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
           const parsed = JSON.parse(saved);
           setFormData(parsed.formData || initialFormData);
           setCompletedSteps(parsed.completedSteps || []);
+          if (parsed.selectedParticipantId) {
+            setSelectedParticipantId(parsed.selectedParticipantId);
+            setSelectedParticipantName(parsed.selectedParticipantName || null);
+          }
         } catch (e) {
           console.error("Failed to parse saved form data:", e);
         }
@@ -310,14 +278,25 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     if (typeof window !== "undefined" && isInitialized) {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ formData, completedSteps })
+        JSON.stringify({ formData, completedSteps, selectedParticipantId, selectedParticipantName })
       );
     }
-  }, [formData, completedSteps, isInitialized]);
+  }, [formData, completedSteps, selectedParticipantId, selectedParticipantName, isInitialized]);
 
   // Update form data
   const updateFormData = useCallback(<K extends keyof FormData>(key: K, value: FormData[K]) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // Select a client
+  const selectParticipant = useCallback((id: string, data: SelectedParticipantData) => {
+    setSelectedParticipantId(id);
+    setSelectedParticipantName(`${data.firstName} ${data.lastName}`.trim());
+  }, []);
+
+  const clearSelectedParticipant = useCallback(() => {
+    setSelectedParticipantId(null);
+    setSelectedParticipantName(null);
   }, []);
 
   // Validation for each step
@@ -354,22 +333,6 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
         if (!formData.supportDetailsData.jobTitle.trim()) {
           errors.push("Please enter a job title");
         }
-        break;
-
-      case "details":
-        if (!formData.detailsData.firstName.trim()) {
-          errors.push("Please enter the participant's first name");
-        }
-        if (!formData.detailsData.lastName.trim()) {
-          errors.push("Please enter the participant's last name");
-        }
-        if (!formData.detailsData.gender) {
-          errors.push("Please select a gender");
-        }
-        break;
-
-      case "diagnoses":
-        // Optional step - no validation required
         break;
 
       case "preferences":
@@ -442,15 +405,9 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
       return { isValid: false, error: "Please enter a job title", stepIndex: 3 };
     }
 
-    // Step 4: Participant details
-    if (!formData.detailsData.firstName.trim()) {
-      return { isValid: false, error: "Please enter the participant's first name", stepIndex: 4 };
-    }
-    if (!formData.detailsData.lastName.trim()) {
-      return { isValid: false, error: "Please enter the participant's last name", stepIndex: 4 };
-    }
-    if (!formData.detailsData.gender) {
-      return { isValid: false, error: "Please select the participant's gender", stepIndex: 4 };
+    // Require a selected client
+    if (!selectedParticipantId) {
+      return { isValid: false, error: "Please select a client before submitting", stepIndex: 0 };
     }
 
     return { isValid: true, error: null, stepIndex: null };
@@ -483,25 +440,13 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
 
       // Build the API payload
       const payload = {
-        // Participant data
-        participant: {
-          firstName: formData.detailsData.firstName,
-          lastName: formData.detailsData.lastName,
-          dateOfBirth: formData.detailsData.dobYear && formData.detailsData.dobMonth && formData.detailsData.dobDay
-            ? `${formData.detailsData.dobYear}-${formData.detailsData.dobMonth.padStart(2, "0")}-${formData.detailsData.dobDay.padStart(2, "0")}`
-            : undefined,
-          gender: formData.detailsData.gender || undefined,
-          fundingType: (formData.supportDetailsData.fundingType as "NDIS" | "AGED_CARE" | "INSURANCE" | "PRIVATE" | "OTHER") || undefined,
-          relationshipToClient: (formData.detailsData.relationshipToClient as any) || undefined,
-          conditions: formData.selectedConditions,
-          additionalInfo: formData.whatAdditionalInfo || formData.whenData.additionalNotes || undefined,
-        },
+        // Use the selected existing participant
+        participantId: selectedParticipantId,
         // Services
         services: formData.services,
         // Details
         details: {
           title: formData.supportDetailsData.jobTitle,
-          fundingType: formData.supportDetailsData.fundingType || undefined,
           description: formData.whatAdditionalInfo || formData.whenData.additionalNotes || undefined,
           schedulingPrefs: {
             preferredDays: formData.whenData.scheduling === "preferred"
@@ -522,19 +467,6 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
           },
           preferredWorkerGender: formData.preferencesData.preferredGender || undefined,
           specialRequirements: formData.preferencesData.preferredQualities || undefined,
-          // NDIS-specific fields (only included when fundingType is NDIS)
-          ...(formData.supportDetailsData.fundingType === "NDIS" ? {
-            ndisDetails: {
-              managementType: formData.supportDetailsData.managementType || undefined,
-              planManagerName: formData.supportDetailsData.planManagerName || undefined,
-              invoiceEmail: formData.supportDetailsData.invoiceEmail || undefined,
-              emailToCC: formData.supportDetailsData.emailToCC || undefined,
-              ndisNumber: formData.supportDetailsData.ndisNumber || undefined,
-              planStartDate: formData.supportDetailsData.planStartDate || undefined,
-              planEndDate: formData.supportDetailsData.planEndDate || undefined,
-              dateOfBirth: formData.supportDetailsData.ndisDob || undefined,
-            },
-          } : {}),
         },
         // Location as string
         location: locationString,
@@ -573,6 +505,10 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
   const value: RequestServiceContextType = {
     formData,
     updateFormData,
+    selectedParticipantId,
+    selectedParticipantName,
+    selectParticipant,
+    clearSelectedParticipant,
     currentStep,
     currentSection,
     goToNext,

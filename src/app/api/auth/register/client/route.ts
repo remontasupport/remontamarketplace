@@ -1,10 +1,6 @@
 /**
  * Client Registration API Endpoint
  *
- * Handles both "self" and "client" registration paths:
- * - Self: Person registering for themselves (isSelfManaged: true)
- * - Client: Person registering on behalf of someone else (isSelfManaged: false)
- *
  * Creates User + ClientProfile + Participant + ServiceRequest.
  * - ClientProfile: User's contact info (firstName, lastName, mobile)
  * - Participant: Person needing support (personal info)
@@ -17,12 +13,11 @@
  *   firstName: string,
  *   lastName: string,
  *   mobile: string,
- *   isSelfManaged: boolean,
  *   fundingType: 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER',
  *   relationshipToClient: 'PARENT' | 'LEGAL_GUARDIAN' | 'SPOUSE_PARTNER' | 'CHILDREN' | 'OTHER',
  *   dateOfBirth?: string,
- *   clientFirstName?: string,  // Required when isSelfManaged is false
- *   clientLastName?: string,   // Required when isSelfManaged is false
+ *   clientFirstName?: string,
+ *   clientLastName?: string,
  *   servicesRequested: { [categoryId]: { categoryName, subCategories: [{id, name}] } },
  *   additionalInfo?: string,
  *   location: string,
@@ -127,13 +122,12 @@ export async function POST(request: Request) {
               status: 'ACTIVE',
               updatedAt: new Date(),
 
-              // ClientProfile: User's contact info and self-managed status
+              // ClientProfile: User's contact info
               clientProfile: {
                 create: {
                   firstName: data.firstName,
                   lastName: data.lastName,
                   mobile: data.mobile,
-                  isSelfManaged: data.isSelfManaged,
                   updatedAt: new Date(),
                 },
               },
@@ -201,7 +195,7 @@ export async function POST(request: Request) {
           userId: user.id,
           action: 'LOGIN_SUCCESS',
           metadata: {
-            registrationType: data.isSelfManaged ? 'CLIENT_SELF' : 'CLIENT_REPRESENTATIVE',
+            registrationType: 'CLIENT',
             fundingType: data.fundingType,
           },
         },
@@ -232,7 +226,7 @@ export async function POST(request: Request) {
             fundingType: participant.fundingType,
             relationshipToClient: participant.relationshipToClient,
           },
-          registrationType: data.isSelfManaged ? 'self' : 'client',
+          registrationType: 'client',
         },
         { status: 201 }
       );

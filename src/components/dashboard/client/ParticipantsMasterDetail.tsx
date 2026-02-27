@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Plus } from "lucide-react";
+import { BRAND_COLORS } from "@/lib/constants";
 import ParticipantListItem from "./ParticipantListItem";
 import ParticipantDetailPanel from "./ParticipantDetailPanel";
 import EditParticipantModal from "./EditParticipantModal";
+import AddClientModal from "./AddClientModal";
 
 export interface ParticipantData {
   id: string;
@@ -33,14 +34,16 @@ interface ParticipantsMasterDetailProps {
   participants: ParticipantData[];
   showRelationship?: boolean;
   basePath?: string;
-  isSelfManaged?: boolean;
+  title: string;
+  subtitle: string;
 }
 
 export default function ParticipantsMasterDetail({
   participants: initialParticipants,
   showRelationship = true,
   basePath = '/dashboard/client',
-  isSelfManaged = false,
+  title,
+  subtitle,
 }: ParticipantsMasterDetailProps) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
@@ -48,6 +51,7 @@ export default function ParticipantsMasterDetail({
     participants.length > 0 ? participants[0].id : null
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const selectedParticipant = participants.find((p) => p.id === selectedId) || null;
 
@@ -74,6 +78,19 @@ export default function ParticipantsMasterDetail({
 
   const handleEditClick = () => {
     setIsEditModalOpen(true);
+  };
+
+  const handleAddParticipant = (newParticipant: { id: string; firstName: string; lastName: string; name: string }) => {
+    const added: ParticipantData = {
+      id: newParticipant.id,
+      name: newParticipant.name,
+      preferredName: newParticipant.firstName,
+      firstName: newParticipant.firstName,
+      lastName: newParticipant.lastName,
+    };
+    setParticipants((prev) => [added, ...prev]);
+    setSelectedId(newParticipant.id);
+    router.refresh();
   };
 
   const handleSaveParticipant = async (data: {
@@ -130,36 +147,44 @@ export default function ParticipantsMasterDetail({
     router.refresh();
   };
 
-  if (participants.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Plus className="w-8 h-8 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
-          {isSelfManaged ? "Profile not found" : "No participants yet"}
-        </h3>
-        <p className="text-gray-600 font-poppins mb-6">
-          {isSelfManaged
-            ? "Your profile information could not be loaded. Please contact support."
-            : "Add your first participant to get started with requesting support services."}
-        </p>
-        {!isSelfManaged && (
-          <Link
-            href={`${basePath}/request-service`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium font-poppins hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Participant
-          </Link>
-        )}
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* Mobile Layout */}
+      {/* Page header + Add Client button on the same row */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
+            {title}
+          </h1>
+          <p className="text-gray-600 font-poppins mt-1">{subtitle}</p>
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium font-poppins text-sm text-white transition-colors hover:opacity-90 flex-shrink-0 ml-4"
+          style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
+        >
+          <Plus className="w-4 h-4" />
+          Add Client
+        </button>
+      </div>
+
+      {/* Empty state */}
+      {participants.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Plus className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
+            No clients yet
+          </h3>
+          <p className="text-gray-600 font-poppins">
+            Click &quot;Add Client&quot; above to add your first client.
+          </p>
+        </div>
+      )}
+
+      {/* Mobile + Desktop Layouts */}
+      {participants.length > 0 && (
+      <>
       <div className="lg:hidden">
         {/* Show list when no participant selected, or show detail with back button */}
         {!selectedId ? (
@@ -220,6 +245,8 @@ export default function ParticipantsMasterDetail({
           />
         </div>
       </div>
+      </>
+      )}
 
       {/* Edit Modal */}
       <EditParticipantModal
@@ -227,6 +254,14 @@ export default function ParticipantsMasterDetail({
         onClose={() => setIsEditModalOpen(false)}
         participant={getEditData()}
         onSave={handleSaveParticipant}
+        showRelationship={showRelationship}
+      />
+
+      {/* Add Client Modal */}
+      <AddClientModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddParticipant}
         showRelationship={showRelationship}
       />
     </>

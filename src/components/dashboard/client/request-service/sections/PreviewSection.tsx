@@ -50,7 +50,7 @@ const frequencyLabels: Record<string, string> = {
 };
 
 export default function PreviewSection() {
-  const { formData, submitError, submitSuccess } = useRequestService();
+  const { formData, submitError, submitSuccess, selectedParticipantName } = useRequestService();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -65,14 +65,11 @@ export default function PreviewSection() {
     services,
     selectedLocation,
     whenData,
-    detailsData,
-    selectedConditions,
     preferencesData,
     supportDetailsData,
   } = formData;
 
-  const participantName = detailsData.firstName || "Participant";
-  const participantFullName = `${detailsData.firstName} ${detailsData.lastName}`.trim() || "Participant";
+  const participantName = selectedParticipantName || "Participant";
   const hasServices = Object.keys(services).length > 0;
 
   // Format time for display
@@ -195,7 +192,7 @@ export default function PreviewSection() {
                 <p className="text-gray-700 font-poppins">
                   <span className="font-medium">{frequencyLabels[whenData.frequency] || whenData.frequency}</span>
                   {", "}
-                  {whenData.hoursPerWeek} hours, {whenData.sessionsPerWeek} session{whenData.sessionsPerWeek !== 1 ? "s" : ""}
+                  {whenData.hoursPerPeriod} hours, {whenData.sessionsPerPeriod} session{whenData.sessionsPerPeriod !== 1 ? "s" : ""}
                 </p>
 
                 {whenData.startPreference && (
@@ -240,39 +237,10 @@ export default function PreviewSection() {
               </div>
             </div>
 
-            {/* Get to know participant */}
-            <div className="border-t border-gray-200 pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xl font-semibold text-gray-900 font-poppins">Get to know {participantName}</h4>
-                <Link
-                  href={`${basePath}?section=details`}
-                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-poppins"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit information about {participantName}
-                </Link>
-              </div>
-
-              {selectedConditions.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {selectedConditions.map((condition, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 font-poppins"
-                    >
-                      {condition}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 font-poppins">No information provided.</p>
-              )}
-            </div>
-
             {/* Preferences */}
             <div className="border-t border-gray-200 pt-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xl font-semibold text-gray-900 font-poppins">{participantName}'s preferences</h4>
+                <h4 className="text-xl font-semibold text-gray-900 font-poppins">{participantName}&apos;s preferences</h4>
                 <Link
                   href={`${basePath}?section=preferences`}
                   className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-poppins"

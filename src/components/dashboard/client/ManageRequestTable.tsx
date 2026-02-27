@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
 import Loader from '@/components/ui/Loader'
@@ -22,6 +23,7 @@ interface Worker {
 
 interface ServiceRequest {
   id: string
+  participantId: string
   participantName: string
   location: string
   assignedWorkerIds: string[]
@@ -31,6 +33,7 @@ interface ServiceRequest {
 
 interface ManageRequestTableProps {
   requests: ServiceRequest[]
+  basePath: string
 }
 
 const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: string; textColor: string; dotColor: string }> = {
@@ -72,7 +75,8 @@ const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: strin
   },
 }
 
-export default function ManageRequestTable({ requests: initialRequests }: ManageRequestTableProps) {
+export default function ManageRequestTable({ requests: initialRequests, basePath }: ManageRequestTableProps) {
+  const router = useRouter()
   const [requests, setRequests] = useState(initialRequests)
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
   const [workers, setWorkers] = useState<Worker[]>([])
@@ -177,7 +181,8 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
           return (
             <div
               key={request.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+              onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow"
             >
               {/* Header: Participant + Status + Archive */}
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -192,7 +197,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                     {status.label}
                   </span>
                   <button
-                    onClick={() => handleArchive(request.id)}
+                    onClick={(e) => { e.stopPropagation(); handleArchive(request.id); }}
                     disabled={isArchiving === request.id}
                     className="text-xs font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                   >
@@ -202,7 +207,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
               </div>
 
               <button
-                onClick={() => openModal(request)}
+                onClick={(e) => { e.stopPropagation(); openModal(request); }}
                 disabled={!request.selectedWorker && request.assignedWorkerIds.length === 0}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins transition-opacity ${!request.selectedWorker && request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
               >
@@ -239,7 +244,11 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                 const status = statusConfig[request.status]
 
                 return (
-                  <tr key={request.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={request.id}
+                    onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     {/* Participant Column */}
                     <td className="px-6 py-5 text-center">
                       <div className="flex flex-col items-center">
@@ -252,7 +261,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                     {/* Workers Column */}
                     <td className="px-6 py-5 text-center">
                       <button
-                        onClick={() => openModal(request)}
+                        onClick={(e) => { e.stopPropagation(); openModal(request); }}
                         disabled={!request.selectedWorker && request.assignedWorkerIds.length === 0}
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins transition-opacity ${!request.selectedWorker && request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
                       >
@@ -272,7 +281,7 @@ export default function ManageRequestTable({ requests: initialRequests }: Manage
                     {/* Archive Column */}
                     <td className="px-6 py-5 text-center">
                       <button
-                        onClick={() => handleArchive(request.id)}
+                        onClick={(e) => { e.stopPropagation(); handleArchive(request.id); }}
                         disabled={isArchiving === request.id}
                         className="text-sm font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
                       >

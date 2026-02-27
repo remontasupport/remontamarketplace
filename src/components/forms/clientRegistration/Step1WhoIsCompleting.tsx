@@ -12,7 +12,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-poppins font-semibold text-gray-900">
-          We can help you create an account in a few easy steps. Who needs support?
+          We can help you create an account in a few easy steps. Who is this account for?
         </h2>
       </div>
 
@@ -32,7 +32,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
               }`}
             >
               <span className="text-base font-poppins text-gray-800">
-                Me/Self manage
+                I manage Clients
               </span>
               <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
             </button>

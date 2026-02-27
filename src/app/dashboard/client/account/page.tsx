@@ -29,10 +29,9 @@ export default async function AccountPage() {
 
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
   displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
   return (
     <ClientDashboardLayout
@@ -40,7 +39,6 @@ export default async function AccountPage() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
     >
       <div className="p-6">
         <h1 className="text-2xl font-semibold font-poppins text-gray-900 mb-4">

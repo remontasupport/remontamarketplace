@@ -96,7 +96,7 @@ model Participant {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
-  serviceRequest ServiceRequest?
+  serviceRequests ServiceRequest[]
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -535,7 +535,7 @@ enum RelationshipType {
 model ServiceRequest {
   id             String               @id @default(cuid())
   requesterId    String
-  participantId  String               @unique
+  participantId  String
   services       Json
   details        Json
   location       String

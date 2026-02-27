@@ -90,7 +90,6 @@ export const clientRegistrationSchema = z.object({
   mobile: phoneValidation,
 
   // Client-specific
-  isSelfManaged: z.boolean(),
   fundingType: fundingTypeEnum,
   relationshipToClient: relationshipTypeEnum,
 

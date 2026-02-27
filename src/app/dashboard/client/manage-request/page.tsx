@@ -30,10 +30,9 @@ export default async function ManageRequestPage() {
 
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
   displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
   // Fetch service requests for this user with participant data
   const serviceRequests = await authPrisma.serviceRequest.findMany({
@@ -51,6 +50,7 @@ export default async function ManageRequestPage() {
 
     return {
       id: sr.id,
+      participantId: sr.participantId,
       participantName: `${sr.participant.firstName} ${sr.participant.lastName}`,
       location: sr.location,
       assignedWorkerIds,
@@ -65,7 +65,6 @@ export default async function ManageRequestPage() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
     >
       <div className="p-6 md:p-8">
         {/* Header */}
@@ -79,7 +78,7 @@ export default async function ManageRequestPage() {
         </div>
 
         {/* Request Table */}
-        <ManageRequestTable requests={requests} />
+        <ManageRequestTable requests={requests} basePath="/dashboard/client" />
       </div>
     </ClientDashboardLayout>
   );

@@ -30,10 +30,9 @@ export default async function ParticipantsPage() {
 
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
   displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
   // Use raw SQL to avoid Prisma enum error when service request status is ARCHIVED
   type RawParticipantRow = {
@@ -150,26 +149,13 @@ export default async function ParticipantsPage() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
     >
       <div className="p-6 md:p-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
-            {isSelfManaged ? 'My Profile' : 'Clients'}
-          </h1>
-          <p className="text-gray-600 font-poppins mt-1">
-            {isSelfManaged
-              ? 'View and manage your profile and service request'
-              : 'Manage the participants you support'}
-          </p>
-        </div>
-
-        {/* Master-Detail Layout */}
         <ParticipantsMasterDetail
           participants={participants}
-          showRelationship={!isSelfManaged}
-          isSelfManaged={isSelfManaged}
+          showRelationship={true}
+          title="Clients"
+          subtitle="Manage the participants you support"
         />
       </div>
     </ClientDashboardLayout>

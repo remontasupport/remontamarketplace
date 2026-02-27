@@ -49,6 +49,7 @@ export default async function SupportCoordinatorsManageRequestPage() {
     const assignedWorkerIds = Array.isArray(workerIds) ? [...new Set(workerIds)] : [];
     return {
       id: sr.id,
+      participantId: sr.participantId,
       participantName: `${sr.participant.firstName} ${sr.participant.lastName}`,
       location: sr.location,
       assignedWorkerIds,
@@ -78,7 +79,7 @@ export default async function SupportCoordinatorsManageRequestPage() {
         </div>
 
         {/* Request Table */}
-        <ManageRequestTable requests={requests} />
+        <ManageRequestTable requests={requests} basePath="/dashboard/supportcoordinators" />
       </div>
     </ClientDashboardLayout>
   );

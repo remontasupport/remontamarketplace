@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Pencil, MapPin, Calendar, User, Heart, Cake } from "lucide-react";
+import { Pencil, Calendar, User, Heart, Cake } from "lucide-react";
 
 interface ParticipantDetailPanelProps {
   participant: {
@@ -51,13 +51,10 @@ export default function ParticipantDetailPanel({
   const {
     id,
     name,
-    preferredName,
     photo,
     gender,
     age,
     dateOfBirth,
-    location,
-    services,
     relationshipToClient,
     additionalInfo,
   } = participant;
@@ -74,8 +71,7 @@ export default function ParticipantDetailPanel({
     });
   };
 
-  const displayName = preferredName || name;
-  const initials = displayName
+  const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -110,20 +106,11 @@ export default function ParticipantDetailPanel({
               )}
             </div>
 
-            {/* Name & Location */}
+            {/* Name */}
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 font-poppins">
-                {displayName}
+                {name}
               </h2>
-              {preferredName && preferredName !== name && (
-                <p className="text-sm text-gray-500 font-poppins">({name})</p>
-              )}
-              {location && (
-                <div className="flex items-center gap-1 mt-1 text-gray-600">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm font-poppins">{location}</span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -195,27 +182,6 @@ export default function ParticipantDetailPanel({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Services Section */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 font-poppins">
-            Services Requested
-          </h3>
-          {services && services.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {services.map((service, index) => (
-                <span
-                  key={index}
-                  className="inline-block px-3 py-1.5 bg-indigo-50 text-indigo-700 text-sm font-medium rounded-lg"
-                >
-                  {service}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 font-poppins">No services specified</p>
-          )}
         </div>
 
         {/* Conditions Section */}

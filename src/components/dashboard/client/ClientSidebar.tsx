@@ -63,7 +63,6 @@ interface ClientSidebarProps {
   }
   basePath?: string // Base path for navigation (e.g., '/dashboard/client' or '/dashboard/supportcoordinators')
   roleLabel?: string // Label to show in profile section (e.g., 'Client' or 'Support Coordinator')
-  isSelfManaged?: boolean // If true, show "My Profile" instead of "Participants" and hide add participant
 }
 
 export default function ClientSidebar({
@@ -72,7 +71,6 @@ export default function ClientSidebar({
   profileData,
   basePath = '/dashboard/client',
   roleLabel,
-  isSelfManaged = false
 }: ClientSidebarProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
@@ -91,14 +89,6 @@ export default function ClientSidebar({
   // Determine role label - use prop if provided, otherwise derive from session
   const displayRoleLabel = roleLabel || (session?.user?.role === 'COORDINATOR' ? 'Support Coordinator' : 'Client')
 
-  // Build menu items based on whether client is self-managed or coordinator path
-  const dynamicMenuItems = menuItems.map(item => {
-    if (item.id === 'participants') {
-      if (isSelfManaged) return { ...item, name: 'Client' }
-      if (basePath.includes('supportcoordinators')) return { ...item, name: 'Clients' }
-    }
-    return item
-  })
 
   // Handle link click on mobile - close menu
   const handleLinkClick = () => {
@@ -180,7 +170,7 @@ export default function ClientSidebar({
       <nav className="sidebar-nav">
         <div className="nav-section">
           <ul className="nav-list">
-            {dynamicMenuItems.map((item) => {
+            {menuItems.map((item) => {
 
               const href = `${basePath}${item.path}`
               const isActive = pathname === href

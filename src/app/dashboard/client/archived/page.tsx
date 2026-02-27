@@ -38,10 +38,9 @@ export default async function ArchivedPage() {
   let displayName = session.user.email?.split('@')[0] || 'User'
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   })
   displayName = clientProfile?.firstName || displayName
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false
 
   // Use raw SQL to fetch ARCHIVED requests (Prisma client doesn't have the enum value)
   const rows = await authPrisma.$queryRaw<RawArchivedRow[]>`
@@ -72,7 +71,6 @@ export default async function ArchivedPage() {
   return (
     <ClientDashboardLayout
       profileData={{ firstName: displayName, photo: null }}
-      isSelfManaged={isSelfManaged}
     >
       <div className="p-6 md:p-8">
         {/* Header */}

@@ -97,24 +97,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       WHERE "participantId" = ${id}
     `
 
-    // 6. Fetch client profile to get isSelfManaged status
-    let isSelfManaged = false
-    if (userRole === UserRole.CLIENT) {
-      const clientProfile = await authPrisma.clientProfile.findUnique({
-        where: { userId: session.user.id },
-        select: { isSelfManaged: true },
-      })
-      isSelfManaged = clientProfile?.isSelfManaged ?? false
-    }
-
-    // 7. Return response
+    // 6. Return response
     return NextResponse.json({
       success: true,
       data: {
         ...participant,
         serviceRequest: serviceRequest ?? null,
       },
-      isSelfManaged,
     })
   } catch (error) {
     console.error('[Participant API] GET Error:', error)

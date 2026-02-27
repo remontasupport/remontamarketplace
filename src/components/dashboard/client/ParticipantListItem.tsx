@@ -18,10 +18,9 @@ export default function ParticipantListItem({
   isSelected,
   onClick,
 }: ParticipantListItemProps) {
-  const { name, preferredName, photo, location, services } = participant;
+  const { name, photo } = participant;
 
-  const displayName = preferredName || name;
-  const initials = displayName
+  const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -37,13 +36,13 @@ export default function ParticipantListItem({
           : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         {/* Avatar */}
         <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
           {photo ? (
             <img
               src={photo}
-              alt={displayName}
+              alt={name}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -53,25 +52,11 @@ export default function ParticipantListItem({
           )}
         </div>
 
-        {/* Info */}
+        {/* Name */}
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 font-poppins truncate">
-            {displayName}
+            {name}
           </h3>
-          {location && (
-            <p className="text-sm text-gray-500 font-poppins truncate mt-0.5">
-              {location}
-            </p>
-          )}
-
-          {/* Tags row */}
-          {services && services.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              <span className="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
-                {services.length} service{services.length > 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </button>

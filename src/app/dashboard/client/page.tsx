@@ -29,15 +29,14 @@ export default async function ClientDashboard() {
     redirect("/unauthorized");
   }
 
-  // Fetch client's profile and check if self-managed
+  // Fetch client's profile for sidebar display
   let displayName = session.user.email?.split('@')[0] || 'User';
 
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
   displayName = clientProfile?.firstName || displayName;
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
   return (
     <ClientDashboardLayout
@@ -45,7 +44,6 @@ export default async function ClientDashboard() {
         firstName: displayName,
         photo: null,
       }}
-      isSelfManaged={isSelfManaged}
     >
       {/* Main Content */}
       <div className="px-6 py-4 md:px-10 md:py-6 lg:px-12">

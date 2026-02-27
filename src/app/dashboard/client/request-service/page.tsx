@@ -13,14 +13,13 @@ export default async function RequestServicePage() {
 
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true, isSelfManaged: true },
+    select: { firstName: true },
   });
 
   const displayName =
     clientProfile?.firstName ||
     session.user.email?.split("@")[0] ||
     "User";
-  const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
-  return <RequestServiceClient displayName={displayName} isSelfManaged={isSelfManaged} />;
+  return <RequestServiceClient displayName={displayName} />;
 }

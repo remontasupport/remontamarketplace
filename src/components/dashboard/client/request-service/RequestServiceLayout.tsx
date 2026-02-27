@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import RequestServiceMenu from "./RequestServiceMenu";
+import ClientListPanel from "./ClientListPanel";
 
 interface RequestServiceLayoutProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ export default function RequestServiceLayout({ children, currentSection }: Reque
         {/* Left: Menu - Hidden on mobile */}
         <div className="profile-edit-sidebar hide-on-mobile">
           <RequestServiceMenu currentSection={currentSection} />
+          <ClientListPanel />
         </div>
 
         {/* Right: Content Area */}

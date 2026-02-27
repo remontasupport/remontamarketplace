@@ -258,14 +258,11 @@ export default function ClientsRegistration() {
         // Client or Self registration
         endpoint = '/api/auth/register/client';
         successPath = '/registration/clients/success';
-        const isSelfManaged = data.completingFormAs === 'self';
-
         payload = {
           firstName: data.firstName,
           lastName: data.lastName,
           mobile: data.phoneNumber,
-          isSelfManaged,
-          fundingType: isSelfManaged ? 'OTHER' : FUNDING_TYPE_MAP[data.fundingType || 'other'],
+          fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
           relationshipToClient: RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
           dateOfBirth: data.clientDateOfBirth,
           clientFirstName: data.clientFirstName,
