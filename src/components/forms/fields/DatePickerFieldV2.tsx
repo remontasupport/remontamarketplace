@@ -24,6 +24,7 @@ interface DatePickerFieldProps {
   disabled?: boolean;
   minDate?: Date;
   maxDate?: Date;
+  dialogTitle?: string;
 }
 
 export default function DatePickerField({
@@ -39,6 +40,7 @@ export default function DatePickerField({
   disabled = false,
   minDate = new Date(1920, 0, 1),
   maxDate = new Date(),
+  dialogTitle = "Select Date of Birth",
 }: DatePickerFieldProps) {
   const [open, setOpen] = React.useState(false);
   // Parse date string safely without timezone issues
@@ -143,7 +145,7 @@ export default function DatePickerField({
                 fontFamily: "var(--font-poppins)",
               }}
             >
-              Select Date of Birth
+              {dialogTitle}
             </Dialog.Title>
 
             {/* Calendar */}

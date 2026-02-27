@@ -27,6 +27,7 @@ const updateParticipantSchema = z.object({
   dateOfBirth: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
   relationshipToClient: z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'MYSELF', 'OTHER']).optional().nullable(),
+  fundingType: z.string().optional().nullable(),
   conditions: z.array(z.string()).optional(),
   additionalInfo: z.string().optional().nullable(),
 })
@@ -194,6 +195,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         }),
         ...(data.gender !== undefined && { gender: data.gender }),
         ...(data.relationshipToClient !== undefined && { relationshipToClient: data.relationshipToClient }),
+        ...(data.fundingType !== undefined && { fundingType: data.fundingType }),
         ...(data.conditions !== undefined && { conditions: data.conditions }),
         ...(data.additionalInfo !== undefined && { additionalInfo: data.additionalInfo }),
       },

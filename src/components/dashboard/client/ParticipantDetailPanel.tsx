@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Pencil, Calendar, User, Heart, Cake } from "lucide-react";
+import { Pencil, Calendar, User, Heart, Cake, ChevronDown } from "lucide-react";
 
 interface ParticipantDetailPanelProps {
   participant: {
@@ -23,15 +23,15 @@ interface ParticipantDetailPanelProps {
   } | null;
   onEditClick?: () => void;
   showRelationship?: boolean;
-  basePath?: string;
 }
 
 export default function ParticipantDetailPanel({
   participant,
   onEditClick,
   showRelationship = true,
-  basePath = '/dashboard/client',
 }: ParticipantDetailPanelProps) {
+  const [isNdisExpanded, setIsNdisExpanded] = useState(false);
+
   if (!participant) {
     return (
       <div className="bg-white rounded-2xl border border-gray-200 p-8 h-full flex flex-col items-center justify-center text-center">
@@ -58,6 +58,39 @@ export default function ParticipantDetailPanel({
     relationshipToClient,
     additionalInfo,
   } = participant;
+
+  // Parse additionalInfo — may be JSON with { notes, ndisDetails } or plain text
+  type NdisDetails = {
+    managementType?: string;
+    planManagerName?: string;
+    invoiceEmail?: string;
+    emailToCC?: string;
+    ndisNumber?: string;
+    planStartDate?: string;
+    planEndDate?: string;
+    ndisDob?: string;
+  };
+  type ParsedAdditionalInfo = { notes?: string; ndisDetails?: NdisDetails };
+
+  let parsedInfo: ParsedAdditionalInfo | null = null;
+  try {
+    if (additionalInfo) {
+      const p = JSON.parse(additionalInfo);
+      if (typeof p === "object" && p !== null) parsedInfo = p as ParsedAdditionalInfo;
+    }
+  } catch {
+    // plain text — render as-is
+  }
+
+  const formatManagementType = (type?: string) =>
+    type ? type.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
+
+  const formatShortDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+  };
 
   // Format date of birth for display
   const formatDateOfBirth = (dob?: string | null) => {
@@ -94,7 +127,7 @@ export default function ParticipantDetailPanel({
               {photo ? (
                 <Image
                   src={photo}
-                  alt={displayName}
+                  alt={name}
                   width={80}
                   height={80}
                   className="w-full h-full object-cover"
@@ -124,13 +157,6 @@ export default function ParticipantDetailPanel({
               <Pencil className="w-3.5 h-3.5" />
               Edit Profile
             </button>
-            <Link
-              href={`${basePath}/request-service/edit/${participant.id}`}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins text-white transition-colors hover:opacity-90"
-              style={{ backgroundColor: '#0C1628' }}
-            >
-              Modify Request
-            </Link>
           </div>
         </div>
       </div>
@@ -211,11 +237,87 @@ export default function ParticipantDetailPanel({
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 font-poppins">
               Additional Information
             </h3>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700 font-poppins whitespace-pre-wrap">
-                {additionalInfo}
-              </p>
-            </div>
+            {parsedInfo ? (
+              <div className="space-y-3">
+                {/* Notes */}
+                {parsedInfo.notes && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-500 font-poppins mb-1">Notes</p>
+                    <p className="text-sm text-gray-700 font-poppins whitespace-pre-wrap">{parsedInfo.notes}</p>
+                  </div>
+                )}
+
+                {/* NDIS Details collapsible */}
+                {parsedInfo.ndisDetails && (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setIsNdisExpanded((v) => !v)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                    >
+                      <span className="text-sm font-semibold text-gray-900 font-poppins">NDIS Details</span>
+                      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isNdisExpanded ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {isNdisExpanded && (
+                      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        {parsedInfo.ndisDetails.ndisNumber && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">NDIS Number</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{parsedInfo.ndisDetails.ndisNumber}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.managementType && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Management Type</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{formatManagementType(parsedInfo.ndisDetails.managementType)}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.planManagerName && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Plan Manager</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{parsedInfo.ndisDetails.planManagerName}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.invoiceEmail && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Invoice Email</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{parsedInfo.ndisDetails.invoiceEmail}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.emailToCC && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Email to CC</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{parsedInfo.ndisDetails.emailToCC}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.ndisDob && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Date of Birth (NDIS)</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{formatShortDate(parsedInfo.ndisDetails.ndisDob)}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.planStartDate && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Plan Start Date</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{formatShortDate(parsedInfo.ndisDetails.planStartDate)}</p>
+                          </div>
+                        )}
+                        {parsedInfo.ndisDetails.planEndDate && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-poppins">Plan End Date</p>
+                            <p className="text-sm font-medium text-gray-900 font-poppins">{formatShortDate(parsedInfo.ndisDetails.planEndDate)}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700 font-poppins whitespace-pre-wrap">{additionalInfo}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

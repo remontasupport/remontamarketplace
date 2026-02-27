@@ -3,6 +3,18 @@
 import { useState, useEffect } from "react";
 import { X, ChevronDown, Check, Plus } from "lucide-react";
 import { BRAND_COLORS } from "@/lib/constants";
+import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
+
+interface NdisDetails {
+  managementType: string;
+  planManagerName: string;
+  invoiceEmail: string;
+  emailToCC: string;
+  ndisNumber: string;
+  planStartDate: string;
+  planEndDate: string;
+  ndisDob: string;
+}
 
 interface ParticipantData {
   id: string;
@@ -11,6 +23,7 @@ interface ParticipantData {
   dateOfBirth?: string | null;
   gender?: string | null;
   relationshipToClient?: string | null;
+  fundingType?: string | null;
   conditions?: string[];
   additionalInfo?: string | null;
 }
@@ -55,6 +68,44 @@ const relationshipOptions = [
   { value: "OTHER", label: "Other" },
 ];
 
+const fundingOptions = [
+  { value: "NDIS", label: "NDIS Participant (has an active NDIS plan)" },
+  { value: "AGED_CARE", label: "Aged Care Recipient" },
+  { value: "INSURANCE", label: "Insurance-Funded Client (e.g. TAC, iCare, WorkCover)" },
+  { value: "PRIVATE", label: "Private (self-funded) Client" },
+  { value: "OTHER", label: "Other" },
+];
+
+const managementTypeOptions = [
+  { value: "PLAN_MANAGED", label: "Plan Managed" },
+  { value: "SELF_MANAGED", label: "Self Managed" },
+  { value: "AGENCY_MANAGED", label: "Agency Managed (NDIA)" },
+];
+
+const emptyNdisDetails: NdisDetails = {
+  managementType: "",
+  planManagerName: "",
+  invoiceEmail: "",
+  emailToCC: "",
+  ndisNumber: "",
+  planStartDate: "",
+  planEndDate: "",
+  ndisDob: "",
+};
+
+interface FormData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  relationshipToClient: string;
+  fundingType: string;
+  ndisDetails: NdisDetails;
+  conditions: string[];
+  notes: string; // plain-text part of additionalInfo
+}
+
 export default function EditParticipantModal({
   isOpen,
   onClose,
@@ -62,26 +113,49 @@ export default function EditParticipantModal({
   onSave,
   showRelationship = true,
 }: EditParticipantModalProps) {
-  const [formData, setFormData] = useState<ParticipantData>({
+  const [formData, setFormData] = useState<FormData>({
     id: "",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
     gender: "",
     relationshipToClient: "",
+    fundingType: "",
+    ndisDetails: emptyNdisDetails,
     conditions: [],
-    additionalInfo: "",
+    notes: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGenderOpen, setIsGenderOpen] = useState(false);
   const [isRelationshipOpen, setIsRelationshipOpen] = useState(false);
+  const [isManagementOpen, setIsManagementOpen] = useState(false);
+  const [isNdisSkipped, setIsNdisSkipped] = useState(false);
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherCondition, setOtherCondition] = useState("");
 
   // Initialize form data when participant changes
   useEffect(() => {
     if (participant) {
+      // Parse additionalInfo — may be JSON { notes, ndisDetails } or plain text
+      let notes = "";
+      let ndisDetails = emptyNdisDetails;
+
+      try {
+        if (participant.additionalInfo) {
+          const parsed = JSON.parse(participant.additionalInfo);
+          if (typeof parsed === "object" && parsed !== null) {
+            notes = parsed.notes || "";
+            if (parsed.ndisDetails) {
+              ndisDetails = { ...emptyNdisDetails, ...parsed.ndisDetails };
+            }
+          }
+        }
+      } catch {
+        // plain text
+        notes = participant.additionalInfo || "";
+      }
+
       setFormData({
         id: participant.id,
         firstName: participant.firstName || "",
@@ -89,9 +163,12 @@ export default function EditParticipantModal({
         dateOfBirth: participant.dateOfBirth || "",
         gender: participant.gender || "",
         relationshipToClient: participant.relationshipToClient || "",
+        fundingType: participant.fundingType || "",
+        ndisDetails,
         conditions: participant.conditions || [],
-        additionalInfo: participant.additionalInfo || "",
+        notes,
       });
+
       // Check if there are any custom conditions (not in the predefined list)
       const customConditions = (participant.conditions || []).filter(
         (c) => !conditionOptions.includes(c)
@@ -103,29 +180,63 @@ export default function EditParticipantModal({
         setShowOtherInput(false);
         setOtherCondition("");
       }
+
+      setIsNdisSkipped(false);
+      setError(null);
     }
   }, [participant]);
+
+  // Reset NDIS skip when funding type changes
+  useEffect(() => {
+    setIsNdisSkipped(false);
+  }, [formData.fundingType]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       setIsGenderOpen(false);
       setIsRelationshipOpen(false);
+      setIsManagementOpen(false);
     };
-
-    if (isGenderOpen || isRelationshipOpen) {
+    if (isGenderOpen || isRelationshipOpen || isManagementOpen) {
       document.addEventListener("click", handleClickOutside);
       return () => document.removeEventListener("click", handleClickOutside);
     }
-  }, [isGenderOpen, isRelationshipOpen]);
+  }, [isGenderOpen, isRelationshipOpen, isManagementOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
+    const isNdis = formData.fundingType === "NDIS";
+    const hasNdisData = isNdis && !isNdisSkipped;
+
+    // Build additionalInfo payload
+    let additionalInfoPayload: string | null = formData.notes || null;
+    if (hasNdisData) {
+      const ndis = formData.ndisDetails;
+      const hasAnyNdisField = Object.values(ndis).some((v) => v.trim() !== "");
+      if (hasAnyNdisField) {
+        additionalInfoPayload = JSON.stringify({
+          notes: formData.notes || null,
+          ndisDetails: ndis,
+        });
+      }
+    }
+
     try {
-      await onSave(formData);
+      await onSave({
+        id: formData.id,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth || null,
+        gender: formData.gender || null,
+        relationshipToClient: formData.relationshipToClient || null,
+        fundingType: formData.fundingType || null,
+        conditions: formData.conditions,
+        additionalInfo: additionalInfoPayload,
+      });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save changes");
@@ -134,23 +245,25 @@ export default function EditParticipantModal({
     }
   };
 
-  const updateField = (field: keyof ParticipantData, value: string) => {
+  const updateField = (field: keyof Omit<FormData, "ndisDetails" | "conditions">, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const updateNdisField = (field: keyof NdisDetails, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      ndisDetails: { ...prev.ndisDetails, [field]: value },
+    }));
+  };
+
   const toggleCondition = (condition: string) => {
-    const currentConditions = formData.conditions || [];
-    if (currentConditions.includes(condition)) {
-      setFormData((prev) => ({
-        ...prev,
-        conditions: currentConditions.filter((c) => c !== condition),
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        conditions: [...currentConditions, condition],
-      }));
-    }
+    const currentConditions = formData.conditions;
+    setFormData((prev) => ({
+      ...prev,
+      conditions: currentConditions.includes(condition)
+        ? currentConditions.filter((c) => c !== condition)
+        : [...currentConditions, condition],
+    }));
   };
 
   const addOtherCondition = () => {
@@ -158,12 +271,12 @@ export default function EditParticipantModal({
       const newConditions = otherCondition
         .split(",")
         .map((c) => c.trim())
-        .filter((c) => c && !(formData.conditions || []).includes(c));
+        .filter((c) => c && !formData.conditions.includes(c));
 
       if (newConditions.length > 0) {
         setFormData((prev) => ({
           ...prev,
-          conditions: [...(prev.conditions || []), ...newConditions],
+          conditions: [...prev.conditions, ...newConditions],
         }));
       }
       setOtherCondition("");
@@ -173,7 +286,7 @@ export default function EditParticipantModal({
   const removeCustomCondition = (condition: string) => {
     setFormData((prev) => ({
       ...prev,
-      conditions: (prev.conditions || []).filter((c) => c !== condition),
+      conditions: prev.conditions.filter((c) => c !== condition),
     }));
   };
 
@@ -184,17 +297,19 @@ export default function EditParticipantModal({
     relationshipOptions.find((opt) => opt.value === formData.relationshipToClient)?.label ||
     "Select relationship";
 
+  const isNdis = formData.fundingType === "NDIS";
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop - lighter blur effect */}
+      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-gray-500/20 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal container - centered relative to content area (accounting for 64px header) */}
+      {/* Modal container */}
       <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 md:p-10 md:pt-27 pointer-events-none">
         <div className="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-xl pointer-events-auto flex flex-col mt-18 sm:mt-2">
           {/* Header */}
@@ -213,7 +328,6 @@ export default function EditParticipantModal({
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
             <div className="px-4 sm:px-6 py-4 sm:py-6 overflow-y-auto flex-1">
-              {/* 2-column grid for desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* First Name */}
                 <div>
@@ -247,14 +361,12 @@ export default function EditParticipantModal({
 
                 {/* Date of Birth */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
+                  <DatePickerField
+                    label="Date of Birth"
+                    name="dateOfBirth"
                     value={formData.dateOfBirth || ""}
-                    onChange={(e) => updateField("dateOfBirth", e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
+                    onChange={(value) => updateField("dateOfBirth", value)}
+                    maxDate={new Date()}
                   />
                 </div>
 
@@ -270,6 +382,7 @@ export default function EditParticipantModal({
                         e.stopPropagation();
                         setIsGenderOpen(!isGenderOpen);
                         setIsRelationshipOpen(false);
+                        setIsManagementOpen(false);
                       }}
                       className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
                     >
@@ -320,6 +433,7 @@ export default function EditParticipantModal({
                           e.stopPropagation();
                           setIsRelationshipOpen(!isRelationshipOpen);
                           setIsGenderOpen(false);
+                          setIsManagementOpen(false);
                         }}
                         className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
                       >
@@ -349,13 +463,232 @@ export default function EditParticipantModal({
                                 formData.relationshipToClient === option.value
                                   ? "bg-indigo-50 text-indigo-900"
                                   : "text-gray-900"
-                            }`}
+                              }`}
                             >
                               {option.label}
                             </button>
                           ))}
                         </div>
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Funding Type — full width */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-900 font-poppins mb-3">
+                    Funding Type{" "}
+                    <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <div className="space-y-2">
+                    {fundingOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateField("fundingType", option.value)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 border-2 rounded-xl text-left font-poppins transition-all ${
+                          formData.fundingType === option.value
+                            ? "border-indigo-500 bg-indigo-50/50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            formData.fundingType === option.value
+                              ? "border-indigo-600"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {formData.fundingType === option.value && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                          )}
+                        </div>
+                        <span className="text-gray-900 text-sm">{option.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* NDIS Plan Details — full width, shown when NDIS selected and not skipped */}
+                {isNdis && !isNdisSkipped && (
+                  <div className="md:col-span-2 border-2 border-indigo-100 rounded-xl p-5 bg-indigo-50/30 space-y-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900 font-poppins text-sm">
+                        NDIS Plan Details
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setIsNdisSkipped(true)}
+                        className="text-sm text-indigo-600 hover:text-indigo-800 font-poppins font-medium transition-colors"
+                      >
+                        Skip for now
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Left column */}
+                      <div className="space-y-4">
+                        {/* Management Type */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Management Type
+                          </label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsManagementOpen(!isManagementOpen);
+                                setIsGenderOpen(false);
+                                setIsRelationshipOpen(false);
+                              }}
+                              className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                            >
+                              <span
+                                className={
+                                  formData.ndisDetails.managementType
+                                    ? "text-gray-900"
+                                    : "text-gray-500"
+                                }
+                              >
+                                {managementTypeOptions.find(
+                                  (o) => o.value === formData.ndisDetails.managementType
+                                )?.label || "Select management type"}
+                              </span>
+                              <ChevronDown
+                                className={`w-5 h-5 text-gray-400 transition-transform ${
+                                  isManagementOpen ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+                            {isManagementOpen && (
+                              <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg">
+                                {managementTypeOptions.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateNdisField("managementType", opt.value);
+                                      setIsManagementOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-3 font-poppins text-sm hover:bg-indigo-50 transition-colors ${
+                                      formData.ndisDetails.managementType === opt.value
+                                        ? "bg-indigo-50 text-indigo-900"
+                                        : "text-gray-900"
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Plan Manager Name */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Plan Manager Name
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.ndisDetails.planManagerName}
+                            onChange={(e) => updateNdisField("planManagerName", e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                            placeholder="Enter plan manager name"
+                          />
+                        </div>
+
+                        {/* Invoice Email */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Invoice Email
+                          </label>
+                          <input
+                            type="email"
+                            value={formData.ndisDetails.invoiceEmail}
+                            onChange={(e) => updateNdisField("invoiceEmail", e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                            placeholder="invoices@example.com"
+                          />
+                        </div>
+
+                        {/* Email to CC */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Email to CC{" "}
+                            <span className="text-gray-400 font-normal">(optional)</span>
+                          </label>
+                          <input
+                            type="email"
+                            value={formData.ndisDetails.emailToCC}
+                            onChange={(e) => updateNdisField("emailToCC", e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                            placeholder="cc@example.com"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right column */}
+                      <div className="space-y-4">
+                        {/* NDIS Number */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            NDIS Number
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.ndisDetails.ndisNumber}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, "").slice(0, 9);
+                              updateNdisField("ndisNumber", value);
+                            }}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                            placeholder="000 000 000"
+                            maxLength={9}
+                          />
+                        </div>
+
+                        {/* Plan Start Date */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Plan Start Date
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.ndisDetails.planStartDate}
+                            onChange={(e) => updateNdisField("planStartDate", e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Plan End Date */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Plan End Date
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.ndisDetails.planEndDate}
+                            onChange={(e) => updateNdisField("planEndDate", e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                          />
+                        </div>
+
+                        {/* NDIS Date of Birth */}
+                        <div>
+                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                            Date of Birth
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.ndisDetails.ndisDob}
+                            onChange={(e) => updateNdisField("ndisDob", e.target.value)}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -367,7 +700,7 @@ export default function EditParticipantModal({
                   </label>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {conditionOptions.map((condition) => {
-                      const isSelected = (formData.conditions || []).includes(condition);
+                      const isSelected = formData.conditions.includes(condition);
                       return (
                         <button
                           key={condition}
@@ -399,10 +732,10 @@ export default function EditParticipantModal({
                     </button>
                   </div>
 
-                  {/* Show custom conditions that are not in the predefined list */}
-                  {(formData.conditions || []).filter((c) => !conditionOptions.includes(c)).length > 0 && (
+                  {/* Show custom conditions */}
+                  {formData.conditions.filter((c) => !conditionOptions.includes(c)).length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {(formData.conditions || [])
+                      {formData.conditions
                         .filter((c) => !conditionOptions.includes(c))
                         .map((condition) => (
                           <span
@@ -449,14 +782,14 @@ export default function EditParticipantModal({
                   )}
                 </div>
 
-                {/* Additional Information - full width */}
+                {/* Additional Information (notes) - full width */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
                     Additional Information
                   </label>
                   <textarea
-                    value={formData.additionalInfo || ""}
-                    onChange={(e) => updateField("additionalInfo", e.target.value)}
+                    value={formData.notes}
+                    onChange={(e) => updateField("notes", e.target.value)}
                     rows={3}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none resize-none"
                     placeholder="Any additional notes about the participant..."

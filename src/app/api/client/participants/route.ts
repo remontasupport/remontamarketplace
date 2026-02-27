@@ -36,13 +36,14 @@ export async function GET() {
         p.id,
         p."firstName",
         p."lastName",
-        CASE
-          WHEN sr.status IN ('PENDING', 'MATCHED', 'ACTIVE') THEN true
-          ELSE false
-        END AS "hasPendingRequest"
+        COALESCE(
+          BOOL_OR(sr.status IN ('PENDING', 'MATCHED', 'ACTIVE')),
+          false
+        ) AS "hasPendingRequest"
       FROM participants p
       LEFT JOIN service_requests sr ON sr."participantId" = p.id
       WHERE p."userId" = ${session.user.id}
+      GROUP BY p.id, p."firstName", p."lastName", p."createdAt"
       ORDER BY p."createdAt" DESC
     `
 

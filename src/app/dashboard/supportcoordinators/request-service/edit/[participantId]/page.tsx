@@ -268,8 +268,8 @@ export default function EditServiceRequestPage({
           }
           if (details.description) setAdditionalNotes(details.description);
 
-          // Pre-populate Additional Info (services step)
-          if (details.specialRequirements) setAdditionalInfo(details.specialRequirements);
+          // Pre-populate Additional Info (participant context — stored in description)
+          if (details.description) setAdditionalInfo(details.description);
 
           // Pre-populate Preferences
           if (details.preferredWorkerGender) setPreferredGender(details.preferredWorkerGender);
@@ -480,7 +480,7 @@ export default function EditServiceRequestPage({
           location,
           details: {
             title: `Support needed: ${Object.values(services).map(s => s.categoryName).join(", ")}`,
-            description: additionalNotes || undefined,
+            description: additionalInfo || additionalNotes || undefined,
             schedulingPrefs: {
               preferredDays: scheduling === "preferred"
                 ? Object.entries(preferredDays)
@@ -499,7 +499,7 @@ export default function EditServiceRequestPage({
               startDate: startPreference === "specific-date" ? specificDate : undefined,
             },
             preferredWorkerGender: preferredGender || undefined,
-            specialRequirements: additionalInfo || preferredQualities || undefined,
+            specialRequirements: preferredQualities || undefined,
           },
         }),
       });

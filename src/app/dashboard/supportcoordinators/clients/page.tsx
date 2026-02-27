@@ -51,23 +51,26 @@ export default async function SupportCoordinatorsParticipantsPage() {
   };
 
   const participantsData = await authPrisma.$queryRaw<RawParticipantRow[]>`
-    SELECT
-      p.id,
-      p."firstName",
-      p."lastName",
-      p."dateOfBirth",
-      p.gender,
-      p."fundingType",
-      p."relationshipToClient",
-      p.conditions,
-      p."additionalInfo",
-      p."createdAt",
-      sr.services   AS "srServices",
-      sr.location   AS "srLocation"
-    FROM participants p
-    LEFT JOIN service_requests sr ON sr."participantId" = p.id
-    WHERE p."userId" = ${session.user.id}
-    ORDER BY p."createdAt" DESC
+    SELECT * FROM (
+      SELECT DISTINCT ON (p.id)
+        p.id,
+        p."firstName",
+        p."lastName",
+        p."dateOfBirth",
+        p.gender,
+        p."fundingType",
+        p."relationshipToClient",
+        p.conditions,
+        p."additionalInfo",
+        p."createdAt",
+        sr.services  AS "srServices",
+        sr.location  AS "srLocation"
+      FROM participants p
+      LEFT JOIN service_requests sr ON sr."participantId" = p.id
+      WHERE p."userId" = ${session.user.id}
+      ORDER BY p.id, sr."createdAt" DESC NULLS LAST
+    ) sub
+    ORDER BY sub."createdAt" DESC
   `;
 
   // Transform database data to match ParticipantCard interface
@@ -156,7 +159,6 @@ export default async function SupportCoordinatorsParticipantsPage() {
         <ParticipantsMasterDetail
           participants={participants}
           showRelationship={false}
-          basePath="/dashboard/supportcoordinators"
           title="Clients"
           subtitle="Manage the participants you support"
         />

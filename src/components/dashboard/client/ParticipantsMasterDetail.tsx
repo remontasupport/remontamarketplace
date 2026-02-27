@@ -33,7 +33,6 @@ export interface ParticipantData {
 interface ParticipantsMasterDetailProps {
   participants: ParticipantData[];
   showRelationship?: boolean;
-  basePath?: string;
   title: string;
   subtitle: string;
 }
@@ -41,7 +40,6 @@ interface ParticipantsMasterDetailProps {
 export default function ParticipantsMasterDetail({
   participants: initialParticipants,
   showRelationship = true,
-  basePath = '/dashboard/client',
   title,
   subtitle,
 }: ParticipantsMasterDetailProps) {
@@ -71,6 +69,7 @@ export default function ParticipantsMasterDetail({
       dateOfBirth: selectedParticipant.dateOfBirth || null,
       gender: selectedParticipant.gender || null,
       relationshipToClient: selectedParticipant.relationshipToClient || null,
+      fundingType: selectedParticipant.fundingType || null,
       conditions: selectedParticipant.conditions || [],
       additionalInfo: selectedParticipant.additionalInfo || null,
     };
@@ -100,6 +99,7 @@ export default function ParticipantsMasterDetail({
     dateOfBirth?: string | null;
     gender?: string | null;
     relationshipToClient?: string | null;
+    fundingType?: string | null;
     conditions?: string[];
     additionalInfo?: string | null;
   }) => {
@@ -112,6 +112,7 @@ export default function ParticipantsMasterDetail({
         dateOfBirth: data.dateOfBirth || null,
         gender: data.gender || null,
         relationshipToClient: data.relationshipToClient || null,
+        fundingType: data.fundingType || null,
         conditions: data.conditions || [],
         additionalInfo: data.additionalInfo || null,
       }),
@@ -136,6 +137,7 @@ export default function ParticipantsMasterDetail({
               dateOfBirth: data.dateOfBirth,
               gender: data.gender || undefined,
               relationshipToClient: data.relationshipToClient || undefined,
+              fundingType: data.fundingType || undefined,
               conditions: data.conditions || undefined,
               additionalInfo: data.additionalInfo || undefined,
             }
@@ -213,7 +215,6 @@ export default function ParticipantsMasterDetail({
               participant={selectedParticipant}
               onEditClick={handleEditClick}
               showRelationship={showRelationship}
-              basePath={basePath}
             />
           </div>
         )}
@@ -241,7 +242,6 @@ export default function ParticipantsMasterDetail({
             participant={selectedParticipant}
             onEditClick={handleEditClick}
             showRelationship={showRelationship}
-            basePath={basePath}
           />
         </div>
       </div>

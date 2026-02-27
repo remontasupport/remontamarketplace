@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, ChevronDown, Check, Plus } from "lucide-react";
 import { BRAND_COLORS } from "@/lib/constants";
+import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 
 interface NdisDetails {
   managementType: string;
@@ -322,14 +323,12 @@ export default function AddClientModal({
 
                 {/* Date of Birth */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
+                  <DatePickerField
+                    label="Date of Birth"
+                    name="dateOfBirth"
                     value={formData.dateOfBirth}
-                    onChange={(e) => updateField("dateOfBirth", e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
+                    onChange={(value) => updateField("dateOfBirth", value)}
+                    maxDate={new Date()}
                   />
                 </div>
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Check } from "lucide-react";
 import { useRequestService } from "../RequestServiceContext";
 import StepNavigation from "../StepNavigation";
+import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 
 interface DaySchedule {
   enabled: boolean;
@@ -140,8 +141,11 @@ export default function WhenSection() {
                     key={option.value}
                     type="button"
                     onClick={() => {
-                      updateField("frequency", option.value);
-                      if (option.value === "one-time") updateField("sessionsPerPeriod", 1);
+                      updateFormData("whenData", {
+                        ...whenData,
+                        frequency: option.value,
+                        ...(option.value === "one-time" ? { sessionsPerPeriod: 1 } : {}),
+                      });
                       setIsFrequencyOpen(false);
                     }}
                     className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
@@ -156,42 +160,42 @@ export default function WhenSection() {
           </div>
         </div>
 
-        {/* How many support sessions per period? */}
-        <div>
-          <label className="block text-gray-900 font-medium font-poppins mb-2">
-            {whenData.frequency === "fortnightly"
-              ? "How many support sessions per fortnight?"
-              : whenData.frequency === "monthly"
-              ? "How many support sessions per month?"
-              : whenData.frequency === "one-time"
-              ? "How many support sessions do you need in total?"
-              : "How many support sessions per week?"}
-          </label>
-          <div className="flex items-center w-28 border-2 border-gray-200 rounded-lg overflow-hidden">
-            <button
-              type="button"
-              onClick={decrementSessions}
-              className="px-2 py-2 text-gray-500 hover:bg-gray-100 transition-colors"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-            <input
-              type="number"
-              value={whenData.sessionsPerPeriod}
-              onChange={(e) => updateField("sessionsPerPeriod", Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
-              className="flex-1 text-left py-2 font-poppins text-gray-900 focus:outline-none w-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              min="1"
-              max="14"
-            />
-            <button
-              type="button"
-              onClick={incrementSessions}
-              className="px-2 py-2 text-gray-500 hover:bg-gray-100 transition-colors"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
+        {/* How many support sessions per period? — hidden for one-time */}
+        {whenData.frequency !== "one-time" && (
+          <div>
+            <label className="block text-gray-900 font-medium font-poppins mb-2">
+              {whenData.frequency === "fortnightly"
+                ? "How many support sessions per fortnight?"
+                : whenData.frequency === "monthly"
+                ? "How many support sessions per month?"
+                : "How many support sessions per week?"}
+            </label>
+            <div className="flex items-center w-28 border-2 border-gray-200 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={decrementSessions}
+                className="px-2 py-2 text-gray-500 hover:bg-gray-100 transition-colors"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              <input
+                type="number"
+                value={whenData.sessionsPerPeriod}
+                onChange={(e) => updateField("sessionsPerPeriod", Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
+                className="flex-1 text-left py-2 font-poppins text-gray-900 focus:outline-none w-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                min="1"
+                max="14"
+              />
+              <button
+                type="button"
+                onClick={incrementSessions}
+                className="px-2 py-2 text-gray-500 hover:bg-gray-100 transition-colors"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Estimated total hours per period? */}
         <div>
@@ -231,136 +235,229 @@ export default function WhenSection() {
           </div>
         </div>
 
-        {/* When would you like the support to start? */}
-        <div>
-          <label className="block text-gray-900 font-medium font-poppins mb-3">
-            When would you like the support to start?
-          </label>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="startPreference"
-                value="asap"
-                checked={whenData.startPreference === "asap"}
-                onChange={() => updateField("startPreference", "asap")}
-                className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+        {/* ONE-TIME: date + time range */}
+        {whenData.frequency === "one-time" ? (
+          <>
+            <div className="w-full md:w-96">
+              <DatePickerField
+                label="Date of the support session"
+                name="specificDateOneTime"
+                value={whenData.specificDate}
+                onChange={(value) => {
+                  updateFormData("whenData", {
+                    ...whenData,
+                    specificDate: value,
+                    startPreference: "specific-date",
+                  });
+                }}
+                minDate={new Date()}
+                maxDate={new Date(2100, 0, 1)}
+                dialogTitle="Select Session Date"
               />
-              <span className="font-poppins text-gray-700">As soon as possible</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="startPreference"
-                value="specific-date"
-                checked={whenData.startPreference === "specific-date"}
-                onChange={() => updateField("startPreference", "specific-date")}
-                className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-              />
-              <span className="font-poppins text-gray-700">From a specific date</span>
-            </label>
-            {whenData.startPreference === "specific-date" && (
-              <div className="ml-8 mt-2">
-                <input
-                  type="date"
-                  value={whenData.specificDate}
-                  onChange={(e) => updateField("specificDate", e.target.value)}
-                  className="px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
-                  min={new Date().toISOString().split("T")[0]}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Scheduling */}
-        <div>
-          <label className="block text-gray-900 font-medium font-poppins mb-3">
-            Scheduling
-          </label>
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="scheduling"
-                value="flexible"
-                checked={whenData.scheduling === "flexible"}
-                onChange={() => updateField("scheduling", "flexible")}
-                className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-              />
-              <span className="font-poppins text-gray-700">I'm flexible</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="scheduling"
-                value="preferred"
-                checked={whenData.scheduling === "preferred"}
-                onChange={() => updateField("scheduling", "preferred")}
-                className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-              />
-              <span className="font-poppins text-gray-700">I have preferred days and times</span>
-            </label>
-
-            {/* Preferred Days and Times Selection */}
-            {whenData.scheduling === "preferred" && (
-              <div className="mt-6 space-y-4">
-                <p className="text-gray-600 text-sm font-poppins">
-                  Set your start and end time for each day you're available.
-                </p>
-                {daysOfWeek.map(({ key, label }) => {
-                  const daySchedule = whenData.preferredDays[key];
-                  return (
-                    <div key={key} className="space-y-3">
-                      {/* Day Checkbox */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <div
-                          onClick={() => toggleDay(key)}
-                          className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${
-                            daySchedule.enabled
-                              ? "bg-indigo-600 border-indigo-600"
-                              : "border-gray-300 bg-white"
-                          }`}
-                        >
-                          {daySchedule.enabled && <Check className="w-4 h-4 text-white" />}
-                        </div>
-                        <span className="font-poppins font-medium text-gray-900">{label}</span>
-                      </label>
-
-                      {/* Time Inputs (shown when day is enabled) */}
-                      {daySchedule.enabled && (
-                        <div className="ml-9 flex flex-wrap gap-4">
-                          <div>
-                            <label className="block text-sm text-gray-600 font-poppins mb-1">
-                              Start time
-                            </label>
-                            <input
-                              type="time"
-                              value={daySchedule.startTime}
-                              onChange={(e) => updateDayTime(key, "startTime", e.target.value)}
-                              className="w-40 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm text-gray-600 font-poppins mb-1">
-                              End time
-                            </label>
-                            <input
-                              type="time"
-                              value={daySchedule.endTime}
-                              onChange={(e) => updateDayTime(key, "endTime", e.target.value)}
-                              className="w-40 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
-                            />
-                          </div>
-                        </div>
+            {(() => {
+              const startTime = whenData.preferredDays.monday.startTime;
+              const endTime = whenData.preferredDays.monday.endTime;
+              let startError: string | null = null;
+              let endError: string | null = null;
+              if (startTime && !endTime) {
+                endError = "Please enter an end time";
+              } else if (!startTime && endTime) {
+                startError = "Please enter a start time";
+              } else if (startTime && endTime && endTime <= startTime) {
+                endError = "End time must be after start time";
+              }
+              return (
+                <div>
+                  <label className="block text-gray-900 font-medium font-poppins mb-3">
+                    Preferred time (optional)
+                  </label>
+                  <div className="flex flex-wrap gap-4 items-start">
+                    <div>
+                      <label className="block text-sm text-gray-600 font-poppins mb-1">Start time</label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => {
+                          updateFormData("whenData", {
+                            ...whenData,
+                            scheduling: "preferred",
+                            preferredDays: {
+                              ...whenData.preferredDays,
+                              monday: { enabled: true, startTime: e.target.value, endTime: whenData.preferredDays.monday.endTime },
+                            },
+                          });
+                        }}
+                        className={`w-40 px-4 py-2.5 border-2 rounded-lg font-poppins focus:outline-none ${
+                          startError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
+                        }`}
+                      />
+                      {startError && (
+                        <p className="mt-1 text-xs text-red-500 font-poppins">{startError}</p>
                       )}
                     </div>
-                  );
-                })}
+                    <div>
+                      <label className="block text-sm text-gray-600 font-poppins mb-1">End time</label>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => {
+                          updateFormData("whenData", {
+                            ...whenData,
+                            scheduling: "preferred",
+                            preferredDays: {
+                              ...whenData.preferredDays,
+                              monday: { enabled: true, startTime: whenData.preferredDays.monday.startTime, endTime: e.target.value },
+                            },
+                          });
+                        }}
+                        className={`w-40 px-4 py-2.5 border-2 rounded-lg font-poppins focus:outline-none ${
+                          endError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
+                        }`}
+                      />
+                      {endError && (
+                        <p className="mt-1 text-xs text-red-500 font-poppins">{endError}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </>
+        ) : (
+          <>
+            {/* RECURRING: When would you like the support to start? */}
+            <div>
+              <label className="block text-gray-900 font-medium font-poppins mb-3">
+                When would you like the support to start?
+              </label>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="startPreference"
+                    value="asap"
+                    checked={whenData.startPreference === "asap"}
+                    onChange={() => updateField("startPreference", "asap")}
+                    className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                  />
+                  <span className="font-poppins text-gray-700">As soon as possible</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="startPreference"
+                    value="specific-date"
+                    checked={whenData.startPreference === "specific-date"}
+                    onChange={() => updateField("startPreference", "specific-date")}
+                    className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                  />
+                  <span className="font-poppins text-gray-700">From a specific date</span>
+                </label>
+                {whenData.startPreference === "specific-date" && (
+                  <div className="ml-8 mt-2 w-full md:w-80">
+                    <DatePickerField
+                      label="Start date"
+                      name="specificDateRecurring"
+                      value={whenData.specificDate}
+                      onChange={(value) => updateField("specificDate", value)}
+                      minDate={new Date()}
+                      maxDate={new Date(2100, 0, 1)}
+                      dialogTitle="Select Start Date"
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+
+            {/* RECURRING: Scheduling */}
+            <div>
+              <label className="block text-gray-900 font-medium font-poppins mb-3">
+                Scheduling
+              </label>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="scheduling"
+                    value="flexible"
+                    checked={whenData.scheduling === "flexible"}
+                    onChange={() => updateField("scheduling", "flexible")}
+                    className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                  />
+                  <span className="font-poppins text-gray-700">I'm flexible</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="scheduling"
+                    value="preferred"
+                    checked={whenData.scheduling === "preferred"}
+                    onChange={() => updateField("scheduling", "preferred")}
+                    className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                  />
+                  <span className="font-poppins text-gray-700">I have preferred days and times</span>
+                </label>
+
+                {whenData.scheduling === "preferred" && (
+                  <div className="mt-6 space-y-4">
+                    <p className="text-gray-600 text-sm font-poppins">
+                      Set your start and end time for each day you're available.
+                    </p>
+                    {daysOfWeek.map(({ key, label }) => {
+                      const daySchedule = whenData.preferredDays[key];
+                      return (
+                        <div key={key} className="space-y-3">
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <div
+                              onClick={() => toggleDay(key)}
+                              className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${
+                                daySchedule.enabled
+                                  ? "bg-indigo-600 border-indigo-600"
+                                  : "border-gray-300 bg-white"
+                              }`}
+                            >
+                              {daySchedule.enabled && <Check className="w-4 h-4 text-white" />}
+                            </div>
+                            <span className="font-poppins font-medium text-gray-900">{label}</span>
+                          </label>
+
+                          {daySchedule.enabled && (
+                            <div className="ml-9 flex flex-wrap gap-4">
+                              <div>
+                                <label className="block text-sm text-gray-600 font-poppins mb-1">
+                                  Start time
+                                </label>
+                                <input
+                                  type="time"
+                                  value={daySchedule.startTime}
+                                  onChange={(e) => updateDayTime(key, "startTime", e.target.value)}
+                                  className="w-40 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm text-gray-600 font-poppins mb-1">
+                                  End time
+                                </label>
+                                <input
+                                  type="time"
+                                  value={daySchedule.endTime}
+                                  onChange={(e) => updateDayTime(key, "endTime", e.target.value)}
+                                  className="w-40 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Additional Info */}
         <div>

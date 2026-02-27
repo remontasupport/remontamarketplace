@@ -94,24 +94,13 @@ const detailsSchema = z.object({
 // CREATE SERVICE REQUEST SCHEMA
 // ============================================
 
-export const createServiceRequestSchema = z
-  .object({
-    // Provide either an existing participantId OR new participant data
-    participantId: z.string().optional(),
-    participant: participantSchema.optional(),
-    services: servicesSchema,
-    details: detailsSchema,
-    location: z.string().min(1, 'Location is required'),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.participantId && !data.participant) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Either participantId or participant data is required',
-        path: ['participant'],
-      })
-    }
-  })
+export const createServiceRequestSchema = z.object({
+  // Must always reference an existing participant
+  participantId: z.string().min(1, 'A participant must be selected'),
+  services: servicesSchema,
+  details: detailsSchema,
+  location: z.string().min(1, 'Location is required'),
+})
 
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>
 

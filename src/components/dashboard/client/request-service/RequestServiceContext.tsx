@@ -324,8 +324,23 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
         break;
 
       case "when":
-        if (!formData.whenData.startPreference) {
-          errors.push("Please select when you'd like to start");
+        if (formData.whenData.frequency === "one-time") {
+          if (!formData.whenData.specificDate) {
+            errors.push("Please select the date for the support session");
+          }
+          const startTime = formData.whenData.preferredDays.monday.startTime;
+          const endTime = formData.whenData.preferredDays.monday.endTime;
+          if (startTime && !endTime) {
+            errors.push("Please enter an end time");
+          } else if (!startTime && endTime) {
+            errors.push("Please enter a start time");
+          } else if (startTime && endTime && endTime <= startTime) {
+            errors.push("End time must be after start time");
+          }
+        } else {
+          if (!formData.whenData.startPreference) {
+            errors.push("Please select when you'd like to start");
+          }
         }
         break;
 
@@ -396,8 +411,23 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     }
 
     // Step 2: Schedule (when)
-    if (!formData.whenData.startPreference) {
-      return { isValid: false, error: "Please select when you'd like to start", stepIndex: 2 };
+    if (formData.whenData.frequency === "one-time") {
+      if (!formData.whenData.specificDate) {
+        return { isValid: false, error: "Please select the date for the support session", stepIndex: 2 };
+      }
+      const startTime = formData.whenData.preferredDays.monday.startTime;
+      const endTime = formData.whenData.preferredDays.monday.endTime;
+      if (startTime && !endTime) {
+        return { isValid: false, error: "Please enter an end time", stepIndex: 2 };
+      } else if (!startTime && endTime) {
+        return { isValid: false, error: "Please enter a start time", stepIndex: 2 };
+      } else if (startTime && endTime && endTime <= startTime) {
+        return { isValid: false, error: "End time must be after start time", stepIndex: 2 };
+      }
+    } else {
+      if (!formData.whenData.startPreference) {
+        return { isValid: false, error: "Please select when you'd like to start", stepIndex: 2 };
+      }
     }
 
     // Step 3: Support details
@@ -411,7 +441,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     }
 
     return { isValid: true, error: null, stepIndex: null };
-  }, [formData]);
+  }, [formData, selectedParticipantId]);
 
   // Submit request
   const submitRequest = useCallback(async (): Promise<boolean> => {
@@ -430,6 +460,13 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     }
 
     try {
+      // Hard guard — selectedParticipantId must be a non-empty string
+      if (!selectedParticipantId) {
+        setSubmitError("Please select a client before submitting");
+        setIsSubmitting(false);
+        return false;
+      }
+
       // Build location string
       const locationParts = [
         formData.locationData.suburb,
@@ -440,7 +477,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
 
       // Build the API payload
       const payload = {
-        // Use the selected existing participant
+        // Send as string — never null (null serialises as JSON null which the API treats as absent)
         participantId: selectedParticipantId,
         // Services
         services: formData.services,
@@ -500,7 +537,7 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, router, validateAllSteps, basePath]);
+  }, [formData, selectedParticipantId, router, validateAllSteps, basePath]);
 
   const value: RequestServiceContextType = {
     formData,
