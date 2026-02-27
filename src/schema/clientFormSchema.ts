@@ -79,8 +79,8 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // fundingType is required for client and self paths
-  if ((data.completingFormAs === "client" || data.completingFormAs === "self") && !data.fundingType) {
+  // fundingType is required for client path only (self path defaults to OTHER)
+  if (data.completingFormAs === "client" && !data.fundingType) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Please select a funding type",
@@ -97,17 +97,8 @@ export const clientFormSchema = z.object({
     });
   }
 
-  // dateOfBirth is required for self path only
-  if (data.completingFormAs === "self" && (!data.dateOfBirth || data.dateOfBirth.trim() === "")) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Date of birth is required",
-      path: ["dateOfBirth"],
-    });
-  }
-
-  // Client info fields are required for client path only (coordinator adds client later from dashboard)
-  if (data.completingFormAs === "client") {
+  // Client info fields are required for both self and client paths
+  if (data.completingFormAs === "self" || data.completingFormAs === "client") {
     if (!data.clientFirstName || data.clientFirstName.trim() === "") {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

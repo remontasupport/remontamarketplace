@@ -36,6 +36,7 @@ const participantSchema = z.object({
   dateOfBirth: z.string().optional(),
   gender: z.string().optional(),
   fundingType: z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']).optional(),
+  relationshipToClient: z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'MYSELF', 'OTHER']).optional(),
   conditions: z.array(z.string()).optional().default([]),
   additionalInfo: z.string().optional(),
 })
@@ -68,12 +69,25 @@ const schedulingPrefsSchema = z.object({
   scheduling: z.string().optional(),
 })
 
+const ndisDetailsSchema = z.object({
+  managementType: z.string().optional(),
+  planManagerName: z.string().optional(),
+  invoiceEmail: z.string().optional(),
+  emailToCC: z.string().optional(),
+  ndisNumber: z.string().optional(),
+  planStartDate: z.string().optional(),
+  planEndDate: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+})
+
 const detailsSchema = z.object({
   title: z.string().min(1, 'Title is required'),
+  fundingType: z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']).optional(),
   description: z.string().optional(),
   schedulingPrefs: schedulingPrefsSchema.optional(),
   preferredWorkerGender: z.string().optional(),
   specialRequirements: z.string().optional(),
+  ndisDetails: ndisDetailsSchema.optional(),
 })
 
 // ============================================

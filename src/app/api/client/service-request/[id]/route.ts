@@ -131,11 +131,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 4. Fetch existing service request
-    const existingRequest = await authPrisma.serviceRequest.findUnique({
-      where: { id },
-      include: { participant: true },
-    })
+    // 4. Fetch existing service request with raw SQL to handle ARCHIVED status
+    // (Prisma enum doesn't include ARCHIVED, so findUnique would throw for archived requests)
+    const [existingRequest] = await authPrisma.$queryRaw<
+      { id: string; requesterId: string; participantId: string }[]
+    >`
+      SELECT id, "requesterId", "participantId"
+      FROM service_requests
+      WHERE id = ${id}
+    `
 
     if (!existingRequest) {
       return NextResponse.json(
@@ -161,8 +165,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: true, message: 'Request archived successfully' })
     }
 
-    // For all other updates, only allow PENDING requests
-    if (existingRequest.status !== 'PENDING') {
+    // Use raw SQL to get the true status (Prisma enum doesn't include ARCHIVED)
+    const [rawRow] = await authPrisma.$queryRaw<{ status: string; hidden: boolean }[]>`
+      SELECT status, (details->>'_hidden' = 'true') AS hidden
+      FROM service_requests WHERE id = ${id}
+    `
+    const actualStatus = rawRow?.status
+    const isHiddenArchived = actualStatus === 'ARCHIVED' && rawRow?.hidden
+
+    if (actualStatus !== 'PENDING' && !isHiddenArchived) {
       return NextResponse.json(
         {
           success: false,
@@ -171,6 +182,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         },
         { status: 400 }
       )
+    }
+
+    // If editing a soft-deleted archived request, restore it to PENDING and clear the hidden flag
+    if (isHiddenArchived) {
+      await authPrisma.$executeRaw`
+        UPDATE service_requests
+        SET status = 'PENDING'::"ServiceRequestStatus",
+            details = details - '_hidden',
+            "updatedAt" = NOW()
+        WHERE id = ${id}
+      `
     }
 
     // 7. Validate request body
@@ -206,7 +228,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
     }
 
-    // Update service request
+    // Update service request (no include — avoids Prisma enum error if status is ARCHIVED)
     const updatedRequest = await authPrisma.serviceRequest.update({
       where: { id },
       data: {
@@ -214,9 +236,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         ...(data.details && { details: data.details }),
         ...(data.location && { location: data.location }),
         ...(data.status && { status: data.status }),
-      },
-      include: {
-        participant: true,
       },
     })
 
@@ -311,9 +330,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 6. If ARCHIVED — hard delete the entire record
+    // 6. If ARCHIVED — soft-delete by flagging details._hidden = true
+    // Keeps the record in DB so editing still works, but hides it from the archived list
     if (statusRow.status === 'ARCHIVED') {
-      await authPrisma.$executeRaw`DELETE FROM service_requests WHERE id = ${id}`
+      await authPrisma.$executeRaw`
+        UPDATE service_requests
+        SET details = COALESCE(details, '{}'::jsonb) || '{"_hidden": true}'::jsonb,
+            "updatedAt" = NOW()
+        WHERE id = ${id}
+      `
 
       authPrisma.auditLog
         .create({
@@ -330,7 +355,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
       return NextResponse.json({
         success: true,
-        message: 'Service request deleted permanently',
+        message: 'Service request deleted successfully',
       })
     }
 

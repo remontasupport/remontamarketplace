@@ -48,6 +48,7 @@ interface DetailsData {
   dobDay: string;
   dobMonth: string;
   dobYear: string;
+  relationshipToClient: string;
 }
 
 interface PreferencesData {
@@ -57,6 +58,16 @@ interface PreferencesData {
 
 interface SupportDetailsData {
   jobTitle: string;
+  fundingType: string;
+  // NDIS-specific fields
+  managementType: string;
+  planManagerName: string;
+  invoiceEmail: string;
+  emailToCC: string;
+  ndisNumber: string;
+  planStartDate: string;
+  planEndDate: string;
+  ndisDob: string;
 }
 
 interface OtherServices {
@@ -78,6 +89,7 @@ export interface FormData {
   selectedCategories: string[];
   selectedSubcategories: string[];
   otherServices: OtherServices;
+  whatAdditionalInfo: string;
   // For API: structured services data
   services: {
     [categoryId: string]: {
@@ -161,6 +173,7 @@ const initialFormData: FormData = {
   selectedCategories: [],
   selectedSubcategories: [],
   otherServices: {},
+  whatAdditionalInfo: "",
   services: {},
 
   // Step 2: Where
@@ -195,12 +208,22 @@ const initialFormData: FormData = {
   // Step 4: Support Details
   supportDetailsData: {
     jobTitle: "",
+    fundingType: "",
+    managementType: "",
+    planManagerName: "",
+    invoiceEmail: "",
+    emailToCC: "",
+    ndisNumber: "",
+    planStartDate: "",
+    planEndDate: "",
+    ndisDob: "",
   },
 
   // Step 5: Details
   detailsData: {
     firstName: "",
     lastName: "",
+    relationshipToClient: "",
     gender: "",
     dobDay: "",
     dobMonth: "",
@@ -459,16 +482,18 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
             ? `${formData.detailsData.dobYear}-${formData.detailsData.dobMonth.padStart(2, "0")}-${formData.detailsData.dobDay.padStart(2, "0")}`
             : undefined,
           gender: formData.detailsData.gender || undefined,
-          fundingType: "NDIS" as const,
+          fundingType: (formData.supportDetailsData.fundingType as "NDIS" | "AGED_CARE" | "INSURANCE" | "PRIVATE" | "OTHER") || undefined,
+          relationshipToClient: (formData.detailsData.relationshipToClient as any) || undefined,
           conditions: formData.selectedConditions,
-          additionalInfo: formData.whenData.additionalNotes || undefined,
+          additionalInfo: formData.whatAdditionalInfo || formData.whenData.additionalNotes || undefined,
         },
         // Services
         services: formData.services,
         // Details
         details: {
           title: formData.supportDetailsData.jobTitle,
-          description: formData.whenData.additionalNotes || undefined,
+          fundingType: formData.supportDetailsData.fundingType || undefined,
+          description: formData.whatAdditionalInfo || formData.whenData.additionalNotes || undefined,
           schedulingPrefs: {
             preferredDays: formData.whenData.scheduling === "preferred"
               ? Object.entries(formData.whenData.preferredDays)
@@ -488,6 +513,19 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
           },
           preferredWorkerGender: formData.preferencesData.preferredGender || undefined,
           specialRequirements: formData.preferencesData.preferredQualities || undefined,
+          // NDIS-specific fields (only included when fundingType is NDIS)
+          ...(formData.supportDetailsData.fundingType === "NDIS" ? {
+            ndisDetails: {
+              managementType: formData.supportDetailsData.managementType || undefined,
+              planManagerName: formData.supportDetailsData.planManagerName || undefined,
+              invoiceEmail: formData.supportDetailsData.invoiceEmail || undefined,
+              emailToCC: formData.supportDetailsData.emailToCC || undefined,
+              ndisNumber: formData.supportDetailsData.ndisNumber || undefined,
+              planStartDate: formData.supportDetailsData.planStartDate || undefined,
+              planEndDate: formData.supportDetailsData.planEndDate || undefined,
+              dateOfBirth: formData.supportDetailsData.ndisDob || undefined,
+            },
+          } : {}),
         },
         // Location as string
         location: locationString,

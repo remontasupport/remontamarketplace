@@ -102,9 +102,9 @@ export default function ClientsRegistration() {
 
   // Calculate total steps based on path
   // Client (assisting someone): 7 steps (Who, Personal, Funding Type + Relationship, Client Info, Services, Address, Account)
-  // Self (registering for myself): 6 steps (Who, Personal, Funding Type, Services, Address, Account)
-  // Coordinator path: 6 steps (Who, Personal, Client Info, Services, Address, Account)
-  const TOTAL_STEPS = completingFormAs === "client" ? 7 : completingFormAs === "coordinator" ? 3 : 6;
+  // Self (registering for myself): 6 steps (Who, Personal, About Person, Services, Address, Account)
+  // Coordinator path: 3 steps (Who, Personal, Account)
+  const TOTAL_STEPS = completingFormAs === "coordinator" ? 3 : completingFormAs === "client" ? 7 : 6;
 
   // Determine if we're on the account setup step
   const isOnAccountSetupStep =
@@ -125,49 +125,52 @@ export default function ClientsRegistration() {
         // Only validate clientTypes for coordinators
         if (completingFormAs === "coordinator") {
           fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
-        } else if (completingFormAs === "self") {
-          fieldsToValidate = ["firstName", "lastName", "dateOfBirth", "phoneNumber"];
         } else {
+          // self and client paths: DOB is captured in the "About person" step (step 4)
           fieldsToValidate = ["firstName", "lastName", "phoneNumber"];
         }
         break;
       case 3:
-        // coordinator: account setup | self: funding type + relationship | client: funding type + relationship
         if (completingFormAs === "coordinator") {
           fieldsToValidate = ["email", "password", "consent"];
+        } else if (completingFormAs === "self") {
+          // self: "About the person needing support" (no funding type step)
+          fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth", "relationshipToClient"];
         } else {
+          // client: funding type + relationship
           fieldsToValidate = ["fundingType", "relationshipToClient"];
         }
         break;
       case 4:
-        // self: services | client: client info
         if (completingFormAs === "client") {
+          // client: "About the person needing support"
           fieldsToValidate = ["clientFirstName", "clientLastName", "clientDateOfBirth"];
-        } else {
+        } else if (completingFormAs === "self") {
+          // self: services requested
           fieldsToValidate = ["servicesRequested"];
         }
         break;
       case 5:
-        // self: location | client: services
         if (completingFormAs === "client") {
+          // client: services requested
           fieldsToValidate = ["servicesRequested"];
-        } else {
+        } else if (completingFormAs === "self") {
+          // self: address/location
           fieldsToValidate = ["location"];
         }
         break;
       case 6:
-        // self: account setup | client: location
         if (completingFormAs === "client") {
+          // client: address/location
           fieldsToValidate = ["location"];
-        } else {
+        } else if (completingFormAs === "self") {
+          // self: account setup
           fieldsToValidate = ["email", "password", "consent"];
         }
         break;
       case 7:
-        // Client path only: account setup
-        if (completingFormAs === "client") {
-          fieldsToValidate = ["email", "password", "consent"];
-        }
+        // client only: account setup
+        fieldsToValidate = ["email", "password", "consent"];
         break;
     }
 
@@ -262,14 +265,11 @@ export default function ClientsRegistration() {
           lastName: data.lastName,
           mobile: data.phoneNumber,
           isSelfManaged,
-          fundingType: FUNDING_TYPE_MAP[data.fundingType || 'other'],
+          fundingType: isSelfManaged ? 'OTHER' : FUNDING_TYPE_MAP[data.fundingType || 'other'],
           relationshipToClient: RELATIONSHIP_MAP[data.relationshipToClient || 'other'],
-          dateOfBirth: isSelfManaged ? data.dateOfBirth : data.clientDateOfBirth,
-          // For client path (not self-managed), include participant's name
-          ...(isSelfManaged ? {} : {
-            clientFirstName: data.clientFirstName,
-            clientLastName: data.clientLastName,
-          }),
+          dateOfBirth: data.clientDateOfBirth,
+          clientFirstName: data.clientFirstName,
+          clientLastName: data.clientLastName,
           servicesRequested,
           additionalInfo: data.additionalInformation,
           location: fullLocation,
@@ -392,20 +392,17 @@ export default function ClientsRegistration() {
               <Step2PersonalInfo control={control} errors={errors} completingFormAs={completingFormAs} />
             )}
 
-            {/* Step 3 - Funding Type (Client/Self path only) */}
+            {/* Step 3 - About the person needing support (self path) */}
+            {currentStep === 3 && completingFormAs === "self" && (
+              <Step5ClientInfo control={control} errors={errors} mode="self" />
+            )}
+
+            {/* Step 3 - Funding Type + Relationship (client path only) */}
             {currentStep === 3 && completingFormAs === "client" && (
               <Step3FundingType control={control} errors={errors} showRelationship={true} />
             )}
-            {currentStep === 3 && completingFormAs === "self" && (
-              <Step3FundingType control={control} errors={errors} showRelationship={true} />
-            )}
 
-            {/* Step 3 - Client Info (Coordinator path) — removed, coordinators add clients from dashboard */}
-            {/* {currentStep === 3 && completingFormAs === "coordinator" && (
-              <Step5ClientInfo control={control} errors={errors} showAddMoreNote />
-            )} */}
-
-            {/* Step 4 - Client Info (Client path only - right after funding type) */}
+            {/* Step 4 - About the person needing support (client path only) */}
             {currentStep === 4 && completingFormAs === "client" && (
               <Step5ClientInfo control={control} errors={errors} />
             )}
@@ -444,7 +441,7 @@ export default function ClientsRegistration() {
               <Step3Address control={control} errors={errors} />
             )}
 
-            {/* Account Setup - Step 6 (coordinator/self), Step 7 (client) */}
+            {/* Account Setup - Step 3 (coordinator), Step 6 (self), Step 7 (client) */}
             {isOnAccountSetupStep && (
               <Step5AccountSetup control={control} errors={errors} showErrors={showAccountErrors} />
             )}

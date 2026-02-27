@@ -23,11 +23,20 @@ const genderOptions = [
   { value: "other", label: "Other" },
 ];
 
+const relationshipOptions = [
+  { value: "PARENT", label: "Parent" },
+  { value: "LEGAL_GUARDIAN", label: "Legal Guardian" },
+  { value: "SPOUSE_PARTNER", label: "Spouse/Partner" },
+  { value: "CHILDREN", label: "Child" },
+  { value: "OTHER", label: "Other" },
+];
+
 export default function DetailsSection() {
   const { formData, updateFormData } = useRequestService();
   const { detailsData } = formData;
 
   const [isGenderOpen, setIsGenderOpen] = useState(false);
+  const [isRelationshipOpen, setIsRelationshipOpen] = useState(false);
 
   const updateField = <K extends keyof DetailsData>(field: K, value: DetailsData[K]) => {
     updateFormData("detailsData", {
@@ -40,6 +49,37 @@ export default function DetailsSection() {
     (opt) => opt.value === detailsData.gender
   )?.label || "Select gender";
 
+  const dobError = (() => {
+    const { dobDay, dobMonth, dobYear } = detailsData;
+    // Only validate when at least one field has been touched
+    if (!dobDay && !dobMonth && !dobYear) return null;
+
+    const day = parseInt(dobDay, 10);
+    const month = parseInt(dobMonth, 10);
+    const year = parseInt(dobYear, 10);
+
+    if (dobDay && (isNaN(day) || day < 1 || day > 31)) return "Day must be between 1 and 31";
+    if (dobMonth && (isNaN(month) || month < 1 || month > 12)) return "Month must be between 1 and 12";
+    if (dobYear && dobYear.length === 4) {
+      const currentYear = new Date().getFullYear();
+      if (isNaN(year) || year < 1900 || year > currentYear) return `Year must be between 1900 and ${currentYear}`;
+    }
+
+    // Validate the full date only when all three fields are complete
+    if (dobDay && dobMonth && dobYear && dobYear.length === 4) {
+      const date = new Date(year, month - 1, day);
+      if (
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+      ) {
+        return "Please enter a valid date";
+      }
+    }
+
+    return null;
+  })();
+
   return (
     <div className="section-card">
       <h2 className="section-title">Basic information</h2>
@@ -51,6 +91,44 @@ export default function DetailsSection() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left side - Form fields */}
         <div className="flex-1 space-y-6">
+          {/* Relationship to Client */}
+          <div>
+            <label className="block text-gray-900 font-medium font-poppins mb-2">
+              Relationship to Client <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-left font-poppins focus:border-indigo-500 focus:outline-none"
+              >
+                <span className={detailsData.relationshipToClient ? "text-gray-900" : "text-gray-500"}>
+                  {relationshipOptions.find(o => o.value === detailsData.relationshipToClient)?.label || "Select your relationship"}
+                </span>
+                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isRelationshipOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isRelationshipOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg">
+                  {relationshipOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        updateField("relationshipToClient", option.value);
+                        setIsRelationshipOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
+                        detailsData.relationshipToClient === option.value ? "bg-indigo-50 text-indigo-900" : "text-gray-900"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* First Name */}
           <div>
             <label className="block text-gray-900 font-medium font-poppins mb-2">
@@ -134,7 +212,7 @@ export default function DetailsSection() {
                     const value = e.target.value.replace(/\D/g, "").slice(0, 2);
                     updateField("dobDay", value);
                   }}
-                  className="w-16 px-3 py-2.5 border-2 border-gray-200 rounded-lg font-poppins text-center focus:border-indigo-500 focus:outline-none"
+                  className={`w-16 px-3 py-2.5 border-2 rounded-lg font-poppins text-center focus:outline-none ${dobError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"}`}
                   placeholder="DD"
                   maxLength={2}
                 />
@@ -150,7 +228,7 @@ export default function DetailsSection() {
                     const value = e.target.value.replace(/\D/g, "").slice(0, 2);
                     updateField("dobMonth", value);
                   }}
-                  className="w-16 px-3 py-2.5 border-2 border-gray-200 rounded-lg font-poppins text-center focus:border-indigo-500 focus:outline-none"
+                  className={`w-16 px-3 py-2.5 border-2 rounded-lg font-poppins text-center focus:outline-none ${dobError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"}`}
                   placeholder="MM"
                   maxLength={2}
                 />
@@ -166,13 +244,16 @@ export default function DetailsSection() {
                     const value = e.target.value.replace(/\D/g, "").slice(0, 4);
                     updateField("dobYear", value);
                   }}
-                  className="w-20 px-3 py-2.5 border-2 border-gray-200 rounded-lg font-poppins text-center focus:border-indigo-500 focus:outline-none"
+                  className={`w-20 px-3 py-2.5 border-2 rounded-lg font-poppins text-center focus:outline-none ${dobError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"}`}
                   placeholder="YYYY"
                   maxLength={4}
                 />
               </div>
             </div>
-            <p className="text-gray-500 text-sm font-poppins mt-3">
+            {dobError && (
+              <p className="text-red-600 text-sm font-poppins mt-2">{dobError}</p>
+            )}
+            <p className="text-gray-500 text-sm font-poppins mt-2">
               Your age group is visible in messages and job posts to help support workers understand if they'll be a good match. Your date of birth won't be shared.
             </p>
           </div>

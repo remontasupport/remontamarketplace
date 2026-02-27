@@ -35,15 +35,41 @@ export default async function ParticipantsPage() {
   displayName = clientProfile?.firstName || displayName;
   const isSelfManaged = clientProfile?.isSelfManaged ?? false;
 
-  // Fetch participants connected to this client from the database
-  // Include the serviceRequest to get services and location
-  const participantsData = await authPrisma.participant.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      serviceRequest: true,
-    },
-  });
+  // Use raw SQL to avoid Prisma enum error when service request status is ARCHIVED
+  type RawParticipantRow = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date | null;
+    gender: string | null;
+    fundingType: string | null;
+    relationshipToClient: string | null;
+    conditions: string[];
+    additionalInfo: string | null;
+    createdAt: Date;
+    srServices: Record<string, unknown> | null;
+    srLocation: string | null;
+  };
+
+  const participantsData = await authPrisma.$queryRaw<RawParticipantRow[]>`
+    SELECT
+      p.id,
+      p."firstName",
+      p."lastName",
+      p."dateOfBirth",
+      p.gender,
+      p."fundingType",
+      p."relationshipToClient",
+      p.conditions,
+      p."additionalInfo",
+      p."createdAt",
+      sr.services   AS "srServices",
+      sr.location   AS "srLocation"
+    FROM participants p
+    LEFT JOIN service_requests sr ON sr."participantId" = p.id
+    WHERE p."userId" = ${session.user.id}
+    ORDER BY p."createdAt" DESC
+  `;
 
   // Transform database data to match ParticipantCard interface
   const participants = participantsData.map((p) => {
@@ -51,21 +77,19 @@ export default async function ParticipantsPage() {
     const today = new Date();
     let age: number | undefined = undefined;
 
-    if (p.dateOfBirth) {
-      const birthDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : new Date(p.dateOfBirth);
-      if (!isNaN(birthDate.getTime())) {
-        age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
+    const dobForAge = p.dateOfBirth instanceof Date ? p.dateOfBirth : (p.dateOfBirth ? new Date(p.dateOfBirth) : null);
+    if (dobForAge && !isNaN(dobForAge.getTime())) {
+      age = today.getFullYear() - dobForAge.getFullYear();
+      const monthDiff = today.getMonth() - dobForAge.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobForAge.getDate())) {
+        age--;
       }
     }
 
-    // Extract service names from serviceRequest.services JSON
+    // Extract service names from srServices JSON
     // Structure: { "category-id": { categoryName: string, subCategories: [{ id, name }] } }
     let services: string[] = [];
-    const servicesData = p.serviceRequest?.services;
+    const servicesData = p.srServices;
     if (servicesData && typeof servicesData === 'object') {
       const servicesObj = servicesData as Record<string, { categoryName?: string; subCategories?: { id: string; name: string }[] }>;
       services = Object.values(servicesObj).flatMap((category) => {
@@ -82,19 +106,21 @@ export default async function ParticipantsPage() {
       });
     }
 
-    // Get location from serviceRequest
-    const location = p.serviceRequest?.location || undefined;
+    // Get location from service request
+    const location = p.srLocation || undefined;
 
-    // Format start date
-    const startDate = p.createdAt.toLocaleDateString('en-AU', {
+    // Format start date (raw SQL may return string or Date)
+    const createdAtDate = p.createdAt instanceof Date ? p.createdAt : new Date(p.createdAt);
+    const startDate = createdAtDate.toLocaleDateString('en-AU', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
 
     // Format dateOfBirth for edit form
-    const dateOfBirthString = p.dateOfBirth
-      ? p.dateOfBirth.toISOString().split("T")[0]
+    const dobDate = p.dateOfBirth instanceof Date ? p.dateOfBirth : (p.dateOfBirth ? new Date(p.dateOfBirth) : null);
+    const dateOfBirthString = dobDate && !isNaN(dobDate.getTime())
+      ? dobDate.toISOString().split("T")[0]
       : null;
 
     return {

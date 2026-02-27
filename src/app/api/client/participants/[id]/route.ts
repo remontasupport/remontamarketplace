@@ -58,12 +58,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 3. Fetch participant
+    // 3. Fetch participant (without serviceRequest include to avoid Prisma enum error on ARCHIVED status)
     const participant = await authPrisma.participant.findUnique({
       where: { id },
-      include: {
-        serviceRequest: true,
-      },
     })
 
     if (!participant) {
@@ -81,7 +78,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // 5. Fetch client profile to get isSelfManaged status
+    // 5. Fetch the service request with raw SQL to handle ARCHIVED status
+    // (Prisma enum doesn't include ARCHIVED, so using include: { serviceRequest: true } would throw)
+    type RawServiceRequest = {
+      id: string
+      services: Record<string, unknown>
+      details: Record<string, unknown>
+      location: string
+      status: string
+      assignedWorker: unknown
+      selectedWorker: string | null
+      createdAt: Date
+      updatedAt: Date
+    }
+    const [serviceRequest] = await authPrisma.$queryRaw<RawServiceRequest[]>`
+      SELECT id, services, details, location, status, "assignedWorker", "selectedWorker", "createdAt", "updatedAt"
+      FROM service_requests
+      WHERE "participantId" = ${id}
+    `
+
+    // 6. Fetch client profile to get isSelfManaged status
     let isSelfManaged = false
     if (userRole === UserRole.CLIENT) {
       const clientProfile = await authPrisma.clientProfile.findUnique({
@@ -91,10 +107,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       isSelfManaged = clientProfile?.isSelfManaged ?? false
     }
 
-    // 6. Return response
+    // 7. Return response
     return NextResponse.json({
       success: true,
-      data: participant,
+      data: {
+        ...participant,
+        serviceRequest: serviceRequest ?? null,
+      },
       isSelfManaged,
     })
   } catch (error) {
@@ -188,9 +207,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         ...(data.relationshipToClient !== undefined && { relationshipToClient: data.relationshipToClient }),
         ...(data.conditions !== undefined && { conditions: data.conditions }),
         ...(data.additionalInfo !== undefined && { additionalInfo: data.additionalInfo }),
-      },
-      include: {
-        serviceRequest: true,
       },
     })
 

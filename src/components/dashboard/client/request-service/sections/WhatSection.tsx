@@ -31,6 +31,7 @@ export default function WhatSection() {
     selectedCategories,
     selectedSubcategories,
     otherServices,
+    whatAdditionalInfo,
   } = formData;
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -343,6 +344,20 @@ export default function WhatSection() {
           </p>
         </div>
       )}
+
+      {/* Additional Information */}
+      <div className="mt-8">
+        <label className="block text-gray-900 font-semibold font-poppins mb-3">
+          Additional Information <span className="text-red-500">*</span>
+        </label>
+        <textarea
+          value={whatAdditionalInfo}
+          onChange={(e) => updateFormData("whatAdditionalInfo", e.target.value)}
+          rows={4}
+          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none resize-none"
+          placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
+        />
+      </div>
 
       {/* Navigation */}
       <StepNavigation showPrevious={false} />

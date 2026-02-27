@@ -45,7 +45,7 @@ const menuItems: MenuItem[] = [
       },
       {
         id: "details",
-        label: "Participant",
+        label: "Client Info",
         href: "/dashboard/client/request-service?section=details",
       },
       {

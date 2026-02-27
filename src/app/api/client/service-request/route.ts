@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
           : null,
         gender: data.participant.gender || null,
         fundingType: data.participant.fundingType || null,
+        relationshipToClient: data.participant.relationshipToClient || null,
         conditions: data.participant.conditions || [],
         additionalInfo: data.participant.additionalInfo || null,
       },

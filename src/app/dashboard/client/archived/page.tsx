@@ -56,6 +56,7 @@ export default async function ArchivedPage() {
     JOIN participants p ON p.id = sr."participantId"
     WHERE sr."requesterId" = ${session.user.id}
       AND sr.status = 'ARCHIVED'::"ServiceRequestStatus"
+      AND (sr.details->>'_hidden' IS NULL OR sr.details->>'_hidden' != 'true')
     ORDER BY sr."updatedAt" DESC
   `
 

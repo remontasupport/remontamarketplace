@@ -102,8 +102,9 @@ export async function POST(request: Request) {
       // ============================================
       // PREPARE DATA
       // ============================================
-      const participantFirstName = data.isSelfManaged ? data.firstName : (data.clientFirstName || data.firstName);
-      const participantLastName = data.isSelfManaged ? data.lastName : (data.clientLastName || data.lastName);
+      // Participant name comes from "About the person needing support" step for both self and client paths
+      const participantFirstName = data.clientFirstName || data.firstName;
+      const participantLastName = data.clientLastName || data.lastName;
 
       // Build a default job title from services
       const serviceNames = Object.values(data.servicesRequested || {}).map(s => s.categoryName);
