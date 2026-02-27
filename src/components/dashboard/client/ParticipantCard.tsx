@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { BRAND_COLORS } from "@/lib/constants";
 
 interface ParticipantCardProps {
   participant: {
@@ -56,7 +57,7 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 text-2xl font-semibold">
+              <div className="w-full h-full flex items-center justify-center text-2xl font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
                 {initials}
               </div>
             )}
@@ -77,7 +78,10 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
           {/* Edit Profile Button */}
           <Link
             href={`/dashboard/client/clients/${id}/edit`}
-            className="mt-4 px-4 py-2 border-2 border-orange-500 text-orange-500 rounded-full text-sm font-medium font-poppins hover:bg-orange-50 transition-colors"
+            className="mt-4 px-4 py-2 border-2 rounded-full text-sm font-medium font-poppins transition-colors"
+            style={{ borderColor: BRAND_COLORS.PRIMARY, color: BRAND_COLORS.PRIMARY, backgroundColor: 'transparent' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = BRAND_COLORS.HIGHLIGHT)}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             Edit Profile
           </Link>

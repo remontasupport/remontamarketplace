@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { BRAND_COLORS } from '@/lib/constants'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
@@ -145,14 +146,14 @@ export default function ClientSidebar({
           ) : (
             <div
               style={{
-                backgroundColor: '#f97316',
+                backgroundColor: BRAND_COLORS.HIGHLIGHT,
                 width: '100%',
                 height: '100%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 600,
-                color: '#fff',
+                color: BRAND_COLORS.PRIMARY,
                 fontSize: '1rem',
               }}
             >

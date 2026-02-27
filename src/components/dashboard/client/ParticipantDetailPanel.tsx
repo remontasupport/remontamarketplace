@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Pencil, Calendar, User, Heart, Cake, ChevronDown } from "lucide-react";
+import { BRAND_COLORS } from "@/lib/constants";
 
 interface ParticipantDetailPanelProps {
   participant: {
@@ -133,7 +134,7 @@ export default function ParticipantDetailPanel({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 text-xl sm:text-2xl font-semibold">
+                <div className="w-full h-full flex items-center justify-center text-xl sm:text-2xl font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
                   {initials}
                 </div>
               )}
@@ -152,7 +153,7 @@ export default function ParticipantDetailPanel({
             <button
               onClick={onEditClick}
               className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins transition-colors"
-              style={{ backgroundColor: '#F8E8D8', color: '#0C1628' }}
+              style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}
             >
               <Pencil className="w-3.5 h-3.5" />
               Edit Profile

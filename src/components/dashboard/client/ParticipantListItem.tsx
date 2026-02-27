@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND_COLORS } from "@/lib/constants";
+
 interface ParticipantListItemProps {
   participant: {
     id: string;
@@ -46,7 +48,7 @@ export default function ParticipantListItem({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 text-sm font-semibold">
+            <div className="w-full h-full flex items-center justify-center text-sm font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
               {initials}
             </div>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { MapPin, Check, X, Pencil } from "lucide-react";
+import { BRAND_COLORS } from "@/lib/constants";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
@@ -123,8 +124,8 @@ export default function PreviewSection() {
 
               {/* Participant Info */}
               <div className="flex items-center gap-3 mt-4">
-                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
-                  <span className="text-orange-600 font-semibold text-lg">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT }}>
+                  <span className="font-semibold text-lg" style={{ color: BRAND_COLORS.PRIMARY }}>
                     {participantName.charAt(0).toUpperCase()}
                   </span>
                 </div>

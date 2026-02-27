@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useRequestService } from "./RequestServiceContext";
+import { BRAND_COLORS } from "@/lib/constants";
 
 interface Participant {
   id: string;
@@ -45,7 +46,7 @@ export default function ClientListPanel() {
       <p
         style={{
           fontSize: "0.75rem",
-          color: selectedParticipantId ? "#6b7280" : "#f97316",
+          color: selectedParticipantId ? "#6b7280" : BRAND_COLORS.PRIMARY,
           fontFamily: "var(--font-poppins, sans-serif)",
           marginBottom: "0.75rem",
           fontWeight: selectedParticipantId ? 400 : 500,
@@ -159,8 +160,8 @@ export default function ClientListPanel() {
                     width: 32,
                     height: 32,
                     borderRadius: "50%",
-                    backgroundColor: isSelected ? "#f97316" : "#f3f4f6",
-                    color: isSelected ? "#fff" : "#6b7280",
+                    backgroundColor: isSelected ? BRAND_COLORS.PRIMARY : "#f3f4f6",
+                    color: isSelected ? BRAND_COLORS.HIGHLIGHT : "#6b7280",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -177,7 +178,7 @@ export default function ClientListPanel() {
                     style={{
                       display: "block",
                       fontSize: "0.8125rem",
-                      color: isSelected ? "#c2410c" : "#374151",
+                      color: isSelected ? BRAND_COLORS.PRIMARY : "#374151",
                       fontFamily: "var(--font-poppins, sans-serif)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -202,7 +203,7 @@ export default function ClientListPanel() {
                 </div>
                 {isSelected && (
                   <Check
-                    style={{ width: 14, height: 14, color: "#f97316", flexShrink: 0 }}
+                    style={{ width: 14, height: 14, color: BRAND_COLORS.PRIMARY, flexShrink: 0 }}
                   />
                 )}
               </button>
