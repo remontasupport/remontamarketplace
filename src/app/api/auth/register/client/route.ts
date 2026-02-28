@@ -156,6 +156,26 @@ export async function POST(request: Request) {
       });
 
       // ============================================
+      // WEBHOOK
+      // ============================================
+      const webhookUrl = process.env.Client_Registration_Webhook
+      if (webhookUrl) {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            mobile: data.mobile,
+            fundingType: data.fundingType ?? null,
+            relationshipToClient: data.relationshipToClient ?? null,
+          }),
+        }).catch((err) => console.error('[Webhook] Client registration webhook failed:', err))
+      }
+
+      // ============================================
       // SUCCESS RESPONSE
       // ============================================
       return NextResponse.json(

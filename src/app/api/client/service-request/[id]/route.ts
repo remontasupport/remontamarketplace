@@ -388,7 +388,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: {
         status: 'CANCELLED',
-        selectedWorker: null,
+        selectedWorkers: [],
       },
       include: {
         participant: true,

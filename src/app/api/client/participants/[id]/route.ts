@@ -88,12 +88,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       location: string
       status: string
       assignedWorker: unknown
-      selectedWorker: string | null
+      selectedWorkers: string[]
       createdAt: Date
       updatedAt: Date
     }
     const [serviceRequest] = await authPrisma.$queryRaw<RawServiceRequest[]>`
-      SELECT id, services, details, location, status, "assignedWorker", "selectedWorker", "createdAt", "updatedAt"
+      SELECT id, services, details, location, status, "assignedWorker", "selectedWorkers", "createdAt", "updatedAt"
       FROM service_requests
       WHERE "participantId" = ${id}
     `

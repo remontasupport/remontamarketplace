@@ -543,31 +543,6 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
         localStorage.removeItem(STORAGE_KEY);
       }
 
-      // Fire n8n webhook (non-blocking)
-      fetch('https://n8n.srv1137899.hstgr.cloud/webhook-test/95cce8c5-b2fd-465b-8ab8-40c6055b1eb2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Participant
-          participantId: result.data?.participant?.id,
-          firstName: result.data?.participant?.firstName,
-          lastName: result.data?.participant?.lastName,
-          dateOfBirth: result.data?.participant?.dateOfBirth,
-          gender: result.data?.participant?.gender,
-          relationshipToClient: result.data?.participant?.relationshipToClient,
-          fundingType: result.data?.participant?.fundingType,
-          conditions: result.data?.participant?.conditions,
-          additionalInfo: result.data?.participant?.additionalInfo,
-          userId: result.data?.requesterId,
-          // Service request
-          serviceRequestId: result.data?.id,
-          services: result.data?.services,
-          location: result.data?.location,
-          details: result.data?.details,
-          status: result.data?.status,
-        }),
-      }).catch(() => {})
-
       // Show success modal with the submitted participant ID
       setSubmittedParticipantId(result.data?.participantId || null);
       setSubmitSuccess(true);

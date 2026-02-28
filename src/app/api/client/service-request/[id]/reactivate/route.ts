@@ -54,7 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       where: { id },
       data: {
         status: 'PENDING',
-        selectedWorker: null,
+        selectedWorkers: [],
       },
     })
 

@@ -201,27 +201,6 @@ export default function ClientsRegistration() {
         throw new Error(result.error || result.message || 'Registration failed');
       }
 
-      // Fire n8n webhook (non-blocking — won't break registration if it fails)
-      const webhookPayload: Record<string, unknown> = {
-        userId: result.user?.id,
-        email: data.email,
-        completingFormAs: data.completingFormAs,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        mobile: data.phoneNumber,
-      };
-
-      if (data.completingFormAs === 'coordinator') {
-        webhookPayload.organization = data.organisationName || undefined;
-        webhookPayload.clientTypes = data.clientTypes || [];
-      }
-
-      fetch('https://n8n.srv1137899.hstgr.cloud/webhook-test/fd8d4515-8711-4178-a91f-34ac41f1c0b2', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookPayload),
-      }).catch(() => {});
-
       // Success - redirect to appropriate success page
       router.push(successPath);
     } catch (error: any) {

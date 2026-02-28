@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { XMarkIcon, MapPinIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, MapPinIcon, CheckIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
 import Loader from '@/components/ui/Loader'
 
 type ServiceRequestStatus = 'PENDING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
 
 interface Worker {
-  id: string       // User.id (userId) — used for fetching, selecting, and profile link
+  id: string
   userId: string
   firstName: string
   lastName: string
@@ -27,7 +27,7 @@ interface ServiceRequest {
   participantName: string
   location: string
   assignedWorkerIds: string[]
-  selectedWorker: string | null
+  selectedWorkers: string[]
   status: ServiceRequestStatus
 }
 
@@ -81,25 +81,24 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
   const [workers, setWorkers] = useState<Worker[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isSelecting, setIsSelecting] = useState<string | null>(null)
+  const [isConfirming, setIsConfirming] = useState(false)
+  const [isRemoving, setIsRemoving] = useState<string | null>(null)
   const [isArchiving, setIsArchiving] = useState<string | null>(null)
-  const [isCancelling, setIsCancelling] = useState(false)
+
+  // Local pending selection — only saved to DB on Confirm
+  const [pendingWorkers, setPendingWorkers] = useState<string[]>([])
 
   const openModal = async (request: ServiceRequest) => {
     setSelectedRequest(request)
+    setPendingWorkers(request.selectedWorkers)
     setWorkers([])
 
-    // If a worker was already selected, only fetch that one worker
-    const idsToFetch = request.selectedWorker
-      ? [request.selectedWorker]
-      : (request.assignedWorkerIds ?? [])
-
+    const idsToFetch = request.assignedWorkerIds ?? []
     if (idsToFetch.length === 0) return
 
     setIsLoading(true)
     try {
-      const ids = idsToFetch.join(',')
-      const res = await fetch(`/api/client/workers/by-ids?ids=${ids}`)
+      const res = await fetch(`/api/client/workers/by-ids?ids=${idsToFetch.join(',')}`)
       const json = await res.json()
       if (json.success) setWorkers(json.data)
     } catch {
@@ -112,25 +111,57 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
   const closeModal = () => {
     setSelectedRequest(null)
     setWorkers([])
+    setPendingWorkers([])
   }
 
-  const handleSelectWorker = async (workerId: string) => {
+  // Add to pending selection locally — no API call
+  const handleSelectWorker = (workerId: string) => {
+    setPendingWorkers((prev) =>
+      prev.includes(workerId) ? prev : [...prev, workerId]
+    )
+  }
+
+  // Remove instantly — immediate API call
+  const handleRemoveWorker = async (workerId: string) => {
     if (!selectedRequest) return
-    setIsSelecting(workerId)
+    setIsRemoving(workerId)
     try {
       const res = await fetch(`/api/client/service-request/${selectedRequest.id}/select-worker`, {
-        method: 'POST',
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workerId }),
       })
       const json = await res.json()
       if (json.success) {
-        // Update the status in local state so the table reflects MATCHED immediately
+        const updated = selectedRequest.selectedWorkers.filter((w) => w !== workerId)
+        setPendingWorkers((prev) => prev.filter((w) => w !== workerId))
+        setSelectedRequest((prev) => prev ? { ...prev, selectedWorkers: updated } : prev)
+        setRequests((prev) =>
+          prev.map((r) => r.id === selectedRequest.id ? { ...r, selectedWorkers: updated } : r)
+        )
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setIsRemoving(null)
+    }
+  }
+
+  // Single API call on Confirm
+  const handleConfirm = async () => {
+    if (!selectedRequest) return
+    setIsConfirming(true)
+    try {
+      const res = await fetch(`/api/client/service-request/${selectedRequest.id}/select-worker`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workerIds: pendingWorkers }),
+      })
+      const json = await res.json()
+      if (json.success) {
         setRequests((prev) =>
           prev.map((r) =>
-            r.id === selectedRequest.id
-              ? { ...r, status: 'MATCHED' as ServiceRequestStatus, selectedWorker: workerId }
-              : r
+            r.id === selectedRequest.id ? { ...r, selectedWorkers: pendingWorkers } : r
           )
         )
         closeModal()
@@ -138,48 +169,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     } catch {
       // silently fail
     } finally {
-      setIsSelecting(null)
-    }
-  }
-
-  const handleCancelWorker = async () => {
-    if (!selectedRequest) return
-    setIsCancelling(true)
-    try {
-      const res = await fetch(`/api/client/service-request/${selectedRequest.id}/select-worker`, {
-        method: 'DELETE',
-      })
-      const json = await res.json()
-      if (json.success) {
-        const updatedRequest: ServiceRequest = {
-          ...selectedRequest,
-          selectedWorker: null,
-          status: 'PENDING',
-        }
-        setRequests((prev) =>
-          prev.map((r) => (r.id === selectedRequest.id ? updatedRequest : r))
-        )
-        setSelectedRequest(updatedRequest)
-        setWorkers([])
-        // Re-fetch the full list of assigned workers
-        const idsToFetch = updatedRequest.assignedWorkerIds ?? []
-        if (idsToFetch.length > 0) {
-          setIsLoading(true)
-          try {
-            const workerRes = await fetch(`/api/client/workers/by-ids?ids=${idsToFetch.join(',')}`)
-            const workerJson = await workerRes.json()
-            if (workerJson.success) setWorkers(workerJson.data)
-          } catch {
-            // silently fail
-          } finally {
-            setIsLoading(false)
-          }
-        }
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setIsCancelling(false)
+      setIsConfirming(false)
     }
   }
 
@@ -219,6 +209,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
       <div className="md:hidden space-y-4">
         {requests.map((request) => {
           const status = statusConfig[request.status]
+          const selectedCount = request.selectedWorkers.length
 
           return (
             <div
@@ -226,13 +217,8 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
               onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow"
             >
-              {/* Header: Participant + Status + Archive */}
               <div className="flex items-start justify-between gap-3 mb-3">
-                <div>
-                  <p className="font-medium text-gray-900 font-poppins">
-                    {request.participantName}
-                  </p>
-                </div>
+                <p className="font-medium text-gray-900 font-poppins">{request.participantName}</p>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`}></span>
@@ -250,11 +236,11 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
 
               <button
                 onClick={(e) => { e.stopPropagation(); openModal(request); }}
-                disabled={!request.selectedWorker && request.assignedWorkerIds.length === 0}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins transition-opacity ${!request.selectedWorker && request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
+                disabled={request.assignedWorkerIds.length === 0}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins transition-opacity ${request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                {request.selectedWorker ? "View Your Worker's Profile" : 'Choose Your Worker'}
+                {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : 'Choose Your Workers'}
               </button>
             </div>
           )
@@ -263,98 +249,97 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
 
       {/* Desktop Table Layout */}
       <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200">
-        <div>
-          <table className="w-full">
-            <thead>
-              <tr style={{ backgroundColor: BRAND_COLORS.TERTIARY }}>
-                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
-                  Participant
-                </th>
-                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
-                  Workers
-                </th>
-                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">
-                </th>
-              </tr>
-            </thead>
+        <table className="w-full">
+          <thead>
+            <tr style={{ backgroundColor: BRAND_COLORS.TERTIARY }}>
+              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Participant</th>
+              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Workers</th>
+              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Status</th>
+              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900"></th>
+            </tr>
+          </thead>
 
-            <tbody className="divide-y divide-gray-200">
-              {requests.map((request) => {
-                const status = statusConfig[request.status]
+          <tbody className="divide-y divide-gray-200">
+            {requests.map((request) => {
+              const status = statusConfig[request.status]
+              const selectedCount = request.selectedWorkers.length
 
-                return (
-                  <tr
-                    key={request.id}
-                    onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    {/* Participant Column */}
-                    <td className="px-6 py-5 text-center">
-                      <div className="flex flex-col items-center">
-                        <p className="font-medium text-gray-900 font-poppins">
-                          {request.participantName}
-                        </p>
-                      </div>
-                    </td>
+              return (
+                <tr
+                  key={request.id}
+                  onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <td className="px-6 py-5 text-center">
+                    <p className="font-medium text-gray-900 font-poppins">{request.participantName}</p>
+                  </td>
 
-                    {/* Workers Column */}
-                    <td className="px-6 py-5 text-center">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openModal(request); }}
-                        disabled={!request.selectedWorker && request.assignedWorkerIds.length === 0}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins transition-opacity ${!request.selectedWorker && request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-green-500" />
-                        {request.selectedWorker ? "View Your Worker's Profile" : 'Choose Your Worker'}
-                      </button>
-                    </td>
+                  <td className="px-6 py-5 text-center">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openModal(request); }}
+                      disabled={request.assignedWorkerIds.length === 0}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins transition-opacity ${request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : 'Choose Your Workers'}
+                    </button>
+                  </td>
 
-                    {/* Status Column */}
-                    <td className="px-6 py-5 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
-                        <span className={`w-2 h-2 rounded-full ${status.dotColor}`}></span>
-                        {status.label}
-                      </span>
-                    </td>
+                  <td className="px-6 py-5 text-center">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
+                      <span className={`w-2 h-2 rounded-full ${status.dotColor}`}></span>
+                      {status.label}
+                    </span>
+                  </td>
 
-                    {/* Archive Column */}
-                    <td className="px-6 py-5 text-center">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleArchive(request.id); }}
-                        disabled={isArchiving === request.id}
-                        className="text-sm font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                      >
-                        {isArchiving === request.id ? 'Archiving...' : 'Archive'}
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                  <td className="px-6 py-5 text-center">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleArchive(request.id); }}
+                      disabled={isArchiving === request.id}
+                      className="text-sm font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    >
+                      {isArchiving === request.id ? 'Archiving...' : 'Archive'}
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Workers Modal */}
       {selectedRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
 
-          {/* Modal Content */}
           <div className="relative bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto mt-4 sm:mt-8">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+            <div className="flex items-start justify-between p-4 sm:p-6 border-b border-gray-200">
               <div className="min-w-0 flex-1 pr-4">
                 <h2 className="text-lg sm:text-xl font-semibold font-poppins text-gray-900">
-                  {selectedRequest.selectedWorker ? 'Your Worker' : 'Best fit workers'}
+                  Choose one or more workers you want to connect with
                 </h2>
-                <p className="text-sm text-gray-500 font-poppins mt-1 truncate">
-                  For {selectedRequest.participantName}
-                </p>
+                {pendingWorkers.length > 0 && (
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      onClick={handleConfirm}
+                      disabled={isConfirming}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed self-start"
+                      style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
+                    >
+                      {isConfirming ? 'Saving...' : 'Confirm'}
+                      {!isConfirming && (
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white text-xs font-semibold" style={{ color: BRAND_COLORS.PRIMARY }}>
+                          {pendingWorkers.length}
+                        </span>
+                      )}
+                    </button>
+                    <p className="text-base text-gray-700 font-poppins">
+                      Your selected workers will be notified and can review your request before accepting.
+                    </p>
+                  </div>
+                )}
               </div>
               <button
                 onClick={closeModal}
@@ -376,13 +361,14 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 </p>
               ) : (
                 workers.map((worker) => {
+                  const isSelected = pendingWorkers.includes(worker.id)
                   const initials = `${worker.firstName.charAt(0)}${worker.lastName.charAt(0)}`.toUpperCase()
                   const displayName = `${worker.firstName}, ${worker.lastName.charAt(0)}.`
 
                   return (
                     <div
                       key={worker.id}
-                      className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow"
+                      className={`bg-white border rounded-xl p-5 transition-all hover:shadow-md ${isSelected ? 'border-green-400 bg-green-50/30' : 'border-gray-200'}`}
                     >
                       {/* Header Section */}
                       <div className="flex items-start gap-3 mb-3">
@@ -402,36 +388,35 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                         )}
 
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-poppins font-semibold text-gray-900 text-base truncate">
-                            {displayName}
-                          </h3>
-                          <p className="font-poppins text-sm text-gray-600 truncate">
-                            {worker.role}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-poppins font-semibold text-gray-900 text-base truncate">
+                              {displayName}
+                            </h3>
+                            {isSelected && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-poppins font-medium flex-shrink-0">
+                                <CheckIcon className="w-3 h-3" />
+                                Selected
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-poppins text-sm text-gray-600 truncate">{worker.role}</p>
                           <p className="font-poppins text-sm text-gray-500 flex items-center gap-1 mt-1">
                             <MapPinIcon className="w-4 h-4 flex-shrink-0" />
                             <span className="truncate">{worker.location}</span>
                           </p>
                           {worker.isNdisCompliant && (
-                            <p className="font-poppins text-sm text-green-600 mt-1">
-                              NDIS Compliant
-                            </p>
+                            <p className="font-poppins text-sm text-green-600 mt-1">NDIS Compliant</p>
                           )}
                         </div>
                       </div>
 
                       {/* Bio */}
-                      <p className="font-poppins text-sm text-gray-600 mb-3 line-clamp-2">
-                        {worker.bio}
-                      </p>
+                      <p className="font-poppins text-sm text-gray-600 mb-3 line-clamp-2">{worker.bio}</p>
 
                       {/* Skills Tags */}
                       <div className="flex flex-wrap gap-2 mb-4">
                         {worker.skills.slice(0, 4).map((skill, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-gray-100 text-gray-700 font-poppins text-xs rounded-full"
-                          >
+                          <span key={index} className="px-3 py-1 bg-gray-100 text-gray-700 font-poppins text-xs rounded-full">
                             {skill}
                           </span>
                         ))}
@@ -444,23 +429,21 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
 
                       {/* Actions */}
                       <div className="pt-3 border-t border-gray-100 flex items-center gap-3">
-                        {!selectedRequest?.selectedWorker && (
+                        {isSelected ? (
                           <button
-                            onClick={() => handleSelectWorker(worker.id)}
-                            disabled={isSelecting === worker.id}
-                            className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
-                          >
-                            {isSelecting === worker.id ? 'Selecting...' : 'Select'}
-                          </button>
-                        )}
-                        {selectedRequest?.selectedWorker && (
-                          <button
-                            onClick={handleCancelWorker}
-                            disabled={isCancelling}
+                            onClick={() => handleRemoveWorker(worker.id)}
+                            disabled={isRemoving === worker.id}
                             className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed bg-red-500"
                           >
-                            {isCancelling ? 'Cancelling...' : 'Cancel Worker'}
+                            {isRemoving === worker.id ? 'Removing...' : 'Remove'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleSelectWorker(worker.id)}
+                            className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg transition-colors hover:opacity-90"
+                            style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
+                          >
+                            Select
                           </button>
                         )}
                         <a

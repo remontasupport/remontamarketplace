@@ -533,18 +533,18 @@ enum RelationshipType {
 }
 
 model ServiceRequest {
-  id             String               @id @default(cuid())
-  requesterId    String
-  participantId  String
-  services       Json
-  details        Json
-  location       String
-  zohoRecordId   String?              @unique
-  assignedWorker Json?
-  selectedWorker String?
-  status         ServiceRequestStatus @default(PENDING)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id              String               @id @default(cuid())
+  requesterId     String
+  participantId   String
+  services        Json
+  details         Json
+  location        String
+  zohoRecordId    String?              @unique
+  assignedWorker  Json?
+  selectedWorkers String[]
+  status          ServiceRequestStatus @default(PENDING)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 

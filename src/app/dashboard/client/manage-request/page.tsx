@@ -54,7 +54,7 @@ export default async function ManageRequestPage() {
       participantName: `${sr.participant.firstName} ${sr.participant.lastName}`,
       location: sr.location,
       assignedWorkerIds,
-      selectedWorker: sr.selectedWorker ?? null,
+      selectedWorkers: sr.selectedWorkers ?? [],
       status: sr.status,
     };
   });

@@ -24968,7 +24968,6 @@ export namespace Prisma {
     participantId: string | null
     location: string | null
     zohoRecordId: string | null
-    selectedWorker: string | null
     status: $Enums.ServiceRequestStatus | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -24980,7 +24979,6 @@ export namespace Prisma {
     participantId: string | null
     location: string | null
     zohoRecordId: string | null
-    selectedWorker: string | null
     status: $Enums.ServiceRequestStatus | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -24995,7 +24993,7 @@ export namespace Prisma {
     location: number
     zohoRecordId: number
     assignedWorker: number
-    selectedWorker: number
+    selectedWorkers: number
     status: number
     createdAt: number
     updatedAt: number
@@ -25009,7 +25007,6 @@ export namespace Prisma {
     participantId?: true
     location?: true
     zohoRecordId?: true
-    selectedWorker?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -25021,7 +25018,6 @@ export namespace Prisma {
     participantId?: true
     location?: true
     zohoRecordId?: true
-    selectedWorker?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -25036,7 +25032,7 @@ export namespace Prisma {
     location?: true
     zohoRecordId?: true
     assignedWorker?: true
-    selectedWorker?: true
+    selectedWorkers?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -25124,7 +25120,7 @@ export namespace Prisma {
     location: string
     zohoRecordId: string | null
     assignedWorker: JsonValue | null
-    selectedWorker: string | null
+    selectedWorkers: string[]
     status: $Enums.ServiceRequestStatus
     createdAt: Date
     updatedAt: Date
@@ -25156,7 +25152,7 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
-    selectedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -25172,7 +25168,7 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
-    selectedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -25188,7 +25184,7 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
-    selectedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -25204,13 +25200,13 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
-    selectedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ServiceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "requesterId" | "participantId" | "services" | "details" | "location" | "zohoRecordId" | "assignedWorker" | "selectedWorker" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceRequest"]>
+  export type ServiceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "requesterId" | "participantId" | "services" | "details" | "location" | "zohoRecordId" | "assignedWorker" | "selectedWorkers" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceRequest"]>
   export type ServiceRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }
@@ -25235,7 +25231,7 @@ export namespace Prisma {
       location: string
       zohoRecordId: string | null
       assignedWorker: Prisma.JsonValue | null
-      selectedWorker: string | null
+      selectedWorkers: string[]
       status: $Enums.ServiceRequestStatus
       createdAt: Date
       updatedAt: Date
@@ -25671,7 +25667,7 @@ export namespace Prisma {
     readonly location: FieldRef<"ServiceRequest", 'String'>
     readonly zohoRecordId: FieldRef<"ServiceRequest", 'String'>
     readonly assignedWorker: FieldRef<"ServiceRequest", 'Json'>
-    readonly selectedWorker: FieldRef<"ServiceRequest", 'String'>
+    readonly selectedWorkers: FieldRef<"ServiceRequest", 'String[]'>
     readonly status: FieldRef<"ServiceRequest", 'ServiceRequestStatus'>
     readonly createdAt: FieldRef<"ServiceRequest", 'DateTime'>
     readonly updatedAt: FieldRef<"ServiceRequest", 'DateTime'>
@@ -26429,7 +26425,7 @@ export namespace Prisma {
     location: 'location',
     zohoRecordId: 'zohoRecordId',
     assignedWorker: 'assignedWorker',
-    selectedWorker: 'selectedWorker',
+    selectedWorkers: 'selectedWorkers',
     status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -28348,7 +28344,7 @@ export namespace Prisma {
     location?: StringFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
-    selectedWorker?: StringNullableFilter<"ServiceRequest"> | string | null
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
@@ -28364,7 +28360,7 @@ export namespace Prisma {
     location?: SortOrder
     zohoRecordId?: SortOrderInput | SortOrder
     assignedWorker?: SortOrderInput | SortOrder
-    selectedWorker?: SortOrderInput | SortOrder
+    selectedWorkers?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28383,7 +28379,7 @@ export namespace Prisma {
     details?: JsonFilter<"ServiceRequest">
     location?: StringFilter<"ServiceRequest"> | string
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
-    selectedWorker?: StringNullableFilter<"ServiceRequest"> | string | null
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
@@ -28399,7 +28395,7 @@ export namespace Prisma {
     location?: SortOrder
     zohoRecordId?: SortOrderInput | SortOrder
     assignedWorker?: SortOrderInput | SortOrder
-    selectedWorker?: SortOrderInput | SortOrder
+    selectedWorkers?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28420,7 +28416,7 @@ export namespace Prisma {
     location?: StringWithAggregatesFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableWithAggregatesFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableWithAggregatesFilter<"ServiceRequest">
-    selectedWorker?: StringNullableWithAggregatesFilter<"ServiceRequest"> | string | null
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusWithAggregatesFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeWithAggregatesFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ServiceRequest"> | Date | string
@@ -30306,7 +30302,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: string | null
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -30322,7 +30318,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: string | null
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -30336,7 +30332,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30352,7 +30348,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30367,7 +30363,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: string | null
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -30381,7 +30377,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30396,7 +30392,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31828,7 +31824,7 @@ export namespace Prisma {
     location?: SortOrder
     zohoRecordId?: SortOrder
     assignedWorker?: SortOrder
-    selectedWorker?: SortOrder
+    selectedWorkers?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -31840,7 +31836,6 @@ export namespace Prisma {
     participantId?: SortOrder
     location?: SortOrder
     zohoRecordId?: SortOrder
-    selectedWorker?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -31852,7 +31847,6 @@ export namespace Prisma {
     participantId?: SortOrder
     location?: SortOrder
     zohoRecordId?: SortOrder
-    selectedWorker?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -32975,10 +32969,19 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutWorkerAdditionalInfoInput, WorkerProfileUpdateWithoutWorkerAdditionalInfoInput>, WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput>
   }
 
+  export type ServiceRequestCreateselectedWorkersInput = {
+    set: string[]
+  }
+
   export type ParticipantCreateNestedOneWithoutServiceRequestsInput = {
     create?: XOR<ParticipantCreateWithoutServiceRequestsInput, ParticipantUncheckedCreateWithoutServiceRequestsInput>
     connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestsInput
     connect?: ParticipantWhereUniqueInput
+  }
+
+  export type ServiceRequestUpdateselectedWorkersInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type EnumServiceRequestStatusFieldUpdateOperationsInput = {
@@ -33846,7 +33849,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: string | null
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33860,7 +33863,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: string | null
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33953,7 +33956,7 @@ export namespace Prisma {
     location?: StringFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
-    selectedWorker?: StringNullableFilter<"ServiceRequest"> | string | null
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
@@ -36265,7 +36268,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: string | null
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -36279,7 +36282,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36293,7 +36296,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36307,7 +36310,7 @@ export namespace Prisma {
     location?: StringFieldUpdateOperationsInput | string
     zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    selectedWorker?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

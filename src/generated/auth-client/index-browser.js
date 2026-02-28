@@ -390,7 +390,7 @@ exports.Prisma.ServiceRequestScalarFieldEnum = {
   location: 'location',
   zohoRecordId: 'zohoRecordId',
   assignedWorker: 'assignedWorker',
-  selectedWorker: 'selectedWorker',
+  selectedWorkers: 'selectedWorkers',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

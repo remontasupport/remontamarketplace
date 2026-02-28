@@ -135,7 +135,33 @@ export async function POST(request: NextRequest) {
         // Don't fail if audit log fails
       })
 
-    // 7. Return success response
+    // 7. Webhook
+    const webhookUrl = process.env.Request_Service_Webhook
+    if (webhookUrl) {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: result.requesterId,
+          serviceRequestId: result.id,
+          services: result.services,
+          location: result.location,
+          details: result.details,
+          status: result.status,
+          participantId: result.participant.id,
+          firstName: result.participant.firstName,
+          lastName: result.participant.lastName,
+          dateOfBirth: result.participant.dateOfBirth ?? null,
+          gender: result.participant.gender ?? null,
+          relationshipToClient: result.participant.relationshipToClient ?? null,
+          fundingType: result.participant.fundingType ?? null,
+          conditions: result.participant.conditions,
+          additionalInfo: result.participant.additionalInfo ?? null,
+        }),
+      }).catch((err) => console.error('[Webhook] Request service webhook failed:', err))
+    }
+
+    // 8. Return success response
     return NextResponse.json(
       {
         success: true,

@@ -541,7 +541,7 @@ model ServiceRequest {
   location       String
   zohoRecordId   String?              @unique
   assignedWorker Json?
-  selectedWorker String?
+  selectedWorkers String[]
   status         ServiceRequestStatus @default(PENDING)
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
