@@ -165,6 +165,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: true, message: 'Request archived successfully' })
     }
 
+    // Handle cancellation — allowed from any non-terminal status
+    if (body?.status === 'CANCELLED') {
+      await authPrisma.serviceRequest.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+          selectedWorkers: [],
+        },
+      })
+      return NextResponse.json({ success: true, message: 'Request cancelled successfully' })
+    }
+
     // Use raw SQL to get the true status (Prisma enum doesn't include ARCHIVED)
     const [rawRow] = await authPrisma.$queryRaw<{ status: string; hidden: boolean }[]>`
       SELECT status, (details->>'_hidden' = 'true') AS hidden

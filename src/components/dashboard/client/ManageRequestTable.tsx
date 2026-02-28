@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { XMarkIcon, MapPinIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, MapPinIcon, CheckIcon, ArchiveBoxArrowDownIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
 import Loader from '@/components/ui/Loader'
 
@@ -38,7 +38,7 @@ interface ManageRequestTableProps {
 
 const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: string; textColor: string; dotColor: string }> = {
   PENDING: {
-    label: 'Matching',
+    label: 'Pending',
     bgColor: 'bg-yellow-50',
     textColor: 'text-yellow-700',
     dotColor: 'bg-yellow-500',
@@ -84,6 +84,17 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
   const [isConfirming, setIsConfirming] = useState(false)
   const [isRemoving, setIsRemoving] = useState<string | null>(null)
   const [isArchiving, setIsArchiving] = useState<string | null>(null)
+  const [isCancellingRequest, setIsCancellingRequest] = useState<string | null>(null)
+  const [isRenewing, setIsRenewing] = useState<string | null>(null)
+
+  // Archive confirmation modal
+  const [archiveTarget, setArchiveTarget] = useState<ServiceRequest | null>(null)
+
+  // Cancel confirmation modal (ACTIVE requests only)
+  const [cancelTarget, setCancelTarget] = useState<ServiceRequest | null>(null)
+  const [cancelStep, setCancelStep] = useState<1 | 2>(1)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelDetails, setCancelDetails] = useState('')
 
   // Local pending selection — only saved to DB on Confirm
   const [pendingWorkers, setPendingWorkers] = useState<string[]>([])
@@ -173,17 +184,76 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     }
   }
 
-  const handleArchive = async (requestId: string) => {
-    setIsArchiving(requestId)
+  const handleCancel = (request: ServiceRequest) => {
+    if (request.status === 'ACTIVE') {
+      // Show confirmation modal for active requests
+      setCancelTarget(request)
+      setCancelStep(1)
+      setCancelReason('')
+      setCancelDetails('')
+    } else {
+      submitCancel(request.id)
+    }
+  }
+
+  const submitCancel = async (requestId: string, reason?: { reason: string; details: string; initiatedBy: string }) => {
+    setIsCancellingRequest(requestId)
     try {
       const res = await fetch(`/api/client/service-request/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED', ...(reason ?? {}) }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setRequests((prev) =>
+          prev.map((r) => r.id === requestId ? { ...r, status: 'CANCELLED' as ServiceRequestStatus } : r)
+        )
+        setCancelTarget(null)
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setIsCancellingRequest(null)
+    }
+  }
+
+  const handleRenew = async (requestId: string) => {
+    setIsRenewing(requestId)
+    try {
+      const res = await fetch(`/api/client/service-request/${requestId}/reactivate`, {
+        method: 'POST',
+      })
+      const json = await res.json()
+      if (json.success) {
+        setRequests((prev) =>
+          prev.map((r) => r.id === requestId ? { ...r, status: 'PENDING' as ServiceRequestStatus, selectedWorkers: [] } : r)
+        )
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setIsRenewing(null)
+    }
+  }
+
+  const handleArchive = (request: ServiceRequest) => {
+    setArchiveTarget(request)
+  }
+
+  const submitArchive = async () => {
+    if (!archiveTarget) return
+    setIsArchiving(archiveTarget.id)
+    try {
+      const res = await fetch(`/api/client/service-request/${archiveTarget.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ARCHIVED' }),
       })
       const json = await res.json()
       if (json.success) {
-        setRequests((prev) => prev.filter((r) => r.id !== requestId))
+        setRequests((prev) => prev.filter((r) => r.id !== archiveTarget.id))
+        setArchiveTarget(null)
       }
     } catch {
       // silently fail
@@ -214,32 +284,56 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
           return (
             <div
               key={request.id}
-              onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow"
+              className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-shadow ${request.status === 'CANCELLED' ? 'opacity-50' : ''}`}
             >
               <div className="flex items-start justify-between gap-3 mb-3">
-                <p className="font-medium text-gray-900 font-poppins">{request.participantName}</p>
+                <button
+                  onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                  className={`font-medium font-poppins text-left ${request.status === 'CANCELLED' ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
+                >
+                  {request.participantName}
+                </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${status.dotColor}`}></span>
                     {status.label}
                   </span>
+                  {request.status === 'CANCELLED' ? (
+                    <button
+                      onClick={() => handleRenew(request.id)}
+                      disabled={isRenewing === request.id}
+                      className="inline-flex items-center gap-1 text-xs font-poppins text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50"
+                    >
+                      <ArrowPathIcon className="w-3.5 h-3.5" />
+                      {isRenewing === request.id ? 'Renewing...' : 'Renew'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleCancel(request)}
+                      disabled={isCancellingRequest === request.id}
+                      className="inline-flex items-center gap-1 text-xs font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    >
+                      <XCircleIcon className="w-3.5 h-3.5" />
+                      {isCancellingRequest === request.id ? 'Cancelling...' : 'Cancel'}
+                    </button>
+                  )}
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleArchive(request.id); }}
+                    onClick={() => handleArchive(request)}
                     disabled={isArchiving === request.id}
-                    className="text-xs font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1 text-xs font-poppins text-gray-400 hover:text-orange-500 transition-colors disabled:opacity-50"
                   >
+                    <ArchiveBoxArrowDownIcon className="w-3.5 h-3.5" />
                     {isArchiving === request.id ? 'Archiving...' : 'Archive'}
                   </button>
                 </div>
               </div>
 
               <button
-                onClick={(e) => { e.stopPropagation(); openModal(request); }}
+                onClick={() => openModal(request)}
                 disabled={request.assignedWorkerIds.length === 0}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins transition-opacity ${request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                {selectedCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-green-500" />}
                 {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : 'Choose Your Workers'}
               </button>
             </div>
@@ -255,7 +349,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
               <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Participant</th>
               <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Workers</th>
               <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Status</th>
-              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900"></th>
+              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Actions</th>
             </tr>
           </thead>
 
@@ -267,20 +361,24 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
               return (
                 <tr
                   key={request.id}
-                  onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
+                  className={`transition-colors ${request.status === 'CANCELLED' ? 'opacity-50' : 'hover:bg-gray-50'}`}
                 >
                   <td className="px-6 py-5 text-center">
-                    <p className="font-medium text-gray-900 font-poppins">{request.participantName}</p>
+                    <button
+                      onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                      className={`font-medium font-poppins ${request.status === 'CANCELLED' ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
+                    >
+                      {request.participantName}
+                    </button>
                   </td>
 
                   <td className="px-6 py-5 text-center">
                     <button
-                      onClick={(e) => { e.stopPropagation(); openModal(request); }}
+                      onClick={() => openModal(request)}
                       disabled={request.assignedWorkerIds.length === 0}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins transition-opacity ${request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
                     >
-                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      {selectedCount > 0 && <span className="w-2 h-2 rounded-full bg-green-500" />}
                       {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : 'Choose Your Workers'}
                     </button>
                   </td>
@@ -293,13 +391,35 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                   </td>
 
                   <td className="px-6 py-5 text-center">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleArchive(request.id); }}
-                      disabled={isArchiving === request.id}
-                      className="text-sm font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                    >
-                      {isArchiving === request.id ? 'Archiving...' : 'Archive'}
-                    </button>
+                    <div className="flex items-center justify-center gap-4">
+                      {request.status === 'CANCELLED' ? (
+                        <button
+                          onClick={() => handleRenew(request.id)}
+                          disabled={isRenewing === request.id}
+                          className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50"
+                        >
+                          <ArrowPathIcon className="w-4 h-4" />
+                          {isRenewing === request.id ? 'Renewing...' : 'Renew'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleCancel(request)}
+                          disabled={isCancellingRequest === request.id}
+                          className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                        >
+                          <XCircleIcon className="w-4 h-4" />
+                          {isCancellingRequest === request.id ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleArchive(request)}
+                        disabled={isArchiving === request.id}
+                        className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors disabled:opacity-50"
+                      >
+                        <ArchiveBoxArrowDownIcon className="w-4 h-4" />
+                        {isArchiving === request.id ? 'Archiving...' : 'Archive'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )
@@ -461,6 +581,154 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 })
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Archive Confirmation Modal */}
+      {archiveTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setArchiveTarget(null)} />
+
+          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <ArchiveBoxArrowDownIcon className="w-5 h-5 text-orange-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold font-poppins text-gray-900">Archive Request?</h2>
+                <p className="text-sm text-gray-500 font-poppins">For {archiveTarget.participantName}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 font-poppins mb-6">
+              This will archive the service request and remove it from your active list. You'll need to create another request for this client.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setArchiveTarget(null)}
+                className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={submitArchive}
+                disabled={isArchiving === archiveTarget.id}
+                className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg bg-orange-500 hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isArchiving === archiveTarget.id ? 'Archiving...' : 'Yes, Archive'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal (ACTIVE requests only) */}
+      {cancelTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setCancelTarget(null)} />
+
+          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+
+            {/* Step 1 — Confirmation */}
+            {cancelStep === 1 && (
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <XCircleIcon className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold font-poppins text-gray-900">Cancel Active Request?</h2>
+                    <p className="text-sm text-gray-500 font-poppins">For {cancelTarget.participantName}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 font-poppins mb-6">
+                  This will cancel the active service request. The assigned workers will be notified. Are you sure you want to proceed?
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setCancelTarget(null)}
+                    className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={() => setCancelStep(2)}
+                    className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg bg-red-500 hover:opacity-90 transition-colors"
+                  >
+                    Yes, Continue
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2 — Reason Form */}
+            {cancelStep === 2 && (
+              <div>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <XCircleIcon className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold font-poppins text-gray-900">Reason for Cancellation</h2>
+                    <p className="text-sm text-gray-500 font-poppins">Please provide more details</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4 mb-6">
+                  {/* Primary reason */}
+                  <div>
+                    <label className="block text-sm font-medium font-poppins text-gray-700 mb-1">
+                      Primary Reason <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-poppins text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent"
+                      style={{ ['--tw-ring-color' as string]: BRAND_COLORS.PRIMARY }}
+                    >
+                      <option value="">Select a reason...</option>
+                      <option value="service_no_longer_needed">Service no longer needed</option>
+                      <option value="found_another_provider">Found another provider</option>
+                      <option value="worker_not_suitable">Worker not suitable</option>
+                      <option value="financial_reasons">Financial reasons</option>
+                      <option value="schedule_conflict">Schedule conflict</option>
+                      <option value="health_condition_changed">Health condition changed</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Additional details */}
+                  <div>
+                    <label className="block text-sm font-medium font-poppins text-gray-700 mb-1">
+                      Additional Details
+                    </label>
+                    <textarea
+                      value={cancelDetails}
+                      onChange={(e) => setCancelDetails(e.target.value)}
+                      rows={3}
+                      placeholder="Any additional information..."
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-poppins text-gray-700 focus:outline-none focus:ring-2 resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setCancelStep(1)}
+                    className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => submitCancel(cancelTarget.id, { reason: cancelReason, details: cancelDetails, initiatedBy: '' })}
+                    disabled={!cancelReason || isCancellingRequest === cancelTarget.id}
+                    className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg bg-red-500 hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCancellingRequest === cancelTarget.id ? 'Cancelling...' : 'Confirm Cancellation'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

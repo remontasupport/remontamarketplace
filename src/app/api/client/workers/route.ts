@@ -27,6 +27,7 @@ import { Prisma } from '@/generated/auth-client';
 import { UserRole } from '@/types/auth';
 import redis from '@/lib/redis';
 import { applyRateLimit, publicApiRateLimit } from '@/lib/ratelimit';
+import { geocodeAddress } from '@/lib/geocoding';
 
 // ============================================================================
 // TYPES
@@ -38,6 +39,7 @@ interface SearchParams {
   search?: string;
   location?: string;
   services?: string[];
+  within?: number; // radius in km, default 50
 }
 
 interface WorkerPublicData {
@@ -76,6 +78,42 @@ const CACHE_PREFIX = 'client:workers:search:';
 const CACHE_TTL_SECONDS = 300; // 5 minutes
 
 // ============================================================================
+// GEOSPATIAL UTILITIES
+// ============================================================================
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const toRad = (deg: number) => deg * (Math.PI / 180)
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function getBoundingBox(lat: number, lng: number, radiusKm: number) {
+  const latDelta = radiusKm / 111.32
+  const lngDelta = radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))
+  return {
+    minLat: lat - latDelta,
+    maxLat: lat + latDelta,
+    minLng: lng - lngDelta,
+    maxLng: lng + lngDelta,
+  }
+}
+
+async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const result = await geocodeAddress(location)
+    return result ? { lat: result.latitude, lng: result.longitude } : null
+  } catch {
+    return null
+  }
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
@@ -106,6 +144,8 @@ function parseSearchParams(searchParams: URLSearchParams): SearchParams {
   );
   const search = searchParams.get('search')?.trim() || undefined;
   const location = searchParams.get('location')?.trim() || undefined;
+  const withinParam = searchParams.get('within');
+  const within = withinParam ? Math.max(1, parseInt(withinParam, 10)) : 50;
 
   // Parse services (comma-separated)
   const servicesParam = searchParams.get('services');
@@ -113,7 +153,7 @@ function parseSearchParams(searchParams: URLSearchParams): SearchParams {
     ? servicesParam.split(',').map(s => s.trim()).filter(Boolean)
     : undefined;
 
-  return { page, pageSize, search, location, services };
+  return { page, pageSize, search, location, services, within };
 }
 
 /**
@@ -149,17 +189,8 @@ function buildWhereClause(params: SearchParams): Prisma.WorkerProfileWhereInput 
     });
   }
 
-  // Location filter (city or state)
-  if (params.location) {
-    const locationTerm = params.location;
-    conditions.push({
-      OR: [
-        { city: { contains: locationTerm, mode: 'insensitive' } },
-        { state: { contains: locationTerm, mode: 'insensitive' } },
-        { postalCode: { contains: locationTerm } },
-      ],
-    });
-  }
+  // NOTE: Location filtering is handled via geocoding + Haversine in searchWorkersWithDistance.
+  // No text-based location filter here.
 
   // Services filter
   if (params.services && params.services.length > 0) {
@@ -239,6 +270,8 @@ async function searchWorkers(params: SearchParams): Promise<SearchResponse> {
         introduction: true,
         city: true,
         state: true,
+        latitude: true,
+        longitude: true,
         workerServices: {
           select: {
             categoryName: true,
@@ -269,6 +302,86 @@ async function searchWorkers(params: SearchParams): Promise<SearchResponse> {
       hasPrev: params.page > 1,
     },
   };
+}
+
+/**
+ * Execute distance-based worker search
+ * Geocodes the location string, then filters by bounding box + Haversine
+ * Falls back to standard search if geocoding fails
+ */
+async function searchWorkersWithDistance(params: SearchParams): Promise<SearchResponse> {
+  const coords = await geocodeLocation(params.location!)
+
+  if (!coords) {
+    // Geocoding failed — fall back to standard search (no location filter)
+    return searchWorkers({ ...params, location: undefined })
+  }
+
+  const radiusKm = params.within ?? 50
+  const bbox = getBoundingBox(coords.lat, coords.lng, radiusKm)
+  const where = buildWhereClause(params)
+
+  // Add bounding box to narrow DB candidates (uses indexed lat/lng fields)
+  where.latitude = { gte: bbox.minLat, lte: bbox.maxLat }
+  where.longitude = { gte: bbox.minLng, lte: bbox.maxLng }
+
+  const existingAnd = where.AND ? (Array.isArray(where.AND) ? where.AND : [where.AND]) : []
+  where.AND = [
+    ...existingAnd,
+    { latitude: { not: null } },
+    { longitude: { not: null } },
+  ]
+
+  const candidates = await prisma.workerProfile.findMany({
+    where,
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      photos: true,
+      introduction: true,
+      city: true,
+      state: true,
+      latitude: true,
+      longitude: true,
+      workerServices: {
+        select: { categoryName: true, subcategoryNames: true },
+        take: 5,
+      },
+      verificationRequirements: {
+        where: { status: 'APPROVED' },
+        select: { status: true },
+        take: 1,
+      },
+    },
+  })
+
+  // Exact Haversine filter + sort by distance
+  const filtered = candidates
+    .map(worker => ({
+      ...worker,
+      distance: haversineDistance(coords.lat, coords.lng, worker.latitude!, worker.longitude!),
+    }))
+    .filter(w => w.distance <= radiusKm)
+    .sort((a, b) => a.distance - b.distance)
+
+  const total = filtered.length
+  const skip = (params.page - 1) * params.pageSize
+  const paginated = filtered.slice(skip, skip + params.pageSize)
+  const totalPages = Math.ceil(total / params.pageSize)
+
+  return {
+    success: true,
+    data: paginated.map(transformToPublicData),
+    pagination: {
+      total,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages,
+      hasNext: params.page < totalPages,
+      hasPrev: params.page > 1,
+    },
+  }
 }
 
 // ============================================================================
@@ -341,8 +454,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 6. Execute database search
-    const result = await searchWorkers(params);
+    // 6. Execute database search (distance-based if location provided)
+    const result = params.location
+      ? await searchWorkersWithDistance(params)
+      : await searchWorkers(params);
 
     // 7. Cache the result
     try {

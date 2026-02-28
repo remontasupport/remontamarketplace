@@ -61,7 +61,7 @@ export default function WorkerSearchBar({ onSearch }: WorkerSearchBarProps) {
         {/* Search Button */}
         <button
           onClick={handleSearch}
-          className="flex-shrink-0 px-5 py-2.5 rounded-full text-white font-poppins text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all whitespace-nowrap ml-2"
+          className="flex-shrink-0 px-4 py-1.5 rounded-full text-white font-poppins text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all whitespace-nowrap ml-2"
           style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
         >
           Find Support Worker

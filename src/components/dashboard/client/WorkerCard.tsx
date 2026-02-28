@@ -79,7 +79,7 @@ export default function WorkerCard({
           </p>
           {isNdisCompliant && (
             <p className="font-poppins text-sm text-green-600 mt-1">
-              NDIS Compliant
+              
             </p>
           )}
         </div>

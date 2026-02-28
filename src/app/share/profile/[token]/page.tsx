@@ -117,9 +117,7 @@ export default function PublicProfilePage({ params }: PageProps) {
               <h1 className="profile-preview-name">
                 {profile.firstName}, {profile.lastName?.[0]}.
               </h1>
-              <p className="profile-preview-ndis-badge">
-                ✅ NDIS Compliant
-              </p>
+             
               <p className="profile-preview-roles">
                 {servicesText}
               </p>
