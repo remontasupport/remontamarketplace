@@ -431,6 +431,16 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
       if (!formData.whenData.startPreference) {
         return { isValid: false, error: "Please select when you'd like to start", stepIndex: 2 };
       }
+      // Check preferred days for invalid time ranges
+      if (formData.whenData.scheduling === "preferred") {
+        const invalidDay = Object.entries(formData.whenData.preferredDays).find(
+          ([_, schedule]) => schedule.enabled && schedule.startTime && schedule.endTime && schedule.endTime <= schedule.startTime
+        );
+        if (invalidDay) {
+          const dayLabel = invalidDay[0].charAt(0).toUpperCase() + invalidDay[0].slice(1);
+          return { isValid: false, error: `${dayLabel}: end time must be after start time`, stepIndex: 2 };
+        }
+      }
     }
 
     // Step 3: Support details
@@ -532,6 +542,31 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
       if (typeof window !== "undefined") {
         localStorage.removeItem(STORAGE_KEY);
       }
+
+      // Fire n8n webhook (non-blocking)
+      fetch('https://n8n.srv1137899.hstgr.cloud/webhook-test/95cce8c5-b2fd-465b-8ab8-40c6055b1eb2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // Participant
+          participantId: result.data?.participant?.id,
+          firstName: result.data?.participant?.firstName,
+          lastName: result.data?.participant?.lastName,
+          dateOfBirth: result.data?.participant?.dateOfBirth,
+          gender: result.data?.participant?.gender,
+          relationshipToClient: result.data?.participant?.relationshipToClient,
+          fundingType: result.data?.participant?.fundingType,
+          conditions: result.data?.participant?.conditions,
+          additionalInfo: result.data?.participant?.additionalInfo,
+          userId: result.data?.requesterId,
+          // Service request
+          serviceRequestId: result.data?.id,
+          services: result.data?.services,
+          location: result.data?.location,
+          details: result.data?.details,
+          status: result.data?.status,
+        }),
+      }).catch(() => {})
 
       // Show success modal with the submitted participant ID
       setSubmittedParticipantId(result.data?.participantId || null);

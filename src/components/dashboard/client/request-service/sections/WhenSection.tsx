@@ -424,7 +424,7 @@ export default function WhenSection() {
                           </label>
 
                           {daySchedule.enabled && (
-                            <div className="ml-9 flex flex-wrap gap-4">
+                            <div className="ml-9 flex flex-wrap gap-4 items-start">
                               <div>
                                 <label className="block text-sm text-gray-600 font-poppins mb-1">
                                   Start time
@@ -444,8 +444,15 @@ export default function WhenSection() {
                                   type="time"
                                   value={daySchedule.endTime}
                                   onChange={(e) => updateDayTime(key, "endTime", e.target.value)}
-                                  className="w-40 px-4 py-2.5 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
+                                  className={`w-40 px-4 py-2.5 border-2 rounded-lg font-poppins focus:outline-none ${
+                                    daySchedule.startTime && daySchedule.endTime && daySchedule.endTime <= daySchedule.startTime
+                                      ? "border-red-400 focus:border-red-500"
+                                      : "border-gray-200 focus:border-indigo-500"
+                                  }`}
                                 />
+                                {daySchedule.startTime && daySchedule.endTime && daySchedule.endTime <= daySchedule.startTime && (
+                                  <p className="mt-1 text-xs text-red-500 font-poppins">End time must be after start time</p>
+                                )}
                               </div>
                             </div>
                           )}

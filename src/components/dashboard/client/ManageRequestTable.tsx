@@ -83,6 +83,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
   const [isLoading, setIsLoading] = useState(false)
   const [isSelecting, setIsSelecting] = useState<string | null>(null)
   const [isArchiving, setIsArchiving] = useState<string | null>(null)
+  const [isCancelling, setIsCancelling] = useState(false)
 
   const openModal = async (request: ServiceRequest) => {
     setSelectedRequest(request)
@@ -138,6 +139,47 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
       // silently fail
     } finally {
       setIsSelecting(null)
+    }
+  }
+
+  const handleCancelWorker = async () => {
+    if (!selectedRequest) return
+    setIsCancelling(true)
+    try {
+      const res = await fetch(`/api/client/service-request/${selectedRequest.id}/select-worker`, {
+        method: 'DELETE',
+      })
+      const json = await res.json()
+      if (json.success) {
+        const updatedRequest: ServiceRequest = {
+          ...selectedRequest,
+          selectedWorker: null,
+          status: 'PENDING',
+        }
+        setRequests((prev) =>
+          prev.map((r) => (r.id === selectedRequest.id ? updatedRequest : r))
+        )
+        setSelectedRequest(updatedRequest)
+        setWorkers([])
+        // Re-fetch the full list of assigned workers
+        const idsToFetch = updatedRequest.assignedWorkerIds ?? []
+        if (idsToFetch.length > 0) {
+          setIsLoading(true)
+          try {
+            const workerRes = await fetch(`/api/client/workers/by-ids?ids=${idsToFetch.join(',')}`)
+            const workerJson = await workerRes.json()
+            if (workerJson.success) setWorkers(workerJson.data)
+          } catch {
+            // silently fail
+          } finally {
+            setIsLoading(false)
+          }
+        }
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setIsCancelling(false)
     }
   }
 
@@ -410,6 +452,15 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                             style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
                           >
                             {isSelecting === worker.id ? 'Selecting...' : 'Select'}
+                          </button>
+                        )}
+                        {selectedRequest?.selectedWorker && (
+                          <button
+                            onClick={handleCancelWorker}
+                            disabled={isCancelling}
+                            className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed bg-red-500"
+                          >
+                            {isCancelling ? 'Cancelling...' : 'Cancel Worker'}
                           </button>
                         )}
                         <a

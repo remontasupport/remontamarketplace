@@ -49,7 +49,6 @@ export async function GET() {
 
     return NextResponse.json({ success: true, data: participants })
   } catch (error) {
-    console.error('[Participants List API] GET Error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch participants' },
       { status: 500 }
@@ -96,7 +95,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: participant }, { status: 201 })
   } catch (error) {
-    console.error('[Participants List API] POST Error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to create participant' },
       { status: 500 }

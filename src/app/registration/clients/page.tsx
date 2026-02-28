@@ -202,17 +202,24 @@ export default function ClientsRegistration() {
       }
 
       // Fire n8n webhook (non-blocking — won't break registration if it fails)
-      const { password: _omit, ...safePayload } = payload as Record<string, unknown>;
-      fetch('https://n8n.srv1137899.hstgr.cloud/webhook/fd8d4515-8711-4178-a91f-34ac41f1c0b2', {
+      const webhookPayload: Record<string, unknown> = {
+        userId: result.user?.id,
+        email: data.email,
+        completingFormAs: data.completingFormAs,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        mobile: data.phoneNumber,
+      };
+
+      if (data.completingFormAs === 'coordinator') {
+        webhookPayload.organization = data.organisationName || undefined;
+        webhookPayload.clientTypes = data.clientTypes || [];
+      }
+
+      fetch('https://n8n.srv1137899.hstgr.cloud/webhook-test/fd8d4515-8711-4178-a91f-34ac41f1c0b2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...safePayload,
-          email: data.email,
-          completingFormAs: data.completingFormAs,
-          userId: result.user?.id,
-          participant: result.participant,
-        }),
+        body: JSON.stringify(webhookPayload),
       }).catch(() => {});
 
       // Success - redirect to appropriate success page

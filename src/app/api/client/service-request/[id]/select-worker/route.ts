@@ -79,3 +79,42 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     )
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params
+
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userRole = session.user.role
+    if (userRole !== UserRole.CLIENT && userRole !== UserRole.COORDINATOR) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    }
+
+    const serviceRequest = await authPrisma.serviceRequest.findUnique({ where: { id } })
+
+    if (!serviceRequest) {
+      return NextResponse.json({ success: false, error: 'Service request not found' }, { status: 404 })
+    }
+
+    if (serviceRequest.requesterId !== session.user.id) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    }
+
+    const updated = await authPrisma.serviceRequest.update({
+      where: { id },
+      data: {
+        selectedWorker: null,
+        status: 'PENDING',
+      },
+    })
+
+    return NextResponse.json({ success: true, data: updated })
+  } catch (error) {
+    console.error('[Cancel Worker API] Error:', error)
+    return NextResponse.json({ success: false, error: 'Failed to cancel worker' }, { status: 500 })
+  }
+}
