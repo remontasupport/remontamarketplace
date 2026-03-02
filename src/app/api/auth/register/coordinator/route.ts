@@ -173,6 +173,7 @@ export async function POST(request: Request) {
             mobile: data.mobile,
             organization: data.organization ?? null,
             clientTypes: data.clientTypes,
+            completingFormAs: 'coordinator',
           }),
         }).catch((err) => console.error('[Webhook] Coordinator registration webhook failed:', err))
       }

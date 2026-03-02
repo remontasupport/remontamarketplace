@@ -11,7 +11,6 @@ interface Participant {
   id: string;
   firstName: string;
   lastName: string;
-  hasPendingRequest: boolean;
 }
 
 export default function ClientListPanel() {
@@ -37,9 +36,7 @@ export default function ClientListPanel() {
   useEffect(() => {
     if (!loading && selectedParticipantId) {
       const stillExists = clients.some((c) => c.id === selectedParticipantId);
-      if (!stillExists) {
-        clearSelectedParticipant();
-      }
+      if (!stillExists) clearSelectedParticipant();
     }
   }, [loading, clients, selectedParticipantId, clearSelectedParticipant]);
 
@@ -133,41 +130,36 @@ export default function ClientListPanel() {
             const initials = `${client.firstName.charAt(0)}${client.lastName.charAt(0)}`.toUpperCase();
             const fullName = `${client.firstName} ${client.lastName}`;
             const isSelected = selectedParticipantId === client.id;
-            const isPending = client.hasPendingRequest;
 
             return (
               <button
                 key={client.id}
                 type="button"
-                disabled={isPending}
                 onClick={() =>
-                  !isPending &&
                   selectParticipant(client.id, {
                     firstName: client.firstName,
                     lastName: client.lastName,
                   })
                 }
-                title={isPending ? "This client already has a pending request" : undefined}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "0.625rem",
                   padding: "0.375rem 0.5rem",
                   borderRadius: "0.5rem",
-                  cursor: isPending ? "not-allowed" : "pointer",
+                  cursor: "pointer",
                   transition: "background-color 0.15s",
                   backgroundColor: isSelected ? "#fff7ed" : "transparent",
                   border: isSelected ? "1.5px solid #fdba74" : "1.5px solid transparent",
                   width: "100%",
                   textAlign: "left",
-                  opacity: isPending ? 0.45 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  if (!isSelected && !isPending)
+                  if (!isSelected)
                     (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#f9fafb";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSelected && !isPending)
+                  if (!isSelected)
                     (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
                 }}
               >
@@ -204,18 +196,6 @@ export default function ClientListPanel() {
                   >
                     {fullName}
                   </span>
-                  {isPending && (
-                    <span
-                      style={{
-                        display: "block",
-                        fontSize: "0.6875rem",
-                        color: "#9ca3af",
-                        fontFamily: "var(--font-poppins, sans-serif)",
-                      }}
-                    >
-                      Pending request
-                    </span>
-                  )}
                 </div>
                 {isSelected && (
                   <Check

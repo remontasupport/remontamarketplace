@@ -175,6 +175,7 @@ export default function ClientsRegistration() {
           email: data.email,
           password: data.password,
           consent: data.consent,
+          completingFormAs: data.completingFormAs,
         };
       }
 

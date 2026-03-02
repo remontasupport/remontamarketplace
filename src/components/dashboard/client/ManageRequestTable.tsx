@@ -2,11 +2,24 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { XMarkIcon, MapPinIcon, CheckIcon, ArchiveBoxArrowDownIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { XMarkIcon, MapPinIcon, CheckIcon, ArchiveBoxArrowDownIcon, XCircleIcon, ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
 import Loader from '@/components/ui/Loader'
 
 type ServiceRequestStatus = 'PENDING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
+
+const SERVICE_LABEL_MAP: Record<string, string> = {
+  'Support Worker': 'Support Work',
+  'Support Worker (High Intensity)': 'Support Work (High Intensity)',
+  'Cleaning Services': 'Cleaning',
+  'Home and Yard Maintenance': 'Home & Yard',
+  'Therapeutic Supports': 'Therapeutic',
+  'Nursing Services': 'Nursing',
+}
+
+function formatServiceLabel(service: string): string {
+  return SERVICE_LABEL_MAP[service] ?? service
+}
 
 interface Worker {
   id: string
@@ -25,6 +38,7 @@ interface ServiceRequest {
   id: string
   participantId: string
   participantName: string
+  primaryService?: string
   location: string
   assignedWorkerIds: string[]
   selectedWorkers: string[]
@@ -34,6 +48,7 @@ interface ServiceRequest {
 interface ManageRequestTableProps {
   requests: ServiceRequest[]
   basePath: string
+  showRequestType?: boolean
 }
 
 const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: string; textColor: string; dotColor: string }> = {
@@ -75,7 +90,7 @@ const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: strin
   },
 }
 
-export default function ManageRequestTable({ requests: initialRequests, basePath }: ManageRequestTableProps) {
+export default function ManageRequestTable({ requests: initialRequests, basePath, showRequestType = false }: ManageRequestTableProps) {
   const router = useRouter()
   const [requests, setRequests] = useState(initialRequests)
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
@@ -291,7 +306,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                   onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.participantId}`)}
                   className={`font-medium font-poppins text-left ${request.status === 'CANCELLED' ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
                 >
-                  {request.participantName}
+                  {showRequestType ? formatServiceLabel(request.primaryService || '') || 'Service Request' : request.participantName}
                 </button>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins ${status.bgColor} ${status.textColor}`}>
@@ -318,6 +333,13 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                     </button>
                   )}
                   <button
+                    onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                    className="inline-flex items-center gap-1 text-xs font-poppins text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <PencilSquareIcon className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  <button
                     onClick={() => handleArchive(request)}
                     disabled={isArchiving === request.id}
                     className="inline-flex items-center gap-1 text-xs font-poppins text-gray-400 hover:text-orange-500 transition-colors disabled:opacity-50"
@@ -334,7 +356,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-poppins transition-opacity ${request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
               >
                 {selectedCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-green-500" />}
-                {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : 'Choose Your Workers'}
+                {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : `Workers Applied (${request.assignedWorkerIds.length})`}
               </button>
             </div>
           )
@@ -346,7 +368,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
         <table className="w-full">
           <thead>
             <tr style={{ backgroundColor: BRAND_COLORS.TERTIARY }}>
-              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Participant</th>
+              <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">{showRequestType ? 'Request Type' : 'Participant'}</th>
               <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Workers</th>
               <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Status</th>
               <th className="px-6 py-4 text-center text-sm font-medium font-poppins text-gray-900">Actions</th>
@@ -368,7 +390,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                       onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.participantId}`)}
                       className={`font-medium font-poppins ${request.status === 'CANCELLED' ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
                     >
-                      {request.participantName}
+                      {showRequestType ? formatServiceLabel(request.primaryService || '') || 'Service Request' : request.participantName}
                     </button>
                   </td>
 
@@ -379,7 +401,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium font-poppins transition-opacity ${request.assignedWorkerIds.length === 0 ? 'bg-green-50 text-green-700 opacity-40 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:opacity-80 cursor-pointer'}`}
                     >
                       {selectedCount > 0 && <span className="w-2 h-2 rounded-full bg-green-500" />}
-                      {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : 'Choose Your Workers'}
+                      {selectedCount > 0 ? `${selectedCount} Worker${selectedCount > 1 ? 's' : ''} Selected` : `Workers Applied (${request.assignedWorkerIds.length})`}
                     </button>
                   </td>
 
@@ -412,6 +434,13 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                         </button>
                       )}
                       <button
+                        onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                        className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-blue-500 transition-colors"
+                      >
+                        <PencilSquareIcon className="w-4 h-4" />
+                        Edit
+                      </button>
+                      <button
                         onClick={() => handleArchive(request)}
                         disabled={isArchiving === request.id}
                         className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors disabled:opacity-50"
@@ -440,7 +469,13 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 <h2 className="text-lg sm:text-xl font-semibold font-poppins text-gray-900">
                   Choose one or more workers you want to connect with
                 </h2>
-                {pendingWorkers.length > 0 && (
+                {(() => {
+                  const saved = selectedRequest.selectedWorkers
+                  const hasChanges =
+                    pendingWorkers.length !== saved.length ||
+                    pendingWorkers.some((id) => !saved.includes(id))
+                  return hasChanges
+                })() && (
                   <div className="mt-4 flex flex-col gap-2">
                     <button
                       onClick={handleConfirm}
@@ -448,7 +483,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                       className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed self-start"
                       style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
                     >
-                      {isConfirming ? 'Saving...' : 'Confirm'}
+                      {isConfirming ? 'Sending...' : 'Confirm'}
                       {!isConfirming && (
                         <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white text-xs font-semibold" style={{ color: BRAND_COLORS.PRIMARY }}>
                           {pendingWorkers.length}

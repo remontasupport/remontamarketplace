@@ -159,27 +159,34 @@ export default function ParticipantsMasterDetail({
           </h1>
           <p className="text-gray-600 font-poppins mt-1">{subtitle}</p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium font-poppins text-sm text-white transition-colors hover:opacity-90 flex-shrink-0 ml-4"
-          style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
-        >
-          <Plus className="w-4 h-4" />
-          Add Client
-        </button>
+        {!showRelationship && (
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium font-poppins text-sm text-white transition-colors hover:opacity-90 flex-shrink-0 ml-4"
+            style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
+          >
+            <Plus className="w-4 h-4" />
+            Add Client
+          </button>
+        )}
       </div>
 
       {/* Empty state */}
       {participants.length === 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 hover:bg-gray-200 transition-colors"
+          >
             <Plus className="w-8 h-8 text-gray-400" />
-          </div>
+          </button>
           <h3 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
-            No clients yet
+            {showRelationship ? "Add Your Details" : "No clients yet"}
           </h3>
           <p className="text-gray-600 font-poppins">
-            Click &quot;Add Client&quot; above to add your first client.
+            {showRelationship
+              ? "Click the + button above to add your details and get started."
+              : "Click \"Add Client\" above to add your first client."}
           </p>
         </div>
       )}

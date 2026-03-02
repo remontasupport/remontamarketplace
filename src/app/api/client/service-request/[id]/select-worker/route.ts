@@ -15,14 +15,9 @@ type RouteParams = {
   params: Promise<{ id: string }>
 }
 
-async function fireWebhook(payload: {
-  zohoRecordId: string | null
-  selectedWorkers: string[]
-  action: 'confirmed'
-}) {
+async function fireWebhook(payload: { zohoRecordId: string | null; selectedWorkers: string[]; action: 'confirmed' | 'cancelling' }) {
   const webhookUrl = process.env.Select_Cancelling_Request_Webhook
   if (!webhookUrl) return
-
   try {
     await fetch(webhookUrl, {
       method: 'POST',
@@ -75,7 +70,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     await fireWebhook({
       zohoRecordId: serviceRequest.zohoRecordId ?? null,
       selectedWorkers: remaining,
-      action: 'confirmed',
+      action: 'cancelling',
     })
 
     return NextResponse.json({ success: true, data: updated })

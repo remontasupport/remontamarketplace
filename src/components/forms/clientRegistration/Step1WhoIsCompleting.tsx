@@ -32,7 +32,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
               }`}
             >
               <span className="text-base font-poppins text-gray-800">
-                I manage Clients / Legal Guardian / Parent
+                I am the Client / Participant
               </span>
               <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
             </button>

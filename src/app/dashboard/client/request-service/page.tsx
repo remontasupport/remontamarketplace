@@ -11,15 +11,30 @@ export default async function RequestServicePage() {
     redirect("/login");
   }
 
-  const clientProfile = await authPrisma.clientProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { firstName: true },
-  });
+  const [clientProfile, participant] = await Promise.all([
+    authPrisma.clientProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    }),
+    authPrisma.participant.findFirst({
+      where: { userId: session.user.id },
+      select: { id: true, firstName: true, lastName: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
   const displayName =
     clientProfile?.firstName ||
     session.user.email?.split("@")[0] ||
     "User";
 
-  return <RequestServiceClient displayName={displayName} />;
+  return (
+    <RequestServiceClient
+      displayName={displayName}
+      defaultParticipantId={participant?.id ?? null}
+      defaultParticipantName={
+        participant ? `${participant.firstName} ${participant.lastName}` : null
+      }
+    />
+  );
 }

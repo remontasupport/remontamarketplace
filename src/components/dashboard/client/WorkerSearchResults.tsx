@@ -95,7 +95,7 @@ export default function WorkerSearchResults({
           <h2 className="font-poppins font-semibold text-xl text-gray-900">
             {searchParams.search || searchParams.location
               ? 'Search Results'
-              : 'Our Best Support Workers'}
+              : 'Some of our available support workers'}
           </h2>
         </div>
       </div>

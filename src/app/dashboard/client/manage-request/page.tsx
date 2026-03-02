@@ -48,10 +48,14 @@ export default async function ManageRequestPage() {
     const workerIds = sr.assignedWorker as string[] | null;
     const assignedWorkerIds = Array.isArray(workerIds) ? [...new Set(workerIds)] : [];
 
+    const services = sr.services as Record<string, { categoryName: string }> | null;
+    const primaryService = services ? Object.values(services)[0]?.categoryName : undefined;
+
     return {
       id: sr.id,
       participantId: sr.participantId,
       participantName: `${sr.participant.firstName} ${sr.participant.lastName}`,
+      primaryService,
       location: sr.location,
       assignedWorkerIds,
       selectedWorkers: sr.selectedWorkers ?? [],
@@ -78,7 +82,7 @@ export default async function ManageRequestPage() {
         </div>
 
         {/* Request Table */}
-        <ManageRequestTable requests={requests} basePath="/dashboard/client" />
+        <ManageRequestTable requests={requests} basePath="/dashboard/client" showRequestType={true} />
       </div>
     </ClientDashboardLayout>
   );

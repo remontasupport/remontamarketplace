@@ -224,9 +224,11 @@ export function useRequestService() {
 
 interface RequestServiceProviderProps {
   children: ReactNode;
+  defaultParticipantId?: string | null;
+  defaultParticipantName?: string | null;
 }
 
-export function RequestServiceProvider({ children }: RequestServiceProviderProps) {
+export function RequestServiceProvider({ children, defaultParticipantId, defaultParticipantName }: RequestServiceProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -246,8 +248,8 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
   const [submittedParticipantId, setSubmittedParticipantId] = useState<string | null>(null);
 
   // Selected client
-  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
-  const [selectedParticipantName, setSelectedParticipantName] = useState<string | null>(null);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(defaultParticipantId ?? null);
+  const [selectedParticipantName, setSelectedParticipantName] = useState<string | null>(defaultParticipantName ?? null);
 
   // Get current step index
   const currentStep = STEPS.findIndex((step) => step.section === currentSection);
@@ -261,7 +263,9 @@ export function RequestServiceProvider({ children }: RequestServiceProviderProps
           const parsed = JSON.parse(saved);
           setFormData(parsed.formData || initialFormData);
           setCompletedSteps(parsed.completedSteps || []);
-          if (parsed.selectedParticipantId) {
+          // Only restore participant from localStorage on coordinator path;
+          // client/self path always uses the server-provided default
+          if (!defaultParticipantId && parsed.selectedParticipantId) {
             setSelectedParticipantId(parsed.selectedParticipantId);
             setSelectedParticipantName(parsed.selectedParticipantName || null);
           }

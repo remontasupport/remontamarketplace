@@ -171,6 +171,7 @@ export async function POST(request: Request) {
             mobile: data.mobile,
             fundingType: data.fundingType ?? null,
             relationshipToClient: data.relationshipToClient ?? null,
+            completingFormAs: body.completingFormAs ?? 'client',
           }),
         }).catch((err) => console.error('[Webhook] Client registration webhook failed:', err))
       }

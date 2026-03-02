@@ -13,6 +13,8 @@ import PreviewSection from "@/components/dashboard/client/request-service/sectio
 
 interface Props {
   displayName: string;
+  defaultParticipantId?: string | null;
+  defaultParticipantName?: string | null;
 }
 
 function RequestServiceContent({ displayName }: Props) {
@@ -41,7 +43,7 @@ function RequestServiceContent({ displayName }: Props) {
   );
 }
 
-export default function RequestServiceClient({ displayName }: Props) {
+export default function RequestServiceClient({ displayName, defaultParticipantId, defaultParticipantName }: Props) {
   return (
     <Suspense
       fallback={
@@ -63,7 +65,7 @@ export default function RequestServiceClient({ displayName }: Props) {
         </ClientDashboardLayout>
       }
     >
-      <RequestServiceProvider>
+      <RequestServiceProvider defaultParticipantId={defaultParticipantId} defaultParticipantName={defaultParticipantName}>
         <RequestServiceContent displayName={displayName} />
       </RequestServiceProvider>
     </Suspense>

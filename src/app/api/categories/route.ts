@@ -5,10 +5,10 @@ import { authPrisma } from '@/lib/auth-prisma';
 const CATEGORY_ORDER = [
   'Support Worker',
   'Support Worker (High Intensity)',
-  'Therapeutic Supports',
-  'Nursing Services',
   'Cleaning Services',
   'Home and Yard Maintenance',
+  'Therapeutic Supports',
+  'Nursing Services',
 ];
 
 export async function GET() {
