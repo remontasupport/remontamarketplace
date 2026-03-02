@@ -58,6 +58,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
   const [localAppliedIds, setLocalAppliedIds] = useState<Set<string>>(() => new Set(appliedJobIds));
 
   // Restore modal from URL on mount / when jobs load (e.g. after returning from profile-building)
+  // Also depends on searchParams so it fires if params populate after the initial jobs render
   useEffect(() => {
     const applyId = searchParams.get('apply');
     if (!applyId || jobs.length === 0) return;
@@ -67,9 +68,8 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
       job.recruitmentTitle ||
       [job.service, [job.city, job.state].filter(Boolean).join(', ')].filter(Boolean).join(' - ') ||
       'Support Work';
-    setApplyJob({ title, jobId: job.id, jobZohoId: job.zohoId, initialStep: 'profile' });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobs]);
+    setApplyJob((prev) => prev ?? { title, jobId: job.id, jobZohoId: job.zohoId, initialStep: 'profile' });
+  }, [jobs, searchParams]);
 
   useEffect(() => {
     const handleResize = () => {
