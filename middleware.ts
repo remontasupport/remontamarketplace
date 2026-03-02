@@ -22,8 +22,10 @@ export default withAuth(
 
     // Additional security: Verify token has required fields
     if (!token || !token.id || !token.role || !token.email) {
- 
-      return NextResponse.redirect(new URL("/login", req.url));
+      const loginUrl = new URL("/login", req.url);
+      const applyParam = req.nextUrl.searchParams.get("apply");
+      if (applyParam) loginUrl.searchParams.set("apply", applyParam);
+      return NextResponse.redirect(loginUrl);
     }
 
     // Role-based access control for dashboard routes

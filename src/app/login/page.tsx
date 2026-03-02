@@ -23,7 +23,18 @@ import Link from 'next/link';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const applyJobId = searchParams.get("apply");
+
+  // Support two paths:
+  // 1. Direct ?apply=ID  (e.g. middleware forwarded it)
+  // 2. apply=ID embedded inside ?callbackUrl  (e.g. withAuth redirect for unauthenticated users)
+  const rawCallbackUrl = searchParams.get("callbackUrl") ?? "";
+  const applyJobId = searchParams.get("apply") ?? (() => {
+    try {
+      return new URL(rawCallbackUrl, "https://x").searchParams.get("apply");
+    } catch {
+      return null;
+    }
+  })();
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
