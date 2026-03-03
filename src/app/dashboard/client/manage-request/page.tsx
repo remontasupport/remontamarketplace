@@ -60,6 +60,7 @@ export default async function ManageRequestPage() {
       assignedWorkerIds,
       selectedWorkers: sr.selectedWorkers ?? [],
       status: sr.status,
+      zohoRecordId: sr.zohoRecordId ?? null,
     };
   });
 

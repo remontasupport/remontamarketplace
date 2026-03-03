@@ -1985,8 +1985,7 @@
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
-    
+    align-items: stretch !important;
   }
 
   /* Override dashboard-main for form pages only */

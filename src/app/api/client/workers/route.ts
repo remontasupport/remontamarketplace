@@ -118,19 +118,29 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lng: nu
 // ============================================================================
 
 /**
- * Generate cache key from search parameters
- * Creates a deterministic key for Redis caching
+ * Generate cache key from search parameters.
+ *
+ * Search terms are tokenized and sorted before keying so that semantically
+ * equivalent queries share the same cache entry:
+ *   "loves cooking"    → tokens: ["cooking"]     → key: s:cooking
+ *   "cooking"          → tokens: ["cooking"]     → key: s:cooking  (same — cache hit)
+ *   "speech therapist" → tokens: ["speech","therapist"] → key: s:speech,therapist
+ *   "therapist speech" → tokens: ["speech","therapist"] → key: s:speech,therapist (same)
  */
 function generateCacheKey(params: SearchParams): string {
+  const searchKey = params.search
+    ? `s:${tokenizeQuery(params.search).sort().join(',')}`
+    : ''
+
   const keyParts = [
     `p${params.page}`,
     `ps${params.pageSize}`,
-    params.search ? `s${params.search.toLowerCase().trim()}` : '',
-    params.location ? `l${params.location.toLowerCase().trim()}` : '',
-    params.services?.length ? `sv${params.services.sort().join(',')}` : '',
-  ].filter(Boolean);
+    searchKey,
+    params.location ? `l:${params.location.toLowerCase().trim()}` : '',
+    params.services?.length ? `sv:${[...params.services].sort().join(',')}` : '',
+  ].filter(Boolean)
 
-  return CACHE_PREFIX + keyParts.join(':');
+  return CACHE_PREFIX + keyParts.join(':')
 }
 
 /**
@@ -156,54 +166,234 @@ function parseSearchParams(searchParams: URLSearchParams): SearchParams {
   return { page, pageSize, search, location, services, within };
 }
 
+// ============================================================================
+// SEARCH UTILITIES
+// ============================================================================
+
 /**
- * Build optimized WHERE clause for worker search
- * Uses indexed fields for fast queries
+ * Stop words stripped from search queries before tokenization.
+ * Covers common English stop words and "intent" words (loves, likes, wants)
+ * so that "loves cooking" → ["cooking"] and "likes swimming" → ["swimming"].
  */
-function buildWhereClause(params: SearchParams): Prisma.WorkerProfileWhereInput {
-  const conditions: Prisma.WorkerProfileWhereInput[] = [];
+const SEARCH_STOP_WORDS = new Set([
+  // Intent / filler words users type to describe what they want
+  'love', 'loves', 'like', 'likes', 'want', 'wants', 'need', 'needs',
+  'enjoy', 'enjoys', 'find', 'looking', 'someone',
+  // English stop words
+  'i', 'me', 'my', 'we', 'our', 'you', 'your', 'they', 'their',
+  'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'do', 'does', 'did', 'has', 'have', 'had',
+  'a', 'an', 'the', 'and', 'or', 'but', 'not',
+  'who', 'what', 'where', 'when', 'how',
+  'that', 'this', 'these', 'those',
+  'can', 'will', 'would', 'could', 'should', 'may', 'might',
+  'with', 'for', 'of', 'to', 'in', 'on', 'at', 'by', 'from', 'into',
+])
 
-  // Base condition: Only ACTIVE users with completed profiles
+/** Cap on the number of tokens processed per query to prevent query explosion */
+const MAX_SEARCH_TOKENS = 5
+
+/** Redis key + TTL for the cached set of known service category/subcategory names */
+const SERVICE_TERMS_CACHE_KEY = 'search:service_terms:v1'
+const SERVICE_TERMS_CACHE_TTL = 3600 // 1 hour — refreshes automatically on miss
+
+/**
+ * Tokenize a natural-language search query into meaningful terms.
+ *
+ * Examples:
+ *   "loves cooking"        → ["cooking"]
+ *   "likes swimming"       → ["swimming"]
+ *   "speech therapist"     → ["speech", "therapist"]
+ *   "gardening nurse"      → ["gardening", "nurse"]
+ *   "loves cooking pasta"  → ["cooking", "pasta"]
+ */
+function tokenizeQuery(query: string): string[] {
+  const tokens = query
+    .trim()
+    .split(/[\s,]+/)
+    .map(word => word.replace(/[^a-zA-Z0-9]/g, '').toLowerCase())
+    .filter(word => word.length >= 2 && !SEARCH_STOP_WORDS.has(word))
+    .slice(0, MAX_SEARCH_TOKENS)
+
+  // Fallback: if the entire query consists of stop words, use the raw trimmed query
+  return tokens.length > 0 ? tokens : [query.trim()]
+}
+
+/**
+ * Load all known service category and subcategory names from the database.
+ * Results are Redis-cached for 1 hour to avoid a DB round-trip on every search.
+ *
+ * Used to classify search tokens as "service terms" vs "lifestyle/text terms"
+ * so that each token is routed to the correct set of fields.
+ */
+async function getServiceTerms(): Promise<Set<string>> {
+  // ── Try Redis cache first ──────────────────────────────────────────────────
+  try {
+    if (redis) {
+      const cached = await redis.get(SERVICE_TERMS_CACHE_KEY)
+      if (cached) {
+        return new Set(JSON.parse(cached as string) as string[])
+      }
+    }
+  } catch { /* fall through to DB */ }
+
+  // ── Fetch from DB (both categories and subcategories) ────────────────────
+  const [categories, subcategories] = await Promise.all([
+    prisma.category.findMany({ select: { name: true } }),
+    prisma.subcategory.findMany({ select: { name: true } }),
+  ])
+
+  const terms = [
+    ...categories.map(c => c.name.toLowerCase()),
+    ...subcategories.map(s => s.name.toLowerCase()),
+  ]
+
+  // ── Write to Redis for future requests ────────────────────────────────────
+  try {
+    if (redis) {
+      await redis.setex(SERVICE_TERMS_CACHE_KEY, SERVICE_TERMS_CACHE_TTL, JSON.stringify(terms))
+    }
+  } catch { /* non-fatal */ }
+
+  return new Set(terms)
+}
+
+/**
+ * Determine whether a search token represents a service type.
+ *
+ * A token is a service token if it appears as a substring of any known
+ * category or subcategory name (min 4 chars to avoid false positives).
+ *
+ * Examples (given terms contain "nursing", "speech therapist", "cleaning"):
+ *   "nurse"     → "nursing".includes("nurs") ✓ → service token
+ *   "cleaning"  → "cleaning".includes("cleaning") ✓ → service token
+ *   "speech"    → "speech therapist".includes("speech") ✓ → service token
+ *   "cooking"   → no term contains "cooking" → text token
+ *   "swimming"  → no term contains "swimming" → text token
+ */
+function isServiceToken(token: string, serviceTerms: Set<string>): boolean {
+  const t = token.toLowerCase()
+  // Exact match on the full term
+  if (serviceTerms.has(t)) return true
+  // Partial match: the token is a meaningful substring of a known service term
+  // Require min 4 chars to avoid short words ("in", "or", "at") creating false matches
+  if (t.length >= 4) {
+    for (const term of serviceTerms) {
+      if (term.includes(t)) return true
+    }
+  }
+  return false
+}
+
+/**
+ * WHERE condition for a SERVICE token (e.g. "nurse", "cleaning", "speech therapist").
+ *
+ * Deliberately excludes bio/hobbies/personality to prevent false positives:
+ * a Support Worker who mentions "nurse" in their bio must NOT appear for a "nurse" search.
+ *
+ * Searched fields:
+ *   - workerServices.categoryName  (primary registered service — partial match)
+ *   - qualifications               (e.g. "Registered Nurse", "Cert III Cleaning")
+ *   - uniqueService                (worker's own description of what they offer)
+ */
+function buildServiceTokenCondition(token: string): Prisma.WorkerProfileWhereInput {
+  return {
+    OR: [
+      { workerServices: { some: { categoryName: { contains: token, mode: 'insensitive' } } } },
+      { qualifications: { contains: token, mode: 'insensitive' } },
+      { uniqueService:  { contains: token, mode: 'insensitive' } },
+    ],
+  }
+}
+
+/**
+ * WHERE condition for a TEXT / lifestyle token (e.g. "cooking", "swimming", "music").
+ *
+ * Deliberately excludes workerServices to avoid cross-contamination:
+ * searching "cooking" should not surface a worker just because their service
+ * category happens to contain that word.
+ *
+ * Searched fields:
+ *   - name, bio, hobbies, fun fact, personality, interests, work preferences
+ */
+function buildTextTokenCondition(token: string): Prisma.WorkerProfileWhereInput {
+  return {
+    OR: [
+      // Name
+      { firstName:    { contains: token, mode: 'insensitive' } },
+      { lastName:     { contains: token, mode: 'insensitive' } },
+      // Bio & profile text
+      { introduction: { contains: token, mode: 'insensitive' } },
+      { hobbies:      { contains: token, mode: 'insensitive' } },
+      { funFact:      { contains: token, mode: 'insensitive' } },
+      // Additional info — text fields
+      { workerAdditionalInfo: { personality:     { contains: token, mode: 'insensitive' } } },
+      { workerAdditionalInfo: { funFact:         { contains: token, mode: 'insensitive' } } },
+      // Additional info — array fields (exact element match, Prisma array limitation)
+      { workerAdditionalInfo: { interests:       { hasSome: [token] } } },
+      { workerAdditionalInfo: { workPreferences: { hasSome: [token] } } },
+    ],
+  }
+}
+
+/**
+ * Build optimized WHERE clause for worker search.
+ * Uses indexed fields for fast queries.
+ *
+ * @param serviceTerms - Set of known category/subcategory names used to classify tokens.
+ *                       Pass an empty Set when there is no search query.
+ */
+function buildWhereClause(
+  params: SearchParams,
+  serviceTerms: Set<string>,
+): Prisma.WorkerProfileWhereInput {
+  const conditions: Prisma.WorkerProfileWhereInput[] = []
+
+  // Base condition: only ACTIVE users with completed profiles
   conditions.push({
-    user: { status: 'ACTIVE' },
+    user:      { status: 'ACTIVE' },
     firstName: { not: '' },
-    lastName: { not: '' },
-  });
+    lastName:  { not: '' },
+  })
 
-  // Default listing only: filter out workers without a bio/introduction
-  const isDefaultListing = !params.search && !params.location && !params.services?.length;
+  // Default listing only: require a bio/introduction to be present
+  const isDefaultListing = !params.search && !params.location && !params.services?.length
   if (isDefaultListing) {
-    conditions.push({ introduction: { not: null } });
-    conditions.push({ introduction: { not: '' } });
+    conditions.push({ introduction: { not: null } })
+    conditions.push({ introduction: { not: '' } })
   }
 
-  // Text search (name)
+  // ── Multi-token semantic search ───────────────────────────────────────────
+  // Each token is classified then routed to the appropriate set of fields:
+  //   Service token  → services / qualifications only (strict, no bio)
+  //   Text token     → bio / hobbies / personality only (no services)
+  //
+  // AND logic across tokens: every token must match somewhere in the profile.
+  // "speech therapist" → "speech" (service) AND "therapist" (service) both matched via services.
+  // "loves cooking"    → "cooking" (text) matched via hobbies/bio.
+  // "nurse"            → service token → ONLY workers with "Nursing" as their service category.
   if (params.search) {
-    const searchTerm = params.search;
-    conditions.push({
-      OR: [
-        { firstName: { contains: searchTerm, mode: 'insensitive' } },
-        { lastName: { contains: searchTerm, mode: 'insensitive' } },
-        { introduction: { contains: searchTerm, mode: 'insensitive' } },
-      ],
-    });
+    const tokens = tokenizeQuery(params.search)
+    for (const token of tokens) {
+      const condition = isServiceToken(token, serviceTerms)
+        ? buildServiceTokenCondition(token)
+        : buildTextTokenCondition(token)
+      conditions.push(condition)
+    }
   }
 
   // NOTE: Location filtering is handled via geocoding + Haversine in searchWorkersWithDistance.
-  // No text-based location filter here.
 
-  // Services filter
+  // Explicit services filter (separate from keyword search)
   if (params.services && params.services.length > 0) {
     conditions.push({
       workerServices: {
-        some: {
-          categoryName: { in: params.services },
-        },
+        some: { categoryName: { in: params.services } },
       },
-    });
+    })
   }
 
-  return { AND: conditions };
+  return { AND: conditions }
 }
 
 /**
@@ -248,7 +438,10 @@ function transformToPublicData(worker: any): WorkerPublicData {
  * Uses parallel queries and caching for performance
  */
 async function searchWorkers(params: SearchParams): Promise<SearchResponse> {
-  const where = buildWhereClause(params);
+  // Only fetch service terms when there is a keyword query (skips the Redis/DB
+  // round-trip for location-only or default listing searches)
+  const serviceTerms = params.search ? await getServiceTerms() : new Set<string>()
+  const where = buildWhereClause(params, serviceTerms)
   const skip = (params.page - 1) * params.pageSize;
 
   // Execute count and data queries in parallel for performance
@@ -310,7 +503,11 @@ async function searchWorkers(params: SearchParams): Promise<SearchResponse> {
  * Falls back to standard search if geocoding fails
  */
 async function searchWorkersWithDistance(params: SearchParams): Promise<SearchResponse> {
-  const coords = await geocodeLocation(params.location!)
+  // Run geocoding and service-term lookup in parallel to minimise latency
+  const [coords, serviceTerms] = await Promise.all([
+    geocodeLocation(params.location!),
+    params.search ? getServiceTerms() : Promise.resolve(new Set<string>()),
+  ])
 
   if (!coords) {
     // Geocoding failed — fall back to standard search (no location filter)
@@ -319,7 +516,7 @@ async function searchWorkersWithDistance(params: SearchParams): Promise<SearchRe
 
   const radiusKm = params.within ?? 50
   const bbox = getBoundingBox(coords.lat, coords.lng, radiusKm)
-  const where = buildWhereClause(params)
+  const where = buildWhereClause(params, serviceTerms)
 
   // Add bounding box to narrow DB candidates (uses indexed lat/lng fields)
   where.latitude = { gte: bbox.minLat, lte: bbox.maxLat }

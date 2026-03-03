@@ -65,53 +65,57 @@ export default function ArchivedRequestsList({ initialRequests }: ArchivedReques
         return (
           <div
             key={req.id}
-            className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
+            className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
           >
-            {/* Top: icon + title + status */}
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                <ArchiveBoxIcon className="w-5 h-5 text-gray-400" />
+            {/* Card body */}
+            <div className="p-4 flex flex-col gap-3">
+              {/* Top: icon + title + status */}
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <ArchiveBoxIcon className="w-5 h-5 text-gray-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-poppins font-semibold text-gray-900 text-sm truncate">
+                    {req.title}
+                  </h3>
+                  <p className="font-poppins text-xs text-gray-500 mt-0.5 truncate">
+                    {req.participantName}
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium font-poppins bg-gray-100 text-gray-500 flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                  Archived
+                </span>
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-poppins font-semibold text-gray-900 text-sm truncate">
-                  {req.title}
-                </h3>
-                <p className="font-poppins text-xs text-gray-500 mt-0.5 truncate">
-                  {req.participantName}
+
+              {/* Description */}
+              {req.description && (
+                <p className="font-poppins text-sm text-gray-600 line-clamp-2">
+                  {req.description}
                 </p>
+              )}
+
+              {/* Location + date inline */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-sm text-gray-500 font-poppins min-w-0">
+                  <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{req.location}</span>
+                </div>
+                <p className="text-xs text-gray-400 font-poppins flex-shrink-0">{date}</p>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium font-poppins bg-gray-100 text-gray-500 flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-                Archived
-              </span>
             </div>
 
-            {/* Description */}
-            {req.description && (
-              <p className="font-poppins text-sm text-gray-600 line-clamp-2">
-                {req.description}
-              </p>
-            )}
-
-            {/* Location */}
-            <div className="flex items-center gap-1.5 text-sm text-gray-500 font-poppins">
-              <MapPinIcon className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{req.location}</span>
-            </div>
-
-            {/* Footer: date + delete */}
-            <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-3">
-              <p className="text-xs text-gray-400 font-poppins">{date}</p>
-
+            {/* Action footer */}
+            <div className="border-t border-gray-100 bg-gray-50 px-2 py-1">
               {isConfirming ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-3 py-2.5">
                   <span className="text-xs text-gray-500 font-poppins">Delete permanently?</span>
                   <button
                     onClick={() => handleDelete(req.id)}
                     disabled={isDeleting}
-                    className="text-xs font-poppins font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                    className="text-xs font-poppins font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
                   >
-                    {isDeleting ? 'Deleting...' : 'Yes'}
+                    {isDeleting ? 'Deleting…' : 'Yes'}
                   </button>
                   <button
                     onClick={() => setConfirmingId(null)}
@@ -123,9 +127,9 @@ export default function ArchivedRequestsList({ initialRequests }: ArchivedReques
               ) : (
                 <button
                   onClick={() => setConfirmingId(req.id)}
-                  className="inline-flex items-center gap-1.5 text-xs font-poppins text-gray-400 hover:text-red-500 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-red-500 rounded-lg transition-colors hover:bg-white"
                 >
-                  <TrashIcon className="w-3.5 h-3.5" />
+                  <TrashIcon className="w-4 h-4" />
                   Delete
                 </button>
               )}

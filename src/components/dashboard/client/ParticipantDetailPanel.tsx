@@ -35,7 +35,7 @@ export default function ParticipantDetailPanel({
 
   if (!participant) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 h-full flex flex-col items-center justify-center text-center">
+      <div className="bg-white rounded-2xl border border-gray-200 p-8 lg:h-full flex flex-col items-center justify-center text-center">
         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
           <User className="w-8 h-8 text-gray-400" />
         </div>
@@ -118,13 +118,13 @@ export default function ParticipantDetailPanel({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden h-full">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden min-h-[calc(100vh-220px)] lg:min-h-0 lg:h-full lg:flex lg:flex-col">
       {/* Header */}
       <div className="p-4 sm:p-6 border-b border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
               {photo ? (
                 <Image
                   src={photo}
@@ -134,7 +134,7 @@ export default function ParticipantDetailPanel({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xl sm:text-2xl font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
+                <div className="w-full h-full flex items-center justify-center text-base sm:text-xl font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
                   {initials}
                 </div>
               )}
@@ -142,7 +142,7 @@ export default function ParticipantDetailPanel({
 
             {/* Name */}
             <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 font-poppins">
+              <h2 className="text-base sm:text-xl font-semibold text-gray-900 font-poppins">
                 {name}
               </h2>
             </div>
@@ -163,7 +163,7 @@ export default function ParticipantDetailPanel({
       </div>
 
       {/* Content */}
-      <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 400px)" }}>
+      <div className="p-4 sm:p-6 lg:flex-1 lg:overflow-y-auto lg:min-h-0">
         {/* Personal Details Section */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 font-poppins">

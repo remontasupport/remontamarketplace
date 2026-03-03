@@ -35,6 +35,7 @@ interface ParticipantsMasterDetailProps {
   showRelationship?: boolean;
   title: string;
   subtitle: string;
+  defaultToList?: boolean; // When true, starts with no selection (list view on mobile)
 }
 
 export default function ParticipantsMasterDetail({
@@ -42,11 +43,12 @@ export default function ParticipantsMasterDetail({
   showRelationship = true,
   title,
   subtitle,
+  defaultToList = false,
 }: ParticipantsMasterDetailProps) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
   const [selectedId, setSelectedId] = useState<string | null>(
-    participants.length > 0 ? participants[0].id : null
+    defaultToList ? null : (participants.length > 0 ? participants[0].id : null)
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -151,19 +153,19 @@ export default function ParticipantsMasterDetail({
 
   return (
     <>
-      {/* Page header + Add Client button on the same row */}
-      <div className="flex items-start justify-between mb-6">
+      {/* Page header + Add Client button */}
+      <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between mb-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-semibold font-poppins text-gray-900">
+          <h1 className="text-lg md:text-3xl font-semibold font-poppins text-gray-900">
             {title}
           </h1>
-          <p className="text-gray-600 font-poppins mt-1">{subtitle}</p>
+          {subtitle && <p className="text-gray-600 font-poppins mt-1">{subtitle}</p>}
         </div>
         {!showRelationship && (
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium font-poppins text-sm text-white transition-colors hover:opacity-90 flex-shrink-0 ml-4"
-            style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium font-poppins text-sm transition-colors hover:opacity-90 flex-shrink-0"
+            style={{ backgroundColor: BRAND_COLORS.TERTIARY, color: BRAND_COLORS.PRIMARY }}
           >
             <Plus className="w-4 h-4" />
             Add Client
@@ -209,15 +211,17 @@ export default function ParticipantsMasterDetail({
           </div>
         ) : (
           <div>
-            <button
-              onClick={() => setSelectedId(null)}
-              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 font-poppins"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to list
-            </button>
+            {showRelationship === false && (
+              <button
+                onClick={() => setSelectedId(null)}
+                className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 font-poppins"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to list
+              </button>
+            )}
             <ParticipantDetailPanel
               participant={selectedParticipant}
               onEditClick={handleEditClick}
@@ -228,9 +232,9 @@ export default function ParticipantsMasterDetail({
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:flex gap-6 h-[calc(100vh-220px)] min-h-[500px]">
+      <div className="hidden lg:flex flex-1 min-h-0 gap-6">
         {/* Left Panel - List */}
-        <div className="w-80 flex-shrink-0 flex flex-col">
+        <div className="w-80 flex-shrink-0 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto space-y-3 pr-2">
             {participants.map((participant) => (
               <ParticipantListItem
@@ -244,7 +248,7 @@ export default function ParticipantsMasterDetail({
         </div>
 
         {/* Right Panel - Detail */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0">
           <ParticipantDetailPanel
             participant={selectedParticipant}
             onEditClick={handleEditClick}

@@ -25,18 +25,26 @@ export default function RequestServiceLayout({ children, currentSection }: Reque
       <div className="profile-edit-grid">
         {/* Left: Menu - Hidden on mobile */}
         <div className="profile-edit-sidebar hide-on-mobile">
+          {/* Participant selection first, before the steps (coordinator only) */}
+          {!isClientPath && <ClientListPanel />}
           <div style={!hasClient ? { opacity: 0.4, pointerEvents: "none", userSelect: "none" } : undefined}>
             <RequestServiceMenu currentSection={currentSection} />
           </div>
-          {!isClientPath && <ClientListPanel />}
         </div>
 
         {/* Right: Content Area */}
-        <div
-          className="profile-edit-main"
-          style={!hasClient ? { opacity: 0.4, pointerEvents: "none", userSelect: "none" } : undefined}
-        >
-          {children}
+        <div className="profile-edit-main">
+          {/* Mobile-only: participant selection above the form steps (coordinator only) */}
+          {!isClientPath && (
+            <div className="md:hidden mb-4">
+              <ClientListPanel />
+            </div>
+          )}
+          <div
+            style={!hasClient ? { opacity: 0.4, pointerEvents: "none", userSelect: "none" } : undefined}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </div>

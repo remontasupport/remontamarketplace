@@ -134,12 +134,13 @@ export default async function SupportCoordinatorsDashboard() {
       basePath="/dashboard/supportcoordinators"
       roleLabel="Support Coordinator"
     >
-      <div className="p-6 md:p-8">
+      <div className="px-4 py-4 md:pl-8 md:pr-4 lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:py-0">
         <ParticipantsMasterDetail
           participants={participants}
           showRelationship={false}
           title="Clients"
           subtitle="Manage the participants you support"
+          defaultToList={true}
         />
       </div>
     </ClientDashboardLayout>

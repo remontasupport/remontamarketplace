@@ -32,15 +32,15 @@ export default function ParticipantListItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+      className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
         isSelected
           ? "border-indigo-500 bg-indigo-50"
           : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
       }`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+        <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
           {photo ? (
             <img
               src={photo}
@@ -48,17 +48,20 @@ export default function ParticipantListItem({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-sm font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
+            <div className="w-full h-full flex items-center justify-center text-base font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
               {initials}
             </div>
           )}
         </div>
 
-        {/* Name */}
+        {/* Name + location */}
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 font-poppins truncate">
             {name}
           </h3>
+          {participant.location && (
+            <p className="text-sm text-gray-500 font-poppins truncate mt-0.5">{participant.location}</p>
+          )}
         </div>
       </div>
     </button>

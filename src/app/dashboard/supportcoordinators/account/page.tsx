@@ -1,14 +1,10 @@
-/**
- * Account Settings Page for Support Coordinators
- * Manage account settings
- */
-
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
 import { authPrisma } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
+import AccountSettingsPanel from "@/components/dashboard/AccountSettingsPanel";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -24,7 +20,6 @@ export default async function SupportCoordinatorsAccountPage() {
     redirect("/unauthorized");
   }
 
-  // Fetch coordinator's profile for sidebar display
   let displayName = session.user.email?.split('@')[0] || 'User';
 
   const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
@@ -35,21 +30,11 @@ export default async function SupportCoordinatorsAccountPage() {
 
   return (
     <ClientDashboardLayout
-      profileData={{
-        firstName: displayName,
-        photo: null,
-      }}
+      profileData={{ firstName: displayName, photo: null }}
       basePath="/dashboard/supportcoordinators"
       roleLabel="Support Coordinator"
     >
-      <div className="p-6">
-        <h1 className="text-2xl font-semibold font-poppins text-gray-900 mb-4">
-          Account Settings
-        </h1>
-        <p className="text-gray-600 font-poppins">
-          Manage your account settings here. This feature is coming soon.
-        </p>
-      </div>
+      <AccountSettingsPanel />
     </ClientDashboardLayout>
   );
 }

@@ -55,6 +55,7 @@ export default async function SupportCoordinatorsManageRequestPage() {
       assignedWorkerIds,
       selectedWorkers: sr.selectedWorkers ?? [],
       status: sr.status,
+      zohoRecordId: sr.zohoRecordId ?? null,
     };
   });
 
