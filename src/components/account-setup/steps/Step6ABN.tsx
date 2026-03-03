@@ -157,6 +157,12 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
 
   // Handle type selection
   const handleTypeSelect = (type: EngagementType) => {
+    // If switching to a different type, clear the previously uploaded contract
+    // so the user can upload the correct contract for the new type
+    if (type !== selectedType && contractUploaded) {
+      onChange("contractDocument", null);
+    }
+
     setSelectedType(type);
     // Restore the value for the selected type
     if (type === "abn") {
@@ -299,81 +305,158 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
 
                   {/* Action Buttons */}
                   <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                    {/* View & Sign Button - hidden when contract is uploaded */}
-                    {!contractUploaded && (
-                      <button
-                        type="button"
-                        onClick={handleViewContract}
-                        style={{
-                          backgroundColor: contractSigned ? "transparent" : "#0C1628",
-                          color: contractSigned ? "#0C1628" : "#ffffff",
-                          border: contractSigned ? "1px solid #0C1628" : "none",
-                          padding: "0.625rem 1.25rem",
-                          borderRadius: "6px",
-                          fontSize: "0.875rem",
-                          fontWeight: 500,
-                          cursor: "pointer",
-                          transition: "all 0.2s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                    {contractUploaded ? (
+                      <>
+                        {/* View uploaded document */}
+                        <a
+                          href={data.contractDocument!.documentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            backgroundColor: "transparent",
+                            color: "#0C1628",
+                            border: "1px solid #0C1628",
+                            padding: "0.625rem 1.25rem",
+                            borderRadius: "6px",
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            textDecoration: "none",
+                          }}
                         >
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                        {contractSigned ? "View Signed Contract" : "View & Sign Contract"}
-                      </button>
-                    )}
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          View Document
+                        </a>
 
-                    {/* Upload Contract Button - hidden when already uploaded */}
-                    {!contractUploaded && (
-                      <button
-                        type="button"
-                        onClick={handleUploadClick}
-                        disabled={isUploading}
-                        style={{
-                          backgroundColor: "transparent",
-                          color: "#0C1628",
-                          border: "1px solid #0C1628",
-                          padding: "0.625rem 1.25rem",
-                          borderRadius: "6px",
-                          fontSize: "0.875rem",
-                          fontWeight: 500,
-                          cursor: isUploading ? "not-allowed" : "pointer",
-                          opacity: isUploading ? 0.6 : 1,
-                          transition: "all 0.2s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        {/* Replace uploaded document */}
+                        <button
+                          type="button"
+                          onClick={handleUploadClick}
+                          disabled={isUploading}
+                          style={{
+                            backgroundColor: "transparent",
+                            color: "#0C1628",
+                            border: "1px solid #0C1628",
+                            padding: "0.625rem 1.25rem",
+                            borderRadius: "6px",
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                            cursor: isUploading ? "not-allowed" : "pointer",
+                            opacity: isUploading ? 0.6 : 1,
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
                         >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        {isUploading ? "Uploading..." : "Upload Contract"}
-                      </button>
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                          {isUploading ? "Uploading..." : "Replace Document"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* View & Sign Button - only shown when no uploaded document */}
+                        <button
+                          type="button"
+                          onClick={handleViewContract}
+                          style={{
+                            backgroundColor: contractSigned ? "transparent" : "#0C1628",
+                            color: contractSigned ? "#0C1628" : "#ffffff",
+                            border: contractSigned ? "1px solid #0C1628" : "none",
+                            padding: "0.625rem 1.25rem",
+                            borderRadius: "6px",
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                          {contractSigned ? "View Signed Contract" : "View & Sign Contract"}
+                        </button>
+
+                        {/* Upload Contract Button */}
+                        <button
+                          type="button"
+                          onClick={handleUploadClick}
+                          disabled={isUploading}
+                          style={{
+                            backgroundColor: "transparent",
+                            color: "#0C1628",
+                            border: "1px solid #0C1628",
+                            padding: "0.625rem 1.25rem",
+                            borderRadius: "6px",
+                            fontSize: "0.875rem",
+                            fontWeight: 500,
+                            cursor: isUploading ? "not-allowed" : "pointer",
+                            opacity: isUploading ? 0.6 : 1,
+                            transition: "all 0.2s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                          {isUploading ? "Uploading..." : "Upload Contract"}
+                        </button>
+                      </>
                     )}
 
                     {/* Hidden file input */}
