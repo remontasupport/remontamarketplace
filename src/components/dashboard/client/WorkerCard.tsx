@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
+import { MapPinIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/constants'
 
 interface WorkerCardProps {
@@ -29,6 +31,16 @@ export default function WorkerCard({
   onViewProfile,
   onContact,
 }: WorkerCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isClamped, setIsClamped] = useState(false)
+  const bioRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    if (bioRef.current) {
+      setIsClamped(bioRef.current.scrollHeight > bioRef.current.clientHeight)
+    }
+  }, [bio])
+
   // Generate initials from name
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   const displayName = `${firstName}, ${lastName.charAt(0)}.`
@@ -53,7 +65,7 @@ export default function WorkerCard({
           </div>
         )}
 
-        {/* Name, Role, NDIS Badge */}
+        {/* Name, Role, Location, NDIS Badge */}
         <div className="min-w-0 flex-1">
           <h3 className="font-poppins font-semibold text-gray-900 text-base truncate">
             {displayName}
@@ -61,18 +73,37 @@ export default function WorkerCard({
           <p className="font-poppins text-sm text-gray-600 truncate">
             {role}
           </p>
+          <p className="font-poppins text-sm text-gray-500 flex items-center gap-1 mt-1">
+            <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{location}</span>
+          </p>
           {isNdisCompliant && (
             <p className="font-poppins text-sm text-green-600 mt-1">
-              ✅ NDIS Compliant
+              
             </p>
           )}
         </div>
       </div>
 
       {/* Bio */}
-      <p className="font-poppins text-sm text-gray-600 mb-3 line-clamp-2">
-        {bio}
-      </p>
+      <div className="mb-3">
+        <p
+          ref={bioRef}
+          className={`font-poppins text-sm text-gray-600 ${!isExpanded ? 'line-clamp-3' : ''}`}
+        >
+          {bio}
+        </p>
+        {(isClamped || isExpanded) && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="font-poppins text-xs font-medium mt-1 hover:underline"
+            style={{ color: BRAND_COLORS.PRIMARY }}
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        )}
+      </div>
 
       {/* Skills Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -91,28 +122,6 @@ export default function WorkerCard({
         )}
       </div>
 
-      {/* Footer: Location + Buttons */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <p className="font-poppins text-sm text-gray-500">
-          {location}
-        </p>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onViewProfile?.(id)}
-            className="px-4 py-2 border border-gray-300 rounded-lg font-poppins text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            View Profile
-          </button>
-          <button
-            onClick={() => onContact?.(id)}
-            className="px-4 py-2 rounded-lg font-poppins text-sm font-medium hover:opacity-80 transition-colors"
-            style={{ backgroundColor: BRAND_COLORS.TERTIARY, color: BRAND_COLORS.PRIMARY }}
-          >
-            Contact
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

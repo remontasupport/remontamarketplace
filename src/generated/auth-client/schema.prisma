@@ -96,7 +96,7 @@ model Participant {
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
-  serviceRequest ServiceRequest?
+  serviceRequests ServiceRequest[]
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -528,21 +528,23 @@ enum RelationshipType {
   LEGAL_GUARDIAN
   SPOUSE_PARTNER
   CHILDREN
+  MYSELF
   OTHER
 }
 
 model ServiceRequest {
-  id             String               @id @default(cuid())
-  requesterId    String
-  participantId  String               @unique
-  services       Json
-  details        Json
-  location       String
-  zohoRecordId   String?              @unique
-  assignedWorker Json?
-  status         ServiceRequestStatus @default(PENDING)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id              String               @id @default(cuid())
+  requesterId     String
+  participantId   String
+  services        Json
+  details         Json
+  location        String
+  zohoRecordId    String?              @unique
+  assignedWorker  Json?
+  selectedWorkers String[]
+  status          ServiceRequestStatus @default(PENDING)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 

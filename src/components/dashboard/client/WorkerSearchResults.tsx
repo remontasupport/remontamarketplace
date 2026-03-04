@@ -95,16 +95,8 @@ export default function WorkerSearchResults({
           <h2 className="font-poppins font-semibold text-xl text-gray-900">
             {searchParams.search || searchParams.location
               ? 'Search Results'
-              : 'Recommended Support Workers'}
+              : 'Some of our available support workers'}
           </h2>
-          {pagination && (
-            <p className="font-poppins text-sm text-gray-500 mt-1">
-              {pagination.total} {pagination.total === 1 ? 'worker' : 'workers'} found
-              {isFetching && !isLoading && (
-                <span className="ml-2 text-blue-500">Updating...</span>
-              )}
-            </p>
-          )}
         </div>
       </div>
 
@@ -140,11 +132,6 @@ export default function WorkerSearchResults({
             <ChevronLeftIcon className="w-4 h-4" />
             Previous
           </button>
-
-          {/* Page Info */}
-          <span className="font-poppins text-sm text-gray-600 px-4">
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
 
           {/* Next Button */}
           <button

@@ -12,7 +12,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
     <div className="space-y-6">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-poppins font-semibold text-gray-900">
-          We can help you create an account in a few easy steps. Who needs support?
+          We can help you create an account in a few easy steps. Who is this account for?
         </h2>
       </div>
 
@@ -32,13 +32,13 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
               }`}
             >
               <span className="text-base font-poppins text-gray-800">
-                Me/Self manage
+                I am the Client / Participant
               </span>
               <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
             </button>
 
-            {/* Option 2: A person I'm assisting */}
-            <button
+            {/* Option 2: A person I'm assisting — hidden for now */}
+            {/* <button
               type="button"
               onClick={() => field.onChange("client")}
               className={`w-full p-5 rounded-lg border-2 transition-all duration-200 flex items-center justify-between text-left ${
@@ -51,7 +51,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
                 A person I'm assisting (e.g a friend or family member)
               </span>
               <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
-            </button>
+            </button> */}
 
             {/* Option 3: Support Coordinator */}
             <button
@@ -64,7 +64,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
               }`}
             >
               <span className="text-base font-poppins text-gray-800">
-                I am a Support Coordinator / Representative / Referrer
+                I am a Support Coordinator / Representative
               </span>
               <ChevronRight className="w-5 h-5 text-gray-600 flex-shrink-0" />
             </button>

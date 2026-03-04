@@ -226,6 +226,7 @@ export const RelationshipType: {
   LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
   SPOUSE_PARTNER: 'SPOUSE_PARTNER',
   CHILDREN: 'CHILDREN',
+  MYSELF: 'MYSELF',
   OTHER: 'OTHER'
 };
 
@@ -2757,6 +2758,37 @@ export namespace Prisma {
   /**
    * Count Types
    */
+
+
+  /**
+   * Count Type ParticipantCountOutputType
+   */
+
+  export type ParticipantCountOutputType = {
+    serviceRequests: number
+  }
+
+  export type ParticipantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    serviceRequests?: boolean | ParticipantCountOutputTypeCountServiceRequestsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ParticipantCountOutputType without action
+   */
+  export type ParticipantCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ParticipantCountOutputType
+     */
+    select?: ParticipantCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ParticipantCountOutputType without action
+   */
+  export type ParticipantCountOutputTypeCountServiceRequestsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiceRequestWhereInput
+  }
 
 
   /**
@@ -7724,8 +7756,9 @@ export namespace Prisma {
     additionalInfo?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    serviceRequest?: boolean | Participant$serviceRequestArgs<ExtArgs>
+    serviceRequests?: boolean | Participant$serviceRequestsArgs<ExtArgs>
     user?: boolean | Participant$userArgs<ExtArgs>
+    _count?: boolean | ParticipantCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["participant"]>
 
   export type ParticipantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7786,8 +7819,9 @@ export namespace Prisma {
 
   export type ParticipantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "lastName" | "dateOfBirth" | "location" | "gender" | "conditions" | "fundingType" | "relationshipToClient" | "isSelfManaged" | "servicesRequested" | "additionalInfo" | "createdAt" | "updatedAt", ExtArgs["result"]["participant"]>
   export type ParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    serviceRequest?: boolean | Participant$serviceRequestArgs<ExtArgs>
+    serviceRequests?: boolean | Participant$serviceRequestsArgs<ExtArgs>
     user?: boolean | Participant$userArgs<ExtArgs>
+    _count?: boolean | ParticipantCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ParticipantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | Participant$userArgs<ExtArgs>
@@ -7799,7 +7833,7 @@ export namespace Prisma {
   export type $ParticipantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Participant"
     objects: {
-      serviceRequest: Prisma.$ServiceRequestPayload<ExtArgs> | null
+      serviceRequests: Prisma.$ServiceRequestPayload<ExtArgs>[]
       user: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -8212,7 +8246,7 @@ export namespace Prisma {
    */
   export interface Prisma__ParticipantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    serviceRequest<T extends Participant$serviceRequestArgs<ExtArgs> = {}>(args?: Subset<T, Participant$serviceRequestArgs<ExtArgs>>): Prisma__ServiceRequestClient<$Result.GetResult<Prisma.$ServiceRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    serviceRequests<T extends Participant$serviceRequestsArgs<ExtArgs> = {}>(args?: Subset<T, Participant$serviceRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiceRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     user<T extends Participant$userArgs<ExtArgs> = {}>(args?: Subset<T, Participant$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -8654,9 +8688,9 @@ export namespace Prisma {
   }
 
   /**
-   * Participant.serviceRequest
+   * Participant.serviceRequests
    */
-  export type Participant$serviceRequestArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Participant$serviceRequestsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the ServiceRequest
      */
@@ -8670,6 +8704,11 @@ export namespace Prisma {
      */
     include?: ServiceRequestInclude<ExtArgs> | null
     where?: ServiceRequestWhereInput
+    orderBy?: ServiceRequestOrderByWithRelationInput | ServiceRequestOrderByWithRelationInput[]
+    cursor?: ServiceRequestWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiceRequestScalarFieldEnum | ServiceRequestScalarFieldEnum[]
   }
 
   /**
@@ -24954,6 +24993,7 @@ export namespace Prisma {
     location: number
     zohoRecordId: number
     assignedWorker: number
+    selectedWorkers: number
     status: number
     createdAt: number
     updatedAt: number
@@ -24992,6 +25032,7 @@ export namespace Prisma {
     location?: true
     zohoRecordId?: true
     assignedWorker?: true
+    selectedWorkers?: true
     status?: true
     createdAt?: true
     updatedAt?: true
@@ -25079,6 +25120,7 @@ export namespace Prisma {
     location: string
     zohoRecordId: string | null
     assignedWorker: JsonValue | null
+    selectedWorkers: string[]
     status: $Enums.ServiceRequestStatus
     createdAt: Date
     updatedAt: Date
@@ -25110,6 +25152,7 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -25125,6 +25168,7 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -25140,6 +25184,7 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -25155,12 +25200,13 @@ export namespace Prisma {
     location?: boolean
     zohoRecordId?: boolean
     assignedWorker?: boolean
+    selectedWorkers?: boolean
     status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ServiceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "requesterId" | "participantId" | "services" | "details" | "location" | "zohoRecordId" | "assignedWorker" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceRequest"]>
+  export type ServiceRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "requesterId" | "participantId" | "services" | "details" | "location" | "zohoRecordId" | "assignedWorker" | "selectedWorkers" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceRequest"]>
   export type ServiceRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     participant?: boolean | ParticipantDefaultArgs<ExtArgs>
   }
@@ -25185,6 +25231,7 @@ export namespace Prisma {
       location: string
       zohoRecordId: string | null
       assignedWorker: Prisma.JsonValue | null
+      selectedWorkers: string[]
       status: $Enums.ServiceRequestStatus
       createdAt: Date
       updatedAt: Date
@@ -25620,6 +25667,7 @@ export namespace Prisma {
     readonly location: FieldRef<"ServiceRequest", 'String'>
     readonly zohoRecordId: FieldRef<"ServiceRequest", 'String'>
     readonly assignedWorker: FieldRef<"ServiceRequest", 'Json'>
+    readonly selectedWorkers: FieldRef<"ServiceRequest", 'String[]'>
     readonly status: FieldRef<"ServiceRequest", 'ServiceRequestStatus'>
     readonly createdAt: FieldRef<"ServiceRequest", 'DateTime'>
     readonly updatedAt: FieldRef<"ServiceRequest", 'DateTime'>
@@ -26377,6 +26425,7 @@ export namespace Prisma {
     location: 'location',
     zohoRecordId: 'zohoRecordId',
     assignedWorker: 'assignedWorker',
+    selectedWorkers: 'selectedWorkers',
     status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -26966,7 +27015,7 @@ export namespace Prisma {
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
-    serviceRequest?: XOR<ServiceRequestNullableScalarRelationFilter, ServiceRequestWhereInput> | null
+    serviceRequests?: ServiceRequestListRelationFilter
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
@@ -26986,7 +27035,7 @@ export namespace Prisma {
     additionalInfo?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    serviceRequest?: ServiceRequestOrderByWithRelationInput
+    serviceRequests?: ServiceRequestOrderByRelationAggregateInput
     user?: UserOrderByWithRelationInput
   }
 
@@ -27009,7 +27058,7 @@ export namespace Prisma {
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
     createdAt?: DateTimeFilter<"Participant"> | Date | string
     updatedAt?: DateTimeFilter<"Participant"> | Date | string
-    serviceRequest?: XOR<ServiceRequestNullableScalarRelationFilter, ServiceRequestWhereInput> | null
+    serviceRequests?: ServiceRequestListRelationFilter
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }, "id">
 
@@ -28295,6 +28344,7 @@ export namespace Prisma {
     location?: StringFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
@@ -28310,6 +28360,7 @@ export namespace Prisma {
     location?: SortOrder
     zohoRecordId?: SortOrderInput | SortOrder
     assignedWorker?: SortOrderInput | SortOrder
+    selectedWorkers?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28318,21 +28369,22 @@ export namespace Prisma {
 
   export type ServiceRequestWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    participantId?: string
     zohoRecordId?: string
     AND?: ServiceRequestWhereInput | ServiceRequestWhereInput[]
     OR?: ServiceRequestWhereInput[]
     NOT?: ServiceRequestWhereInput | ServiceRequestWhereInput[]
     requesterId?: StringFilter<"ServiceRequest"> | string
+    participantId?: StringFilter<"ServiceRequest"> | string
     services?: JsonFilter<"ServiceRequest">
     details?: JsonFilter<"ServiceRequest">
     location?: StringFilter<"ServiceRequest"> | string
     assignedWorker?: JsonNullableFilter<"ServiceRequest">
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
     participant?: XOR<ParticipantScalarRelationFilter, ParticipantWhereInput>
-  }, "id" | "participantId" | "zohoRecordId">
+  }, "id" | "zohoRecordId">
 
   export type ServiceRequestOrderByWithAggregationInput = {
     id?: SortOrder
@@ -28343,6 +28395,7 @@ export namespace Prisma {
     location?: SortOrder
     zohoRecordId?: SortOrderInput | SortOrder
     assignedWorker?: SortOrderInput | SortOrder
+    selectedWorkers?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -28363,6 +28416,7 @@ export namespace Prisma {
     location?: StringWithAggregatesFilter<"ServiceRequest"> | string
     zohoRecordId?: StringNullableWithAggregatesFilter<"ServiceRequest"> | string | null
     assignedWorker?: JsonNullableWithAggregatesFilter<"ServiceRequest">
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
     status?: EnumServiceRequestStatusWithAggregatesFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeWithAggregatesFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ServiceRequest"> | Date | string
@@ -28715,7 +28769,7 @@ export namespace Prisma {
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    serviceRequest?: ServiceRequestCreateNestedOneWithoutParticipantInput
+    serviceRequests?: ServiceRequestCreateNestedManyWithoutParticipantInput
     user?: UserCreateNestedOneWithoutParticipantsInput
   }
 
@@ -28735,7 +28789,7 @@ export namespace Prisma {
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    serviceRequest?: ServiceRequestUncheckedCreateNestedOneWithoutParticipantInput
+    serviceRequests?: ServiceRequestUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUpdateInput = {
@@ -28753,7 +28807,7 @@ export namespace Prisma {
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    serviceRequest?: ServiceRequestUpdateOneWithoutParticipantNestedInput
+    serviceRequests?: ServiceRequestUpdateManyWithoutParticipantNestedInput
     user?: UserUpdateOneWithoutParticipantsNestedInput
   }
 
@@ -28773,7 +28827,7 @@ export namespace Prisma {
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    serviceRequest?: ServiceRequestUncheckedUpdateOneWithoutParticipantNestedInput
+    serviceRequests?: ServiceRequestUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantCreateManyInput = {
@@ -30248,6 +30302,110 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
+    status?: $Enums.ServiceRequestStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    participant: ParticipantCreateNestedOneWithoutServiceRequestsInput
+  }
+
+  export type ServiceRequestUncheckedCreateInput = {
+    id?: string
+    requesterId: string
+    participantId: string
+    services: JsonNullValueInput | InputJsonValue
+    details: JsonNullValueInput | InputJsonValue
+    location: string
+    zohoRecordId?: string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
+    status?: $Enums.ServiceRequestStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiceRequestUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    participant?: ParticipantUpdateOneRequiredWithoutServiceRequestsNestedInput
+  }
+
+  export type ServiceRequestUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestCreateManyInput = {
+    id?: string
+    requesterId: string
+    participantId: string
+    services: JsonNullValueInput | InputJsonValue
+    details: JsonNullValueInput | InputJsonValue
+    location: string
+    zohoRecordId?: string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
+    status?: $Enums.ServiceRequestStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiceRequestUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    participantId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestCreateInput = {
+    id?: string
+    requesterId: string
+    services: JsonNullValueInput | InputJsonValue
+    details: JsonNullValueInput | InputJsonValue
+    location: string
+    zohoRecordId?: string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -30724,9 +30882,14 @@ export namespace Prisma {
     not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
   }
 
-  export type ServiceRequestNullableScalarRelationFilter = {
-    is?: ServiceRequestWhereInput | null
-    isNot?: ServiceRequestWhereInput | null
+  export type ServiceRequestListRelationFilter = {
+    every?: ServiceRequestWhereInput
+    some?: ServiceRequestWhereInput
+    none?: ServiceRequestWhereInput
+  }
+
+  export type ServiceRequestOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type ParticipantCountOrderByAggregateInput = {
@@ -31758,6 +31921,7 @@ export namespace Prisma {
     location?: SortOrder
     zohoRecordId?: SortOrder
     assignedWorker?: SortOrder
+    selectedWorkers?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -31920,10 +32084,11 @@ export namespace Prisma {
     set: string[]
   }
 
-  export type ServiceRequestCreateNestedOneWithoutParticipantInput = {
-    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
-    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
-    connect?: ServiceRequestWhereUniqueInput
+  export type ServiceRequestCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput> | ServiceRequestCreateWithoutParticipantInput[] | ServiceRequestUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput | ServiceRequestCreateOrConnectWithoutParticipantInput[]
+    createMany?: ServiceRequestCreateManyParticipantInputEnvelope
+    connect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
   }
 
   export type UserCreateNestedOneWithoutParticipantsInput = {
@@ -31932,10 +32097,11 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
-  export type ServiceRequestUncheckedCreateNestedOneWithoutParticipantInput = {
-    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
-    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
-    connect?: ServiceRequestWhereUniqueInput
+  export type ServiceRequestUncheckedCreateNestedManyWithoutParticipantInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput> | ServiceRequestCreateWithoutParticipantInput[] | ServiceRequestUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput | ServiceRequestCreateOrConnectWithoutParticipantInput[]
+    createMany?: ServiceRequestCreateManyParticipantInputEnvelope
+    connect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
   }
 
   export type ParticipantUpdateconditionsInput = {
@@ -31951,14 +32117,18 @@ export namespace Prisma {
     set?: $Enums.RelationshipType | null
   }
 
-  export type ServiceRequestUpdateOneWithoutParticipantNestedInput = {
-    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
-    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
-    upsert?: ServiceRequestUpsertWithoutParticipantInput
-    disconnect?: ServiceRequestWhereInput | boolean
-    delete?: ServiceRequestWhereInput | boolean
-    connect?: ServiceRequestWhereUniqueInput
-    update?: XOR<XOR<ServiceRequestUpdateToOneWithWhereWithoutParticipantInput, ServiceRequestUpdateWithoutParticipantInput>, ServiceRequestUncheckedUpdateWithoutParticipantInput>
+  export type ServiceRequestUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput> | ServiceRequestCreateWithoutParticipantInput[] | ServiceRequestUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput | ServiceRequestCreateOrConnectWithoutParticipantInput[]
+    upsert?: ServiceRequestUpsertWithWhereUniqueWithoutParticipantInput | ServiceRequestUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: ServiceRequestCreateManyParticipantInputEnvelope
+    set?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    disconnect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    delete?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    connect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    update?: ServiceRequestUpdateWithWhereUniqueWithoutParticipantInput | ServiceRequestUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: ServiceRequestUpdateManyWithWhereWithoutParticipantInput | ServiceRequestUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: ServiceRequestScalarWhereInput | ServiceRequestScalarWhereInput[]
   }
 
   export type UserUpdateOneWithoutParticipantsNestedInput = {
@@ -31971,14 +32141,18 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutParticipantsInput, UserUpdateWithoutParticipantsInput>, UserUncheckedUpdateWithoutParticipantsInput>
   }
 
-  export type ServiceRequestUncheckedUpdateOneWithoutParticipantNestedInput = {
-    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
-    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput
-    upsert?: ServiceRequestUpsertWithoutParticipantInput
-    disconnect?: ServiceRequestWhereInput | boolean
-    delete?: ServiceRequestWhereInput | boolean
-    connect?: ServiceRequestWhereUniqueInput
-    update?: XOR<XOR<ServiceRequestUpdateToOneWithWhereWithoutParticipantInput, ServiceRequestUpdateWithoutParticipantInput>, ServiceRequestUncheckedUpdateWithoutParticipantInput>
+  export type ServiceRequestUncheckedUpdateManyWithoutParticipantNestedInput = {
+    create?: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput> | ServiceRequestCreateWithoutParticipantInput[] | ServiceRequestUncheckedCreateWithoutParticipantInput[]
+    connectOrCreate?: ServiceRequestCreateOrConnectWithoutParticipantInput | ServiceRequestCreateOrConnectWithoutParticipantInput[]
+    upsert?: ServiceRequestUpsertWithWhereUniqueWithoutParticipantInput | ServiceRequestUpsertWithWhereUniqueWithoutParticipantInput[]
+    createMany?: ServiceRequestCreateManyParticipantInputEnvelope
+    set?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    disconnect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    delete?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    connect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
+    update?: ServiceRequestUpdateWithWhereUniqueWithoutParticipantInput | ServiceRequestUpdateWithWhereUniqueWithoutParticipantInput[]
+    updateMany?: ServiceRequestUpdateManyWithWhereWithoutParticipantInput | ServiceRequestUpdateManyWithWhereWithoutParticipantInput[]
+    deleteMany?: ServiceRequestScalarWhereInput | ServiceRequestScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutSessionsInput = {
@@ -32892,22 +33066,31 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutWorkerAdditionalInfoInput, WorkerProfileUpdateWithoutWorkerAdditionalInfoInput>, WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput>
   }
 
-  export type ParticipantCreateNestedOneWithoutServiceRequestInput = {
-    create?: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
-    connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestInput
+  export type ServiceRequestCreateselectedWorkersInput = {
+    set: string[]
+  }
+
+  export type ParticipantCreateNestedOneWithoutServiceRequestsInput = {
+    create?: XOR<ParticipantCreateWithoutServiceRequestsInput, ParticipantUncheckedCreateWithoutServiceRequestsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestsInput
     connect?: ParticipantWhereUniqueInput
+  }
+
+  export type ServiceRequestUpdateselectedWorkersInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type EnumServiceRequestStatusFieldUpdateOperationsInput = {
     set?: $Enums.ServiceRequestStatus
   }
 
-  export type ParticipantUpdateOneRequiredWithoutServiceRequestNestedInput = {
-    create?: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
-    connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestInput
-    upsert?: ParticipantUpsertWithoutServiceRequestInput
+  export type ParticipantUpdateOneRequiredWithoutServiceRequestsNestedInput = {
+    create?: XOR<ParticipantCreateWithoutServiceRequestsInput, ParticipantUncheckedCreateWithoutServiceRequestsInput>
+    connectOrCreate?: ParticipantCreateOrConnectWithoutServiceRequestsInput
+    upsert?: ParticipantUpsertWithoutServiceRequestsInput
     connect?: ParticipantWhereUniqueInput
-    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutServiceRequestInput, ParticipantUpdateWithoutServiceRequestInput>, ParticipantUncheckedUpdateWithoutServiceRequestInput>
+    update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutServiceRequestsInput, ParticipantUpdateWithoutServiceRequestsInput>, ParticipantUncheckedUpdateWithoutServiceRequestsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -33763,6 +33946,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33776,6 +33960,7 @@ export namespace Prisma {
     location: string
     zohoRecordId?: string | null
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
     status?: $Enums.ServiceRequestStatus
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33784,6 +33969,11 @@ export namespace Prisma {
   export type ServiceRequestCreateOrConnectWithoutParticipantInput = {
     where: ServiceRequestWhereUniqueInput
     create: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
+  }
+
+  export type ServiceRequestCreateManyParticipantInputEnvelope = {
+    data: ServiceRequestCreateManyParticipantInput | ServiceRequestCreateManyParticipantInput[]
+    skipDuplicates?: boolean
   }
 
   export type UserCreateWithoutParticipantsInput = {
@@ -33835,41 +34025,38 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutParticipantsInput, UserUncheckedCreateWithoutParticipantsInput>
   }
 
-  export type ServiceRequestUpsertWithoutParticipantInput = {
+  export type ServiceRequestUpsertWithWhereUniqueWithoutParticipantInput = {
+    where: ServiceRequestWhereUniqueInput
     update: XOR<ServiceRequestUpdateWithoutParticipantInput, ServiceRequestUncheckedUpdateWithoutParticipantInput>
     create: XOR<ServiceRequestCreateWithoutParticipantInput, ServiceRequestUncheckedCreateWithoutParticipantInput>
-    where?: ServiceRequestWhereInput
   }
 
-  export type ServiceRequestUpdateToOneWithWhereWithoutParticipantInput = {
-    where?: ServiceRequestWhereInput
+  export type ServiceRequestUpdateWithWhereUniqueWithoutParticipantInput = {
+    where: ServiceRequestWhereUniqueInput
     data: XOR<ServiceRequestUpdateWithoutParticipantInput, ServiceRequestUncheckedUpdateWithoutParticipantInput>
   }
 
-  export type ServiceRequestUpdateWithoutParticipantInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    requesterId?: StringFieldUpdateOperationsInput | string
-    services?: JsonNullValueInput | InputJsonValue
-    details?: JsonNullValueInput | InputJsonValue
-    location?: StringFieldUpdateOperationsInput | string
-    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
-    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  export type ServiceRequestUpdateManyWithWhereWithoutParticipantInput = {
+    where: ServiceRequestScalarWhereInput
+    data: XOR<ServiceRequestUpdateManyMutationInput, ServiceRequestUncheckedUpdateManyWithoutParticipantInput>
   }
 
-  export type ServiceRequestUncheckedUpdateWithoutParticipantInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    requesterId?: StringFieldUpdateOperationsInput | string
-    services?: JsonNullValueInput | InputJsonValue
-    details?: JsonNullValueInput | InputJsonValue
-    location?: StringFieldUpdateOperationsInput | string
-    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
-    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
-    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  export type ServiceRequestScalarWhereInput = {
+    AND?: ServiceRequestScalarWhereInput | ServiceRequestScalarWhereInput[]
+    OR?: ServiceRequestScalarWhereInput[]
+    NOT?: ServiceRequestScalarWhereInput | ServiceRequestScalarWhereInput[]
+    id?: StringFilter<"ServiceRequest"> | string
+    requesterId?: StringFilter<"ServiceRequest"> | string
+    participantId?: StringFilter<"ServiceRequest"> | string
+    services?: JsonFilter<"ServiceRequest">
+    details?: JsonFilter<"ServiceRequest">
+    location?: StringFilter<"ServiceRequest"> | string
+    zohoRecordId?: StringNullableFilter<"ServiceRequest"> | string | null
+    assignedWorker?: JsonNullableFilter<"ServiceRequest">
+    selectedWorkers?: StringNullableListFilter<"ServiceRequest">
+    status?: EnumServiceRequestStatusFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFilter<"ServiceRequest"> | Date | string
+    updatedAt?: DateTimeFilter<"ServiceRequest"> | Date | string
   }
 
   export type UserUpsertWithoutParticipantsInput = {
@@ -34265,7 +34452,7 @@ export namespace Prisma {
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    serviceRequest?: ServiceRequestCreateNestedOneWithoutParticipantInput
+    serviceRequests?: ServiceRequestCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantUncheckedCreateWithoutUserInput = {
@@ -34283,7 +34470,7 @@ export namespace Prisma {
     additionalInfo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    serviceRequest?: ServiceRequestUncheckedCreateNestedOneWithoutParticipantInput
+    serviceRequests?: ServiceRequestUncheckedCreateNestedManyWithoutParticipantInput
   }
 
   export type ParticipantCreateOrConnectWithoutUserInput = {
@@ -36082,7 +36269,7 @@ export namespace Prisma {
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
-  export type ParticipantCreateWithoutServiceRequestInput = {
+  export type ParticipantCreateWithoutServiceRequestsInput = {
     id?: string
     firstName: string
     lastName: string
@@ -36100,7 +36287,7 @@ export namespace Prisma {
     user?: UserCreateNestedOneWithoutParticipantsInput
   }
 
-  export type ParticipantUncheckedCreateWithoutServiceRequestInput = {
+  export type ParticipantUncheckedCreateWithoutServiceRequestsInput = {
     id?: string
     userId?: string | null
     firstName: string
@@ -36118,23 +36305,23 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
-  export type ParticipantCreateOrConnectWithoutServiceRequestInput = {
+  export type ParticipantCreateOrConnectWithoutServiceRequestsInput = {
     where: ParticipantWhereUniqueInput
-    create: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
+    create: XOR<ParticipantCreateWithoutServiceRequestsInput, ParticipantUncheckedCreateWithoutServiceRequestsInput>
   }
 
-  export type ParticipantUpsertWithoutServiceRequestInput = {
-    update: XOR<ParticipantUpdateWithoutServiceRequestInput, ParticipantUncheckedUpdateWithoutServiceRequestInput>
-    create: XOR<ParticipantCreateWithoutServiceRequestInput, ParticipantUncheckedCreateWithoutServiceRequestInput>
+  export type ParticipantUpsertWithoutServiceRequestsInput = {
+    update: XOR<ParticipantUpdateWithoutServiceRequestsInput, ParticipantUncheckedUpdateWithoutServiceRequestsInput>
+    create: XOR<ParticipantCreateWithoutServiceRequestsInput, ParticipantUncheckedCreateWithoutServiceRequestsInput>
     where?: ParticipantWhereInput
   }
 
-  export type ParticipantUpdateToOneWithWhereWithoutServiceRequestInput = {
+  export type ParticipantUpdateToOneWithWhereWithoutServiceRequestsInput = {
     where?: ParticipantWhereInput
-    data: XOR<ParticipantUpdateWithoutServiceRequestInput, ParticipantUncheckedUpdateWithoutServiceRequestInput>
+    data: XOR<ParticipantUpdateWithoutServiceRequestsInput, ParticipantUncheckedUpdateWithoutServiceRequestsInput>
   }
 
-  export type ParticipantUpdateWithoutServiceRequestInput = {
+  export type ParticipantUpdateWithoutServiceRequestsInput = {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
@@ -36152,7 +36339,7 @@ export namespace Prisma {
     user?: UserUpdateOneWithoutParticipantsNestedInput
   }
 
-  export type ParticipantUncheckedUpdateWithoutServiceRequestInput = {
+  export type ParticipantUncheckedUpdateWithoutServiceRequestsInput = {
     id?: StringFieldUpdateOperationsInput | string
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
@@ -36166,6 +36353,62 @@ export namespace Prisma {
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestCreateManyParticipantInput = {
+    id?: string
+    requesterId: string
+    services: JsonNullValueInput | InputJsonValue
+    details: JsonNullValueInput | InputJsonValue
+    location: string
+    zohoRecordId?: string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestCreateselectedWorkersInput | string[]
+    status?: $Enums.ServiceRequestStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiceRequestUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestUncheckedUpdateWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceRequestUncheckedUpdateManyWithoutParticipantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requesterId?: StringFieldUpdateOperationsInput | string
+    services?: JsonNullValueInput | InputJsonValue
+    details?: JsonNullValueInput | InputJsonValue
+    location?: StringFieldUpdateOperationsInput | string
+    zohoRecordId?: NullableStringFieldUpdateOperationsInput | string | null
+    assignedWorker?: NullableJsonNullValueInput | InputJsonValue
+    selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
+    status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -36322,7 +36565,7 @@ export namespace Prisma {
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    serviceRequest?: ServiceRequestUpdateOneWithoutParticipantNestedInput
+    serviceRequests?: ServiceRequestUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateWithoutUserInput = {
@@ -36340,7 +36583,7 @@ export namespace Prisma {
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    serviceRequest?: ServiceRequestUncheckedUpdateOneWithoutParticipantNestedInput
+    serviceRequests?: ServiceRequestUncheckedUpdateManyWithoutParticipantNestedInput
   }
 
   export type ParticipantUncheckedUpdateManyWithoutUserInput = {

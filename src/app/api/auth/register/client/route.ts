@@ -1,13 +1,10 @@
 /**
  * Client Registration API Endpoint
  *
- * Handles both "self" and "client" registration paths:
- * - Self: Person registering for themselves (isSelfManaged: true)
- * - Client: Person registering on behalf of someone else (isSelfManaged: false)
- *
- * Creates User + ClientProfile + Participant.
+ * Creates User + ClientProfile + Participant + ServiceRequest.
  * - ClientProfile: User's contact info (firstName, lastName, mobile)
- * - Participant: Participant details (personal info, services, location)
+ * - Participant: Person needing support (personal info)
+ * - ServiceRequest: Services needed, location, details
  *
  * POST /api/auth/register/client
  *
@@ -16,10 +13,11 @@
  *   firstName: string,
  *   lastName: string,
  *   mobile: string,
- *   isSelfManaged: boolean,
  *   fundingType: 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER',
  *   relationshipToClient: 'PARENT' | 'LEGAL_GUARDIAN' | 'SPOUSE_PARTNER' | 'CHILDREN' | 'OTHER',
  *   dateOfBirth?: string,
+ *   clientFirstName?: string,
+ *   clientLastName?: string,
  *   servicesRequested: { [categoryId]: { categoryName, subCategories: [{id, name}] } },
  *   additionalInfo?: string,
  *   location: string,
@@ -97,48 +95,40 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // CREATE USER + CLIENT PROFILE + PARTICIPANT
+      // CREATE USER + CLIENT PROFILE
       // ============================================
       let user;
       try {
-        user = await authPrisma.user.create({
-          data: {
-            email: data.email,
-            passwordHash,
-            role: 'CLIENT',
-            status: 'ACTIVE',
-            updatedAt: new Date(),
+        user = await authPrisma.$transaction(async (tx) => {
+          // Create User with ClientProfile
+          const createdUser = await tx.user.create({
+            data: {
+              email: data.email,
+              passwordHash,
+              role: 'CLIENT',
+              status: 'ACTIVE',
+              updatedAt: new Date(),
 
-            // ClientProfile: User's contact info only
-            clientProfile: {
-              create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                mobile: data.mobile,
-                updatedAt: new Date(),
+              // ClientProfile: User's contact info
+              clientProfile: {
+                create: {
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  mobile: data.mobile,
+                  isSelfManaged: data.completingFormAs === 'self',
+                  updatedAt: new Date(),
+                },
               },
             },
-
-            // Participant: About the person needing support, services, location
-            participants: {
-              create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date(),
-                location: data.location,
-                fundingType: data.fundingType,
-                relationshipToClient: data.isSelfManaged ? 'OTHER' : data.relationshipToClient,
-                isSelfManaged: data.isSelfManaged,
-                servicesRequested: data.servicesRequested,
-                additionalInfo: data.additionalInfo || null,
-                updatedAt: new Date(),
-              },
+            include: {
+              clientProfile: true,
             },
-          },
-          include: {
-            clientProfile: true,
-            participants: true,
-          },
+          });
+
+          return createdUser;
+        }, {
+          maxWait: 10000, // wait up to 10s to acquire a connection
+          timeout: 20000, // allow up to 20s for the transaction (handles Neon cold starts)
         });
       } catch (dbError: any) {
         // Handle unique constraint violation (duplicate email)
@@ -159,13 +149,33 @@ export async function POST(request: Request) {
           userId: user.id,
           action: 'LOGIN_SUCCESS',
           metadata: {
-            registrationType: data.isSelfManaged ? 'CLIENT_SELF' : 'CLIENT_REPRESENTATIVE',
-            fundingType: data.fundingType,
+            registrationType: 'CLIENT',
           },
         },
       }).catch(() => {
         // Don't fail registration if audit log fails
       });
+
+      // ============================================
+      // WEBHOOK
+      // ============================================
+      const webhookUrl = process.env.Client_Registration_Webhook
+      if (webhookUrl) {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            mobile: data.mobile,
+            fundingType: data.fundingType ?? null,
+            relationshipToClient: data.relationshipToClient ?? null,
+            completingFormAs: body.completingFormAs ?? 'client',
+          }),
+        }).catch((err) => console.error('[Webhook] Client registration webhook failed:', err))
+      }
 
       // ============================================
       // SUCCESS RESPONSE
@@ -180,7 +190,7 @@ export async function POST(request: Request) {
             role: user.role,
             status: user.status,
           },
-          registrationType: data.isSelfManaged ? 'self' : 'client',
+          registrationType: 'client',
         },
         { status: 201 }
       );

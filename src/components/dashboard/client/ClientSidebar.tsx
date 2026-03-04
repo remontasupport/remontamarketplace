@@ -3,21 +3,22 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { BRAND_COLORS } from '@/lib/constants'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
   HomeIcon,
-  UsersIcon,
-  CalendarDaysIcon,
-  ChatBubbleLeftRightIcon,
+  MagnifyingGlassIcon,
+  PlusCircleIcon,
+  ClipboardDocumentListIcon,
   Cog6ToothIcon,
-  HeartIcon,
+  ArchiveBoxIcon,
 } from '@heroicons/react/24/outline'
 
 interface MenuItem {
   id: string
   name: string
-  href: string
+  path: string // relative path (e.g., '' for dashboard, '/clients' for clients)
   icon: React.ComponentType<{ className?: string }>
 }
 
@@ -25,32 +26,32 @@ const menuItems: MenuItem[] = [
   {
     id: 'dashboard',
     name: 'Dashboard',
-    href: '/dashboard/client',
+    path: '',
     icon: HomeIcon,
   },
   {
-    id: 'participants',
-    name: 'Participants',
-    href: '/dashboard/client/participants',
-    icon: UsersIcon,
+    id: 'find-worker',
+    name: 'Find Worker',
+    path: '/find-worker',
+    icon: MagnifyingGlassIcon,
   },
   {
-    id: 'bookings',
-    name: 'Bookings',
-    href: '/dashboard/client/bookings',
-    icon: CalendarDaysIcon,
+    id: 'request-service',
+    name: 'Request A Service',
+    path: '/request-service',
+    icon: PlusCircleIcon,
   },
   {
-    id: 'messages',
-    name: 'Messages',
-    href: '/dashboard/client/messages',
-    icon: ChatBubbleLeftRightIcon,
+    id: 'manage-request',
+    name: 'Manage Request',
+    path: '/manage-request',
+    icon: ClipboardDocumentListIcon,
   },
   {
-    id: 'favorites',
-    name: 'Favorites',
-    href: '/dashboard/client/favorites',
-    icon: HeartIcon,
+    id: 'archived',
+    name: 'Archived',
+    path: '/archived',
+    icon: ArchiveBoxIcon,
   },
 ]
 
@@ -61,20 +62,34 @@ interface ClientSidebarProps {
     firstName: string
     photo: string | null
   }
+  basePath?: string // Base path for navigation (e.g., '/dashboard/client' or '/dashboard/supportcoordinators')
+  roleLabel?: string // Label to show in profile section (e.g., 'Client' or 'Support Coordinator')
 }
 
 export default function ClientSidebar({
   isMobileOpen = false,
   onClose,
-  profileData
+  profileData,
+  basePath = '/dashboard/client',
+  roleLabel,
 }: ClientSidebarProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [isNavigating, setIsNavigating] = useState(false)
 
-  // Get profile photo URL or use placeholder
-  const photoUrl = profileData?.photo || '/images/profilePlaceHolder.png'
+  const photoUrl = profileData?.photo || null
   const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'User'
+
+  // Generate initials from display name for avatar fallback
+  const initials = displayName
+    .split(' ')
+    .map((w: string) => w.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('')
+
+  // Determine role label - use prop if provided, otherwise derive from session
+  const displayRoleLabel = roleLabel || (session?.user?.role === 'COORDINATOR' ? 'Support Coordinator' : 'Client')
+
 
   // Handle link click on mobile - close menu
   const handleLinkClick = () => {
@@ -104,7 +119,7 @@ export default function ClientSidebar({
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
       {/* Logo - Only visible on mobile */}
       <div className="sidebar-logo-mobile">
-        <Link href="/dashboard/client" onClick={handleLinkClick}>
+        <Link href={basePath} onClick={handleLinkClick}>
           <Image
             src="/logo/logo.svg"
             alt="Remonta"
@@ -119,18 +134,36 @@ export default function ClientSidebar({
       {/* Profile Section */}
       <div className="sidebar-profile-section">
         <div className="sidebar-profile-avatar">
-          <Image
-            src={photoUrl}
-            alt={displayName}
-            width={64}
-            height={64}
-            className="sidebar-profile-img"
-            unoptimized={photoUrl?.includes('blob.vercel-storage.com')}
-          />
+          {photoUrl ? (
+            <Image
+              src={photoUrl}
+              alt={displayName}
+              width={64}
+              height={64}
+              className="sidebar-profile-img"
+              unoptimized={photoUrl.includes('blob.vercel-storage.com')}
+            />
+          ) : (
+            <div
+              style={{
+                backgroundColor: BRAND_COLORS.HIGHLIGHT,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                color: BRAND_COLORS.PRIMARY,
+                fontSize: '1rem',
+              }}
+            >
+              {initials}
+            </div>
+          )}
         </div>
         <div className="sidebar-profile-info">
           <h4 className="sidebar-profile-name">{displayName}</h4>
-          <p className="sidebar-profile-role">Client</p>
+          <p className="sidebar-profile-role">{displayRoleLabel}</p>
         </div>
       </div>
 
@@ -139,15 +172,17 @@ export default function ClientSidebar({
         <div className="nav-section">
           <ul className="nav-list">
             {menuItems.map((item) => {
-              const isActive = pathname === item.href
+
+              const href = `${basePath}${item.path}`
+              const isActive = pathname === href
               const ItemIcon = item.icon
 
               return (
                 <li key={item.id}>
                   <Link
-                    href={item.href}
+                    href={href}
                     className={`nav-item ${isActive ? 'active' : ''}`}
-                    onClick={() => handleNavClick(item.href)}
+                    onClick={() => handleNavClick(href)}
                   >
                     <ItemIcon className="nav-icon" />
                     <span>{item.name}</span>
@@ -161,7 +196,7 @@ export default function ClientSidebar({
         {/* Account Button */}
         <div className="sidebar-account-section">
           <Link
-            href="/dashboard/client/account"
+            href={`${basePath}/account`}
             className="sidebar-account-button"
             onClick={handleLinkClick}
           >

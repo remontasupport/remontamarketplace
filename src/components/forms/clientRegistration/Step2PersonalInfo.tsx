@@ -7,8 +7,6 @@ import { Control, FieldErrors } from "react-hook-form";
 import { ClientFormData } from "@/schema/clientFormSchema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronDown, Check } from "lucide-react";
-import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
-
 const CLIENT_TYPES = [
   { id: "ndis", label: "NDIS Participant (has an active NDIS plan)" },
   { id: "aged-care", label: "Aged Care Recipient" },
@@ -70,24 +68,6 @@ export function Step2PersonalInfo({ control, errors, completingFormAs }: Step2Pe
         {errors.lastName && <p className="text-red-500 text-sm font-poppins mt-1">{errors.lastName.message}</p>}
       </div>
 
-      {/* Date of Birth - Only shown for Self-managed clients */}
-      {completingFormAs === "self" && (
-        <Controller
-          name="dateOfBirth"
-          control={control}
-          render={({ field }) => (
-            <DatePickerField
-              label="Date of birth"
-              name="dateOfBirth"
-              value={field.value || ""}
-              onChange={field.onChange}
-              error={errors.dateOfBirth?.message}
-              required
-            />
-          )}
-        />
-      )}
-
       {/* Phone Number */}
       <div>
         <Label className="text-base font-poppins font-semibold text-gray-900">
@@ -142,7 +122,8 @@ export function Step2PersonalInfo({ control, errors, completingFormAs }: Step2Pe
       {completingFormAs === "coordinator" && (
         <div>
           <Label className="text-base font-poppins font-semibold text-gray-900">
-            What type of clients do you service?
+            What type of clients do you service?{" "}
+            <span className="text-sm font-normal text-gray-400">(optional)</span>
           </Label>
           <Controller
             name="clientTypes"

@@ -13,11 +13,15 @@ interface ClientDashboardLayoutProps {
     firstName: string
     photo: string | null
   }
+  basePath?: string // Base path for navigation (e.g., '/dashboard/client' or '/dashboard/supportcoordinators')
+  roleLabel?: string // Label to show in profile section (e.g., 'Client' or 'Support Coordinator')
 }
 
 export default function ClientDashboardLayout({
   children,
-  profileData
+  profileData,
+  basePath = '/dashboard/client',
+  roleLabel,
 }: ClientDashboardLayoutProps) {
   const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -59,6 +63,8 @@ export default function ClientDashboardLayout({
           isMobileOpen={isMobileMenuOpen}
           onClose={closeMobileMenu}
           profileData={profileData}
+          basePath={basePath}
+          roleLabel={roleLabel}
         />
 
         {/* Main Content */}

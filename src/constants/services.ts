@@ -1,11 +1,10 @@
 export const SERVICE_TYPES = [
   "Support Worker",
-  "Cleaning Services",
+  "Support Worker (High Intensity)",
   "Therapeutic Supports",
-  "Nursing",
-  "Home Modifications",
+  "Nursing Services",
+  "Cleaning Services",
   "Home and Yard Maintenance",
-  "Fitness and Rehabilitation",
 ] as const;
 
 export type ServiceType = typeof SERVICE_TYPES[number] | string;

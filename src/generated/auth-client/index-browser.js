@@ -390,6 +390,7 @@ exports.Prisma.ServiceRequestScalarFieldEnum = {
   location: 'location',
   zohoRecordId: 'zohoRecordId',
   assignedWorker: 'assignedWorker',
+  selectedWorkers: 'selectedWorkers',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -454,6 +455,7 @@ exports.RelationshipType = exports.$Enums.RelationshipType = {
   LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
   SPOUSE_PARTNER: 'SPOUSE_PARTNER',
   CHILDREN: 'CHILDREN',
+  MYSELF: 'MYSELF',
   OTHER: 'OTHER'
 };
 

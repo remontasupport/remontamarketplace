@@ -1,9 +1,10 @@
 /**
  * Coordinator Registration API Endpoint
  *
- * Creates User + CoordinatorProfile + Participant.
+ * Creates User + CoordinatorProfile + Participant + ServiceRequest.
  * - CoordinatorProfile: Coordinator's contact info (firstName, lastName, mobile, organization, clientTypes)
- * - Participant: Participant details (personal info, services, location)
+ * - Participant: Person needing support (personal info)
+ * - ServiceRequest: Services needed, location, details
  *
  * POST /api/auth/register/coordinator
  *
@@ -94,49 +95,40 @@ export async function POST(request: Request) {
       const passwordHash = await hashPassword(data.password);
 
       // ============================================
-      // CREATE USER + COORDINATOR PROFILE + PARTICIPANT
+      // CREATE USER + COORDINATOR PROFILE
+      // (Participants and ServiceRequests are created later from the coordinator's dashboard)
       // ============================================
       let user;
       try {
-        user = await authPrisma.user.create({
-          data: {
-            email: data.email, // Already normalized by Zod transform
-            passwordHash,
-            role: 'COORDINATOR',
-            status: 'ACTIVE',
-            updatedAt: new Date(),
+        user = await authPrisma.$transaction(async (tx) => {
+          const createdUser = await tx.user.create({
+            data: {
+              email: data.email,
+              passwordHash,
+              role: 'COORDINATOR',
+              status: 'ACTIVE',
+              updatedAt: new Date(),
 
-            // CoordinatorProfile: Coordinator's contact info only
-            coordinatorProfile: {
-              create: {
-                firstName: data.firstName,
-                lastName: data.lastName,
-                mobile: data.mobile,
-                organization: data.organization || null,
-                clientTypes: data.clientTypes,
-                updatedAt: new Date(),
+              coordinatorProfile: {
+                create: {
+                  firstName: data.firstName,
+                  lastName: data.lastName,
+                  mobile: data.mobile,
+                  organization: data.organization || null,
+                  clientTypes: data.clientTypes,
+                  updatedAt: new Date(),
+                },
               },
             },
-
-            // Participant: About the person needing support, services, location
-            participants: {
-              create: {
-                firstName: data.clientFirstName,
-                lastName: data.clientLastName,
-                dateOfBirth: new Date(data.clientDateOfBirth),
-                fundingType: 'OTHER',
-                relationshipToClient: 'OTHER',
-                location: data.location,
-                servicesRequested: data.servicesRequested,
-                additionalInfo: data.additionalInfo || null,
-                updatedAt: new Date(),
-              },
+            include: {
+              coordinatorProfile: true,
             },
-          },
-          include: {
-            coordinatorProfile: true,
-            participants: true,
-          },
+          });
+
+          return createdUser;
+        }, {
+          maxWait: 10000,
+          timeout: 20000,
         });
       } catch (dbError: any) {
         // Handle unique constraint violation (duplicate email)
@@ -164,6 +156,27 @@ export async function POST(request: Request) {
       }).catch(() => {
         // Don't fail registration if audit log fails
       });
+
+      // ============================================
+      // WEBHOOK
+      // ============================================
+      const webhookUrl = process.env.Client_Registration_Webhook
+      if (webhookUrl) {
+        await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            email: data.email,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            mobile: data.mobile,
+            organization: data.organization ?? null,
+            clientTypes: data.clientTypes,
+            completingFormAs: 'coordinator',
+          }),
+        }).catch((err) => console.error('[Webhook] Coordinator registration webhook failed:', err))
+      }
 
       // ============================================
       // SUCCESS RESPONSE

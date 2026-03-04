@@ -22,7 +22,8 @@ export function Step3FundingType({ control, showRelationship = true }: Step3Fund
     { value: "parent", label: "Parent" },
     { value: "legal-guardian", label: "Legal Guardian" },
     { value: "spouse-partner", label: "Spouse/Partner" },
-    { value: "children", label: "Children" },
+    { value: "children", label: "Child" },
+    { value: "myself", label: "My Self" },
     { value: "other", label: "Other" },
   ];
 

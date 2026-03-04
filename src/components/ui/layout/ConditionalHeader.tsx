@@ -26,6 +26,11 @@ export default function ConditionalHeader() {
     return null
   }
 
+  // Don't render header for worker profile pages
+  if (pathname?.startsWith('/workers')) {
+    return null
+  }
+
   // Don't render header for authentication pages
   if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/setup-password') {
     return null

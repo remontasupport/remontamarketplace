@@ -61,19 +61,7 @@ export const coordinatorRegistrationSchema = z.object({
   organization: z.string().optional(),
 
   // Coordinator-specific
-  clientTypes: z.array(z.string()).min(1, 'Please select at least one client type'),
-
-  // Participant info (about the person needing support)
-  clientFirstName: z.string().min(1, 'First name is required').trim(),
-  clientLastName: z.string().min(1, 'Last name is required').trim(),
-  clientDateOfBirth: z.string().min(1, 'Date of birth is required'),
-
-  // Services
-  servicesRequested: servicesRequestedSchema,
-  additionalInfo: z.string().optional(),
-
-  // Location
-  location: z.string().min(1, 'Location is required'),
+  clientTypes: z.array(z.string()).optional(),
 
   // Account
   email: emailValidation,
@@ -93,7 +81,7 @@ export type CoordinatorRegistrationInput = z.infer<typeof coordinatorRegistratio
 // ============================================
 
 export const fundingTypeEnum = z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']);
-export const relationshipTypeEnum = z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'OTHER']);
+export const relationshipTypeEnum = z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'OTHER', 'MYSELF']);
 
 export const clientRegistrationSchema = z.object({
   // Personal Information (the person registering)
@@ -101,20 +89,21 @@ export const clientRegistrationSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').trim(),
   mobile: phoneValidation,
 
-  // Client-specific
-  isSelfManaged: z.boolean(),
-  fundingType: fundingTypeEnum,
-  relationshipToClient: relationshipTypeEnum,
+  // Client-specific (optional — only captured on client path)
+  fundingType: fundingTypeEnum.optional(),
+  relationshipToClient: relationshipTypeEnum.optional(),
 
-  // Participant info (for self-managed, this is the same as the person registering)
+  // Participant info
   dateOfBirth: z.string().optional(),
+  clientFirstName: z.string().trim().optional(),
+  clientLastName: z.string().trim().optional(),
 
-  // Services
-  servicesRequested: servicesRequestedSchema,
+  // Services (optional — participants created from dashboard)
+  servicesRequested: servicesRequestedSchema.optional(),
   additionalInfo: z.string().optional(),
 
-  // Location
-  location: z.string().min(1, 'Location is required'),
+  // Location (optional)
+  location: z.string().optional(),
 
   // Account
   email: emailValidation,
@@ -122,6 +111,9 @@ export const clientRegistrationSchema = z.object({
   consent: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms to continue' }),
   }),
+
+  // Who is completing the form
+  completingFormAs: z.enum(['coordinator', 'self', 'client']).optional(),
 
   // Optional: reCAPTCHA token
   recaptchaToken: z.string().optional(),
