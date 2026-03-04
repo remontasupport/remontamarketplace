@@ -185,27 +185,27 @@ export default function EditServiceRequestPage({
         setIsLoading(true);
         setError(null);
 
-        const [categoriesRes, participantRes] = await Promise.all([
+        const [categoriesRes, serviceRequestRes] = await Promise.all([
           fetch("/api/categories"),
-          fetch(`/api/client/participants/${participantId}`),
+          fetch(`/api/client/service-request/${participantId}`),
         ]);
 
         if (!categoriesRes.ok) throw new Error("Failed to fetch categories");
-        if (!participantRes.ok) throw new Error("Failed to fetch participant data");
+        if (!serviceRequestRes.ok) throw new Error("Failed to fetch service request");
 
         const categoriesData = await categoriesRes.json();
-        const participantData = await participantRes.json();
+        const serviceRequestData = await serviceRequestRes.json();
 
         setCategories(categoriesData);
 
-        const sr = participantData.data?.serviceRequest;
+        const sr = serviceRequestData.data;
         if (sr) {
           setServiceRequest({
             id: sr.id,
             services: sr.services || {},
             location: sr.location || "",
             details: sr.details || {},
-            participant: participantData.data,
+            participant: sr.participant,
           });
 
           // Pre-populate Services

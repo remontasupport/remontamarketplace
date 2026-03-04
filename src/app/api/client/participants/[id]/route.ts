@@ -201,6 +201,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
     })
 
+    // 6b. If the user is a CLIENT, also sync firstName/lastName to their clientProfile
+    // (1:1 relationship — the client IS the participant)
+    if (userRole === UserRole.CLIENT && (data.firstName !== undefined || data.lastName !== undefined)) {
+      await authPrisma.clientProfile.update({
+        where: { userId: session.user.id },
+        data: {
+          ...(data.firstName !== undefined && { firstName: data.firstName }),
+          ...(data.lastName !== undefined && { lastName: data.lastName }),
+        },
+      })
+    }
+
     // 7. Audit log (fire-and-forget)
     authPrisma.auditLog
       .create({

@@ -78,6 +78,8 @@ interface AddClientModalProps {
   onClose: () => void;
   onAdd: (participant: { id: string; firstName: string; lastName: string; name: string }) => void;
   showRelationship?: boolean;
+  initialFirstName?: string;
+  initialLastName?: string;
 }
 
 const emptyNdisDetails: NdisDetails = {
@@ -108,6 +110,8 @@ export default function AddClientModal({
   onClose,
   onAdd,
   showRelationship = true,
+  initialFirstName,
+  initialLastName,
 }: AddClientModalProps) {
   const [formData, setFormData] = useState<NewParticipantData>(emptyForm);
   const [isLoading, setIsLoading] = useState(false);
@@ -119,10 +123,14 @@ export default function AddClientModal({
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherCondition, setOtherCondition] = useState("");
 
-  // Reset form when modal opens
+  // Reset form when modal opens, pre-populating name from client profile if available
   useEffect(() => {
     if (isOpen) {
-      setFormData(emptyForm);
+      setFormData({
+        ...emptyForm,
+        firstName: initialFirstName || "",
+        lastName: initialLastName || "",
+      });
       setError(null);
       setIsGenderOpen(false);
       setIsRelationshipOpen(false);
@@ -131,7 +139,7 @@ export default function AddClientModal({
       setShowOtherInput(false);
       setOtherCondition("");
     }
-  }, [isOpen]);
+  }, [isOpen, initialFirstName, initialLastName]);
 
   // Reset NDIS skip when funding type changes
   useEffect(() => {
@@ -181,7 +189,8 @@ export default function AddClientModal({
           lastName: formData.lastName,
           dateOfBirth: formData.dateOfBirth || null,
           gender: formData.gender || null,
-          relationshipToClient: formData.relationshipToClient || null,
+          // When showRelationship=true the client is adding their own details
+          relationshipToClient: showRelationship ? "MYSELF" : (formData.relationshipToClient || null),
           fundingType: formData.fundingType || null,
           conditions: formData.conditions,
           additionalInfo: additionalInfoPayload,
@@ -769,7 +778,7 @@ export default function AddClientModal({
                 className="w-full sm:w-auto px-5 py-2.5 text-white font-medium font-poppins rounded-lg transition-colors disabled:opacity-50 hover:opacity-90"
                 style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
               >
-                {isLoading ? "Adding..." : "Add Client"}
+                {isLoading ? "Saving..." : showRelationship ? "Save Details" : "Add Client"}
               </button>
             </div>
           </form>

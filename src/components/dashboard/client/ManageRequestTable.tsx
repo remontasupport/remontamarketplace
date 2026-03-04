@@ -318,7 +318,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 {/* Name + status badge */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <button
-                    onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                    onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.id}`)}
                     className={`font-semibold font-poppins text-base text-left leading-snug ${request.status === 'CANCELLED' ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
                   >
                     {showRequestType ? formatServiceLabel(request.primaryService || '') || 'Service Request' : request.participantName}
@@ -349,7 +349,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
               {/* Action footer */}
               <div className="border-t border-gray-100 bg-gray-50 px-2 py-1 flex items-center">
                 <button
-                  onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                  onClick={() => router.push(`${basePath}/request-service/edit/${request.id}`)}
                   className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-blue-600 rounded-lg transition-colors hover:bg-white"
                 >
                   <PencilSquareIcon className="w-4 h-4" />
@@ -418,7 +418,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 >
                   <td className="px-6 py-5 text-center">
                     <button
-                      onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                      onClick={() => request.status !== 'CANCELLED' && router.push(`${basePath}/request-service/edit/${request.id}`)}
                       className={`font-medium font-poppins ${request.status === 'CANCELLED' ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
                     >
                       {showRequestType ? formatServiceLabel(request.primaryService || '') || 'Service Request' : request.participantName}
@@ -465,7 +465,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                         </button>
                       )}
                       <button
-                        onClick={() => router.push(`${basePath}/request-service/edit/${request.participantId}`)}
+                        onClick={() => router.push(`${basePath}/request-service/edit/${request.id}`)}
                         className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-blue-500 transition-colors"
                       >
                         <PencilSquareIcon className="w-4 h-4" />

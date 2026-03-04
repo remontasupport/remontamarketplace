@@ -313,10 +313,7 @@ export default function EditParticipantModal({
       <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 md:p-10 md:pt-27 pointer-events-none">
         <div className="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-xl pointer-events-auto flex flex-col mt-18 sm:mt-2">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4 flex-shrink-0">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-poppins pr-4">
-              Edit Participant Profile
-            </h2>
+          <div className="flex items-center justify-end border-b border-gray-200 px-4 sm:px-6 py-4 flex-shrink-0">
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-1"
@@ -420,8 +417,8 @@ export default function EditParticipantModal({
                   </div>
                 </div>
 
-                {/* Relationship */}
-                {showRelationship && (
+                {/* Relationship — hidden on client/self-manage path */}
+                {!showRelationship && (
                   <div>
                     <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
                       Relationship

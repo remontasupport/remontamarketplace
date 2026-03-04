@@ -1,11 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useRequestService } from "../RequestServiceContext";
 import StepNavigation from "../StepNavigation";
 
 export default function SupportDetailsSection() {
   const { formData, updateFormData } = useRequestService();
   const { supportDetailsData, whatAdditionalInfo } = formData;
+  const [error, setError] = useState<string | null>(null);
+
+  const handleBeforeNext = () => {
+    if (!whatAdditionalInfo.trim()) {
+      setError("Additional Information is required before proceeding.");
+      return false;
+    }
+    setError(null);
+    return true;
+  };
 
   return (
     <div className="section-card">
@@ -43,11 +54,19 @@ export default function SupportDetailsSection() {
             </p>
             <textarea
               value={whatAdditionalInfo}
-              onChange={(e) => updateFormData("whatAdditionalInfo", e.target.value)}
+              onChange={(e) => {
+                updateFormData("whatAdditionalInfo", e.target.value);
+                if (e.target.value.trim()) setError(null);
+              }}
               rows={4}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none resize-none"
+              className={`w-full px-4 py-3 border-2 rounded-lg font-poppins text-sm focus:outline-none resize-none ${
+                error ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
+              }`}
               placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
             />
+            {error && (
+              <p className="mt-1.5 text-sm text-red-600 font-poppins">{error}</p>
+            )}
           </div>
         </div>
 
@@ -82,7 +101,7 @@ export default function SupportDetailsSection() {
       </div>
 
       {/* Navigation */}
-      <StepNavigation />
+      <StepNavigation onBeforeNext={handleBeforeNext} />
     </div>
   );
 }

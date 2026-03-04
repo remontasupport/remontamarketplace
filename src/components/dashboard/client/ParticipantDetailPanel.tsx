@@ -184,7 +184,7 @@ export default function ParticipantDetailPanel({
               <div>
                 <p className="text-xs text-gray-500 font-poppins">Age</p>
                 <p className="text-sm font-medium text-gray-900 font-poppins">
-                  {typeof age === "number" ? `${age} years` : "Not specified"}
+                  {typeof age === "number" ? `${age} y/o` : "Not specified"}
                 </p>
               </div>
             </div>

@@ -29,7 +29,7 @@ export default async function ClientDashboard() {
 
   const clientProfile = await authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
-    select: { firstName: true },
+    select: { firstName: true, lastName: true },
   });
   displayName = clientProfile?.firstName || displayName;
 
@@ -138,6 +138,7 @@ export default async function ClientDashboard() {
           showRelationship={true}
           title="Manage your profile"
           subtitle=""
+          clientName={clientProfile ? { firstName: clientProfile.firstName, lastName: clientProfile.lastName } : undefined}
         />
       </div>
     </ClientDashboardLayout>

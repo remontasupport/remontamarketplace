@@ -122,7 +122,8 @@ export function Step2PersonalInfo({ control, errors, completingFormAs }: Step2Pe
       {completingFormAs === "coordinator" && (
         <div>
           <Label className="text-base font-poppins font-semibold text-gray-900">
-            What type of clients do you service?
+            What type of clients do you service?{" "}
+            <span className="text-sm font-normal text-gray-400">(optional)</span>
           </Label>
           <Controller
             name="clientTypes"

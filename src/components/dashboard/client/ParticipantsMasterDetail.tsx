@@ -36,6 +36,7 @@ interface ParticipantsMasterDetailProps {
   title: string;
   subtitle: string;
   defaultToList?: boolean; // When true, starts with no selection (list view on mobile)
+  clientName?: { firstName: string; lastName: string };
 }
 
 export default function ParticipantsMasterDetail({
@@ -44,6 +45,7 @@ export default function ParticipantsMasterDetail({
   title,
   subtitle,
   defaultToList = false,
+  clientName,
 }: ParticipantsMasterDetailProps) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
@@ -274,6 +276,8 @@ export default function ParticipantsMasterDetail({
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddParticipant}
         showRelationship={showRelationship}
+        initialFirstName={clientName?.firstName}
+        initialLastName={clientName?.lastName}
       />
     </>
   );

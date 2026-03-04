@@ -93,6 +93,17 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Sync firstName/lastName to clientProfile for CLIENT users (1:1 relationship)
+    if (userRole === UserRole.CLIENT) {
+      await authPrisma.clientProfile.update({
+        where: { userId: session.user.id },
+        data: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+        },
+      })
+    }
+
     return NextResponse.json({ success: true, data: participant }, { status: 201 })
   } catch (error) {
     return NextResponse.json(

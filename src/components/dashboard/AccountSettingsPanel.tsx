@@ -6,7 +6,7 @@ import QueryProvider from "@/providers/QueryProvider";
 import { updateUserEmail, updateUserPassword } from "@/services/user/account.service";
 import "@/app/styles/account-settings.css";
 
-type Tab = "username";
+type Tab = "username" | "personal";
 
 function AccountSettingsPanelContent() {
   const { data: session, update } = useSession();
@@ -21,11 +21,41 @@ function AccountSettingsPanelContent() {
   const [errorMessage, setErrorMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
+  // Personal Details state (coordinator only)
+  const [personalFirstName, setPersonalFirstName] = useState("");
+  const [personalLastName, setPersonalLastName] = useState("");
+  const [personalMobile, setPersonalMobile] = useState("");
+  const [personalOrganization, setPersonalOrganization] = useState("");
+  const [personalLoading, setPersonalLoading] = useState(false);
+  const [personalSuccess, setPersonalSuccess] = useState("");
+  const [personalError, setPersonalError] = useState("");
+
+  const isCoordinator = session?.user?.role === "COORDINATOR";
+
   useEffect(() => {
     if (session?.user?.email) {
       setEmail(session.user.email);
     }
+    if (session?.user?.role === "COORDINATOR") {
+      setActiveTab("personal");
+    }
   }, [session]);
+
+  // Fetch coordinator profile on mount
+  useEffect(() => {
+    if (!isCoordinator) return;
+    fetch("/api/coordinator/profile")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success && res.data) {
+          setPersonalFirstName(res.data.firstName || "");
+          setPersonalLastName(res.data.lastName || "");
+          setPersonalMobile(res.data.mobile || "");
+          setPersonalOrganization(res.data.organization || "");
+        }
+      })
+      .catch(() => {});
+  }, [isCoordinator]);
 
   const passwordStrength = useMemo(() => {
     if (!password) return { score: 0, label: "", color: "" };
@@ -44,8 +74,39 @@ function AccountSettingsPanelContent() {
   }, [password]);
 
   const tabs = [
+    ...(isCoordinator ? [{ id: "personal" as Tab, label: "Personal Details" }] : []),
     { id: "username" as Tab, label: "Username & password" },
   ];
+
+  const handlePersonalSave = async () => {
+    setPersonalLoading(true);
+    setPersonalSuccess("");
+    setPersonalError("");
+
+    try {
+      const res = await fetch("/api/coordinator/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: personalFirstName,
+          lastName: personalLastName,
+          mobile: personalMobile,
+          organization: personalOrganization,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPersonalError(data.error || "Failed to update profile");
+      } else {
+        setPersonalSuccess("Personal details updated successfully!");
+        setTimeout(() => setPersonalSuccess(""), 3000);
+      }
+    } catch {
+      setPersonalError("An unexpected error occurred. Please try again.");
+    } finally {
+      setPersonalLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -114,6 +175,61 @@ function AccountSettingsPanelContent() {
 
       {/* Tab Content */}
       <div className="account-content">
+        {activeTab === "personal" && (
+          <div className="tab-panel">
+            {personalSuccess && <div className="alert alert-success">{personalSuccess}</div>}
+            {personalError && <div className="alert alert-error">{personalError}</div>}
+
+            <div className="form-field">
+              <label className="form-label">First Name</label>
+              <input
+                type="text"
+                className="form-input"
+                value={personalFirstName}
+                onChange={(e) => setPersonalFirstName(e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">Last Name</label>
+              <input
+                type="text"
+                className="form-input"
+                value={personalLastName}
+                onChange={(e) => setPersonalLastName(e.target.value)}
+                placeholder="Last name"
+              />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">Mobile</label>
+              <input
+                type="tel"
+                className="form-input"
+                value={personalMobile}
+                onChange={(e) => setPersonalMobile(e.target.value)}
+                placeholder="04XX XXX XXX"
+              />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">Organization <span style={{ fontWeight: 400, color: '#9ca3af' }}>(optional)</span></label>
+              <input
+                type="text"
+                className="form-input"
+                value={personalOrganization}
+                onChange={(e) => setPersonalOrganization(e.target.value)}
+                placeholder="Your organization"
+              />
+            </div>
+
+            <button className="save-button" onClick={handlePersonalSave} disabled={personalLoading}>
+              {personalLoading ? "Saving..." : "Save"}
+            </button>
+          </div>
+        )}
+
         {activeTab === "username" && (
           <div className="tab-panel">
             {successMessage && <div className="alert alert-success">{successMessage}</div>}

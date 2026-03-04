@@ -78,7 +78,7 @@ export default function ClientsRegistration() {
         break;
       case 2:
         if (completingFormAs === "coordinator") {
-          fieldsToValidate = ["firstName", "lastName", "phoneNumber", "clientTypes"];
+          fieldsToValidate = ["firstName", "lastName", "phoneNumber"];
         } else {
           fieldsToValidate = ["firstName", "lastName", "phoneNumber"];
         }

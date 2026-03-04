@@ -101,7 +101,7 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
           <div>
             <p className="text-sm text-gray-500 font-poppins">Age</p>
             <p className="text-base font-medium text-gray-900 font-poppins">
-              {typeof age === 'number' ? `${age} years` : "Not specified"}
+              {typeof age === 'number' ? `${age} y/o` : "Not specified"}
             </p>
           </div>
 

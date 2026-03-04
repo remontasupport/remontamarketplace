@@ -61,7 +61,7 @@ export const coordinatorRegistrationSchema = z.object({
   organization: z.string().optional(),
 
   // Coordinator-specific
-  clientTypes: z.array(z.string()).min(1, 'Please select at least one client type'),
+  clientTypes: z.array(z.string()).optional(),
 
   // Account
   email: emailValidation,
@@ -111,6 +111,9 @@ export const clientRegistrationSchema = z.object({
   consent: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms to continue' }),
   }),
+
+  // Who is completing the form
+  completingFormAs: z.enum(['coordinator', 'self', 'client']).optional(),
 
   // Optional: reCAPTCHA token
   recaptchaToken: z.string().optional(),

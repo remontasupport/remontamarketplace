@@ -115,6 +115,7 @@ export async function POST(request: Request) {
                   firstName: data.firstName,
                   lastName: data.lastName,
                   mobile: data.mobile,
+                  isSelfManaged: data.completingFormAs === 'self',
                   updatedAt: new Date(),
                 },
               },

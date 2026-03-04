@@ -265,7 +265,57 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
       .catch(() => {})
 
-    // 10. Return response
+    // 10. Webhook — fire-and-forget (mirrors the POST creation webhook)
+    // Fetches fresh participant data after any participant updates above,
+    // then sends the full edit payload to Zoho via Request_Service_Webhook.
+    const webhookUrl = process.env.Request_Service_Webhook
+    if (webhookUrl) {
+      ;(async () => {
+        try {
+          const participant = await authPrisma.participant.findUnique({
+            where: { id: existingRequest.participantId },
+            select: {
+              firstName: true,
+              lastName: true,
+              dateOfBirth: true,
+              gender: true,
+              relationshipToClient: true,
+              fundingType: true,
+              conditions: true,
+              additionalInfo: true,
+            },
+          })
+
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'edit',
+              zohoRecordId: updatedRequest.zohoRecordId ?? null,
+              userId: session.user.id,
+              serviceRequestId: id,
+              services: updatedRequest.services,
+              location: updatedRequest.location,
+              details: updatedRequest.details,
+              status: updatedRequest.status,
+              participantId: existingRequest.participantId,
+              firstName: participant?.firstName ?? null,
+              lastName: participant?.lastName ?? null,
+              dateOfBirth: participant?.dateOfBirth ?? null,
+              gender: participant?.gender ?? null,
+              relationshipToClient: participant?.relationshipToClient ?? null,
+              fundingType: participant?.fundingType ?? null,
+              conditions: participant?.conditions ?? [],
+              additionalInfo: participant?.additionalInfo ?? null,
+            }),
+          })
+        } catch (err) {
+          console.error('[Webhook] Edit service request webhook failed:', err)
+        }
+      })()
+    }
+
+    // 11. Return response
     return NextResponse.json({
       success: true,
       message: 'Service request updated successfully',

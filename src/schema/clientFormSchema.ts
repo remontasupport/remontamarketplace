@@ -70,15 +70,6 @@ export const clientFormSchema = z.object({
 
   // Additional fields will be added as more steps are defined
 }).superRefine((data, ctx) => {
-  // clientTypes is required for coordinator path only
-  if (data.completingFormAs === "coordinator" && (!data.clientTypes || data.clientTypes.length === 0)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Please select at least one client type",
-      path: ["clientTypes"],
-    });
-  }
-
   // fundingType is required for client path only
   if (data.completingFormAs === "client" && !data.fundingType) {
     ctx.addIssue({
