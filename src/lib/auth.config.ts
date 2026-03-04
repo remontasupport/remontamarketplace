@@ -13,7 +13,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { authPrisma, withRetry } from "./auth-prisma";
 import { UserRole } from "@/types/auth";
-import { getOrFetch, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
+import { getOrFetch, getCached, setCached, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
 
 /**
  * NextAuth configuration options
@@ -175,6 +175,17 @@ export const authOptions: NextAuthOptions = {
             throw new Error(`ACCOUNT_LOCKED:${secondsLeft}`);
           }
 
+          // If a previous lockout has expired, reset the counter so the user gets a fresh 3 attempts
+          if (user.accountLockedUntil && user.accountLockedUntil <= new Date()) {
+            authPrisma.user.update({
+              where: { id: user.id },
+              data: { failedLoginAttempts: 0, accountLockedUntil: null },
+            }).catch(() => {});
+            invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
+            user.failedLoginAttempts = 0;
+            user.accountLockedUntil = null;
+          }
+
           // Verify password
           const bcryptStart = Date.now();
           const isValidPassword = await bcrypt.compare(
@@ -183,49 +194,35 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!isValidPassword) {
-            // Increment failed login attempts
-            const failedAttempts = user.failedLoginAttempts + 1;
-            const updates: any = {
-              failedLoginAttempts: failedAttempts,
-            };
-
-            // Progressive lockout: 3 attempts → 30s, 5 attempts → 5min, 10+ attempts → 30min
-            if (failedAttempts >= 10) {
-              const lockUntil = new Date();
-              lockUntil.setMinutes(lockUntil.getMinutes() + 30);
-              updates.accountLockedUntil = lockUntil;
-            } else if (failedAttempts >= 5) {
-              const lockUntil = new Date();
-              lockUntil.setMinutes(lockUntil.getMinutes() + 5);
-              updates.accountLockedUntil = lockUntil;
-            } else if (failedAttempts >= 3) {
-              const lockUntil = new Date();
-              lockUntil.setSeconds(lockUntil.getSeconds() + 30);
-              updates.accountLockedUntil = lockUntil;
-            }
-
-            // OPTIMIZATION: Fire-and-forget for failed login tracking (non-blocking)
-            // User gets error response IMMEDIATELY without waiting for DB update
-            // This improves failed login responsiveness by 50-100ms
-            authPrisma.user.update({
-              where: { id: user.id },
-              data: updates,
-            }).catch(() => {
-              // Ignore update errors silently - user gets error message anyway
-            });
-
-            // Invalidate user cache so next attempt gets fresh failedLoginAttempts count
-            invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
+            // Use Redis to track attempts with a 10-minute TTL so stale failures never carry over
+            const attemptsKey = `login_attempts:${user.id}`;
+            const currentAttempts = await getCached<number>(attemptsKey) ?? 0;
+            const failedAttempts = currentAttempts + 1;
 
             // Log failed login (fire-and-forget, non-blocking)
             authPrisma.auditLog.create({
-              data: {
-                userId: user.id,
-                action: "LOGIN_FAILED",
-              },
-            }).catch(() => {
-              // Ignore audit log errors silently
-            });
+              data: { userId: user.id, action: "LOGIN_FAILED" },
+            }).catch(() => {});
+
+            if (failedAttempts >= 3) {
+              // Await the lock so ACCOUNT_LOCKED is thrown on the 3rd attempt itself
+              const lockUntil = new Date();
+              lockUntil.setSeconds(lockUntil.getSeconds() + 30);
+              await authPrisma.user.update({
+                where: { id: user.id },
+                data: { accountLockedUntil: lockUntil, failedLoginAttempts: failedAttempts },
+              });
+              invalidateCache(attemptsKey).catch(() => {});
+              invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
+              throw new Error("ACCOUNT_LOCKED:30");
+            }
+
+            // Store updated count in Redis (10-minute TTL)
+            setCached(attemptsKey, failedAttempts, 10 * 60).catch(() => {});
+            authPrisma.user.update({
+              where: { id: user.id },
+              data: { failedLoginAttempts: failedAttempts },
+            }).catch(() => {});
 
             throw new Error("Invalid credentials");
           }
@@ -252,7 +249,8 @@ export const authOptions: NextAuthOptions = {
             // Ignore update errors silently - user is already logged in
           });
 
-          // Invalidate user cache so next login gets fresh data (fire-and-forget)
+          // Reset Redis attempt counter and invalidate user cache (fire-and-forget)
+          invalidateCache(`login_attempts:${user.id}`).catch(() => {});
           invalidateCache(CACHE_KEYS.user(user.email.toLowerCase())).catch(() => {});
 
           // Async: Log successful login (fire-and-forget, non-blocking)

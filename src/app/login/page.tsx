@@ -44,11 +44,28 @@ function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
 
+  // On mount, check localStorage for an active lockout
+  useEffect(() => {
+    const lockoutUntil = localStorage.getItem("lockoutUntil");
+    if (lockoutUntil) {
+      const remaining = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000);
+      if (remaining > 0) {
+        setLockoutSeconds(remaining);
+      } else {
+        localStorage.removeItem("lockoutUntil");
+      }
+    }
+  }, []);
+
   // Countdown timer for account lockout
   useEffect(() => {
     if (lockoutSeconds <= 0) return;
     const timer = setTimeout(() => {
-      setLockoutSeconds((s) => Math.max(0, s - 1));
+      setLockoutSeconds((s) => {
+        const next = Math.max(0, s - 1);
+        if (next === 0) localStorage.removeItem("lockoutUntil");
+        return next;
+      });
     }, 1000);
     return () => clearTimeout(timer);
   }, [lockoutSeconds]);
@@ -82,6 +99,7 @@ function LoginForm() {
       if (result?.error) {
         if (result.error.startsWith("ACCOUNT_LOCKED:")) {
           const seconds = parseInt(result.error.split(":")[1]) || 30;
+          localStorage.setItem("lockoutUntil", (Date.now() + seconds * 1000).toString());
           setLockoutSeconds(seconds);
           setError("");
         } else {
