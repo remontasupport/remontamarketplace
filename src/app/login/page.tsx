@@ -41,6 +41,17 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Countdown timer for account lockout
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setTimeout(() => {
+      setLockoutSeconds((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [lockoutSeconds]);
 
   // Auto-redirect if user is already authenticated
   useEffect(() => {
@@ -64,11 +75,18 @@ function LoginForm() {
       const result = await signIn("credentials", {
         email,
         password,
+        rememberMe: rememberMe.toString(),
         redirect: false, // We handle redirect manually
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        if (result.error.startsWith("ACCOUNT_LOCKED:")) {
+          const seconds = parseInt(result.error.split(":")[1]) || 30;
+          setLockoutSeconds(seconds);
+          setError("");
+        } else {
+          setError("Invalid email or password");
+        }
         setIsLoading(false);
         return;
       }
@@ -142,12 +160,21 @@ function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Error Alert */}
-            {error && (
+            {lockoutSeconds > 0 ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="font-poppins">
+                  Too many failed attempts. Try again in{" "}
+                  <span className="font-semibold">{lockoutSeconds}</span>{" "}
+                  second{lockoutSeconds !== 1 ? "s" : ""}.
+                </AlertDescription>
+              </Alert>
+            ) : error ? (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="font-poppins">{error}</AlertDescription>
               </Alert>
-            )}
+            ) : null}
 
             {/* Email Field */}
             <div className="space-y-2">
@@ -161,7 +188,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isLoading || lockoutSeconds > 0}
                 className="font-poppins"
               />
             </div>
@@ -176,7 +203,7 @@ function LoginForm() {
                   type="button"
                   onClick={() => router.push("/forgot-password")}
                   className="text-sm text-blue-600 hover:text-blue-700 font-poppins font-medium"
-                  disabled={isLoading}
+                  disabled={isLoading || lockoutSeconds > 0}
                 >
                   Forgot Password?
                 </button>
@@ -189,14 +216,14 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || lockoutSeconds > 0}
                   className="font-poppins pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800"
-                  disabled={isLoading}
+                  disabled={isLoading || lockoutSeconds > 0}
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -207,13 +234,28 @@ function LoginForm() {
               </div>
             </div>
 
+            {/* Remember Me */}
+            <div className="flex items-center gap-2">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={isLoading || lockoutSeconds > 0}
+                className="h-4 w-4 rounded border-gray-300 accent-[#0C1628] cursor-pointer"
+              />
+              <label htmlFor="rememberMe" className="text-sm font-poppins text-gray-600 cursor-pointer select-none">
+                Remember me
+              </label>
+            </div>
+
             {/* Submit Button */}
             <Button
               type="submit"
               className="w-full bg-[#0C1628] hover:bg-[#1a2740] text-white font-poppins font-medium"
-              disabled={isLoading}
+              disabled={isLoading || lockoutSeconds > 0}
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Signing in..." : lockoutSeconds > 0 ? `Try again in ${lockoutSeconds}s` : "Sign in"}
             </Button>
 
             {/* Divider */}

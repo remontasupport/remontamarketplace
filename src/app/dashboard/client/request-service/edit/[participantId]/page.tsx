@@ -510,7 +510,7 @@ export default function EditServiceRequestPage({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to update request");
 
-      router.push("/dashboard/client");
+      router.push("/dashboard/client/manage-request");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save changes");

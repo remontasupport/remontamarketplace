@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
-import { authPrisma } from "@/lib/auth-prisma";
+import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import NewsSlider from "@/components/dashboard/NewsSlider";
 import NewsSliderAsync from "@/components/dashboard/NewsSliderAsync";
@@ -44,7 +44,7 @@ export default async function WorkerDashboard() {
   const workerProfile = await getOrFetch(
     CACHE_KEYS.workerProfile(session.user.id),
     async () => {
-      return await authPrisma.workerProfile.findUnique({
+      return await withRetry(() => authPrisma.workerProfile.findUnique({
         where: { userId: session.user.id },
         select: {
           firstName: true,
@@ -60,7 +60,7 @@ export default async function WorkerDashboard() {
             take: 1,
           },
         },
-      });
+      }));
     },
     CACHE_TTL.WORKER_PROFILE
   );

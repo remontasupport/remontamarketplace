@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
-import { authPrisma } from "@/lib/auth-prisma";
+import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
 import ManageRequestTable from "@/components/dashboard/client/ManageRequestTable";
 
@@ -28,20 +28,20 @@ export default async function ManageRequestPage() {
   // Fetch client's profile for sidebar display
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const clientProfile = await authPrisma.clientProfile.findUnique({
+  const clientProfile = await withRetry(() => authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
     select: { firstName: true },
-  });
+  }));
   displayName = clientProfile?.firstName || displayName;
 
   // Fetch service requests for this user with participant data
-  const serviceRequests = await authPrisma.serviceRequest.findMany({
+  const serviceRequests = await withRetry(() => authPrisma.serviceRequest.findMany({
     where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
     orderBy: { createdAt: 'desc' },
     include: {
       participant: true,
     },
-  });
+  }));
 
   // Transform data for the table — pass raw user IDs, modal fetches via API
   const requests = serviceRequests.map((sr) => {

@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
-import { authPrisma } from "@/lib/auth-prisma";
+import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
 import ParticipantsMasterDetail from "@/components/dashboard/client/ParticipantsMasterDetail";
 
@@ -27,10 +27,10 @@ export default async function ClientDashboard() {
 
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const clientProfile = await authPrisma.clientProfile.findUnique({
+  const clientProfile = await withRetry(() => authPrisma.clientProfile.findUnique({
     where: { userId: session.user.id },
     select: { firstName: true, lastName: true },
-  });
+  }));
   displayName = clientProfile?.firstName || displayName;
 
   type RawParticipantRow = {
@@ -48,7 +48,7 @@ export default async function ClientDashboard() {
     srLocation: string | null;
   };
 
-  const participantsData = await authPrisma.$queryRaw<RawParticipantRow[]>`
+  const participantsData = await withRetry(() => authPrisma.$queryRaw<RawParticipantRow[]>`
     SELECT * FROM (
       SELECT DISTINCT ON (p.id)
         p.id,
@@ -69,7 +69,7 @@ export default async function ClientDashboard() {
       ORDER BY p.id, sr."createdAt" DESC NULLS LAST
     ) sub
     ORDER BY sub."createdAt" DESC
-  `;
+  `);
 
   const participants = participantsData.map((p) => {
     const today = new Date();

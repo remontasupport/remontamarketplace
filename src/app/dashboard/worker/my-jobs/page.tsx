@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
-import { authPrisma } from "@/lib/auth-prisma";
+import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import WithdrawButton from "@/components/dashboard/WithdrawButton";
 
@@ -17,7 +17,7 @@ export default async function MyJobsPage() {
   if (session.user.role !== UserRole.WORKER) redirect("/unauthorized");
 
   // Fetch worker profile for layout
-  const workerProfile = await authPrisma.workerProfile.findUnique({
+  const workerProfile = await withRetry(() => authPrisma.workerProfile.findUnique({
     where: { userId: session.user.id },
     select: {
       firstName: true,
@@ -28,10 +28,10 @@ export default async function MyJobsPage() {
         take: 1,
       },
     },
-  });
+  }));
 
   // Fetch applications with joined job details
-  const applications = await authPrisma.jobApplication.findMany({
+  const applications = await withRetry(() => authPrisma.jobApplication.findMany({
     where: { workerId: session.user.id },
     include: {
       job: {
@@ -48,7 +48,7 @@ export default async function MyJobsPage() {
       },
     },
     orderBy: { appliedAt: "desc" },
-  });
+  }));
 
   const primaryService =
     workerProfile?.workerServices?.[0]?.categoryName || "Support Worker";

@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
-import { authPrisma } from "@/lib/auth-prisma";
+import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
 import AccountSettingsPanel from "@/components/dashboard/AccountSettingsPanel";
 
@@ -22,10 +22,10 @@ export default async function SupportCoordinatorsAccountPage() {
 
   let displayName = session.user.email?.split('@')[0] || 'User';
 
-  const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
+  const coordinatorProfile = await withRetry(() => authPrisma.coordinatorProfile.findUnique({
     where: { userId: session.user.id },
     select: { firstName: true },
-  });
+  }));
   displayName = coordinatorProfile?.firstName || displayName;
 
   return (

@@ -11,7 +11,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
-import { authPrisma } from "./auth-prisma";
+import { authPrisma, withRetry } from "./auth-prisma";
 import { UserRole } from "@/types/auth";
 import { getOrFetch, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
 
@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        rememberMe: { label: "Remember Me", type: "text" },
         impersonationToken: { label: "Impersonation Token", type: "text" },
       },
       async authorize(credentials) {
@@ -44,14 +45,14 @@ export const authOptions: NextAuthOptions = {
             const normalizedEmail = credentials.email.toLowerCase();
 
             // Verify the impersonation token
-            const tokenRecord = await authPrisma.verificationToken.findUnique({
+            const tokenRecord = await withRetry(() => authPrisma.verificationToken.findUnique({
               where: {
                 identifier_token: {
                   identifier: `impersonation:${normalizedEmail}`,
                   token: credentials.impersonationToken,
                 },
               },
-            });
+            }));
 
             if (!tokenRecord) {
               throw new Error("Invalid impersonation token");
@@ -147,8 +148,7 @@ export const authOptions: NextAuthOptions = {
           const user = await getOrFetch(
             CACHE_KEYS.user(normalizedLoginEmail),
             async () => {
-              // Use case-insensitive lookup to handle mixed-case emails in DB
-              return await authPrisma.user.findFirst({
+              return await withRetry(() => authPrisma.user.findFirst({
                 where: { email: { equals: credentials.email, mode: "insensitive" } },
                 select: {
                   id: true,
@@ -159,7 +159,7 @@ export const authOptions: NextAuthOptions = {
                   failedLoginAttempts: true,
                   accountLockedUntil: true,
                 },
-              });
+              }));
             },
             CACHE_TTL.USER_DATA
           );
@@ -171,7 +171,8 @@ export const authOptions: NextAuthOptions = {
 
           // Check if account is locked
           if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
-            throw new Error("Account is temporarily locked. Please try again later.");
+            const secondsLeft = Math.ceil((user.accountLockedUntil.getTime() - Date.now()) / 1000);
+            throw new Error(`ACCOUNT_LOCKED:${secondsLeft}`);
           }
 
           // Verify password
@@ -188,10 +189,18 @@ export const authOptions: NextAuthOptions = {
               failedLoginAttempts: failedAttempts,
             };
 
-            // Lock account after 5 failed attempts (15 minutes)
-            if (failedAttempts >= 5) {
+            // Progressive lockout: 3 attempts → 30s, 5 attempts → 5min, 10+ attempts → 30min
+            if (failedAttempts >= 10) {
               const lockUntil = new Date();
-              lockUntil.setMinutes(lockUntil.getMinutes() + 15);
+              lockUntil.setMinutes(lockUntil.getMinutes() + 30);
+              updates.accountLockedUntil = lockUntil;
+            } else if (failedAttempts >= 5) {
+              const lockUntil = new Date();
+              lockUntil.setMinutes(lockUntil.getMinutes() + 5);
+              updates.accountLockedUntil = lockUntil;
+            } else if (failedAttempts >= 3) {
+              const lockUntil = new Date();
+              lockUntil.setSeconds(lockUntil.getSeconds() + 30);
               updates.accountLockedUntil = lockUntil;
             }
 
@@ -264,6 +273,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             role: user.role as UserRole,
             name: `${user.email.split("@")[0]}`,
+            rememberMe: credentials.rememberMe === "true",
           };
         } catch (error) {
           // Re-throw the error (audit logging already done in the failed password check above)
@@ -287,6 +297,10 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
+        // Set expiry: 7 days if "Remember me", otherwise 24 hours
+        const rememberMe = (user as any).rememberMe ?? false;
+        const expirySeconds = rememberMe ? 7 * 24 * 60 * 60 : 24 * 60 * 60;
+        token.exp = Math.floor(Date.now() / 1000) + expirySeconds;
         // Preserve impersonation flag if present
         if ((user as any).impersonatedBy) {
           token.impersonatedBy = (user as any).impersonatedBy;
@@ -297,13 +311,13 @@ export const authOptions: NextAuthOptions = {
 
       // Refetch user data when session is updated
       if (trigger === "update" && token.id) {
-        const freshUser = await authPrisma.user.findUnique({
+        const freshUser = await withRetry(() => authPrisma.user.findUnique({
           where: { id: token.id as string },
           select: {
             email: true,
             role: true,
           },
-        });
+        }));
 
         if (freshUser) {
           token.email = freshUser.email;

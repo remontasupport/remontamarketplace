@@ -7,7 +7,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth.config'
 import { UserRole } from '@/types/auth'
-import { authPrisma } from '@/lib/auth-prisma'
+import { authPrisma, withRetry } from '@/lib/auth-prisma'
 import ClientDashboardLayout from '@/components/dashboard/client/ClientDashboardLayout'
 import ArchivedRequestsList from '@/components/dashboard/client/ArchivedRequestsList'
 
@@ -36,14 +36,14 @@ export default async function CoordinatorArchivedPage() {
 
   // Fetch coordinator profile for sidebar
   let displayName = session.user.email?.split('@')[0] || 'User'
-  const coordinatorProfile = await authPrisma.coordinatorProfile.findUnique({
+  const coordinatorProfile = await withRetry(() => authPrisma.coordinatorProfile.findUnique({
     where: { userId: session.user.id },
     select: { firstName: true },
-  })
+  }))
   displayName = coordinatorProfile?.firstName || displayName
 
   // Use raw SQL to fetch ARCHIVED requests (Prisma client doesn't have the enum value)
-  const rows = await authPrisma.$queryRaw<RawArchivedRow[]>`
+  const rows = await withRetry(() => authPrisma.$queryRaw<RawArchivedRow[]>`
     SELECT
       sr.id,
       sr.location,
@@ -57,7 +57,7 @@ export default async function CoordinatorArchivedPage() {
       AND sr.status = 'ARCHIVED'::"ServiceRequestStatus"
       AND (sr.details->>'_hidden' IS NULL OR sr.details->>'_hidden' != 'true')
     ORDER BY sr."updatedAt" DESC
-  `
+  `)
 
   const requests = rows.map((r) => ({
     id: r.id,
