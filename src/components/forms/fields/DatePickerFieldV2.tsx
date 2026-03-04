@@ -25,6 +25,9 @@ interface DatePickerFieldProps {
   minDate?: Date;
   maxDate?: Date;
   dialogTitle?: string;
+  className?: string;
+  labelClassName?: string;
+  wrapperClassName?: string;
 }
 
 export default function DatePickerField({
@@ -39,8 +42,11 @@ export default function DatePickerField({
   placeholder = "Select date",
   disabled = false,
   minDate = new Date(1920, 0, 1),
-  maxDate = new Date(),
-  dialogTitle = "Select Date of Birth",
+  maxDate = new Date(2100, 0, 1),
+  dialogTitle = "Select A Date",
+  className,
+  labelClassName,
+  wrapperClassName,
 }: DatePickerFieldProps) {
   const [open, setOpen] = React.useState(false);
   // Parse date string safely without timezone issues
@@ -71,8 +77,8 @@ export default function DatePickerField({
   };
 
   return (
-    <div className="form-group">
-      <label htmlFor={name} className="form-label">
+    <div className={wrapperClassName ?? "form-group"}>
+      <label htmlFor={name} className={labelClassName ?? "form-label"}>
         {label}
         {isOptional && <span className="label-optional"> (optional)</span>}
         {required && !isOptional && (
@@ -86,7 +92,7 @@ export default function DatePickerField({
             id={name}
             type="button"
             disabled={disabled}
-            className={`form-input ${error ? "form-input-error" : ""}`}
+            className={className ?? `form-input ${error ? "form-input-error" : ""}`}
             style={{
               display: "flex",
               alignItems: "center",

@@ -13,6 +13,7 @@ import {
   Info,
 } from "lucide-react";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
+import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 
 // Types
 interface Category {
@@ -737,15 +738,24 @@ export default function EditServiceRequestPage({
                     <input type="radio" value="asap" checked={startPreference === "asap"} onChange={() => setStartPreference("asap")} className="w-5 h-5 text-indigo-600" />
                     <span className="font-poppins text-gray-700">As soon as possible</span>
                   </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="radio" value="specific-date" checked={startPreference === "specific-date"} onChange={() => setStartPreference("specific-date")} className="w-5 h-5 text-indigo-600" />
-                    <span className="font-poppins text-gray-700">From a specific date</span>
-                  </label>
-                  {startPreference === "specific-date" && (
-                    <div className="ml-8 mt-2">
-                      <input type="date" value={specificDate} onChange={(e) => setSpecificDate(e.target.value)} className="px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none" min={new Date().toISOString().split("T")[0]} />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="radio" value="specific-date" checked={startPreference === "specific-date"} onChange={() => setStartPreference("specific-date")} className="w-5 h-5 text-indigo-600" />
+                      <span className="font-poppins text-gray-700">From a specific date</span>
+                    </label>
+                    {startPreference === "specific-date" && (
+                      <DatePickerField
+                        label=""
+                        name="specificDate"
+                        value={specificDate}
+                        onChange={(value) => setSpecificDate(value)}
+                        minDate={(() => { const d = new Date(); d.setHours(0,0,0,0); return d; })()}
+                        wrapperClassName=""
+                        labelClassName="hidden"
+                        className="px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none flex items-center justify-between bg-white cursor-pointer w-48"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 

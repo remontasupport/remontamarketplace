@@ -163,7 +163,6 @@ export default function ClientSidebar({
         </div>
         <div className="sidebar-profile-info">
           <h4 className="sidebar-profile-name">{displayName}</h4>
-          <p className="sidebar-profile-role">{displayRoleLabel}</p>
         </div>
       </div>
 

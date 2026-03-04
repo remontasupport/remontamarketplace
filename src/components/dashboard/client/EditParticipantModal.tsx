@@ -364,6 +364,7 @@ export default function EditParticipantModal({
                     value={formData.dateOfBirth || ""}
                     onChange={(value) => updateField("dateOfBirth", value)}
                     maxDate={new Date()}
+                    dialogTitle="Select Date of Birth"
                   />
                 </div>
 
@@ -527,7 +528,7 @@ export default function EditParticipantModal({
                       <div className="space-y-4">
                         {/* Management Type */}
                         <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                          <label className="block text-gray-900 font-medium font-poppins text-sm">
                             Management Type
                           </label>
                           <div className="relative">
@@ -585,7 +586,7 @@ export default function EditParticipantModal({
 
                         {/* Plan Manager Name */}
                         <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                          <label className="block text-gray-900 font-medium font-poppins text-sm">
                             Plan Manager Name
                           </label>
                           <input
@@ -599,7 +600,7 @@ export default function EditParticipantModal({
 
                         {/* Invoice Email */}
                         <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                          <label className="block text-gray-900 font-medium font-poppins text-sm">
                             Invoice Email
                           </label>
                           <input
@@ -613,7 +614,7 @@ export default function EditParticipantModal({
 
                         {/* Email to CC */}
                         <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                          <label className="block text-gray-900 font-medium font-poppins text-sm">
                             Email to CC{" "}
                             <span className="text-gray-400 font-normal">(optional)</span>
                           </label>
@@ -631,7 +632,7 @@ export default function EditParticipantModal({
                       <div className="space-y-4">
                         {/* NDIS Number */}
                         <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
+                          <label className="block text-gray-900 font-medium font-poppins text-sm">
                             NDIS Number
                           </label>
                           <input
@@ -648,43 +649,38 @@ export default function EditParticipantModal({
                         </div>
 
                         {/* Plan Start Date */}
-                        <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
-                            Plan Start Date
-                          </label>
-                          <input
-                            type="date"
-                            value={formData.ndisDetails.planStartDate}
-                            onChange={(e) => updateNdisField("planStartDate", e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
-                          />
-                        </div>
+                        <DatePickerField
+                          label="Plan Start Date"
+                          name="planStartDate"
+                          value={formData.ndisDetails.planStartDate}
+                          onChange={(value) => updateNdisField("planStartDate", value)}
+                          wrapperClassName=""
+                          labelClassName="block text-gray-900 font-medium font-poppins text-sm"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none flex items-center justify-between bg-white cursor-pointer"
+                        />
 
                         {/* Plan End Date */}
-                        <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
-                            Plan End Date
-                          </label>
-                          <input
-                            type="date"
-                            value={formData.ndisDetails.planEndDate}
-                            onChange={(e) => updateNdisField("planEndDate", e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
-                          />
-                        </div>
+                        <DatePickerField
+                          label="Plan End Date"
+                          name="planEndDate"
+                          value={formData.ndisDetails.planEndDate}
+                          onChange={(value) => updateNdisField("planEndDate", value)}
+                          wrapperClassName=""
+                          labelClassName="block text-gray-900 font-medium font-poppins text-sm"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none flex items-center justify-between bg-white cursor-pointer"
+                        />
 
                         {/* NDIS Date of Birth */}
-                        <div>
-                          <label className="block text-gray-900 font-medium font-poppins text-sm mb-2">
-                            Date of Birth
-                          </label>
-                          <input
-                            type="date"
-                            value={formData.ndisDetails.ndisDob}
-                            onChange={(e) => updateNdisField("ndisDob", e.target.value)}
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
-                          />
-                        </div>
+                        <DatePickerField
+                          label="Date of Birth"
+                          name="ndisDob"
+                          value={formData.ndisDetails.ndisDob}
+                          onChange={(value) => updateNdisField("ndisDob", value)}
+                          maxDate={new Date()}
+                          wrapperClassName=""
+                          labelClassName="block text-gray-900 font-medium font-poppins text-sm"
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none flex items-center justify-between bg-white cursor-pointer"
+                        />
                       </div>
                     </div>
                   </div>

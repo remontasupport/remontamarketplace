@@ -344,30 +344,33 @@ export default function WhenSection() {
                   />
                   <span className="font-poppins text-gray-700">As soon as possible</span>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="startPreference"
-                    value="specific-date"
-                    checked={whenData.startPreference === "specific-date"}
-                    onChange={() => updateField("startPreference", "specific-date")}
-                    className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                  />
-                  <span className="font-poppins text-gray-700">From a specific date</span>
-                </label>
-                {whenData.startPreference === "specific-date" && (
-                  <div className="ml-8 mt-2 w-full md:w-80">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="startPreference"
+                      value="specific-date"
+                      checked={whenData.startPreference === "specific-date"}
+                      onChange={() => updateField("startPreference", "specific-date")}
+                      className="w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                    />
+                    <span className="font-poppins text-gray-700">From a specific date</span>
+                  </label>
+                  {whenData.startPreference === "specific-date" && (
                     <DatePickerField
-                      label="Start date"
+                      label=""
                       name="specificDateRecurring"
                       value={whenData.specificDate}
                       onChange={(value) => updateField("specificDate", value)}
-                      minDate={new Date()}
+                      minDate={(() => { const d = new Date(); d.setHours(0,0,0,0); return d; })()}
                       maxDate={new Date(2100, 0, 1)}
                       dialogTitle="Select Start Date"
+                      wrapperClassName=""
+                      labelClassName="hidden"
+                      className="px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none flex items-center justify-between bg-white cursor-pointer w-48"
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
