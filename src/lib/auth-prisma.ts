@@ -31,6 +31,9 @@ const createAuthPrismaClient = () => {
     if (!url.searchParams.has('pool_timeout')) {
       url.searchParams.set('pool_timeout', '30')
     }
+    if (!url.searchParams.has('pgbouncer')) {
+      url.searchParams.set('pgbouncer', 'true')
+    }
     databaseUrl = url.toString()
   } catch {
     // Non-parseable URL — use as-is

@@ -121,6 +121,89 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 }
 
 // ============================================================================
+// DELETE - Disconnect Participant from Coordinator (sets userId = null)
+// ============================================================================
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params
+
+    // 1. Authentication check
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // 2. Role check — only coordinators can disconnect participants
+    if (session.user.role !== UserRole.COORDINATOR) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    // 3. Fetch participant and verify ownership
+    const participant = await authPrisma.participant.findUnique({
+      where: { id },
+    })
+
+    if (!participant) {
+      return NextResponse.json(
+        { success: false, error: 'Participant not found' },
+        { status: 404 }
+      )
+    }
+
+    if (participant.userId !== session.user.id) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    // 4. Disconnect by setting userId to null (record is preserved)
+    await authPrisma.participant.update({
+      where: { id },
+      data: { userId: null },
+    })
+
+    // 5. Audit log (fire-and-forget)
+    authPrisma.auditLog
+      .create({
+        data: {
+          userId: session.user.id,
+          action: 'PROFILE_UPDATE',
+          metadata: {
+            type: 'PARTICIPANT_DISCONNECTED',
+            participantId: id,
+          },
+        },
+      })
+      .catch(() => {})
+
+    return NextResponse.json({
+      success: true,
+      message: 'Participant disconnected successfully',
+    })
+  } catch (error) {
+    console.error('[Participant API] DELETE Error:', error)
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to disconnect participant',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// ============================================================================
 // PATCH - Update Participant Profile
 // ============================================================================
 

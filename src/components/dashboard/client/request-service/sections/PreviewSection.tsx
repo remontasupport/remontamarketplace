@@ -67,7 +67,7 @@ export default function PreviewSection() {
     selectedLocation,
     whenData,
     preferencesData,
-    supportDetailsData,
+    whatAdditionalInfo,
   } = formData;
 
   const participantName = selectedParticipantName || "Participant";
@@ -116,10 +116,10 @@ export default function PreviewSection() {
         <div className="flex flex-col lg:flex-row gap-8 mt-6">
           {/* Left side - Summary content */}
           <div className="flex-1 space-y-8">
-            {/* Job Title */}
+            {/* Header */}
             <div>
               <h3 className="text-2xl font-semibold text-gray-900 font-poppins">
-                {supportDetailsData.jobTitle || "Your support request"}
+                Your support request
               </h3>
 
               {/* Participant Info */}
@@ -138,7 +138,7 @@ export default function PreviewSection() {
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-xl font-semibold text-gray-900 font-poppins">Support details</h4>
                 <Link
-                  href={`${basePath}?section=support-details`}
+                  href={`${basePath}?section=what`}
                   className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm font-poppins"
                 >
                   <Pencil className="w-4 h-4" />
@@ -172,6 +172,14 @@ export default function PreviewSection() {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* What we're looking for */}
+              {whatAdditionalInfo && (
+                <div className="mt-4">
+                  <p className="font-medium text-gray-900 font-poppins mb-1">What we&apos;re looking for</p>
+                  <p className="text-gray-600 font-poppins whitespace-pre-wrap">{whatAdditionalInfo}</p>
                 </div>
               )}
             </div>

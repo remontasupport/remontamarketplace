@@ -10,7 +10,6 @@ import WhenSection from "@/components/dashboard/client/request-service/sections/
 import DetailsSection from "@/components/dashboard/client/request-service/sections/DetailsSection";
 import DiagnosesSection from "@/components/dashboard/client/request-service/sections/DiagnosesSection";
 import PreferencesSection from "@/components/dashboard/client/request-service/sections/PreferencesSection";
-import SupportDetailsSection from "@/components/dashboard/client/request-service/sections/SupportDetailsSection";
 import PreviewSection from "@/components/dashboard/client/request-service/sections/PreviewSection";
 
 interface Props {
@@ -25,7 +24,6 @@ function RequestServiceContent({ displayName }: Props) {
       case "what":            return <WhatSection />;
       case "where":           return <WhereSection />;
       case "when":            return <WhenSection />;
-      case "support-details": return <SupportDetailsSection />;
       case "details":         return <DetailsSection hideRelationship />;
       case "diagnoses":       return <DiagnosesSection />;
       case "preferences":     return <PreferencesSection />;

@@ -583,7 +583,7 @@ export default function EditServiceRequestPage({
             {/* Additional Information */}
             <div className="mt-6">
               <label className="block text-gray-900 font-semibold font-poppins mb-1">
-                Additional Information <span className="text-red-500">*</span>
+                Tell us what you're looking for <span className="text-red-500">*</span>
               </label>
               <p className="text-gray-500 text-sm font-poppins mb-3">
                 Provide any additional context about the participant&apos;s needs.

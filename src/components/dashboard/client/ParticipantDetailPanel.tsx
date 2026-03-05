@@ -23,12 +23,14 @@ interface ParticipantDetailPanelProps {
     conditions?: string[];
   } | null;
   onEditClick?: () => void;
+  onRemoveClick?: () => void;
   showRelationship?: boolean;
 }
 
 export default function ParticipantDetailPanel({
   participant,
   onEditClick,
+  onRemoveClick,
   showRelationship = true,
 }: ParticipantDetailPanelProps) {
   const [isNdisExpanded, setIsNdisExpanded] = useState(false);
@@ -158,6 +160,14 @@ export default function ParticipantDetailPanel({
               <Pencil className="w-3.5 h-3.5" />
               Edit Profile
             </button>
+            {onRemoveClick && (
+              <button
+                onClick={onRemoveClick}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins transition-colors border border-red-200 text-red-600 hover:bg-red-50"
+              >
+                Remove
+              </button>
+            )}
           </div>
         </div>
       </div>

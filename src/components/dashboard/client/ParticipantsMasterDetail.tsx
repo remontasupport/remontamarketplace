@@ -8,6 +8,7 @@ import ParticipantListItem from "./ParticipantListItem";
 import ParticipantDetailPanel from "./ParticipantDetailPanel";
 import EditParticipantModal from "./EditParticipantModal";
 import AddClientModal from "./AddClientModal";
+import RemoveClientModal from "./RemoveClientModal";
 
 export interface ParticipantData {
   id: string;
@@ -54,6 +55,7 @@ export default function ParticipantsMasterDetail({
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
 
   const selectedParticipant = participants.find((p) => p.id === selectedId) || null;
 
@@ -81,6 +83,29 @@ export default function ParticipantsMasterDetail({
 
   const handleEditClick = () => {
     setIsEditModalOpen(true);
+  };
+
+  const handleRemoveClick = () => {
+    if (!selectedParticipant) return;
+    setIsRemoveModalOpen(true);
+  };
+
+  const handleRemoveProceed = async () => {
+    if (!selectedParticipant) return;
+
+    const response = await fetch(`/api/client/participants/${selectedParticipant.id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || "Failed to remove client");
+    }
+
+    setIsRemoveModalOpen(false);
+    setParticipants((prev) => prev.filter((p) => p.id !== selectedParticipant.id));
+    setSelectedId(null);
+    router.refresh();
   };
 
   const handleAddParticipant = (newParticipant: {
@@ -261,6 +286,7 @@ export default function ParticipantsMasterDetail({
             <ParticipantDetailPanel
               participant={selectedParticipant}
               onEditClick={handleEditClick}
+              onRemoveClick={!showRelationship ? handleRemoveClick : undefined}
               showRelationship={showRelationship}
             />
           </div>
@@ -288,6 +314,7 @@ export default function ParticipantsMasterDetail({
           <ParticipantDetailPanel
             participant={selectedParticipant}
             onEditClick={handleEditClick}
+            onRemoveClick={!showRelationship ? handleRemoveClick : undefined}
             showRelationship={showRelationship}
           />
         </div>
@@ -302,6 +329,14 @@ export default function ParticipantsMasterDetail({
         participant={getEditData()}
         onSave={handleSaveParticipant}
         showRelationship={showRelationship}
+      />
+
+      {/* Remove Client Modal */}
+      <RemoveClientModal
+        isOpen={isRemoveModalOpen}
+        clientName={selectedParticipant?.name || ""}
+        onClose={() => setIsRemoveModalOpen(false)}
+        onProceed={handleRemoveProceed}
       />
 
       {/* Add Client Modal */}

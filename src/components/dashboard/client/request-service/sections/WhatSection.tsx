@@ -25,17 +25,31 @@ interface OtherServices {
   };
 }
 
+// These two categories are allowed to be selected together
+const SUPPORT_WORKER_GROUP = ["Support Worker", "Support Worker (High Intensity)"];
+
 export default function WhatSection() {
   const { formData, updateFormData } = useRequestService();
   const {
     selectedCategories,
     selectedSubcategories,
     otherServices,
+    whatAdditionalInfo,
   } = formData;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [additionalInfoError, setAdditionalInfoError] = useState<string | null>(null);
+
+  const handleBeforeNext = () => {
+    if (!whatAdditionalInfo.trim()) {
+      setAdditionalInfoError("Please tell us what you're looking for before proceeding.");
+      return false;
+    }
+    setAdditionalInfoError(null);
+    return true;
+  };
 
   // Fetch categories on mount
   useEffect(() => {
@@ -90,22 +104,22 @@ export default function WhatSection() {
   }, [selectedCategories, selectedSubcategories, otherServices, categories, updateFormData]);
 
   const toggleCategory = (categoryId: string) => {
+    const category = categories.find((c) => c.id === categoryId);
+    if (!category) return;
+
     if (selectedCategories.includes(categoryId)) {
-      // Remove category and its subcategories
+      // Deselect: remove category and its subcategories
       updateFormData(
         "selectedCategories",
         selectedCategories.filter((id) => id !== categoryId)
       );
-      const category = categories.find((c) => c.id === categoryId);
-      if (category) {
-        const subcategoryIds = category.subcategories.map((s) => s.id);
-        updateFormData(
-          "selectedSubcategories",
-          selectedSubcategories.filter((id) => !subcategoryIds.includes(id))
-        );
-      }
+      const subcategoryIds = category.subcategories.map((s) => s.id);
+      updateFormData(
+        "selectedSubcategories",
+        selectedSubcategories.filter((id) => !subcategoryIds.includes(id))
+      );
     } else {
-      // Add category
+      // Add category — disabled cards can't reach here
       updateFormData("selectedCategories", [...selectedCategories, categoryId]);
     }
   };
@@ -170,13 +184,31 @@ export default function WhatSection() {
     <div className="section-card">
       <h2 className="section-title">What service do you need?</h2>
       <p className="text-gray-600 font-poppins mt-2 mb-6">
-        Select the support services you want to include. You can select multiple services.
+        Select the primary service you need. Support Worker and Support Worker (High Intensity) can be selected together.
       </p>
 
       {/* Category Cards */}
       <div className="space-y-4">
         {categories.map((category) => {
           const isSelected = selectedCategories.includes(category.id);
+          const isInSupportWorkerGroup = SUPPORT_WORKER_GROUP.includes(category.name);
+
+          // A category is disabled when something else is selected that can't coexist with it
+          const hasSelectedNonSW = selectedCategories.some((id) => {
+            const c = categories.find((cat) => cat.id === id);
+            return c && !SUPPORT_WORKER_GROUP.includes(c.name);
+          });
+          const hasSelectedSW = selectedCategories.some((id) => {
+            const c = categories.find((cat) => cat.id === id);
+            return c && SUPPORT_WORKER_GROUP.includes(c.name);
+          });
+
+          const isHidden =
+            !isSelected &&
+            ((isInSupportWorkerGroup && hasSelectedNonSW) ||
+              (!isInSupportWorkerGroup && (hasSelectedNonSW || hasSelectedSW)));
+
+          if (isHidden) return null;
 
           return (
             <div key={category.id}>
@@ -220,7 +252,7 @@ export default function WhatSection() {
                   <p className="text-sm text-gray-600 mb-3 font-medium">
                     Select specific services (optional):
                   </p>
-                  <div className="space-y-2">
+                  <div className="flex flex-col lg:flex-row lg:flex-wrap gap-2">
                     {category.subcategories.map((subcategory) => {
                       const isSubSelected = selectedSubcategories.includes(subcategory.id);
 
@@ -324,6 +356,31 @@ export default function WhatSection() {
         })}
       </div>
 
+      {/* Tell us what you're looking for */}
+      <div className="mt-8">
+        <label className="block text-gray-900 font-medium font-poppins mb-2">
+          Tell us what you&apos;re looking for <span className="text-red-500">*</span>
+        </label>
+        <p className="text-gray-600 text-sm font-poppins mb-3">
+          Describe the support needed and any relevant background about the participant.
+        </p>
+        <textarea
+          value={whatAdditionalInfo}
+          onChange={(e) => {
+            updateFormData("whatAdditionalInfo", e.target.value);
+            if (e.target.value.trim()) setAdditionalInfoError(null);
+          }}
+          rows={4}
+          className={`w-full px-4 py-3 border-2 rounded-lg font-poppins text-sm focus:outline-none resize-none ${
+            additionalInfoError ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
+          }`}
+          placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
+        />
+        {additionalInfoError && (
+          <p className="mt-1.5 text-sm text-red-600 font-poppins">{additionalInfoError}</p>
+        )}
+      </div>
+
       {/* Selection Summary */}
       {selectedCategories.length > 0 && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -345,7 +402,7 @@ export default function WhatSection() {
       )}
 
       {/* Navigation */}
-      <StepNavigation showPrevious={false} />
+      <StepNavigation showPrevious={false} onBeforeNext={handleBeforeNext} />
     </div>
   );
 }

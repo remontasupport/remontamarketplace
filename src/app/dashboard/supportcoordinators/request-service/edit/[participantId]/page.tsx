@@ -133,6 +133,7 @@ export default function EditServiceRequestPage({
   // Form state - Services
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [otherServices, setOtherServices] = useState<Record<string, { selected: boolean; text: string }>>({});
 
   // Form state - Location
   const [location, setLocation] = useState("");
@@ -214,16 +215,20 @@ export default function EditServiceRequestPage({
           setSelectedCategories(categoryIds);
 
           const subIds: string[] = [];
-          Object.values(services).forEach((cat: any) => {
+          const otherMap: Record<string, { selected: boolean; text: string }> = {};
+          Object.entries(services).forEach(([categoryId, cat]: [string, any]) => {
             if (cat.subCategories) {
               cat.subCategories.forEach((sub: any) => {
-                if (sub.id && !sub.id.startsWith("other-")) {
+                if (sub.id && sub.id.startsWith("other-")) {
+                  otherMap[categoryId] = { selected: true, text: sub.name };
+                } else if (sub.id) {
                   subIds.push(sub.id);
                 }
               });
             }
           });
           setSelectedSubcategories(subIds);
+          setOtherServices(otherMap);
 
           // Pre-populate Location
           setLocation(sr.location || "");
@@ -467,6 +472,10 @@ export default function EditServiceRequestPage({
           const selectedSubs = category.subcategories
             .filter((sub) => selectedSubcategories.includes(sub.id))
             .map((sub) => ({ id: sub.id, name: sub.name }));
+          const otherData = otherServices[categoryId];
+          if (otherData?.selected && otherData.text.trim()) {
+            selectedSubs.push({ id: `other-${categoryId}`, name: otherData.text.trim() });
+          }
           services[categoryId] = {
             categoryName: category.name,
             subCategories: selectedSubs.length > 0 ? selectedSubs : category.subcategories.map((s) => ({ id: s.id, name: s.name })),
@@ -481,7 +490,6 @@ export default function EditServiceRequestPage({
           services,
           location,
           details: {
-            title: `Support needed: ${Object.values(services).map(s => s.categoryName).join(", ")}`,
             description: additionalInfo || undefined,
             scheduleNotes: additionalNotes || undefined,
             schedulingPrefs: {
@@ -528,12 +536,9 @@ export default function EditServiceRequestPage({
             <h2 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
               Services Requested
             </h2>
-            <p className="text-gray-600 font-poppins text-sm mb-6">
-              Select the support services needed. You can select multiple services.
-            </p>
             <div className="space-y-4">
-              {categories.map((category) => {
-                const isSelected = selectedCategories.includes(category.id);
+              {categories.filter((category) => selectedCategories.includes(category.id)).map((category) => {
+                const isSelected = true;
                 return (
                   <div key={category.id}>
                     <div
@@ -571,6 +576,41 @@ export default function EditServiceRequestPage({
                               </button>
                             );
                           })}
+
+                          {/* Other toggle */}
+                          {(() => {
+                            const otherData = otherServices[category.id];
+                            const isOtherSelected = otherData?.selected || false;
+                            return (
+                              <div className="w-full mt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setOtherServices((prev) => ({
+                                    ...prev,
+                                    [category.id]: { selected: !isOtherSelected, text: otherData?.text || "" },
+                                  }))}
+                                  className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border text-xs sm:text-sm font-poppins transition-all ${
+                                    isOtherSelected ? "bg-indigo-100 border-indigo-300 text-indigo-900" : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
+                                  }`}
+                                >
+                                  {isOtherSelected && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                                  Other
+                                </button>
+                                {isOtherSelected && (
+                                  <input
+                                    type="text"
+                                    value={otherData?.text || ""}
+                                    onChange={(e) => setOtherServices((prev) => ({
+                                      ...prev,
+                                      [category.id]: { selected: true, text: e.target.value },
+                                    }))}
+                                    placeholder="Please specify..."
+                                    className="mt-2 w-full px-3 py-2 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                                  />
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
@@ -582,7 +622,7 @@ export default function EditServiceRequestPage({
             {/* Additional Information */}
             <div className="mt-6">
               <label className="block text-gray-900 font-semibold font-poppins mb-1">
-                Additional Information <span className="text-red-500">*</span>
+                Tell us what you're looking for <span className="text-red-500">*</span>
               </label>
               <p className="text-gray-500 text-sm font-poppins mb-3">
                 Provide any additional context about the participant&apos;s needs.

@@ -104,8 +104,7 @@ export const STEPS: StepConfig[] = [
   { id: "what", label: "Services", section: "what" },
   { id: "where", label: "Location", section: "where" },
   { id: "when", label: "Schedule", section: "when" },
-  { id: "support-details", label: "Support details", section: "support-details", parentId: "details" },
-  { id: "preferences", label: "Worker preferences", section: "preferences", parentId: "details" },
+  { id: "preferences", label: "Preferences", section: "preferences" },
   { id: "preview", label: "Review & Submit", section: "preview" },
 ];
 
@@ -348,14 +347,6 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
         }
         break;
 
-      case "support-details":
-        if (!formData.supportDetailsData.jobTitle.trim()) {
-          errors.push("Please enter a job title");
-        }
-        if (!formData.whatAdditionalInfo.trim()) {
-          errors.push("Please provide additional information about the support needed");
-        }
-        break;
 
       case "preferences":
         // Optional step - no validation required
@@ -411,6 +402,9 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
     if (formData.selectedCategories.length === 0) {
       return { isValid: false, error: "Please select at least one service", stepIndex: 0 };
     }
+    if (!formData.whatAdditionalInfo.trim()) {
+      return { isValid: false, error: "Please tell us what you're looking for", stepIndex: 0 };
+    }
 
     // Step 1: Location (where)
     if (!formData.locationData.suburb || !formData.locationData.state || !formData.locationData.postalCode) {
@@ -445,14 +439,6 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
           return { isValid: false, error: `${dayLabel}: end time must be after start time`, stepIndex: 2 };
         }
       }
-    }
-
-    // Step 3: Support details
-    if (!formData.supportDetailsData.jobTitle.trim()) {
-      return { isValid: false, error: "Please enter a job title", stepIndex: 3 };
-    }
-    if (!formData.whatAdditionalInfo.trim()) {
-      return { isValid: false, error: "Please provide additional information about the support needed", stepIndex: 3 };
     }
 
     // Require a selected client
@@ -503,7 +489,6 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
         services: formData.services,
         // Details
         details: {
-          title: formData.supportDetailsData.jobTitle,
           description: formData.whatAdditionalInfo || undefined,
           scheduleNotes: formData.whenData.additionalNotes || undefined,
           schedulingPrefs: {

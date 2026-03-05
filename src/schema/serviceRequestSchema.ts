@@ -81,7 +81,6 @@ const ndisDetailsSchema = z.object({
 })
 
 const detailsSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
   fundingType: z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']).optional(),
   description: z.string().optional(),
   scheduleNotes: z.string().optional(),

@@ -85,6 +85,11 @@ export default function ParticipantCard({ participant }: ParticipantCardProps) {
           >
             Edit Profile
           </Link>
+          <button
+            className="mt-2 px-4 py-2 border-2 border-red-200 rounded-full text-sm font-medium font-poppins text-red-600 transition-colors hover:bg-red-50"
+          >
+            Remove
+          </button>
         </div>
 
         {/* Right side - Info grid */}

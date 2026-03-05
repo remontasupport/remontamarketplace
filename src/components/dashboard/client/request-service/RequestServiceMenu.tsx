@@ -19,7 +19,7 @@ interface MenuItem {
 }
 
 // All detail sub-section IDs for checking if we're in the details group
-const detailsSectionIds = ["support-details", "preferences"];
+const detailsSectionIds = ["preferences"];
 
 interface RequestServiceMenuProps {
   currentSection: string;
@@ -50,21 +50,9 @@ export default function RequestServiceMenu({ currentSection }: RequestServiceMen
       href: `${basePath}?section=when`,
     },
     {
-      id: "details",
-      label: "Details",
-      href: `${basePath}?section=support-details`,
-      subItems: [
-        {
-          id: "support-details",
-          label: "Support details",
-          href: `${basePath}?section=support-details`,
-        },
-        {
-          id: "preferences",
-          label: "Worker preferences",
-          href: `${basePath}?section=preferences`,
-        },
-      ],
+      id: "preferences",
+      label: "Preferences",
+      href: `${basePath}?section=preferences`,
     },
     {
       id: "preview",

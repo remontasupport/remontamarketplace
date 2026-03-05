@@ -1,74 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { useRequestService } from "../RequestServiceContext";
 import StepNavigation from "../StepNavigation";
 
 export default function SupportDetailsSection() {
-  const { formData, updateFormData } = useRequestService();
-  const { supportDetailsData, whatAdditionalInfo } = formData;
-  const [error, setError] = useState<string | null>(null);
-
-  const handleBeforeNext = () => {
-    if (!whatAdditionalInfo.trim()) {
-      setError("Additional Information is required before proceeding.");
-      return false;
-    }
-    setError(null);
-    return true;
-  };
+  useRequestService();
 
   return (
     <div className="section-card">
       <h2 className="section-title">Support details</h2>
 
       <div className="flex flex-col lg:flex-row gap-8 mt-6">
-        {/* Left side - Form fields */}
-        <div className="flex-1 space-y-8">
-          {/* Give your job a title */}
-          <div>
-            <label className="block text-gray-900 font-medium font-poppins mb-2">
-              Give your job a title
-            </label>
-            <p className="text-gray-600 text-sm font-poppins mb-3">
-              Summarise the support activities you want e.g. &apos;Help a female teenager get ready for school and share a passion for Star Wars!&apos;
-            </p>
-            <input
-              type="text"
-              value={supportDetailsData.jobTitle}
-              onChange={(e) =>
-                updateFormData("supportDetailsData", { jobTitle: e.target.value })
-              }
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins focus:border-indigo-500 focus:outline-none"
-              placeholder="E.g. personal carer for an adult"
-            />
-          </div>
-
-          {/* Additional Information */}
-          <div>
-            <label className="block text-gray-900 font-medium font-poppins mb-2">
-              Additional Information <span className="text-red-500">*</span>
-            </label>
-            <p className="text-gray-600 text-sm font-poppins mb-3">
-              Describe the support needed and any relevant background about the participant.
-            </p>
-            <textarea
-              value={whatAdditionalInfo}
-              onChange={(e) => {
-                updateFormData("whatAdditionalInfo", e.target.value);
-                if (e.target.value.trim()) setError(null);
-              }}
-              rows={4}
-              className={`w-full px-4 py-3 border-2 rounded-lg font-poppins text-sm focus:outline-none resize-none ${
-                error ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-indigo-500"
-              }`}
-              placeholder="An independent support worker is needed for a young male who has been diagnosed with ASD, ADHD, and schizoaffective disorder."
-            />
-            {error && (
-              <p className="mt-1.5 text-sm text-red-600 font-poppins">{error}</p>
-            )}
-          </div>
-        </div>
+        {/* Left side - placeholder for future fields */}
+        <div className="flex-1" />
 
         {/* Right side - Tips */}
         <div className="lg:w-72">
@@ -101,7 +45,7 @@ export default function SupportDetailsSection() {
       </div>
 
       {/* Navigation */}
-      <StepNavigation onBeforeNext={handleBeforeNext} />
+      <StepNavigation />
     </div>
   );
 }
