@@ -74,7 +74,7 @@ export function Step1WhoIsCompleting({ control, errors }: Step1WhoIsCompletingPr
 
       {errors.completingFormAs && (
         <p className="text-red-500 text-sm font-poppins mt-2">
-          {errors.completingFormAs.message}
+          Please select one option
         </p>
       )}
     </div>

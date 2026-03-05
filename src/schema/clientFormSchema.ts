@@ -5,7 +5,9 @@ export const clientFormSchema = z.object({
   completingFormAs: z.enum(
     ["coordinator", "self", "client"],
     {
-      required_error: "Please select who is completing this form",
+      required_error: "Please select one option",
+      invalid_type_error: "Please select one option",
+      errorMap: () => ({ message: "Please select one option" }),
     }
   ),
 
