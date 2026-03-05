@@ -89,7 +89,7 @@ model Participant {
   gender               String?
   conditions           String[]          @default([])
   fundingType          FundingType?
-  relationshipToClient RelationshipType?
+  relationshipToClient String?
   isSelfManaged        Boolean           @default(false)
   servicesRequested    Json?
   additionalInfo       String?
@@ -523,14 +523,6 @@ enum FundingType {
   OTHER
 }
 
-enum RelationshipType {
-  PARENT
-  LEGAL_GUARDIAN
-  SPOUSE_PARTNER
-  CHILDREN
-  MYSELF
-  OTHER
-}
 
 model ServiceRequest {
   id             String               @id @default(cuid())

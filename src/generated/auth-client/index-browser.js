@@ -450,15 +450,6 @@ exports.FundingType = exports.$Enums.FundingType = {
   OTHER: 'OTHER'
 };
 
-exports.RelationshipType = exports.$Enums.RelationshipType = {
-  PARENT: 'PARENT',
-  LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
-  SPOUSE_PARTNER: 'SPOUSE_PARTNER',
-  CHILDREN: 'CHILDREN',
-  MYSELF: 'MYSELF',
-  OTHER: 'OTHER'
-};
-
 exports.UserRole = exports.$Enums.UserRole = {
   WORKER: 'WORKER',
   CLIENT: 'CLIENT',

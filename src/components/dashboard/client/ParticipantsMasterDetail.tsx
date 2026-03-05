@@ -83,17 +83,51 @@ export default function ParticipantsMasterDetail({
     setIsEditModalOpen(true);
   };
 
-  const handleAddParticipant = (newParticipant: { id: string; firstName: string; lastName: string; name: string }) => {
+  const handleAddParticipant = (newParticipant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth?: string | null;
+    gender?: string | null;
+    relationshipToClient?: string | null;
+    fundingType?: string | null;
+    conditions?: string[];
+    additionalInfo?: string | null;
+  }) => {
+    // Compute age client-side from dateOfBirth
+    let age: number | undefined;
+    if (newParticipant.dateOfBirth) {
+      const [year, month, day] = newParticipant.dateOfBirth.split("-").map(Number);
+      const dob = new Date(year, month - 1, day);
+      const today = new Date();
+      age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    }
+
+    const startDate = new Date().toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
     const added: ParticipantData = {
       id: newParticipant.id,
-      name: newParticipant.name,
+      name: `${newParticipant.firstName} ${newParticipant.lastName}`,
       preferredName: newParticipant.firstName,
       firstName: newParticipant.firstName,
       lastName: newParticipant.lastName,
+      dateOfBirth: newParticipant.dateOfBirth ?? null,
+      gender: newParticipant.gender ?? undefined,
+      age,
+      fundingType: newParticipant.fundingType ?? undefined,
+      relationshipToClient: newParticipant.relationshipToClient ?? undefined,
+      conditions: newParticipant.conditions?.length ? newParticipant.conditions : undefined,
+      additionalInfo: newParticipant.additionalInfo ?? undefined,
+      startDate,
     };
     setParticipants((prev) => [added, ...prev]);
     setSelectedId(newParticipant.id);
-    router.refresh();
   };
 
   const handleSaveParticipant = async (data: {

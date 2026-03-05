@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ChevronDown, Check, Plus } from "lucide-react";
+import { X, ChevronDown, Check, Plus, Search } from "lucide-react";
 import { BRAND_COLORS } from "@/lib/constants";
 import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
 
@@ -51,11 +51,12 @@ const genderOptions = [
 ];
 
 const relationshipOptions = [
-  { value: "", label: "Select relationship" },
   { value: "PARENT", label: "Parent" },
   { value: "LEGAL_GUARDIAN", label: "Legal Guardian" },
   { value: "SPOUSE_PARTNER", label: "Spouse/Partner" },
   { value: "CHILDREN", label: "Children" },
+  { value: "SUPPORT_COORDINATOR", label: "Support Coordinator" },
+  { value: "NOMINEE", label: "Nominee" },
   { value: "OTHER", label: "Other" },
 ];
 
@@ -76,7 +77,17 @@ const managementTypeOptions = [
 interface AddClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (participant: { id: string; firstName: string; lastName: string; name: string }) => void;
+  onAdd: (participant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth?: string | null;
+    gender?: string | null;
+    relationshipToClient?: string | null;
+    fundingType?: string | null;
+    conditions?: string[];
+    additionalInfo?: string | null;
+  }) => void;
   showRelationship?: boolean;
   initialFirstName?: string;
   initialLastName?: string;
@@ -120,8 +131,9 @@ export default function AddClientModal({
   const [isRelationshipOpen, setIsRelationshipOpen] = useState(false);
   const [isManagementOpen, setIsManagementOpen] = useState(false);
   const [isNdisSkipped, setIsNdisSkipped] = useState(false);
-  const [showOtherInput, setShowOtherInput] = useState(false);
-  const [otherCondition, setOtherCondition] = useState("");
+  const [otherRelationshipText, setOtherRelationshipText] = useState("");
+  const [conditionSearch, setConditionSearch] = useState("");
+  const [isConditionOpen, setIsConditionOpen] = useState(false);
 
   // Reset form when modal opens, pre-populating name from client profile if available
   useEffect(() => {
@@ -136,8 +148,9 @@ export default function AddClientModal({
       setIsRelationshipOpen(false);
       setIsManagementOpen(false);
       setIsNdisSkipped(false);
-      setShowOtherInput(false);
-      setOtherCondition("");
+      setOtherRelationshipText("");
+      setConditionSearch("");
+      setIsConditionOpen(false);
     }
   }, [isOpen, initialFirstName, initialLastName]);
 
@@ -152,12 +165,13 @@ export default function AddClientModal({
       setIsGenderOpen(false);
       setIsRelationshipOpen(false);
       setIsManagementOpen(false);
+      setIsConditionOpen(false);
     };
-    if (isGenderOpen || isRelationshipOpen || isManagementOpen) {
+    if (isGenderOpen || isRelationshipOpen || isManagementOpen || isConditionOpen) {
       document.addEventListener("click", handleClickOutside);
       return () => document.removeEventListener("click", handleClickOutside);
     }
-  }, [isGenderOpen, isRelationshipOpen, isManagementOpen]);
+  }, [isGenderOpen, isRelationshipOpen, isManagementOpen, isConditionOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +204,11 @@ export default function AddClientModal({
           dateOfBirth: formData.dateOfBirth || null,
           gender: formData.gender || null,
           // When showRelationship=true the client is adding their own details
-          relationshipToClient: showRelationship ? "MYSELF" : (formData.relationshipToClient || null),
+          relationshipToClient: showRelationship ? "MYSELF" : (
+            formData.relationshipToClient === "OTHER"
+              ? (otherRelationshipText.trim() || "OTHER")
+              : (formData.relationshipToClient || null)
+          ),
           fundingType: formData.fundingType || null,
           conditions: formData.conditions,
           additionalInfo: additionalInfoPayload,
@@ -203,11 +221,21 @@ export default function AddClientModal({
         throw new Error(result.error || "Failed to add client");
       }
 
+      const resolvedRelationship = showRelationship ? "MYSELF" : (
+        formData.relationshipToClient === "OTHER"
+          ? (otherRelationshipText.trim() || "OTHER")
+          : (formData.relationshipToClient || null)
+      );
       onAdd({
         id: result.data.id,
         firstName: result.data.firstName,
         lastName: result.data.lastName,
-        name: `${result.data.firstName} ${result.data.lastName}`,
+        dateOfBirth: formData.dateOfBirth || null,
+        gender: formData.gender || null,
+        relationshipToClient: resolvedRelationship,
+        fundingType: formData.fundingType || null,
+        conditions: formData.conditions,
+        additionalInfo: additionalInfoPayload,
       });
       onClose();
     } catch (err) {
@@ -218,7 +246,18 @@ export default function AddClientModal({
   };
 
   const updateField = (field: keyof Omit<NewParticipantData, "ndisDetails" | "conditions">, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      // Pre-populate NDIS DOB from main DOB when switching to NDIS
+      if (field === "fundingType" && value === "NDIS" && prev.dateOfBirth) {
+        updated.ndisDetails = { ...prev.ndisDetails, ndisDob: prev.ndisDetails.ndisDob || prev.dateOfBirth };
+      }
+      // Keep NDIS DOB in sync when main DOB changes and NDIS is already selected
+      if (field === "dateOfBirth" && prev.fundingType === "NDIS") {
+        updated.ndisDetails = { ...prev.ndisDetails, ndisDob: value };
+      }
+      return updated;
+    });
   };
 
   const updateNdisField = (field: keyof NdisDetails, value: string) => {
@@ -237,29 +276,9 @@ export default function AddClientModal({
     }));
   };
 
-  const addOtherCondition = () => {
-    if (otherCondition.trim()) {
-      const newConditions = otherCondition
-        .split(",")
-        .map((c) => c.trim())
-        .filter((c) => c && !formData.conditions.includes(c));
-
-      if (newConditions.length > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          conditions: [...prev.conditions, ...newConditions],
-        }));
-      }
-      setOtherCondition("");
-    }
-  };
-
-  const removeCustomCondition = (condition: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      conditions: prev.conditions.filter((c) => c !== condition),
-    }));
-  };
+  const filteredConditions = conditionOptions.filter((c) =>
+    c.toLowerCase().includes(conditionSearch.toLowerCase())
+  );
 
   const selectedGenderLabel =
     genderOptions.find((opt) => opt.value === formData.gender)?.label || "Select gender";
@@ -418,6 +437,7 @@ export default function AddClientModal({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 updateField("relationshipToClient", option.value);
+                                if (option.value !== "OTHER") setOtherRelationshipText("");
                                 setIsRelationshipOpen(false);
                               }}
                               className={`w-full text-left px-4 py-3 font-poppins hover:bg-indigo-50 transition-colors ${
@@ -432,6 +452,17 @@ export default function AddClientModal({
                         </div>
                       )}
                     </div>
+
+                    {/* Custom text input when Other is selected */}
+                    {formData.relationshipToClient === "OTHER" && (
+                      <input
+                        type="text"
+                        value={otherRelationshipText}
+                        onChange={(e) => setOtherRelationshipText(e.target.value)}
+                        className="mt-2 w-full px-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                        placeholder="Please specify the relationship..."
+                      />
+                    )}
                   </div>
                 )}
 
@@ -654,86 +685,106 @@ export default function AddClientModal({
                   <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
                     Conditions / Disabilities
                   </label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {conditionOptions.map((condition) => {
-                      const isSelected = formData.conditions.includes(condition);
-                      return (
-                        <button
-                          key={condition}
-                          type="button"
-                          onClick={() => toggleCondition(condition)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 font-poppins text-sm transition-all ${
-                            isSelected
-                              ? "bg-indigo-50 border-indigo-500 text-indigo-900"
-                              : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
-                          }`}
-                        >
-                          {isSelected && <Check className="w-3.5 h-3.5" />}
-                          {condition}
-                        </button>
-                      );
-                    })}
-                    <button
-                      type="button"
-                      onClick={() => setShowOtherInput(!showOtherInput)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 font-poppins text-sm transition-all ${
-                        showOtherInput
-                          ? "bg-indigo-50 border-indigo-500 text-indigo-900"
-                          : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Other
-                    </button>
-                  </div>
 
-                  {/* Custom conditions tags */}
-                  {formData.conditions.filter((c) => !conditionOptions.includes(c)).length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {formData.conditions
-                        .filter((c) => !conditionOptions.includes(c))
-                        .map((condition) => (
-                          <span
-                            key={condition}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border-2 border-indigo-500 text-indigo-900 font-poppins text-sm"
+                  {/* Selected tags */}
+                  {formData.conditions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formData.conditions.map((condition) => (
+                        <span
+                          key={condition}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border-2 border-indigo-500 text-indigo-900 font-poppins text-sm"
+                        >
+                          {condition}
+                          <button
+                            type="button"
+                            onClick={() => toggleCondition(condition)}
+                            className="hover:text-indigo-700"
                           >
-                            {condition}
-                            <button
-                              type="button"
-                              onClick={() => removeCustomCondition(condition)}
-                              className="hover:text-indigo-700"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </span>
-                        ))}
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   )}
 
-                  {showOtherInput && (
-                    <div className="flex gap-2">
+                  {/* Search input + dropdown */}
+                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                       <input
                         type="text"
-                        value={otherCondition}
-                        onChange={(e) => setOtherCondition(e.target.value)}
+                        value={conditionSearch}
+                        onChange={(e) => {
+                          setConditionSearch(e.target.value);
+                          setIsConditionOpen(true);
+                        }}
+                        onFocus={() => setIsConditionOpen(true)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            addOtherCondition();
+                            const trimmed = conditionSearch.trim();
+                            if (trimmed && !formData.conditions.includes(trimmed)) {
+                              toggleCondition(trimmed);
+                              setConditionSearch("");
+                              setIsConditionOpen(false);
+                            }
                           }
+                          if (e.key === "Escape") setIsConditionOpen(false);
                         }}
-                        className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
-                        placeholder="Enter other condition(s), comma separated"
+                        className="w-full pl-9 pr-4 py-3 border-2 border-gray-200 rounded-lg font-poppins text-sm focus:border-indigo-500 focus:outline-none"
+                        placeholder="Search or type a condition..."
                       />
-                      <button
-                        type="button"
-                        onClick={addOtherCondition}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-poppins text-sm hover:bg-indigo-700 transition-colors"
-                      >
-                        Add
-                      </button>
                     </div>
-                  )}
+
+                    {isConditionOpen && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {filteredConditions.map((condition) => {
+                          const isSelected = formData.conditions.includes(condition);
+                          return (
+                            <button
+                              key={condition}
+                              type="button"
+                              onClick={() => {
+                                toggleCondition(condition);
+                                setConditionSearch("");
+                                setIsConditionOpen(false);
+                              }}
+                              className="w-full flex items-center justify-between px-4 py-2.5 text-left font-poppins text-sm hover:bg-indigo-50 transition-colors"
+                            >
+                              <span className={isSelected ? "text-indigo-900 font-medium" : "text-gray-900"}>
+                                {condition}
+                              </span>
+                              {isSelected && <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />}
+                            </button>
+                          );
+                        })}
+
+                        {/* Add custom entry */}
+                        {conditionSearch.trim() &&
+                          !conditionOptions.some((c) => c.toLowerCase() === conditionSearch.trim().toLowerCase()) &&
+                          !formData.conditions.includes(conditionSearch.trim()) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                toggleCondition(conditionSearch.trim());
+                                setConditionSearch("");
+                                setIsConditionOpen(false);
+                              }}
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-left font-poppins text-sm text-indigo-600 hover:bg-indigo-50 transition-colors border-t border-gray-100"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Add &ldquo;{conditionSearch.trim()}&rdquo;
+                            </button>
+                          )}
+
+                        {filteredConditions.length === 0 && !conditionSearch.trim() && (
+                          <div className="px-4 py-3 text-sm text-gray-400 font-poppins">
+                            Start typing to search conditions
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Additional Information — full width */}

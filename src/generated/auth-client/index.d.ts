@@ -221,18 +221,6 @@ export const FundingType: {
 export type FundingType = (typeof FundingType)[keyof typeof FundingType]
 
 
-export const RelationshipType: {
-  PARENT: 'PARENT',
-  LEGAL_GUARDIAN: 'LEGAL_GUARDIAN',
-  SPOUSE_PARTNER: 'SPOUSE_PARTNER',
-  CHILDREN: 'CHILDREN',
-  MYSELF: 'MYSELF',
-  OTHER: 'OTHER'
-};
-
-export type RelationshipType = (typeof RelationshipType)[keyof typeof RelationshipType]
-
-
 export const ServiceRequestStatus: {
   PENDING: 'PENDING',
   MATCHED: 'MATCHED',
@@ -280,10 +268,6 @@ export const RepresentativeType: typeof $Enums.RepresentativeType
 export type FundingType = $Enums.FundingType
 
 export const FundingType: typeof $Enums.FundingType
-
-export type RelationshipType = $Enums.RelationshipType
-
-export const RelationshipType: typeof $Enums.RelationshipType
 
 export type ServiceRequestStatus = $Enums.ServiceRequestStatus
 
@@ -7539,7 +7523,7 @@ export namespace Prisma {
     location: string | null
     gender: string | null
     fundingType: $Enums.FundingType | null
-    relationshipToClient: $Enums.RelationshipType | null
+    relationshipToClient: string | null
     isSelfManaged: boolean | null
     additionalInfo: string | null
     createdAt: Date | null
@@ -7555,7 +7539,7 @@ export namespace Prisma {
     location: string | null
     gender: string | null
     fundingType: $Enums.FundingType | null
-    relationshipToClient: $Enums.RelationshipType | null
+    relationshipToClient: string | null
     isSelfManaged: boolean | null
     additionalInfo: string | null
     createdAt: Date | null
@@ -7715,7 +7699,7 @@ export namespace Prisma {
     gender: string | null
     conditions: string[]
     fundingType: $Enums.FundingType | null
-    relationshipToClient: $Enums.RelationshipType | null
+    relationshipToClient: string | null
     isSelfManaged: boolean
     servicesRequested: JsonValue | null
     additionalInfo: string | null
@@ -7846,7 +7830,7 @@ export namespace Prisma {
       gender: string | null
       conditions: string[]
       fundingType: $Enums.FundingType | null
-      relationshipToClient: $Enums.RelationshipType | null
+      relationshipToClient: string | null
       isSelfManaged: boolean
       servicesRequested: Prisma.JsonValue | null
       additionalInfo: string | null
@@ -8286,7 +8270,7 @@ export namespace Prisma {
     readonly gender: FieldRef<"Participant", 'String'>
     readonly conditions: FieldRef<"Participant", 'String[]'>
     readonly fundingType: FieldRef<"Participant", 'FundingType'>
-    readonly relationshipToClient: FieldRef<"Participant", 'RelationshipType'>
+    readonly relationshipToClient: FieldRef<"Participant", 'String'>
     readonly isSelfManaged: FieldRef<"Participant", 'Boolean'>
     readonly servicesRequested: FieldRef<"Participant", 'Json'>
     readonly additionalInfo: FieldRef<"Participant", 'String'>
@@ -26579,20 +26563,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'RelationshipType'
-   */
-  export type EnumRelationshipTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RelationshipType'>
-    
-
-
-  /**
-   * Reference to a field of type 'RelationshipType[]'
-   */
-  export type ListEnumRelationshipTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RelationshipType[]'>
-    
-
-
-  /**
    * Reference to a field of type 'UserRole'
    */
   export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
@@ -27009,7 +26979,7 @@ export namespace Prisma {
     gender?: StringNullableFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
     fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
-    relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
+    relationshipToClient?: StringNullableFilter<"Participant"> | string | null
     isSelfManaged?: BoolFilter<"Participant"> | boolean
     servicesRequested?: JsonNullableFilter<"Participant">
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
@@ -27052,7 +27022,7 @@ export namespace Prisma {
     gender?: StringNullableFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
     fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
-    relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
+    relationshipToClient?: StringNullableFilter<"Participant"> | string | null
     isSelfManaged?: BoolFilter<"Participant"> | boolean
     servicesRequested?: JsonNullableFilter<"Participant">
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
@@ -27096,7 +27066,7 @@ export namespace Prisma {
     gender?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
     fundingType?: EnumFundingTypeNullableWithAggregatesFilter<"Participant"> | $Enums.FundingType | null
-    relationshipToClient?: EnumRelationshipTypeNullableWithAggregatesFilter<"Participant"> | $Enums.RelationshipType | null
+    relationshipToClient?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     isSelfManaged?: BoolWithAggregatesFilter<"Participant"> | boolean
     servicesRequested?: JsonNullableWithAggregatesFilter<"Participant">
     additionalInfo?: StringNullableWithAggregatesFilter<"Participant"> | string | null
@@ -28763,7 +28733,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -28783,7 +28753,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -28801,7 +28771,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28821,7 +28791,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28840,7 +28810,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -28857,7 +28827,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28875,7 +28845,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30778,13 +30748,6 @@ export namespace Prisma {
     not?: NestedEnumFundingTypeNullableFilter<$PrismaModel> | $Enums.FundingType | null
   }
 
-  export type EnumRelationshipTypeNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
-  }
-
   export type ServiceRequestListRelationFilter = {
     every?: ServiceRequestWhereInput
     some?: ServiceRequestWhereInput
@@ -30853,16 +30816,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
     _max?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
-  }
-
-  export type EnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RelationshipType | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
-    _max?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
   }
 
   export type SessionCountOrderByAggregateInput = {
@@ -32014,10 +31967,6 @@ export namespace Prisma {
 
   export type NullableEnumFundingTypeFieldUpdateOperationsInput = {
     set?: $Enums.FundingType | null
-  }
-
-  export type NullableEnumRelationshipTypeFieldUpdateOperationsInput = {
-    set?: $Enums.RelationshipType | null
   }
 
   export type ServiceRequestUpdateManyWithoutParticipantNestedInput = {
@@ -33192,13 +33141,6 @@ export namespace Prisma {
     not?: NestedEnumFundingTypeNullableFilter<$PrismaModel> | $Enums.FundingType | null
   }
 
-  export type NestedEnumRelationshipTypeNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel> | $Enums.RelationshipType | null
-  }
-
   export type NestedEnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
@@ -33207,16 +33149,6 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
     _max?: NestedEnumFundingTypeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.RelationshipType | EnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    in?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.RelationshipType[] | ListEnumRelationshipTypeFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumRelationshipTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.RelationshipType | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
-    _max?: NestedEnumRelationshipTypeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumUserRoleFilter<$PrismaModel = never> = {
@@ -34349,7 +34281,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -34367,7 +34299,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -34652,7 +34584,7 @@ export namespace Prisma {
     gender?: StringNullableFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
     fundingType?: EnumFundingTypeNullableFilter<"Participant"> | $Enums.FundingType | null
-    relationshipToClient?: EnumRelationshipTypeNullableFilter<"Participant"> | $Enums.RelationshipType | null
+    relationshipToClient?: StringNullableFilter<"Participant"> | string | null
     isSelfManaged?: BoolFilter<"Participant"> | boolean
     servicesRequested?: JsonNullableFilter<"Participant">
     additionalInfo?: StringNullableFilter<"Participant"> | string | null
@@ -36181,7 +36113,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -36200,7 +36132,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -36233,7 +36165,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36252,7 +36184,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36355,7 +36287,7 @@ export namespace Prisma {
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
     fundingType?: $Enums.FundingType | null
-    relationshipToClient?: $Enums.RelationshipType | null
+    relationshipToClient?: string | null
     isSelfManaged?: boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: string | null
@@ -36462,7 +36394,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36480,7 +36412,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36498,7 +36430,7 @@ export namespace Prisma {
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
     fundingType?: NullableEnumFundingTypeFieldUpdateOperationsInput | $Enums.FundingType | null
-    relationshipToClient?: NullableEnumRelationshipTypeFieldUpdateOperationsInput | $Enums.RelationshipType | null
+    relationshipToClient?: NullableStringFieldUpdateOperationsInput | string | null
     isSelfManaged?: BoolFieldUpdateOperationsInput | boolean
     servicesRequested?: NullableJsonNullValueInput | InputJsonValue
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null

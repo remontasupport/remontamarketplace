@@ -80,21 +80,21 @@ model CoordinatorProfile {
 }
 
 model Participant {
-  id                   String            @id @default(cuid())
+  id                   String       @id @default(cuid())
   userId               String?
   firstName            String
   lastName             String
   dateOfBirth          DateTime
   location             String?
   gender               String?
-  conditions           String[]          @default([])
+  conditions           String[]     @default([])
   fundingType          FundingType?
-  relationshipToClient RelationshipType?
-  isSelfManaged        Boolean           @default(false)
+  relationshipToClient String?
+  isSelfManaged        Boolean      @default(false)
   servicesRequested    Json?
   additionalInfo       String?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
   serviceRequests ServiceRequest[]
 
@@ -520,15 +520,6 @@ enum FundingType {
   AGED_CARE
   INSURANCE
   PRIVATE
-  OTHER
-}
-
-enum RelationshipType {
-  PARENT
-  LEGAL_GUARDIAN
-  SPOUSE_PARTNER
-  CHILDREN
-  MYSELF
   OTHER
 }
 
