@@ -307,7 +307,7 @@ function LoginForm() {
                   type="button"
                   variant="outline"
                   className="flex-1 font-poppins"
-                  onClick={() => router.push("/registration/client")}
+                  onClick={() => router.push("/registration/clients")}
                   disabled={isLoading}
                 >
                   Client
