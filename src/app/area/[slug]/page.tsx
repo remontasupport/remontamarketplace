@@ -129,7 +129,7 @@ export default function AreaPage({ params }: PageProps) {
           /* Contractor Cards Grid */
           <div className="area-grid">
             {contractors.map((contractor) => (
-              <Link key={contractor.id} href="/registration/user" className="area-card-link">
+              <Link key={contractor.id} href="https://app.remontaservices.com.au/registration/clients" className="area-card-link">
                 <div className="area-card">
                   {/* Profile Picture and Name */}
                   <div className="area-card-profile">

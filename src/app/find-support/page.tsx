@@ -103,7 +103,7 @@ export default function FindSupportPage() {
         </li>
        </ul>
 
-       <Link href="/registration/user" className="find-support-hero-button">
+       <Link href="https://app.remontaservices.com.au/registration/clients" className="find-support-hero-button">
         Find Support
        </Link>
       </div>
@@ -189,7 +189,7 @@ export default function FindSupportPage() {
        <p className="jobs-cta-description">
         Choose a support worker and mutually agree on rates.
        </p>
-       <Link href="/registration/user" className="jobs-cta-button">
+       <Link href="https://app.remontaservices.com.au/registration/clients" className="jobs-cta-button">
         Find Support
        </Link>
       </div>

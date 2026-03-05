@@ -85,7 +85,7 @@ export default function AboutUs() {
 
             {/* CTA Buttons */}
             <div className="about-cta-buttons scroll-animate fade-up" data-delay="3">
-              <Link href="/registration/user" className="btn btn-primary">
+              <Link href="https://app.remontaservices.com.au/registration/clients" className="btn btn-primary">
                  Get started with us today
                 <svg className="btn-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

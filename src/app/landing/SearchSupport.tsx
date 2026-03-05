@@ -148,7 +148,7 @@ export default function SearchSupport() {
           </p>
           <div className="flex justify-center">
             <a
-              href="/registration/user"
+              href="https://app.remontaservices.com.au/registration/clients"
               className="inline-block bg-[#0C1628] hover:bg-[#B1C3CD] hover:text-[#0C1628] text-white font-medium py-3 px-8 rounded-full transition-colors duration-200 font-sans"
             >
               Sign up to connect with workers near you

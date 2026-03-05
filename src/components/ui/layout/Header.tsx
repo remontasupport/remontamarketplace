@@ -264,7 +264,7 @@ export default function Header() {
 
                   <div className="signup-dropdown-options">
                     <Link
-                      href="/registration/user"
+                      href="https://app.remontaservices.com.au/registration/clients"
                       className="signup-dropdown-option"
                       onClick={() => setSignUpModalOpen(false)}
                     >
@@ -405,7 +405,7 @@ export default function Header() {
 
             <div className="signup-modal-options">
               <Link
-                href="/registration/user"
+                href="https://app.remontaservices.com.au/registration/clients"
                 className="signup-modal-option"
                 onClick={() => setSignUpModalOpen(false)}
               >
