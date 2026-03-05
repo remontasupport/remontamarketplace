@@ -36,7 +36,7 @@ export default async function SupportCoordinatorsManageRequestPage() {
 
   // Fetch service requests for this coordinator with participant data (exclude ARCHIVED)
   const serviceRequests = await withRetry(() => authPrisma.serviceRequest.findMany({
-    where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
+    where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'CANCELLED'] } },
     orderBy: { createdAt: 'desc' },
     include: {
       participant: true,

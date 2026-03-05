@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { BRAND_COLORS } from '@/lib/constants'
@@ -13,6 +13,7 @@ import {
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   ArchiveBoxIcon,
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline'
 
 interface MenuItem {
@@ -48,6 +49,12 @@ const menuItems: MenuItem[] = [
     icon: ClipboardDocumentListIcon,
   },
   {
+    id: 'completed',
+    name: 'Completed Jobs',
+    path: '/completed',
+    icon: CheckCircleIcon,
+  },
+  {
     id: 'archived',
     name: 'Archived',
     path: '/archived',
@@ -76,6 +83,8 @@ export default function ClientSidebar({
   const pathname = usePathname()
   const { data: session } = useSession()
   const [isNavigating, setIsNavigating] = useState(false)
+  const [completedCount, setCompletedCount] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const photoUrl = profileData?.photo || null
   const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'User'
@@ -114,6 +123,28 @@ export default function ClientSidebar({
       }, 300)
     }
   }, [pathname, isNavigating])
+
+  // Poll completed count so the badge stays up-to-date
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/client/service-request/completed-count')
+        if (res.ok) {
+          const data = await res.json()
+          setCompletedCount(data.count ?? 0)
+        }
+      } catch {
+        // silently ignore
+      }
+    }
+
+    fetchCount()
+    intervalRef.current = setInterval(fetchCount, 30_000) // refresh every 30 s
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [])
 
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
@@ -185,6 +216,11 @@ export default function ClientSidebar({
                   >
                     <ItemIcon className="nav-icon" />
                     <span>{item.name}</span>
+                    {item.id === 'completed' && completedCount > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-semibold bg-green-500 text-white">
+                        {completedCount > 99 ? '99+' : completedCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               )
