@@ -429,7 +429,7 @@ export default function AddClientModal({
                 {!showRelationship && (
                   <div>
                     <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
-                      Relation with this client
+                      Relationship with the client
                     </label>
                     <div className="relative">
                       <button

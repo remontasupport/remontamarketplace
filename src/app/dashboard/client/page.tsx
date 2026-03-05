@@ -135,7 +135,7 @@ export default async function ClientDashboard() {
       <div className="px-4 py-4 md:pl-8 md:pr-4 lg:flex lg:flex-col lg:flex-1 lg:min-h-0 lg:py-0">
         <ParticipantsMasterDetail
           participants={participants}
-          showRelationship={true}
+          showRelationship={false}
           title="Manage your profile"
           subtitle=""
           clientName={clientProfile ? { firstName: clientProfile.firstName, lastName: clientProfile.lastName } : undefined}

@@ -18,7 +18,8 @@ type RawArchivedRow = {
   id: string
   location: string
   createdAt: Date
-  details: { title?: string; description?: string } | null
+  services: Record<string, { categoryName: string }> | null
+  details: { description?: string } | null
   firstName: string
   lastName: string
 }
@@ -48,6 +49,7 @@ export default async function ArchivedPage() {
       sr.id,
       sr.location,
       sr."createdAt",
+      sr.services,
       sr.details,
       p."firstName",
       p."lastName"
@@ -59,14 +61,19 @@ export default async function ArchivedPage() {
     ORDER BY sr."updatedAt" DESC
   `)
 
-  const requests = rows.map((r) => ({
-    id: r.id,
-    participantName: `${r.firstName} ${r.lastName}`,
-    location: r.location,
-    title: (r.details as { title?: string } | null)?.title || 'Untitled Request',
-    description: (r.details as { description?: string } | null)?.description || null,
-    createdAt: new Date(r.createdAt).toISOString(),
-  }))
+  const toDisplayName = (name: string) => name.replace(/Support Worker/g, 'Support Work')
+
+  const requests = rows.map((r) => {
+    const serviceNames = Object.values(r.services ?? {}).map((s) => toDisplayName(s.categoryName)).filter(Boolean)
+    return {
+      id: r.id,
+      participantName: `${r.firstName} ${r.lastName}`,
+      location: r.location,
+      primaryService: serviceNames.length > 0 ? serviceNames.join(', ') : 'Untitled Request',
+      description: r.details?.description ?? null,
+      createdAt: new Date(r.createdAt).toISOString(),
+    }
+  })
 
   return (
     <ClientDashboardLayout

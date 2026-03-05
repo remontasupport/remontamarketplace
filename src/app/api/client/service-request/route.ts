@@ -232,6 +232,9 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       where.status = status
+    } else {
+      // Exclude ARCHIVED — it's not in the Prisma enum and causes a deserialization error
+      where.status = { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] as any[] }
     }
 
     // 6. Execute queries in parallel

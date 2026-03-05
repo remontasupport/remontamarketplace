@@ -7,7 +7,7 @@ interface ArchivedRequest {
   id: string
   participantName: string
   location: string
-  title: string
+  primaryService: string
   description: string | null
   createdAt: string // ISO string (serialized from server)
 }
@@ -76,7 +76,7 @@ export default function ArchivedRequestsList({ initialRequests }: ArchivedReques
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-poppins font-semibold text-gray-900 text-sm truncate">
-                    {req.title}
+                    {req.primaryService}
                   </h3>
                   <p className="font-poppins text-xs text-gray-500 mt-0.5 truncate">
                     {req.participantName}

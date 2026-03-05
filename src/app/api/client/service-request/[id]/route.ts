@@ -251,7 +251,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
     })
 
-    // 9. Audit log (fire-and-forget)
+
+    // 11. Audit log (fire-and-forget)
     authPrisma.auditLog
       .create({
         data: {
@@ -265,7 +266,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
       .catch(() => {})
 
-    // 10. Webhook — fire-and-forget (mirrors the POST creation webhook)
+    // 12. Webhook — fire-and-forget (mirrors the POST creation webhook)
     // Fetches fresh participant data after any participant updates above,
     // then sends the full edit payload to Zoho via Request_Service_Webhook.
     const webhookUrl = process.env.Request_Service_Webhook
@@ -315,7 +316,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })()
     }
 
-    // 11. Return response
+    // 13. Return response
     return NextResponse.json({
       success: true,
       message: 'Service request updated successfully',

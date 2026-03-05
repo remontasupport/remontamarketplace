@@ -36,7 +36,7 @@ const participantSchema = z.object({
   dateOfBirth: z.string().optional(),
   gender: z.string().optional(),
   fundingType: z.enum(['NDIS', 'AGED_CARE', 'INSURANCE', 'PRIVATE', 'OTHER']).optional(),
-  relationshipToClient: z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'MYSELF', 'OTHER']).optional(),
+  relationshipToClient: z.string().optional(),
   conditions: z.array(z.string()).optional().default([]),
   additionalInfo: z.string().optional(),
 })

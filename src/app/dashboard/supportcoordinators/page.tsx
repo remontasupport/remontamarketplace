@@ -140,6 +140,7 @@ export default async function SupportCoordinatorsDashboard() {
         <ParticipantsMasterDetail
           participants={participants}
           showRelationship={false}
+          showRemove={true}
           title="Clients"
           subtitle="Manage the clients you support"
           defaultToList={true}

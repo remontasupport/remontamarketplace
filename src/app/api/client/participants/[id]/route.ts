@@ -26,7 +26,7 @@ const updateParticipantSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').optional(),
   dateOfBirth: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
-  relationshipToClient: z.enum(['PARENT', 'LEGAL_GUARDIAN', 'SPOUSE_PARTNER', 'CHILDREN', 'MYSELF', 'OTHER']).optional().nullable(),
+  relationshipToClient: z.string().optional().nullable(),
   fundingType: z.string().optional().nullable(),
   conditions: z.array(z.string()).optional(),
   additionalInfo: z.string().optional().nullable(),

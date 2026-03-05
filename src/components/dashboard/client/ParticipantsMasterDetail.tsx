@@ -34,6 +34,7 @@ export interface ParticipantData {
 interface ParticipantsMasterDetailProps {
   participants: ParticipantData[];
   showRelationship?: boolean;
+  showRemove?: boolean;
   title: string;
   subtitle: string;
   defaultToList?: boolean; // When true, starts with no selection (list view on mobile)
@@ -43,6 +44,7 @@ interface ParticipantsMasterDetailProps {
 export default function ParticipantsMasterDetail({
   participants: initialParticipants,
   showRelationship = true,
+  showRemove = false,
   title,
   subtitle,
   defaultToList = false,
@@ -286,7 +288,7 @@ export default function ParticipantsMasterDetail({
             <ParticipantDetailPanel
               participant={selectedParticipant}
               onEditClick={handleEditClick}
-              onRemoveClick={!showRelationship ? handleRemoveClick : undefined}
+              onRemoveClick={showRemove ? handleRemoveClick : undefined}
               showRelationship={showRelationship}
             />
           </div>
@@ -314,7 +316,7 @@ export default function ParticipantsMasterDetail({
           <ParticipantDetailPanel
             participant={selectedParticipant}
             onEditClick={handleEditClick}
-            onRemoveClick={!showRelationship ? handleRemoveClick : undefined}
+            onRemoveClick={showRemove ? handleRemoveClick : undefined}
             showRelationship={showRelationship}
           />
         </div>

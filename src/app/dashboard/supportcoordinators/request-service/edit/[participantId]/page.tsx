@@ -113,6 +113,9 @@ const defaultDaySchedule: DaySchedule = {
 
 const BASE_PATH = "/dashboard/supportcoordinators";
 
+// Categories that can be selected together (all others are mutually exclusive)
+const SUPPORT_WORKER_GROUP = ["Support Worker", "Support Worker (High Intensity)"];
+
 export default function EditServiceRequestPage({
   params,
 }: {
@@ -121,6 +124,9 @@ export default function EditServiceRequestPage({
   const { participantId } = use(params);
   const router = useRouter();
   const { data: session } = useSession();
+
+  // Ref guard: prevents stale fetch callbacks from overwriting user-cleared state
+  const isEditingRef = useRef(false);
 
   // State
   const [currentStep, setCurrentStep] = useState(0);
@@ -133,6 +139,8 @@ export default function EditServiceRequestPage({
   // Form state - Services
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [isEditingServices, setIsEditingServices] = useState(false);
   const [otherServices, setOtherServices] = useState<Record<string, { selected: boolean; text: string }>>({});
 
   // Form state - Location
@@ -181,14 +189,17 @@ export default function EditServiceRequestPage({
 
   // Fetch data on mount
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
         const [categoriesRes, serviceRequestRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch(`/api/client/service-request/${participantId}`),
+          fetch("/api/categories", { signal }),
+          fetch(`/api/client/service-request/${participantId}`, { signal }),
         ]);
 
         if (!categoriesRes.ok) throw new Error("Failed to fetch categories");
@@ -209,26 +220,29 @@ export default function EditServiceRequestPage({
             participant: sr.participant,
           });
 
-          // Pre-populate Services
-          const services = sr.services || {};
-          const categoryIds = Object.keys(services);
-          setSelectedCategories(categoryIds);
+          // Guard: if user already entered edit mode, don't overwrite cleared state
+          if (!isEditingRef.current) {
+            // Pre-populate Services
+            const services = sr.services || {};
+            const categoryIds = Object.keys(services);
+            setSelectedCategories(categoryIds);
 
-          const subIds: string[] = [];
-          const otherMap: Record<string, { selected: boolean; text: string }> = {};
-          Object.entries(services).forEach(([categoryId, cat]: [string, any]) => {
-            if (cat.subCategories) {
-              cat.subCategories.forEach((sub: any) => {
-                if (sub.id && sub.id.startsWith("other-")) {
-                  otherMap[categoryId] = { selected: true, text: sub.name };
-                } else if (sub.id) {
-                  subIds.push(sub.id);
-                }
-              });
-            }
-          });
-          setSelectedSubcategories(subIds);
-          setOtherServices(otherMap);
+            const subIds: string[] = [];
+            const otherMap: Record<string, { selected: boolean; text: string }> = {};
+            Object.entries(services).forEach(([categoryId, cat]: [string, any]) => {
+              if (cat.subCategories) {
+                cat.subCategories.forEach((sub: any) => {
+                  if (sub.id && sub.id.startsWith("other-")) {
+                    otherMap[categoryId] = { selected: true, text: sub.name };
+                  } else if (sub.id) {
+                    subIds.push(sub.id);
+                  }
+                });
+              }
+            });
+            setSelectedSubcategories(subIds);
+            setOtherServices(otherMap);
+          }
 
           // Pre-populate Location
           setLocation(sr.location || "");
@@ -283,13 +297,15 @@ export default function EditServiceRequestPage({
           if (details.specialRequirements) setPreferredQualities(details.specialRequirements);
         }
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to load data");
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) setIsLoading(false);
       }
     };
 
     fetchData();
+    return () => controller.abort();
   }, [participantId]);
 
   // Sync locationSearchQuery with location when data loads
@@ -378,6 +394,7 @@ export default function EditServiceRequestPage({
   const toggleCategory = (categoryId: string) => {
     if (selectedCategories.includes(categoryId)) {
       setSelectedCategories(selectedCategories.filter((id) => id !== categoryId));
+      setExpandedCategories(expandedCategories.filter((id) => id !== categoryId));
       const category = categories.find((c) => c.id === categoryId);
       if (category) {
         const subIds = category.subcategories.map((s) => s.id);
@@ -385,6 +402,7 @@ export default function EditServiceRequestPage({
       }
     } else {
       setSelectedCategories([...selectedCategories, categoryId]);
+      setExpandedCategories([...expandedCategories, categoryId]);
     }
   };
 
@@ -436,6 +454,46 @@ export default function EditServiceRequestPage({
     });
   };
 
+  // Build the services payload from current selection state
+  const buildServicesPayload = () => {
+    const services: Record<string, { categoryName: string; subCategories: { id: string; name: string }[] }> = {};
+    selectedCategories.forEach((categoryId) => {
+      const category = categories.find((c) => c.id === categoryId);
+      if (!category) return;
+      const selectedSubs = category.subcategories
+        .filter((sub) => selectedSubcategories.includes(sub.id))
+        .map((sub) => ({ id: sub.id, name: sub.name }));
+      const otherData = otherServices[categoryId];
+      if (otherData?.selected && otherData.text.trim()) {
+        selectedSubs.push({ id: `other-${categoryId}`, name: otherData.text.trim() });
+      }
+      services[categoryId] = {
+        categoryName: category.name,
+        subCategories: selectedSubs.length > 0 ? selectedSubs : category.subcategories.map((s) => ({ id: s.id, name: s.name })),
+      };
+    });
+    return services;
+  };
+
+  // Build the scheduling prefs payload
+  const buildSchedulingPrefs = () => ({
+    preferredDays: scheduling === "preferred"
+      ? Object.entries(preferredDays)
+          .filter(([, s]) => s.enabled)
+          .map(([day, s]) => ({
+            day: day.charAt(0).toUpperCase() + day.slice(1),
+            startTime: s.startTime || undefined,
+            endTime: s.endTime || undefined,
+          }))
+      : undefined,
+    frequency,
+    sessionsPerPeriod,
+    hoursPerPeriod,
+    scheduling: scheduling || undefined,
+    startPreference: startPreference || undefined,
+    startDate: startPreference === "specific-date" ? specificDate : undefined,
+  });
+
   // Save handler
   const handleSave = async () => {
     if (!serviceRequest) return;
@@ -465,24 +523,7 @@ export default function EditServiceRequestPage({
     setError(null);
 
     try {
-      const services: Record<string, { categoryName: string; subCategories: { id: string; name: string }[] }> = {};
-      selectedCategories.forEach((categoryId) => {
-        const category = categories.find((c) => c.id === categoryId);
-        if (category) {
-          const selectedSubs = category.subcategories
-            .filter((sub) => selectedSubcategories.includes(sub.id))
-            .map((sub) => ({ id: sub.id, name: sub.name }));
-          const otherData = otherServices[categoryId];
-          if (otherData?.selected && otherData.text.trim()) {
-            selectedSubs.push({ id: `other-${categoryId}`, name: otherData.text.trim() });
-          }
-          services[categoryId] = {
-            categoryName: category.name,
-            subCategories: selectedSubs.length > 0 ? selectedSubs : category.subcategories.map((s) => ({ id: s.id, name: s.name })),
-          };
-        }
-      });
-
+      const services = buildServicesPayload();
       const response = await fetch(`/api/client/service-request/${serviceRequest.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -492,23 +533,7 @@ export default function EditServiceRequestPage({
           details: {
             description: additionalInfo || undefined,
             scheduleNotes: additionalNotes || undefined,
-            schedulingPrefs: {
-              preferredDays: scheduling === "preferred"
-                ? Object.entries(preferredDays)
-                    .filter(([_, schedule]) => schedule.enabled)
-                    .map(([day, schedule]) => ({
-                      day: day.charAt(0).toUpperCase() + day.slice(1),
-                      startTime: schedule.startTime || undefined,
-                      endTime: schedule.endTime || undefined,
-                    }))
-                : undefined,
-              frequency,
-              sessionsPerPeriod,
-              hoursPerPeriod,
-              scheduling: scheduling || undefined,
-              startPreference: startPreference || undefined,
-              startDate: startPreference === "specific-date" ? specificDate : undefined,
-            },
+            schedulingPrefs: buildSchedulingPrefs(),
             preferredWorkerGender: preferredGender || undefined,
             specialRequirements: preferredQualities || undefined,
           },
@@ -518,11 +543,10 @@ export default function EditServiceRequestPage({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to update request");
 
+      // Keep loader visible through navigation — component will unmount naturally
       router.push(`${BASE_PATH}/manage-request`);
-      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save changes");
-    } finally {
       setIsSaving(false);
     }
   };
@@ -533,30 +557,86 @@ export default function EditServiceRequestPage({
       case "services":
         return (
           <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-gray-900 font-poppins mb-2">
-              Services Requested
-            </h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold text-gray-900 font-poppins">
+                Services Requested
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isEditingServices) {
+                    isEditingRef.current = true;
+                    setSelectedCategories([]);
+                    setSelectedSubcategories([]);
+                    setExpandedCategories([]);
+                  } else {
+                    isEditingRef.current = false;
+                  }
+                  setIsEditingServices((prev) => !prev);
+                }}
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-800 font-poppins transition-colors"
+              >
+                {isEditingServices ? "Done" : "Edit"}
+              </button>
+            </div>
             <div className="space-y-4">
-              {categories.filter((category) => selectedCategories.includes(category.id)).map((category) => {
-                const isSelected = true;
+              {(isEditingServices ? categories : categories.filter((c) => selectedCategories.includes(c.id))).map((category) => {
+                const isSelected = selectedCategories.includes(category.id);
+
+                // Same hide logic as WhatSection: SW categories can coexist, but non-SW hides SW and vice versa
+                if (isEditingServices) {
+                  const isInSWGroup = SUPPORT_WORKER_GROUP.includes(category.name);
+                  const hasSelectedNonSW = selectedCategories.some((id) => {
+                    const c = categories.find((cat) => cat.id === id);
+                    return c && !SUPPORT_WORKER_GROUP.includes(c.name);
+                  });
+                  const hasSelectedSW = selectedCategories.some((id) => {
+                    const c = categories.find((cat) => cat.id === id);
+                    return c && SUPPORT_WORKER_GROUP.includes(c.name);
+                  });
+                  const isHidden =
+                    !isSelected &&
+                    ((isInSWGroup && hasSelectedNonSW) ||
+                      (!isInSWGroup && (hasSelectedNonSW || hasSelectedSW)));
+                  if (isHidden) return null;
+                }
+
                 return (
                   <div key={category.id}>
-                    <div
-                      onClick={() => toggleCategory(category.id)}
-                      className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        isSelected ? "border-indigo-500 bg-indigo-50/50" : "border-gray-200 bg-white hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          isSelected ? "bg-indigo-600 border-indigo-600" : "border-gray-300 bg-white"
-                        }`}>
-                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                    {isEditingServices ? (
+                      /* Edit mode: plain cards, checkbox only, no highlight */
+                      <div
+                        onClick={() => toggleCategory(category.id)}
+                        className="relative p-4 rounded-xl border-2 border-gray-200 bg-white cursor-pointer hover:border-gray-300 transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isSelected ? "bg-indigo-600 border-indigo-600" : "border-gray-300 bg-white"
+                          }`}>
+                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <h3 className="font-medium text-gray-900 font-poppins">{category.name}</h3>
                         </div>
-                        <h3 className="font-medium text-gray-900 font-poppins">{category.name}</h3>
                       </div>
-                    </div>
-                    {isSelected && category.subcategories.length > 0 && (
+                    ) : (
+                      /* View mode: accordion, no checkmark, no deselect */
+                      <div
+                        onClick={() => category.subcategories.length > 0 && setExpandedCategories((prev) => prev.includes(category.id) ? prev.filter((id) => id !== category.id) : [...prev, category.id])}
+                        className={`relative p-4 rounded-xl border-2 transition-all border-indigo-500 bg-indigo-50/50 ${category.subcategories.length > 0 ? "cursor-pointer hover:border-indigo-400" : ""}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-medium text-gray-900 font-poppins">{category.name}</h3>
+                          {category.subcategories.length > 0 && (
+                            <span className="ml-auto text-gray-400">
+                              {expandedCategories.includes(category.id)
+                                ? <ChevronUp className="w-4 h-4" />
+                                : <ChevronDown className="w-4 h-4" />}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {isSelected && expandedCategories.includes(category.id) && category.subcategories.length > 0 && (
                       <div className="mt-2 ml-8 pl-4 border-l-2 border-indigo-200">
                         <p className="text-sm text-gray-600 mb-2 font-poppins">Select specific services:</p>
                         <div className="flex flex-wrap justify-start gap-1.5 sm:gap-2">
@@ -963,6 +1043,13 @@ export default function EditServiceRequestPage({
 
   return (
     <ClientDashboardLayout profileData={{ firstName: displayName, photo: null }} basePath={BASE_PATH} roleLabel="Support Coordinator">
+      {/* Full-screen save overlay */}
+      {isSaving && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-3" />
+          <p className="text-gray-700 font-medium font-poppins text-sm">Saving changes…</p>
+        </div>
+      )}
       <div className="p-6 md:p-8 max-w-4xl">
         {/* Header */}
         <div className="mb-6">

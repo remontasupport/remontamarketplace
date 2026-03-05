@@ -434,7 +434,7 @@ export default function EditParticipantModal({
                 {!showRelationship && (
                   <div>
                     <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
-                      Relationship
+                      Relationship with the client
                     </label>
                     <div className="relative">
                       <button
