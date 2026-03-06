@@ -759,6 +759,18 @@ async function searchWithDistance(params: FilterParams): Promise<PaginatedRespon
 // API ROUTE HANDLER
 // ============================================================================
 
+// Response cache TTL — 60s is fresh enough for an admin panel
+const RESPONSE_CACHE_TTL = 60
+
+/** Stable cache key from query params — sorted so param order doesn't matter */
+function buildCacheKey(searchParams: URLSearchParams): string {
+  const sorted = [...searchParams.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&')
+  return `admin:contractors:v1:${sorted || 'default'}`
+}
+
 /**
  * GET /api/admin/contractors
  * Search workers with advanced filtering
@@ -770,26 +782,36 @@ export async function GET(request: NextRequest) {
     // Require ADMIN role
     await requireRole(UserRole.ADMIN)
 
-    // Parse filter parameters
     const searchParams = request.nextUrl.searchParams
-    const params = parseFilterParams(searchParams)
 
-    // Determine if distance filtering is needed
-    // Distance filtering is used when:
-    // 1. Location is provided, AND
-    // 2. Within has any value (including "none" which defaults to 500 km)
+    // Check Redis cache first — serves repeated queries instantly
+    const cacheKey = buildCacheKey(searchParams)
+    const cached = await getCached<PaginatedResponse>(cacheKey)
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'X-Response-Time': `${Date.now() - startTime}ms`,
+          'X-Cache': 'HIT',
+        },
+      })
+    }
+
+    const params = parseFilterParams(searchParams)
     const hasDistanceFilter = params.location && params.location.trim() !== ''
 
-    // Execute appropriate search strategy
     const response = hasDistanceFilter
       ? await searchWithDistance(params)
       : await searchStandard(params)
+
+    // Cache response — fire and forget, don't block the reply
+    setCached(cacheKey, response, RESPONSE_CACHE_TTL).catch(() => {})
 
     const duration = Date.now() - startTime
 
     return NextResponse.json(response, {
       headers: {
         'X-Response-Time': `${duration}ms`,
+        'X-Cache': 'MISS',
       },
     })
 
@@ -797,7 +819,6 @@ export async function GET(request: NextRequest) {
     const duration = Date.now() - startTime
     const errorMsg = error instanceof Error ? error.message : 'Unknown error'
 
-    // Log detailed error for debugging
     console.error('[Admin Contractors API] Error:', {
       message: errorMsg,
       stack: error instanceof Error ? error.stack : undefined,
@@ -809,16 +830,13 @@ export async function GET(request: NextRequest) {
         success: false,
         error: 'Failed to fetch workers',
         message: errorMsg,
-        // Include stack trace in development
         ...(process.env.NODE_ENV === 'development' && {
           stack: error instanceof Error ? error.stack : undefined,
         }),
       },
       {
         status: 500,
-        headers: {
-          'X-Response-Time': `${duration}ms`,
-        },
+        headers: { 'X-Response-Time': `${duration}ms` },
       }
     )
   }
