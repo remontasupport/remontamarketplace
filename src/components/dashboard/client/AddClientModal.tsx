@@ -199,64 +199,50 @@ export default function AddClientModal({
     setError(null);
     setIsLoading(true);
 
-    const isNdis = formData.fundingType === "NDIS";
-    const hasNdisData = isNdis && !isNdisSkipped;
+    // Resolve once — used for both the API payload and the onAdd callback
+    const resolvedRelationship = showRelationship
+      ? "MYSELF"
+      : formData.relationshipToClient === "OTHER"
+        ? otherRelationshipText.trim() || "OTHER"
+        : formData.relationshipToClient || null;
 
-    // Build additionalInfo: merge NDIS details + free-text notes
-    let additionalInfoPayload: string | null = formData.additionalInfo || null;
-    if (hasNdisData) {
-      const ndis = formData.ndisDetails;
-      const hasAnyNdisField = Object.values(ndis).some((v) => v.trim() !== "");
-      if (hasAnyNdisField) {
-        additionalInfoPayload = JSON.stringify({
-          notes: formData.additionalInfo || null,
-          ndisDetails: ndis,
-        });
-      }
-    }
+    // Build additionalInfo: embed NDIS details when NDIS is selected and not skipped
+    const ndis = formData.ndisDetails;
+    const hasNdisData = formData.fundingType === "NDIS" && !isNdisSkipped;
+    const additionalInfoPayload: string | null =
+      hasNdisData && Object.values(ndis).some((v) => v.trim() !== "")
+        ? JSON.stringify({ notes: formData.additionalInfo || null, ndisDetails: ndis })
+        : formData.additionalInfo || null;
 
     try {
       const response = await fetch("/api/client/participants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          dateOfBirth: formData.dateOfBirth || null,
-          gender: formData.gender || null,
-          // When showRelationship=true the client is adding their own details
-          relationshipToClient: showRelationship ? "MYSELF" : (
-            formData.relationshipToClient === "OTHER"
-              ? (otherRelationshipText.trim() || "OTHER")
-              : (formData.relationshipToClient || null)
-          ),
-          fundingType: formData.fundingType || null,
-          conditions: formData.conditions,
-          additionalInfo: additionalInfoPayload,
+          firstName:            formData.firstName,
+          lastName:             formData.lastName,
+          dateOfBirth:          formData.dateOfBirth || null,
+          gender:               formData.gender || null,
+          relationshipToClient: resolvedRelationship,
+          fundingType:          formData.fundingType || null,
+          conditions:           formData.conditions,
+          additionalInfo:       additionalInfoPayload,
         }),
       });
 
       const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to add client");
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to add client");
-      }
-
-      const resolvedRelationship = showRelationship ? "MYSELF" : (
-        formData.relationshipToClient === "OTHER"
-          ? (otherRelationshipText.trim() || "OTHER")
-          : (formData.relationshipToClient || null)
-      );
       onAdd({
-        id: result.data.id,
-        firstName: result.data.firstName,
-        lastName: result.data.lastName,
-        dateOfBirth: formData.dateOfBirth || null,
-        gender: formData.gender || null,
+        id:                   result.data.id,
+        firstName:            result.data.firstName,
+        lastName:             result.data.lastName,
+        dateOfBirth:          formData.dateOfBirth || null,
+        gender:               formData.gender || null,
         relationshipToClient: resolvedRelationship,
-        fundingType: formData.fundingType || null,
-        conditions: formData.conditions,
-        additionalInfo: additionalInfoPayload,
+        fundingType:          formData.fundingType || null,
+        conditions:           formData.conditions,
+        additionalInfo:       additionalInfoPayload,
       });
       onClose();
     } catch (err) {
