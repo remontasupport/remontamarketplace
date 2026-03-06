@@ -66,9 +66,7 @@ function toTitleCase(str: string): string {
     .join(' ');
 }
 
-/**
- * Maps frontend service names (kebab-case) to database format (Title Case)
- */
+/** Maps frontend service names (kebab-case) to database format (Title Case) */
 const SERVICE_NAME_MAP: Record<string, string> = {
   'support-worker': 'Support Worker',
   'therapeutic-supports': 'Therapeutic Supports',
@@ -77,7 +75,16 @@ const SERVICE_NAME_MAP: Record<string, string> = {
   'cleaning-services': 'Cleaning Services',
   'nursing-services': 'Nursing Services',
   'home-yard-maintenance': 'Home and Yard Maintenance',
-};
+}
+
+/** Maps frontend experience display names to database JSON keys */
+const EXPERIENCE_KEY_MAP: Record<string, string> = {
+  'Aged Care': 'aged-care',
+  'Chronic medical conditions': 'chronic-medical',
+  'Disability': 'disability',
+  'Mental health': 'mental-health',
+  'Working with Children': 'working-with-children',
+}
 
 // ============================================================================
 // FILTER REGISTRY PATTERN (No If-Statements!)
@@ -304,14 +311,6 @@ const filterRegistry: Record<string, FilterBuilder> = {
   },
 
   /**
-   * Location Filter - REMOVED
-   * Location field is now ONLY used for distance filtering
-   * When "Within" = "None", all workers are shown regardless of location
-   * When "Within" = distance value, location is used for geocoding and distance calc
-   */
-  location: (params) => null,
-
-  /**
    * Document Categories Filter (Multi-select)
    * Filters workers who have documents in specific categories
    * Uses indexed relation for fast queries
@@ -351,100 +350,36 @@ const filterRegistry: Record<string, FilterBuilder> = {
 
   /**
    * Requirement Types Filter (Multi-select)
-   * Filters workers who have specific document types
-   *
-   * Logic: OR within the same filter (worker has ANY of the selected documents)
-   * Uses optimized indexed query for maximum performance
-   *
-   * Example: If selecting ["driver-license-vehicle", "police-check"]
-   * Returns: Workers who have either document (or both)
-   *
-   * Performance: O(log n) with requirementType index + compound index
-   *
-   * IMPORTANT: Uses requirementType (Document.id) for querying
-   * Examples: "driver-license-vehicle", "police-check", "worker-screening-check"
+   * Workers who have ANY of the selected document types.
+   * Uses IN clause — PostgreSQL optimises IN('x') to = 'x' for single values.
    */
   requirementTypes: (params) => {
-    if (!params.requirementTypes || params.requirementTypes.length === 0) return null;
-    // For single document, use simple query (fastest)
-    if (params.requirementTypes.length === 1) {
-      return {
-        verificationRequirements: {
-          some: {
-            requirementType: params.requirementTypes[0]
-          }
-        }
-      };
-    }
-
-    // For multiple documents, use IN clause (optimized with index)
-    // This finds workers who have AT LEAST ONE of the selected documents
+    if (!params.requirementTypes?.length) return null
     return {
       verificationRequirements: {
-        some: {
-          requirementType: {
-            in: params.requirementTypes
-          }
-        }
+        some: { requirementType: { in: params.requirementTypes } }
       }
-    };
+    }
   },
 
   /**
    * Experience With Filter (Multi-select)
-   * Filters workers who have experience in specific areas
-   * Queries WorkerAdditionalInfo.experience JSON column
-   *
-   * The experience column stores JSON like:
-   * {
-   *   "aged-care": { "isPersonal": false, "isProfessional": true, ... },
-   *   "disability": { "isPersonal": false, "isProfessional": true, ... },
-   *   ...
-   * }
-   *
-   * Frontend values map to JSON keys:
-   * - "Aged Care" → "aged-care"
-   * - "Chronic medical conditions" → "chronic-medical"
-   * - "Disability" → "disability"
-   * - "Mental health" → "mental-health"
-   * - "Working with Children" → "working-with-children"
-   *
-   * Logic: AND - workers must have ALL of the selected experience types
+   * Workers must have ALL selected experience types (AND logic).
+   * Queries WorkerAdditionalInfo.experience JSON column.
+   * Uses module-level EXPERIENCE_KEY_MAP — not recreated per call.
    */
   experienceWith: (params) => {
-    if (!params.experienceWith || params.experienceWith.length === 0) return null;
-
-    // Map frontend display names to database JSON keys
-    const experienceKeyMap: Record<string, string> = {
-      'Aged Care': 'aged-care',
-      'Chronic medical conditions': 'chronic-medical',
-      'Disability': 'disability',
-      'Mental health': 'mental-health',
-      'Working with Children': 'working-with-children',
-    };
-
-    // Build AND conditions - worker must have ALL selected experience types
-    const experienceConditions = params.experienceWith.map(exp => {
-      const jsonKey = experienceKeyMap[exp] || exp.toLowerCase().replace(/\s+/g, '-');
-      return {
+    if (!params.experienceWith?.length) return null
+    return {
+      AND: params.experienceWith.map(exp => ({
         workerAdditionalInfo: {
           experience: {
-            path: [jsonKey],
+            path: [EXPERIENCE_KEY_MAP[exp] ?? exp.toLowerCase().replace(/\s+/g, '-')],
             not: Prisma.DbNull
           }
         }
-      };
-    });
-
-    // If only one experience type, return simple condition
-    if (experienceConditions.length === 1) {
-      return experienceConditions[0];
+      }))
     }
-
-    // Multiple experience types - use AND (worker must have ALL)
-    return {
-      AND: experienceConditions
-    };
   },
 }
 
@@ -453,40 +388,15 @@ const filterRegistry: Record<string, FilterBuilder> = {
 // ============================================================================
 
 /**
- * Builds WHERE clause from active filters
- * Uses functional composition to merge filters dynamically
+ * Builds the Prisma WHERE clause from all active filters.
  *
- * FILTER COMBINATION LOGIC:
- * -------------------------
- * - Within same filter type: OR logic (any match)
- *   Example: requirementTypes = ["driver-license-vehicle", "police-check"]
- *   Result: Workers with Driver's License OR Police Check
+ * Combination logic:
+ *   - Filters of the same type use OR internally (e.g. requirementTypes IN [...])
+ *   - Different filter types are ANDed together via the top-level AND array
  *
- * - Across different filter types: AND logic (all must match)
- *   Example: requirementTypes = ["driver-license-vehicle"] + documentStatuses = ["APPROVED"]
- *   Result: Workers with Driver's License AND status is APPROVED
- *
- * HOW REQUIREMENT TYPES FILTERING WORKS:
- * ---------------------------------------
- * 1. Filter options come from Document table (master list of all possible documents)
- * 2. Each Document has: id (kebab-case), name (display), category
- *    Example: { id: "driver-license-vehicle", name: "Driver's License", category: "TRANSPORT" }
- * 3. Frontend shows Document.name in dropdown, sends Document.id as value
- * 4. Backend queries VerificationRequirement.requirementType = Document.id
- * 5. This finds all workers who have uploaded that specific document type
- *
- * PERFORMANCE OPTIMIZATIONS:
- * --------------------------
- * 1. Uses indexed fields (requirementType, status, documentCategory, workerProfileId)
- * 2. Compound indexes for common combinations (workerProfileId + requirementType)
- * 3. Executes count and data queries in parallel
- * 4. Uses database-level filtering (no post-processing)
- *
- * QUERY COMPLEXITY:
- * -----------------
- * - Simple filters: O(log n) with indexes
- * - Multiple filters: O(log n * m) where m = number of active filters
- * - Expected query time: < 100ms for 10k+ records
+ * The AND array composition prevents the silent key-overwrite bug that spread
+ * merging causes when multiple filters target the same relation field
+ * (e.g. documentCategories + documentStatuses both targeting verificationRequirements).
  */
 function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput {
   const baseCondition: Prisma.WorkerProfileWhereInput = {
@@ -592,158 +502,77 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lng: nu
 // HELPER FUNCTIONS
 // ============================================================================
 
-/**
- * Transform WorkerService records to legacy services array format
- * Extracts unique category names for backward compatibility
- */
 function transformWorkerServices(workerServices: Array<{ categoryName: string }>): string[] {
-  const uniqueCategories = new Set<string>();
-  workerServices.forEach(ws => uniqueCategories.add(ws.categoryName));
-  return Array.from(uniqueCategories);
+  return [...new Set(workerServices.map(ws => ws.categoryName))]
 }
 
-/**
- * Calculate age from date of birth string
- * Supports various date formats (YYYY-MM-DD, DD/MM/YYYY, etc.)
- */
 function calculateAge(dateOfBirth: string): number | null {
-  try {
-    const dob = new Date(dateOfBirth);
-    if (isNaN(dob.getTime())) return null;
+  const dob = new Date(dateOfBirth)
+  if (isNaN(dob.getTime())) return null
 
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
+  const today = new Date()
+  let age = today.getFullYear() - dob.getFullYear()
+  const m = today.getMonth() - dob.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
 
-    // Adjust if birthday hasn't occurred this year yet
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-
-    return age >= 0 ? age : null;
-  } catch (error) {
-    return null;
-  }
+  return age >= 0 ? age : null
 }
 
-/**
- * Parse filter parameters from URL
- */
 function parseFilterParams(searchParams: URLSearchParams): FilterParams {
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10)))
-  const search = searchParams.get('search') || undefined
-  const sortBy = searchParams.get('sortBy') || 'createdAt'
-  const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
-
-  // Advanced filters
-  const location = searchParams.get('location') || undefined
-  const typeOfSupport = searchParams.get('typeOfSupport') || undefined
-  const gender = searchParams.get('gender') || undefined
-  const hasVehicle = searchParams.get('hasVehicle') || undefined
-  const workerType = searchParams.get('workerType') || undefined
-  const age = searchParams.get('age') || undefined
-  const within = searchParams.get('within') || 'none'
-
-  // Parse languages (comma-separated)
-  const languagesParam = searchParams.get('languages')
-  const languages = languagesParam
-    ? languagesParam.split(',').map(l => l.trim()).filter(Boolean)
-    : []
-
-  // Parse therapeutic subcategories (comma-separated)
-  const therapeuticSubcategoriesParam = searchParams.get('therapeuticSubcategories')
-  const therapeuticSubcategories = therapeuticSubcategoriesParam
-    ? therapeuticSubcategoriesParam.split(',').map(s => s.trim()).filter(Boolean)
-    : []
-
-  // Parse document filters (NEW - comma-separated arrays)
-  const documentCategoriesParam = searchParams.get('documentCategories')
-  const documentCategories = documentCategoriesParam
-    ? documentCategoriesParam.split(',').map(c => c.trim()).filter(Boolean)
-    : []
-
-  const documentStatusesParam = searchParams.get('documentStatuses')
-  const documentStatuses = documentStatusesParam
-    ? documentStatusesParam.split(',').map(s => s.trim()).filter(Boolean)
-    : []
-
-  const requirementTypesParam = searchParams.get('requirementTypes')
-  const requirementTypes = requirementTypesParam
-    ? requirementTypesParam.split(',').map(t => t.trim()).filter(Boolean)
-    : []
-
-  // Parse experience with filter (comma-separated)
-  const experienceWithParam = searchParams.get('experienceWith')
-  const experienceWith = experienceWithParam
-    ? experienceWithParam.split(',').map(e => e.trim()).filter(Boolean)
-    : []
+  const get = (key: string) => searchParams.get(key)
+  const parseArr = (key: string) =>
+    (get(key) ?? '').split(',').map(s => s.trim()).filter(Boolean)
 
   return {
-    page,
-    pageSize,
-    search,
-    sortBy,
-    sortOrder,
-    location,
-    typeOfSupport,
-    gender,
-    hasVehicle,
-    workerType,
-    languages,
-    age,
-    within,
-    therapeuticSubcategories,
-    documentCategories,
-    documentStatuses,
-    requirementTypes,
-    experienceWith,
+    page:     Math.max(1, parseInt(get('page') ?? '1', 10)),
+    pageSize: Math.min(100, Math.max(1, parseInt(get('pageSize') ?? '20', 10))),
+    sortBy:   get('sortBy') || 'createdAt',
+    sortOrder: get('sortOrder') === 'asc' ? 'asc' : 'desc',
+    search:        get('search')       || undefined,
+    location:      get('location')     || undefined,
+    typeOfSupport: get('typeOfSupport')|| undefined,
+    gender:        get('gender')       || undefined,
+    hasVehicle:    get('hasVehicle')   || undefined,
+    workerType:    get('workerType')   || undefined,
+    age:           get('age')          || undefined,
+    within:        get('within')       || 'none',
+    languages:                 parseArr('languages'),
+    therapeuticSubcategories:  parseArr('therapeuticSubcategories'),
+    documentCategories:        parseArr('documentCategories'),
+    documentStatuses:          parseArr('documentStatuses'),
+    requirementTypes:          parseArr('requirementTypes'),
+    experienceWith:            parseArr('experienceWith'),
   }
 }
 
-/**
- * Get applied filters for response
- */
 function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
   const applied: Partial<FilterParams> = {}
 
-  if (params.search) applied.search = params.search
+  // String filters — include only when set and not the default sentinel value
+  const stringChecks: Array<[keyof FilterParams, string]> = [
+    ['typeOfSupport', 'all'],
+    ['gender',        'all'],
+    ['hasVehicle',    'all'],
+    ['workerType',    'all'],
+    ['age',           'all'],
+    ['within',        'none'],
+  ]
+  for (const [key, sentinel] of stringChecks) {
+    const val = params[key]
+    if (val && val !== sentinel) (applied as any)[key] = val
+  }
+
+  if (params.search)   applied.search   = params.search
   if (params.location) applied.location = params.location
-  if (params.typeOfSupport && params.typeOfSupport !== 'all') {
-    applied.typeOfSupport = params.typeOfSupport
-  }
-  if (params.gender && params.gender !== 'all') {
-    applied.gender = params.gender
-  }
-  if (params.hasVehicle && params.hasVehicle !== 'all') {
-    applied.hasVehicle = params.hasVehicle
-  }
-  if (params.workerType && params.workerType !== 'all') {
-    applied.workerType = params.workerType
-  }
-  if (params.languages && params.languages.length > 0) {
-    applied.languages = params.languages
-  }
-  if (params.age && params.age !== 'all') {
-    applied.age = params.age
-  }
-  if (params.within && params.within !== 'none') {
-    applied.within = params.within
-  }
-  if (params.therapeuticSubcategories && params.therapeuticSubcategories.length > 0) {
-    applied.therapeuticSubcategories = params.therapeuticSubcategories
-  }
-  if (params.documentCategories && params.documentCategories.length > 0) {
-    applied.documentCategories = params.documentCategories
-  }
-  if (params.documentStatuses && params.documentStatuses.length > 0) {
-    applied.documentStatuses = params.documentStatuses
-  }
-  if (params.requirementTypes && params.requirementTypes.length > 0) {
-    applied.requirementTypes = params.requirementTypes
-  }
-  if (params.experienceWith && params.experienceWith.length > 0) {
-    applied.experienceWith = params.experienceWith
+
+  // Array filters — include only when non-empty
+  const arrKeys: Array<keyof FilterParams> = [
+    'languages', 'therapeuticSubcategories', 'documentCategories',
+    'documentStatuses', 'requirementTypes', 'experienceWith',
+  ]
+  for (const key of arrKeys) {
+    const val = params[key] as string[]
+    if (val?.length) (applied as any)[key] = val
   }
 
   return applied
