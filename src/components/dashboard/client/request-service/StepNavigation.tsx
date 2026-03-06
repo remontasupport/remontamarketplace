@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useRequestService, STEPS } from "./RequestServiceContext";
+import { BRAND_COLORS } from "@/lib/constants";
 
 interface StepNavigationProps {
   showPrevious?: boolean;
@@ -69,14 +70,8 @@ export default function StepNavigation({
             type="button"
             onClick={handleNext}
             disabled={isSubmitting}
-            className={`
-              w-full sm:w-auto sm:ml-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors
-              ${isLastStep
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-indigo-600 hover:bg-indigo-700 text-white"
-              }
-              ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""}
-            `}
+            className={`w-full sm:w-auto sm:ml-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-opacity text-white ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:opacity-90"}`}
+            style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
           >
             {isSubmitting ? (
               <>

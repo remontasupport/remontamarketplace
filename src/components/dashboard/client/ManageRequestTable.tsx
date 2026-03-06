@@ -200,16 +200,19 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     }
   }
 
+  const closeCancelModal = () => {
+    setCancelTarget(null)
+    setCancelStep(1)
+    setCancelReason('')
+    setCancelDetails('')
+  }
+
   const handleCancel = (request: ServiceRequest) => {
-    if (request.status === 'ACTIVE') {
-      // Show confirmation modal for active requests
-      setCancelTarget(request)
-      setCancelStep(1)
-      setCancelReason('')
-      setCancelDetails('')
-    } else {
+    if (request.status !== 'ACTIVE') {
       submitCancel(request.id)
+      return
     }
+    setCancelTarget(request)
   }
 
   const fireActionWebhook = (action: 'Cancel' | 'Archive' | 'Renew', requestId: string) => {
@@ -220,7 +223,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     }).catch(() => {})
   }
 
-  const submitCancel = async (requestId: string, reason?: { reason: string; details: string; initiatedBy: string }) => {
+  const submitCancel = async (requestId: string, reason?: { reason: string; details: string }) => {
     setIsCancellingRequest(requestId)
     try {
       const res = await fetch(`/api/client/service-request/${requestId}`, {
@@ -233,8 +236,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
         setRequests((prev) =>
           prev.map((r) => r.id === requestId ? { ...r, status: 'CANCELLED' as ServiceRequestStatus } : r)
         )
-        setCancelTarget(null)
-        fireActionWebhook('Cancel', requestId)
+        closeCancelModal()
         router.refresh()
       }
     } catch {
@@ -264,23 +266,20 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     }
   }
 
-  const handleArchive = (request: ServiceRequest) => {
-    setArchiveTarget(request)
-  }
-
   const submitArchive = async () => {
     if (!archiveTarget) return
-    fireActionWebhook('Archive', archiveTarget.id)
     setIsArchiving(archiveTarget.id)
+    const targetId = archiveTarget.id
     try {
-      const res = await fetch(`/api/client/service-request/${archiveTarget.id}`, {
+      const res = await fetch(`/api/client/service-request/${targetId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ARCHIVED' }),
       })
       const json = await res.json()
       if (json.success) {
-        setRequests((prev) => prev.filter((r) => r.id !== archiveTarget.id))
+        fireActionWebhook('Archive', targetId)
+        setRequests((prev) => prev.filter((r) => r.id !== targetId))
         setArchiveTarget(null)
       }
     } catch {
@@ -382,12 +381,11 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
 
                 <button
-                  onClick={() => handleArchive(request)}
-                  disabled={isArchiving === request.id}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-orange-500 rounded-lg transition-colors hover:bg-white disabled:opacity-50"
+                  onClick={() => setArchiveTarget(request)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-orange-500 rounded-lg transition-colors hover:bg-white"
                 >
                   <ArchiveBoxArrowDownIcon className="w-4 h-4" />
-                  {isArchiving === request.id ? 'Archiving…' : 'Archive'}
+                  Archive
                 </button>
               </div>
             </div>
@@ -473,12 +471,11 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                         Edit
                       </button>
                       <button
-                        onClick={() => handleArchive(request)}
-                        disabled={isArchiving === request.id}
-                        className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors disabled:opacity-50"
+                        onClick={() => setArchiveTarget(request)}
+                        className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors"
                       >
                         <ArchiveBoxArrowDownIcon className="w-4 h-4" />
-                        {isArchiving === request.id ? 'Archiving...' : 'Archive'}
+                        Archive
                       </button>
                     </div>
                   </td>
@@ -692,7 +689,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
       {/* Cancel Confirmation Modal (ACTIVE requests only) */}
       {cancelTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setCancelTarget(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={closeCancelModal} />
 
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
 
@@ -713,7 +710,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 </p>
                 <div className="flex gap-3 justify-end">
                   <button
-                    onClick={() => setCancelTarget(null)}
+                    onClick={closeCancelModal}
                     className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                   >
                     Go Back
@@ -787,7 +784,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                     Back
                   </button>
                   <button
-                    onClick={() => submitCancel(cancelTarget.id, { reason: cancelReason, details: cancelDetails, initiatedBy: '' })}
+                    onClick={() => submitCancel(cancelTarget.id, { reason: cancelReason, details: cancelDetails })}
                     disabled={!cancelReason || isCancellingRequest === cancelTarget.id}
                     className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg bg-red-500 hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >

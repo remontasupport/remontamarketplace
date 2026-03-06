@@ -328,22 +328,13 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
 
       case "when":
         if (formData.whenData.frequency === "one-time") {
-          if (!formData.whenData.specificDate) {
-            errors.push("Please select the date for the support session");
-          }
-          const startTime = formData.whenData.preferredDays.monday.startTime;
-          const endTime = formData.whenData.preferredDays.monday.endTime;
-          if (startTime && !endTime) {
-            errors.push("Please enter an end time");
-          } else if (!startTime && endTime) {
-            errors.push("Please enter a start time");
-          } else if (startTime && endTime && endTime <= startTime) {
-            errors.push("End time must be after start time");
-          }
+          if (!formData.whenData.specificDate) errors.push("Please select the date for the support session");
+          const { startTime, endTime } = formData.whenData.preferredDays.monday;
+          if (startTime && !endTime) errors.push("Please enter an end time");
+          if (!startTime && endTime) errors.push("Please enter a start time");
+          if (startTime && endTime && endTime <= startTime) errors.push("End time must be after start time");
         } else {
-          if (!formData.whenData.startPreference) {
-            errors.push("Please select when you'd like to start");
-          }
+          if (!formData.whenData.startPreference) errors.push("Please select when you'd like to start");
         }
         break;
 
@@ -398,41 +389,29 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
 
   // Validate all steps and return first error with step index
   const validateAllSteps = useCallback((): { isValid: boolean; error: string | null; stepIndex: number | null } => {
-    // Step 0: Services (what)
-    if (formData.selectedCategories.length === 0) {
+    if (formData.selectedCategories.length === 0)
       return { isValid: false, error: "Please select at least one service", stepIndex: 0 };
-    }
-    if (!formData.whatAdditionalInfo.trim()) {
+    if (!formData.whatAdditionalInfo.trim())
       return { isValid: false, error: "Please tell us what you're looking for", stepIndex: 0 };
-    }
-
-    // Step 1: Location (where)
-    if (!formData.locationData.suburb || !formData.locationData.state || !formData.locationData.postalCode) {
+    if (!formData.locationData.suburb || !formData.locationData.state || !formData.locationData.postalCode)
       return { isValid: false, error: "Please select a location", stepIndex: 1 };
-    }
 
-    // Step 2: Schedule (when)
     if (formData.whenData.frequency === "one-time") {
-      if (!formData.whenData.specificDate) {
+      if (!formData.whenData.specificDate)
         return { isValid: false, error: "Please select the date for the support session", stepIndex: 2 };
-      }
-      const startTime = formData.whenData.preferredDays.monday.startTime;
-      const endTime = formData.whenData.preferredDays.monday.endTime;
-      if (startTime && !endTime) {
+      const { startTime, endTime } = formData.whenData.preferredDays.monday;
+      if (startTime && !endTime)
         return { isValid: false, error: "Please enter an end time", stepIndex: 2 };
-      } else if (!startTime && endTime) {
+      if (!startTime && endTime)
         return { isValid: false, error: "Please enter a start time", stepIndex: 2 };
-      } else if (startTime && endTime && endTime <= startTime) {
+      if (startTime && endTime && endTime <= startTime)
         return { isValid: false, error: "End time must be after start time", stepIndex: 2 };
-      }
     } else {
-      if (!formData.whenData.startPreference) {
+      if (!formData.whenData.startPreference)
         return { isValid: false, error: "Please select when you'd like to start", stepIndex: 2 };
-      }
-      // Check preferred days for invalid time ranges
       if (formData.whenData.scheduling === "preferred") {
         const invalidDay = Object.entries(formData.whenData.preferredDays).find(
-          ([_, schedule]) => schedule.enabled && schedule.startTime && schedule.endTime && schedule.endTime <= schedule.startTime
+          ([_, s]) => s.enabled && s.startTime && s.endTime && s.endTime <= s.startTime
         );
         if (invalidDay) {
           const dayLabel = invalidDay[0].charAt(0).toUpperCase() + invalidDay[0].slice(1);
@@ -441,10 +420,8 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
       }
     }
 
-    // Require a selected client
-    if (!selectedParticipantId) {
+    if (!selectedParticipantId)
       return { isValid: false, error: "Please select a client before submitting", stepIndex: 0 };
-    }
 
     return { isValid: true, error: null, stepIndex: null };
   }, [formData, selectedParticipantId]);
@@ -454,25 +431,15 @@ export function RequestServiceProvider({ children, defaultParticipantId, default
     setIsSubmitting(true);
     setSubmitError(null);
 
-    // Validate all steps before submission
     const validation = validateAllSteps();
-    if (!validation.isValid && validation.error && validation.stepIndex !== null) {
+    if (!validation.isValid) {
       setSubmitError(validation.error);
       setIsSubmitting(false);
-      // Navigate to the step with the error
-      const errorStep = STEPS[validation.stepIndex];
-      router.push(`${basePath}?section=${errorStep.section}`);
+      router.push(`${basePath}?section=${STEPS[validation.stepIndex!].section}`);
       return false;
     }
 
     try {
-      // Hard guard — selectedParticipantId must be a non-empty string
-      if (!selectedParticipantId) {
-        setSubmitError("Please select a client before submitting");
-        setIsSubmitting(false);
-        return false;
-      }
-
       // Build location string
       const locationParts = [
         formData.locationData.suburb,

@@ -15,6 +15,7 @@ import { authOptions } from '@/lib/auth.config'
 import { authPrisma } from '@/lib/auth-prisma'
 import { UserRole } from '@/types/auth'
 import { z } from 'zod'
+import { getOrFetch, invalidateCache, CACHE_KEYS, CACHE_TTL } from '@/lib/redis'
 
 const ALLOWED_ROLES = new Set([UserRole.CLIENT, UserRole.COORDINATOR])
 
@@ -49,20 +50,24 @@ export async function GET() {
     const auth = await authorizeUser()
     if ('error' in auth) return auth.error
 
-    // Raw SQL to avoid Prisma enum issues with ARCHIVED service request status
+    const userId = auth.session.user.id
     type RawRow = { id: string; firstName: string; lastName: string; hasPendingRequest: boolean }
-    const participants = await authPrisma.$queryRaw<RawRow[]>`
-      SELECT
-        p.id,
-        p."firstName",
-        p."lastName",
-        COALESCE(BOOL_OR(sr.status IN ('PENDING', 'MATCHED', 'ACTIVE')), false) AS "hasPendingRequest"
-      FROM participants p
-      LEFT JOIN service_requests sr ON sr."participantId" = p.id
-      WHERE p."userId" = ${auth.session.user.id}
-      GROUP BY p.id, p."firstName", p."lastName", p."createdAt"
-      ORDER BY p."createdAt" DESC
-    `
+    const participants = await getOrFetch<RawRow[]>(
+      CACHE_KEYS.participantsList(userId),
+      () => authPrisma.$queryRaw<RawRow[]>`
+        SELECT
+          p.id,
+          p."firstName",
+          p."lastName",
+          COALESCE(BOOL_OR(sr.status IN ('PENDING', 'MATCHED', 'ACTIVE')), false) AS "hasPendingRequest"
+        FROM participants p
+        LEFT JOIN service_requests sr ON sr."participantId" = p.id
+        WHERE p."userId" = ${userId}
+        GROUP BY p.id, p."firstName", p."lastName", p."createdAt"
+        ORDER BY p."createdAt" DESC
+      `,
+      CACHE_TTL.PARTICIPANTS_LIST
+    )
 
     return NextResponse.json({ success: true, data: participants })
   } catch {
@@ -112,6 +117,8 @@ export async function POST(request: NextRequest) {
         data: { firstName: data.firstName.trim(), lastName: data.lastName.trim() },
       }).catch(() => {})
     }
+
+    invalidateCache(CACHE_KEYS.participantsList(userId)).catch(() => {})
 
     authPrisma.auditLog.create({
       data: {

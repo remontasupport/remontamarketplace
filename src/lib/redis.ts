@@ -32,6 +32,8 @@ export const CACHE_TTL = {
   SESSION_DATA: 900,       // 15 minutes - session data
   ACTIVE_JOBS: 7200,       // 2 hours safety-net TTL — explicit invalidation on every sync is the
                            // primary freshness mechanism; this is just a backstop if it fails
+  CATEGORIES: 1800,        // 30 minutes - categories are semi-static, rarely change
+  PARTICIPANTS_LIST: 300,  // 5 minutes - participant list per user
 } as const;
 
 // Cache key generators
@@ -44,6 +46,8 @@ export const CACHE_KEYS = {
   completionStatus: (userId: string) => `completion_status:${CACHE_VERSION}:${userId}`,
   // Shared across ALL users — one entry, invalidated on every sync-jobs run
   activeJobs: () => `active_jobs:${CACHE_VERSION}`,
+  categories: () => `categories:${CACHE_VERSION}`,
+  participantsList: (userId: string) => `participants_list:${CACHE_VERSION}:${userId}`,
 } as const;
 
 /**

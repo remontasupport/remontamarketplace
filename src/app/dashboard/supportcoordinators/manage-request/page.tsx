@@ -25,23 +25,19 @@ export default async function SupportCoordinatorsManageRequestPage() {
     redirect("/unauthorized");
   }
 
-  // Fetch coordinator's profile for sidebar display
-  let displayName = session.user.email?.split('@')[0] || 'User';
+  const [coordinatorProfile, serviceRequests] = await Promise.all([
+    withRetry(() => authPrisma.coordinatorProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    })),
+    withRetry(() => authPrisma.serviceRequest.findMany({
+      where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
+      orderBy: { createdAt: 'desc' },
+      include: { participant: true },
+    })),
+  ]);
 
-  const coordinatorProfile = await withRetry(() => authPrisma.coordinatorProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { firstName: true },
-  }));
-  displayName = coordinatorProfile?.firstName || displayName;
-
-  // Fetch service requests for this coordinator with participant data (exclude ARCHIVED)
-  const serviceRequests = await withRetry(() => authPrisma.serviceRequest.findMany({
-    where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      participant: true,
-    },
-  }));
+  const displayName = coordinatorProfile?.firstName || session.user.email?.split('@')[0] || 'User';
 
   // Transform data for the table
   const requests = serviceRequests.map((sr) => {

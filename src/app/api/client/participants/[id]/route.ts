@@ -147,8 +147,15 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-    const auth = await authorizeParticipant(id)
-    if ('error' in auth) return auth.error
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { role, id: userId } = session.user
+    if (role !== UserRole.CLIENT && role !== UserRole.COORDINATOR) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    }
 
     const body = await request.json()
     const parsed = updateParticipantSchema.safeParse(body)
@@ -161,8 +168,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const data = parsed.data
 
-    const updatedParticipant = await authPrisma.participant.update({
-      where: { id },
+    // Single DB call: update only if owned by this user (eliminates separate findUnique)
+    const { count } = await authPrisma.participant.updateMany({
+      where: { id, userId },
       data: {
         ...(data.firstName            !== undefined && { firstName: data.firstName }),
         ...(data.lastName             !== undefined && { lastName: data.lastName }),
@@ -175,26 +183,30 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
     })
 
-    // Sync name to clientProfile — CLIENT is the participant (1:1 relationship)
-    if (auth.session.user.role === UserRole.CLIENT && (data.firstName !== undefined || data.lastName !== undefined)) {
-      await authPrisma.clientProfile.update({
-        where: { userId: auth.session.user.id },
+    if (count === 0) {
+      // Distinguish 404 (not found) from 403 (found but not owned)
+      const exists = await authPrisma.participant.findUnique({ where: { id }, select: { id: true } })
+      return exists
+        ? NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+        : NextResponse.json({ success: false, error: 'Participant not found' }, { status: 404 })
+    }
+
+    // Sync name to clientProfile — CLIENT is the participant (1:1 relationship), fire-and-forget
+    if (role === UserRole.CLIENT && (data.firstName !== undefined || data.lastName !== undefined)) {
+      authPrisma.clientProfile.update({
+        where: { userId },
         data: {
           ...(data.firstName !== undefined && { firstName: data.firstName }),
           ...(data.lastName  !== undefined && { lastName: data.lastName }),
         },
-      })
+      }).catch(() => {})
     }
 
     authPrisma.auditLog.create({
-      data: {
-        userId: auth.session.user.id,
-        action: 'PROFILE_UPDATE',
-        metadata: { type: 'PARTICIPANT_UPDATED', participantId: id },
-      },
+      data: { userId, action: 'PROFILE_UPDATE', metadata: { type: 'PARTICIPANT_UPDATED', participantId: id } },
     }).catch(() => {})
 
-    return NextResponse.json({ success: true, message: 'Participant updated successfully', data: updatedParticipant })
+    return NextResponse.json({ success: true, message: 'Participant updated successfully' })
   } catch (error) {
     console.error('[Participant API] PATCH Error:', error)
     return NextResponse.json(

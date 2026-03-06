@@ -1,12 +1,11 @@
 /**
  * Service Request API
  *
- * POST /api/client/service-request - Create a new service request with participant
- * GET /api/client/service-request - Get service requests for the current user
+ * POST /api/client/service-request - Create a new service request
+ * GET  /api/client/service-request - List service requests for the current user
  *
  * SECURITY:
  * - Requires CLIENT or COORDINATOR role
- * - Users can only view their own requests
  * - Rate limited to prevent abuse
  */
 
@@ -16,65 +15,48 @@ import { authOptions } from '@/lib/auth.config'
 import { authPrisma } from '@/lib/auth-prisma'
 import { UserRole } from '@/types/auth'
 import { applyRateLimit, publicApiRateLimit } from '@/lib/ratelimit'
-import {
-  createServiceRequestSchema,
-  formatZodErrors,
-} from '@/schema/serviceRequestSchema'
+import { createServiceRequestSchema, formatZodErrors } from '@/schema/serviceRequestSchema'
+
+const ALLOWED_ROLES = new Set([UserRole.CLIENT, UserRole.COORDINATOR])
+const VALID_STATUSES = ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] as const
+
+async function authorizeUser(request: NextRequest) {
+  try {
+    const rl = await applyRateLimit(request, publicApiRateLimit)
+    if (!rl.success) return { error: rl.response }
+  } catch {}
+
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return { error: NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 }) }
+  }
+  if (!ALLOWED_ROLES.has(session.user.role as UserRole)) {
+    return { error: NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 }) }
+  }
+  return { session }
+}
 
 // ============================================================================
-// POST - Create Service Request (with new Participant)
+// POST - Create Service Request
 // ============================================================================
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Rate limiting
-    try {
-      const rateLimitResult = await applyRateLimit(request, publicApiRateLimit)
-      if (!rateLimitResult.success) {
-        return rateLimitResult.response
-      }
-    } catch {
-      // Continue if rate limit check fails (fail open)
-    }
+    const auth = await authorizeUser(request)
+    if ('error' in auth) return auth.error
 
-    // 2. Authentication check
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // 3. Role check (CLIENT or COORDINATOR only)
-    const userRole = session.user.role
-    if (userRole !== UserRole.CLIENT && userRole !== UserRole.COORDINATOR) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
-    }
-
-    // 4. Parse and validate request body
     const body = await request.json()
-
-    const validationResult = createServiceRequestSchema.safeParse(body)
-
-    if (!validationResult.success) {
+    const parsed = createServiceRequestSchema.safeParse(body)
+    if (!parsed.success) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          details: formatZodErrors(validationResult.error),
-        },
+        { success: false, error: 'Validation failed', details: formatZodErrors(parsed.error) },
         { status: 400 }
       )
     }
 
-    const data = validationResult.data
+    const data = parsed.data
+    const { id: userId } = auth.session.user
 
-    // 5. Resolve participant — must be an existing participant owned by this user
     if (!data.participantId) {
       return NextResponse.json(
         { success: false, error: 'A participant must be selected to submit a request' },
@@ -82,162 +64,102 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existing = await authPrisma.participant.findUnique({
+    const participant = await authPrisma.participant.findUnique({
       where: { id: data.participantId },
       select: { id: true, userId: true },
     })
 
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, error: 'Participant not found' },
-        { status: 404 }
-      )
+    if (!participant) {
+      return NextResponse.json({ success: false, error: 'Participant not found' }, { status: 404 })
     }
-
-    if (existing.userId !== session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
+    if (participant.userId !== userId) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
     }
-
-    const participant = existing
 
     const result = await authPrisma.serviceRequest.create({
       data: {
-        requesterId: session.user.id,
+        requesterId:   userId,
         participantId: participant.id,
-        services: data.services,
-        details: data.details,
-        location: data.location,
-        status: 'PENDING',
+        services:      data.services,
+        details:       data.details,
+        location:      data.location,
+        status:        'PENDING',
       },
-      include: {
-        participant: true,
-      },
+      include: { participant: true },
     })
 
-    // 6. Audit log (fire-and-forget)
-    authPrisma.auditLog
-      .create({
-        data: {
-          userId: session.user.id,
-          action: 'PROFILE_UPDATE',
-          metadata: {
-            type: 'SERVICE_REQUEST_CREATED',
-            serviceRequestId: result.id,
-            participantId: result.participantId,
-            services: Object.keys(data.services),
-          },
+    authPrisma.auditLog.create({
+      data: {
+        userId,
+        action: 'PROFILE_UPDATE',
+        metadata: {
+          type:             'SERVICE_REQUEST_CREATED',
+          serviceRequestId: result.id,
+          participantId:    result.participantId,
+          services:         Object.keys(data.services),
         },
-      })
-      .catch(() => {
-        // Don't fail if audit log fails
-      })
+      },
+    }).catch(() => {})
 
-    // 7. Webhook
+    // Fire-and-forget — external latency must not block the response
     const webhookUrl = process.env.Request_Service_Webhook
     if (webhookUrl) {
-      await fetch(webhookUrl, {
+      fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: result.requesterId,
-          serviceRequestId: result.id,
-          services: result.services,
-          location: result.location,
-          details: result.details,
-          status: result.status,
-          participantId: result.participant.id,
-          firstName: result.participant.firstName,
-          lastName: result.participant.lastName,
-          dateOfBirth: result.participant.dateOfBirth ?? null,
-          gender: result.participant.gender ?? null,
+          userId:               result.requesterId,
+          serviceRequestId:     result.id,
+          services:             result.services,
+          location:             result.location,
+          details:              result.details,
+          status:               result.status,
+          participantId:        result.participant.id,
+          firstName:            result.participant.firstName,
+          lastName:             result.participant.lastName,
+          dateOfBirth:          result.participant.dateOfBirth          ?? null,
+          gender:               result.participant.gender               ?? null,
           relationshipToClient: result.participant.relationshipToClient ?? null,
-          fundingType: result.participant.fundingType ?? null,
-          conditions: result.participant.conditions,
-          additionalInfo: result.participant.additionalInfo ?? null,
+          fundingType:          result.participant.fundingType          ?? null,
+          conditions:           result.participant.conditions,
+          additionalInfo:       result.participant.additionalInfo       ?? null,
         }),
       }).catch((err) => console.error('[Webhook] Request service webhook failed:', err))
     }
 
-    // 8. Return success response
     return NextResponse.json(
-      {
-        success: true,
-        message: 'Service request created successfully',
-        data: result,
-      },
+      { success: true, message: 'Service request created successfully', data: result },
       { status: 201 }
     )
   } catch (error) {
     console.error('[Service Request API] POST Error:', error)
-
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to create service request',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { success: false, error: 'Failed to create service request', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
 }
 
 // ============================================================================
-// GET - Get Service Requests
+// GET - List Service Requests
 // ============================================================================
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Rate limiting
-    try {
-      const rateLimitResult = await applyRateLimit(request, publicApiRateLimit)
-      if (!rateLimitResult.success) {
-        return rateLimitResult.response
-      }
-    } catch {
-      // Continue if rate limit check fails (fail open)
-    }
+    const auth = await authorizeUser(request)
+    if ('error' in auth) return auth.error
 
-    // 2. Authentication check
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // 3. Role check (CLIENT or COORDINATOR only)
-    const userRole = session.user.role
-    if (userRole !== UserRole.CLIENT && userRole !== UserRole.COORDINATOR) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
-    }
-
-    // 4. Parse query parameters
     const searchParams = request.nextUrl.searchParams
-    const status = searchParams.get('status')
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+    const status   = searchParams.get('status')
+    const page     = Math.max(1, parseInt(searchParams.get('page')     || '1',  10))
     const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') || '10', 10)))
 
-    // 5. Build where clause
     const where: any = {
-      requesterId: session.user.id,
+      requesterId: auth.session.user.id,
+      // Exclude ARCHIVED — not in Prisma enum; causes deserialization error
+      status: status ? status : { in: VALID_STATUSES },
     }
 
-    if (status) {
-      where.status = status
-    } else {
-      // Exclude ARCHIVED — it's not in the Prisma enum and causes a deserialization error
-      where.status = { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] as any[] }
-    }
-
-    // 6. Execute queries in parallel
     const [total, serviceRequests] = await Promise.all([
       authPrisma.serviceRequest.count({ where }),
       authPrisma.serviceRequest.findMany({
@@ -245,15 +167,12 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
-        include: {
-          participant: true,
-        },
+        include: { participant: true },
       }),
     ])
 
     const totalPages = Math.ceil(total / pageSize)
 
-    // 7. Return response
     return NextResponse.json({
       success: true,
       data: serviceRequests,
@@ -268,13 +187,8 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('[Service Request API] GET Error:', error)
-
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch service requests',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { success: false, error: 'Failed to fetch service requests', message: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

@@ -25,23 +25,19 @@ export default async function ManageRequestPage() {
     redirect("/unauthorized");
   }
 
-  // Fetch client's profile for sidebar display
-  let displayName = session.user.email?.split('@')[0] || 'User';
+  const [clientProfile, serviceRequests] = await Promise.all([
+    withRetry(() => authPrisma.clientProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true },
+    })),
+    withRetry(() => authPrisma.serviceRequest.findMany({
+      where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
+      orderBy: { createdAt: 'desc' },
+      include: { participant: true },
+    })),
+  ]);
 
-  const clientProfile = await withRetry(() => authPrisma.clientProfile.findUnique({
-    where: { userId: session.user.id },
-    select: { firstName: true },
-  }));
-  displayName = clientProfile?.firstName || displayName;
-
-  // Fetch service requests for this user with participant data
-  const serviceRequests = await withRetry(() => authPrisma.serviceRequest.findMany({
-    where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      participant: true,
-    },
-  }));
+  const displayName = clientProfile?.firstName || session.user.email?.split('@')[0] || 'User';
 
   // Transform data for the table — pass raw user IDs, modal fetches via API
   const requests = serviceRequests.map((sr) => {
