@@ -4,6 +4,7 @@ import { Prisma } from '@/generated/auth-client'
 import { geocodeAddress } from '@/lib/geocoding'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
+import { getCached, setCached } from '@/lib/redis'
 
 // ============================================================================
 // TYPES
@@ -475,21 +476,21 @@ function getBoundingBox(lat: number, lng: number, radiusKm: number) {
   }
 }
 
-// Module-level geocode cache — reused across requests within a warm serverless instance.
-// Location strings (e.g. "Sydney NSW") rarely change coordinates, so 24h TTL is safe.
-const _geocodeCache = new Map<string, { coords: { lat: number; lng: number }; expiresAt: number }>()
-const GEOCODE_TTL_MS = 24 * 60 * 60 * 1000
+// Redis geocode cache — shared across all Vercel instances, 24h TTL.
+// Eliminates redundant Google Geocoding API calls under concurrent load.
+const GEOCODE_TTL_SECONDS = 24 * 60 * 60
 
 async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
-  const key = location.toLowerCase().trim()
-  const cached = _geocodeCache.get(key)
-  if (cached && cached.expiresAt > Date.now()) return cached.coords
+  const key = `geocode:v1:${location.toLowerCase().trim()}`
+
+  const cached = await getCached<{ lat: number; lng: number }>(key)
+  if (cached) return cached
 
   try {
     const result = await geocodeAddress(location)
     if (result) {
       const coords = { lat: result.latitude, lng: result.longitude }
-      _geocodeCache.set(key, { coords, expiresAt: Date.now() + GEOCODE_TTL_MS })
+      setCached(key, coords, GEOCODE_TTL_SECONDS).catch(() => {})
       return coords
     }
     return null
