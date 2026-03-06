@@ -78,6 +78,31 @@ interface ContractorsFilters {
 }
 
 // ============================================================================
+// DEFAULT FILTERS (module-level — stable reference for prefetching)
+// ============================================================================
+
+const DEFAULT_FILTERS: ContractorsFilters = {
+  page: 1,
+  pageSize: 6,
+  search: '',
+  sortBy: 'createdAt',
+  sortOrder: 'desc',
+  location: '',
+  typeOfSupport: 'all',
+  gender: 'all',
+  hasVehicle: 'all',
+  workerType: 'all',
+  languages: [],
+  age: 'all',
+  within: 'none',
+  therapeuticSubcategories: [],
+  documentCategories: [],
+  documentStatuses: [],
+  requirementTypes: [],
+  experienceWith: [],
+}
+
+// ============================================================================
 // API FUNCTION
 // ============================================================================
 
@@ -311,34 +336,8 @@ export default function AdminDashboard() {
 
   // State for filters (unified state) - Initialize from URL params if available
   const [filters, setFilters] = useState<ContractorsFilters>(() => {
-    const defaultFilters: ContractorsFilters = {
-      page: 1,
-      pageSize: 6,
-      search: '',
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-      // Advanced filters
-      location: '',
-      typeOfSupport: 'all',
-      gender: 'all',
-      hasVehicle: 'all',
-      workerType: 'all',
-      languages: [],
-      age: 'all',
-      within: 'none',
-      // Therapeutic subcategories filter
-      therapeuticSubcategories: [],
-      // Document filters
-      documentCategories: [],
-      documentStatuses: [],
-      requirementTypes: [],
-      // Experience filter
-      experienceWith: [],
-    }
-
-    // Parse URL params and merge with defaults
     const urlFilters = parseFiltersFromURL(searchParams)
-    return { ...defaultFilters, ...urlFilters }
+    return { ...DEFAULT_FILTERS, ...urlFilters }
   })
 
   // Initialize search input from URL as well
@@ -539,12 +538,21 @@ export default function AdminDashboard() {
     }
   }, [filters, router])
 
+  // Prefetch the default (no-filter) state on mount so "Clear Filters" is instant
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ['contractors', DEFAULT_FILTERS],
+      queryFn: () => fetchContractors(DEFAULT_FILTERS),
+      staleTime: 60000,
+    })
+  }, [queryClient])
+
   // Fetch contractors using TanStack Query
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: ['contractors', filters],
     queryFn: () => fetchContractors(filters),
-    placeholderData: keepPreviousData, // Keep previous data while fetching new page
-    staleTime: 30000, // Cache for 30 seconds
+    placeholderData: keepPreviousData,
+    staleTime: 60000, // Match Redis response cache TTL (60s)
   })
 
   // ========================================
@@ -705,26 +713,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-end gap-2 mb-4">
               <button
                 onClick={() => {
-                  setFilters({
-                    page: 1,
-                    pageSize: 6,
-                    search: '',
-                    sortBy: 'createdAt',
-                    sortOrder: 'desc',
-                    location: '',
-                    typeOfSupport: 'all',
-                    gender: 'all',
-                    hasVehicle: 'all',
-                    workerType: 'all',
-                    languages: [],
-                    age: 'all',
-                    within: 'none',
-                    therapeuticSubcategories: [],
-                    documentCategories: [],
-                    documentStatuses: [],
-                    requirementTypes: [],
-                    experienceWith: [],
-                  })
+                  setFilters(DEFAULT_FILTERS)
                   setPendingFilters({
                     location: '',
                     typeOfSupport: 'all',
