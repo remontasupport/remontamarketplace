@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { MapPinIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/constants'
 
@@ -33,6 +34,7 @@ export default function WorkerCard({
 }: WorkerCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isClamped, setIsClamped] = useState(false)
+  const [photoError, setPhotoError] = useState(false)
   const bioRef = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
@@ -50,12 +52,17 @@ export default function WorkerCard({
       {/* Header Section */}
       <div className="flex items-start gap-3 mb-3">
         {/* Avatar */}
-        {photo ? (
-          <img
-            src={photo}
-            alt={displayName}
-            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-          />
+        {photo && !photoError ? (
+          <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+              src={photo}
+              alt={displayName}
+              fill
+              sizes="48px"
+              className="object-cover"
+              onError={() => setPhotoError(true)}
+            />
+          </div>
         ) : (
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center text-white font-poppins font-semibold text-sm flex-shrink-0"

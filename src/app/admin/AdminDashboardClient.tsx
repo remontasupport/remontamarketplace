@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCategories } from '@/hooks/queries/useCategories'
+import WorkerAvatar from '@/components/ui/WorkerAvatar'
 
 // ============================================================================
 // TYPES
@@ -27,7 +28,7 @@ interface Contractor {
   longitude: number | null
   experience: string | null
   introduction: string | null
-  photos: string[]
+  photos: string | null
   createdAt: string
   updatedAt: string
   distance?: number // Only present when distance filtering is active
@@ -370,7 +371,6 @@ export default function AdminDashboard() {
 
   // Contractor modal state (isModalOpen derived from selectedContractor !== null)
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
-  const [showContactInfo, setShowContactInfo] = useState(false)
   const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
 
   // Inactive workers modal state (grouped)
@@ -567,11 +567,6 @@ export default function AdminDashboard() {
       sortOrder: prev.sortBy === sortBy && prev.sortOrder === 'asc' ? 'desc' : 'asc',
       page: 1,
     }))
-  }
-
-  const closeModal = () => {
-    setSelectedContractor(null)
-    setShowContactInfo(false)
   }
 
   const fetchInactiveWorkers = async () => {
@@ -1265,22 +1260,13 @@ export default function AdminDashboard() {
                     >
                       <div className="flex gap-4">
                         {/* Profile Photo */}
-                        <div className="flex-shrink-0">
-                          {contractor.photos ? (
-                            <img
-                              className="h-20 w-20 rounded-full object-cover border-2 border-white shadow"
-                              src={contractor.photos}
-                              alt=""
-                            />
-                          ) : (
-                            <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center border-2 border-white shadow">
-                              <span className="text-gray-500 font-semibold text-lg">
-                                {contractor.firstName?.[0]}
-                                {contractor.lastName?.[0]}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        <WorkerAvatar
+                          photo={contractor.photos}
+                          firstName={contractor.firstName}
+                          lastName={contractor.lastName}
+                          size={80}
+                          className="border-2 border-white shadow"
+                        />
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
@@ -1527,19 +1513,12 @@ export default function AdminDashboard() {
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
                       >
                         <div className="flex items-center gap-3">
-                          {worker.photos ? (
-                            <img
-                              className="h-10 w-10 rounded-full object-cover"
-                              src={worker.photos}
-                              alt=""
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                              <span className="text-gray-600 font-medium text-sm">
-                                {worker.firstName?.[0]}{worker.lastName?.[0]}
-                              </span>
-                            </div>
-                          )}
+                          <WorkerAvatar
+                            photo={worker.photos}
+                            firstName={worker.firstName}
+                            lastName={worker.lastName}
+                            size={40}
+                          />
                           <div>
                             <p className="font-medium text-gray-900">
                               {worker.firstName} {worker.lastName}

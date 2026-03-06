@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
         hostname: '*.blob.vercel-storage.com',
       },
     ],
+    // Prefer AVIF (40% smaller than WebP), fall back to WebP
+    formats: ['image/avif', 'image/webp'],
+    // Cache optimized images for 30 days on Vercel CDN
+    minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   async headers() {
     return [

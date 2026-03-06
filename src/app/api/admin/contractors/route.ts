@@ -489,60 +489,19 @@ const filterRegistry: Record<string, FilterBuilder> = {
  * - Expected query time: < 100ms for 10k+ records
  */
 function buildWhereClause(params: FilterParams): Prisma.WorkerProfileWhereInput {
-  // Base condition: Only show ACTIVE users (hide suspended/inactive workers)
   const baseCondition: Prisma.WorkerProfileWhereInput = {
-    user: {
-      status: 'ACTIVE'
-    }
+    user: { status: 'ACTIVE' }
   }
 
-  // Execute all filters and collect non-null results
   const activeFilters = Object.values(filterRegistry)
     .map(filterFn => filterFn(params))
     .filter((clause): clause is NonNullable<typeof clause> => clause !== null)
 
-  // Debug logging for WHERE clause
-  if (activeFilters.length > 0) {
-  }
+  if (activeFilters.length === 0) return baseCondition
 
-  // Edge case: No filters active - still apply base condition
-  if (activeFilters.length === 0) {
-    return baseCondition
-  }
-
-  // Separate OR filters from AND filters
-  const orFilters = activeFilters.filter(f => f.OR)
-  const andFilters = activeFilters.filter(f => !f.OR)
-
-  // If we have multiple OR filters, wrap each in AND
-  if (orFilters.length > 0) {
-    const andConditions = orFilters.map(f => ({ OR: f.OR }))
-
-    // Merge with regular AND filters + base condition
-    const mergedAndFilters = andFilters.reduce((acc, filter) => {
-      return { ...acc, ...filter }
-    }, baseCondition)
-
-    // Combine everything
-    let result
-    if (Object.keys(mergedAndFilters).length > 0) {
-      result = {
-        AND: [...andConditions, mergedAndFilters]
-      }
-    } else {
-      result = orFilters.length === 1
-        ? { ...orFilters[0], ...baseCondition }
-        : { AND: [...andConditions, baseCondition] }
-    }
-    return result;
-  }
-
-  // No OR filters, just merge AND filters with base condition
-  const result = andFilters.reduce<Prisma.WorkerProfileWhereInput>((acc, filter) => {
-    return { ...acc, ...filter }
-  }, baseCondition)
-
-  return result
+  // AND array safely composes all filters — prevents silent key overwrites
+  // when multiple filters target the same relation (e.g. verificationRequirements)
+  return { AND: [baseCondition, ...activeFilters] }
 }
 
 /**
@@ -606,30 +565,25 @@ function getBoundingBox(lat: number, lng: number, radiusKm: number) {
   }
 }
 
-/**
- * Geocode Location String
- * Converts location to coordinates using Google Geocoding API
- *
- * IMPORTANT: Uses the same geocoding service as worker registration
- * to ensure coordinate consistency and accurate distance filtering
- */
-async function geocodeLocation(
-  location: string
-): Promise<{ lat: number; lng: number } | null> {
+// Module-level geocode cache — reused across requests within a warm serverless instance.
+// Location strings (e.g. "Sydney NSW") rarely change coordinates, so 24h TTL is safe.
+const _geocodeCache = new Map<string, { coords: { lat: number; lng: number }; expiresAt: number }>()
+const GEOCODE_TTL_MS = 24 * 60 * 60 * 1000
+
+async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
+  const key = location.toLowerCase().trim()
+  const cached = _geocodeCache.get(key)
+  if (cached && cached.expiresAt > Date.now()) return cached.coords
+
   try {
-    // Use Google Geocoding API (same as worker registration)
-    // This ensures coordinates match what's stored in worker profiles
     const result = await geocodeAddress(location)
-
     if (result) {
-      return {
-        lat: result.latitude,
-        lng: result.longitude
-      }
+      const coords = { lat: result.latitude, lng: result.longitude }
+      _geocodeCache.set(key, { coords, expiresAt: Date.now() + GEOCODE_TTL_MS })
+      return coords
     }
-
     return null
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -796,6 +750,65 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
 }
 
 // ============================================================================
+// SHARED QUERY HELPERS
+// ============================================================================
+
+/** Columns fetched for every worker record — shared by both query paths */
+const workerSelect = {
+  id: true,
+  userId: true,
+  firstName: true,
+  lastName: true,
+  mobile: true,
+  gender: true,
+  age: true,
+  dateOfBirth: true,
+  languages: true,
+  workerAdditionalInfo: { select: { languages: true } },
+  workerServices: { select: { categoryName: true } },
+  user: { select: { email: true, status: true } },
+  city: true,
+  state: true,
+  postalCode: true,
+  latitude: true,
+  longitude: true,
+  experience: true,
+  introduction: true,
+  photos: true,
+  createdAt: true,
+  updatedAt: true,
+} as const
+
+/** Transforms a raw DB worker record into the API response shape */
+function transformWorker(worker: any, distanceKm?: number) {
+  const calculatedAge = worker.dateOfBirth ? calculateAge(worker.dateOfBirth) : null
+  const finalAge = calculatedAge !== null ? calculatedAge : worker.age
+
+  let finalLanguages: string[] = []
+  if (worker.workerAdditionalInfo?.languages?.length > 0) {
+    finalLanguages = worker.workerAdditionalInfo.languages
+  } else if (worker.languages?.length > 0) {
+    finalLanguages = worker.languages
+  }
+
+  const result: Record<string, unknown> = {
+    ...worker,
+    email: worker.user?.email ?? null,
+    age: finalAge,
+    languages: finalLanguages,
+    services: transformWorkerServices(worker.workerServices),
+    isActive: worker.user?.status === 'ACTIVE',
+    workerServices: undefined,
+    workerAdditionalInfo: undefined,
+    user: undefined,
+    dateOfBirth: undefined,
+  }
+
+  if (distanceKm !== undefined) result.distance = distanceKm
+  return result
+}
+
+// ============================================================================
 // MAIN QUERY FUNCTIONS
 // ============================================================================
 
@@ -803,114 +816,30 @@ function getAppliedFilters(params: FilterParams): Partial<FilterParams> {
  * Standard search (no distance filtering)
  */
 async function searchStandard(params: FilterParams): Promise<PaginatedResponse> {
-  const queryStartTime = Date.now()
   const where = buildWhereClause(params)
   const orderBy = buildOrderByClause(params.sortBy, params.sortOrder)
   const skip = (params.page - 1) * params.pageSize
 
-  // Log active filters for debugging
-  const appliedFilters = getAppliedFilters(params)
-  if (Object.keys(appliedFilters).length > 0) {
-  }
-
-  // Execute count and data query in parallel for performance
-  let total, workers;
+  let total, workers
   try {
     [total, workers] = await Promise.all([
       prisma.workerProfile.count({ where }),
-      prisma.workerProfile.findMany({
-        where,
-        orderBy,
-        skip,
-        take: params.pageSize,
-        select: {
-          id: true,
-          userId: true,
-          firstName: true,
-          lastName: true,
-          mobile: true,
-          gender: true,
-          age: true,
-          dateOfBirth: true,
-          languages: true,
-          workerAdditionalInfo: {
-            select: {
-              languages: true,
-            }
-          },
-          workerServices: {
-            select: {
-              categoryName: true,
-            }
-          },
-          user: {
-            select: {
-              email: true,
-              status: true,
-            }
-          },
-          city: true,
-          state: true,
-          postalCode: true,
-          latitude: true,
-          longitude: true,
-          experience: true,
-          introduction: true,
-          photos: true,
-          createdAt: true,
-          updatedAt: true,
-        }
-      })
-    ]);
+      prisma.workerProfile.findMany({ where, orderBy, skip, take: params.pageSize, select: workerSelect }),
+    ])
   } catch (prismaError: any) {
     console.error('[Admin Contractors] Prisma query error:', {
       message: prismaError.message,
       code: prismaError.code,
       meta: prismaError.meta,
-      stack: prismaError.stack,
-    });
-    throw new Error(`Database query failed: ${prismaError.message}`);
+    })
+    throw new Error(`Database query failed: ${prismaError.message}`)
   }
-
-  const queryDuration = Date.now() - queryStartTime
-  // Transform workerServices to legacy services array format for backward compatibility
-  const workersWithServices = workers.map(worker => {
-    // Calculate age from dateOfBirth if available, otherwise use age column
-    const calculatedAge = worker.dateOfBirth
-      ? calculateAge(worker.dateOfBirth)
-      : null;
-    const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
-
-    // Languages fallback logic:
-    // 1. Primary: Use workerAdditionalInfo.languages array if it exists and is not empty
-    // 2. Fallback: Use workerProfile.languages array
-    // 3. Default: Empty array
-    let finalLanguages: string[] = [];
-    if (worker.workerAdditionalInfo?.languages && worker.workerAdditionalInfo.languages.length > 0) {
-      finalLanguages = worker.workerAdditionalInfo.languages;
-    } else if (worker.languages && worker.languages.length > 0) {
-      finalLanguages = worker.languages;
-    }
-
-    return {
-      ...worker,
-      email: worker.user?.email || null,
-      age: finalAge,
-      languages: finalLanguages,
-      services: transformWorkerServices(worker.workerServices),
-      isActive: worker.user?.status === 'ACTIVE',
-      workerServices: undefined, // Remove from response
-      workerAdditionalInfo: undefined, // Remove from response
-      user: undefined, // Remove from response
-      dateOfBirth: undefined, // Remove from response (internal use only)
-    };
-  })
 
   const totalPages = Math.ceil(total / params.pageSize)
 
   return {
     success: true,
-    data: workersWithServices,
+    data: workers.map(w => transformWorker(w)),
     pagination: {
       total,
       page: params.page,
@@ -924,134 +853,68 @@ async function searchStandard(params: FilterParams): Promise<PaginatedResponse> 
 }
 
 /**
- * Search with distance filtering
- * Uses bounding box + Haversine for accuracy and performance
+ * Search with distance filtering — two-pass strategy:
+ *
+ * Pass 1: Fetch only { id, lat, lng } for all bounding-box candidates (no JOINs).
+ *         Apply exact Haversine filter + sort in JS on this tiny payload.
+ *
+ * Pass 2: Fetch full data only for the current page IDs (≤ pageSize rows).
+ *
+ * This prevents loading full records for every candidate and makes
+ * both total count and pagination 100% accurate.
  */
 async function searchWithDistance(params: FilterParams): Promise<PaginatedResponse> {
-  // Geocode the search location
   const coords = await geocodeLocation(params.location!)
+  if (!coords) return searchStandard({ ...params, within: 'none' })
 
-  if (!coords) {
-    // Fallback to standard search if geocoding fails
-    return searchStandard({ ...params, within: 'none' })
-  }
-
-  // Default radius: 500 km when "Within" = "None"
-  // This shows workers in a wide area while still being location-based
   const radiusKm = params.within === 'none' ? 500 : parseInt(params.within!)
   const bbox = getBoundingBox(coords.lat, coords.lng, radiusKm)
 
-  // Build base WHERE clause (all non-distance filters)
-  const where = buildWhereClause(params)
+  // Compose WHERE: base filters + bounding box pre-filter (hits lat/lng composite index)
+  const distanceWhere: Prisma.WorkerProfileWhereInput = {
+    AND: [
+      buildWhereClause(params),
+      { latitude: { gte: bbox.minLat, lte: bbox.maxLat, not: null } },
+      { longitude: { gte: bbox.minLng, lte: bbox.maxLng, not: null } },
+    ]
+  }
 
-  // Add bounding box filter (uses indexed lat/lng fields)
-  where.latitude = { gte: bbox.minLat, lte: bbox.maxLat }
-  where.longitude = { gte: bbox.minLng, lte: bbox.maxLng }
-
-  // Ensure lat/lng are not null
-  // IMPORTANT: Append to existing AND conditions instead of replacing them
-  const existingAndConditions = where.AND ? (Array.isArray(where.AND) ? where.AND : [where.AND]) : []
-  where.AND = [
-    ...existingAndConditions,
-    { latitude: { not: null } },
-    { longitude: { not: null } }
-  ]
-
-  // Fetch candidates from database (pre-filtered by bounding box)
+  // Pass 1: coordinates only — no JOINs, minimal data transfer
   const candidates = await prisma.workerProfile.findMany({
-    where,
-    select: {
-      id: true,
-      userId: true,
-      firstName: true,
-      lastName: true,
-      mobile: true,
-      gender: true,
-      age: true,
-      dateOfBirth: true,
-      languages: true,
-      workerAdditionalInfo: {
-        select: {
-          languages: true,
-        }
-      },
-      workerServices: {
-        select: {
-          categoryName: true,
-        }
-      },
-      user: {
-        select: {
-          email: true,
-          status: true,
-        }
-      },
-      city: true,
-      state: true,
-      postalCode: true,
-      latitude: true,
-      longitude: true,
-      experience: true,
-      introduction: true,
-      photos: true,
-      createdAt: true,
-      updatedAt: true,
-    }
+    where: distanceWhere,
+    select: { id: true, latitude: true, longitude: true },
   })
 
-  // Calculate exact distance and filter
-  const workersWithDistance = candidates
-    .map(worker => {
-      // Calculate age from dateOfBirth if available, otherwise use age column
-      const calculatedAge = worker.dateOfBirth
-        ? calculateAge(worker.dateOfBirth)
-        : null;
-      const finalAge = calculatedAge !== null ? calculatedAge : worker.age;
+  // Exact Haversine filter + sort ascending by distance
+  const ranked = candidates
+    .map(w => ({ id: w.id, distance: haversineDistance(coords.lat, coords.lng, w.latitude!, w.longitude!) }))
+    .filter(w => w.distance <= radiusKm)
+    .sort((a, b) => a.distance - b.distance)
 
-      // Languages fallback logic:
-      // 1. Primary: Use workerAdditionalInfo.languages array if it exists and is not empty
-      // 2. Fallback: Use workerProfile.languages array
-      // 3. Default: Empty array
-      let finalLanguages: string[] = [];
-      if (worker.workerAdditionalInfo?.languages && worker.workerAdditionalInfo.languages.length > 0) {
-        finalLanguages = worker.workerAdditionalInfo.languages;
-      } else if (worker.languages && worker.languages.length > 0) {
-        finalLanguages = worker.languages;
-      }
-
-      return {
-        ...worker,
-        email: worker.user?.email || null,
-        age: finalAge,
-        languages: finalLanguages,
-        services: transformWorkerServices(worker.workerServices),
-        isActive: worker.user?.status === 'ACTIVE',
-        workerServices: undefined, // Remove from response
-        workerAdditionalInfo: undefined, // Remove from response
-        user: undefined, // Remove from response
-        dateOfBirth: undefined, // Remove from response (internal use only)
-        distance: haversineDistance(
-          coords.lat,
-          coords.lng,
-          worker.latitude!,
-          worker.longitude!
-        )
-      };
-    })
-    .filter(worker => worker.distance <= radiusKm)
-    .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
-
-  // Apply pagination to filtered results
+  const total = ranked.length
   const skip = (params.page - 1) * params.pageSize
-  const paginatedWorkers = workersWithDistance.slice(skip, skip + params.pageSize)
+  const pageSlice = ranked.slice(skip, skip + params.pageSize)
+  const pageIds = pageSlice.map(w => w.id)
+  const distanceMap = new Map(pageSlice.map(w => [w.id, w.distance]))
 
-  const totalPages = Math.ceil(workersWithDistance.length / params.pageSize)
+  // Pass 2: full data only for this page (≤ pageSize rows)
+  const workers = pageIds.length > 0
+    ? await prisma.workerProfile.findMany({ where: { id: { in: pageIds } }, select: workerSelect })
+    : []
+
+  // Re-order to match distance sort — IN clause does not guarantee order
+  const workerMap = new Map(workers.map(w => [w.id, w]))
+  const data = pageIds
+    .filter(id => workerMap.has(id))
+    .map(id => transformWorker(workerMap.get(id)!, distanceMap.get(id)))
+
+  const totalPages = Math.ceil(total / params.pageSize)
 
   return {
     success: true,
-    data: paginatedWorkers,
+    data,
     pagination: {
-      total: workersWithDistance.length,
+      total,
       page: params.page,
       pageSize: params.pageSize,
       totalPages,
