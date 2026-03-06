@@ -35,6 +35,7 @@ interface ParticipantsMasterDetailProps {
   participants: ParticipantData[];
   showRelationship?: boolean;
   showRemove?: boolean;
+  showAddButton?: boolean;
   title: string;
   subtitle: string;
   defaultToList?: boolean; // When true, starts with no selection (list view on mobile)
@@ -45,6 +46,7 @@ export default function ParticipantsMasterDetail({
   participants: initialParticipants,
   showRelationship = true,
   showRemove = false,
+  showAddButton = true,
   title,
   subtitle,
   defaultToList = false,
@@ -224,7 +226,7 @@ export default function ParticipantsMasterDetail({
           </h1>
           {subtitle && <p className="text-gray-600 font-poppins mt-1">{subtitle}</p>}
         </div>
-        {!showRelationship && (
+        {!showRelationship && showAddButton && (
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium font-poppins text-sm transition-colors hover:opacity-90 flex-shrink-0"

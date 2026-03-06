@@ -136,6 +136,7 @@ export default async function ClientDashboard() {
         <ParticipantsMasterDetail
           participants={participants}
           showRelationship={false}
+          showAddButton={false}
           title="Manage your profile"
           subtitle=""
           clientName={clientProfile ? { firstName: clientProfile.firstName, lastName: clientProfile.lastName } : undefined}
