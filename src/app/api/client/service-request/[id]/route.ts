@@ -134,9 +134,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // 4. Fetch existing service request with raw SQL to handle ARCHIVED status
     // (Prisma enum doesn't include ARCHIVED, so findUnique would throw for archived requests)
     const [existingRequest] = await authPrisma.$queryRaw<
-      { id: string; requesterId: string; participantId: string }[]
+      { id: string; requesterId: string; participantId: string; zohoRecordId: string | null }[]
     >`
-      SELECT id, "requesterId", "participantId"
+      SELECT id, "requesterId", "participantId", "zohoRecordId"
       FROM service_requests
       WHERE id = ${id}
     `
@@ -174,6 +174,35 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           selectedWorkers: [],
         },
       })
+
+      // Fire Active_Request_Cancellation webhook (fire-and-forget)
+      const cancellationWebhookUrl = process.env.Active_Request_Cancellation
+      if (cancellationWebhookUrl) {
+        const reasonLabelMap: Record<string, string> = {
+          service_no_longer_needed: 'Service no longer needed',
+          found_another_provider: 'Found another provider',
+          worker_not_suitable: 'Worker not suitable',
+          financial_reasons: 'Financial reasons',
+          schedule_conflict: 'Schedule conflict',
+          health_condition_changed: 'Health condition changed',
+          other: 'Other',
+        }
+        const readableReason = body.reason ? (reasonLabelMap[body.reason] ?? body.reason) : null
+
+        fetch(cancellationWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'cancel',
+            requestId: id,
+            zohoRecordId: existingRequest.zohoRecordId ?? null,
+            userId: session.user.id,
+            reason: readableReason,
+            details: body.details ?? null,
+          }),
+        }).catch(() => {})
+      }
+
       return NextResponse.json({ success: true, message: 'Request cancelled successfully' })
     }
 

@@ -235,6 +235,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
         )
         setCancelTarget(null)
         fireActionWebhook('Cancel', requestId)
+        router.refresh()
       }
     } catch {
       // silently fail
