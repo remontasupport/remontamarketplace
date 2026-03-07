@@ -24,9 +24,6 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function WorkerDashboard() {
-  // PERFORMANCE LOGGING: Track dashboard rendering
-  const dashboardStart = Date.now();
-  // Server-side session validation using getServerSession (RECOMMENDED APPROACH)
   const session = await getServerSession(authOptions);
   // Redirect to login if no session
   if (!session || !session.user) {
@@ -38,41 +35,31 @@ export default async function WorkerDashboard() {
     redirect("/unauthorized");
   }
 
-  // REDIS OPTIMIZATION: Cache worker profile to avoid slow database queries
-  // First load: ~700ms (database), Subsequent loads: ~20-50ms (Redis cache)
-  const profileStart = Date.now();
-  const workerProfile = await getOrFetch(
-    CACHE_KEYS.workerProfile(session.user.id),
-    async () => {
-      return await withRetry(() => authPrisma.workerProfile.findUnique({
+  // Run profile fetch + completion status in parallel — both cached independently
+  const [workerProfile, completionResult] = await Promise.all([
+    getOrFetch(
+      CACHE_KEYS.workerProfile(session.user.id),
+      () => withRetry(() => authPrisma.workerProfile.findUnique({
         where: { userId: session.user.id },
         select: {
           firstName: true,
           lastName: true,
           photos: true,
           workerServices: {
-            select: {
-              categoryName: true,
-            },
-            orderBy: {
-              createdAt: 'asc', // Get first service added (primary service)
-            },
+            select: { categoryName: true },
+            orderBy: { createdAt: 'asc' },
             take: 1,
           },
         },
-      }));
-    },
-    CACHE_TTL.WORKER_PROFILE
-  );
-
-  // PHASE 1 OPTIMIZATION: Single optimized query replaces 4 separate functions
-  // REDIS OPTIMIZATION: Cache completion status (biggest performance win!)
-  // First load: ~7000ms (multiple DB queries), Subsequent loads: ~50ms (Redis cache)
-  const completionResult = await getOrFetch(
-    CACHE_KEYS.completionStatus(session.user.id),
-    () => getAllCompletionStatusOptimized(session.user.id),
-    CACHE_TTL.COMPLETION_STATUS
-  );
+      })),
+      CACHE_TTL.WORKER_PROFILE
+    ),
+    getOrFetch(
+      CACHE_KEYS.completionStatus(session.user.id),
+      () => getAllCompletionStatusOptimized(session.user.id),
+      CACHE_TTL.COMPLETION_STATUS
+    ),
+  ]);
   
   // Construct setupProgress from optimized single-query result
   const setupProgress = completionResult.success && completionResult.data

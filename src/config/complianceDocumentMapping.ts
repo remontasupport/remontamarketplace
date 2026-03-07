@@ -19,8 +19,7 @@ import Step4NDISTrainingsMultiple from "@/components/requirements-setup/steps/St
 import Step5InfectionControl from "@/components/requirements-setup/steps/Step5InfectionControl";
 import Step0WorkerScreeningCheck from "@/components/requirements-setup/steps/Step0WorkerScreeningCheck";
 import StepRightToWork from "@/components/requirements-setup/steps/StepRightToWork";
-import StepCodeOfConductPart1 from "@/components/requirements-setup/steps/StepCodeOfConductPart1";
-import StepCodeOfConductPart2 from "@/components/requirements-setup/steps/StepCodeOfConductPart2";
+import StepCodeOfConduct from "@/components/requirements-setup/steps/StepCodeOfConduct";
 
 // Account-setup components (reused for compliance)
 import Step6ABN from "@/components/account-setup/steps/Step6ABN";
@@ -28,6 +27,8 @@ import Step6ABN from "@/components/account-setup/steps/Step6ABN";
 export interface ComplianceStepMapping {
   documentId: string;
   component: React.ComponentType<any>;
+  // Optional: override the title shown in the sidebar
+  title?: string;
   // Optional: specify which API endpoint to use for fetching/uploading
   apiEndpoint?: string;
   // Optional: custom document type for upload API
@@ -131,19 +132,13 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
   // CODE OF CONDUCT
   // ========================================
 
-  // Code of Conduct Part 1 - Sections 1-6 (read-only, no upload required)
+  // Combined Code of Conduct (Part 1 + Part 2) with internal stepper
+  // Part 2 is NOT mapped as a separate step - filtered out in dynamicComplianceSteps.ts
   "code-of-conduct-part1": {
     documentId: "code-of-conduct-part1",
-    component: StepCodeOfConductPart1,
-    // No upload needed for Part 1 - just reading
-  },
-
-  // Code of Conduct Part 2 - Sections 7-12 + Signature
-  "code-of-conduct-part2": {
-    documentId: "code-of-conduct-part2",
-    component: StepCodeOfConductPart2,
+    component: StepCodeOfConduct,
+    title: "Code of Conduct",
     apiEndpoint: "/api/worker/compliance-documents",
-    uploadDocumentType: "code-of-conduct",
   },
 };
 

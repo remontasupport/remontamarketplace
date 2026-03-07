@@ -97,6 +97,7 @@ function MandatoryRequirementsSetupContent() {
   const [successMessage] = useState("");
   const [isNavigating, setIsNavigating] = useState(false);
   const [isFinalSaving, setIsFinalSaving] = useState(false);
+  const [conductPart, setConductPart] = useState(1);
 
   // Track if we've initialized form data to prevent overwrites
   const hasInitializedFormData = useRef(false);
@@ -207,8 +208,8 @@ function MandatoryRequirementsSetupContent() {
       }
     }
 
-    // Validate Code of Conduct Part 2 - require signature
-    if (currentStepData?.documentId === "code-of-conduct-part2") {
+    // Validate Code of Conduct - require signature (combined part1+part2 step)
+    if (currentStepData?.documentId === "code-of-conduct-part1") {
       const isAlreadySigned = !!formData.codeOfConductDocument?.documentUrl;
       if (!isAlreadySigned) {
         newErrors.codeOfConductSignature = "Please sign and save the Code of Conduct acknowledgment before proceeding.";
@@ -314,7 +315,13 @@ function MandatoryRequirementsSetupContent() {
 
   // Go to previous step
   const handlePrevious = () => {
+    // If on Code of Conduct Part 2, go back to Part 1 internally
+    if (currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 2) {
+      setConductPart(1);
+      return;
+    }
     if (currentStep > 1) {
+      setConductPart(1);
       const prevStepSlug = STEPS[currentStep - 2].slug;
       router.push(`/dashboard/worker/requirements/setup?step=${prevStepSlug}`);
     }
@@ -367,6 +374,8 @@ function MandatoryRequirementsSetupContent() {
           isNextLoading={false}
           nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
           showSkip={false}
+          showPrevious={!(currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 1)}
+          showNext={!(currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 1)}
         >
           {/* Success Message */}
           {successMessage && (
@@ -390,6 +399,9 @@ function MandatoryRequirementsSetupContent() {
             // Pass additional props for dynamic components
             requirement={currentStepData?.requirement}
             apiEndpoint={currentStepData?.apiEndpoint}
+            // Code of Conduct internal part tracking
+            onPartChange={currentStepData?.documentId === 'code-of-conduct-part1' ? setConductPart : undefined}
+            part={currentStepData?.documentId === 'code-of-conduct-part1' ? conductPart : undefined}
           />
         </StepContainer>
       ) : (

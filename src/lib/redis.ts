@@ -34,6 +34,8 @@ export const CACHE_TTL = {
                            // primary freshness mechanism; this is just a backstop if it fails
   CATEGORIES: 1800,        // 30 minutes - categories are semi-static, rarely change
   PARTICIPANTS_LIST: 300,  // 5 minutes - participant list per user
+  WORKER_REQUIREMENTS: 600, // 10 minutes - requirements rarely change during a session
+  WORKER_PROFILE_BASE: 60,  // 1 minute - short TTL since hook always fetches fresh; just reduces DB load
 } as const;
 
 // Cache key generators
@@ -48,6 +50,8 @@ export const CACHE_KEYS = {
   activeJobs: () => `active_jobs:${CACHE_VERSION}`,
   categories: () => `categories:${CACHE_VERSION}`,
   participantsList: (userId: string) => `participants_list:${CACHE_VERSION}:${userId}`,
+  workerRequirements: (userId: string) => `worker_req:${CACHE_VERSION}:${userId}`,
+  workerProfileBase: (userId: string) => `worker_profile_base:${CACHE_VERSION}:${userId}`,
 } as const;
 
 /**

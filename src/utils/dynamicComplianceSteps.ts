@@ -62,7 +62,7 @@ export function generateComplianceSteps(
     return {
       id: index + 1,
       slug,
-      title: req.name,
+      title: customMapping?.title || req.name,
       component,
       documentId: req.id,
       requirement: req,
@@ -70,7 +70,7 @@ export function generateComplianceSteps(
     };
   });
 
-  return steps;
+  return steps.filter(s => s.slug !== 'code-of-conduct-part2');
 }
 
 /**

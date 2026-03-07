@@ -29,15 +29,15 @@ import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicCo
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
 
 // Route-to-section mapping
-
-const getSectionFromPath = (path: string): string | null => {
-  if (path.includes('/account/')) return 'account-details';
-  if (path.includes('/requirements/')) return 'requirements';
-  if (path.includes('/trainings/')) return 'trainings';
-  if (path.includes('/services/')) return 'services';
-  if (path.includes('/additional-documents')) return 'additional-credentials';
-  return null;
-};
+const PATH_TO_SECTION: Array<[string, string]> = [
+  ['/account/', 'account-details'],
+  ['/requirements/', 'requirements'],
+  ['/trainings/', 'trainings'],
+  ['/services/', 'services'],
+  ['/additional-documents', 'additional-credentials'],
+]
+const getSectionFromPath = (path: string) =>
+  PATH_TO_SECTION.find(([seg]) => path.includes(seg))?.[1] ?? null
 
 interface SubMenuItem {
   name: string
@@ -48,7 +48,7 @@ interface MenuSection {
   id: string
   name: string
   icon: React.ComponentType<{ className?: string }>
-  items: SubMenuItem[]
+  items: SubMenuItem[] | null  // null = loading (renders skeleton)
 }
 
 // Dynamically generate account details items from centralized config
@@ -73,7 +73,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
 
   // Get session and profile data for setup progress
   const { data: session } = useSession()
-  const { data: profileDataFromHook, refetch, isRefetching } = useWorkerProfile(session?.user?.id)
+  const { data: profileDataFromHook, refetch, isRefetching, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id)
 
   // CRITICAL: Aggressively refetch when on dashboard to ensure checkmarks appear
   useEffect(() => {
@@ -89,102 +89,39 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
   // profileDataFromHook is from client-side API call with real-time progress calculation
   const profileData = profileDataProp || profileDataFromHook
 
-  // Parse setup progress to show checkmarks
-  // ALWAYS use profileDataFromHook for setupProgress (not profileDataProp!)
-  const setupProgress = useMemo(() => {
-    // Use hook data which has real-time calculated setupProgress from API
-    const progress = profileDataFromHook?.setupProgress
-    const parsed = parseSetupProgress(progress)
+  const setupProgress = useMemo(() => parseSetupProgress(profileDataFromHook?.setupProgress), [profileDataFromHook])
 
-    return parsed
-  }, [profileDataFromHook])
-
-  // Fetch worker requirements to generate dynamic compliance items
   const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
 
-  // Generate dynamic compliance steps from API data
-  const dynamicComplianceSteps = useMemo(() => {
-    return generateComplianceSteps(requirementsData)
-  }, [requirementsData])
+  // null while loading → triggers skeleton in JSX
+  const requirementsItems = useMemo<SubMenuItem[] | null>(() => {
+    if (isLoadingRequirements) return null
+    const steps = generateComplianceSteps(requirementsData)
+    return (steps.length > 0 ? steps.map(s => ({ name: s.title, href: getComplianceStepUrl(s.slug) }))
+      : MANDATORY_REQUIREMENTS_SETUP_STEPS.map(s => ({ name: s.title, href: getRequirementsStepUrl(s.slug) })))
+  }, [requirementsData, isLoadingRequirements])
 
-  // Generate dynamic training steps from API data
-  const dynamicTrainingSteps = useMemo(() => {
-    return generateTrainingSteps(requirementsData)
-  }, [requirementsData])
+  const trainingsItems = useMemo<SubMenuItem[] | null>(() =>
+    isLoadingRequirements ? null : generateTrainingSteps(requirementsData).map(s => ({ name: s.title, href: getTrainingStepUrl(s.slug) })),
+    [requirementsData, isLoadingRequirements])
 
-  // Generate requirements items dynamically from API or fallback to static
-  const requirementsItems = useMemo(() => {
-    if (dynamicComplianceSteps.length > 0) {
-      // Use dynamic steps from API
-      return dynamicComplianceSteps.map(step => ({
-        name: step.title,
-        href: getComplianceStepUrl(step.slug)
-      }))
-    }
-    // Fallback to static steps if API data not available yet
-    return MANDATORY_REQUIREMENTS_SETUP_STEPS.map(step => ({
-      name: step.title,
-      href: getRequirementsStepUrl(step.slug)
-    }))
-  }, [dynamicComplianceSteps])
+  const servicesItems = useMemo<SubMenuItem[] | null>(() => {
+    if (isLoadingProfile) return null
+    const services = profileDataFromHook?.services ?? []
+    const steps = services.length > 0 ? generateServicesSetupSteps(services) : SERVICES_SETUP_STEPS
+    return steps.map(s => ({ name: s.title, href: getServicesStepUrl(s.slug) }))
+  }, [profileDataFromHook?.services, isLoadingProfile])
 
-  // Generate trainings items dynamically from API
-  const trainingsItems = useMemo(() => {
-    if (dynamicTrainingSteps.length > 0) {
-      return dynamicTrainingSteps.map(step => ({
-        name: step.title,
-        href: getTrainingStepUrl(step.slug)
-      }))
-    }
-    return []
-  }, [dynamicTrainingSteps])
+  const additionalCredentialsItems: SubMenuItem[] = [{ name: ADDITIONAL_DOCUMENTS_STEP.title, href: '/dashboard/worker/additional-documents' }]
 
-  // Generate services items dynamically from profile data
-  const servicesItems = useMemo(() => {
-    // Get services from profile data (use hook data which has services array)
-    const services = profileDataFromHook?.services || []
-
-    if (services.length > 0) {
-      // Generate dynamic steps based on selected services
-      const dynamicSteps = generateServicesSetupSteps(services)
-      return dynamicSteps.map(step => ({
-        name: step.title,
-        href: getServicesStepUrl(step.slug)
-      }))
-    }
-
-    // Fallback to static steps if no services selected yet
-    return SERVICES_SETUP_STEPS.map(step => ({
-      name: step.title,
-      href: getServicesStepUrl(step.slug)
-    }))
-  }, [profileDataFromHook?.services])
-
-  // Additional Credentials items (Section 3)
-  const additionalCredentialsItems = useMemo(() => {
-    return [{
-      name: ADDITIONAL_DOCUMENTS_STEP.title,
-      href: '/dashboard/worker/additional-documents'
-    }]
-  }, [])
-
-  // Helper to check if a section is completed
-  const isSectionCompleted = (sectionId: string): boolean => {
-    switch (sectionId) {
-      case 'account-details':
-        return setupProgress.accountDetails
-      case 'requirements':
-        return setupProgress.compliance
-      case 'trainings':
-        return setupProgress.trainings
-      case 'services':
-        return setupProgress.services
-      case 'additional-credentials':
-        return setupProgress.additionalCredentials || false
-      default:
-        return false
-    }
+  const SECTION_PROGRESS_MAP: Record<string, keyof ReturnType<typeof parseSetupProgress>> = {
+    'account-details': 'accountDetails',
+    'requirements': 'compliance',
+    'trainings': 'trainings',
+    'services': 'services',
+    'additional-credentials': 'additionalCredentials',
   }
+  const isSectionCompleted = (sectionId: string) => setupProgress[SECTION_PROGRESS_MAP[sectionId]] ?? false
 
   const menuSections: MenuSection[] = [
     {
@@ -369,7 +306,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
         {/* Dropdown Sections */}
         {menuSections.map((section) => {
           const isOpen = openSections[section.id]
-          const isSectionActive = section.items.some(item => pathname === item.href)
+          const isSectionActive = section.items?.some(item => pathname === item.href) ?? false
           const SectionIcon = section.icon
 
           return (
@@ -390,22 +327,26 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
               </button>
 
               <ul className={`nav-dropdown-list ${isOpen ? 'open' : 'closed'} ${!shouldTransition ? 'no-transition' : ''}`}>
-                {section.items.map((item) => {
-                  const isActive = pathname === item.href
-
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={`nav-dropdown-item ${isActive ? 'active' : ''}`}
-                        onClick={handleLinkClick}
-                      >
-                        <span className="nav-dropdown-bullet"></span>
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  )
-                })}
+                {section.items === null
+                  ? Array.from({ length: 6 }, (_, i) => (
+                      <li key={i} className="nav-dropdown-item pointer-events-none">
+                        <span className="nav-dropdown-bullet opacity-30" />
+                        <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
+                      </li>
+                    ))
+                  : section.items.map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={`nav-dropdown-item ${pathname === item.href ? 'active' : ''}`}
+                          onClick={handleLinkClick}
+                        >
+                          <span className="nav-dropdown-bullet" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </li>
+                    ))
+                }
               </ul>
             </div>
           )

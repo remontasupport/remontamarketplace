@@ -19,6 +19,7 @@ interface StepContainerProps {
   isNextLoading?: boolean;
   showSkip?: boolean;
   showPrevious?: boolean;
+  showNext?: boolean;
   nextButtonText?: string;
   previousButtonText?: string;
 }
@@ -37,6 +38,7 @@ export default function StepContainer({
   isNextLoading = false,
   showSkip = true,
   showPrevious,
+  showNext = true,
   nextButtonText = "Next",
   previousButtonText = "Back",
 }: StepContainerProps) {
@@ -62,30 +64,34 @@ export default function StepContainer({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="step-navigation">
-        <div className="step-nav-buttons">
-          {shouldShowPrevious && (
-            <button
-              type="button"
-              onClick={onPrevious}
-              className="btn-secondary"
-              disabled={isNextLoading}
-            >
-              ← {previousButtonText}
-            </button>
-          )}
+      {(shouldShowPrevious || showNext) && (
+        <div className="step-navigation">
+          <div className="step-nav-buttons">
+            {shouldShowPrevious && (
+              <button
+                type="button"
+                onClick={onPrevious}
+                className="btn-secondary"
+                disabled={isNextLoading}
+              >
+                ← {previousButtonText}
+              </button>
+            )}
 
-          <button
-            type="button"
-            onClick={onNext}
-            className="btn-primary-brand"
-            disabled={isNextDisabled || isNextLoading}
-          >
-            {nextButtonText}
-            {currentStep < totalSteps && " →"}
-          </button>
+            {showNext && (
+              <button
+                type="button"
+                onClick={onNext}
+                className="btn-primary-brand"
+                disabled={isNextDisabled || isNextLoading}
+              >
+                {nextButtonText}
+                {currentStep < totalSteps && " →"}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Progress Bar */}
       <div className="progress-bar-container">
