@@ -20,7 +20,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
-import { MANDATORY_REQUIREMENTS_SETUP_STEPS, getRequirementsStepUrl } from '@/config/mandatoryRequirementsSetupSteps'
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
 import { useSession } from 'next-auth/react'
@@ -96,9 +95,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
   // null while loading → triggers skeleton in JSX
   const requirementsItems = useMemo<SubMenuItem[] | null>(() => {
     if (isLoadingRequirements) return null
-    const steps = generateComplianceSteps(requirementsData)
-    return (steps.length > 0 ? steps.map(s => ({ name: s.title, href: getComplianceStepUrl(s.slug) }))
-      : MANDATORY_REQUIREMENTS_SETUP_STEPS.map(s => ({ name: s.title, href: getRequirementsStepUrl(s.slug) })))
+    return generateComplianceSteps(requirementsData).map(s => ({ name: s.title, href: getComplianceStepUrl(s.slug) }))
   }, [requirementsData, isLoadingRequirements])
 
   const trainingsItems = useMemo<SubMenuItem[] | null>(() =>

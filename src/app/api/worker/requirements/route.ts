@@ -105,31 +105,37 @@ async function buildRequirementsResponse(userId: string, servicesParam: string |
     ? { categoryIds: [], categoryNames: [], subIds: [], subNames: [] }
     : parseServiceSets(servicesToFetch)
 
-  const categories = await prisma.category.findMany({
-    where: noServices
-      ? undefined // no filter → all categories
-      : { OR: [{ id: { in: categoryIds } }, { name: { in: categoryNames } }] },
-    select: {
-      id: true, name: true,
-      documents: {
-        select: {
-          documentType: true, conditionKey: true, requiredIfTrue: true,
-          document: { select: { id: true, name: true, category: true, description: true, hasExpiration: true } },
+  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = []
+  try {
+    categories = await prisma.category.findMany({
+      where: noServices
+        ? undefined // no filter → all categories
+        : { OR: [{ id: { in: categoryIds } }, { name: { in: categoryNames } }] },
+      select: {
+        id: true, name: true,
+        documents: {
+          select: {
+            documentType: true, conditionKey: true, requiredIfTrue: true,
+            document: { select: { id: true, name: true, category: true, description: true, hasExpiration: true } },
+          },
         },
-      },
-      subcategories: {
-        where: subIds.length > 0 || subNames.length > 0
-          ? { OR: [{ id: { in: subIds } }, { name: { in: subNames } }] }
-          : undefined,
-        select: {
-          name: true,
-          additionalDocuments: {
-            select: { document: { select: { id: true, name: true, category: true, description: true, hasExpiration: true } } },
+        subcategories: {
+          where: subIds.length > 0 || subNames.length > 0
+            ? { OR: [{ id: { in: subIds } }, { name: { in: subNames } }] }
+            : undefined,
+          select: {
+            name: true,
+            additionalDocuments: {
+              select: { document: { select: { id: true, name: true, category: true, description: true, hasExpiration: true } } },
+            },
           },
         },
       },
-    },
-  })
+    })
+  } catch {
+    // If the categories DB query fails (e.g. Accelerate misconfiguration),
+    // continue with empty categories so Code of Conduct still appears below.
+  }
 
   const allRequirements = [
     ...categories.flatMap(cat => cat.documents.map(cd => ({
