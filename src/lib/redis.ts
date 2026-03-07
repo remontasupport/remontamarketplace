@@ -40,7 +40,7 @@ export const CACHE_TTL = {
 
 // Cache key generators
 // Version the keys when query structure changes to force cache refresh
-const CACHE_VERSION = 'v2'; // Increment when changing query structure
+const CACHE_VERSION = 'v3'; // Increment when changing query structure
 
 export const CACHE_KEYS = {
   user: (email: string) => `user:${CACHE_VERSION}:${email.toLowerCase()}`,

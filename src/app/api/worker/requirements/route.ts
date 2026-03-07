@@ -98,14 +98,17 @@ async function buildRequirementsResponse(userId: string, servicesParam: string |
     servicesToFetch = services
   }
 
-  if (servicesToFetch.length === 0) {
-    return { success: true, services: [], requirements: EMPTY_REQUIREMENTS }
-  }
-
-  const { categoryIds, categoryNames, subIds, subNames } = parseServiceSets(servicesToFetch)
+  // When no services yet, fetch ALL categories so mandatory docs (Worker Engagement,
+  // police check, etc.) still appear. When services exist, filter to only their categories.
+  const noServices = servicesToFetch.length === 0
+  const { categoryIds, categoryNames, subIds, subNames } = noServices
+    ? { categoryIds: [], categoryNames: [], subIds: [], subNames: [] }
+    : parseServiceSets(servicesToFetch)
 
   const categories = await prisma.category.findMany({
-    where: { OR: [{ id: { in: categoryIds } }, { name: { in: categoryNames } }] },
+    where: noServices
+      ? undefined // no filter → all categories
+      : { OR: [{ id: { in: categoryIds } }, { name: { in: categoryNames } }] },
     select: {
       id: true, name: true,
       documents: {
