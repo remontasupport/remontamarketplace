@@ -3,7 +3,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import {
   SetupSection,
@@ -353,49 +352,54 @@ export async function checkComplianceCompletion(): Promise<ActionResponse<boolea
       .map(s => s.subcategoryName)
       .filter((name): name is string => name !== null))];
 
-    const categories = await prisma.category.findMany({
-      where: {
-        OR: [
-          { id: { in: categoryIds } },
-          { name: { in: categoryNames } },
-        ],
-      },
-      select: {
-        documents: {
-          select: {
-            document: {
-              select: {
-                id: true,
-                category: true,
+    let categories: any[] = [];
+    try {
+      categories = await authPrisma.category.findMany({
+        where: {
+          OR: [
+            { id: { in: categoryIds } },
+            { name: { in: categoryNames } },
+          ],
+        },
+        select: {
+          documents: {
+            select: {
+              document: {
+                select: {
+                  id: true,
+                  category: true,
+                },
               },
             },
           },
-        },
-        // CRITICAL: Include subcategory documents
-        subcategories: {
-          where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
-            ? {
-                OR: [
-                  { id: { in: requestedSubcategoryIds } },
-                  { name: { in: requestedSubcategoryNames } },
-                ],
-              }
-            : undefined,
-          select: {
-            additionalDocuments: {
-              select: {
-                document: {
-                  select: {
-                    id: true,
-                    category: true,
+          // CRITICAL: Include subcategory documents
+          subcategories: {
+            where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+              ? {
+                  OR: [
+                    { id: { in: requestedSubcategoryIds } },
+                    { name: { in: requestedSubcategoryNames } },
+                  ],
+                }
+              : undefined,
+            select: {
+              additionalDocuments: {
+                select: {
+                  document: {
+                    select: {
+                      id: true,
+                      category: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
+    } catch {
+      // If Accelerate/DB fails, continue with empty categories
+    }
 
     // 7. Extract base compliance document IDs from BOTH category and subcategory levels
     const baseComplianceIds = new Set<string>();
@@ -714,55 +718,60 @@ export async function checkTrainingsCompletion(): Promise<ActionResponse<boolean
       .map(s => s.subcategoryName)
       .filter((name): name is string => name !== null))];
 
-    const categories = await prisma.category.findMany({
-      where: {
-        OR: [
-          { id: { in: categoryIds } },
-          { name: { in: categoryNames } },
-        ],
-      },
-      select: {
-        id: true,
-        name: true,
-        documents: {
-          select: {
-            document: {
-              select: {
-                id: true,
-                name: true,
-                category: true,
+    let categories: any[] = [];
+    try {
+      categories = await authPrisma.category.findMany({
+        where: {
+          OR: [
+            { id: { in: categoryIds } },
+            { name: { in: categoryNames } },
+          ],
+        },
+        select: {
+          id: true,
+          name: true,
+          documents: {
+            select: {
+              document: {
+                select: {
+                  id: true,
+                  name: true,
+                  category: true,
+                },
               },
             },
           },
-        },
-        // CRITICAL: Include subcategory documents
-        subcategories: {
-          where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
-            ? {
-                OR: [
-                  { id: { in: requestedSubcategoryIds } },
-                  { name: { in: requestedSubcategoryNames } },
-                ],
-              }
-            : undefined,
-          select: {
-            id: true,
-            name: true,
-            additionalDocuments: {
-              select: {
-                document: {
-                  select: {
-                    id: true,
-                    name: true,
-                    category: true,
+          // CRITICAL: Include subcategory documents
+          subcategories: {
+            where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+              ? {
+                  OR: [
+                    { id: { in: requestedSubcategoryIds } },
+                    { name: { in: requestedSubcategoryNames } },
+                  ],
+                }
+              : undefined,
+            select: {
+              id: true,
+              name: true,
+              additionalDocuments: {
+                select: {
+                  document: {
+                    select: {
+                      id: true,
+                      name: true,
+                      category: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
+    } catch {
+      // If Accelerate/DB fails, continue with empty categories
+    }
 
     // 7. Extract training document IDs from BOTH category-level AND subcategory-level documents
     const trainingDocIds = new Set<string>();
@@ -1431,48 +1440,53 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
 
       // Fetch categories with documents
       const categoryQueryStart = Date.now();
-      const categories = await prisma.category.findMany({
-        where: {
-          OR: [
-            { id: { in: categoryIds } },
-            { name: { in: categoryNames } },
-          ],
-        },
-        select: {
-          documents: {
-            select: {
-              document: {
-                select: {
-                  id: true,
-                  category: true,
+      let categories: any[] = [];
+      try {
+        categories = await authPrisma.category.findMany({
+          where: {
+            OR: [
+              { id: { in: categoryIds } },
+              { name: { in: categoryNames } },
+            ],
+          },
+          select: {
+            documents: {
+              select: {
+                document: {
+                  select: {
+                    id: true,
+                    category: true,
+                  },
                 },
               },
             },
-          },
-          subcategories: {
-            where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
-              ? {
-                  OR: [
-                    { id: { in: requestedSubcategoryIds } },
-                    { name: { in: requestedSubcategoryNames } },
-                  ],
-                }
-              : undefined,
-            select: {
-              additionalDocuments: {
-                select: {
-                  document: {
-                    select: {
-                      id: true,
-                      category: true,
+            subcategories: {
+              where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+                ? {
+                    OR: [
+                      { id: { in: requestedSubcategoryIds } },
+                      { name: { in: requestedSubcategoryNames } },
+                    ],
+                  }
+                : undefined,
+              select: {
+                additionalDocuments: {
+                  select: {
+                    document: {
+                      select: {
+                        id: true,
+                        category: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
+        });
+      } catch {
+        // If Accelerate/DB fails, continue with empty categories
+      }
       // Extract base compliance document IDs
       const baseComplianceIds = new Set<string>();
       const baseComplianceCategories = ['IDENTITY', 'BUSINESS', 'COMPLIANCE'];
@@ -1603,49 +1617,53 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
         .filter((name): name is string => name !== null))];
 
       // Fetch categories with training documents
-      const categories = await prisma.category.findMany({
-        where: {
-          OR: [
-            { id: { in: categoryIds } },
-            { name: { in: categoryNames } },
-          ],
-        },
-        select: {
-          documents: {
-            select: {
-              document: {
-                select: {
-                  id: true,
-                  category: true,
+      let categories: any[] = [];
+      try {
+        categories = await authPrisma.category.findMany({
+          where: {
+            OR: [
+              { id: { in: categoryIds } },
+              { name: { in: categoryNames } },
+            ],
+          },
+          select: {
+            documents: {
+              select: {
+                document: {
+                  select: {
+                    id: true,
+                    category: true,
+                  },
                 },
               },
             },
-          },
-          subcategories: {
-            where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
-              ? {
-                  OR: [
-                    { id: { in: requestedSubcategoryIds } },
-                    { name: { in: requestedSubcategoryNames } },
-                  ],
-                }
-              : undefined,
-            select: {
-              additionalDocuments: {
-                select: {
-                  document: {
-                    select: {
-                      id: true,
-                      category: true,
+            subcategories: {
+              where: requestedSubcategoryIds.length > 0 || requestedSubcategoryNames.length > 0
+                ? {
+                    OR: [
+                      { id: { in: requestedSubcategoryIds } },
+                      { name: { in: requestedSubcategoryNames } },
+                    ],
+                  }
+                : undefined,
+              select: {
+                additionalDocuments: {
+                  select: {
+                    document: {
+                      select: {
+                        id: true,
+                        category: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
- 
+        });
+      } catch {
+        // If Accelerate/DB fails, continue with empty categories
+      }
 
       // Extract training document IDs
       const trainingDocIds = new Set<string>();

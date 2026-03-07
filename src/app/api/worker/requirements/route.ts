@@ -9,7 +9,6 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth.config'
 import { authPrisma } from '@/lib/auth-prisma'
-import { prisma } from '@/lib/prisma'
 import { getOrFetch, CACHE_KEYS, CACHE_TTL } from '@/lib/redis'
 
 // ─── Static constants ────────────────────────────────────────────────────────
@@ -105,9 +104,9 @@ async function buildRequirementsResponse(userId: string, servicesParam: string |
     ? { categoryIds: [], categoryNames: [], subIds: [], subNames: [] }
     : parseServiceSets(servicesToFetch)
 
-  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = []
+  let categories: Awaited<ReturnType<typeof authPrisma.category.findMany>> = []
   try {
-    categories = await prisma.category.findMany({
+    categories = await authPrisma.category.findMany({
       where: noServices
         ? undefined // no filter → all categories
         : { OR: [{ id: { in: categoryIds } }, { name: { in: categoryNames } }] },
