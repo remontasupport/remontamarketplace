@@ -180,6 +180,23 @@ function MandatoryRequirementsSetupContent() {
         return newErrors;
       });
     }
+
+    // Auto-save workerEngagementType when contract is uploaded so a page refresh
+    // doesn't lose the ABN/TFN selection (which is only normally saved on Next click)
+    if (field === "contractDocument" && value && formData.workerEngagementType && session?.user?.id) {
+      updateProfileMutation.mutate({
+        userId: session.user.id,
+        step: currentStep,
+        data: {
+          abn: {
+            workerEngagementType: {
+              type: formData.workerEngagementType.type,
+              signed: true,
+            },
+          },
+        },
+      });
+    }
   };
 
   // Validate current step
