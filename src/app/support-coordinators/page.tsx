@@ -29,7 +29,7 @@ export default function SupportCoordinatorsPage() {
               </p>
 
               <Link
-                href="/registration/support-coordinator"
+                href="https://app.remontaservices.com.au/registration/clients"
                 style={{ background: BRAND_COLORS.PRIMARY }}
                 className="inline-flex items-center justify-center text-white rounded-full px-6 py-2.5 sm:px-8 sm:py-3 font-poppins font-medium text-sm sm:text-base hover:bg-[#B1C3CD] hover:text-white transition-colors duration-300"
               >
@@ -177,7 +177,7 @@ export default function SupportCoordinatorsPage() {
             <div className="w-full max-w-7xl mx-auto">
               <div className="max-w-xl">
                 <h2 className="hidden lg:block text-2xl md:text-4xl lg:text-5xl mb-0 lg:mb-6 font-cooper" style={{ color: BRAND_COLORS.PRIMARY }}>
-                  4,000+ Participants And Growing
+                  16,500+ Participants And Growing
                 </h2>
                 <p className="text-sm md:text-lg mb-4 font-poppins leading-relaxed" style={{ color: BRAND_COLORS.PRIMARY }}>
                   We currently support thousands of participants across Australia.
@@ -230,7 +230,7 @@ You'll always know where we operate and which services are available in your par
             </p>
 
             <Link
-              href="/registration/support-coordinator"
+              href="https://app.remontaservices.com.au/registration/clients"
               className="inline-flex items-center justify-center rounded-full bg-[#B1C3CD] px-8 sm:px-10 lg:px-12 py-3 sm:py-3.5 lg:py-4 font-poppins font-semibold text-base sm:text-lg text-[#0C1628] hover:bg-white transition-colors duration-200"
             >
               Join the Network
