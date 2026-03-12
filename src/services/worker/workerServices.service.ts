@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { autoUpdateServicesCompletion } from "./setupProgress.service";
 import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
@@ -753,5 +753,44 @@ export async function getTherapeuticRegistration(): Promise<ActionResponse<Thera
       success: false,
       error: "Failed to fetch therapeutic registration data.",
     };
+  }
+}
+
+/**
+ * Server Action: Delete a single worker service by category name
+ * Called immediately when the user removes a service in the manage page
+ */
+export async function deleteWorkerService(categoryName: string): Promise<ActionResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { success: false, error: "Unauthorized. Please log in." };
+
+    const rateLimitCheck = await checkServerActionRateLimit(session.user.id, dbWriteRateLimit);
+    if (!rateLimitCheck.success) return { success: false, error: rateLimitCheck.error };
+
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) return { success: false, error: "Worker profile not found" };
+
+    await authPrisma.workerService.deleteMany({
+      where: { workerProfileId: workerProfile.id, categoryName },
+    });
+
+    await invalidateCache(
+      CACHE_KEYS.workerProfile(session.user.id),
+      CACHE_KEYS.completionStatus(session.user.id)
+    );
+
+    revalidateTag(`worker-services-${workerProfile.id}`);
+    revalidatePath("/dashboard/worker/services/manage");
+    revalidatePath("/dashboard/worker");
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("[deleteWorkerService] Error:", error);
+    return { success: false, error: "Failed to delete service. Please try again." };
   }
 }

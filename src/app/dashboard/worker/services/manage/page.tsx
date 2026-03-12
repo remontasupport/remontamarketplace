@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { deleteWorkerService } from "@/services/worker/workerServices.service";
 import Loader from "@/components/ui/Loader";
 
 export default function ManageServicesPage() {
@@ -91,6 +92,14 @@ export default function ManageServicesPage() {
     }
   };
 
+  // Delete a single service immediately — called on trash button click
+  const handleDeleteService = async (serviceName: string) => {
+    const result = await deleteWorkerService(serviceName);
+    if (!result.success) throw new Error(result.error);
+    queryClient.invalidateQueries({ queryKey: ['worker-services'] });
+    queryClient.invalidateQueries({ queryKey: ['worker-profile'] });
+  };
+
   // Handle redirect after user clicks "Save" button
   const handleSaveAndRedirect = () => {
     if (returnUrl) {
@@ -163,6 +172,7 @@ export default function ManageServicesPage() {
               data={formData}
               onChange={handleFieldChange}
               onSaveServices={handleSaveServices}
+              onDeleteService={handleDeleteService}
               onSaveAndExit={returnUrl ? handleSaveAndRedirect : undefined}
               errors={errors}
             />

@@ -22,6 +22,7 @@ interface Step1ServicesOfferProps {
   };
   onChange: (field: string, value: any) => void;
   onSaveServices?: (services: string[], supportWorkerCategories: string[]) => Promise<void>;
+  onDeleteService?: (serviceName: string) => Promise<void>;
   onSaveAndExit?: () => void;
   errors?: Record<string, string>;
 }
@@ -128,6 +129,7 @@ export default function Step1ServicesOffer({
   data,
   onChange,
   onSaveServices,
+  onDeleteService,
   onSaveAndExit,
 }: Step1ServicesOfferProps) {
   const router = useRouter();
@@ -170,23 +172,30 @@ export default function Step1ServicesOffer({
     }
   };
 
-  const handleRemoveService = (serviceTitle: string) => {
-    const currentServices = data.services || [];
-    const updatedServices = currentServices.filter((s) => s !== serviceTitle);
+  const handleRemoveService = async (serviceTitle: string) => {
+    const prevServices = data.services || [];
+    const prevCategories = data.supportWorkerCategories || [];
 
+    // Compute updated state
     const category = categoryMap.get(serviceTitle);
-    let updatedCategories = data.supportWorkerCategories || [];
+    const removedSubIds = category?.subcategories?.map((sub: any) => sub.id) ?? [];
+    const updatedServices = prevServices.filter(s => s !== serviceTitle);
+    const updatedCategories = prevCategories.filter(id => !removedSubIds.includes(id));
 
-    if (category && category.subcategories.length > 0) {
-      const subcategoryIds = category.subcategories.map((sub: any) => sub.id);
-      updatedCategories = updatedCategories.filter(id => !subcategoryIds.includes(id));
-    }
-
+    // Optimistic update — instant UI feedback
     onChange("services", updatedServices);
     onChange("supportWorkerCategories", updatedCategories);
+
+    try {
+      await onDeleteService?.(serviceTitle);
+    } catch {
+      // Rollback on failure
+      onChange("services", prevServices);
+      onChange("supportWorkerCategories", prevCategories);
+    }
   };
 
-  const handleSubcategoriesSave = (subcategoryIds: string[]) => {
+  const handleSubcategoriesSave = async (subcategoryIds: string[]) => {
     if (!selectedCategoryForEdit) return;
 
     const currentSubcategories = data.supportWorkerCategories || [];
@@ -197,9 +206,9 @@ export default function Step1ServicesOffer({
 
     onChange("supportWorkerCategories", updatedCategories);
 
-    // If no subcategories selected, remove the service from UI
+    // If no subcategories selected, delete the service immediately
     if (subcategoryIds.length === 0) {
-      handleRemoveService(selectedCategoryForEdit.name);
+      await handleRemoveService(selectedCategoryForEdit.name);
     }
   };
 
