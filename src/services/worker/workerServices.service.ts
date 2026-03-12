@@ -361,24 +361,30 @@ export async function saveNursingRegistration(
       };
     }
 
-    // 4. Convert expiry date to ISO format
-    // Convert month name to month number
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    const monthNumber = monthNames.indexOf(data.expiryMonth) + 1;
-    const monthString = monthNumber > 0 ? monthNumber.toString().padStart(2, "0") : "01";
+    // 4. Build metadata — enrolled nurses only store nursingType (+ hasExperience if true)
+    const isEnrolled = data.nursingType === 'enrolled';
 
-    const expiryDate = `${data.expiryYear}-${monthString}-${data.expiryDay.padStart(2, "0")}`;
+    let metadata: Record<string, any> = { nursingType: data.nursingType };
 
-    // 5. Prepare metadata
-    const metadata = {
-      nursingType: data.nursingType,
-      hasExperience: data.hasExperience,
-      registrationNumber: data.registrationNumber,
-      expiryDate,
-    };
+    if (isEnrolled) {
+      if (data.hasExperience) metadata.hasExperience = true;
+    } else {
+      // Registered nurses — include registration number and expiry date
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const monthNumber = monthNames.indexOf(data.expiryMonth) + 1;
+      const monthString = monthNumber > 0 ? monthNumber.toString().padStart(2, "0") : "01";
+      const expiryDate = `${data.expiryYear}-${monthString}-${data.expiryDay.padStart(2, "0")}`;
+
+      metadata = {
+        nursingType: data.nursingType,
+        hasExperience: data.hasExperience,
+        registrationNumber: data.registrationNumber,
+        expiryDate,
+      };
+    }
 
     // 6. Find existing nursing services entry
     // Note: Nursing services can have multiple subcategories (nursing specialties)

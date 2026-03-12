@@ -151,37 +151,22 @@ export default function Step1ServicesOffer({
     const currentServices = data.services || [];
     const updatedServices = [...currentServices, ...newServices];
 
-    // OPTIMIZED: Check for subcategories FIRST before any async operations
-    // This ensures instant dialog opening without waiting for database save
+    // Check for subcategories to open dialog immediately
     let categoryWithSubcategories = null;
     for (const serviceTitle of newServices) {
-      const category = categoryMap.get(serviceTitle); // O(1) lookup
+      const category = categoryMap.get(serviceTitle);
       if (category && Array.isArray(category.subcategories) && category.subcategories.length > 0) {
         categoryWithSubcategories = category;
-        break; // Only handle the first one
+        break;
       }
     }
 
-    // OPTIMIZED: Update UI state synchronously for INSTANT feedback (no await)
+    // Update UI state synchronously for instant feedback
     onChange("services", updatedServices);
 
-    // OPTIMIZED: Open dialog SYNCHRONOUSLY before any async work
-    // This eliminates ALL delay - dialog opens immediately
     if (categoryWithSubcategories) {
       setSelectedCategoryForEdit(categoryWithSubcategories);
       setShowSubcategoriesDialog(true);
-    }
-
-    // FIRE-AND-FORGET: Save to database in background without blocking UI
-    if (onSaveServices) {
-      setIsSaving(true);
-      onSaveServices(updatedServices, data.supportWorkerCategories || [])
-        .catch(error => {
-         
-        })
-        .finally(() => {
-          setIsSaving(false);
-        });
     }
   };
 
@@ -189,62 +174,48 @@ export default function Step1ServicesOffer({
     const currentServices = data.services || [];
     const updatedServices = currentServices.filter((s) => s !== serviceTitle);
 
-    // Find category to remove its subcategories
-    const category = categoryMap.get(serviceTitle); // O(1) lookup
+    const category = categoryMap.get(serviceTitle);
     let updatedCategories = data.supportWorkerCategories || [];
 
     if (category && category.subcategories.length > 0) {
-      // Remove subcategories for this service
       const subcategoryIds = category.subcategories.map((sub: any) => sub.id);
       updatedCategories = updatedCategories.filter(id => !subcategoryIds.includes(id));
     }
 
-    // OPTIMIZED: Update state synchronously for INSTANT UI removal
     onChange("services", updatedServices);
     onChange("supportWorkerCategories", updatedCategories);
-
-    // FIRE-AND-FORGET: Save to database in background
-    if (onSaveServices) {
-      setIsSaving(true);
-      onSaveServices(updatedServices, updatedCategories)
-        .catch(error => {
-
-        })
-        .finally(() => {
-          setIsSaving(false);
-        });
-    }
   };
 
   const handleSubcategoriesSave = (subcategoryIds: string[]) => {
     if (!selectedCategoryForEdit) return;
 
-    // Get current subcategories and remove old ones for this category
     const currentSubcategories = data.supportWorkerCategories || [];
     const categorySubcategoryIds = selectedCategoryForEdit.subcategories.map((sub: any) => sub.id);
     const otherSubcategories = currentSubcategories.filter(id => !categorySubcategoryIds.includes(id));
 
-    // Combine with new selections
     const updatedCategories = [...otherSubcategories, ...subcategoryIds];
 
-    // OPTIMIZED: Update state synchronously for INSTANT display on card
     onChange("supportWorkerCategories", updatedCategories);
 
-    // If no subcategories selected, remove the service
+    // If no subcategories selected, remove the service from UI
     if (subcategoryIds.length === 0) {
       handleRemoveService(selectedCategoryForEdit.name);
-    } else {
-      // FIRE-AND-FORGET: Auto-save categories to database in background
-      if (onSaveServices) {
-        setIsSaving(true);
-        onSaveServices(data.services || [], updatedCategories)
-          .catch(error => {
-     
-          })
-          .finally(() => {
-            setIsSaving(false);
-          });
-      }
+    }
+  };
+
+  const handleDone = async () => {
+    if (!onSaveServices) {
+      setIsEditMode(false);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onSaveServices(data.services || [], data.supportWorkerCategories || []);
+    } catch (error) {
+      console.error('Error saving services:', error);
+    } finally {
+      setIsSaving(false);
+      setIsEditMode(false);
     }
   };
 
@@ -258,31 +229,12 @@ export default function Step1ServicesOffer({
 
   // Validation: Check if all services with subcategories have at least one selected
   const hasValidSubcategories = useMemo(() => {
-    const currentServices = data.services || [];
     const selectedSubcategories = data.supportWorkerCategories || [];
-
-    // Check each service
-    for (const serviceTitle of currentServices) {
+    return (data.services || []).every((serviceTitle) => {
       const category = categoryMap.get(serviceTitle);
-
-      // If service has subcategories available
-      if (category && category.subcategories && category.subcategories.length > 0) {
-        // Get subcategory IDs for this service
-        const serviceLevelSubcategoryIds = category.subcategories.map((sub: any) => sub.id);
-
-        // Check if at least one subcategory is selected for this service
-        const hasSelectedSubcategory = serviceLevelSubcategoryIds.some((id: string) =>
-          selectedSubcategories.includes(id)
-        );
-
-        // If no subcategory is selected for this service, validation fails
-        if (!hasSelectedSubcategory) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+      return !category?.subcategories?.length ||
+        category.subcategories.some((sub: any) => selectedSubcategories.includes(sub.id));
+    });
   }, [data.services, data.supportWorkerCategories, categoryMap]);
 
   return (
@@ -342,12 +294,12 @@ export default function Step1ServicesOffer({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setIsEditMode(false)}
-                      disabled={!hasValidSubcategories}
+                      onClick={handleDone}
+                      disabled={!hasValidSubcategories || isSaving}
                       className="service-btn-done"
                       title={!hasValidSubcategories ? "Please select service offerings for all services" : ""}
                     >
-                      Done
+                      {isSaving ? 'Saving...' : 'Done'}
                     </button>
                   </div>
                 ) : (

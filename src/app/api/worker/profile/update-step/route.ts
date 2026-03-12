@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
 import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
+import { workerServicesCacheTag } from "@/app/api/worker/services/route";
 
 /**
  * POST /api/worker/profile/update-step
@@ -35,117 +37,75 @@ export async function POST(request: Request) {
         break;
 
       // Services Setup Steps (100+)
-      case 101: // Services Offer
-        // DO NOT save to arrays anymore - use WorkerService table only
-        // Legacy arrays are kept for backward compatibility (read-only)
+      case 101: { // Services Offer
+        if (!data.services) break;
 
-        // Save to WorkerService table (normalized approach)
-        if (data.services) {
-          const workerProfile = await authPrisma.workerProfile.findUnique({
-            where: { userId: session.user.id },
-            select: { id: true },
-          });
+        const workerProfile = await authPrisma.workerProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { id: true },
+        });
 
-          if (!workerProfile) {
-            throw new Error("Worker profile not found");
-          }
+        if (!workerProfile) throw new Error("Worker profile not found");
 
-          // Get all categories from database to map subcategories to their parent categories
-          const categories = await authPrisma.category.findMany({
-            include: {
-              subcategories: true,
-            },
-          });
-
-          // OPTIMIZED: Build subcategoryId -> category map using flatMap (single pass)
-          const subcategoryToCategory = new Map(
-            categories.flatMap(category =>
-              category.subcategories.map((sub: any) => [sub.id, category] as const)
-            )
-          );
-
-          // CRITICAL: Save existing metadata BEFORE deleting (nursing, therapeutic, etc.)
-          const existingServices = await authPrisma.workerService.findMany({
+        // Fetch categories and existing services in parallel
+        const [categories, existingServices] = await Promise.all([
+          authPrisma.category.findMany({ include: { subcategories: true } }),
+          authPrisma.workerService.findMany({
             where: { workerProfileId: workerProfile.id },
             select: { categoryId: true, metadata: true },
-          });
+          }),
+        ]);
 
-          // Build a map of categoryId -> metadata
-          // Find the FIRST entry with non-null metadata for each category
-          const metadataByCategory = new Map<string, any>();
-          for (const service of existingServices) {
-            // Only set metadata if we haven't found one for this category yet
-            // and if this service has non-null metadata
-            if (!metadataByCategory.has(service.categoryId) && service.metadata !== null) {
-              metadataByCategory.set(service.categoryId, service.metadata);
-              
-            }
-          }
+        // O(1) lookup maps
+        const categoryByName = new Map(categories.map(c => [c.name, c]));
+        const subcategoryToCategory = new Map(
+          categories.flatMap(c => c.subcategories.map((sub: any) => [sub.id, c] as const))
+        );
 
-          // Delete existing WorkerService records
-          await authPrisma.workerService.deleteMany({
-            where: { workerProfileId: workerProfile.id },
-          });
+        // Preserve first non-null metadata per category
+        const metadataByCategory = existingServices.reduce<Map<string, any>>((acc, { categoryId, metadata }) => {
+          if (!acc.has(categoryId) && metadata !== null) acc.set(categoryId, metadata);
+          return acc;
+        }, new Map());
 
-          // Create new WorkerService records with subcategories as arrays
-          const subcategoryIds = data.supportWorkerCategories || [];
+        const subcategoryIds: string[] = data.supportWorkerCategories || [];
 
-          const workerServiceRecords = data.services.map((serviceName: string) => {
-            // Find category by name
-            const category = categories.find(c => c.name === serviceName);
+        const workerServiceRecords = (data.services as string[])
+          .map((serviceName) => {
+            const category = categoryByName.get(serviceName);
             if (!category) return null;
 
-            const categoryId = category.id;
+            const subcategoryNameMap = new Map(category.subcategories.map((sub: any) => [sub.id, sub.name]));
+            const validSubIds = subcategoryIds.filter(
+              subId => subcategoryToCategory.get(subId)?.id === category.id && subcategoryNameMap.has(subId)
+            );
 
-            // Get preserved metadata for this category (undefined if not found)
-            const preservedMetadata = metadataByCategory.get(categoryId) ?? undefined;
-
-            // Find subcategories that belong to this category
-            const relevantSubcategoryIds = subcategoryIds.filter((subId: string) => {
-              const parentCategory = subcategoryToCategory.get(subId);
-              return parentCategory?.id === categoryId;
-            });
-
-            // Build arrays of subcategory IDs and names
-            const subcategoryIdsArray: string[] = [];
-            const subcategoryNamesArray: string[] = [];
-
-            for (const subcategoryId of relevantSubcategoryIds) {
-              const subcategory = category.subcategories.find((sub: any) => sub.id === subcategoryId);
-              if (subcategory) {
-                subcategoryIdsArray.push(subcategoryId);
-                subcategoryNamesArray.push(subcategory.name);
-              }
-            }
-
-            // Create ONE record per category with subcategories as arrays
             return {
               workerProfileId: workerProfile.id,
-              categoryId,
+              categoryId: category.id,
               categoryName: serviceName,
-              subcategoryIds: subcategoryIdsArray,
-              subcategoryNames: subcategoryNamesArray,
-              metadata: preservedMetadata,
+              subcategoryIds: validSubIds,
+              subcategoryNames: validSubIds.map(id => subcategoryNameMap.get(id)!),
+              metadata: metadataByCategory.get(category.id) ?? undefined,
             };
-          }).filter(Boolean);
+          })
+          .filter(Boolean);
 
-          // CRITICAL: Use individual creates instead of createMany to support metadata (JSON field)
-          // createMany does NOT support JSON fields in Prisma
-          if (workerServiceRecords.length > 0) {
-            await Promise.all(
-              workerServiceRecords.map((record) =>
-                authPrisma.workerService.create({ data: record })
-              )
-            );
-          }
+        // Delete + create in a single transaction
+        await authPrisma.$transaction([
+          authPrisma.workerService.deleteMany({ where: { workerProfileId: workerProfile.id } }),
+          ...workerServiceRecords.map((record) => authPrisma.workerService.create({ data: record })),
+        ]);
 
-          // Invalidate Redis cache to reflect service changes immediately
-          await invalidateCache(
-            CACHE_KEYS.workerProfile(session.user.id),
-            CACHE_KEYS.completionStatus(session.user.id)
-          );
-        }
+        await invalidateCache(
+          CACHE_KEYS.workerProfile(session.user.id),
+          CACHE_KEYS.completionStatus(session.user.id)
+        );
+
+        // Invalidate the Next.js server cache for this worker's services
+        revalidateTag(workerServicesCacheTag(workerProfile.id));
         break;
+      }
 
       case 102: // Additional Training / Qualifications
         // Handle selectedQualifications

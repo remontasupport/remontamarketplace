@@ -601,6 +601,7 @@ export default function ServiceQualificationStep({
             </div>
 
             {/* Registration Number */}
+            {nursingData.nursingType !== 'enrolled' && (
             <div className="mb-6">
               <Label
                 htmlFor="registration-number"
@@ -623,8 +624,10 @@ export default function ServiceQualificationStep({
                 </p>
               )}
             </div>
+            )}
 
             {/* Expiry Date */}
+            {nursingData.nursingType !== 'enrolled' && (
             <div className="mb-6">
               <Label className="text-base font-poppins font-semibold text-gray-900 mb-2 block">
                 Expiry date
@@ -697,6 +700,7 @@ export default function ServiceQualificationStep({
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
 

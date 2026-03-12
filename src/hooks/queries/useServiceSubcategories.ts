@@ -83,8 +83,8 @@ export function useWorkerServices(options?: { suspense?: boolean }) {
   return useQuery({
     queryKey: workerServicesKeys.current,
     queryFn: fetchWorkerServices,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 0, // Always fetch fresh — server controls cache via revalidateTag
+    gcTime: 5 * 60 * 1000, // Keep in memory for 5 minutes
     retry: 1,
     suspense: options?.suspense,
   });

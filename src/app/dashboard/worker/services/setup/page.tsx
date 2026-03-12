@@ -17,10 +17,12 @@ import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
+import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { useWorkerServices } from "@/hooks/queries/useServiceSubcategories";
+import { useServiceDocuments } from "@/hooks/queries/useServiceDocuments";
 import { saveNursingRegistration, getNursingRegistration, saveTherapeuticRegistration, getTherapeuticRegistration } from "@/services/worker/workerServices.service";
 
 // Form data interface
@@ -67,6 +69,9 @@ function ServicesSetupContent() {
   // Guarantees workerServices is ALWAYS defined when component renders
   // Result: ZERO flicker during navigation between steps
   const { data: workerServices } = useWorkerServices({ suspense: true });
+
+  // Fetch service documents — used for qualifications upload validation (cached, no extra fetch)
+  const { data: serviceDocumentsData } = useServiceDocuments();
 
   // Track if we've initialized form data
   const hasInitializedFormData = useRef(false);
@@ -229,266 +234,140 @@ function ServicesSetupContent() {
 
   // Save current step and move to next
   const handleNext = async () => {
-    // Import getServiceDocumentRequirements
-    const { getServiceDocumentRequirements } = await import("@/config/serviceDocumentRequirements");
+    const { view } = currentView;
+    const serviceTitle = currentStepData?.serviceTitle ?? '';
+    const isServiceStep = !!serviceTitle;
 
-    // VALIDATION: Check if we're on qualifications view and all selected qualifications have uploads
-    const isShowingQualifications = currentView.view === 'qualifications';
-    if (isShowingQualifications && currentStepData?.serviceTitle) {
-      const selectedQuals = formData.qualificationsByService?.[currentStepData.serviceTitle] || [];
-
-      if (selectedQuals.length > 0) {
-        // Check uploaded qualification files - need to query the database
-        const { getServiceDocuments } = await import("@/services/worker/serviceDocuments.service");
-        const documentsResult = await getServiceDocuments();
-
-        if (documentsResult.success && documentsResult.data) {
-          // Filter documents for current service
-          const serviceDocuments = documentsResult.data.filter(
-            (doc: any) => doc.serviceTitle === currentStepData.serviceTitle
-          );
-
-          // Get qualification types that have uploaded files
-          const uploadedQualTypes = new Set(
-            serviceDocuments.map((doc: any) => doc.documentType)
-          );
-
-          // Check if any selected qualification is missing an upload
-          const missingUploads = selectedQuals.filter(qualType => !uploadedQualTypes.has(qualType));
-
-          if (missingUploads.length > 0) {
-            setErrors({
-              qualifications: "Please upload documents for all selected qualifications before proceeding."
-            });
-            return;
-          } else {
-            // Clear the error if validation passes
-            setErrors((prev) => {
-              const newErrors = { ...prev };
-              delete newErrors.qualifications;
-              return newErrors;
-            });
-          }
-        }
-      }
-    }
-
-    // Define service step variables early
-    const isServiceStep = !!currentStepData?.serviceTitle;
-
-    // INTERCEPTOR 0: Check if we're on registration view (nursing services only)
-    // Navigate to qualifications view OR skip to offerings if no qualifications
-    const isShowingRegistration = currentView.view === 'registration';
-    if (isShowingRegistration) {
-      // Validate registration number (front-end only)
-      if (!formData.nursingRegistration?.registrationNumber || formData.nursingRegistration.registrationNumber.trim() === '') {
+    // --- REGISTRATION VIEW (nursing) ---
+    if (view === 'registration') {
+      const isEnrolledNurse = formData.nursingRegistration?.nursingType === 'enrolled';
+      if (!isEnrolledNurse && !formData.nursingRegistration?.registrationNumber?.trim()) {
         setErrors({ registrationNumber: "Please enter your registration number before proceeding." });
         return;
       }
 
-      // Save nursing registration data using server action
-      if (session?.user?.id && formData.nursingRegistration) {
-        try {
-         
-          const result = await saveNursingRegistration({
-            nursingType: formData.nursingRegistration.nursingType || 'registered',
-            hasExperience: formData.nursingRegistration.hasExperience || false,
-            registrationNumber: formData.nursingRegistration.registrationNumber || '',
-            expiryDay: formData.nursingRegistration.expiryDay || '',
-            expiryMonth: formData.nursingRegistration.expiryMonth || '',
-            expiryYear: formData.nursingRegistration.expiryYear || '',
-          });
+      const hasQualifications = serviceHasQualifications(serviceTitle);
+      const subcategories = workerServices?.find(
+        s => s.categoryName.toLowerCase() === serviceTitle.toLowerCase()
+      )?.subcategories ?? [];
+      const documentRequirements = getServiceDocumentRequirements(serviceTitle);
 
-          if (!result.success) {
-            setErrors({ general: result.error || "Failed to save nursing registration. Please try again." });
-            return;
-          }
+      const nextView = hasQualifications ? 'qualifications'
+        : subcategories.length > 0 ? 'offerings'
+        : documentRequirements.length > 0 ? 'documents'
+        : 'qualifications';
 
-        
-        } catch (error) {
-          
-          setErrors({ general: "Failed to save nursing registration. Please try again." });
-          return;
-        }
+      // Navigate immediately for instant UX, save in background
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=${nextView}`);
+
+      if (formData.nursingRegistration) {
+        saveNursingRegistration({
+          nursingType: formData.nursingRegistration.nursingType || 'registered',
+          hasExperience: formData.nursingRegistration.hasExperience || false,
+          registrationNumber: formData.nursingRegistration.registrationNumber || '',
+          expiryDay: formData.nursingRegistration.expiryDay || '',
+          expiryMonth: formData.nursingRegistration.expiryMonth || '',
+          expiryYear: formData.nursingRegistration.expiryYear || '',
+        }).catch(err => console.error('[Nursing] Background save failed:', err));
       }
-
-      // Check if service has qualifications
-      const hasQualifications = currentStepData?.serviceTitle
-        ? serviceHasQualifications(currentStepData.serviceTitle)
-        : false;
-
-      // Check if service has offerings (from worker's selected subcategories)
-      const selectedSubcategories = workerServices?.find(
-        (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
-      )?.subcategories || [];
-      const hasOfferings = selectedSubcategories.length > 0;
-
-      // If no qualifications but has offerings, skip to offerings
-      if (!hasQualifications && hasOfferings) {
-        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=offerings`);
-        return;
-      }
-
-      // If has qualifications, go to qualifications view
-      if (hasQualifications) {
-        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
-        return;
-      }
-
-      // If no qualifications and no offerings, check for documents
-      const documentRequirements = isServiceStep ? getServiceDocumentRequirements(currentStepData.serviceTitle!) : [];
-      const hasDocuments = documentRequirements.length > 0;
-
-      if (hasDocuments) {
-        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
-        return;
-      }
-
-      // Fallback: go to qualifications view
-      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=qualifications`);
       return;
     }
 
-    // INTERCEPTOR 1: Check if we're on a service step - always show offerings view
-    // Only intercept if:
-    // 1. We have a serviceTitle (it's a service step, not "Other Documents")
-    // 2. We're NOT currently showing offerings view
-    // 3. We're NOT currently showing documents view
-    // Note: We removed the hasOfferings check so offerings view shows even when empty
-    const isShowingOfferings = currentView.view === 'offerings';
-    const isShowingDocuments = currentView.view === 'documents';
-    // Check if worker has selected subcategories for this service
-    const serviceSelectedSubcategories = isServiceStep && workerServices?.find(
-      (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
-    )?.subcategories || [];
-    const hasOfferings = isServiceStep && serviceSelectedSubcategories.length > 0;
+    // --- QUALIFICATIONS VIEW ---
+    if (view === 'qualifications') {
+      const selectedQuals = formData.qualificationsByService?.[serviceTitle] ?? [];
 
-    if (isServiceStep && !isShowingOfferings && !isShowingDocuments) {
-      // INTERCEPT: Navigate to offerings view via URL (even if no offerings)
+      if (selectedQuals.length > 0) {
+        // Use already-cached service documents — no extra API call
+        const serviceDocuments = (serviceDocumentsData ?? []).filter(
+          (doc: any) => doc.serviceTitle === serviceTitle
+        );
+        const uploadedTypes = new Set(serviceDocuments.map((doc: any) => doc.documentType));
+        const missingUploads = selectedQuals.filter(q => !uploadedTypes.has(q));
+
+        if (missingUploads.length > 0) {
+          setErrors({ qualifications: "Please upload documents for all selected qualifications before proceeding." });
+          return;
+        }
+        setErrors(prev => { const e = { ...prev }; delete e.qualifications; return e; });
+      }
+
       router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=offerings`);
       return;
     }
 
-    // INTERCEPTOR 2: Removed - Always show offerings view even if empty
-    // This allows users to see "Add more services here" message
-    const documentRequirements = isServiceStep ? getServiceDocumentRequirements(currentStepData.serviceTitle!) : [];
-    const hasDocuments = documentRequirements.length > 0;
+    // --- OFFERINGS VIEW ---
+    if (view === 'offerings' && isServiceStep) {
+      const serviceSlug = serviceNameToSlug(serviceTitle);
+      const hasDocuments = getServiceDocumentRequirements(serviceTitle).length > 0;
 
-    // Note: We no longer skip to documents when there are no offerings
-    // The offerings view will display a "Add more services here" link instead
-
-    // VALIDATION: Check if we're on offerings view for therapeutic support
-    // Validate and save registration data before proceeding
-    if (isServiceStep && isShowingOfferings) {
-      const serviceSlug = currentStepData?.serviceTitle ? serviceNameToSlug(currentStepData.serviceTitle) : '';
-      const isTherapeuticSupport = serviceSlug === 'therapeutic-supports';
-
-      if (isTherapeuticSupport) {
-        // Validate that all date fields are filled
-        const { expiryDay, expiryMonth, expiryYear } = formData.therapeuticRegistration || {};
-
+      if (serviceSlug === 'therapeutic-supports') {
+        const { expiryDay, expiryMonth, expiryYear } = formData.therapeuticRegistration ?? {};
         if (!expiryDay || !expiryMonth || !expiryYear) {
           setErrors({ expiryDate: "Select a date (Day/Month/Year)" });
           return;
         }
 
-        // Save therapeutic registration data using server action
-        if (session?.user?.id && formData.therapeuticRegistration) {
-          try {
-           
-            const result = await saveTherapeuticRegistration({
+        if (hasDocuments) {
+          // Navigate immediately, save in background
+          router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
+          if (formData.therapeuticRegistration) {
+            saveTherapeuticRegistration({
               registrationNumber: formData.therapeuticRegistration.registrationNumber || '',
               expiryDay: formData.therapeuticRegistration.expiryDay || '',
               expiryMonth: formData.therapeuticRegistration.expiryMonth || '',
               expiryYear: formData.therapeuticRegistration.expiryYear || '',
-            });
-
-            if (!result.success) {
-              setErrors({ general: result.error || "Failed to save therapeutic registration. Please try again." });
-              return;
-            }
-
-          
-          } catch (error) {
-            
-            setErrors({ general: "Failed to save therapeutic registration. Please try again." });
-            return;
+            }).catch(err => console.error('[Therapeutic] Background save failed:', err));
           }
+          return;
         }
+
+        // No documents — save therapeutic + step data in parallel, then navigate
+        // (fall through to the save-and-navigate section below)
+      } else if (hasDocuments) {
+        router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
+        return;
       }
     }
 
-    // INTERCEPTOR 3: Check if we're on offerings view and should show documents
-    // Only intercept if:
-    // 1. We're currently showing offerings view
-    // 2. The service has document requirements
-    if (isServiceStep && isShowingOfferings && !isShowingDocuments && hasDocuments) {
-      // INTERCEPT: Navigate to documents view via URL
-      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
-      return;
-    }
+    // --- SAVE AND NAVIGATE TO NEXT STEP ---
+    if (!validateStep() || !session?.user?.id) return;
 
-    // PROCEED: Either no skills/documents, or already showed them, or not a service step
-    // Validate current step
-    if (!validateStep()) {
-      return;
-    }
-
-    if (!session?.user?.id) return;
-
-    // Check if this is the final step (after all interceptors, so we know we're saving)
     const isFinalStep = currentStep === STEPS.length;
 
     try {
-      // Show appropriate loading state BEFORE any async operations
       if (isFinalStep) {
-        // Use flushSync to force immediate synchronous render
-        flushSync(() => {
-          setIsFinalSaving(true);
-        });
+        flushSync(() => setIsFinalSaving(true));
       } else {
         setIsNavigating(true);
       }
 
-      const apiStep = 100 + currentStep;
-      let dataToSend: any = {};
+      const dataToSend = stepSlug === 'other-documents'
+        ? { selectedQualifications: formData.selectedQualifications }
+        : { qualificationsByService: formData.qualificationsByService, nursingRegistration: formData.nursingRegistration };
 
-      // Determine what data to send based on current step
-      if (stepSlug === "other-documents") {
-        dataToSend = {
-          selectedQualifications: formData.selectedQualifications,
-        };
-      } else {
-        // Individual service step - save qualifications and nursing registration
-        // NOTE: offeringsByService is saved via mutations in real-time (no need to save here)
-        // NOTE: documentsByService is saved directly during upload via uploadServiceDocument
-        dataToSend = {
-          qualificationsByService: formData.qualificationsByService,
-          nursingRegistration: formData.nursingRegistration,
-        };
-      }
+      // Run therapeutic save + step save in parallel if needed
+      const saveTherapeutic = view === 'offerings' && serviceNameToSlug(serviceTitle) === 'therapeutic-supports' && formData.therapeuticRegistration
+        ? saveTherapeuticRegistration({
+            registrationNumber: formData.therapeuticRegistration.registrationNumber || '',
+            expiryDay: formData.therapeuticRegistration.expiryDay || '',
+            expiryMonth: formData.therapeuticRegistration.expiryMonth || '',
+            expiryYear: formData.therapeuticRegistration.expiryYear || '',
+          })
+        : Promise.resolve(null);
 
-      // Save to database
-      await updateProfileMutation.mutateAsync({
-        userId: session.user.id,
-        step: apiStep,
-        data: dataToSend,
-      });
+      await Promise.all([
+        saveTherapeutic,
+        updateProfileMutation.mutateAsync({ userId: session.user.id, step: 100 + currentStep, data: dataToSend }),
+      ]);
 
-      // Move to next step or go to Additional Documents (Section 3)
-      if (!isFinalStep) {
-        // Reset loading state before navigation
-        setIsNavigating(false);
-
-        // Navigate to next service WITHOUT view parameter (will auto-determine)
-        const nextStepSlug = STEPS[currentStep].slug;
-        router.push(`/dashboard/worker/services/setup?step=${nextStepSlug}`);
-      } else {
-        // All services completed - Navigate to Additional Documents
-        // (don't reset loading state - we're leaving anyway)
+      if (isFinalStep) {
         router.push("/dashboard/worker/additional-documents");
+      } else {
+        setIsNavigating(false);
+        router.push(`/dashboard/worker/services/setup?step=${STEPS[currentStep].slug}`);
       }
-    } catch (error) {
+    } catch {
       setIsNavigating(false);
       setIsFinalSaving(false);
       setErrors({ general: "Failed to save. Please try again." });
@@ -636,7 +515,6 @@ function ServicesSetupContent() {
     )?.subcategories || [];
     const hasOfferings = selectedSubcategories.length > 0;
 
-    const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
     const documentRequirements = getServiceDocumentRequirements(serviceTitle);
     const hasDocuments = documentRequirements.length > 0;
 
@@ -755,9 +633,7 @@ function ServicesSetupContent() {
 
   // Determine next button text
   const getNextButtonText = () => {
-    const { getServiceDocumentRequirements } = require("@/config/serviceDocumentRequirements");
     const isLastService = currentStep === STEPS.length;
-    // Check if worker has selected subcategories for this service
     const selectedSubcategories = currentStepData?.serviceTitle && workerServices?.find(
       (s) => s.categoryName.toLowerCase() === (currentStepData.serviceTitle?.toLowerCase() || '')
     )?.subcategories || [];

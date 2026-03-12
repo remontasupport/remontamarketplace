@@ -79,6 +79,12 @@ export default function ManageServicesPage() {
           supportWorkerCategories,
         },
       });
+
+      // Invalidate caches so other parts of the app reflect the update immediately
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['worker-services'] }),
+        queryClient.invalidateQueries({ queryKey: ['worker-profile'] }),
+      ]);
     } catch (error) {
       console.error('Error saving services:', error);
       throw error;
