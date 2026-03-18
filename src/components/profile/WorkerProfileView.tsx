@@ -897,7 +897,7 @@ export default function WorkerProfileView({
                     <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-2">
                       <span className="text-2xl">🏳️‍🌈</span>
                     </div>
-                    <p className="text-sm text-gray-700 text-center">LGBTQIA+<br />Friendly</p>
+                    <p className="text-lg text-gray-700 text-center">LGBTQIA+<br />Friendly</p>
                   </div>
                 )}
                 {additionalInfo?.nonSmoker && (
@@ -905,7 +905,7 @@ export default function WorkerProfileView({
                     <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-2">
                       <span className="text-2xl">🚭</span>
                     </div>
-                    <p className="text-sm text-gray-700 text-center">Non-Smoker</p>
+                    <p className="text-lg text-gray-700 text-center">Non-Smoker</p>
                   </div>
                 )}
                 {additionalInfo?.petFriendly && (
@@ -913,7 +913,7 @@ export default function WorkerProfileView({
                     <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-2">
                       <span className="text-2xl">🐾</span>
                     </div>
-                    <p className="text-sm text-gray-700 text-center">Pet Friendly</p>
+                    <p className="text-lg text-gray-700 text-center">Pet Friendly</p>
                   </div>
                 )}
               </div>

@@ -22,6 +22,7 @@ import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
 import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
 import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
+import { useProfilePreview } from '@/hooks/useProfilePreview'
 import { useSession } from 'next-auth/react'
 import { parseSetupProgress } from '@/types/setupProgress'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
@@ -73,6 +74,30 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
   // Get session and profile data for setup progress
   const { data: session } = useSession()
   const { data: profileDataFromHook, refetch, isRefetching, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id)
+
+  // Background check: fetch profile-preview data to determine profile completion
+  const { data: previewData } = useProfilePreview()
+
+  const profileCompletionPct = useMemo(() => {
+    if (!previewData) return null
+    const { profile, services, additionalInfo } = previewData as any
+    const fields = [
+      !!profile?.photos,
+      !!(profile?.introduction && profile.introduction.length >= 50),
+      !!(profile?.city || profile?.location),
+      Array.isArray(services) && services.length > 0,
+      additionalInfo?.languages?.length > 0,
+      !!additionalInfo?.availability,
+      !!additionalInfo?.experience,
+      additionalInfo?.jobHistory?.length > 0,
+      additionalInfo?.education?.length > 0,
+      additionalInfo?.personality?.length > 0,
+    ]
+    const completed = fields.filter(Boolean).length
+    return Math.round((completed / fields.length) * 100)
+  }, [previewData])
+
+  const showEditProfileHighlight = profileCompletionPct !== null && profileCompletionPct < 80
 
   // CRITICAL: Aggressively refetch when on dashboard to ensure checkmarks appear
   useEffect(() => {
@@ -272,9 +297,16 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
 
       {/* Edit Profile Link - Separate Section */}
       <div className="sidebar-edit-profile-section">
-        <Link href="/dashboard/worker/profile-building" className="sidebar-edit-profile" onClick={handleLinkClick}>
+        <Link
+          href="/dashboard/worker/profile-building"
+          className={`sidebar-edit-profile${showEditProfileHighlight ? ' sidebar-edit-profile--highlight' : ''}`}
+          onClick={handleLinkClick}
+        >
           <PencilIcon className="sidebar-edit-icon" />
           <span>Edit profile</span>
+          {showEditProfileHighlight && (
+            <span className="sidebar-edit-profile__badge">{profileCompletionPct}%</span>
+          )}
         </Link>
         <Link href="/dashboard/worker/services/manage" className="sidebar-edit-profile" onClick={handleLinkClick} style={{ marginTop: '0.75rem' }}>
           <WrenchScrewdriverIcon className="sidebar-edit-icon" />

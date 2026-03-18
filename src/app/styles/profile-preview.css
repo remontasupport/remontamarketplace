@@ -398,7 +398,7 @@
 /* Qualifications */
 .profile-preview-verified {
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   color: #059669;
   margin: 0 0 12px 0;
 }
@@ -421,7 +421,7 @@
 .profile-preview-checkmark {
   color: #10b981;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* Services Dropdown */
@@ -462,6 +462,124 @@
   margin-bottom: 12px;
 }
 
+/* ============================================================
+   DOWNLOADING MODE - larger fonts for JPEG export
+   Applied temporarily via JS before html-to-image capture
+   ============================================================ */
+.profile-preview-page.downloading .profile-preview-name {
+  font-size: 52px;
+}
+.profile-preview-page.downloading .profile-preview-ndis-badge {
+  font-size: 16px;
+}
+.profile-preview-page.downloading .profile-preview-roles {
+  font-size: 28px;
+}
+.profile-preview-page.downloading .profile-preview-member-since {
+  font-size: 22px;
+}
+.profile-preview-page.downloading .profile-preview-avatar {
+  width: 170px;
+  height: 170px;
+}
+.profile-preview-page.downloading .profile-preview-avatar-placeholder {
+  font-size: 52px;
+}
+.profile-preview-page.downloading .profile-preview-section-title {
+  font-size: 44px;
+}
+.profile-preview-page.downloading .profile-preview-subsection-title {
+  font-size: 35px;
+}
+.profile-preview-page.downloading .profile-preview-text {
+  font-size: 24px;
+}
+.profile-preview-page.downloading .profile-preview-qualification-item {
+  font-size: 22px;
+}
+.profile-preview-page.downloading .profile-preview-checkmark {
+  font-size: 26px;
+}
+.profile-preview-page.downloading .profile-preview-verified {
+  font-size: 20px;
+}
+.profile-preview-page.downloading .profile-preview-service-summary {
+  font-size: 16px;
+}
+.profile-preview-page.downloading .profile-preview-info-text {
+  font-size: 16px;
+}
+.profile-preview-page.downloading .profile-preview-rate-prompt {
+  font-size: 16px;
+}
+/* Tailwind text size overrides for downloading mode */
+.profile-preview-page.downloading .text-xs {
+  font-size: 13px !important;
+}
+.profile-preview-page.downloading .text-sm {
+  font-size: 16px !important;
+}
+.profile-preview-page.downloading .text-base {
+  font-size: 18px !important;
+}
+.profile-preview-page.downloading .text-lg {
+  font-size: 20px !important;
+}
+.profile-preview-page.downloading .text-xl {
+  font-size: 22px !important;
+}
+.profile-preview-page.downloading .text-2xl {
+  font-size: 26px !important;
+}
+.profile-preview-page.downloading .text-3xl {
+  font-size: 32px !important;
+}
+.profile-preview-page.downloading .text-4xl {
+  font-size: 40px !important;
+}
+/* Compact spacing — reduces total page height significantly */
+.profile-preview-page.downloading .profile-preview-header-content {
+  padding: 24px;
+}
+.profile-preview-page.downloading .profile-preview-content {
+  padding: 16px 24px;
+}
+.profile-preview-page.downloading .profile-preview-section {
+  padding: 10px 0;
+}
+.profile-preview-page.downloading .profile-preview-grid {
+  gap: 20px;
+  padding-top: 6px;
+}
+.profile-preview-page.downloading .profile-preview-column {
+  gap: 12px;
+}
+.profile-preview-page.downloading .profile-preview-section-title {
+  margin-bottom: 6px;
+}
+.profile-preview-page.downloading .profile-preview-subsection-title {
+  margin-bottom: 6px;
+}
+.profile-preview-page.downloading .profile-preview-text {
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.profile-preview-page.downloading .space-y-4 > * + * {
+  margin-top: 8px !important;
+}
+.profile-preview-page.downloading .space-y-2 > * + * {
+  margin-top: 4px !important;
+}
+.profile-preview-page.downloading .mb-4 {
+  margin-bottom: 8px !important;
+}
+.profile-preview-page.downloading .mb-3 {
+  margin-bottom: 6px !important;
+}
+.profile-preview-page.downloading .mb-2 {
+  margin-bottom: 4px !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .profile-preview-header-content {
@@ -479,15 +597,15 @@
   }
 
   .profile-preview-ndis-badge {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .profile-preview-section-title {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .profile-preview-subsection-title {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .profile-preview-edit-link {

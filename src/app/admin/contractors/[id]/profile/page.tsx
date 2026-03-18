@@ -176,111 +176,124 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
     }
   }, [shareLink]);
 
-  // Handle PDF download - client-side generation
+  // Handle PDF download - multi-page, all content visible
   const handleDownloadPDF = useCallback(async () => {
+    const CAPTURE_WIDTH = 1200;
+
+    const element = document.querySelector('.profile-preview-page') as HTMLElement;
+    const origWidth = element?.style.width ?? '';
+    const origMaxWidth = element?.style.maxWidth ?? '';
+
     try {
       setIsDownloadingPDF(true);
 
-      // Wait a bit for any pending renders
+      if (!element) throw new Error('Profile page not found');
+
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Dynamically import libraries
       const { toPng } = await import('html-to-image');
       const { jsPDF } = await import('jspdf');
 
-      // Get the profile page element
-      const element = document.querySelector('.profile-preview-page') as HTMLElement;
-      if (!element) {
-        throw new Error('Profile page not found');
-      }
+      // Fix capture width for consistent layout
+      element.style.width = `${CAPTURE_WIDTH}px`;
+      element.style.maxWidth = `${CAPTURE_WIDTH}px`;
+      void element.getBoundingClientRect();
+      await new Promise(resolve => setTimeout(resolve, 150));
 
-      // Store original styles
       const originalBoxShadow = element.style.boxShadow;
       const originalBorderRadius = element.style.borderRadius;
 
-      // Hide header buttons during capture
       const headerSection = element.querySelector('.profile-preview-back-section') as HTMLElement | null;
-      const originalHeaderDisplay = headerSection?.style.display ?? '';
+      const origHeaderDisplay = headerSection?.style.display ?? '';
       if (headerSection) headerSection.style.display = 'none';
 
-      // Remove visual effects for cleaner PDF
       element.style.boxShadow = 'none';
       element.style.borderRadius = '0';
 
-      // Generate PNG from HTML with high quality
       const dataUrl = await toPng(element, {
         quality: 1.0,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
       });
 
-      // Restore original styles
       element.style.boxShadow = originalBoxShadow;
       element.style.borderRadius = originalBorderRadius;
-      if (headerSection) headerSection.style.display = originalHeaderDisplay;
+      if (headerSection) headerSection.style.display = origHeaderDisplay;
 
-      // Get image dimensions
-      const img = window.document.createElement('img');
+      // Load image to get dimensions
+      const img = document.createElement('img');
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = () => reject(new Error('Failed to load image'));
         img.src = dataUrl;
       });
 
-      // Create PDF with A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
-        compress: true
+        compress: true,
       });
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Calculate image dimensions to fit A4
       const imgWidth = pageWidth;
       const imgHeight = (img.height * pageWidth) / img.width;
 
-      // Add image to PDF
-      pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight, undefined, 'FAST');
+      // Render all content across as many A4 pages as needed
+      let yOffset = 0;
+      let pageNum = 0;
+      while (yOffset < imgHeight) {
+        if (pageNum > 0) pdf.addPage();
+        // Draw the full image shifted up so the correct slice shows on this page
+        pdf.addImage(dataUrl, 'PNG', 0, -yOffset, imgWidth, imgHeight, undefined, 'FAST');
+        yOffset += pageHeight;
+        pageNum++;
+      }
 
-      // Download PDF
       const lastInitial = profileData?.profile?.lastName?.charAt(0) ?? '';
-      const fileName = `${profileData?.profile?.firstName}${lastInitial}_Profile.pdf`;
-      pdf.save(fileName);
+      pdf.save(`${profileData?.profile?.firstName}${lastInitial}_Profile.pdf`);
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       alert(`Failed to generate PDF: ${errorMsg}`);
     } finally {
+      if (element) {
+        element.style.width = origWidth;
+        element.style.maxWidth = origMaxWidth;
+      }
       setIsDownloadingPDF(false);
     }
   }, [profileData?.profile?.firstName, profileData?.profile?.lastName]);
 
-  // Handle JPEG download
+  // Handle JPEG download — single file, wide landscape-friendly format for FB sharing
   const handleDownloadJPEG = useCallback(async () => {
+    const CAPTURE_WIDTH = 1600;
+
+    const element = document.querySelector('.profile-preview-page') as HTMLElement;
+    const origWidth = element?.style.width ?? '';
+    const origMaxWidth = element?.style.maxWidth ?? '';
+
     try {
       setShowDownloadDropdown(false);
       setIsDownloadingJPEG(true);
+
+      if (!element) throw new Error('Profile page not found');
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const { toJpeg } = await import('html-to-image');
 
-      const element = document.querySelector('.profile-preview-page') as HTMLElement;
-      if (!element) throw new Error('Profile page not found');
+      element.style.width = `${CAPTURE_WIDTH}px`;
+      element.style.maxWidth = `${CAPTURE_WIDTH}px`;
+      void element.getBoundingClientRect();
 
-      const originalBoxShadow = element.style.boxShadow;
-      const originalBorderRadius = element.style.borderRadius;
+      element.classList.add('downloading');
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Hide header buttons during capture
       const headerSection = element.querySelector('.profile-preview-back-section') as HTMLElement | null;
-      const originalHeaderDisplay = headerSection?.style.display ?? '';
+      const origHeaderDisplay = headerSection?.style.display ?? '';
       if (headerSection) headerSection.style.display = 'none';
-
-      element.style.boxShadow = 'none';
-      element.style.borderRadius = '0';
 
       const dataUrl = await toJpeg(element, {
         quality: 0.95,
@@ -288,13 +301,11 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
         backgroundColor: '#ffffff',
       });
 
-      element.style.boxShadow = originalBoxShadow;
-      element.style.borderRadius = originalBorderRadius;
-      if (headerSection) headerSection.style.display = originalHeaderDisplay;
+      if (headerSection) headerSection.style.display = origHeaderDisplay;
 
       const link = document.createElement('a');
-      const lastInitialJpeg = profileData?.profile?.lastName?.charAt(0) ?? '';
-      link.download = `${profileData?.profile?.firstName}${lastInitialJpeg}_Profile.jpeg`;
+      const lastInitial = profileData?.profile?.lastName?.charAt(0) ?? '';
+      link.download = `${profileData?.profile?.firstName}${lastInitial}_Profile.jpeg`;
       link.href = dataUrl;
       link.click();
 
@@ -302,6 +313,11 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       alert(`Failed to generate JPEG: ${errorMsg}`);
     } finally {
+      if (element) {
+        element.style.width = origWidth;
+        element.style.maxWidth = origMaxWidth;
+        element.classList.remove('downloading');
+      }
       setIsDownloadingJPEG(false);
     }
   }, [profileData?.profile?.firstName, profileData?.profile?.lastName]);
