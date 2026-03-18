@@ -78,12 +78,13 @@ export async function POST(request: NextRequest) {
 
     const result = await authPrisma.serviceRequest.create({
       data: {
-        requesterId:   userId,
-        participantId: participant.id,
-        services:      data.services,
-        details:       data.details,
-        location:      data.location,
-        status:        'PENDING',
+        requesterId:     userId,
+        participantId:   participant.id,
+        services:        data.services,
+        details:         data.details,
+        location:        data.location,
+        status:          'PENDING',
+        selectedWorkers: [],
       },
       include: { participant: true },
     })
