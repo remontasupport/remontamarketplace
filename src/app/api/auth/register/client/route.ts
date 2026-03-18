@@ -43,7 +43,18 @@ export async function POST(request: Request) {
     // Hash password before DB ops to minimise transaction lock time
     const passwordHash = await hashPassword(data.password);
 
-    // Create User + ClientProfile — nested create is atomic in Prisma
+    // Determine participant name: on 'client' path use clientFirstName/clientLastName if provided,
+    // otherwise fall back to the registrant's own name.
+    const participantFirstName =
+      data.completingFormAs === 'client' && data.clientFirstName
+        ? data.clientFirstName
+        : data.firstName;
+    const participantLastName =
+      data.completingFormAs === 'client' && data.clientLastName
+        ? data.clientLastName
+        : data.lastName;
+
+    // Create User + ClientProfile + Participant — nested create is atomic in Prisma
     let user;
     try {
       user = await authPrisma.user.create({
@@ -60,6 +71,19 @@ export async function POST(request: Request) {
               mobile: data.mobile,
               isSelfManaged: data.completingFormAs === 'self',
               updatedAt: new Date(),
+            },
+          },
+          participants: {
+            create: {
+              firstName: participantFirstName,
+              lastName: participantLastName,
+              dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+              fundingType: data.fundingType ?? null,
+              relationshipToClient: data.relationshipToClient ?? null,
+              isSelfManaged: data.completingFormAs === 'self',
+              location: data.location ?? null,
+              servicesRequested: data.servicesRequested ?? undefined,
+              additionalInfo: data.additionalInfo ?? null,
             },
           },
         },

@@ -84,7 +84,7 @@ model Participant {
   userId               String?
   firstName            String
   lastName             String
-  dateOfBirth          DateTime
+  dateOfBirth          DateTime?
   location             String?
   gender               String?
   conditions           String[]     @default([])

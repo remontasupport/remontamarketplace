@@ -7694,7 +7694,7 @@ export namespace Prisma {
     userId: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date
+    dateOfBirth: Date | null
     location: string | null
     gender: string | null
     conditions: string[]
@@ -7825,7 +7825,7 @@ export namespace Prisma {
       userId: string | null
       firstName: string
       lastName: string
-      dateOfBirth: Date
+      dateOfBirth: Date | null
       location: string | null
       gender: string | null
       conditions: string[]
@@ -26974,7 +26974,7 @@ export namespace Prisma {
     userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
+    dateOfBirth?: DateTimeNullableFilter<"Participant"> | Date | string | null
     location?: StringNullableFilter<"Participant"> | string | null
     gender?: StringNullableFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
@@ -26994,7 +26994,7 @@ export namespace Prisma {
     userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
-    dateOfBirth?: SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
     location?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
     conditions?: SortOrder
@@ -27017,7 +27017,7 @@ export namespace Prisma {
     userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
+    dateOfBirth?: DateTimeNullableFilter<"Participant"> | Date | string | null
     location?: StringNullableFilter<"Participant"> | string | null
     gender?: StringNullableFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
@@ -27037,7 +27037,7 @@ export namespace Prisma {
     userId?: SortOrderInput | SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
-    dateOfBirth?: SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
     location?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
     conditions?: SortOrder
@@ -27061,7 +27061,7 @@ export namespace Prisma {
     userId?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     firstName?: StringWithAggregatesFilter<"Participant"> | string
     lastName?: StringWithAggregatesFilter<"Participant"> | string
-    dateOfBirth?: DateTimeWithAggregatesFilter<"Participant"> | Date | string
+    dateOfBirth?: DateTimeNullableWithAggregatesFilter<"Participant"> | Date | string | null
     location?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     gender?: StringNullableWithAggregatesFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
@@ -28728,7 +28728,7 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -28748,7 +28748,7 @@ export namespace Prisma {
     userId?: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -28766,7 +28766,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -28786,7 +28786,7 @@ export namespace Prisma {
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -28805,7 +28805,7 @@ export namespace Prisma {
     userId?: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -28822,7 +28822,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -28840,7 +28840,7 @@ export namespace Prisma {
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -30741,6 +30741,17 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type EnumFundingTypeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
@@ -30808,6 +30819,20 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type EnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
@@ -30854,17 +30879,6 @@ export namespace Prisma {
     in?: $Enums.AccountStatus[] | ListEnumAccountStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.AccountStatus[] | ListEnumAccountStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumAccountStatusFilter<$PrismaModel> | $Enums.AccountStatus
-  }
-
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -31007,20 +31021,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAccountStatusFilter<$PrismaModel>
     _max?: NestedEnumAccountStatusFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -31960,6 +31960,10 @@ export namespace Prisma {
     connect?: ServiceRequestWhereUniqueInput | ServiceRequestWhereUniqueInput[]
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type ParticipantUpdateconditionsInput = {
     set?: string[]
     push?: string | string[]
@@ -32119,10 +32123,6 @@ export namespace Prisma {
 
   export type EnumAccountStatusFieldUpdateOperationsInput = {
     set?: $Enums.AccountStatus
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -33134,11 +33134,36 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedEnumFundingTypeNullableFilter<$PrismaModel = never> = {
     equals?: $Enums.FundingType | EnumFundingTypeFieldRefInput<$PrismaModel> | null
     in?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
     notIn?: $Enums.FundingType[] | ListEnumFundingTypeFieldRefInput<$PrismaModel> | null
     not?: NestedEnumFundingTypeNullableFilter<$PrismaModel> | $Enums.FundingType | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumFundingTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -33165,17 +33190,6 @@ export namespace Prisma {
     not?: NestedEnumAccountStatusFilter<$PrismaModel> | $Enums.AccountStatus
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedEnumUserRoleWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.UserRole | EnumUserRoleFieldRefInput<$PrismaModel>
     in?: $Enums.UserRole[] | ListEnumUserRoleFieldRefInput<$PrismaModel>
@@ -33194,20 +33208,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAccountStatusFilter<$PrismaModel>
     _max?: NestedEnumAccountStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -34276,7 +34276,7 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -34294,7 +34294,7 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -34579,7 +34579,7 @@ export namespace Prisma {
     userId?: StringNullableFilter<"Participant"> | string | null
     firstName?: StringFilter<"Participant"> | string
     lastName?: StringFilter<"Participant"> | string
-    dateOfBirth?: DateTimeFilter<"Participant"> | Date | string
+    dateOfBirth?: DateTimeNullableFilter<"Participant"> | Date | string | null
     location?: StringNullableFilter<"Participant"> | string | null
     gender?: StringNullableFilter<"Participant"> | string | null
     conditions?: StringNullableListFilter<"Participant">
@@ -36108,7 +36108,7 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -36127,7 +36127,7 @@ export namespace Prisma {
     userId?: string | null
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -36160,7 +36160,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -36179,7 +36179,7 @@ export namespace Prisma {
     userId?: NullableStringFieldUpdateOperationsInput | string | null
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -36282,7 +36282,7 @@ export namespace Prisma {
     id?: string
     firstName: string
     lastName: string
-    dateOfBirth: Date | string
+    dateOfBirth?: Date | string | null
     location?: string | null
     gender?: string | null
     conditions?: ParticipantCreateconditionsInput | string[]
@@ -36389,7 +36389,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -36407,7 +36407,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
@@ -36425,7 +36425,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
-    dateOfBirth?: DateTimeFieldUpdateOperationsInput | Date | string
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     conditions?: ParticipantUpdateconditionsInput | string[]
