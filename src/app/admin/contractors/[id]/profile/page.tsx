@@ -3,10 +3,12 @@
 import * as React from 'react';
 import { use, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, ChevronDown, Share2, Copy, Check } from "lucide-react";
+import { ArrowLeft, Download, ChevronDown, Share2, Copy, Check, Pencil, Upload } from "lucide-react";
 import Loader from "@/components/ui/Loader";
 import WorkerProfileView from "@/components/profile/WorkerProfileView";
+import ImageCropModal from "@/components/modals/ImageCropModal";
 import { getWorkerProfilePreview } from "@/services/worker/profilePreview.service";
+import { useProfileEditor } from "@/hooks/useProfileEditor";
 import "@/app/styles/profile-preview.css";
 
 interface PageProps {
@@ -29,6 +31,50 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
   const [shareLink, setShareLink] = useState<string>("");
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+
+  // Photo editing state
+  const [selectedImageUrl, setSelectedImageUrl] = useState('');
+  const [croppedImageUrl, setCroppedImageUrl] = useState('');
+  const [showCropModal, setShowCropModal] = useState(false);
+
+  // Compute job title early (before conditional returns) so the hook call is always at top level.
+  // Use '' until profileData is loaded so the hook doesn't initialize with the fallback too early.
+  const rawServices = profileData?.services;
+  const servicesText = !profileData
+    ? ''
+    : rawServices && rawServices.length > 0
+      ? rawServices.flatMap((service: any) => {
+          if (service.categoryName === "Therapeutic Supports" && service.subcategories?.length > 0) {
+            return service.subcategories.map((sub: any) => sub.subcategoryName);
+          }
+          return [service.categoryName];
+        }).join(" / ")
+      : "Support Worker";
+
+  const introduction = profileData?.profile?.introduction ?? '';
+  const funFact = profileData?.additionalInfo?.funFact ?? '';
+  const initialUniqueServices: string[] = !profileData
+    ? []
+    : Array.isArray(profileData?.additionalInfo?.uniqueService)
+      ? profileData.additionalInfo.uniqueService
+      : [];
+
+  const initialServices = !profileData
+    ? []
+    : (rawServices ?? []).filter(
+        (s: any) => s.subcategories?.length > 0 && s.categoryName !== 'Therapeutic Supports'
+      );
+
+  const initialMoreInfo = {
+    languages: Array.isArray(profileData?.additionalInfo?.languages) ? profileData.additionalInfo.languages : [],
+    culturalBackground: Array.isArray(profileData?.additionalInfo?.culturalBackground) ? profileData.additionalInfo.culturalBackground : [],
+    religion: Array.isArray(profileData?.additionalInfo?.religion) ? profileData.additionalInfo.religion : [],
+    interests: Array.isArray(profileData?.additionalInfo?.interests) ? profileData.additionalInfo.interests : [],
+    personality: profileData?.additionalInfo?.personality ?? '',
+  };
+
+  const { isEditMode, toggleEditMode, state, updateField, removeServiceCategory, removeSubcategory, addSubcategory, toggleSection, addUniqueService, removeUniqueService, addInfoItem, removeInfoItem, addExperienceItem, updateExperienceItem, removeExperienceItem } =
+    useProfileEditor(servicesText, introduction, funFact, initialServices, initialUniqueServices, initialMoreInfo);
 
   // Close download dropdown on outside click
   React.useEffect(() => {
@@ -58,6 +104,32 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
       fetchProfile();
     }
   }, [workerId]);
+
+  // Photo editing handlers
+  const handleImageChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { alert('Please select a valid image file'); return }
+    if (file.size > 50 * 1024 * 1024) { alert('Image size must be less than 50MB'); return }
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setSelectedImageUrl(e.target?.result as string)
+      setCroppedImageUrl('')
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }, [])
+
+  const handlePhotoDoubleClick = useCallback(() => {
+    if (isEditMode && (selectedImageUrl || profileData?.profile?.photos)) {
+      setShowCropModal(true)
+    }
+  }, [isEditMode, selectedImageUrl, profileData?.profile?.photos])
+
+  const handleCropComplete = useCallback((croppedUrl: string) => {
+    setCroppedImageUrl(croppedUrl)
+    setShowCropModal(false)
+  }, [])
 
   // Handle Generate Share Link
   const handleGenerateShareLink = useCallback(async () => {
@@ -263,17 +335,6 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
     ? `${profile.firstName[0]}${profile.lastName[0]}`
     : "U";
 
-  // Format services separated by slashes
-  // For Therapeutic Supports, show subcategory names; for others, show category name
-  const servicesText = services && services.length > 0
-    ? services.flatMap((service: any) => {
-        if (service.categoryName === "Therapeutic Supports" && service.subcategories?.length > 0) {
-          return service.subcategories.map((sub: any) => sub.subcategoryName);
-        }
-        return [service.categoryName];
-      }).join(" / ")
-    : "Support Worker";
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="profile-preview-page">
@@ -302,6 +363,19 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
                   <span>Share Profile</span>
                 </>
               )}
+            </button>
+
+            {/* Edit Profile Button */}
+            <button
+              onClick={toggleEditMode}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium border ${
+                isEditMode
+                  ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <Pencil className="w-5 h-5" />
+              <span>{isEditMode ? 'Done Editing' : 'Edit Profile'}</span>
             </button>
 
             {/* Download Dropdown */}
@@ -351,12 +425,40 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
         <div className="profile-preview-header">
           <div className="profile-preview-header-content">
             {/* Avatar */}
-            <div className="profile-preview-avatar">
-              {profile?.photos ? (
-                <img src={profile.photos} alt={`${profile.firstName} ${profile.lastName}`} />
+            <div
+              className="profile-preview-avatar relative"
+              onDoubleClick={handlePhotoDoubleClick}
+              style={{ cursor: isEditMode && (selectedImageUrl || profile?.photos) ? 'pointer' : 'default' }}
+              title={isEditMode && (selectedImageUrl || profile?.photos) ? 'Double-click to crop image' : ''}
+            >
+              {(croppedImageUrl || selectedImageUrl || profile?.photos) ? (
+                <img
+                  src={croppedImageUrl || selectedImageUrl || profile.photos}
+                  alt={`${profile.firstName} ${profile.lastName}`}
+                  style={{ objectFit: 'cover', width: '100%', height: '100%', borderRadius: 'inherit' }}
+                />
               ) : (
                 <div className="profile-preview-avatar-placeholder">
                   {initials}
+                </div>
+              )}
+              {isEditMode && (
+                <div className="absolute inset-0 flex items-end justify-center pb-2 rounded-full overflow-hidden">
+                  <input
+                    type="file"
+                    id="profile-photo-upload"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    aria-label="Upload new photo"
+                  />
+                  <label
+                    htmlFor="profile-photo-upload"
+                    className="flex items-center gap-1 px-2 py-1 bg-black bg-opacity-60 text-white text-xs rounded cursor-pointer hover:bg-opacity-80 transition-all"
+                  >
+                    <Upload className="w-3 h-3" />
+                    Change Photo
+                  </label>
                 </div>
               )}
             </div>
@@ -366,8 +468,26 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
               <h1 className="profile-preview-name">
                 {profile.firstName}, {profile.lastName?.[0]}.
               </h1>
-              <p className="profile-preview-roles">
-                {servicesText}
+              <p
+                contentEditable={isEditMode}
+                suppressContentEditableWarning
+                onFocus={(e) => {
+                  const range = document.createRange()
+                  range.selectNodeContents(e.currentTarget)
+                  const selection = window.getSelection()
+                  selection?.removeAllRanges()
+                  selection?.addRange(range)
+                }}
+                onBlur={(e) => updateField('customJobTitle', e.currentTarget.textContent || '')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    e.currentTarget.blur()
+                  }
+                }}
+                className={`profile-preview-roles ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''}`}
+              >
+                {state.customJobTitle}
               </p>
             </div>
           </div>
@@ -380,8 +500,31 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
           qualifications={qualifications}
           additionalInfo={additionalInfo}
           isAdminView={true}
+          isEditMode={isEditMode}
+          editableState={state}
+          onUpdateField={updateField}
+          onRemoveServiceCategory={removeServiceCategory}
+          onRemoveSubcategory={removeSubcategory}
+          onAddSubcategory={addSubcategory}
+          onToggleSection={toggleSection}
+          onAddUniqueService={addUniqueService}
+          onRemoveUniqueService={removeUniqueService}
+          onAddInfoItem={addInfoItem}
+          onRemoveInfoItem={removeInfoItem}
+          onAddExperienceItem={addExperienceItem}
+          onUpdateExperienceItem={updateExperienceItem}
+          onRemoveExperienceItem={removeExperienceItem}
         />
       </div>
+
+      {/* Image Crop Modal */}
+      {showCropModal && (selectedImageUrl || profileData?.profile?.photos) && (
+        <ImageCropModal
+          imageUrl={selectedImageUrl || profileData.profile.photos}
+          onClose={() => setShowCropModal(false)}
+          onCropComplete={handleCropComplete}
+        />
+      )}
 
       {/* Share Link Modal */}
       {showShareModal && (

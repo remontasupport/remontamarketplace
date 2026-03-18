@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronUp, ChevronDown, Users } from "lucide-react";
 import { getQualificationDisplayName } from "@/utils/qualificationMapping";
+import type { EditableProfileState, StringField, InfoArrayField } from "@/hooks/useProfileEditor";
+import ServiceSelectionModal from "@/components/modals/ServiceSelectionModal";
+import UniqueServiceSelectionModal from "@/components/modals/UniqueServiceSelectionModal";
+import InfoItemSelectionModal from "@/components/modals/InfoItemSelectionModal";
+import { LANGUAGES, CULTURAL_BACKGROUNDS, RELIGIONS, INTERESTS } from "@/constants/moreInfoOptions";
 
 interface WorkerProfileViewProps {
   profile: any;
@@ -12,6 +17,20 @@ interface WorkerProfileViewProps {
   additionalInfo: any;
   isAdminView?: boolean;
   isPublicView?: boolean;
+  isEditMode?: boolean;
+  editableState?: EditableProfileState;
+  onUpdateField?: (field: StringField, value: string) => void;
+  onRemoveServiceCategory?: (categoryId: string) => void;
+  onRemoveSubcategory?: (categoryId: string, subcategoryName: string) => void;
+  onAddSubcategory?: (categoryId: string, subcategoryName: string) => void;
+  onToggleSection?: (sectionId: string) => void;
+  onAddUniqueService?: (item: string) => void;
+  onRemoveUniqueService?: (item: string) => void;
+  onAddInfoItem?: (field: InfoArrayField, item: string) => void;
+  onRemoveInfoItem?: (field: InfoArrayField, item: string) => void;
+  onAddExperienceItem?: () => void;
+  onUpdateExperienceItem?: (index: number, value: string) => void;
+  onRemoveExperienceItem?: (index: number) => void;
 }
 
 export default function WorkerProfileView({
@@ -20,9 +39,39 @@ export default function WorkerProfileView({
   qualifications,
   additionalInfo,
   isAdminView = false,
-  isPublicView = false
+  isPublicView = false,
+  isEditMode = false,
+  editableState,
+  onUpdateField,
+  onRemoveServiceCategory,
+  onRemoveSubcategory,
+  onAddSubcategory,
+  onToggleSection,
+  onAddUniqueService,
+  onRemoveUniqueService,
+  onAddInfoItem,
+  onRemoveInfoItem,
+  onAddExperienceItem,
+  onUpdateExperienceItem,
+  onRemoveExperienceItem,
 }: WorkerProfileViewProps) {
   const router = useRouter();
+
+  const isHidden = (sectionId: string) => editableState?.hiddenSections.includes(sectionId) ?? false
+
+  const SectionRemoveButton = ({ sectionId }: { sectionId: string }) =>
+    isEditMode ? (
+      <button
+        onClick={() => onToggleSection?.(sectionId)}
+        className={`text-xs font-medium transition-colors ${
+          isHidden(sectionId)
+            ? 'text-indigo-500 hover:text-indigo-700'
+            : 'text-red-400 hover:text-red-600'
+        }`}
+      >
+        {isHidden(sectionId) ? '+ Restore' : '✕ Remove'}
+      </button>
+    ) : null
 
   // Service category expansion state — open by default if category has data
   const [expandedServices, setExpandedServices] = useState<Record<string, boolean>>(() => {
@@ -36,6 +85,15 @@ export default function WorkerProfileView({
 
   // Unique services expansion state
   const [showAllUniqueServices, setShowAllUniqueServices] = useState(false);
+
+  // Service subcategory modal state
+  const [addSubcategoryTargetId, setAddSubcategoryTargetId] = useState<string | null>(null);
+
+  // Unique service modal state
+  const [showUniqueServiceModal, setShowUniqueServiceModal] = useState(false);
+
+  // Info item modal state
+  const [activeInfoModal, setActiveInfoModal] = useState<InfoArrayField | null>(null);
 
   // Toggle service category expansion
   const toggleServiceExpansion = (categoryId: string) => {
@@ -115,10 +173,11 @@ export default function WorkerProfileView({
   return (
     <div className="profile-preview-content">
       {/* About Section */}
-      <div className="profile-preview-section">
-        <h2 className="profile-preview-section-title">
-          {`${profile.firstName}, ${profile.lastName?.[0]}.`}
-        </h2>
+      {!isHidden('about-me') && <div className="profile-preview-section">
+        <div className="flex items-center justify-between">
+          <h2 className="profile-preview-section-title">About Me</h2>
+          <SectionRemoveButton sectionId="about-me" />
+        </div>
         {!isAdminView && !isPublicView && (
           <button
             className="profile-preview-edit-link"
@@ -127,24 +186,40 @@ export default function WorkerProfileView({
             Edit bio
           </button>
         )}
-        {profile.introduction ? (
-          <p className="profile-preview-text">{profile.introduction}</p>
-        ) : (
-          !isAdminView && !isPublicView && (
-            <p className="profile-preview-text text-gray-400 italic">
-              No introduction provided yet. Click "Edit bio" to add your introduction.
-            </p>
-          )
-        )}
-      </div>
+        <p
+          contentEditable={isEditMode}
+          suppressContentEditableWarning
+          onFocus={(e) => {
+            if (!isEditMode) return
+            const range = document.createRange()
+            range.selectNodeContents(e.currentTarget)
+            const selection = window.getSelection()
+            selection?.removeAllRanges()
+            selection?.addRange(range)
+          }}
+          onBlur={(e) => onUpdateField?.('introduction', e.currentTarget.textContent || '')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              e.currentTarget.blur()
+            }
+          }}
+          className={`profile-preview-text ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''} ${!editableState?.introduction && !isEditMode ? 'text-gray-400 italic' : ''}`}
+        >
+          {editableState?.introduction || (!isAdminView && !isPublicView ? 'No introduction provided yet.' : '')}
+        </p>
+      </div>}
 
       {/* Two Column Layout */}
       <div className="profile-preview-grid">
         {/* Left Column */}
         <div className="profile-preview-column">
-          {/* About Me Section */}
-          <div className="profile-preview-section about-me-section">
-            <h3 className="profile-preview-subsection-title">About Me</h3>
+          {/* Basic Information Section */}
+          {!isHidden('basic-information') && <div className="profile-preview-section about-me-section">
+            <div className="flex items-center justify-between">
+              <h3 className="profile-preview-subsection-title">Basic Information</h3>
+              <SectionRemoveButton sectionId="basic-information" />
+            </div>
 
             {/* Drive Access */}
             <div className="mb-4">
@@ -169,17 +244,34 @@ export default function WorkerProfileView({
                   : profile?.city || profile?.state || 'Not specified'}
               </p>
             </div>
-          </div>
+          </div>}
 
           {/* Experience */}
-          {additionalInfo?.experience && typeof additionalInfo.experience === 'object' && Object.keys(additionalInfo.experience).length > 0 && (
+          {!isHidden('experience') && (() => {
+            const hasRealExperience = Object.entries(additionalInfo?.experience ?? {}).some(
+              ([, data]: [string, any]) => data?.description
+            )
+            const experienceItems = editableState?.editableExperienceItems ?? []
+            return (
             <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Experience</h3>
-              <p className="text-sm text-gray-500 mb-4">Self declared</p>
-
-              {/* Experience Categories */}
+              <div className="flex items-center justify-between">
+                <h3 className="profile-preview-subsection-title">Experience</h3>
+                <div className="flex items-center gap-2">
+                  {isEditMode && !hasRealExperience && (
+                    <button
+                      onClick={() => onAddExperienceItem?.()}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                    >
+                      + Add
+                    </button>
+                  )}
+                  <SectionRemoveButton sectionId="experience" />
+                </div>
+              </div>
+              {hasRealExperience ? (
+              /* Experience Categories (real data) */
               <div className="space-y-4">
-                {Object.entries(additionalInfo.experience).map(([categoryId, experienceData]: [string, any]) => {
+                {Object.entries(additionalInfo?.experience ?? {}).map(([categoryId, experienceData]: [string, any]) => {
                   // Map experience category IDs to display names
                   const experienceCategoryNames: { [key: string]: string } = {
                     "aged-care": "Aged care",
@@ -264,13 +356,62 @@ export default function WorkerProfileView({
                   );
                 })}
               </div>
+              ) : (
+              /* Editable simple list (no real experience data) */
+              <div className="space-y-2">
+                {experienceItems.map((item, index) => (
+                  <div key={index} className="profile-preview-qualification-item justify-between">
+                    <div className="flex items-center gap-1 flex-1">
+                      <span className="profile-preview-checkmark" style={{ fontSize: '24px' }}>•</span>
+                      <span
+                        contentEditable={isEditMode}
+                        suppressContentEditableWarning
+                        onFocus={(e) => {
+                          if (!isEditMode) return
+                          const range = document.createRange()
+                          range.selectNodeContents(e.currentTarget)
+                          const selection = window.getSelection()
+                          selection?.removeAllRanges()
+                          selection?.addRange(range)
+                        }}
+                        onBlur={(e) => onUpdateExperienceItem?.(index, e.currentTarget.textContent || '')}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur() }
+                        }}
+                        className={`text-base text-gray-900 ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''}`}
+                      >
+                        {item}
+                      </span>
+                    </div>
+                    {isEditMode && (
+                      <button
+                        onClick={() => onRemoveExperienceItem?.(index)}
+                        className="text-red-400 hover:text-red-600 ml-2 transition-colors"
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {experienceItems.length === 0 && (
+                  <p className="text-sm text-gray-400 italic">
+                    {isEditMode ? 'Click "+ Add" to add experience items.' : 'No experience added yet.'}
+                  </p>
+                )}
+              </div>
+              )}
             </div>
-          )}
+            )
+          })()}
 
           {/* Job History */}
-          {yearsOfExperience.length > 0 && (
+          {!isHidden('job-history') && (
             <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Job History</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="profile-preview-subsection-title">Job History</h3>
+                <SectionRemoveButton sectionId="job-history" />
+              </div>
               <div className="space-y-2">
                 {yearsOfExperience.map((job: any, index: number) => (
                   <div key={index} className="profile-preview-qualification-item">
@@ -287,8 +428,11 @@ export default function WorkerProfileView({
           )}
 
           {/* Education History */}
-          <div className="profile-preview-section">
-            <h3 className="profile-preview-subsection-title">Education History</h3>
+          {!isHidden('education-history') && <div className="profile-preview-section">
+            <div className="flex items-center justify-between">
+              <h3 className="profile-preview-subsection-title">Education History</h3>
+              <SectionRemoveButton sectionId="education-history" />
+            </div>
             {additionalInfo?.education && Array.isArray(additionalInfo.education) && additionalInfo.education.length > 0 ? (
               <div className="space-y-4">
                 {additionalInfo.education.map((edu: any, index: number) => (
@@ -316,148 +460,322 @@ export default function WorkerProfileView({
                 No education history added yet.
               </p>
             )}
-          </div>
+          </div>}
 
           {/* More Information */}
-          <div className="profile-preview-section">
-            <h3 className="profile-preview-subsection-title">More information</h3>
-            <p className="text-sm text-gray-500 mb-4">Self declared</p>
+          {!isHidden('more-information') && <div className="profile-preview-section">
+            <div className="flex items-center justify-between">
+              <h3 className="profile-preview-subsection-title">More information</h3>
+              <SectionRemoveButton sectionId="more-information" />
+            </div>
+
 
             {/* Language */}
-            {additionalInfo?.languages && Array.isArray(additionalInfo.languages) && additionalInfo.languages.length > 0 && (
-              <div className="mb-4">
-                <h4 className="text-base font-poppins font-semibold text-gray-700 mb-2">Language</h4>
-                <div className="flex flex-wrap gap-2">
-                  {additionalInfo.languages.map((lang: string, index: number) => (
-                    <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
-                      {lang}
-                    </span>
-                  ))}
+            {(() => {
+              const langs = editableState?.editableLanguages ?? (additionalInfo?.languages ?? [])
+              if (!isEditMode && langs.length === 0) return null
+              return (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-base font-poppins font-semibold text-gray-700">Language</h4>
+                    {isEditMode && (
+                      <button onClick={() => setActiveInfoModal('editableLanguages')} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        + Add
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {langs.map((lang: string, index: number) => (
+                      <span key={index} className="inline-flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
+                        {lang}
+                        {isEditMode && (
+                          <button onClick={() => onRemoveInfoItem?.('editableLanguages', lang)} className="text-red-400 hover:text-red-600 ml-1 transition-colors leading-none" title="Remove">✕</button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Cultural backgrounds */}
-            {additionalInfo?.culturalBackground && additionalInfo.culturalBackground.length > 0 && (
-              <div className="mb-4">
-                <h4 className="text-base font-poppins font-semibold text-gray-700 mb-2">Cultural backgrounds</h4>
-                <div className="flex flex-wrap gap-2">
-                  {additionalInfo.culturalBackground.map((culture: string, index: number) => (
-                    <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
-                      {culture}
-                    </span>
-                  ))}
+            {(() => {
+              const cultures = editableState?.editableCulturalBackground ?? (additionalInfo?.culturalBackground ?? [])
+              if (!isEditMode && cultures.length === 0) return null
+              return (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-base font-poppins font-semibold text-gray-700">Cultural backgrounds</h4>
+                    {isEditMode && (
+                      <button onClick={() => setActiveInfoModal('editableCulturalBackground')} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        + Add
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {cultures.map((culture: string, index: number) => (
+                      <span key={index} className="inline-flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
+                        {culture}
+                        {isEditMode && (
+                          <button onClick={() => onRemoveInfoItem?.('editableCulturalBackground', culture)} className="text-red-400 hover:text-red-600 ml-1 transition-colors leading-none" title="Remove">✕</button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Religion */}
-            {additionalInfo?.religion && Array.isArray(additionalInfo.religion) && additionalInfo.religion.length > 0 && (
-              <div className="mb-4">
-                <h4 className="text-base font-poppins font-semibold text-gray-700 mb-2">Religion</h4>
-                <div className="flex flex-wrap gap-2">
-                  {additionalInfo.religion.map((rel: string, index: number) => (
-                    <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
-                      {rel}
-                    </span>
-                  ))}
+            {(() => {
+              const religions = editableState?.editableReligion ?? (additionalInfo?.religion ?? [])
+              if (!isEditMode && religions.length === 0) return null
+              return (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-base font-poppins font-semibold text-gray-700">Religion</h4>
+                    {isEditMode && (
+                      <button onClick={() => setActiveInfoModal('editableReligion')} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        + Add
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {religions.map((rel: string, index: number) => (
+                      <span key={index} className="inline-flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
+                        {rel}
+                        {isEditMode && (
+                          <button onClick={() => onRemoveInfoItem?.('editableReligion', rel)} className="text-red-400 hover:text-red-600 ml-1 transition-colors leading-none" title="Remove">✕</button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Interests */}
-            {additionalInfo?.interests && additionalInfo.interests.length > 0 && (
-              <div className="mb-4">
-                <h4 className="text-base font-poppins font-semibold text-gray-700 mb-2">Interests</h4>
-                <div className="flex flex-wrap gap-2">
-                  {additionalInfo.interests.map((interest: string, index: number) => (
-                    <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
-                      {interest}
-                    </span>
-                  ))}
+            {(() => {
+              const interests = editableState?.editableInterests ?? (additionalInfo?.interests ?? [])
+              if (!isEditMode && interests.length === 0) return null
+              return (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-base font-poppins font-semibold text-gray-700">Interests</h4>
+                    {isEditMode && (
+                      <button onClick={() => setActiveInfoModal('editableInterests')} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors">
+                        + Add
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {interests.map((interest: string, index: number) => (
+                      <span key={index} className="inline-flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
+                        {interest}
+                        {isEditMode && (
+                          <button onClick={() => onRemoveInfoItem?.('editableInterests', interest)} className="text-red-400 hover:text-red-600 ml-1 transition-colors leading-none" title="Remove">✕</button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Personality */}
-            {additionalInfo?.personality && (
-              <div className="mb-4">
-                <h4 className="text-base font-poppins font-semibold text-gray-700 mb-2">Personality</h4>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
-                    {additionalInfo.personality}
-                  </span>
+            {(() => {
+              const personality = editableState?.personality ?? additionalInfo?.personality ?? ''
+              if (!isEditMode && !personality) return null
+              return (
+                <div className="mb-4">
+                  <h4 className="text-base font-poppins font-semibold text-gray-700 mb-2">Personality</h4>
+                  <p
+                    contentEditable={isEditMode}
+                    suppressContentEditableWarning
+                    onFocus={(e) => {
+                      if (!isEditMode) return
+                      const range = document.createRange()
+                      range.selectNodeContents(e.currentTarget)
+                      const selection = window.getSelection()
+                      selection?.removeAllRanges()
+                      selection?.addRange(range)
+                    }}
+                    onBlur={(e) => onUpdateField?.('personality', e.currentTarget.textContent || '')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur() }
+                    }}
+                    className={`text-base text-gray-700 ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''}`}
+                  >
+                    {personality}
+                  </p>
                 </div>
-              </div>
-            )}
-          </div>
+              )
+            })()}
+          </div>}
+
+          {/* Info item modals */}
+          {activeInfoModal === 'editableLanguages' && (
+            <InfoItemSelectionModal
+              title="Language"
+              options={LANGUAGES}
+              selectedItems={editableState?.editableLanguages ?? (additionalInfo?.languages ?? [])}
+              onClose={() => setActiveInfoModal(null)}
+              onSelectItem={(item) => { onAddInfoItem?.('editableLanguages', item); setActiveInfoModal(null) }}
+            />
+          )}
+          {activeInfoModal === 'editableCulturalBackground' && (
+            <InfoItemSelectionModal
+              title="Cultural Background"
+              options={CULTURAL_BACKGROUNDS}
+              selectedItems={editableState?.editableCulturalBackground ?? (additionalInfo?.culturalBackground ?? [])}
+              onClose={() => setActiveInfoModal(null)}
+              onSelectItem={(item) => { onAddInfoItem?.('editableCulturalBackground', item); setActiveInfoModal(null) }}
+            />
+          )}
+          {activeInfoModal === 'editableReligion' && (
+            <InfoItemSelectionModal
+              title="Religion"
+              options={RELIGIONS}
+              selectedItems={editableState?.editableReligion ?? (additionalInfo?.religion ?? [])}
+              onClose={() => setActiveInfoModal(null)}
+              onSelectItem={(item) => { onAddInfoItem?.('editableReligion', item); setActiveInfoModal(null) }}
+            />
+          )}
+          {activeInfoModal === 'editableInterests' && (
+            <InfoItemSelectionModal
+              title="Interest"
+              options={INTERESTS}
+              selectedItems={editableState?.editableInterests ?? (additionalInfo?.interests ?? [])}
+              onClose={() => setActiveInfoModal(null)}
+              onSelectItem={(item) => { onAddInfoItem?.('editableInterests', item); setActiveInfoModal(null) }}
+            />
+          )}
         </div>
 
         {/* Right Column */}
         <div className="profile-preview-column">
-          {/* Qualifications - Only show if there are qualifications */}
-          {validQualifications.length > 0 && (
-            <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Qualifications</h3>
-              <p className="profile-preview-verified">Verified by Remonta</p>
-              <div className="profile-preview-qualification-list">
-                {validQualifications.map((qual) => (
-                  <div key={qual.requirementType} className="profile-preview-qualification-item">
-                    <span className="profile-preview-checkmark" style={{ fontSize: '24px' }}>•</span>
-                    <span>{getQualificationDisplayName(qual.requirementType, qual.requirementName)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Services Offered - Hidden for Therapeutic Supports only */}
-          {servicesWithSubcategories.length > 0 && (
-            <div className="profile-preview-section services-offered-section">
-              <h3 className="profile-preview-subsection-title">Services offered</h3>
-              <div className="space-y-4">
-                {servicesWithSubcategories.map((service: any) => (
-                  <div key={service.categoryId || service.id}>
-                    <h4 className="text-base font-poppins font-semibold text-gray-900 mb-2">
-                      {formatCategoryName(service.categoryName)}
-                    </h4>
-                    <div className="profile-preview-qualification-list ml-2">
-                      {service.subcategories.map((sub: any, index: number) => (
-                        <div key={index} className="profile-preview-qualification-item">
-                          <span className="profile-preview-checkmark" style={{ fontSize: '24px' }}>•</span>
-                          <span>{sub.subcategoryName}</span>
-                        </div>
-                      ))}
+          {/* Services Offered */}
+          {(() => {
+            const displayServices = editableState?.editableServices ?? servicesWithSubcategories;
+            if (isHidden('services-offered')) return null;
+            return (
+              <div className="profile-preview-section services-offered-section">
+                <div className="flex items-center justify-between">
+                  <h3 className="profile-preview-subsection-title">Services offered</h3>
+                  <SectionRemoveButton sectionId="services-offered" />
+                </div>
+                <div className="space-y-4">
+                  {displayServices.map((service: any) => (
+                    <div key={service.categoryId || service.id}>
+                      {/* Category row */}
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-base font-poppins font-semibold text-gray-900">
+                          {formatCategoryName(service.categoryName)}
+                        </h4>
+                        {isEditMode && (
+                          <button
+                            onClick={() => onRemoveServiceCategory?.(service.categoryId)}
+                            className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors"
+                            title="Remove category"
+                          >
+                            ✕ Remove
+                          </button>
+                        )}
+                      </div>
+                      {/* Subcategories */}
+                      <div className="profile-preview-qualification-list ml-2">
+                        {service.subcategories.map((sub: any, index: number) => (
+                          <div key={index} className="profile-preview-qualification-item justify-between">
+                            <div className="flex items-center gap-1">
+                              <span className="profile-preview-checkmark" style={{ fontSize: '24px' }}>•</span>
+                              <span>{sub.subcategoryName}</span>
+                            </div>
+                            {isEditMode && (
+                              <button
+                                onClick={() => onRemoveSubcategory?.(service.categoryId, sub.subcategoryName)}
+                                className="text-red-400 hover:text-red-600 ml-2 transition-colors"
+                                title="Remove subcategory"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Add subcategory button */}
+                      {isEditMode && (
+                        <button
+                          onClick={() => setAddSubcategoryTargetId(service.categoryId)}
+                          className="mt-2 ml-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                        >
+                          + Add subcategory
+                        </button>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                {!isAdminView && !isPublicView && (
+                  <button
+                    className="profile-preview-edit-link mt-3"
+                    onClick={() => router.push('/dashboard/worker/services/manage')}
+                  >
+                    Add more services
+                  </button>
+                )}
               </div>
-              {!isAdminView && !isPublicView && (
-                <button
-                  className="profile-preview-edit-link mt-3"
-                  onClick={() => router.push('/dashboard/worker/services/manage')}
-                >
-                  Add more services
-                </button>
-              )}
-            </div>
+            );
+          })()}
+
+          {/* Subcategory selection modal */}
+          {addSubcategoryTargetId && (
+            <ServiceSelectionModal
+              onClose={() => setAddSubcategoryTargetId(null)}
+              onSelectService={(subcategoryName) => {
+                onAddSubcategory?.(addSubcategoryTargetId, subcategoryName)
+                setAddSubcategoryTargetId(null)
+              }}
+            />
           )}
 
           {/* Unique Service */}
-          {additionalInfo?.uniqueService && Array.isArray(additionalInfo.uniqueService) && additionalInfo.uniqueService.length > 0 && (
+          {!isHidden('unique-service') && (
             <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Unique Service</h3>
-              <div className="flex flex-wrap gap-2">
-                {(showAllUniqueServices
-                  ? additionalInfo.uniqueService
-                  : additionalInfo.uniqueService.slice(0, 10)
-                ).map((service: string, index: number) => (
-                  <span key={index} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
-                    {service}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between">
+                <h3 className="profile-preview-subsection-title">Unique Service</h3>
+                <div className="flex items-center gap-2">
+                  {isEditMode && (
+                    <button
+                      onClick={() => setShowUniqueServiceModal(true)}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                    >
+                      + Add
+                    </button>
+                  )}
+                  <SectionRemoveButton sectionId="unique-service" />
+                </div>
               </div>
-              {additionalInfo.uniqueService.length > 10 && (
+              <div className="flex flex-wrap gap-2">
+                {(() => {
+                  const items = editableState?.editableUniqueServices ?? (additionalInfo?.uniqueService ?? [])
+                  const displayed = showAllUniqueServices ? items : items.slice(0, 10)
+                  return displayed.map((service: string, index: number) => (
+                    <span key={index} className="inline-flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base">
+                      {service}
+                      {isEditMode && (
+                        <button
+                          onClick={() => onRemoveUniqueService?.(service)}
+                          className="text-red-400 hover:text-red-600 ml-1 transition-colors leading-none"
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </span>
+                  ))
+                })()}
+              </div>
+              {(editableState?.editableUniqueServices ?? additionalInfo?.uniqueService ?? []).length > 10 && (
                 <button
                   type="button"
                   onClick={() => setShowAllUniqueServices(!showAllUniqueServices)}
@@ -471,7 +789,7 @@ export default function WorkerProfileView({
                   ) : (
                     <>
                       <ChevronDown className="w-4 h-4" />
-                      Show {additionalInfo.uniqueService.length - 10} more
+                      Show {(editableState?.editableUniqueServices ?? additionalInfo?.uniqueService ?? []).length - 10} more
                     </>
                   )}
                 </button>
@@ -479,20 +797,56 @@ export default function WorkerProfileView({
             </div>
           )}
 
+          {/* Unique Service modal */}
+          {showUniqueServiceModal && (
+            <UniqueServiceSelectionModal
+              selectedItems={editableState?.editableUniqueServices ?? (additionalInfo?.uniqueService ?? [])}
+              onClose={() => setShowUniqueServiceModal(false)}
+              onSelectItem={(item) => { onAddUniqueService?.(item); setShowUniqueServiceModal(false) }}
+            />
+          )}
+
           {/* Fun Fact */}
-          {additionalInfo?.funFact && (
+          {!isHidden('fun-fact') && (
             <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Fun Fact</h3>
-              <p className="profile-preview-text">{additionalInfo.funFact}</p>
+              <div className="flex items-center justify-between">
+                <h3 className="profile-preview-subsection-title">Fun Fact</h3>
+                <SectionRemoveButton sectionId="fun-fact" />
+              </div>
+              <p
+                contentEditable={isEditMode}
+                suppressContentEditableWarning
+                onFocus={(e) => {
+                  if (!isEditMode) return
+                  const range = document.createRange()
+                  range.selectNodeContents(e.currentTarget)
+                  const selection = window.getSelection()
+                  selection?.removeAllRanges()
+                  selection?.addRange(range)
+                }}
+                onBlur={(e) => onUpdateField?.('funFact', e.currentTarget.textContent || '')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    e.currentTarget.blur()
+                  }
+                }}
+                className={`profile-preview-text ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''}`}
+              >
+                {editableState?.funFact ?? additionalInfo?.funFact}
+              </p>
             </div>
           )}
 
           {/* Working Hours */}
-          {additionalInfo?.availability && Object.keys(additionalInfo.availability).length > 0 && (
+          {!isHidden('working-hours') && (
             <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Working Hours</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="profile-preview-subsection-title">Working Hours</h3>
+                <SectionRemoveButton sectionId="working-hours" />
+              </div>
               <div className="space-y-4">
-                {Object.entries(additionalInfo.availability as Record<string, { startTime: string; endTime: string } | Array<{ startTime: string; endTime: string }>>).map(([day, timeSlots]) => {
+                {Object.entries((additionalInfo?.availability ?? {}) as Record<string, { startTime: string; endTime: string } | Array<{ startTime: string; endTime: string }>>).map(([day, timeSlots]) => {
                   // Format day name (MONDAY -> Monday)
                   const dayName = day.charAt(0) + day.slice(1).toLowerCase();
 
@@ -531,11 +885,14 @@ export default function WorkerProfileView({
           )}
 
           {/* Good to Know */}
-          {(additionalInfo?.lgbtqiaSupport || additionalInfo?.nonSmoker || additionalInfo?.petFriendly) && (
+          {!isHidden('good-to-know') && (
             <div className="profile-preview-section">
-              <h3 className="profile-preview-subsection-title">Good to know</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="profile-preview-subsection-title">Good to know</h3>
+                <SectionRemoveButton sectionId="good-to-know" />
+              </div>
               <div className="flex flex-wrap gap-4">
-                {additionalInfo.lgbtqiaSupport && (
+                {additionalInfo?.lgbtqiaSupport && (
                   <div className="flex flex-col items-center">
                     <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-2">
                       <span className="text-2xl">🏳️‍🌈</span>
@@ -543,7 +900,7 @@ export default function WorkerProfileView({
                     <p className="text-sm text-gray-700 text-center">LGBTQIA+<br />Friendly</p>
                   </div>
                 )}
-                {additionalInfo.nonSmoker && (
+                {additionalInfo?.nonSmoker && (
                   <div className="flex flex-col items-center">
                     <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-2">
                       <span className="text-2xl">🚭</span>
@@ -551,7 +908,7 @@ export default function WorkerProfileView({
                     <p className="text-sm text-gray-700 text-center">Non-Smoker</p>
                   </div>
                 )}
-                {additionalInfo.petFriendly && (
+                {additionalInfo?.petFriendly && (
                   <div className="flex flex-col items-center">
                     <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-2">
                       <span className="text-2xl">🐾</span>
