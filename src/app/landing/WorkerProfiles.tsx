@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation } from 'swiper/modules'
 import { getFeaturedWorkerProfiles, WorkerProfile } from '@/lib/sanity/workerProfileClient'
@@ -31,6 +31,12 @@ export default function WorkerProfiles() {
   const [supportType, setSupportType] = useState('All')
   const [within, setWithin] = useState('20')
 
+  // Suburb autocomplete state
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     async function fetchWorkers() {
       const data = await getFeaturedWorkerProfiles()
@@ -56,6 +62,47 @@ export default function WorkerProfiles() {
     return () => {
       document.body.classList.remove('modal-open')
     }
+  }, [])
+
+  // Fetch suburb suggestions with debounce
+  const handleLocationChange = (value: string) => {
+    setLocation(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (value.trim().length < 1) {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/suburbs?q=${encodeURIComponent(value)}`)
+        const data = await res.json()
+        const raw: { name: string; postcode: number; state: { abbreviation: string } }[] = Array.isArray(data) ? data : []
+        const results = raw.map((item) => `${item.name} ${item.state.abbreviation} ${item.postcode}`)
+        setSuggestions(results)
+        setShowSuggestions(results.length > 0)
+      } catch {
+        setSuggestions([])
+        setShowSuggestions(false)
+      }
+    }, 300)
+  }
+
+  const handleSelectSuggestion = (value: string) => {
+    setLocation(value)
+    setSuggestions([])
+    setShowSuggestions(false)
+  }
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -88,15 +135,30 @@ export default function WorkerProfiles() {
           style={{ borderColor: BRAND_COLORS.PRIMARY }}
         >
           {/* Suburb or postcode */}
-          <div className="flex flex-col justify-center px-5 py-4 text-left border-b md:border-b-0 md:border-r border-gray-200 w-auto">
+          <div ref={wrapperRef} className="relative flex flex-col justify-center px-5 py-4 text-left border-b md:border-b-0 md:border-r border-gray-200 w-auto">
             <label className="text-xs font-bold text-[#0C1628] mb-1">Suburb or postcode</label>
             <input
               type="text"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder="e.g. Sydney NSW 2000"
               className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
+              autoComplete="off"
             />
+            {showSuggestions && (
+              <ul className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-60 overflow-y-auto">
+                {suggestions.map((s, i) => (
+                  <li
+                    key={i}
+                    onMouseDown={() => handleSelectSuggestion(s)}
+                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Type of Support */}
