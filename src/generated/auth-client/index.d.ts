@@ -226,7 +226,8 @@ export const ServiceRequestStatus: {
   MATCHED: 'MATCHED',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  ARCHIVED: 'ARCHIVED'
 };
 
 export type ServiceRequestStatus = (typeof ServiceRequestStatus)[keyof typeof ServiceRequestStatus]

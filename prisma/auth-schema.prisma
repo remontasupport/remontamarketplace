@@ -552,4 +552,5 @@ enum ServiceRequestStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+  ARCHIVED
 }

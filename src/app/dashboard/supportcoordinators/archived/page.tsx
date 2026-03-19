@@ -56,7 +56,7 @@ export default async function CoordinatorArchivedPage() {
     FROM service_requests sr
     JOIN participants p ON p.id = sr."participantId"
     WHERE sr."requesterId" = ${session.user.id}
-      AND sr.status = 'ARCHIVED'::"ServiceRequestStatus"
+      AND sr.status::text = 'ARCHIVED'
       AND (sr.details->>'_hidden' IS NULL OR sr.details->>'_hidden' != 'true')
     ORDER BY sr."updatedAt" DESC
   `)

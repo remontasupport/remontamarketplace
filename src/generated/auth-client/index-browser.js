@@ -489,7 +489,8 @@ exports.ServiceRequestStatus = exports.$Enums.ServiceRequestStatus = {
   MATCHED: 'MATCHED',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  ARCHIVED: 'ARCHIVED'
 };
 
 exports.Prisma.ModelName = {
