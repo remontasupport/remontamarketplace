@@ -12,12 +12,16 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import '@/styles/worker-profiles.css'
 
-const backgroundColors = [
-  '#E6A965',
-  '#8EBFD9',
-  '#C5A8D4',
-  '#E6A965',
-]
+const backgroundColors = ['#E6A965', '#8EBFD9', '#C5A8D4', '#E6A965']
+
+const SUPPORT_TYPE_SLUGS: Record<string, string> = {
+  'Support Worker': 'support-worker',
+  'Support Worker (High Intensity)': 'support-worker-high-intensity',
+  'Cleaning Services': 'cleaning-services',
+  'Home and Yard Maintenance': 'home-and-yard-maintenance',
+  'Therapeutic Supports': 'therapeutic-supports',
+  'Nursing Services': 'nursing-services',
+}
 
 export default function WorkerProfiles() {
   const router = useRouter()
@@ -34,6 +38,7 @@ export default function WorkerProfiles() {
   // Suburb autocomplete state
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [loadingSuburbs, setLoadingSuburbs] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -59,31 +64,33 @@ export default function WorkerProfiles() {
   }
 
   useEffect(() => {
-    return () => {
-      document.body.classList.remove('modal-open')
-    }
+    return () => { document.body.classList.remove('modal-open') }
   }, [])
 
-  // Fetch suburb suggestions with debounce
+  // Suburb autocomplete
   const handleLocationChange = (value: string) => {
     setLocation(value)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (value.trim().length < 1) {
+    if (value.trim().length < 3) {
       setSuggestions([])
       setShowSuggestions(false)
+      setLoadingSuburbs(false)
       return
     }
+    setLoadingSuburbs(true)
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/suburbs?q=${encodeURIComponent(value)}`)
         const data = await res.json()
         const raw: { name: string; postcode: number; state: { abbreviation: string } }[] = Array.isArray(data) ? data : []
-        const results = raw.map((item) => `${item.name} ${item.state.abbreviation} ${item.postcode}`)
+        const results = raw.map((item) => `${item.name}, ${item.state.abbreviation} ${item.postcode}`)
         setSuggestions(results)
         setShowSuggestions(results.length > 0)
       } catch {
         setSuggestions([])
         setShowSuggestions(false)
+      } finally {
+        setLoadingSuburbs(false)
       }
     }, 300)
   }
@@ -94,7 +101,6 @@ export default function WorkerProfiles() {
     setShowSuggestions(false)
   }
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
@@ -105,13 +111,17 @@ export default function WorkerProfiles() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Search workers — redirect to results page
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+
     const params = new URLSearchParams()
-    if (location.trim()) params.append('location', location.trim())
-    if (supportType !== 'All') params.append('supportType', supportType)
-    if (within !== '0') params.append('distance', within)
-    router.push(`/find-support?${params.toString()}`)
+    if (location.trim()) params.set('location', location.trim())
+    const slug = SUPPORT_TYPE_SLUGS[supportType]
+    if (slug) params.set('typeOfSupport', slug)
+    params.set('within', within)
+
+    router.push(`/search?${params}`)
   }
 
   return (
@@ -131,21 +141,29 @@ export default function WorkerProfiles() {
         {/* Unified search bar */}
         <form
           onSubmit={handleSearch}
-          className="inline-flex flex-col md:flex-row items-stretch rounded-2xl border-2 overflow-hidden shadow-sm mb-20"
+          className="inline-flex flex-col md:flex-row items-stretch rounded-2xl border-2 shadow-sm mb-12"
           style={{ borderColor: BRAND_COLORS.PRIMARY }}
         >
           {/* Suburb or postcode */}
-          <div ref={wrapperRef} className="relative flex flex-col justify-center px-5 py-4 text-left border-b md:border-b-0 md:border-r border-gray-200 w-auto">
+          <div ref={wrapperRef} className="relative flex flex-col justify-center px-5 py-4 text-left border-b md:border-b-0 md:border-r border-gray-200 w-full md:w-56">
             <label className="text-xs font-bold text-[#0C1628] mb-1">Suburb or postcode</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => handleLocationChange(e.target.value)}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              placeholder="e.g. Sydney NSW 2000"
-              className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
-              autoComplete="off"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => handleLocationChange(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="e.g. Sydney NSW 2000"
+                className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none flex-1 min-w-0"
+                autoComplete="off"
+              />
+              {loadingSuburbs && (
+                <svg className="animate-spin h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+            </div>
             {showSuggestions && (
               <ul className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-60 overflow-y-auto">
                 {suggestions.map((s, i) => (
@@ -206,6 +224,7 @@ export default function WorkerProfiles() {
             </button>
           </div>
         </form>
+
 
       </div>
 
@@ -275,7 +294,6 @@ export default function WorkerProfiles() {
                         />
                       )}
                     </div>
-
                     <div className="worker-profile-content">
                       <p className="worker-profile-label">SUPPORT WORKER</p>
                       <h3 className="worker-profile-name">

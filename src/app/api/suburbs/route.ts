@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json([])
   }
 
-  const res = await fetch(`https://app.remontaservices.com.au/api/suburbs?q=${encodeURIComponent(q)}`)
+  const res = await fetch(`${process.env.REMONTA_API_URL}/api/suburbs?q=${encodeURIComponent(q)}`)
   const data = await res.json()
 
   return NextResponse.json(data)
