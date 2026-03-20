@@ -11,6 +11,7 @@ import {
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { autoUpdateComplianceCompletion, autoUpdateTrainingsCompletion } from "./setupProgress.service";
 import { put, del } from "@vercel/blob";
+import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
 
 /**
  * Backend Service: Worker Compliance Management
@@ -91,9 +92,9 @@ export async function updateWorkerABN(
       data: updatedProfile,
     };
 
-    // 6. BACKGROUND: Auto-update Compliance completion status (non-blocking)
-    // Revalidate cache and update progress in background - doesn't block response
+    // 6. BACKGROUND: bust Redis cache + revalidate paths + sync completion (fire-and-forget)
     Promise.all([
+      invalidateCache(CACHE_KEYS.workerProfileBase(session.user.id)).catch(() => {}),
       Promise.resolve().then(() => {
         revalidatePath("/dashboard/worker/account/setup");
         revalidatePath("/dashboard/worker");
@@ -494,38 +495,41 @@ export async function uploadComplianceDocument(
       return requirement;
     });
 
-    // 10. Return SUCCESS immediately (optimistic update handles instant UI feedback)
+    // 10. Return SUCCESS immediately — do not block on any post-save operations
     const response = {
       success: true,
       message: "Document uploaded successfully!",
       data: {
         id: verificationReq.id,
-        documentUrl: blob.url, // Use documentUrl to match API response format
+        documentUrl: blob.url,
         documentType,
         documentName: documentName?.trim() || docConfig.name,
         uploadedAt: verificationReq.documentUploadedAt?.toISOString() || new Date().toISOString(),
       },
     };
 
-    // 11. BACKGROUND SYNC: Update database setupProgress field (async, non-blocking)
-    // This runs AFTER response is sent to user (doesn't block)
-    // Optimistic updates handle instant UI feedback, this ensures database stays in sync
+    // 11. BACKGROUND: bust Redis cache + revalidate paths + sync setupProgress
+    // All fire-and-forget — response is already returned, none of these block the user
     Promise.all([
-      // Revalidate cache paths
+      // Bust Redis so the next profile fetch returns fresh data (not stale cached data)
+      invalidateCache(
+        CACHE_KEYS.workerProfileBase(session.user.id),
+        CACHE_KEYS.completionStatus(session.user.id)
+      ).catch(() => {}),
+      // Revalidate Next.js route cache
       Promise.resolve().then(() => {
         revalidatePath("/dashboard/worker/requirements/setup");
         revalidatePath("/dashboard/worker");
       }),
-      // Update setupProgress.compliance in database (background)
+      // Update setupProgress.compliance in database
       autoUpdateComplianceCompletion().catch((error) => {
         console.error("[Compliance] Background DB sync failed (non-critical):", error);
       }),
-      // Update setupProgress.trainings in database (background)
+      // Update setupProgress.trainings in database
       autoUpdateTrainingsCompletion().catch((error) => {
         console.error("[Compliance] Background DB sync failed (non-critical):", error);
       }),
     ]).catch((error) => {
-      // Silently fail - optimistic updates already showed correct state to user
       console.error("[Compliance] Background sync operations failed:", error);
     });
 

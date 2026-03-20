@@ -20,6 +20,30 @@ import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { getRedirectPathForRole } from "@/types/auth";
 import Link from 'next/link';
 
+/**
+ * Extracts a safe relative redirect path from a callbackUrl.
+ * withAuth provides the full absolute URL (e.g. https://app.remontaservices.com.au/dashboard/...)
+ * so we extract the pathname+search and validate it's an internal dashboard route.
+ * Returns null if the URL is not safe (e.g. external domain).
+ */
+function getSafeRedirectPath(url: string): string | null {
+  if (!url) return null;
+
+  // Already a relative path — validate it's not protocol-relative (//)
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+
+  // Absolute URL — extract path only if it's a recognised internal route
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname + parsed.search + parsed.hash;
+    if (path.startsWith("/dashboard/") || path.startsWith("/admin/")) return path;
+  } catch {
+    // Malformed URL — ignore
+  }
+
+  return null;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,14 +97,16 @@ function LoginForm() {
   // Auto-redirect if user is already authenticated
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
-      let redirectPath = getRedirectPathForRole(session.user.role);
-      if (applyJobId && session.user.role === "WORKER") {
+      // Honour the deep-link callbackUrl (e.g. from an email link) if it's safe.
+      // Fall back to the default role-based dashboard otherwise.
+      const safeCallback = getSafeRedirectPath(rawCallbackUrl);
+      let redirectPath = safeCallback ?? getRedirectPathForRole(session.user.role);
+      if (!safeCallback && applyJobId && session.user.role === "WORKER") {
         redirectPath += `?apply=${applyJobId}`;
       }
-      // Use window.location.href for immediate redirect (works even in background tabs)
       window.location.href = redirectPath;
     }
-  }, [status, session, router, applyJobId]);
+  }, [status, session, router, applyJobId, rawCallbackUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,9 +140,11 @@ function LoginForm() {
       const session = await response.json();
 
       if (session?.user?.role) {
-        // Redirect based on role
-        let redirectPath = getRedirectPathForRole(session.user.role);
-        if (applyJobId && session.user.role === "WORKER") {
+        // Honour the deep-link callbackUrl (e.g. from an email link) if it's safe.
+        // Fall back to the default role-based dashboard otherwise.
+        const safeCallback = getSafeRedirectPath(rawCallbackUrl);
+        let redirectPath = safeCallback ?? getRedirectPathForRole(session.user.role);
+        if (!safeCallback && applyJobId && session.user.role === "WORKER") {
           redirectPath += `?apply=${applyJobId}`;
         }
 

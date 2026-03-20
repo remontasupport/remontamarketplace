@@ -90,8 +90,41 @@ function MandatoryRequirementsSetupContent() {
 
   // TanStack Query hooks
   const queryClient = useQueryClient();
-  const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
+  const { data: profileData, isLoading: isLoadingProfile, refetch: refetchProfile } = useWorkerProfile(session?.user?.id);
   const updateProfileMutation = useUpdateProfileStep();
+
+  // Two-layer instant update strategy — both call refetch() directly (not just invalidate):
+  //
+  // Layer 1 — BroadcastChannel: fires while the contract tab still shows the success screen,
+  //   so the setup tab can update before the worker even closes the contract tab.
+  //
+  // Layer 2 — visibilitychange: fires the moment the worker switches back to this tab,
+  //   100% reliable regardless of BroadcastChannel support or timing.
+  useEffect(() => {
+    const refetch = () => { refetchProfile(); };
+
+    // Layer 1: BroadcastChannel (instant, while contract tab is still open)
+    let bc: BroadcastChannel | undefined;
+    try {
+      bc = new BroadcastChannel("remonta-worker-compliance");
+      bc.onmessage = (event) => {
+        if (event.data?.type === "contract-signed") refetch();
+      };
+    } catch {
+      // Not supported — visibilitychange handles it
+    }
+
+    // Layer 2: visibilitychange (fires when worker returns to this tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      bc?.close();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refetchProfile]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage] = useState("");
@@ -111,6 +144,26 @@ function MandatoryRequirementsSetupContent() {
     codeOfConductDate: null,
     codeOfConductDocument: null,
   });
+
+  // Derive contract state directly from profileData — reactive on the same render as refetch.
+  // This avoids the async formData-sync chain (useEffect → setFormData → re-render) which
+  // was causing the UI to lag behind until a manual page refresh.
+  const contractDocumentFromDB = useMemo(() => {
+    const req = (profileData?.verificationRequirements as any[])?.find(
+      (req: any) => req.requirementType === "contract-of-agreement"
+    );
+    if (!req?.documentUrl) return null;
+    return {
+      id: req.id,
+      documentUrl: req.documentUrl,
+      uploadedAt: req.documentUploadedAt || req.createdAt,
+    };
+  }, [profileData]);
+
+  const contractSignedFromDB = useMemo(
+    () => !!(profileData?.abn as any)?.workerEngagementType?.signed,
+    [profileData]
+  );
 
   // Populate form data ONLY on initial load
   useEffect(() => {
@@ -206,9 +259,12 @@ function MandatoryRequirementsSetupContent() {
     // Validate ABN/TFN if this is the ABN step
     // Skip validation if contract is already uploaded (value not needed after upload)
     if (currentStepData?.documentId === "abn-contractor") {
-      const isContractUploaded = !!formData.contractDocument?.documentUrl;
+      // Consider the contract complete if a document was uploaded OR the worker previously signed
+      const isContractUploaded =
+        !!formData.contractDocument?.documentUrl ||
+        !!formData.workerEngagementType?.signed;
 
-      // Only validate ABN/TFN number if contract is NOT uploaded yet
+      // Only validate ABN/TFN number if contract is NOT yet signed/uploaded
       if (!isContractUploaded) {
         const engagement = formData.workerEngagementType;
         if (engagement?.type === "abn") {
@@ -246,14 +302,24 @@ function MandatoryRequirementsSetupContent() {
 
     if (!session?.user?.id) return;
 
-    // Check if this is the ABN/TFN step and contract needs to be uploaded
+    // Check if this is the ABN/TFN step and contract needs to be signed & uploaded
     if (currentStepData?.documentId === "abn-contractor") {
-      // Check if contract document is uploaded
-      const isContractUploaded = !!formData.contractDocument?.documentUrl;
+      // Accept any of:
+      // 1. contractDocument in local formData (new flow or manual upload)
+      // 2. workerEngagementType.signed in local formData (covers existing signed-only workers)
+      // 3. contract-of-agreement in fresh profileData (after BroadcastChannel refetch)
+      // 4. signed flag in fresh profileData (existing workers, signed before auto-upload existed)
+      const isContractDone =
+        !!formData.contractDocument?.documentUrl ||
+        !!formData.workerEngagementType?.signed ||
+        !!(profileData?.verificationRequirements as any[])?.find(
+          (req: any) => req.requirementType === "contract-of-agreement"
+        )?.documentUrl ||
+        !!(profileData?.abn as any)?.workerEngagementType?.signed;
 
-      if (!isContractUploaded) {
-        setErrors({ contractDocument: "Please upload the contract before proceeding." });
-        return; // Don't proceed until contract is uploaded
+      if (!isContractDone) {
+        setErrors({ contractDocument: "Please sign the contract before proceeding." });
+        return;
       }
     }
 
@@ -352,12 +418,15 @@ function MandatoryRequirementsSetupContent() {
     }
   };
 
-  // Redirect to first step if invalid slug
+  // Redirect to first step if invalid slug — but only after requirements have loaded.
+  // Without this guard, the effect fires during the loading render when dynamicSteps
+  // is still empty and STEPS falls back to the static list, which doesn't contain
+  // deep-linked slugs like abn-contractor, causing a premature redirect to step 1.
   useEffect(() => {
-    if (currentStepIndex < 0 && STEPS.length > 0) {
+    if (!isLoadingRequirements && currentStepIndex < 0 && STEPS.length > 0) {
       router.push(`/dashboard/worker/requirements/setup?step=${STEPS[0].slug}`);
     }
-  }, [currentStepIndex, router, STEPS]);
+  }, [isLoadingRequirements, currentStepIndex, router, STEPS]);
 
   // Authentication is handled by layout - no need to check here
   if (status === "loading" || isLoadingProfile || isLoadingRequirements) {
@@ -410,7 +479,15 @@ function MandatoryRequirementsSetupContent() {
 
           {/* Render current step */}
           <CurrentStepComponent
-            data={formData}
+            data={{
+              ...formData,
+              // Always read contract state directly from profileData so the UI updates
+              // on the same render as the refetch — no async formData-sync step in between.
+              contractDocument: contractDocumentFromDB ?? formData.contractDocument,
+              workerEngagementType: formData.workerEngagementType
+                ? { ...formData.workerEngagementType, signed: contractSignedFromDB || formData.workerEngagementType.signed }
+                : formData.workerEngagementType,
+            }}
             onChange={handleFieldChange}
             errors={errors}
             // Pass additional props for dynamic components

@@ -11,7 +11,7 @@ import { getContractContent } from "@/config/contractContent";
 import ContractViewer from "./ContractViewer";
 import SignaturePad from "./SignaturePad";
 import Image from "next/image";
-import { updateWorkerABN } from "@/services/worker/compliance.service";
+import { updateWorkerABN, uploadComplianceDocument } from "@/services/worker/compliance.service";
 
 interface ContractPageProps {
   contractType: "abn" | "tfn";
@@ -38,6 +38,9 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Non-blocking warning shown on success screen when auto-upload fails.
+  // signed:true is already in DB so the worker can still proceed.
+  const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
   // Preamble fields
   const [agreementDate, setAgreementDate] = useState<string>(
@@ -66,8 +69,8 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
     setError(null);
   }, []);
 
-  // Generate and download PDF
-  const generateAndDownloadPdf = useCallback(() => {
+  // Generate PDF document (returns doc and filename without saving/downloading)
+  const generatePdfDocument = useCallback(() => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -171,9 +174,8 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
     addText(`Name: ${partyName}`, 10, false);
     addText(`Date: ${formattedSignatureDate}`, 10, false);
 
-    // Download
     const fileName = `${contract.title.replace(/\s+/g, "_")}_${partyName.replace(/\s+/g, "_")}_${signatureDate}.pdf`;
-    doc.save(fileName);
+    return { doc, fileName };
   }, [contract, agreementDate, partyName, partyTaxId, partyAddress, partyLabel, isContractor, signature, signatureDate]);
 
   const handleSubmit = useCallback(async () => {
@@ -205,10 +207,12 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
     setIsSubmitting(true);
     setError(null);
+    setUploadWarning(null);
 
+    // ── Step 1: Save signed status (CRITICAL — must succeed before anything else) ──
+    let signResult;
     try {
-      // Save contract signed status to database via server action
-      const result = await updateWorkerABN({
+      signResult = await updateWorkerABN({
         abn: {
           workerEngagementType: {
             type: contractType,
@@ -216,27 +220,88 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
           },
         },
       });
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to save contract");
-      }
-
-      console.log("Contract signed and saved to database:", {
-        contractType,
-        partyName,
-        signedAt: new Date().toISOString(),
-      });
-
-      // Generate and download PDF automatically
-      generateAndDownloadPdf();
-
-      setIsSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to submit. Please try again.");
-    } finally {
+    } catch {
+      setError("Unable to reach the server. Please check your connection and try again.");
       setIsSubmitting(false);
+      return;
     }
-  }, [contractType, signature, agreed, partyName, partyTaxId, partyAddress, agreementDate, signatureDate, partyLabel, isContractor, generateAndDownloadPdf]);
+
+    if (!signResult.success) {
+      setError(
+        signResult.error === "Unauthorized. Please log in."
+          ? "Your session has expired. Please refresh the page and log in again."
+          : signResult.error || "Failed to save your contract. Please try again."
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    // ── Step 2: Generate PDF (non-critical — signed status already saved) ──
+    let doc: import("jspdf").jsPDF | null = null;
+    let fileName = "";
+    try {
+      const result = generatePdfDocument();
+      doc = result.doc;
+      fileName = result.fileName;
+    } catch (pdfErr) {
+      console.error("[Contract] PDF generation failed:", pdfErr);
+      // Worker can still proceed — signed:true is in DB
+    }
+
+    // ── Step 3: Auto-upload to database (non-critical) ──
+    if (doc) {
+      try {
+        const pdfBlob = doc.output("blob");
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", new File([pdfBlob], fileName, { type: "application/pdf" }));
+        uploadFormData.append("documentType", "contract-of-agreement");
+        uploadFormData.append("documentName", "Contract of Agreement");
+
+        const uploadResult = await uploadComplianceDocument(uploadFormData);
+        if (!uploadResult.success) {
+          console.error("[Contract] Auto-upload failed:", uploadResult.error);
+          setUploadWarning(
+            "Your contract was signed, but we couldn't save a copy to your account. " +
+            "Please keep the downloaded PDF for your records. You can still proceed with your registration."
+          );
+        }
+      } catch (uploadErr) {
+        console.error("[Contract] Auto-upload threw:", uploadErr);
+        setUploadWarning(
+          "Your contract was signed, but we couldn't upload it due to a connection issue. " +
+          "Please keep the downloaded PDF for your records. You can still proceed with your registration."
+        );
+      }
+    } else {
+      // PDF generation failed — warn but don't block
+      setUploadWarning(
+        "Your contract was signed, but we couldn't generate the PDF copy. " +
+        "You can still proceed with your registration."
+      );
+    }
+
+    // ── Step 4: Download PDF for worker's records (non-critical) ──
+    if (doc) {
+      try {
+        doc.save(fileName);
+      } catch (downloadErr) {
+        console.error("[Contract] PDF download failed:", downloadErr);
+        // Browser may have blocked it — not actionable, silently ignore
+      }
+    }
+
+    // ── Step 5: Notify setup tab (best-effort) ──
+    try {
+      const bc = new BroadcastChannel("remonta-worker-compliance");
+      bc.postMessage({ type: "contract-signed", contractType });
+      bc.close();
+    } catch {
+      // BroadcastChannel not supported — visibilitychange handles the refetch
+    }
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+  }, [contractType, signature, agreed, partyName, partyTaxId, partyAddress, agreementDate, signatureDate, partyLabel, isContractor, generatePdfDocument]);
 
   const handleClose = useCallback(() => {
     window.close();
@@ -283,6 +348,23 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
               recorded. You can now close this tab and continue with your
               registration.
             </p>
+
+            {/* Non-blocking warning if auto-upload failed — worker can still proceed */}
+            {uploadWarning && (
+              <div style={{
+                marginTop: "1rem",
+                padding: "0.875rem 1rem",
+                backgroundColor: "#fffbeb",
+                border: "1px solid #f59e0b",
+                borderRadius: "8px",
+                textAlign: "left",
+              }}>
+                <p style={{ margin: 0, fontSize: "0.875rem", color: "#92400e" }}>
+                  <strong>Note:</strong> {uploadWarning}
+                </p>
+              </div>
+            )}
+
             <button
               type="button"
               className="contract-success-close-btn"

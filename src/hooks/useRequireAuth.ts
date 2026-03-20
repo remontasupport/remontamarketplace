@@ -40,9 +40,12 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   const isUnauthenticated = status === "unauthenticated";
 
   // SECURITY: Redirect to login if not authenticated
+  // Include the current URL as callbackUrl so the user returns to the right page after login
   useEffect(() => {
     if (redirectOnUnauthenticated && isUnauthenticated) {
-      router.push(redirectTo);
+      const currentPath = window.location.pathname + window.location.search;
+      const loginUrl = `${redirectTo}?callbackUrl=${encodeURIComponent(currentPath)}`;
+      router.push(loginUrl);
     }
   }, [isUnauthenticated, redirectOnUnauthenticated, redirectTo, router]);
 

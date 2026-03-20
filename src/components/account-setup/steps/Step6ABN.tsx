@@ -3,10 +3,9 @@
  * Australian Business Number or Tax File Number
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TextField } from "@/components/forms/fields";
 import StepContentWrapper from "../shared/StepContentWrapper";
-import { uploadComplianceDocument } from "@/services/worker/compliance.service";
 
 type EngagementType = "abn" | "tfn" | null;
 
@@ -47,11 +46,6 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
     data.workerEngagementType?.type === "tfn" ? (data.workerEngagementType.value || "") : ""
   );
 
-  // Contract upload state
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Contract signed status comes from DB (data.workerEngagementType?.signed)
   const contractSigned = data.workerEngagementType?.signed === true;
 
@@ -78,69 +72,6 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
       window.open(contractUrl, "_blank");
     }
   }, [selectedType, abnValue, tfnValue]);
-
-  // Handle upload button click
-  const handleUploadClick = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  // Handle file selection and upload
-  const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      // Validate file type
-      const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-      if (!allowedTypes.includes(file.type)) {
-        setUploadError("Please upload a PDF or image file (PDF, JPG, PNG, WebP)");
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError("File size must be less than 10MB");
-        return;
-      }
-
-      setIsUploading(true);
-      setUploadError(null);
-
-      try {
-        // Create FormData for the upload
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("documentType", "contract-of-agreement");
-        formData.append("documentName", "Contract of Agreement");
-
-        // Upload using server action
-        const result = await uploadComplianceDocument(formData);
-
-        if (!result.success) {
-          throw new Error(result.error || "Failed to upload contract");
-        }
-
-        // Update parent component with the uploaded document
-        onChange("contractDocument", {
-          id: result.data?.id,
-          documentUrl: result.data?.documentUrl,
-          uploadedAt: result.data?.uploadedAt,
-        });
-
-        console.log("Contract uploaded successfully:", result.data);
-      } catch (err: any) {
-        console.error("Upload failed:", err);
-        setUploadError(err.message || "Failed to upload file. Please try again.");
-      } finally {
-        setIsUploading(false);
-        // Reset input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-      }
-    },
-    [onChange]
-  );
 
   // Sync state when data prop changes (e.g., after async data load)
   // Note: value may be undefined if loading from DB (new format only stores type + signed)
@@ -203,7 +134,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
         <div className="form-column">
           <div className="account-form">
             {/* Radio button selection */}
-            <div className="tax-id-selection">
+            <div className="tax-id-selection" style={contractSigned || contractUploaded ? { opacity: 0.45, pointerEvents: "none" } : undefined}>
               <label className="radio-option">
                 <input
                   type="radio"
@@ -211,6 +142,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                   value="abn"
                   checked={selectedType === "abn"}
                   onChange={() => handleTypeSelect("abn")}
+                  disabled={contractSigned || contractUploaded}
                 />
                 <span className="radio-label">Contractor: Company / Business / Sole Trader (Operating under ABN)</span>
               </label>
@@ -221,6 +153,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                   value="tfn"
                   checked={selectedType === "tfn"}
                   onChange={() => handleTypeSelect("tfn")}
+                  disabled={contractSigned || contractUploaded}
                 />
                 <span className="radio-label">Casual Employee: Internal (Operating under TFN)</span>
               </label>
@@ -246,6 +179,18 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
             {/* Contract Signing Section - shown when valid ABN/TFN is entered OR contract is already signed */}
             {selectedType && (isValidEntry || contractSigned) && (
               <div className="contract-signing-section" style={{ marginTop: "1.5rem" }}>
+                {/* Support link - shown only when contract is locked */}
+                {(contractSigned || contractUploaded) && (
+                  <p style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.75rem" }}>
+                    Need to update your agreement? Contact{" "}
+                    <a
+                      href="mailto:support@remontaservices.com.au"
+                      style={{ color: "#0C1628", fontWeight: 500, textDecoration: "underline" }}
+                    >
+                      support@remontaservices.com.au
+                    </a>
+                  </p>
+                )}
                 {/* Contract Status Card */}
                 <div
                   style={{
@@ -298,7 +243,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                           ? "Contract signed"
                           : contractUploaded
                           ? "Contract uploaded"
-                          : "Please sign or upload the contract"}
+                          : "Please sign the contract"}
                       </p>
                     </div>
                   </div>
@@ -306,175 +251,79 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                   {/* Action Buttons */}
                   <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
                     {contractUploaded ? (
-                      <>
-                        {/* View uploaded document */}
-                        <a
-                          href={data.contractDocument!.documentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            backgroundColor: "transparent",
-                            color: "#0C1628",
-                            border: "1px solid #0C1628",
-                            padding: "0.625rem 1.25rem",
-                            borderRadius: "6px",
-                            fontSize: "0.875rem",
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                            textDecoration: "none",
-                          }}
+                      /* View uploaded document */
+                      <a
+                        href={data.contractDocument!.documentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          backgroundColor: "transparent",
+                          color: "#0C1628",
+                          border: "1px solid #0C1628",
+                          padding: "0.625rem 1.25rem",
+                          borderRadius: "6px",
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                          View Document
-                        </a>
-
-                        {/* Replace uploaded document */}
-                        <button
-                          type="button"
-                          onClick={handleUploadClick}
-                          disabled={isUploading}
-                          style={{
-                            backgroundColor: "transparent",
-                            color: "#0C1628",
-                            border: "1px solid #0C1628",
-                            padding: "0.625rem 1.25rem",
-                            borderRadius: "6px",
-                            fontSize: "0.875rem",
-                            fontWeight: 500,
-                            cursor: isUploading ? "not-allowed" : "pointer",
-                            opacity: isUploading ? 0.6 : 1,
-                            transition: "all 0.2s ease",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                          </svg>
-                          {isUploading ? "Uploading..." : "Replace Document"}
-                        </button>
-                      </>
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        View Document
+                      </a>
                     ) : (
-                      <>
-                        {/* View & Sign Button - only shown when no uploaded document */}
-                        <button
-                          type="button"
-                          onClick={handleViewContract}
-                          style={{
-                            backgroundColor: contractSigned ? "transparent" : "#0C1628",
-                            color: contractSigned ? "#0C1628" : "#ffffff",
-                            border: contractSigned ? "1px solid #0C1628" : "none",
-                            padding: "0.625rem 1.25rem",
-                            borderRadius: "6px",
-                            fontSize: "0.875rem",
-                            fontWeight: 500,
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
+                      /* View & Sign Button */
+                      <button
+                        type="button"
+                        onClick={handleViewContract}
+                        style={{
+                          backgroundColor: contractSigned ? "transparent" : "#0C1628",
+                          color: contractSigned ? "#0C1628" : "#ffffff",
+                          border: contractSigned ? "1px solid #0C1628" : "none",
+                          padding: "0.625rem 1.25rem",
+                          borderRadius: "6px",
+                          fontSize: "0.875rem",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          {contractSigned ? "View Signed Contract" : "View & Sign Contract"}
-                        </button>
-
-                        {/* Upload Contract Button */}
-                        <button
-                          type="button"
-                          onClick={handleUploadClick}
-                          disabled={isUploading}
-                          style={{
-                            backgroundColor: "transparent",
-                            color: "#0C1628",
-                            border: "1px solid #0C1628",
-                            padding: "0.625rem 1.25rem",
-                            borderRadius: "6px",
-                            fontSize: "0.875rem",
-                            fontWeight: 500,
-                            cursor: isUploading ? "not-allowed" : "pointer",
-                            opacity: isUploading ? 0.6 : 1,
-                            transition: "all 0.2s ease",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                          </svg>
-                          {isUploading ? "Uploading..." : "Upload Contract"}
-                        </button>
-                      </>
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        {contractSigned ? "View Signed Contract" : "View & Sign Contract"}
+                      </button>
                     )}
-
-                    {/* Hidden file input */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.webp"
-                      onChange={handleFileChange}
-                      style={{ display: "none" }}
-                    />
                   </div>
-
-                  {/* Upload Error */}
-                  {uploadError && (
-                    <p style={{ color: "#dc2626", fontSize: "0.875rem", marginTop: "0.5rem", marginBottom: 0 }}>
-                      {uploadError}
-                    </p>
-                  )}
 
                   {/* Contract Document Error from validation */}
                   {errors?.contractDocument && (
