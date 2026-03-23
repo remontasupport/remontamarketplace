@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
 import ImageCropModal from '@/components/modals/ImageCropModal'
 import ServiceSelectionModal from '@/components/modals/ServiceSelectionModal'
+import QuoteSelectionModal from '@/components/modals/QuoteSelectionModal'
+import { EXPERIENCE_OPTIONS, HOBBIES_OPTIONS, UNIQUE_SERVICE_OPTIONS, WHY_ENJOY_OPTIONS } from '@/constants/profileAnswers'
 import NextImage from 'next/image'
 import { useState, useCallback, useEffect } from 'react'
 import './contractor-profile.css'
@@ -55,6 +57,12 @@ export default function WorkerDetailPage() {
 
   // Service selection modal state
   const [showServiceModal, setShowServiceModal] = useState<boolean>(false)
+
+  // Quote section modal states
+  const [showExperienceModal, setShowExperienceModal] = useState<boolean>(false)
+  const [showHobbiesModal, setShowHobbiesModal] = useState<boolean>(false)
+  const [showUniqueServiceModal, setShowUniqueServiceModal] = useState<boolean>(false)
+  const [showWhyEnjoyModal, setShowWhyEnjoyModal] = useState<boolean>(false)
 
   // Editable fields state (not saved to database)
   const [editableLanguages, setEditableLanguages] = useState<string>('')
@@ -295,7 +303,7 @@ export default function WorkerDetailPage() {
   }
 
   const addExperienceItem = () => {
-    setExperienceItems([...experienceItems, 'New experience item'])
+    setShowExperienceModal(true)
   }
 
   const removeExperienceItem = (index: number) => {
@@ -724,9 +732,21 @@ export default function WorkerDetailPage() {
 
               {/* HOBBIES */}
               <div className="quote-section">
-                <h3 className="quote-title">Hobbies</h3>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="quote-title">Hobbies</h3>
+                  {isEditMode && (
+                    <button
+                      onClick={() => setShowHobbiesModal(true)}
+                      className="add-service-btn"
+                      title="Select a hobby answer"
+                    >
+                      Select
+                    </button>
+                  )}
+                </div>
                 <p className="quote-text">
                   "<span
+                    key={hobbies}
                     contentEditable={isEditMode}
                     suppressContentEditableWarning
                     onFocus={(e) => {
@@ -752,9 +772,21 @@ export default function WorkerDetailPage() {
 
               {/* WHAT MAKES YOUR SERVICES UNIQUE */}
               <div className="quote-section">
-                <h3 className="quote-title">What makes your services unique?</h3>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="quote-title">What makes your services unique?</h3>
+                  {isEditMode && (
+                    <button
+                      onClick={() => setShowUniqueServiceModal(true)}
+                      className="add-service-btn"
+                      title="Select a unique service answer"
+                    >
+                      Select
+                    </button>
+                  )}
+                </div>
                 <p className="quote-text">
                   "<span
+                    key={uniqueService}
                     contentEditable={isEditMode}
                     suppressContentEditableWarning
                     onFocus={(e) => {
@@ -780,9 +812,21 @@ export default function WorkerDetailPage() {
 
               {/* WHY DO YOU ENJOY YOUR WORK */}
               <div className="quote-section">
-                <h3 className="quote-title">Why do you enjoy your work?</h3>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="quote-title">Why do you enjoy your work?</h3>
+                  {isEditMode && (
+                    <button
+                      onClick={() => setShowWhyEnjoyModal(true)}
+                      className="add-service-btn"
+                      title="Select a why enjoy answer"
+                    >
+                      Select
+                    </button>
+                  )}
+                </div>
                 <p className="quote-text">
                   "<span
+                    key={whyEnjoy}
                     contentEditable={isEditMode}
                     suppressContentEditableWarning
                     onFocus={(e) => {
@@ -823,6 +867,46 @@ export default function WorkerDetailPage() {
           <ServiceSelectionModal
             onClose={() => setShowServiceModal(false)}
             onSelectService={handleSelectService}
+          />
+        )}
+
+        {/* Experience Selection Modal */}
+        {showExperienceModal && (
+          <QuoteSelectionModal
+            title="Select an Experience Item"
+            items={EXPERIENCE_OPTIONS}
+            onClose={() => setShowExperienceModal(false)}
+            onSelect={(value) => setExperienceItems([...experienceItems, value])}
+          />
+        )}
+
+        {/* Hobbies Selection Modal */}
+        {showHobbiesModal && (
+          <QuoteSelectionModal
+            title="Select a Hobbies Answer"
+            items={HOBBIES_OPTIONS}
+            onClose={() => setShowHobbiesModal(false)}
+            onSelect={(value) => setEditableHobbies(value)}
+          />
+        )}
+
+        {/* Unique Service Selection Modal */}
+        {showUniqueServiceModal && (
+          <QuoteSelectionModal
+            title="Select a Unique Service Answer"
+            items={UNIQUE_SERVICE_OPTIONS}
+            onClose={() => setShowUniqueServiceModal(false)}
+            onSelect={(value) => setEditableUniqueService(value)}
+          />
+        )}
+
+        {/* Why Enjoy Selection Modal */}
+        {showWhyEnjoyModal && (
+          <QuoteSelectionModal
+            title="Select a Why Enjoy Answer"
+            items={WHY_ENJOY_OPTIONS}
+            onClose={() => setShowWhyEnjoyModal(false)}
+            onSelect={(value) => setEditableWhyEnjoy(value)}
           />
         )}
       </div>
