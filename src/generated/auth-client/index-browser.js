@@ -381,6 +381,15 @@ exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.EmailOtpScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  code: 'code',
+  expiresAt: 'expiresAt',
+  used: 'used',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.ServiceRequestScalarFieldEnum = {
   id: 'id',
   requesterId: 'requesterId',
@@ -513,6 +522,7 @@ exports.Prisma.ModelName = {
   Job: 'Job',
   JobApplication: 'JobApplication',
   WorkerAdditionalInfo: 'WorkerAdditionalInfo',
+  EmailOtp: 'EmailOtp',
   ServiceRequest: 'ServiceRequest'
 };
 

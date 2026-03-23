@@ -43,6 +43,7 @@ export default function ClientsRegistration() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [showAccountErrors, setShowAccountErrors] = useState(false);
   const [isSubmitClicked, setIsSubmitClicked] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState('');
 
   const { control, handleSubmit, formState, trigger, getValues, watch, setValue } = useForm<ClientFormData>({
     resolver: zodResolver(clientFormSchema),
@@ -140,6 +141,14 @@ export default function ClientsRegistration() {
   };
 
   const onSubmit = async (data: ClientFormData) => {
+    // Block submit if email hasn't been verified
+    const emailNormalized = data.email.toLowerCase().trim();
+    if (!verifiedEmail || verifiedEmail !== emailNormalized) {
+      setShowAccountErrors(true);
+      setApiError(null);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setApiError(null);
@@ -285,7 +294,14 @@ export default function ClientsRegistration() {
 
             {/* Account Setup - Step 3 (self/coordinator), Step 4 (client) */}
             {isOnAccountSetupStep && (
-              <Step5AccountSetup control={control} errors={errors} showErrors={showAccountErrors} />
+              <Step5AccountSetup
+                control={control}
+                errors={errors}
+                showErrors={showAccountErrors}
+                getFirstName={() => getValues('firstName')}
+                onEmailVerified={(email) => setVerifiedEmail(email)}
+                verifiedEmail={verifiedEmail}
+              />
             )}
 
             {/* API Error Display */}
@@ -315,7 +331,7 @@ export default function ClientsRegistration() {
               {currentStep === TOTAL_STEPS ? (
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !verifiedEmail}
                   className="flex items-center gap-2"
                   onClick={() => setIsSubmitClicked(true)}
                 >

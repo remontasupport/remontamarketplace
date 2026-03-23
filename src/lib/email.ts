@@ -57,7 +57,7 @@ export async function sendVerificationEmail(
               <div class="content">
                 <p>Hi ${firstName},</p>
 
-                <p>Thank you for registering as a support worker with ${APP_NAME}. We're excited to have you join our community!</p>
+                <p>Thank you for creating your account with ${APP_NAME}.</p>
 
                 <p>To complete your registration and activate your account, please enter the verification code below:</p>
 
@@ -72,20 +72,9 @@ export async function sendVerificationEmail(
                   <strong>⚠️ This code will expire in 15 minutes.</strong>
                 </div>
 
-                <p><strong>Next Steps:</strong></p>
-                <ol>
-                  <li>Enter the verification code on the registration page</li>
-                  <li>Complete your profile verification (upload required documents)</li>
-                  <li>Start connecting with clients!</li>
-                </ol>
-
-                <p>If you didn't create this account, you can safely ignore this email.</p>
-
-                <p>Best regards,<br>The ${APP_NAME} Team</p>
               </div>
               <div class="footer">
                 <p>© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
-                <p>This code is valid for 15 minutes only.</p>
               </div>
             </div>
           </body>
