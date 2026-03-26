@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth.config";
 import NewsSlider from "./NewsSlider";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getOrFetch, CACHE_KEYS, CACHE_TTL } from "@/lib/redis";
+import { SetupProgress } from "@/types/setupProgress";
 
 async function fetchJobs() {
   // Jobs are identical for every user and only change when sync-jobs runs.
@@ -59,7 +60,7 @@ async function fetchAppliedJobIds(workerId: string): Promise<string[]> {
  * Async Server Component — fetches job listings and the worker's applied job IDs directly from DB.
  * Use with Suspense boundary for streaming SSR.
  */
-export default async function NewsSliderAsync() {
+export default async function NewsSliderAsync({ setupProgress }: { setupProgress?: SetupProgress }) {
   const session = await getServerSession(authOptions);
 
   const [jobs, appliedJobIds] = await Promise.all([
@@ -67,5 +68,5 @@ export default async function NewsSliderAsync() {
     session?.user?.id ? fetchAppliedJobIds(session.user.id) : Promise.resolve([]),
   ]);
 
-  return <NewsSlider jobs={jobs} appliedJobIds={appliedJobIds} />;
+  return <NewsSlider jobs={jobs} appliedJobIds={appliedJobIds} setupProgress={setupProgress} />;
 }

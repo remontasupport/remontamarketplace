@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
-import { authPrisma } from "@/lib/auth-prisma";
+import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import {
   updateWorkerABNSchema,
@@ -383,15 +383,18 @@ export async function uploadComplianceDocument(
     // 6. OPTIMIZED: Parallel operations - Get worker profile while processing file
     // This saves ~50-100ms by not waiting for DB before starting file processing
     const timestamp = Date.now();
+    const uniqueSuffix = crypto.randomUUID().slice(0, 8); // 8-char UUID fragment for uniqueness
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const blobPath = `${docConfig.folder}/${session.user.id}/${documentType}-${timestamp}-${sanitizedFileName}`;
+    const blobPath = `${docConfig.folder}/${session.user.id}/${documentType}-${timestamp}-${uniqueSuffix}-${sanitizedFileName}`;
 
     // Start both operations in parallel
     const [workerProfile, arrayBuffer] = await Promise.all([
-      authPrisma.workerProfile.findUnique({
-        where: { userId: session.user.id },
-        select: { id: true },
-      }),
+      withRetry(() =>
+        authPrisma.workerProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { id: true },
+        })
+      ),
       file.arrayBuffer().catch(() => null),
     ]);
 
@@ -428,10 +431,13 @@ export async function uploadComplianceDocument(
       };
     }
 
-    // 8. OPTIMIZED: Use Prisma transaction for atomic operation
-    // Wraps all DB writes in one transaction (reduces round-trips, ensures atomicity)
-    // This saves ~50-100ms compared to separate queries
-    const verificationReq = await authPrisma.$transaction(async (tx) => {
+    // 8. OPTIMIZED: Use Prisma transaction scoped to VerificationRequirement only.
+    // The workerProfile.update (verificationStatus) is intentionally moved OUTSIDE
+    // the transaction — it is idempotent and having it inside causes row-level lock
+    // contention when multiple documents are uploaded simultaneously (they all compete
+    // to lock/update the same workerProfile row, leading to serialization failures).
+    // withRetry handles Neon cold-start errors that surface under concurrent load.
+    const verificationReq = await withRetry(() => authPrisma.$transaction(async (tx) => {
       // Check if document of this type already exists
       const existingDoc = await tx.verificationRequirement.findFirst({
         where: {
@@ -440,11 +446,9 @@ export async function uploadComplianceDocument(
         },
       });
 
-      let requirement;
-
       if (existingDoc) {
         // Update existing document
-        requirement = await tx.verificationRequirement.update({
+        return tx.verificationRequirement.update({
           where: { id: existingDoc.id },
           data: {
             documentUrl: blob.url,
@@ -453,7 +457,6 @@ export async function uploadComplianceDocument(
             status: "SUBMITTED",
             submittedAt: new Date(),
             updatedAt: new Date(),
-            // Store metadata if provided (e.g., signature date for Code of Conduct)
             metadata: metadata || undefined,
             // Reset review fields when re-uploading
             reviewedAt: null,
@@ -463,37 +466,34 @@ export async function uploadComplianceDocument(
             rejectionReason: null,
           },
         });
-      } else {
-        // Create new document entry
-        requirement = await tx.verificationRequirement.create({
-          data: {
-            workerProfileId: workerProfile.id,
-            requirementType: documentType,
-            requirementName: documentName?.trim() || docConfig.name,
-            documentCategory: docConfig.category,
-            isRequired: docConfig.isRequired,
-            documentUrl: blob.url,
-            documentUploadedAt: new Date(),
-            expiresAt: expiryDate ? new Date(expiryDate) : null,
-            status: "SUBMITTED",
-            submittedAt: new Date(),
-            updatedAt: new Date(),
-            // Store metadata if provided (e.g., signature date for Code of Conduct)
-            metadata: metadata || undefined,
-          },
-        });
       }
 
-      // Update worker's verificationStatus in same transaction
-      await tx.workerProfile.update({
-        where: { id: workerProfile.id },
+      // Create new document entry
+      return tx.verificationRequirement.create({
         data: {
-          verificationStatus: "PENDING_REVIEW",
+          workerProfileId: workerProfile.id,
+          requirementType: documentType,
+          requirementName: documentName?.trim() || docConfig.name,
+          documentCategory: docConfig.category,
+          isRequired: docConfig.isRequired,
+          documentUrl: blob.url,
+          documentUploadedAt: new Date(),
+          expiresAt: expiryDate ? new Date(expiryDate) : null,
+          status: "SUBMITTED",
+          submittedAt: new Date(),
+          updatedAt: new Date(),
+          metadata: metadata || undefined,
         },
       });
+    }));
 
-      return requirement;
-    });
+    // Update workerProfile.verificationStatus outside the transaction so concurrent
+    // uploads don't deadlock on the same row. This is fire-and-forget — failures are
+    // non-critical since the background sync will reconcile the status anyway.
+    authPrisma.workerProfile.update({
+      where: { id: workerProfile.id },
+      data: { verificationStatus: "PENDING_REVIEW" },
+    }).catch(() => {});
 
     // 10. Return SUCCESS immediately — do not block on any post-save operations
     const response = {
@@ -539,6 +539,160 @@ export async function uploadComplianceDocument(
     return {
       success: false,
       error: `Failed to upload document: ${error.message || 'Unknown error'}`,
+    };
+  }
+}
+
+/**
+ * Server Action: Save compliance document metadata to DB
+ *
+ * This is Phase 2 of the two-phase upload flow:
+ *   Phase 1 — browser uploads file directly to Vercel Blob CDN via upload-token route
+ *   Phase 2 — browser calls THIS action with the returned blob URL to persist metadata
+ *
+ * Using this separation means:
+ *   - File bytes NEVER touch the Next.js server → no server-action serialization bottleneck
+ *   - All 4 concurrent uploads hit Vercel's CDN edge in true parallel
+ *   - This DB-only action is tiny (< 5 ms) and protected by withRetry for Neon cold starts
+ */
+export async function saveComplianceDocumentRecord(data: {
+  blobUrl: string;
+  documentType: string;
+  requirementName?: string;
+  expiryDate?: string;
+}): Promise<ActionResponse> {
+  try {
+    // 1. Authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized. Please log in." };
+    }
+
+    // 2. Rate limiting
+    const rateLimitCheck = await checkServerActionRateLimit(
+      session.user.id,
+      dbWriteRateLimit
+    );
+    if (!rateLimitCheck.success) {
+      return { success: false, error: rateLimitCheck.error };
+    }
+
+    const { blobUrl, documentType, requirementName, expiryDate } = data;
+
+    if (!blobUrl || !documentType) {
+      return { success: false, error: "blobUrl and documentType are required" };
+    }
+
+    // 3. Resolve document config (fallback for unknown types)
+    const docConfig = DOCUMENT_CONFIGS[documentType] || {
+      name: requirementName || documentType,
+      category: null,
+      isRequired: false,
+      folder: "compliance-documents",
+    };
+
+    // 4. Get worker profile — wrapped in withRetry for Neon cold-start resilience
+    const workerProfile = await withRetry(() =>
+      authPrisma.workerProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      })
+    );
+
+    if (!workerProfile) {
+      return { success: false, error: "Worker profile not found" };
+    }
+
+    // 5. Upsert the VerificationRequirement record — withRetry for cold starts
+    const verificationReq = await withRetry(() =>
+      authPrisma.$transaction(async (tx) => {
+        const existingDoc = await tx.verificationRequirement.findFirst({
+          where: {
+            workerProfileId: workerProfile.id,
+            requirementType: documentType,
+          },
+        });
+
+        if (existingDoc) {
+          return tx.verificationRequirement.update({
+            where: { id: existingDoc.id },
+            data: {
+              documentUrl: blobUrl,
+              documentUploadedAt: new Date(),
+              expiresAt: expiryDate ? new Date(expiryDate) : null,
+              status: "SUBMITTED",
+              submittedAt: new Date(),
+              updatedAt: new Date(),
+              reviewedAt: null,
+              reviewedBy: null,
+              approvedAt: null,
+              rejectedAt: null,
+              rejectionReason: null,
+            },
+          });
+        }
+
+        return tx.verificationRequirement.create({
+          data: {
+            workerProfileId: workerProfile.id,
+            requirementType: documentType,
+            requirementName: requirementName?.trim() || docConfig.name,
+            documentCategory: docConfig.category,
+            isRequired: docConfig.isRequired,
+            documentUrl: blobUrl,
+            documentUploadedAt: new Date(),
+            expiresAt: expiryDate ? new Date(expiryDate) : null,
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+      })
+    );
+
+    // 6. Fire-and-forget: update verificationStatus (idempotent, never blocks)
+    authPrisma.workerProfile
+      .update({
+        where: { id: workerProfile.id },
+        data: { verificationStatus: "PENDING_REVIEW" },
+      })
+      .catch(() => {});
+
+    // 7. Return success immediately
+    const response = {
+      success: true,
+      message: "Document saved successfully!",
+      data: {
+        id: verificationReq.id,
+        documentUrl: blobUrl,
+        documentType,
+        documentName: requirementName?.trim() || docConfig.name,
+        uploadedAt:
+          verificationReq.documentUploadedAt?.toISOString() ||
+          new Date().toISOString(),
+      },
+    };
+
+    // 8. Background: cache bust + setupProgress sync (fire-and-forget)
+    Promise.all([
+      invalidateCache(
+        CACHE_KEYS.workerProfileBase(session.user.id),
+        CACHE_KEYS.completionStatus(session.user.id)
+      ).catch(() => {}),
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/trainings/setup");
+        revalidatePath("/dashboard/worker/requirements/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+      autoUpdateComplianceCompletion().catch(() => {}),
+      autoUpdateTrainingsCompletion().catch(() => {}),
+    ]).catch(() => {});
+
+    return response;
+  } catch (error: any) {
+    return {
+      success: false,
+      error: `Failed to save document record: ${error.message || "Unknown error"}`,
     };
   }
 }

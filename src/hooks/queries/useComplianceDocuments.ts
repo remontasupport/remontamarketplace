@@ -9,9 +9,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  uploadComplianceDocument,
   deleteComplianceDocument,
 } from "@/services/worker/compliance.service";
+import { backgroundUploadQueue } from "@/lib/backgroundUploadQueue";
 
 // Query Keys
 export const complianceDocumentsKeys = {
@@ -52,15 +52,10 @@ async function fetchComplianceDocuments(
   return response.json();
 }
 
+
 /**
  * Hook to fetch compliance documents for a specific document type
  * OPTIMIZED: Prevents UI flash using React Query caching
- *
- * Features:
- * - Keeps previous data visible while refetching
- * - Smart caching (5 minutes stale time)
- * - Background refetching for fresh data
- * - No UI flash when navigating between steps
  *
  * @param documentType - The type of document to fetch
  * @param apiEndpoint - Optional custom API endpoint
@@ -72,16 +67,23 @@ export function useComplianceDocuments(
   return useQuery({
     queryKey: complianceDocumentsKeys.byType(documentType || ""),
     queryFn: () => fetchComplianceDocuments(documentType!, apiEndpoint),
-    enabled: !!documentType, // Only fetch when documentType is provided
-    staleTime: 5 * 60 * 1000, // 5 minutes - data is fresh
-    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache
-    retry: 1, // Retry once on failure
+    enabled: !!documentType,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: 1,
   });
 }
 
 /**
- * Hook to upload a compliance document
- * REFACTORED: Now uses server action instead of API endpoint
+ * Hook to upload a compliance document.
+ *
+ * Key behaviours:
+ * - Optimistic update: document appears instantly while server processes in background
+ * - Retry: up to 3 attempts with exponential backoff for transient failures
+ * - Rollback: ALWAYS reverts the optimistic update on failure, including when there
+ *   was no previous document (fixes: `if (context?.previousDocument)` was falsy for
+ *   new uploads, leaving the UI stuck showing a dangling blob URL after a failure)
+ * - Settled: invalidates the query after every attempt to verify server state
  */
 export function useUploadComplianceDocument() {
   const queryClient = useQueryClient();
@@ -100,137 +102,193 @@ export function useUploadComplianceDocument() {
       expiryDate?: string;
       apiEndpoint?: string; // Deprecated
     }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", documentType);
-      if (requirementName) {
-        formData.append("documentName", requirementName); // Use documentName for consistency
-      }
-      if (expiryDate) {
-        formData.append("expiryDate", expiryDate);
-      }
-
-      // Use server action instead of API endpoint
-      const result = await uploadComplianceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
-
-      return result;
+      // Route through the module-level BackgroundUploadQueue.
+      //
+      // The queue holds a strong reference to the running promise, so it is
+      // never garbage-collected when this component unmounts or the user
+      // navigates away. The upload always runs to completion (or exhausts
+      // its 3 retries) regardless of page state.
+      //
+      // The callbacks below update the React Query cache directly on the
+      // QueryClient singleton — this works even after component unmount,
+      // ensuring the cache reflects the real server state when the user
+      // eventually returns to a page that reads these documents.
+      return backgroundUploadQueue.enqueue(
+        { file, documentType, requirementName, expiryDate },
+        {
+          onSuccess: (result) => {
+            if (result?.data) {
+              queryClient.setQueryData(
+                complianceDocumentsKeys.byType(documentType),
+                {
+                  document: {
+                    id: result.data.id,
+                    documentUrl: result.data.documentUrl,
+                    documentType: result.data.documentType,
+                    uploadedAt: result.data.uploadedAt,
+                  },
+                }
+              );
+            }
+            import("@/hooks/queries/useWorkerProfile")
+              .then(({ workerProfileKeys }) => {
+                queryClient.invalidateQueries({ queryKey: workerProfileKeys.all });
+              })
+              .catch(() => {});
+          },
+          onError: () => {
+            // Clear the optimistic entry and force a re-fetch from the server
+            queryClient.setQueryData(
+              complianceDocumentsKeys.byType(documentType),
+              undefined
+            );
+            queryClient.invalidateQueries({
+              queryKey: complianceDocumentsKeys.byType(documentType),
+            });
+            import("@/hooks/queries/useWorkerProfile")
+              .then(({ workerProfileKeys }) => {
+                queryClient.invalidateQueries({ queryKey: workerProfileKeys.all });
+              })
+              .catch(() => {});
+          },
+        }
+      );
     },
-    // TRUE OPTIMISTIC UPDATE: Update cache BEFORE server responds
-    // This makes checkmarks appear INSTANTLY while upload happens in background
+
+    // Optimistic update: show document immediately while server processes
     onMutate: async (variables) => {
-      // 1. Cancel any outgoing refetches
       await queryClient.cancelQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
 
-      // 2. Snapshot previous value for rollback on error
-      const previousDocument = queryClient.getQueryData(
+      // Snapshot previous value — may be undefined (no cache entry) or null (no doc)
+      const previousData = queryClient.getQueryData(
         complianceDocumentsKeys.byType(variables.documentType)
       );
 
-      // 3. OPTIMISTICALLY update document cache (INSTANT UI feedback)
       const optimisticDocument = {
-        id: 'temp-' + Date.now(), // Temporary ID until server responds
-        documentUrl: URL.createObjectURL(variables.file), // Preview URL
+        id: "temp-" + Date.now(),
+        documentUrl: URL.createObjectURL(variables.file),
         documentType: variables.documentType,
         uploadedAt: new Date().toISOString(),
       };
 
       queryClient.setQueryData(
         complianceDocumentsKeys.byType(variables.documentType),
-        {
-          document: optimisticDocument,
-        }
+        { document: optimisticDocument }
       );
 
-      // 4. OPTIMISTICALLY update setupProgress checkmarks (INSTANT checkmark!)
-      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
-        const currentProfileData = queryClient.getQueryData(
-          workerProfileKeys.all
-        ) as any;
+      // Optimistically update setupProgress checkmarks
+      import("@/hooks/queries/useWorkerProfile")
+        .then(({ workerProfileKeys }) => {
+          const currentProfileData = queryClient.getQueryData(
+            workerProfileKeys.all
+          ) as any;
 
-        if (currentProfileData && Array.isArray(currentProfileData)) {
-          const profileData = currentProfileData[0];
-          if (profileData?.setupProgress) {
-            // Determine which section to update based on documentType
-            const isCompliance = ['right-to-work', 'police-check', 'ndis-screening-check', 'abn-contractor'].includes(variables.documentType);
-            const isTraining = ['infection-control', 'first-aid', 'behaviour-support', 'manual-handling', 'ndis-worker-orientation'].includes(variables.documentType);
+          if (currentProfileData && Array.isArray(currentProfileData)) {
+            const profileData = currentProfileData[0];
+            if (profileData?.setupProgress) {
+              const isCompliance = [
+                "right-to-work",
+                "police-check",
+                "ndis-screening-check",
+                "abn-contractor",
+              ].includes(variables.documentType);
+              const isTraining = [
+                "infection-control",
+                "first-aid",
+                "behaviour-support",
+                "manual-handling",
+                "ndis-worker-orientation",
+              ].includes(variables.documentType);
 
-            const optimisticProgress = {
-              ...profileData.setupProgress,
-              // Optimistically mark as complete (will be verified by server)
-              ...(isCompliance && { compliance: true }),
-              ...(isTraining && { trainings: true }),
-            };
-
-            queryClient.setQueryData(
-              workerProfileKeys.all,
-              [{
-                ...profileData,
-                setupProgress: optimisticProgress,
-              }]
-            );
+              queryClient.setQueryData(workerProfileKeys.all, [
+                {
+                  ...profileData,
+                  setupProgress: {
+                    ...profileData.setupProgress,
+                    ...(isCompliance && { compliance: true }),
+                    ...(isTraining && { trainings: true }),
+                  },
+                },
+              ]);
+            }
           }
-        }
-      }).catch(() => {
-        // Silently fail - not critical
+        })
+        .catch(() => {});
+
+      return { previousData };
+    },
+
+    // CRITICAL FIX: Always rollback the optimistic update on failure.
+    //
+    // The previous code used `if (context?.previousDocument)` which is falsy
+    // when previousDocument is null or undefined (i.e. a brand-new upload with
+    // no existing document in cache). This meant a failed first upload would
+    // leave the UI showing the document as "uploaded" indefinitely via the
+    // dangling blob URL set during onMutate.
+    //
+    // Fix: unconditionally restore previousData (null/undefined clears the entry)
+    // and then invalidate so React Query re-fetches the real server state.
+    onError: (_error, variables, context) => {
+      // Restore the cache to whatever it was before the optimistic update.
+      // Setting to undefined removes the entry; React Query will refetch.
+      queryClient.setQueryData(
+        complianceDocumentsKeys.byType(variables.documentType),
+        context?.previousData ?? undefined
+      );
+
+      // Force a server-side verification fetch
+      queryClient.invalidateQueries({
+        queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
 
-      // Return context for rollback
-      return { previousDocument };
-    },
-    // Rollback on error
-    onError: (error, variables, context) => {
-      if (context?.previousDocument) {
-        queryClient.setQueryData(
-          complianceDocumentsKeys.byType(variables.documentType),
-          context.previousDocument
-        );
-      }
-
       // Rollback setupProgress optimistic update
-      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
-        queryClient.invalidateQueries({
-          queryKey: workerProfileKeys.all,
-        });
-      }).catch(() => {});
+      import("@/hooks/queries/useWorkerProfile")
+        .then(({ workerProfileKeys }) => {
+          queryClient.invalidateQueries({ queryKey: workerProfileKeys.all });
+        })
+        .catch(() => {});
     },
-    // Update with real data from server
+
+    // Replace optimistic data with real server data on success
     onSuccess: (result, variables) => {
       if (result.success && result.data) {
-        const documentData = {
-          id: result.data.id,
-          documentUrl: result.data.documentUrl,
-          documentType: result.data.documentType,
-          uploadedAt: result.data.uploadedAt,
-        };
-
-        // Replace optimistic data with real server data
         queryClient.setQueryData(
           complianceDocumentsKeys.byType(variables.documentType),
           {
-            document: documentData,
+            document: {
+              id: result.data.id,
+              documentUrl: result.data.documentUrl,
+              documentType: result.data.documentType,
+              uploadedAt: result.data.uploadedAt,
+            },
           }
         );
       }
 
-      // Invalidate to refetch fresh setupProgress from server (with real-time calculation)
-      import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
+      import("@/hooks/queries/useWorkerProfile")
+        .then(({ workerProfileKeys }) => {
+          queryClient.invalidateQueries({ queryKey: workerProfileKeys.all });
+        })
+        .catch(() => {});
+    },
+
+    // Safety net: after every upload attempt (success or error) re-validate
+    // the specific document type so the cache never drifts from server state
+    onSettled: (_data, _error, variables) => {
+      // Small delay on success to avoid racing with the setQueryData in onSuccess
+      setTimeout(() => {
         queryClient.invalidateQueries({
-          queryKey: workerProfileKeys.all,
+          queryKey: complianceDocumentsKeys.byType(variables.documentType),
         });
-      }).catch(() => {});
+      }, 300);
     },
   });
 }
 
 /**
  * Hook to delete a compliance document
- * REFACTORED: Now uses server action instead of API endpoint
  */
 export function useDeleteComplianceDocument() {
   const queryClient = useQueryClient();
@@ -245,7 +303,6 @@ export function useDeleteComplianceDocument() {
       documentType: string;
       apiEndpoint?: string; // Deprecated
     }) => {
-      // Use server action instead of API endpoint
       const result = await deleteComplianceDocument(documentId);
 
       if (!result.success) {
@@ -254,64 +311,49 @@ export function useDeleteComplianceDocument() {
 
       return result;
     },
-    // TRUE OPTIMISTIC UPDATE: Update cache BEFORE server call
-    // This makes the UI update instantly while server processes in background
+
     onMutate: async (variables) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
 
-      // Snapshot the previous value for rollback
-      const previousDocument = queryClient.getQueryData(
+      const previousData = queryClient.getQueryData(
         complianceDocumentsKeys.byType(variables.documentType)
       );
 
-      // Optimistically update cache (INSTANT UI feedback)
-      // Set both formats to ensure compatibility with all components
       queryClient.setQueryData(
         complianceDocumentsKeys.byType(variables.documentType),
-        {
-          document: null,
-          documents: [],  // Also clear array format
-        }
+        { document: null, documents: [] }
       );
 
-      // Return snapshot for rollback if mutation fails
-      return { previousDocument };
+      return { previousData };
     },
-    // If mutation fails, rollback to previous state
-    onError: (error, variables, context) => {
-      if (context?.previousDocument) {
-        queryClient.setQueryData(
-          complianceDocumentsKeys.byType(variables.documentType),
-          context.previousDocument
-        );
-      }
-    },
-    // Always refetch after mutation completes (success or error)
-    // This ensures cache is in sync with server
-    // NOTE: Only invalidate the specific documentType to prevent race conditions
-    // when deleting multiple documents simultaneously
-    onSettled: (result, error, variables) => {
+
+    // Always rollback on delete failure (same fix as upload onError)
+    onError: (_error, variables, context) => {
+      queryClient.setQueryData(
+        complianceDocumentsKeys.byType(variables.documentType),
+        context?.previousData ?? undefined
+      );
+
       queryClient.invalidateQueries({
         queryKey: complianceDocumentsKeys.byType(variables.documentType),
       });
-      // REMOVED: complianceDocumentsKeys.all invalidation
-      // Reason: Causes race condition when deleting multiple docs simultaneously
-      // If File 1 completes and invalidates ALL, it refetches File 2 while File 2
-      // is still being deleted, causing File 2 to briefly reappear before disappearing
+    },
 
-      // Also invalidate worker profile to update setupProgress checkmarks
-      // Small delay to prevent race conditions
+    onSettled: (_result, _error, variables) => {
+      // Only invalidate the specific documentType — prevents race conditions
+      // when multiple documents are deleted simultaneously
+      queryClient.invalidateQueries({
+        queryKey: complianceDocumentsKeys.byType(variables.documentType),
+      });
+
       setTimeout(() => {
-        import("@/hooks/queries/useWorkerProfile").then(({ workerProfileKeys }) => {
-          queryClient.invalidateQueries({
-            queryKey: workerProfileKeys.all,
-          });
-        }).catch(() => {
-          // Silently fail if import fails - not critical
-        });
+        import("@/hooks/queries/useWorkerProfile")
+          .then(({ workerProfileKeys }) => {
+            queryClient.invalidateQueries({ queryKey: workerProfileKeys.all });
+          })
+          .catch(() => {});
       }, 100);
     },
   });
@@ -319,11 +361,6 @@ export function useDeleteComplianceDocument() {
 
 /**
  * Hook for single document endpoints (Police Check, Worker Screening, etc.)
- * These endpoints return { document } instead of { documents: [] }
- *
- * REFACTORED: Now supports both legacy endpoints and generic endpoint
- * - Legacy: Direct call to specific endpoint (e.g., /api/worker/police-check)
- * - Generic: Uses /api/worker/compliance-documents?documentType={type}&format=single
  */
 export function useSingleComplianceDocument(
   apiEndpoint: string,
@@ -332,18 +369,10 @@ export function useSingleComplianceDocument(
   return useQuery({
     queryKey: complianceDocumentsKeys.byType(documentType),
     queryFn: async () => {
-      // Check if this is the generic endpoint or a legacy specific endpoint
       const isGenericEndpoint = apiEndpoint.includes("compliance-documents");
-
-      let url: string;
-
-      if (isGenericEndpoint) {
-        // Using generic endpoint - add format=single parameter
-        url = `${apiEndpoint}?documentType=${encodeURIComponent(documentType)}&format=single`;
-      } else {
-        // Legacy specific endpoint - use as-is for backward compatibility
-        url = apiEndpoint;
-      }
+      const url = isGenericEndpoint
+        ? `${apiEndpoint}?documentType=${encodeURIComponent(documentType)}&format=single`
+        : apiEndpoint;
 
       const response = await fetch(url);
       if (!response.ok) {

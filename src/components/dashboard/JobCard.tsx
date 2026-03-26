@@ -14,7 +14,7 @@ interface Job {
   createdAt: string
 }
 
-export default function JobCard({ job, onApply, applied = false }: { job: Job; onApply: () => void; applied?: boolean }) {
+export default function JobCard({ job, onApply, applied = false, canApply = true }: { job: Job; onApply: () => void; applied?: boolean; canApply?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const location = [job.city, job.state].filter(Boolean).join(', ') || 'Remote'
 
@@ -93,17 +93,27 @@ export default function JobCard({ job, onApply, applied = false }: { job: Job; o
       )}
 
       {/* Apply Now / Applied */}
-      <button
-        onClick={applied ? undefined : onApply}
-        disabled={applied}
-        className={`mt-auto w-full font-semibold text-sm py-3 rounded-2xl transition-colors ${
-          applied
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-gray-900 text-white hover:bg-gray-800 cursor-pointer'
-        }`}
-      >
-        {applied ? 'Applied' : 'Apply Now'}
-      </button>
+      <div className="mt-auto flex flex-col gap-1.5">
+        <button
+          onClick={applied || !canApply ? undefined : onApply}
+          disabled={applied || !canApply}
+          title={!canApply && !applied ? 'Complete your profile before applying' : undefined}
+          className={`w-full font-semibold text-sm py-3 rounded-2xl transition-colors ${
+            applied
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : !canApply
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-gray-900 text-white hover:bg-gray-800 cursor-pointer'
+          }`}
+        >
+          {applied ? 'Applied' : 'Apply Now'}
+        </button>
+        {!canApply && !applied && (
+          <p className="text-xs text-center text-amber-600">
+            Complete your profile to apply
+          </p>
+        )}
+      </div>
     </div>
   )
 }

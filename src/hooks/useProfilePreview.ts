@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { getProfilePreviewData } from "@/services/worker/profilePreview.service";
 
 /**
@@ -10,10 +11,24 @@ import { getProfilePreviewData } from "@/services/worker/profilePreview.service"
 export const PROFILE_PREVIEW_KEY = ["profile-preview"];
 
 /**
- * Hook to fetch complete profile preview data
- * Returns: profile, services (grouped by category), and additional info
+ * Hook to fetch complete profile preview data.
+ * Reactive via three layers:
+ *  1. staleTime: 0  — always considered stale, refetches on every mount
+ *  2. refetchOnWindowFocus  — auto-refetch when user returns from another tab/route
+ *  3. 'remonta:profile-updated' event — immediate refetch after any section save
  */
 export function useProfilePreview() {
+  const queryClient = useQueryClient();
+
+  // Layer 3: listen for saves fired from any section component
+  useEffect(() => {
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: PROFILE_PREVIEW_KEY });
+    };
+    window.addEventListener('remonta:profile-updated', handler);
+    return () => window.removeEventListener('remonta:profile-updated', handler);
+  }, [queryClient]);
+
   return useQuery({
     queryKey: PROFILE_PREVIEW_KEY,
     queryFn: async () => {
@@ -23,7 +38,7 @@ export function useProfilePreview() {
       }
       throw new Error(result.error || "Failed to fetch profile preview data");
     },
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    refetchOnWindowFocus: false,
+    staleTime: 0,              // Layer 1: always stale → refetches on mount
+    refetchOnWindowFocus: true, // Layer 2: refetch when user returns to the window
   });
 }

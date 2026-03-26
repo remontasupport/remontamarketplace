@@ -780,9 +780,6 @@ export default function ServiceQualificationStep({
                         {requirement.required && (
                           <span className="text-orange-600 text-sm">*Required</span>
                         )}
-                        {!requirement.required && (
-                          <span className="text-gray-500 text-sm font-normal">Optional</span>
-                        )}
                       </h4>
                       <p className="text-sm text-gray-600 font-poppins mt-1">
                         {requirement.description}

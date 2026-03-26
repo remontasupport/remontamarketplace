@@ -8,6 +8,7 @@ import QueryProvider from "@/providers/QueryProvider";
 import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import Loader from "@/components/ui/Loader";
 import "@/app/styles/profile-preview.css";
+import { checkRequiredSections, EXEMPT_SERVICES } from "@/utils/profileSections";
 
 const N8N_WEBHOOK_URL = "https://n8n.srv1137899.hstgr.cloud/webhook/ea912076-f38d-4484-bd05-40e6cb5ae6c1";
 
@@ -15,12 +16,13 @@ interface ApplyModalProps {
   jobTitle: string;
   jobId: string;
   jobZohoId: string;
+  jobService?: string | null;
   onClose: () => void;
   onApplied: () => void;
   initialStep?: 'prompt' | 'profile';
 }
 
-function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, initialStep = 'prompt' }: ApplyModalProps) {
+function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, onApplied, initialStep = 'prompt' }: ApplyModalProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const applyJobId = searchParams.get('apply');
@@ -86,6 +88,11 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
   }, [onClose, step]);
 
   const { profile, services, qualifications, additionalInfo } = profileData ?? {};
+
+  const isExemptService = EXEMPT_SERVICES.some(s => jobService?.toLowerCase().includes(s.toLowerCase()));
+  const { canApply, missingSections } = isExemptService
+    ? { canApply: true, missingSections: [] }
+    : checkRequiredSections(additionalInfo);
 
   const initials =
     profile?.firstName && profile?.lastName
@@ -253,44 +260,74 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, onClose, onApplied, ini
           </div>
 
           {/* Footer buttons */}
-          <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0">
-            {submitError && (
-              <p className="text-xs text-red-500 flex-1">{submitError}</p>
+          <div className="flex flex-col gap-2 px-6 py-4 border-t border-gray-100 flex-shrink-0">
+            {!isLoading && !canApply && (
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <div className="flex-1">
+                  {missingSections.length > 0 && (
+                    <p className="text-xs text-amber-700">
+                      Please fill out:{' '}
+                      <span className="font-semibold">{missingSections.join(', ')}</span>
+                      {' '}in your profile.
+                    </p>
+                  )}
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (applyJobId) params.set('applyJobId', applyJobId);
+                      params.set('applyJobTitle', encodeURIComponent(jobTitle));
+                      sessionStorage.setItem('remonta_apply_context', JSON.stringify({ applyJobId: applyJobId ?? jobId, applyJobTitle: jobTitle }));
+                      router.push(`/dashboard/worker/profile-building?${params.toString()}`);
+                    }}
+                    className="text-xs underline font-semibold text-amber-700 cursor-pointer mt-0.5"
+                  >
+                    Go to profile
+                  </button>
+                </div>
+              </div>
             )}
-            <div className="flex items-center gap-3 ml-auto">
-              <button
-                onClick={handleCancel}
-                disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  if (applyJobId) params.set('applyJobId', applyJobId);
-                  params.set('applyJobTitle', encodeURIComponent(jobTitle));
-                  // Persist context so it survives section-to-section navigation
-                  sessionStorage.setItem(
-                    'remonta_apply_context',
-                    // Prefer the URL param; fall back to the jobId prop so the
-                    // stored value is never an empty string.
-                    JSON.stringify({ applyJobId: applyJobId ?? jobId, applyJobTitle: jobTitle })
-                  );
-                  router.push(`/dashboard/worker/profile-building?${params.toString()}`);
-                }}
-                disabled={isLoading}
-                className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                Edit My Profile
-              </button>
-              <button
-                onClick={handleApply}
-                disabled={isSubmitting || isLoading}
-                className="px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Applying…' : 'Apply'}
-              </button>
+            <div className="flex items-center justify-between gap-3">
+              {submitError && (
+                <p className="text-xs text-red-500 flex-1">{submitError}</p>
+              )}
+              <div className="flex items-center gap-3 ml-auto">
+                <button
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (applyJobId) params.set('applyJobId', applyJobId);
+                    params.set('applyJobTitle', encodeURIComponent(jobTitle));
+                    // Persist context so it survives section-to-section navigation
+                    sessionStorage.setItem(
+                      'remonta_apply_context',
+                      // Prefer the URL param; fall back to the jobId prop so the
+                      // stored value is never an empty string.
+                      JSON.stringify({ applyJobId: applyJobId ?? jobId, applyJobTitle: jobTitle })
+                    );
+                    router.push(`/dashboard/worker/profile-building?${params.toString()}`);
+                  }}
+                  disabled={isLoading}
+                  className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Edit My Profile
+                </button>
+                <button
+                  onClick={handleApply}
+                  disabled={isSubmitting || isLoading || !canApply}
+                  className="px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Applying…' : 'Apply'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

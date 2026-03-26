@@ -10,6 +10,7 @@ import {
   type ExperienceArea as ServiceExperienceArea,
 } from "@/services/worker/experience.service";
 import { getNextSection } from "@/utils/profileSectionNavigation";
+import { notifyProfileUpdated } from "@/utils/profileSections";
 
 interface ExperienceArea {
   id: string;
@@ -121,25 +122,29 @@ export default function ExperienceSection() {
 
         if (response.success && response.data) {
           const savedData = response.data;
-          const updatedExperienceData = { ...experienceData };
 
-          // Populate with saved data
-          for (const [areaId, areaData] of Object.entries(savedData)) {
-            if (updatedExperienceData[areaId]) {
-              updatedExperienceData[areaId] = {
-                ...updatedExperienceData[areaId],
-                selected: true,
-                expanded: false,
-                isProfessional: areaData.isProfessional,
-                isPersonal: areaData.isPersonal,
-                specificAreas: areaData.specificAreas || [],
-                description: areaData.description || "",
-                otherAreas: areaData.otherAreas || [],
-              };
+          // Use functional update to read the latest state, not the stale closure.
+          // This prevents a race condition where the async load completes after the
+          // user has already opened an area or started typing, which would otherwise
+          // reset `expanded` to false and overwrite the typed description.
+          setExperienceData(prev => {
+            const updated = { ...prev };
+            for (const [areaId, areaData] of Object.entries(savedData)) {
+              if (updated[areaId]) {
+                updated[areaId] = {
+                  ...updated[areaId],
+                  selected: true,
+                  expanded: prev[areaId].expanded, // preserve user's open/close state
+                  isProfessional: areaData.isProfessional,
+                  isPersonal: areaData.isPersonal,
+                  specificAreas: areaData.specificAreas || [],
+                  description: prev[areaId].description || areaData.description || "", // preserve typed text
+                  otherAreas: areaData.otherAreas || [],
+                };
+              }
             }
-          }
-
-          setExperienceData(updatedExperienceData);
+            return updated;
+          });
         }
       } catch (error) {
         console.error("Error loading experience:", error);
@@ -285,6 +290,7 @@ export default function ExperienceSection() {
 
       if (response.success) {
         setSuccessMessage(response.message || "Experience saved successfully!");
+        notifyProfileUpdated();
 
         // Navigate to next section after successful save
         const nextSection = getNextSection("experience");

@@ -16,6 +16,12 @@ export type ProfilePreviewResponse = {
   data?: {
     workerProfileId: string;
     userId: string;
+    setupProgress: {
+      accountDetails: boolean;
+      compliance: boolean;
+      trainings: boolean;
+      services: boolean;
+    };
     // From worker_profiles table
     profile: {
       firstName: string | null;
@@ -111,6 +117,7 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
       select: {
         id: true,
         userId: true,
+        setupProgress: true,
         firstName: true,
         lastName: true,
         photos: true,
@@ -195,6 +202,12 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
       data: {
         workerProfileId: workerProfile.id,
         userId: workerProfile.userId,
+        setupProgress: {
+          accountDetails: (workerProfile.setupProgress as any)?.accountDetails ?? false,
+          compliance: (workerProfile.setupProgress as any)?.compliance ?? false,
+          trainings: (workerProfile.setupProgress as any)?.trainings ?? false,
+          services: (workerProfile.setupProgress as any)?.services ?? false,
+        },
         profile: {
           firstName: workerProfile.firstName,
           lastName: workerProfile.lastName,

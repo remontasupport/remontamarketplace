@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import JobDetailsMenu from "./JobDetailsMenu";
 import AdditionalDetailsMenu from "./AdditionalDetailsMenu";
 import { useWorkerProfileData } from "@/hooks/useWorkerProfile";
+import { useProfilePreview } from "@/hooks/useProfilePreview";
+import { checkRequiredSections } from "@/utils/profileSections";
 import { BRAND_COLORS } from "@/constants";
 
 interface ProfileEditLayoutProps {
@@ -17,11 +19,15 @@ interface ProfileEditLayoutProps {
 export default function ProfileEditLayout({ children, currentSection, applyJobId, applyJobTitle }: ProfileEditLayoutProps) {
   // Prefetch data at layout level so it's ready for all sections
   const { data, isLoading } = useWorkerProfileData();
+  const { data: previewData } = useProfilePreview();
   const router = useRouter();
 
   useEffect(() => {
 
   }, [data]);
+
+  const { canApply, missingSections } = checkRequiredSections(previewData?.additionalInfo);
+  const completionPct = Math.round(((5 - missingSections.length) / 5) * 100);
 
   const inApplyFlow = !!applyJobId;
 
@@ -55,22 +61,37 @@ export default function ProfileEditLayout({ children, currentSection, applyJobId
         <h1 className="profile-edit-title">My profile</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           {inApplyFlow && (
-            <button
-              className="profile-preview-button"
-              onClick={() => {
-                // Do NOT remove sessionStorage here — the user may use the
-                // browser back button to return to profile-building, and we
-                // need the context to still be available as a fallback.
-                // It is cleared only after a successful apply (in NewsSlider).
-                router.push(`/dashboard/worker?apply=${applyJobId}`);
-              }}
-              style={{ background: BRAND_COLORS.TERTIARY, color: BRAND_COLORS.PRIMARY }}
-            >
-              <svg className="profile-preview-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>Review Application</span>
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+              <button
+                className="profile-preview-button"
+                onClick={() => {
+                  if (!canApply) return;
+                  // Do NOT remove sessionStorage here — the user may use the
+                  // browser back button to return to profile-building, and we
+                  // need the context to still be available as a fallback.
+                  // It is cleared only after a successful apply (in NewsSlider).
+                  router.push(`/dashboard/worker?apply=${applyJobId}`);
+                }}
+                disabled={!canApply}
+                title={!canApply ? `Complete your profile to at least 80% to apply (currently ${completionPct}%)` : undefined}
+                style={{
+                  background: canApply ? BRAND_COLORS.TERTIARY : '#f3f4f6',
+                  color: canApply ? BRAND_COLORS.PRIMARY : '#9ca3af',
+                  cursor: canApply ? 'pointer' : 'not-allowed',
+                  opacity: canApply ? 1 : 0.7,
+                }}
+              >
+                <svg className="profile-preview-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Review Application</span>
+              </button>
+              {!canApply && (
+                <span style={{ fontSize: '0.7rem', color: '#d97706', textAlign: 'right' }}>
+                  {completionPct}% complete — need 80% to apply
+                </span>
+              )}
+            </div>
           )}
           <button className="profile-preview-button" onClick={() => router.push('/dashboard/worker/profile-preview')}>
             <svg className="profile-preview-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">

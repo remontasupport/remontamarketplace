@@ -215,13 +215,9 @@ export default function ServiceDocumentsPage() {
               <Label className="text-base sm:text-lg font-poppins font-semibold" style={{ color: '#0C1628' }}>
                 {name}
               </Label>
-              {isRequired ? (
+              {isRequired && (
                 <span className="text-xs px-2 py-0.5 sm:py-1 bg-red-100 text-red-700 rounded font-poppins font-medium">
                   Required
-                </span>
-              ) : (
-                <span className="text-xs px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-700 rounded font-poppins font-medium">
-                  Optional
                 </span>
               )}
               {subcategory && (

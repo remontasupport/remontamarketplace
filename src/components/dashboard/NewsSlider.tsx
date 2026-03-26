@@ -5,6 +5,9 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Loader from "@/components/ui/Loader";
 import JobCard from "@/components/dashboard/JobCard";
 import ApplyModal from "@/components/dashboard/ApplyModal";
+import { SetupProgress, getCompletionPercentage } from "@/types/setupProgress";
+import { EXEMPT_SERVICES } from "@/utils/profileSections";
+import { useProfilePreview } from "@/hooks/useProfilePreview";
 
 interface Job {
   id: string
@@ -22,6 +25,7 @@ interface NewsSliderProps {
   jobs: Job[];
   isLoading?: boolean;
   appliedJobIds?: string[];
+  setupProgress?: SetupProgress;
 }
 
 const CARDS_PER_PAGE = 6; // 3 columns × 2 rows
@@ -42,7 +46,12 @@ const SERVICE_OPTIONS = [
   'Home Modifications',
 ];
 
-export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = [] }: NewsSliderProps) {
+export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = [], setupProgress }: NewsSliderProps) {
+  // Live client-side override: useProfilePreview is reactive (staleTime:0 + window focus + event).
+  // Falls back to the server-rendered prop while the query is loading (no flicker).
+  const { data: previewData } = useProfilePreview();
+  const liveSetupProgress = previewData?.setupProgress ?? setupProgress;
+  const canApply = liveSetupProgress ? getCompletionPercentage(liveSetupProgress) >= 80 : true;
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -53,7 +62,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
   const [searchArea, setSearchArea] = useState('');
   const [resolvedState, setResolvedState] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
-  const [applyJob, setApplyJob] = useState<{ title: string; jobId: string; jobZohoId: string; initialStep?: 'prompt' | 'profile' } | null>(null);
+  const [applyJob, setApplyJob] = useState<{ title: string; jobId: string; jobZohoId: string; jobService?: string | null; initialStep?: 'prompt' | 'profile' } | null>(null);
   // Optimistic set — merges server-fetched applied IDs with any applied this session
   const [localAppliedIds, setLocalAppliedIds] = useState<Set<string>>(() => new Set(appliedJobIds));
 
@@ -274,11 +283,12 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
                 <JobCard
                   job={job}
                   applied={localAppliedIds.has(job.id)}
+                  canApply={canApply || EXEMPT_SERVICES.some(s => job.service?.toLowerCase().includes(s.toLowerCase()))}
                   onApply={() => {
                     const params = new URLSearchParams(searchParams.toString());
                     params.set('apply', job.id);
                     router.replace(`${pathname}?${params.toString()}`);
-                    setApplyJob({ title, jobId: job.id });
+                    setApplyJob({ title, jobId: job.id, jobService: job.service });
                   }}
                 />
               </div>
@@ -301,11 +311,12 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
                 key={job.id}
                 job={job}
                 applied={localAppliedIds.has(job.id)}
+                canApply={canApply || EXEMPT_SERVICES.some(s => job.service?.toLowerCase().includes(s.toLowerCase()))}
                 onApply={() => {
                   const params = new URLSearchParams(searchParams.toString());
                   params.set('apply', job.id);
                   router.replace(`${pathname}?${params.toString()}`);
-                  setApplyJob({ title, jobId: job.id, jobZohoId: job.zohoId });
+                  setApplyJob({ title, jobId: job.id, jobZohoId: job.zohoId, jobService: job.service });
                 }}
               />
             );
@@ -320,6 +331,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
         jobTitle={applyJob.title}
         jobId={applyJob.jobId}
         jobZohoId={applyJob.jobZohoId}
+        jobService={applyJob.jobService}
         initialStep={applyJob.initialStep}
         onClose={() => {
           const params = new URLSearchParams(searchParams.toString());

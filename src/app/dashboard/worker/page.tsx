@@ -137,7 +137,7 @@ export default async function WorkerDashboard() {
       {/* Jobs Section - Streaming with Suspense */}
       <div style={{ marginTop: '0' }}>
         <Suspense fallback={<NewsSlider jobs={[]} isLoading={true} />}>
-          <NewsSliderAsync />
+          <NewsSliderAsync setupProgress={setupProgress} />
         </Suspense>
       </div>
     </DashboardLayout>

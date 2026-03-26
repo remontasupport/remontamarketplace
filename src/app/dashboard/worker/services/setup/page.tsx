@@ -277,9 +277,9 @@ function ServicesSetupContent() {
     if (view === 'qualifications') {
       const selectedQuals = formData.qualificationsByService?.[serviceTitle] ?? [];
 
-      if (selectedQuals.length > 0) {
+      if (selectedQuals.length > 0 && serviceDocumentsData !== undefined) {
         // Use already-cached service documents — no extra API call
-        const serviceDocuments = (serviceDocumentsData ?? []).filter(
+        const serviceDocuments = serviceDocumentsData.documents.filter(
           (doc: any) => doc.serviceTitle === serviceTitle
         );
         const uploadedTypes = new Set(serviceDocuments.map((doc: any) => doc.documentType));

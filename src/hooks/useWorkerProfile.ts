@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { notifyProfileUpdated } from "@/utils/profileSections";
 import {
   getWorkerAdditionalInfo,
   updateWorkerBankAccount,
@@ -54,6 +55,7 @@ export function useUpdateBankAccount() {
     mutationFn: (data: UpdateWorkerBankAccountData) => updateWorkerBankAccount(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -66,6 +68,7 @@ export function useUpdateWorkHistory() {
     mutationFn: (data: UpdateWorkerWorkHistoryData) => updateWorkerWorkHistory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -78,6 +81,7 @@ export function useUpdateEducation() {
     mutationFn: (data: UpdateWorkerEducationData) => updateWorkerEducation(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -90,6 +94,7 @@ export function useUpdateGoodToKnow() {
     mutationFn: (data: UpdateWorkerGoodToKnowData) => updateWorkerGoodToKnow(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -102,6 +107,7 @@ export function useUpdateLanguages() {
     mutationFn: (data: UpdateWorkerLanguagesData) => updateWorkerLanguages(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -114,6 +120,7 @@ export function useUpdateCulturalBackground() {
     mutationFn: (data: UpdateWorkerCulturalBackgroundData) => updateWorkerCulturalBackground(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -126,6 +133,7 @@ export function useUpdateReligion() {
     mutationFn: (data: UpdateWorkerReligionData) => updateWorkerReligion(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -138,6 +146,7 @@ export function useUpdateInterests() {
     mutationFn: (data: UpdateWorkerInterestsData) => updateWorkerInterests(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -150,6 +159,7 @@ export function useUpdateAboutMe() {
     mutationFn: (data: UpdateWorkerAboutMeData) => updateWorkerAboutMe(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -162,6 +172,7 @@ export function useUpdatePersonality() {
     mutationFn: (data: UpdateWorkerPersonalityData) => updateWorkerPersonality(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
@@ -174,6 +185,7 @@ export function useUpdateWorkPreferences() {
     mutationFn: (data: UpdateWorkerWorkPreferencesData) => updateWorkerWorkPreferences(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: WORKER_PROFILE_KEY });
+      notifyProfileUpdated();
     },
   });
 }
