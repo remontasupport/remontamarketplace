@@ -73,6 +73,7 @@ export default function WorkerDetailPage() {
   const [editableHobbies, setEditableHobbies] = useState<string>('')
   const [editableUniqueService, setEditableUniqueService] = useState<string>('')
   const [editableWhyEnjoy, setEditableWhyEnjoy] = useState<string>('')
+  const [editableJobTitle, setEditableJobTitle] = useState<string>('')
   const [experienceItems, setExperienceItems] = useState<string[]>([])
   const [servicesItems, setServicesItems] = useState<string[]>([])
 
@@ -294,6 +295,7 @@ export default function WorkerDetailPage() {
   const hobbies = editableHobbies || worker.hobbies || ''
   const uniqueService = editableUniqueService || worker.uniqueService || ''
   const whyEnjoy = editableWhyEnjoy || 'I find great fulfillment in making a positive impact on people\'s lives and helping them achieve their goals.'
+  const jobTitle = editableJobTitle || 'Support Worker'
 
   // Functions for experience items
   const updateExperienceItem = (index: number, value: string) => {
@@ -646,7 +648,29 @@ export default function WorkerDetailPage() {
                   <h1 className="worker-name">
                     {displayName}
                   </h1>
-                  <div className="worker-title">Support Worker</div>
+                  <div className="worker-title">
+                    <span
+                      contentEditable={isEditMode}
+                      suppressContentEditableWarning
+                      onFocus={(e) => {
+                        const range = document.createRange()
+                        range.selectNodeContents(e.currentTarget)
+                        const selection = window.getSelection()
+                        selection?.removeAllRanges()
+                        selection?.addRange(range)
+                      }}
+                      onBlur={(e) => setEditableJobTitle(e.currentTarget.textContent || '')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          e.currentTarget.blur()
+                        }
+                      }}
+                      className="editable-field editable-field-white"
+                    >
+                      {jobTitle}
+                    </span>
+                  </div>
                 </div>
 
                 {/* BIO / INTRODUCTION */}
