@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { MapPin, User, Car } from 'lucide-react'
 import { WorkerProfile } from '@/lib/sanity/workerProfileClient'
 import '@/styles/worker-profile-modal.css'
@@ -112,6 +113,11 @@ export default function WorkerProfileModal({
               <h3 className="worker-modal-about-title">About</h3>
               <p className="worker-modal-bio">{worker.bio}</p>
             </div>
+
+            {/* Sign Up CTA */}
+            <Link href="https://app.remontaservices.com.au/registration/clients" className="worker-modal-signup-btn">
+              Sign up to see full profile
+            </Link>
           </div>
         </div>
       </div>
