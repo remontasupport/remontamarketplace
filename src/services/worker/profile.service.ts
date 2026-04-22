@@ -9,6 +9,10 @@ import {
   type UpdateWorkerNameData,
   updateWorkerPhotoSchema,
   type UpdateWorkerPhotoData,
+  updateWorkerAdditionalPhotosSchema,
+  type UpdateWorkerAdditionalPhotosData,
+  swapMainPhotoSchema,
+  type SwapMainPhotoData,
   updateWorkerBioSchema,
   type UpdateWorkerBioData,
   updateWorkerAddressSchema,
@@ -269,6 +273,115 @@ export async function updateWorkerPhoto(
       success: false,
       error: "Failed to save your photo. Please try again.",
     };
+  }
+}
+
+/**
+ * Server Action: Update worker's additional photos (up to 2 extra photos)
+ * Saves a JSON-serialized array of URLs to the additionalPhotos column
+ */
+export async function updateWorkerAdditionalPhotos(
+  data: UpdateWorkerAdditionalPhotosData
+): Promise<ActionResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized. Please log in." };
+    }
+
+    const rateLimitCheck = await checkServerActionRateLimit(session.user.id, dbWriteRateLimit);
+    if (!rateLimitCheck.success) {
+      return { success: false, error: rateLimitCheck.error };
+    }
+
+    const validationResult = updateWorkerAdditionalPhotosSchema.safeParse(data);
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: "Validation failed",
+        fieldErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>,
+      };
+    }
+
+    const { additionalPhotos } = validationResult.data;
+
+    await authPrisma.workerProfile.update({
+      where: { userId: session.user.id },
+      data: {
+        additionalPhotos: additionalPhotos.length > 0 ? JSON.stringify(additionalPhotos) : null,
+      },
+      select: { additionalPhotos: true },
+    });
+
+    await invalidateCache(CACHE_KEYS.workerProfile(session.user.id));
+
+    Promise.all([
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return { success: true, message: "Additional photos saved successfully!" };
+  } catch (error: any) {
+    return { success: false, error: "Failed to save additional photos. Please try again." };
+  }
+}
+
+/**
+ * Server Action: Swap main photo with an additional photo
+ * Atomically updates both photos and additionalPhotos in one DB call
+ */
+export async function swapMainPhoto(
+  data: SwapMainPhotoData
+): Promise<ActionResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized. Please log in." };
+    }
+
+    const rateLimitCheck = await checkServerActionRateLimit(session.user.id, dbWriteRateLimit);
+    if (!rateLimitCheck.success) {
+      return { success: false, error: rateLimitCheck.error };
+    }
+
+    const validationResult = swapMainPhotoSchema.safeParse(data);
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: "Validation failed",
+        fieldErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>,
+      };
+    }
+
+    const { newMainUrl, additionalPhotos } = validationResult.data;
+
+    await authPrisma.workerProfile.update({
+      where: { userId: session.user.id },
+      data: {
+        photos: newMainUrl,
+        additionalPhotos: additionalPhotos.length > 0 ? JSON.stringify(additionalPhotos) : null,
+      },
+      select: { photos: true, additionalPhotos: true },
+    });
+
+    await invalidateCache(CACHE_KEYS.workerProfile(session.user.id));
+
+    Promise.all([
+      Promise.resolve().then(() => {
+        revalidatePath("/dashboard/worker/account/setup");
+        revalidatePath("/dashboard/worker");
+      }),
+    ]).catch((error) => {
+      console.error("[Profile] Background sync operations failed:", error);
+    });
+
+    return { success: true, message: "Main photo updated successfully!" };
+  } catch (error: any) {
+    return { success: false, error: "Failed to update main photo. Please try again." };
   }
 }
 

@@ -13417,6 +13417,7 @@ export namespace Prisma {
     hobbies: string | null
     uniqueService: string | null
     photos: string | null
+    additionalPhotos: string | null
     latitude: number | null
     longitude: number | null
     profileCompleted: boolean | null
@@ -13448,6 +13449,7 @@ export namespace Prisma {
     hobbies: string | null
     uniqueService: string | null
     photos: string | null
+    additionalPhotos: string | null
     latitude: number | null
     longitude: number | null
     profileCompleted: boolean | null
@@ -13480,6 +13482,7 @@ export namespace Prisma {
     hobbies: number
     uniqueService: number
     photos: number
+    additionalPhotos: number
     latitude: number
     longitude: number
     abn: number
@@ -13527,6 +13530,7 @@ export namespace Prisma {
     hobbies?: true
     uniqueService?: true
     photos?: true
+    additionalPhotos?: true
     latitude?: true
     longitude?: true
     profileCompleted?: true
@@ -13558,6 +13562,7 @@ export namespace Prisma {
     hobbies?: true
     uniqueService?: true
     photos?: true
+    additionalPhotos?: true
     latitude?: true
     longitude?: true
     profileCompleted?: true
@@ -13590,6 +13595,7 @@ export namespace Prisma {
     hobbies?: true
     uniqueService?: true
     photos?: true
+    additionalPhotos?: true
     latitude?: true
     longitude?: true
     abn?: true
@@ -13711,6 +13717,7 @@ export namespace Prisma {
     hobbies: string | null
     uniqueService: string | null
     photos: string | null
+    additionalPhotos: string | null
     latitude: number | null
     longitude: number | null
     abn: JsonValue | null
@@ -13764,6 +13771,7 @@ export namespace Prisma {
     hobbies?: boolean
     uniqueService?: boolean
     photos?: boolean
+    additionalPhotos?: boolean
     latitude?: boolean
     longitude?: boolean
     abn?: boolean
@@ -13803,6 +13811,7 @@ export namespace Prisma {
     hobbies?: boolean
     uniqueService?: boolean
     photos?: boolean
+    additionalPhotos?: boolean
     latitude?: boolean
     longitude?: boolean
     abn?: boolean
@@ -13838,6 +13847,7 @@ export namespace Prisma {
     hobbies?: boolean
     uniqueService?: boolean
     photos?: boolean
+    additionalPhotos?: boolean
     latitude?: boolean
     longitude?: boolean
     abn?: boolean
@@ -13873,6 +13883,7 @@ export namespace Prisma {
     hobbies?: boolean
     uniqueService?: boolean
     photos?: boolean
+    additionalPhotos?: boolean
     latitude?: boolean
     longitude?: boolean
     abn?: boolean
@@ -13884,7 +13895,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["workerProfile"]>
+  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["workerProfile"]>
   export type WorkerProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
@@ -13930,6 +13941,7 @@ export namespace Prisma {
       hobbies: string | null
       uniqueService: string | null
       photos: string | null
+      additionalPhotos: string | null
       latitude: number | null
       longitude: number | null
       abn: Prisma.JsonValue | null
@@ -14388,6 +14400,7 @@ export namespace Prisma {
     readonly hobbies: FieldRef<"WorkerProfile", 'String'>
     readonly uniqueService: FieldRef<"WorkerProfile", 'String'>
     readonly photos: FieldRef<"WorkerProfile", 'String'>
+    readonly additionalPhotos: FieldRef<"WorkerProfile", 'String'>
     readonly latitude: FieldRef<"WorkerProfile", 'Float'>
     readonly longitude: FieldRef<"WorkerProfile", 'Float'>
     readonly abn: FieldRef<"WorkerProfile", 'Json'>
@@ -26253,6 +26266,7 @@ export namespace Prisma {
     hobbies: 'hobbies',
     uniqueService: 'uniqueService',
     photos: 'photos',
+    additionalPhotos: 'additionalPhotos',
     latitude: 'latitude',
     longitude: 'longitude',
     abn: 'abn',
@@ -27444,6 +27458,7 @@ export namespace Prisma {
     hobbies?: StringNullableFilter<"WorkerProfile"> | string | null
     uniqueService?: StringNullableFilter<"WorkerProfile"> | string | null
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
+    additionalPhotos?: StringNullableFilter<"WorkerProfile"> | string | null
     latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableFilter<"WorkerProfile">
@@ -27482,6 +27497,7 @@ export namespace Prisma {
     hobbies?: SortOrderInput | SortOrder
     uniqueService?: SortOrderInput | SortOrder
     photos?: SortOrderInput | SortOrder
+    additionalPhotos?: SortOrderInput | SortOrder
     latitude?: SortOrderInput | SortOrder
     longitude?: SortOrderInput | SortOrder
     abn?: SortOrderInput | SortOrder
@@ -27523,6 +27539,7 @@ export namespace Prisma {
     hobbies?: StringNullableFilter<"WorkerProfile"> | string | null
     uniqueService?: StringNullableFilter<"WorkerProfile"> | string | null
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
+    additionalPhotos?: StringNullableFilter<"WorkerProfile"> | string | null
     latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableFilter<"WorkerProfile">
@@ -27561,6 +27578,7 @@ export namespace Prisma {
     hobbies?: SortOrderInput | SortOrder
     uniqueService?: SortOrderInput | SortOrder
     photos?: SortOrderInput | SortOrder
+    additionalPhotos?: SortOrderInput | SortOrder
     latitude?: SortOrderInput | SortOrder
     longitude?: SortOrderInput | SortOrder
     abn?: SortOrderInput | SortOrder
@@ -27603,6 +27621,7 @@ export namespace Prisma {
     hobbies?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     uniqueService?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     photos?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
+    additionalPhotos?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     latitude?: FloatNullableWithAggregatesFilter<"WorkerProfile"> | number | null
     longitude?: FloatNullableWithAggregatesFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableWithAggregatesFilter<"WorkerProfile">
@@ -29273,6 +29292,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -29311,6 +29331,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -29347,6 +29368,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -29385,6 +29407,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -29422,6 +29445,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -29455,6 +29479,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -29489,6 +29514,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -31228,6 +31254,7 @@ export namespace Prisma {
     hobbies?: SortOrder
     uniqueService?: SortOrder
     photos?: SortOrder
+    additionalPhotos?: SortOrder
     latitude?: SortOrder
     longitude?: SortOrder
     abn?: SortOrder
@@ -31267,6 +31294,7 @@ export namespace Prisma {
     hobbies?: SortOrder
     uniqueService?: SortOrder
     photos?: SortOrder
+    additionalPhotos?: SortOrder
     latitude?: SortOrder
     longitude?: SortOrder
     profileCompleted?: SortOrder
@@ -31298,6 +31326,7 @@ export namespace Prisma {
     hobbies?: SortOrder
     uniqueService?: SortOrder
     photos?: SortOrder
+    additionalPhotos?: SortOrder
     latitude?: SortOrder
     longitude?: SortOrder
     profileCompleted?: SortOrder
@@ -34166,6 +34195,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34202,6 +34232,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34442,6 +34473,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34478,6 +34510,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34615,6 +34648,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34652,6 +34686,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34703,6 +34738,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -34740,6 +34776,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -35661,6 +35698,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -35698,6 +35736,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -35749,6 +35788,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -35786,6 +35826,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -35967,6 +36008,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -36004,6 +36046,7 @@ export namespace Prisma {
     hobbies?: string | null
     uniqueService?: string | null
     photos?: string | null
+    additionalPhotos?: string | null
     latitude?: number | null
     longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -36055,6 +36098,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
@@ -36092,6 +36136,7 @@ export namespace Prisma {
     hobbies?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
     latitude?: NullableFloatFieldUpdateOperationsInput | number | null
     longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue

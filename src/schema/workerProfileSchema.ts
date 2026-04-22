@@ -45,6 +45,21 @@ export const updateWorkerPhotoDefaults: UpdateWorkerPhotoData = {
   photo: "",
 };
 
+// Schema: Update Worker Additional Photos (max 2 extra photos)
+export const updateWorkerAdditionalPhotosSchema = z.object({
+  additionalPhotos: z.array(z.string().url("Invalid photo URL")).max(2, "Maximum 2 additional photos allowed"),
+});
+
+export type UpdateWorkerAdditionalPhotosData = z.infer<typeof updateWorkerAdditionalPhotosSchema>;
+
+// Schema: Swap main photo with an additional photo
+export const swapMainPhotoSchema = z.object({
+  newMainUrl: z.string().url("Invalid photo URL"),
+  additionalPhotos: z.array(z.string().url("Invalid photo URL")).max(2),
+});
+
+export type SwapMainPhotoData = z.infer<typeof swapMainPhotoSchema>;
+
 // Schema: Update Worker Bio
 export const updateWorkerBioSchema = z.object({
   bio: z.string()

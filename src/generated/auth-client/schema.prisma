@@ -223,6 +223,7 @@ model WorkerProfile {
   hobbies                  String?
   uniqueService            String?
   photos                   String?
+  additionalPhotos         String?
   latitude                 Float?
   longitude                Float?
   abn                      Json?

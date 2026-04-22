@@ -14,7 +14,7 @@ async function fetchProfileBase(userId: string) {
     select: {
       id: true, firstName: true, middleName: true, lastName: true,
       mobile: true, location: true, city: true, state: true, postalCode: true,
-      photos: true, introduction: true, age: true, dateOfBirth: true,
+      photos: true, additionalPhotos: true, introduction: true, age: true, dateOfBirth: true,
       gender: true, hasVehicle: true, abn: true, profileCompleted: true,
       isPublished: true, verificationStatus: true, setupProgress: true,
       workerServices: {

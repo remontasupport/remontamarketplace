@@ -14,6 +14,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   updateWorkerName,
   updateWorkerPhoto,
+  updateWorkerAdditionalPhotos,
+  swapMainPhoto,
   updateWorkerBio,
   updateWorkerAddress,
   updateWorkerPersonalInfo,
@@ -43,6 +45,7 @@ interface WorkerProfile {
   state?: string;
   postalCode?: string;
   photos?: string | null; // Profile photo URL (changed from array to string)
+  additionalPhotos?: string | null; // JSON array of up to 2 extra photo URLs
   introduction?: string; // Bio
   age?: number;
   dateOfBirth?: string;
@@ -110,6 +113,25 @@ async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
       });
       if (!photoResult.success) {
         throw new Error(photoResult.error || "Failed to update photo");
+      }
+      break;
+
+    case 23: // Swap main photo with an additional photo
+      const swapResult = await swapMainPhoto({
+        newMainUrl: data.newMainUrl,
+        additionalPhotos: data.additionalPhotos,
+      });
+      if (!swapResult.success) {
+        throw new Error(swapResult.error || "Failed to swap main photo");
+      }
+      break;
+
+    case 22: // Additional Photos (step 2 extra slot)
+      const additionalPhotosResult = await updateWorkerAdditionalPhotos({
+        additionalPhotos: data.additionalPhotos,
+      });
+      if (!additionalPhotosResult.success) {
+        throw new Error(additionalPhotosResult.error || "Failed to update additional photos");
       }
       break;
 

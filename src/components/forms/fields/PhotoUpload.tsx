@@ -22,6 +22,7 @@ interface PhotoUploadProps {
   onUploadEnd?: () => void; // Called when upload ends (success or failure)
   maxSizeMB?: number;
   error?: string;
+  inputId?: string; // Unique id for the file input — required when multiple instances on same page
 }
 
 export default function PhotoUpload({
@@ -32,6 +33,7 @@ export default function PhotoUpload({
   onUploadEnd,
   maxSizeMB = 50,
   error,
+  inputId = "photo-upload-input",
 }: PhotoUploadProps) {
   const { data: session } = useSession();
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhoto || null);
@@ -195,10 +197,10 @@ export default function PhotoUpload({
             accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
             onChange={handleFileChange}
             className="hidden"
-            id="photo-upload-input"
+            id={inputId}
           />
           <label
-            htmlFor="photo-upload-input"
+            htmlFor={inputId}
             className="photo-upload-button"
             style={{
               backgroundColor: isUploading ? 'var(--brand-secondary)' : 'var(--brand-primary)',

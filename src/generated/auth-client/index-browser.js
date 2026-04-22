@@ -263,6 +263,7 @@ exports.Prisma.WorkerProfileScalarFieldEnum = {
   hobbies: 'hobbies',
   uniqueService: 'uniqueService',
   photos: 'photos',
+  additionalPhotos: 'additionalPhotos',
   latitude: 'latitude',
   longitude: 'longitude',
   abn: 'abn',

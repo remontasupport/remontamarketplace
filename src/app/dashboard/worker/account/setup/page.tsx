@@ -71,6 +71,7 @@ interface FormData {
   lastName: string;
   // Step 2: Photo
   photo: string | null;
+  additionalPhotos: string[];
   // Step 3: Bio
   bio: string;
   // Step 4: Address
@@ -123,6 +124,7 @@ function AccountSetupContent() {
     middleName: "",
     lastName: "",
     photo: null,
+    additionalPhotos: [],
     bio: "",
     streetAddress: "",
     city: "",
@@ -141,6 +143,9 @@ function AccountSetupContent() {
     if (profileData && !hasInitializedFormData.current) {
       // photos is now a string (single photo URL), not an array
       const photoUrl = profileData.photos || null;
+      const additionalPhotosArr: string[] = profileData.additionalPhotos
+        ? JSON.parse(profileData.additionalPhotos)
+        : [];
 
       // Extract street address from location string
       let streetAddress = "";
@@ -167,6 +172,7 @@ function AccountSetupContent() {
         middleName: profileData.middleName || "",
         lastName: profileData.lastName || "",
         photo: photoUrl,
+        additionalPhotos: additionalPhotosArr,
         bio: profileData.introduction || "",
         streetAddress: streetAddress,
         city: profileData.city || "",
@@ -213,6 +219,42 @@ function AccountSetupContent() {
       });
     } catch (error) {
       throw error; // Re-throw so PhotoUpload component can handle it
+    }
+  };
+
+  // Handle additional photo save — persists the full updated array immediately
+  const handleAdditionalPhotoSave = async (updatedPhotos: string[]) => {
+    if (!session?.user?.id) return;
+
+    try {
+      await updateProfileMutation.mutateAsync({
+        userId: session.user.id,
+        step: 22,
+        data: { additionalPhotos: updatedPhotos },
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Handle swap — atomically sets a new main photo and updates additionalPhotos
+  const handleSwapMainPhoto = async (newMainUrl: string, updatedAdditional: string[]) => {
+    if (!session?.user?.id) return;
+
+    try {
+      await updateProfileMutation.mutateAsync({
+        userId: session.user.id,
+        step: 23,
+        data: { newMainUrl, additionalPhotos: updatedAdditional },
+      });
+      // Reflect swap in local form state immediately
+      setFormData((prev) => ({
+        ...prev,
+        photo: newMainUrl,
+        additionalPhotos: updatedAdditional,
+      }));
+    } catch (error) {
+      throw error;
     }
   };
 
@@ -495,6 +537,8 @@ function AccountSetupContent() {
             data={formData}
             onChange={handleFieldChange}
             onPhotoSave={currentStep === 2 ? handlePhotoSave : undefined}
+            onAdditionalPhotoSave={currentStep === 2 ? handleAdditionalPhotoSave : undefined}
+            onSwapMainPhoto={currentStep === 2 ? handleSwapMainPhoto : undefined}
             errors={errors}
           />
         </StepContainer>
