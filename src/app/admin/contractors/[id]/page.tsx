@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
 import ImageCropModal from '@/components/modals/ImageCropModal'
+import AdminPhotoPickerModal from '@/components/modals/AdminPhotoPickerModal'
 import ServiceSelectionModal from '@/components/modals/ServiceSelectionModal'
 import QuoteSelectionModal from '@/components/modals/QuoteSelectionModal'
 import { EXPERIENCE_OPTIONS, HOBBIES_OPTIONS, UNIQUE_SERVICE_OPTIONS, WHY_ENJOY_OPTIONS } from '@/constants/profileAnswers'
@@ -19,6 +20,7 @@ interface WorkerProfile {
   languages?: string[]
   services?: string[]
   photos?: string | null
+  additionalPhotos?: string | null
   experience?: string | null
   hasVehicle?: string | null
   introduction?: string | null
@@ -54,6 +56,10 @@ export default function WorkerDetailPage() {
   const [showCropModal, setShowCropModal] = useState<boolean>(false)
   const [croppedImageUrl, setCroppedImageUrl] = useState<string>('')
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>('')
+
+  // Admin-selected photo from the worker's photo pool (main + additional)
+  const [adminSelectedPhoto, setAdminSelectedPhoto] = useState<string | null>(null)
+  const [showPhotoPickerModal, setShowPhotoPickerModal] = useState(false)
 
   // Service selection modal state
   const [showServiceModal, setShowServiceModal] = useState<boolean>(false)
@@ -108,11 +114,11 @@ export default function WorkerDetailPage() {
 
   // Image crop handlers (must be before early returns)
   const handlePhotoDoubleClick = useCallback(() => {
-    const currentPhoto = selectedImageUrl || data?.data?.photos?.[0]
-    if (isEditMode && currentPhoto) {
+    const currentPhoto = selectedImageUrl || data?.data?.photos
+    if (currentPhoto) {
       setShowCropModal(true)
     }
-  }, [isEditMode, selectedImageUrl, data?.data?.photos])
+  }, [selectedImageUrl, data?.data?.photos])
 
   const handleCropComplete = useCallback((croppedUrl: string) => {
     setCroppedImageUrl(croppedUrl)
@@ -278,8 +284,14 @@ export default function WorkerDetailPage() {
   }
 
   const worker = data.data
-  // photos is now a string (single photo URL), not an array
   const mainPhoto = worker.photos || null
+  // Build the full pool of available photos for the admin to pick from
+  const additionalPhotosArr: string[] = worker.additionalPhotos
+    ? JSON.parse(worker.additionalPhotos)
+    : []
+  const allPhotos: string[] = [mainPhoto, ...additionalPhotosArr].filter(Boolean) as string[]
+  // The photo currently displayed on the card (admin pick → upload → original main)
+  const displayPhoto = croppedImageUrl || selectedImageUrl || adminSelectedPhoto || mainPhoto
   const initials = `${worker.firstName?.[0] || ''}${worker.lastName?.[0] || ''}`
   const displayName = `${worker.firstName} ${worker.lastName?.[0] || ''}.`
 
@@ -387,16 +399,13 @@ export default function WorkerDetailPage() {
           <div
             className="profile-photo-circle"
             onDoubleClick={handlePhotoDoubleClick}
-            style={{
-              cursor: isEditMode && (selectedImageUrl || mainPhoto) ? 'pointer' : 'default',
-              transition: 'transform 0.2s'
-            }}
-            title={isEditMode && (selectedImageUrl || mainPhoto) ? 'Double-click to crop image' : ''}
+            style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+            title="Hover to replace · Double-click to crop"
           >
             <div className="profile-photo-inner">
-              {(selectedImageUrl || croppedImageUrl || mainPhoto) ? (
+              {displayPhoto ? (
                 <img
-                  src={croppedImageUrl || selectedImageUrl || mainPhoto || ''}
+                  src={displayPhoto}
                   alt={`${worker.firstName} ${worker.lastName}`}
                   style={{ objectFit: 'cover' }}
                 />
@@ -405,24 +414,66 @@ export default function WorkerDetailPage() {
               )}
             </div>
 
-            {/* Change Photo Button - Only visible in edit mode */}
-            {isEditMode && (
-              <div className="photo-change-overlay">
-                <input
-                  type="file"
-                  id="photo-upload"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                  aria-label="Upload new photo"
-                />
-                <label htmlFor="photo-upload" className="photo-change-button">
-                  <Upload className="w-4 h-4" />
-                  <span>Change Photo</span>
-                </label>
-              </div>
-            )}
+            {/* Replace Photo — always available on hover, opens picker modal */}
+            <div className="photo-change-overlay">
+              <button
+                type="button"
+                className="photo-change-button"
+                onClick={() => setShowPhotoPickerModal(true)}
+              >
+                <Upload className="w-4 h-4" />
+                <span>Replace Photo</span>
+              </button>
+            </div>
           </div>
+
+          {/* Photo picker — always visible when worker has multiple photos */}
+          {allPhotos.length > 1 && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-4.5rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '0.5rem',
+                background: 'rgba(255,255,255,0.92)',
+                borderRadius: '0.75rem',
+                padding: '0.5rem 0.75rem',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                zIndex: 10,
+              }}
+            >
+              {allPhotos.map((url, i) => {
+                const isActive = url === displayPhoto
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setAdminSelectedPhoto(url)
+                      setSelectedImageUrl('')
+                      setCroppedImageUrl('')
+                    }}
+                    title={i === 0 ? 'Main photo' : `Photo ${i + 1}`}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '0.5rem',
+                      overflow: 'hidden',
+                      border: isActive ? '2.5px solid #4f46e5' : '2px solid transparent',
+                      padding: 0,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      outline: isActive ? '2px solid #c7d2fe' : 'none',
+                    }}
+                  >
+                    <img src={url} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           <div className="profile-content">
             {/* LEFT COLUMN - Beige/Cream */}
@@ -877,12 +928,26 @@ export default function WorkerDetailPage() {
           </div>
         </div>
 
-        {/* Image Crop Modal */}
-        {showCropModal && (selectedImageUrl || mainPhoto) && (
+        {/* Image Crop Modal (double-click to crop current photo) */}
+        {showCropModal && (selectedImageUrl || displayPhoto) && (
           <ImageCropModal
-            imageUrl={selectedImageUrl || mainPhoto || ''}
+            imageUrl={selectedImageUrl || displayPhoto || ''}
             onClose={handleCloseCropModal}
             onCropComplete={handleCropComplete}
+          />
+        )}
+
+        {/* Admin Photo Picker Modal */}
+        {showPhotoPickerModal && (
+          <AdminPhotoPickerModal
+            allPhotos={allPhotos}
+            currentPhoto={displayPhoto}
+            onSelect={(url) => {
+              setAdminSelectedPhoto(url)
+              setSelectedImageUrl('')
+              setCroppedImageUrl('')
+            }}
+            onClose={() => setShowPhotoPickerModal(false)}
           />
         )}
 
