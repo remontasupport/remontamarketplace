@@ -3,9 +3,40 @@
 import { useState } from 'react'
 
 type ReportType = 'daily' | 'weekly' | 'worker-statistics'
+type AgreementType = 'abn' | 'tfn'
 
 export default function ReportsContent() {
   const [generatingReport, setGeneratingReport] = useState<ReportType | null>(null)
+  const [generatingAgreement, setGeneratingAgreement] = useState<AgreementType | null>(null)
+
+  const handleGenerateAgreement = async (agreementType: AgreementType) => {
+    setGeneratingAgreement(agreementType)
+    try {
+      const response = await fetch(`/api/admin/reports/agreement/${agreementType}`)
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate ${agreementType} agreement`)
+      }
+
+      const contentDisposition = response.headers.get('Content-Disposition')
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+      const filename = filenameMatch ? filenameMatch[1] : `${agreementType}-agreement.pdf`
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch {
+      alert(`Failed to generate ${agreementType.toUpperCase()} agreement. Please try again.`)
+    } finally {
+      setGeneratingAgreement(null)
+    }
+  }
 
   const handleGenerateReport = async (reportType: ReportType) => {
     setGeneratingReport(reportType)
@@ -150,6 +181,82 @@ export default function ReportsContent() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Agreement Templates */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Agreement Templates</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Contractor Agreement (ABN) */}
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-orange-300 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-orange-100 rounded-lg">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">Contractor Agreement (ABN)</h3>
+                    <p className="text-sm text-gray-500 mt-1">Remonta Platform Contractor Agreement — Independent Contractor template</p>
+                    <button
+                      onClick={() => handleGenerateAgreement('abn')}
+                      disabled={generatingAgreement !== null || generatingReport !== null}
+                      className="mt-4 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {generatingAgreement === 'abn' ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Download PDF
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Casual Employment Agreement (TFN) */}
+              <div className="border border-gray-200 rounded-lg p-6 hover:border-yellow-300 transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-yellow-100 rounded-lg">
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">Casual Employment Agreement (TFN)</h3>
+                    <p className="text-sm text-gray-500 mt-1">Remonta Casual Employment Agreement — Casual Employee template</p>
+                    <button
+                      onClick={() => handleGenerateAgreement('tfn')}
+                      disabled={generatingAgreement !== null || generatingReport !== null}
+                      className="mt-4 rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {generatingAgreement === 'tfn' ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Download PDF
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
