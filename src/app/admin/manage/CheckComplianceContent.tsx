@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { FileText, User, Clock, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react'
+import { FileText, User, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react'
 import WorkerAvatar from '@/components/ui/WorkerAvatar'
 
 interface SubmittedDocument {
@@ -53,6 +53,8 @@ interface CompliantData {
 
 type ActiveView = 'pending' | 'compliant'
 
+const PAGE_SIZE = 10
+
 export default function CheckComplianceContent() {
   const [data, setData] = useState<ComplianceData | null>(null)
   const [compliantData, setCompliantData] = useState<CompliantData | null>(null)
@@ -62,6 +64,10 @@ export default function CheckComplianceContent() {
   const [toggleOpenFor, setToggleOpenFor] = useState<string | null>(null)
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
   const [activeView, setActiveView] = useState<ActiveView>('pending')
+  const [searchInput, setSearchInput] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [pendingPage, setPendingPage] = useState(1)
+  const [compliantPage, setCompliantPage] = useState(1)
 
   useEffect(() => {
     fetchPendingCompliance()
@@ -159,19 +165,28 @@ export default function CheckComplianceContent() {
     })
   }
 
-  const getTimeSinceSubmission = (dateString: string | null) => {
-    if (!dateString) return null
-    const submitted = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - submitted.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-
-    if (diffDays > 0) {
-      return `${diffDays}d ${diffHours}h ago`
-    }
-    return `${diffHours}h ago`
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setSearchQuery(searchInput)
+    setPendingPage(1)
+    setCompliantPage(1)
   }
+
+  const filterWorkers = (query: string) => (w: { firstName: string | null; lastName: string | null; email: string | null }) => {
+    if (!query) return true
+    const q = query.toLowerCase()
+    const name = `${w.firstName ?? ''} ${w.lastName ?? ''}`.toLowerCase()
+    const email = (w.email ?? '').toLowerCase()
+    return name.includes(q) || email.includes(q)
+  }
+
+  const filteredPendingWorkers = data?.workers.filter(filterWorkers(searchQuery)) ?? []
+  const filteredCompliantWorkers = compliantData?.workers.filter(filterWorkers(searchQuery)) ?? []
+
+  const pendingTotalPages = Math.max(1, Math.ceil(filteredPendingWorkers.length / PAGE_SIZE))
+  const compliantTotalPages = Math.max(1, Math.ceil(filteredCompliantWorkers.length / PAGE_SIZE))
+  const pagedPendingWorkers = filteredPendingWorkers.slice((pendingPage - 1) * PAGE_SIZE, pendingPage * PAGE_SIZE)
+  const pagedCompliantWorkers = filteredCompliantWorkers.slice((compliantPage - 1) * PAGE_SIZE, compliantPage * PAGE_SIZE)
 
   if (isLoading) {
     return (
@@ -267,6 +282,32 @@ export default function CheckComplianceContent() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name or email..."
+            className="flex-1 rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          <button
+            type="submit"
+            className="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Search
+          </button>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => { setSearchInput(''); setSearchQuery(''); setPendingPage(1); setCompliantPage(1) }}
+              className="rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              Clear
+            </button>
+          )}
+        </form>
+
         {/* Pending Workers Table */}
         {activeView === 'pending' && (
           <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -279,6 +320,10 @@ export default function CheckComplianceContent() {
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
                 <p className="text-gray-500">No workers have pending documents for review.</p>
+              </div>
+            ) : filteredPendingWorkers.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-gray-500">No workers match &quot;{searchQuery}&quot;.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -294,20 +339,14 @@ export default function CheckComplianceContent() {
                       <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Pending Docs
                       </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Documents
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Oldest Submission
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-10">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {data.workers.map((worker) => (
-                      <tr key={worker.id} className="hover:bg-gray-50">
+                    {pagedPendingWorkers.map((worker) => (
+                      <tr key={worker.id} className="hover:bg-gray-50 group">
                         {/* Worker Info */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
@@ -382,43 +421,8 @@ export default function CheckComplianceContent() {
                           </span>
                         </td>
 
-                        {/* Document Names */}
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1 max-w-[300px]">
-                            {worker.submittedDocuments.slice(0, 3).map((doc) => (
-                              <span
-                                key={doc.id}
-                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                                title={doc.requirementName}
-                              >
-                                {doc.requirementName.length > 20
-                                  ? doc.requirementName.substring(0, 20) + '...'
-                                  : doc.requirementName}
-                              </span>
-                            ))}
-                            {worker.submittedDocuments.length > 3 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                                +{worker.submittedDocuments.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Oldest Submission */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm">
-                            <p className="text-gray-900">{formatDate(worker.oldestSubmission)}</p>
-                            {worker.oldestSubmission && (
-                              <p className="text-xs text-gray-500 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {getTimeSinceSubmission(worker.oldestSubmission)}
-                              </p>
-                            )}
-                          </div>
-                        </td>
-
                         {/* Actions */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 text-center sticky right-0 bg-white group-hover:bg-gray-50 z-10">
                           <Link
                             href={`/admin/compliance/${worker.id}`}
                             target="_blank"
@@ -433,6 +437,30 @@ export default function CheckComplianceContent() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {filteredPendingWorkers.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  Showing {(pendingPage - 1) * PAGE_SIZE + 1}–{Math.min(pendingPage * PAGE_SIZE, filteredPendingWorkers.length)} of {filteredPendingWorkers.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPendingPage(p => p - 1)}
+                    disabled={pendingPage === 1}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600">Page {pendingPage} of {pendingTotalPages}</span>
+                  <button
+                    onClick={() => setPendingPage(p => p + 1)}
+                    disabled={pendingPage === pendingTotalPages}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -456,6 +484,10 @@ export default function CheckComplianceContent() {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No compliant workers yet</h3>
                 <p className="text-gray-500">Workers will appear here once their compliance is verified.</p>
               </div>
+            ) : filteredCompliantWorkers.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-gray-500">No workers match &quot;{searchQuery}&quot;.</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -470,14 +502,14 @@ export default function CheckComplianceContent() {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Verified Date
                       </th>
-                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-10">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {compliantData.workers.map((worker) => (
-                      <tr key={worker.id} className="hover:bg-gray-50">
+                    {pagedCompliantWorkers.map((worker) => (
+                      <tr key={worker.id} className="hover:bg-gray-50 group">
                         {/* Worker Info */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
@@ -543,7 +575,7 @@ export default function CheckComplianceContent() {
                         </td>
 
                         {/* Actions */}
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-6 py-4 text-center sticky right-0 bg-white group-hover:bg-gray-50 z-10">
                           <Link
                             href={`/admin/compliance/${worker.id}`}
                             target="_blank"
@@ -558,6 +590,30 @@ export default function CheckComplianceContent() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {filteredCompliantWorkers.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <p className="text-sm text-gray-500">
+                  Showing {(compliantPage - 1) * PAGE_SIZE + 1}–{Math.min(compliantPage * PAGE_SIZE, filteredCompliantWorkers.length)} of {filteredCompliantWorkers.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCompliantPage(p => p - 1)}
+                    disabled={compliantPage === 1}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-600">Page {compliantPage} of {compliantTotalPages}</span>
+                  <button
+                    onClick={() => setCompliantPage(p => p + 1)}
+                    disabled={compliantPage === compliantTotalPages}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             )}
           </div>

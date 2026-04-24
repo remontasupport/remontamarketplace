@@ -38,10 +38,14 @@ export async function POST(
     // Update the worker profile
     const updatedWorker = await prisma.workerProfile.update({
       where: { id: workerId },
-      data: { isPublished },
+      data: {
+        isPublished,
+        verificationStatus: isPublished ? 'Verified' : 'PENDING_REVIEW',
+      },
       select: {
         id: true,
         isPublished: true,
+        verificationStatus: true,
         firstName: true,
         lastName: true,
       },
