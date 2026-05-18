@@ -78,6 +78,7 @@
   position: relative;
   padding-bottom: 0.25rem;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .footer-link::after {
@@ -298,7 +299,7 @@
 
   .footer-grid {
     grid-template-columns: auto 1fr auto auto auto;
-    gap: 3rem;
+    gap: 2rem;
     padding-right: 10px;
     align-items: start;
   }
@@ -384,14 +385,14 @@
   }
 
   .footer-grid {
-    grid-template-columns: auto 1fr 1fr 1fr;
-    gap: 5rem;
-    padding-left: 14rem;
+    grid-template-columns: auto auto auto auto;
+    gap: 3.5rem;
+    padding-left: 0;
   }
 
   .footer-logo-wrapper {
     align-items: flex-start;
-    left: -21.85rem;
+    left: 0;
     top: -1.2rem;
   }
 
