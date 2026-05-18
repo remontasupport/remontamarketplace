@@ -1,33 +1,16 @@
-'use client'
-import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import '@/styles/footer.css'
 
-// Helper function to convert state name to slug
-function stateToSlug(state: string): string {
-  return state.toLowerCase()
-}
-
-// Map state abbreviations to display names with cities
-const stateDisplayNames: Record<string, string> = {
-  'NSW': 'Sydney, NSW',
-  'VIC': 'Melbourne, VIC',
-  'QLD': 'Brisbane, QLD',
-  'SA': 'Adelaide, SA',
-  'WA': 'Perth, WA',
-  'ACT': 'Canberra, ACT',
-  'NT': 'Darwin, NT',
-  'TAS': 'Hobart, TAS'
-}
 
 export default function Footer() {
-  const [productItems, setProductItems] = useState([
+  const productItems = [
     { name: 'Sydney, NSW', href: '/area/nsw' },
     { name: 'Melbourne, VIC', href: '/area/vic' },
     { name: 'Brisbane, QLD', href: '/area/qld' },
     { name: 'Adelaide, SA', href: '/area/sa' },
-    { name: 'Perth, WA', href: '/area/wa' }
-  ])
+    { name: 'Perth, WA', href: '/area/wa' },
+    { name: 'Hobart, TAS', href: '/area/tas' }
+  ]
 
   const menuItems = [
     { name: 'Support Workers', href: '#' },
@@ -42,28 +25,6 @@ export default function Footer() {
     { name: 'News', href: '/newsroom' }
   ]
 
-  // Fetch states from API on mount
-  useEffect(() => {
-    const fetchStates = async () => {
-      try {
-        const response = await fetch('/api/contractors-by-area')
-        const data = await response.json()
-
-        if (data.success && data.states && data.states.length > 0) {
-          const states = data.states.slice(0, 5).map((state: string) => ({
-            name: stateDisplayNames[state] || state, // Use display name with city
-            href: `/area/${stateToSlug(state)}`
-          }))
-          setProductItems(states)
-        }
-      } catch (error) {
-        console.error('Error fetching states for footer:', error)
-        // Keep default hardcoded values if fetch fails
-      }
-    }
-
-    fetchStates()
-  }, [])
 
   return (
     <footer className="footer">

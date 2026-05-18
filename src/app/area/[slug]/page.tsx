@@ -32,13 +32,6 @@ function slugToStateName(slug: string): string {
   return slug.toUpperCase()
 }
 
-// Worker count mapping by state
-const workerCountByState: Record<string, number> = {
-  'QLD': 1050,
-  'VIC': 945,
-  'WA': 905,
-  'NSW': 859
-}
 
 // Fetcher function for SWR
 const fetcher = async (url: string) => {
@@ -91,7 +84,7 @@ export default function AreaPage({ params }: PageProps) {
 
   const contractors = data?.contractors || []
   const state = data?.state || stateName
-  const workerCount = workerCountByState[stateName] || 800
+  const workerCount = data?.count ?? 0
 
   return (
     <section className="area-page">
@@ -102,7 +95,7 @@ export default function AreaPage({ params }: PageProps) {
             {workerCount} local support workers in {state}
           </h1>
           <p className="area-description">
-            Here's a preview of just some of the 800+ talented workers you can find and book on Remonta in {state}.
+            Here's a preview of just some of the talented workers you can find and book on Remonta in {state}.
           </p>
         </div>
 
