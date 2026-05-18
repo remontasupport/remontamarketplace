@@ -160,7 +160,7 @@ export default function Footer() {
         <div className="footer-copyright-wrapper">
           <div className="footer-copyright-content">
             <p className="footer-copyright-text">
-              © 2025 Remonta. All rights reserved.
+              © {new Date().getFullYear()} Remonta. All rights reserved.
             </p>
           </div>
         </div>
