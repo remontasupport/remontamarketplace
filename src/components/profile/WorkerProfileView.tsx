@@ -204,9 +204,9 @@ export default function WorkerProfileView({
               e.currentTarget.blur()
             }
           }}
-          className={`profile-preview-text ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''} ${!editableState?.introduction && !isEditMode ? 'text-gray-400 italic' : ''}`}
+          className={`profile-preview-text ${isEditMode ? 'outline outline-2 outline-indigo-300 rounded px-1 cursor-text' : ''} ${!editableState?.introduction && !profile?.introduction && !isEditMode ? 'text-gray-400 italic' : ''}`}
         >
-          {editableState?.introduction || (!isAdminView && !isPublicView ? 'No introduction provided yet.' : '')}
+          {editableState?.introduction || profile?.introduction || (!isAdminView && !isPublicView ? 'No introduction provided yet.' : '')}
         </p>
       </div>}
 
