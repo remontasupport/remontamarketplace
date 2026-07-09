@@ -31,6 +31,11 @@ export default function ConditionalHeader() {
     return null
   }
 
+  // Don't render header for the standalone application form
+  if (pathname?.startsWith('/apply')) {
+    return null
+  }
+
   // Don't render header for authentication pages
   if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/setup-password') {
     return null

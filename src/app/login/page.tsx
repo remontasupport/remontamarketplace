@@ -36,7 +36,7 @@ function getSafeRedirectPath(url: string): string | null {
   try {
     const parsed = new URL(url);
     const path = parsed.pathname + parsed.search + parsed.hash;
-    if (path.startsWith("/dashboard/") || path.startsWith("/admin/")) return path;
+    if (path.startsWith("/dashboard/") || path.startsWith("/admin/") || path.startsWith("/apply")) return path;
   } catch {
     // Malformed URL — ignore
   }
