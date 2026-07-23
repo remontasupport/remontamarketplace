@@ -114,6 +114,12 @@ export default function RootLayout({
         "position": 5,
         "name": "Newsroom",
         "item": `${siteUrl}/newsroom`
+      },
+      {
+        "@type": "ListItem",
+        "position": 6,
+        "name": "Privacy Policy",
+        "item": `${siteUrl}/policy`
       }
     ]
   }

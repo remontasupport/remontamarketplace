@@ -22,7 +22,8 @@ export default function Footer() {
   const legalItems = [
     { name: 'Our Story', href: '#' },
     { name: 'Careers', href: '/provide-support' },
-    { name: 'News', href: '/newsroom' }
+    { name: 'News', href: '/newsroom' },
+    { name: 'Policy', href: '/policy' }
   ]
 
 
