@@ -1,25 +1,37 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/jobs
  *
- * Proxies job listings from the Remonta app API (server-side, no CORS issues).
- * Used by the provide-support page to display jobs.
+ * Reads active job listings from the local database (synced from Zoho
+ * via /api/sync-jobs). Used by the provide-support page to display jobs.
  */
 export async function GET() {
   try {
-    const response = await fetch('https://app.remontaservices.com.au/api/jobs', {
-      cache: 'no-store',
+    const dbJobs = await prisma.job.findMany({
+      where: {
+        stage: 'Recruitment End',
+        AND: [
+          { description: { not: null } },
+          { description: { not: '' } },
+        ],
+      },
+      orderBy: { postedAt: 'desc' },
+      take: 20,
     })
 
-    if (!response.ok) {
-      throw new Error(`External API responded with status ${response.status}`)
-    }
-
-    const data = await response.json()
-
-    // Handle both array response and { success, jobs } response formats
-    const jobs = Array.isArray(data) ? data : data.jobs ?? []
+    const jobs = dbJobs.map(job => ({
+      id: job.id,
+      zohoId: job.zohoId,
+      recruitmentTitle: job.title || job.dealName,
+      service: job.serviceAvailed || '',
+      jobDescription: job.description || '',
+      city: job.suburbs,
+      state: job.state,
+      postedAt: job.postedAt?.toISOString() ?? null,
+      createdAt: job.createdAt.toISOString(),
+    }))
 
     return NextResponse.json({
       success: true,

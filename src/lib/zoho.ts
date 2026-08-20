@@ -257,7 +257,15 @@ class ZohoService {
       throw new Error(`Failed to refresh Zoho access token: ${response.statusText}`)
     }
 
-    const data: ZohoTokenResponse = await response.json()
+    const data: ZohoTokenResponse & { error?: string } = await response.json()
+
+    if (!data.access_token) {
+      throw new Error(
+        `Zoho token refresh returned no access_token (error: ${data.error || 'unknown'}). ` +
+        `The ZOHO_REFRESH_TOKEN is likely invalid or revoked and needs to be re-generated.`
+      )
+    }
+
     this.accessToken = data.access_token
     // Set expiry time to 5 minutes before actual expiry for safety
     this.tokenExpiryTime = Date.now() + (data.expires_in - 300) * 1000
