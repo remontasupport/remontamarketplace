@@ -52,9 +52,9 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 function JobCard({ job, onApply }: { job: Job; onApply: (jobId: string) => void }) {
   const [expanded, setExpanded] = useState(false)
   const location = [job.city, job.state].filter(Boolean).join(', ') || 'Remote'
-  const postedDate = job.postedAt
-    ? new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  // const postedDate = job.postedAt
+  //   ? new Date(job.postedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  //   : new Date(job.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   return (
     <div className="job-card">
@@ -81,11 +81,11 @@ function JobCard({ job, onApply }: { job: Job; onApply: (jobId: string) => void 
         <span className="job-badge job-badge-active">{job.service}</span>
       </div>
 
-      <div className="job-card-meta">
+      {/* <div className="job-card-meta">
         <div className="job-card-meta-item">
           <span><span className="job-card-meta-label">Posted:</span> {postedDate}</span>
         </div>
-      </div>
+      </div> */}
 
       <div className="job-card-description-section">
         <p className="job-card-description-label">Job Description:</p>
