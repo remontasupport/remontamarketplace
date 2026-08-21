@@ -6,6 +6,22 @@ import { UserRole } from "@/types/auth";
 import { getOrFetch, getCached, setCached, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
 
 // ============================================================================
+// SHARED HELPERS
+// ============================================================================
+
+type ProfileName = { firstName: string; lastName: string } | null
+
+function resolveFullName(
+  email: string,
+  profiles: { workerProfile: ProfileName; clientProfile: ProfileName; coordinatorProfile: ProfileName }
+) {
+  const profile = profiles.workerProfile ?? profiles.clientProfile ?? profiles.coordinatorProfile
+  if (!profile) return email.split("@")[0]
+  const fullName = `${profile.firstName} ${profile.lastName}`.trim()
+  return fullName || email.split("@")[0]
+}
+
+// ============================================================================
 // IMPERSONATION FLOW
 // ============================================================================
 
@@ -26,7 +42,12 @@ async function handleImpersonation(email: string, token: string) {
 
   const user = await authPrisma.user.findFirst({
     where: { email: { equals: email, mode: "insensitive" } },
-    select: { id: true, email: true, role: true, status: true },
+    select: {
+      id: true, email: true, role: true, status: true,
+      workerProfile: { select: { firstName: true, lastName: true } },
+      clientProfile: { select: { firstName: true, lastName: true } },
+      coordinatorProfile: { select: { firstName: true, lastName: true } },
+    },
   })
 
   if (!user) throw new Error("User not found")
@@ -42,7 +63,7 @@ async function handleImpersonation(email: string, token: string) {
     id: user.id,
     email: user.email,
     role: user.role as UserRole,
-    name: user.email.split("@")[0],
+    name: resolveFullName(user.email, user),
     ...(!isRestore && { impersonatedBy: adminId }),
   }
 }
@@ -61,6 +82,9 @@ async function handleNormalLogin(email: string, password: string, rememberMe: bo
       select: {
         id: true, email: true, passwordHash: true, role: true,
         status: true, failedLoginAttempts: true, accountLockedUntil: true,
+        workerProfile: { select: { firstName: true, lastName: true } },
+        clientProfile: { select: { firstName: true, lastName: true } },
+        coordinatorProfile: { select: { firstName: true, lastName: true } },
       },
     })),
     CACHE_TTL.USER_DATA
@@ -128,7 +152,7 @@ async function handleNormalLogin(email: string, password: string, rememberMe: bo
     id: user.id,
     email: user.email,
     role: user.role as UserRole,
-    name: user.email.split("@")[0],
+    name: resolveFullName(user.email, user),
     rememberMe,
   }
 }
