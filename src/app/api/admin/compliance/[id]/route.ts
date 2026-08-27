@@ -40,6 +40,7 @@ const MODULES_TYPES = [
  */
 const INSURANCE_TYPES = [
   'car-insurance',
+  'ctp-insurance',
   'public-liability-10m',
   'professional-indemnity',
 ]

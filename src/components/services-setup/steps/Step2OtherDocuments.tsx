@@ -46,6 +46,42 @@ interface Document {
   requiredIfTrue?: boolean;
 }
 
+/**
+ * Display order for the insurance and transport document lists
+ *
+ * The requirements API returns documents in whatever order Postgres yields
+ * (the query has no ORDER BY), so without this the rows shuffle whenever a
+ * document is added — the same document can even appear in a different
+ * position for different service categories. Anything not listed here keeps
+ * its API order and is appended after the known documents.
+ *
+ * Vehicle-related cover is kept together: Car Insurance and CTP are always
+ * adjacent.
+ */
+const ADDITIONAL_DOCUMENT_ORDER = [
+  // Insurance
+  "public-liability-10m",
+  "professional-indemnity",
+  "car-insurance",
+  "ctp-insurance",
+  // Transport
+  "drivers-licence",
+  "car-registration",
+];
+
+/** Position in ADDITIONAL_DOCUMENT_ORDER; unknown IDs sort last, keeping API order. */
+function additionalDocumentOrderIndex(documentId: string): number {
+  const index = ADDITIONAL_DOCUMENT_ORDER.indexOf(documentId);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+/** Stable sort by the explicit display order above. */
+function sortByDisplayOrder(documents: Document[]): Document[] {
+  return [...documents].sort(
+    (a, b) => additionalDocumentOrderIndex(a.id) - additionalDocumentOrderIndex(b.id)
+  );
+}
+
 // OPTIMIZED: TanStack Query hook for requirements (replaces useEffect + useState)
 const useWorkerRequirements = () => {
   return useQuery({
@@ -84,12 +120,12 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
   // OPTIMIZED: Extract documents from query data with useMemo
   const insuranceDocuments = useMemo(() =>
-    requirementsData?.requirements?.insurance || [],
+    sortByDisplayOrder(requirementsData?.requirements?.insurance || []),
     [requirementsData]
   );
 
   const transportDocuments = useMemo(() =>
-    requirementsData?.requirements?.transport || [],
+    sortByDisplayOrder(requirementsData?.requirements?.transport || []),
     [requirementsData]
   );
 
