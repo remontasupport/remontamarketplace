@@ -37,6 +37,36 @@ const COMBINED_NDIS_TRAININGS = [
 ];
 
 /**
+ * Display order for training steps
+ *
+ * The requirements API returns documents in whatever order Postgres yields them
+ * (the query has no ORDER BY), so without this the step order shifts whenever
+ * rows are inserted. Anything not listed here keeps its API order and is
+ * appended after the known steps.
+ *
+ * NOTE: "first-aid-cpr" is a legacy document ID that now carries First Aid
+ * only — CPR was split out into its own "cpr" document. Both IDs are listed
+ * so the pair always renders adjacent.
+ */
+const TRAINING_STEP_ORDER = [
+  "ndis-worker-orientation",
+  "infection-control-training",
+  "infection-control",
+  "first-aid-cpr",
+  "first-aid",
+  "cpr",
+  "manual-handling",
+  "medication-training",
+  "behaviour-support",
+];
+
+/** Position in TRAINING_STEP_ORDER; unknown IDs sort last, keeping API order. */
+function trainingOrderIndex(documentId: string): number {
+  const index = TRAINING_STEP_ORDER.indexOf(documentId);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+/**
  * Generate training steps from trainings array in requirements
  *
  * @param requirements - Worker requirements data from API
@@ -56,8 +86,14 @@ export function generateTrainingSteps(
     (req) => !COMBINED_NDIS_TRAININGS.includes(req.id)
   );
 
-  // Generate steps from filtered trainings
-  const steps: DynamicTrainingStep[] = filteredTrainings.map((req, index) => {
+  // Apply the explicit display order (Array.prototype.sort is stable, so
+  // unlisted trainings keep their relative API order at the end)
+  const orderedTrainings = [...filteredTrainings].sort(
+    (a, b) => trainingOrderIndex(a.id) - trainingOrderIndex(b.id)
+  );
+
+  // Generate steps from ordered trainings
+  const steps: DynamicTrainingStep[] = orderedTrainings.map((req, index) => {
     // Check if there's a custom component for this training
     const customMapping = getComponentForDocument(req.id);
 

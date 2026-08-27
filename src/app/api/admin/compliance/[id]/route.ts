@@ -28,7 +28,8 @@ const MODULES_TYPES = [
   'effective-communication',
   'safe-enjoyable-meals',
   'infection-control',
-  'first-aid-cpr',
+  'first-aid-cpr', // legacy id, now carries First Aid only (split from CPR)
+  'cpr',
   'manual-handling',
   'medication-training',
   'behaviour-support',
