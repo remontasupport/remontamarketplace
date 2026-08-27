@@ -162,12 +162,12 @@ export default function Step5InfectionControl({
                 Complete the following modules at:
               </p>
               <a
-                href="https://www.safetyandquality.gov.au/our-work/infection-prevention-and-control/hand-hygiene-and-infection-prevention-and-control-elearning-modules"
+                href="https://handhygiene.freshdesk.com/support/solutions/articles/47001285139"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins break-all mb-4 block"
               >
-                https://www.safetyandquality.gov.au/our-work/infection-prevention-and-control/hand-hygiene-and-infection-prevention-and-control-elearning-modules
+                https://handhygiene.freshdesk.com/support/solutions/articles/47001285139
               </a>
 
             </div>
