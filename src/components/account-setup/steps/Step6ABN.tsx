@@ -146,6 +146,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                 />
                 <span className="radio-label">Contractor: Company / Business / Sole Trader (Operating under ABN)</span>
               </label>
+              {/* TFN option disabled — engagement is ABN-only. Uncomment to restore the Casual Employee (TFN) selection.
               <label className="radio-option">
                 <input
                   type="radio"
@@ -157,6 +158,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                 />
                 <span className="radio-label">Casual Employee: Internal (Operating under TFN)</span>
               </label>
+              */}
             </div>
 
             {/* Input Field - shown when type is selected and contract is NOT signed */}
