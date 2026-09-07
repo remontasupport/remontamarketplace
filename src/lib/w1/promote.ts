@@ -124,7 +124,7 @@ const intOrNull = (v: unknown): number | null => {
 /** jobHistory Json -> worker_job_history. Array order becomes sortOrder. */
 export async function rebuildJobHistory(
   tx: Prisma.TransactionClient,
-  workerAdditionalInfoId: string,
+  workerProfileId: string,
   json: unknown,
 ): Promise<PromoteResult> {
   const skipped: string[] = []
@@ -141,7 +141,7 @@ export async function rebuildJobHistory(
         return skipped.push(`entry ${i}: missing ${!jobTitle ? 'jobTitle' : 'company'}`)
       }
       rows.push({
-        workerAdditionalInfoId,
+        workerProfileId,
         jobTitle,
         company,
         startMonth: monthOrNull(e.startMonth),
@@ -154,7 +154,7 @@ export async function rebuildJobHistory(
     })
   }
 
-  await tx.workerJobHistory.deleteMany({ where: { workerAdditionalInfoId } })
+  await tx.workerJobHistory.deleteMany({ where: { workerProfileId } })
   if (rows.length) await tx.workerJobHistory.createMany({ data: rows })
   return { written: rows.length, skipped }
 }
@@ -162,7 +162,7 @@ export async function rebuildJobHistory(
 /** education Json -> worker_education. Array order becomes sortOrder. */
 export async function rebuildEducation(
   tx: Prisma.TransactionClient,
-  workerAdditionalInfoId: string,
+  workerProfileId: string,
   json: unknown,
 ): Promise<PromoteResult> {
   const skipped: string[] = []
@@ -178,7 +178,7 @@ export async function rebuildEducation(
         return skipped.push(`entry ${i}: missing ${!institution ? 'institution' : 'qualification'}`)
       }
       rows.push({
-        workerAdditionalInfoId,
+        workerProfileId,
         institution,
         qualification,
         startMonth: monthOrNull(e.startMonth),
@@ -191,7 +191,7 @@ export async function rebuildEducation(
     })
   }
 
-  await tx.workerEducation.deleteMany({ where: { workerAdditionalInfoId } })
+  await tx.workerEducation.deleteMany({ where: { workerProfileId } })
   if (rows.length) await tx.workerEducation.createMany({ data: rows })
   return { written: rows.length, skipped }
 }

@@ -376,7 +376,7 @@ model WorkerBankAccount {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
   @@map("worker_bank_accounts")
 }
@@ -403,7 +403,7 @@ model WorkerPhoto {
 /// From jobHistory Json — 7 uniform keys, 570 entries.
 model WorkerJobHistory {
   id                     String  @id @default(cuid())
-  workerAdditionalInfoId String
+  workerProfileId        String
   jobTitle               String
   company                String
   startMonth             String?
@@ -416,16 +416,16 @@ model WorkerJobHistory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  @@index([workerAdditionalInfoId])
+  @@index([workerProfileId])
   @@map("worker_job_history")
 }
 
 /// From education Json — 7 uniform keys, 395 entries.
 model WorkerEducation {
   id                     String  @id @default(cuid())
-  workerAdditionalInfoId String
+  workerProfileId        String
   institution            String
   qualification          String
   startMonth             String?
@@ -438,9 +438,9 @@ model WorkerEducation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  @@index([workerAdditionalInfoId])
+  @@index([workerProfileId])
   @@map("worker_education")
 }
 

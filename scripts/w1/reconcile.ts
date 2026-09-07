@@ -167,8 +167,8 @@ async function main(): Promise<number> {
         // overwrite a concurrent save once dual-write is live.
         await tx.$queryRaw`SELECT id FROM worker_additional_info WHERE id = ${w.id} FOR UPDATE`
 
-        const jh = await rebuildJobHistory(tx, w.id, w.jobHistory)
-        const ed = await rebuildEducation(tx, w.id, w.education)
+        const jh = await rebuildJobHistory(tx, w.workerProfileId, w.jobHistory)
+        const ed = await rebuildEducation(tx, w.workerProfileId, w.education)
         const av = await rebuildAvailability(tx, w.workerProfileId, w.availability)
         const ex = await rebuildExperience(tx, w.workerProfileId, w.experience)
 

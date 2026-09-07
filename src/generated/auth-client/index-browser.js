@@ -399,7 +399,7 @@ exports.Prisma.ServiceRequestScalarFieldEnum = {
 
 exports.Prisma.WorkerJobHistoryScalarFieldEnum = {
   id: 'id',
-  workerAdditionalInfoId: 'workerAdditionalInfoId',
+  workerProfileId: 'workerProfileId',
   jobTitle: 'jobTitle',
   company: 'company',
   startMonth: 'startMonth',
@@ -414,7 +414,7 @@ exports.Prisma.WorkerJobHistoryScalarFieldEnum = {
 
 exports.Prisma.WorkerEducationScalarFieldEnum = {
   id: 'id',
-  workerAdditionalInfoId: 'workerAdditionalInfoId',
+  workerProfileId: 'workerProfileId',
   institution: 'institution',
   qualification: 'qualification',
   startMonth: 'startMonth',

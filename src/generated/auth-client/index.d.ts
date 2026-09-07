@@ -3245,6 +3245,8 @@ export namespace Prisma {
     verificationRequirements: number
     workerServices: number
     availability: number
+    jobHistoryEntries: number
+    educationEntries: number
     careExperience: number
   }
 
@@ -3252,6 +3254,8 @@ export namespace Prisma {
     verificationRequirements?: boolean | WorkerProfileCountOutputTypeCountVerificationRequirementsArgs
     workerServices?: boolean | WorkerProfileCountOutputTypeCountWorkerServicesArgs
     availability?: boolean | WorkerProfileCountOutputTypeCountAvailabilityArgs
+    jobHistoryEntries?: boolean | WorkerProfileCountOutputTypeCountJobHistoryEntriesArgs
+    educationEntries?: boolean | WorkerProfileCountOutputTypeCountEducationEntriesArgs
     careExperience?: boolean | WorkerProfileCountOutputTypeCountCareExperienceArgs
   }
 
@@ -3285,6 +3289,20 @@ export namespace Prisma {
    */
   export type WorkerProfileCountOutputTypeCountAvailabilityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkerAvailabilityWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountJobHistoryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerJobHistoryWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountEducationEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerEducationWhereInput
   }
 
   /**
@@ -3434,46 +3452,6 @@ export namespace Prisma {
    */
   export type JobCountOutputTypeCountApplicationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: JobApplicationWhereInput
-  }
-
-
-  /**
-   * Count Type WorkerAdditionalInfoCountOutputType
-   */
-
-  export type WorkerAdditionalInfoCountOutputType = {
-    jobHistoryEntries: number
-    educationEntries: number
-  }
-
-  export type WorkerAdditionalInfoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    jobHistoryEntries?: boolean | WorkerAdditionalInfoCountOutputTypeCountJobHistoryEntriesArgs
-    educationEntries?: boolean | WorkerAdditionalInfoCountOutputTypeCountEducationEntriesArgs
-  }
-
-  // Custom InputTypes
-  /**
-   * WorkerAdditionalInfoCountOutputType without action
-   */
-  export type WorkerAdditionalInfoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the WorkerAdditionalInfoCountOutputType
-     */
-    select?: WorkerAdditionalInfoCountOutputTypeSelect<ExtArgs> | null
-  }
-
-  /**
-   * WorkerAdditionalInfoCountOutputType without action
-   */
-  export type WorkerAdditionalInfoCountOutputTypeCountJobHistoryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: WorkerJobHistoryWhereInput
-  }
-
-  /**
-   * WorkerAdditionalInfoCountOutputType without action
-   */
-  export type WorkerAdditionalInfoCountOutputTypeCountEducationEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: WorkerEducationWhereInput
   }
 
 
@@ -14247,6 +14225,8 @@ export namespace Prisma {
     user?: boolean | UserDefaultArgs<ExtArgs>
     workerServices?: boolean | WorkerProfile$workerServicesArgs<ExtArgs>
     availability?: boolean | WorkerProfile$availabilityArgs<ExtArgs>
+    jobHistoryEntries?: boolean | WorkerProfile$jobHistoryEntriesArgs<ExtArgs>
+    educationEntries?: boolean | WorkerProfile$educationEntriesArgs<ExtArgs>
     careExperience?: boolean | WorkerProfile$careExperienceArgs<ExtArgs>
     _count?: boolean | WorkerProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerProfile"]>
@@ -14365,6 +14345,8 @@ export namespace Prisma {
     user?: boolean | UserDefaultArgs<ExtArgs>
     workerServices?: boolean | WorkerProfile$workerServicesArgs<ExtArgs>
     availability?: boolean | WorkerProfile$availabilityArgs<ExtArgs>
+    jobHistoryEntries?: boolean | WorkerProfile$jobHistoryEntriesArgs<ExtArgs>
+    educationEntries?: boolean | WorkerProfile$educationEntriesArgs<ExtArgs>
     careExperience?: boolean | WorkerProfile$careExperienceArgs<ExtArgs>
     _count?: boolean | WorkerProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -14383,6 +14365,8 @@ export namespace Prisma {
       user: Prisma.$UserPayload<ExtArgs>
       workerServices: Prisma.$WorkerServicePayload<ExtArgs>[]
       availability: Prisma.$WorkerAvailabilityPayload<ExtArgs>[]
+      jobHistoryEntries: Prisma.$WorkerJobHistoryPayload<ExtArgs>[]
+      educationEntries: Prisma.$WorkerEducationPayload<ExtArgs>[]
       careExperience: Prisma.$WorkerExperiencePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -14817,6 +14801,8 @@ export namespace Prisma {
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     workerServices<T extends WorkerProfile$workerServicesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$workerServicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerServicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     availability<T extends WorkerProfile$availabilityArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$availabilityArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    jobHistoryEntries<T extends WorkerProfile$jobHistoryEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$jobHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    educationEntries<T extends WorkerProfile$educationEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$educationEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     careExperience<T extends WorkerProfile$careExperienceArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$careExperienceArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -15363,6 +15349,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkerAvailabilityScalarFieldEnum | WorkerAvailabilityScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.jobHistoryEntries
+   */
+  export type WorkerProfile$jobHistoryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    where?: WorkerJobHistoryWhereInput
+    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
+    cursor?: WorkerJobHistoryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerJobHistoryScalarFieldEnum | WorkerJobHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.educationEntries
+   */
+  export type WorkerProfile$educationEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    where?: WorkerEducationWhereInput
+    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
+    cursor?: WorkerEducationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerEducationScalarFieldEnum | WorkerEducationScalarFieldEnum[]
   }
 
   /**
@@ -24499,9 +24533,6 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
-    jobHistoryEntries?: boolean | WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs>
-    educationEntries?: boolean | WorkerAdditionalInfo$educationEntriesArgs<ExtArgs>
-    _count?: boolean | WorkerAdditionalInfoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerAdditionalInfo"]>
 
   export type WorkerAdditionalInfoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -24578,9 +24609,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "jobHistory" | "education" | "languages" | "culturalBackground" | "religion" | "interests" | "workPreferences" | "lgbtqiaSupport" | "nonSmoker" | "petFriendly" | "personality" | "uniqueService" | "funFact" | "availability" | "bankAccount" | "experience" | "createdAt" | "updatedAt", ExtArgs["result"]["workerAdditionalInfo"]>
   export type WorkerAdditionalInfoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
-    jobHistoryEntries?: boolean | WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs>
-    educationEntries?: boolean | WorkerAdditionalInfo$educationEntriesArgs<ExtArgs>
-    _count?: boolean | WorkerAdditionalInfoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkerAdditionalInfoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -24593,8 +24621,6 @@ export namespace Prisma {
     name: "WorkerAdditionalInfo"
     objects: {
       workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
-      jobHistoryEntries: Prisma.$WorkerJobHistoryPayload<ExtArgs>[]
-      educationEntries: Prisma.$WorkerEducationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -25012,8 +25038,6 @@ export namespace Prisma {
   export interface Prisma__WorkerAdditionalInfoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    jobHistoryEntries<T extends WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    educationEntries<T extends WorkerAdditionalInfo$educationEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfo$educationEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -25456,54 +25480,6 @@ export namespace Prisma {
      * Limit how many WorkerAdditionalInfos to delete.
      */
     limit?: number
-  }
-
-  /**
-   * WorkerAdditionalInfo.jobHistoryEntries
-   */
-  export type WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the WorkerJobHistory
-     */
-    select?: WorkerJobHistorySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the WorkerJobHistory
-     */
-    omit?: WorkerJobHistoryOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: WorkerJobHistoryInclude<ExtArgs> | null
-    where?: WorkerJobHistoryWhereInput
-    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
-    cursor?: WorkerJobHistoryWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: WorkerJobHistoryScalarFieldEnum | WorkerJobHistoryScalarFieldEnum[]
-  }
-
-  /**
-   * WorkerAdditionalInfo.educationEntries
-   */
-  export type WorkerAdditionalInfo$educationEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the WorkerEducation
-     */
-    select?: WorkerEducationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the WorkerEducation
-     */
-    omit?: WorkerEducationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: WorkerEducationInclude<ExtArgs> | null
-    where?: WorkerEducationWhereInput
-    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
-    cursor?: WorkerEducationWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: WorkerEducationScalarFieldEnum | WorkerEducationScalarFieldEnum[]
   }
 
   /**
@@ -26684,7 +26660,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryMinAggregateOutputType = {
     id: string | null
-    workerAdditionalInfoId: string | null
+    workerProfileId: string | null
     jobTitle: string | null
     company: string | null
     startMonth: string | null
@@ -26699,7 +26675,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryMaxAggregateOutputType = {
     id: string | null
-    workerAdditionalInfoId: string | null
+    workerProfileId: string | null
     jobTitle: string | null
     company: string | null
     startMonth: string | null
@@ -26714,7 +26690,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryCountAggregateOutputType = {
     id: number
-    workerAdditionalInfoId: number
+    workerProfileId: number
     jobTitle: number
     company: number
     startMonth: number
@@ -26743,7 +26719,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryMinAggregateInputType = {
     id?: true
-    workerAdditionalInfoId?: true
+    workerProfileId?: true
     jobTitle?: true
     company?: true
     startMonth?: true
@@ -26758,7 +26734,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryMaxAggregateInputType = {
     id?: true
-    workerAdditionalInfoId?: true
+    workerProfileId?: true
     jobTitle?: true
     company?: true
     startMonth?: true
@@ -26773,7 +26749,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryCountAggregateInputType = {
     id?: true
-    workerAdditionalInfoId?: true
+    workerProfileId?: true
     jobTitle?: true
     company?: true
     startMonth?: true
@@ -26875,7 +26851,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryGroupByOutputType = {
     id: string
-    workerAdditionalInfoId: string
+    workerProfileId: string
     jobTitle: string
     company: string
     startMonth: string | null
@@ -26909,7 +26885,7 @@ export namespace Prisma {
 
   export type WorkerJobHistorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     jobTitle?: boolean
     company?: boolean
     startMonth?: boolean
@@ -26920,12 +26896,12 @@ export namespace Prisma {
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerJobHistory"]>
 
   export type WorkerJobHistorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     jobTitle?: boolean
     company?: boolean
     startMonth?: boolean
@@ -26936,12 +26912,12 @@ export namespace Prisma {
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerJobHistory"]>
 
   export type WorkerJobHistorySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     jobTitle?: boolean
     company?: boolean
     startMonth?: boolean
@@ -26952,12 +26928,12 @@ export namespace Prisma {
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerJobHistory"]>
 
   export type WorkerJobHistorySelectScalar = {
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     jobTitle?: boolean
     company?: boolean
     startMonth?: boolean
@@ -26970,25 +26946,25 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WorkerJobHistoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerAdditionalInfoId" | "jobTitle" | "company" | "startMonth" | "startYear" | "endMonth" | "endYear" | "currentlyWorking" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerJobHistory"]>
+  export type WorkerJobHistoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "jobTitle" | "company" | "startMonth" | "startYear" | "endMonth" | "endYear" | "currentlyWorking" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerJobHistory"]>
   export type WorkerJobHistoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
   export type WorkerJobHistoryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
   export type WorkerJobHistoryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
 
   export type $WorkerJobHistoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "WorkerJobHistory"
     objects: {
-      additionalInfo: Prisma.$WorkerAdditionalInfoPayload<ExtArgs>
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      workerAdditionalInfoId: string
+      workerProfileId: string
       jobTitle: string
       company: string
       startMonth: string | null
@@ -27393,7 +27369,7 @@ export namespace Prisma {
    */
   export interface Prisma__WorkerJobHistoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    additionalInfo<T extends WorkerAdditionalInfoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfoDefaultArgs<ExtArgs>>): Prisma__WorkerAdditionalInfoClient<$Result.GetResult<Prisma.$WorkerAdditionalInfoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -27424,7 +27400,7 @@ export namespace Prisma {
    */
   interface WorkerJobHistoryFieldRefs {
     readonly id: FieldRef<"WorkerJobHistory", 'String'>
-    readonly workerAdditionalInfoId: FieldRef<"WorkerJobHistory", 'String'>
+    readonly workerProfileId: FieldRef<"WorkerJobHistory", 'String'>
     readonly jobTitle: FieldRef<"WorkerJobHistory", 'String'>
     readonly company: FieldRef<"WorkerJobHistory", 'String'>
     readonly startMonth: FieldRef<"WorkerJobHistory", 'String'>
@@ -27875,7 +27851,7 @@ export namespace Prisma {
 
   export type WorkerEducationMinAggregateOutputType = {
     id: string | null
-    workerAdditionalInfoId: string | null
+    workerProfileId: string | null
     institution: string | null
     qualification: string | null
     startMonth: string | null
@@ -27890,7 +27866,7 @@ export namespace Prisma {
 
   export type WorkerEducationMaxAggregateOutputType = {
     id: string | null
-    workerAdditionalInfoId: string | null
+    workerProfileId: string | null
     institution: string | null
     qualification: string | null
     startMonth: string | null
@@ -27905,7 +27881,7 @@ export namespace Prisma {
 
   export type WorkerEducationCountAggregateOutputType = {
     id: number
-    workerAdditionalInfoId: number
+    workerProfileId: number
     institution: number
     qualification: number
     startMonth: number
@@ -27934,7 +27910,7 @@ export namespace Prisma {
 
   export type WorkerEducationMinAggregateInputType = {
     id?: true
-    workerAdditionalInfoId?: true
+    workerProfileId?: true
     institution?: true
     qualification?: true
     startMonth?: true
@@ -27949,7 +27925,7 @@ export namespace Prisma {
 
   export type WorkerEducationMaxAggregateInputType = {
     id?: true
-    workerAdditionalInfoId?: true
+    workerProfileId?: true
     institution?: true
     qualification?: true
     startMonth?: true
@@ -27964,7 +27940,7 @@ export namespace Prisma {
 
   export type WorkerEducationCountAggregateInputType = {
     id?: true
-    workerAdditionalInfoId?: true
+    workerProfileId?: true
     institution?: true
     qualification?: true
     startMonth?: true
@@ -28066,7 +28042,7 @@ export namespace Prisma {
 
   export type WorkerEducationGroupByOutputType = {
     id: string
-    workerAdditionalInfoId: string
+    workerProfileId: string
     institution: string
     qualification: string
     startMonth: string | null
@@ -28100,7 +28076,7 @@ export namespace Prisma {
 
   export type WorkerEducationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     institution?: boolean
     qualification?: boolean
     startMonth?: boolean
@@ -28111,12 +28087,12 @@ export namespace Prisma {
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerEducation"]>
 
   export type WorkerEducationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     institution?: boolean
     qualification?: boolean
     startMonth?: boolean
@@ -28127,12 +28103,12 @@ export namespace Prisma {
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerEducation"]>
 
   export type WorkerEducationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     institution?: boolean
     qualification?: boolean
     startMonth?: boolean
@@ -28143,12 +28119,12 @@ export namespace Prisma {
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerEducation"]>
 
   export type WorkerEducationSelectScalar = {
     id?: boolean
-    workerAdditionalInfoId?: boolean
+    workerProfileId?: boolean
     institution?: boolean
     qualification?: boolean
     startMonth?: boolean
@@ -28161,25 +28137,25 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WorkerEducationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerAdditionalInfoId" | "institution" | "qualification" | "startMonth" | "startYear" | "endMonth" | "endYear" | "currentlyStudying" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerEducation"]>
+  export type WorkerEducationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "institution" | "qualification" | "startMonth" | "startYear" | "endMonth" | "endYear" | "currentlyStudying" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerEducation"]>
   export type WorkerEducationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
   export type WorkerEducationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
   export type WorkerEducationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
 
   export type $WorkerEducationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "WorkerEducation"
     objects: {
-      additionalInfo: Prisma.$WorkerAdditionalInfoPayload<ExtArgs>
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      workerAdditionalInfoId: string
+      workerProfileId: string
       institution: string
       qualification: string
       startMonth: string | null
@@ -28584,7 +28560,7 @@ export namespace Prisma {
    */
   export interface Prisma__WorkerEducationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    additionalInfo<T extends WorkerAdditionalInfoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfoDefaultArgs<ExtArgs>>): Prisma__WorkerAdditionalInfoClient<$Result.GetResult<Prisma.$WorkerAdditionalInfoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -28615,7 +28591,7 @@ export namespace Prisma {
    */
   interface WorkerEducationFieldRefs {
     readonly id: FieldRef<"WorkerEducation", 'String'>
-    readonly workerAdditionalInfoId: FieldRef<"WorkerEducation", 'String'>
+    readonly workerProfileId: FieldRef<"WorkerEducation", 'String'>
     readonly institution: FieldRef<"WorkerEducation", 'String'>
     readonly qualification: FieldRef<"WorkerEducation", 'String'>
     readonly startMonth: FieldRef<"WorkerEducation", 'String'>
@@ -31646,7 +31622,7 @@ export namespace Prisma {
 
   export const WorkerJobHistoryScalarFieldEnum: {
     id: 'id',
-    workerAdditionalInfoId: 'workerAdditionalInfoId',
+    workerProfileId: 'workerProfileId',
     jobTitle: 'jobTitle',
     company: 'company',
     startMonth: 'startMonth',
@@ -31664,7 +31640,7 @@ export namespace Prisma {
 
   export const WorkerEducationScalarFieldEnum: {
     id: 'id',
-    workerAdditionalInfoId: 'workerAdditionalInfoId',
+    workerProfileId: 'workerProfileId',
     institution: 'institution',
     qualification: 'qualification',
     startMonth: 'startMonth',
@@ -32778,6 +32754,8 @@ export namespace Prisma {
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     workerServices?: WorkerServiceListRelationFilter
     availability?: WorkerAvailabilityListRelationFilter
+    jobHistoryEntries?: WorkerJobHistoryListRelationFilter
+    educationEntries?: WorkerEducationListRelationFilter
     careExperience?: WorkerExperienceListRelationFilter
   }
 
@@ -32819,6 +32797,8 @@ export namespace Prisma {
     user?: UserOrderByWithRelationInput
     workerServices?: WorkerServiceOrderByRelationAggregateInput
     availability?: WorkerAvailabilityOrderByRelationAggregateInput
+    jobHistoryEntries?: WorkerJobHistoryOrderByRelationAggregateInput
+    educationEntries?: WorkerEducationOrderByRelationAggregateInput
     careExperience?: WorkerExperienceOrderByRelationAggregateInput
   }
 
@@ -32863,6 +32843,8 @@ export namespace Prisma {
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     workerServices?: WorkerServiceListRelationFilter
     availability?: WorkerAvailabilityListRelationFilter
+    jobHistoryEntries?: WorkerJobHistoryListRelationFilter
+    educationEntries?: WorkerEducationListRelationFilter
     careExperience?: WorkerExperienceListRelationFilter
   }, "id" | "userId">
 
@@ -33528,8 +33510,6 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
-    jobHistoryEntries?: WorkerJobHistoryListRelationFilter
-    educationEntries?: WorkerEducationListRelationFilter
   }
 
   export type WorkerAdditionalInfoOrderByWithRelationInput = {
@@ -33554,8 +33534,6 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     workerProfile?: WorkerProfileOrderByWithRelationInput
-    jobHistoryEntries?: WorkerJobHistoryOrderByRelationAggregateInput
-    educationEntries?: WorkerEducationOrderByRelationAggregateInput
   }
 
   export type WorkerAdditionalInfoWhereUniqueInput = Prisma.AtLeast<{
@@ -33583,8 +33561,6 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
-    jobHistoryEntries?: WorkerJobHistoryListRelationFilter
-    educationEntries?: WorkerEducationListRelationFilter
   }, "id" | "workerProfileId">
 
   export type WorkerAdditionalInfoOrderByWithAggregationInput = {
@@ -33734,7 +33710,7 @@ export namespace Prisma {
     OR?: WorkerJobHistoryWhereInput[]
     NOT?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
     id?: StringFilter<"WorkerJobHistory"> | string
-    workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
+    workerProfileId?: StringFilter<"WorkerJobHistory"> | string
     jobTitle?: StringFilter<"WorkerJobHistory"> | string
     company?: StringFilter<"WorkerJobHistory"> | string
     startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
@@ -33745,12 +33721,12 @@ export namespace Prisma {
     sortOrder?: IntFilter<"WorkerJobHistory"> | number
     createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
-    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
   }
 
   export type WorkerJobHistoryOrderByWithRelationInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     jobTitle?: SortOrder
     company?: SortOrder
     startMonth?: SortOrderInput | SortOrder
@@ -33761,7 +33737,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    additionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
+    workerProfile?: WorkerProfileOrderByWithRelationInput
   }
 
   export type WorkerJobHistoryWhereUniqueInput = Prisma.AtLeast<{
@@ -33769,7 +33745,7 @@ export namespace Prisma {
     AND?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
     OR?: WorkerJobHistoryWhereInput[]
     NOT?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
-    workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
+    workerProfileId?: StringFilter<"WorkerJobHistory"> | string
     jobTitle?: StringFilter<"WorkerJobHistory"> | string
     company?: StringFilter<"WorkerJobHistory"> | string
     startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
@@ -33780,12 +33756,12 @@ export namespace Prisma {
     sortOrder?: IntFilter<"WorkerJobHistory"> | number
     createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
-    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
   }, "id">
 
   export type WorkerJobHistoryOrderByWithAggregationInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     jobTitle?: SortOrder
     company?: SortOrder
     startMonth?: SortOrderInput | SortOrder
@@ -33808,7 +33784,7 @@ export namespace Prisma {
     OR?: WorkerJobHistoryScalarWhereWithAggregatesInput[]
     NOT?: WorkerJobHistoryScalarWhereWithAggregatesInput | WorkerJobHistoryScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
-    workerAdditionalInfoId?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
+    workerProfileId?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
     jobTitle?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
     company?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
     startMonth?: StringNullableWithAggregatesFilter<"WorkerJobHistory"> | string | null
@@ -33826,7 +33802,7 @@ export namespace Prisma {
     OR?: WorkerEducationWhereInput[]
     NOT?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
     id?: StringFilter<"WorkerEducation"> | string
-    workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
+    workerProfileId?: StringFilter<"WorkerEducation"> | string
     institution?: StringFilter<"WorkerEducation"> | string
     qualification?: StringFilter<"WorkerEducation"> | string
     startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
@@ -33837,12 +33813,12 @@ export namespace Prisma {
     sortOrder?: IntFilter<"WorkerEducation"> | number
     createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
-    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
   }
 
   export type WorkerEducationOrderByWithRelationInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     institution?: SortOrder
     qualification?: SortOrder
     startMonth?: SortOrderInput | SortOrder
@@ -33853,7 +33829,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    additionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
+    workerProfile?: WorkerProfileOrderByWithRelationInput
   }
 
   export type WorkerEducationWhereUniqueInput = Prisma.AtLeast<{
@@ -33861,7 +33837,7 @@ export namespace Prisma {
     AND?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
     OR?: WorkerEducationWhereInput[]
     NOT?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
-    workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
+    workerProfileId?: StringFilter<"WorkerEducation"> | string
     institution?: StringFilter<"WorkerEducation"> | string
     qualification?: StringFilter<"WorkerEducation"> | string
     startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
@@ -33872,12 +33848,12 @@ export namespace Prisma {
     sortOrder?: IntFilter<"WorkerEducation"> | number
     createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
-    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
   }, "id">
 
   export type WorkerEducationOrderByWithAggregationInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     institution?: SortOrder
     qualification?: SortOrder
     startMonth?: SortOrderInput | SortOrder
@@ -33900,7 +33876,7 @@ export namespace Prisma {
     OR?: WorkerEducationScalarWhereWithAggregatesInput[]
     NOT?: WorkerEducationScalarWhereWithAggregatesInput | WorkerEducationScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"WorkerEducation"> | string
-    workerAdditionalInfoId?: StringWithAggregatesFilter<"WorkerEducation"> | string
+    workerProfileId?: StringWithAggregatesFilter<"WorkerEducation"> | string
     institution?: StringWithAggregatesFilter<"WorkerEducation"> | string
     qualification?: StringWithAggregatesFilter<"WorkerEducation"> | string
     startMonth?: StringNullableWithAggregatesFilter<"WorkerEducation"> | string | null
@@ -34962,6 +34938,8 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -35002,6 +34980,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -35042,6 +35022,8 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -35082,6 +35064,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -35815,8 +35799,6 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
-    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput
-    educationEntries?: WorkerEducationCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoUncheckedCreateInput = {
@@ -35840,8 +35822,6 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput
-    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoUpdateInput = {
@@ -35865,8 +35845,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
-    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput
-    educationEntries?: WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type WorkerAdditionalInfoUncheckedUpdateInput = {
@@ -35890,8 +35868,6 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput
-    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type WorkerAdditionalInfoCreateManyInput = {
@@ -36078,12 +36054,12 @@ export namespace Prisma {
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    additionalInfo: WorkerAdditionalInfoCreateNestedOneWithoutJobHistoryEntriesInput
+    workerProfile: WorkerProfileCreateNestedOneWithoutJobHistoryEntriesInput
   }
 
   export type WorkerJobHistoryUncheckedCreateInput = {
     id?: string
-    workerAdditionalInfoId: string
+    workerProfileId: string
     jobTitle: string
     company: string
     startMonth?: string | null
@@ -36108,12 +36084,12 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    additionalInfo?: WorkerAdditionalInfoUpdateOneRequiredWithoutJobHistoryEntriesNestedInput
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutJobHistoryEntriesNestedInput
   }
 
   export type WorkerJobHistoryUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
     startMonth?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36128,7 +36104,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryCreateManyInput = {
     id?: string
-    workerAdditionalInfoId: string
+    workerProfileId: string
     jobTitle: string
     company: string
     startMonth?: string | null
@@ -36157,7 +36133,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
     startMonth?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36182,12 +36158,12 @@ export namespace Prisma {
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    additionalInfo: WorkerAdditionalInfoCreateNestedOneWithoutEducationEntriesInput
+    workerProfile: WorkerProfileCreateNestedOneWithoutEducationEntriesInput
   }
 
   export type WorkerEducationUncheckedCreateInput = {
     id?: string
-    workerAdditionalInfoId: string
+    workerProfileId: string
     institution: string
     qualification: string
     startMonth?: string | null
@@ -36212,12 +36188,12 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    additionalInfo?: WorkerAdditionalInfoUpdateOneRequiredWithoutEducationEntriesNestedInput
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutEducationEntriesNestedInput
   }
 
   export type WorkerEducationUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
     startMonth?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36232,7 +36208,7 @@ export namespace Prisma {
 
   export type WorkerEducationCreateManyInput = {
     id?: string
-    workerAdditionalInfoId: string
+    workerProfileId: string
     institution: string
     qualification: string
     startMonth?: string | null
@@ -36261,7 +36237,7 @@ export namespace Prisma {
 
   export type WorkerEducationUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
     startMonth?: NullableStringFieldUpdateOperationsInput | string | null
@@ -37274,6 +37250,18 @@ export namespace Prisma {
     none?: WorkerAvailabilityWhereInput
   }
 
+  export type WorkerJobHistoryListRelationFilter = {
+    every?: WorkerJobHistoryWhereInput
+    some?: WorkerJobHistoryWhereInput
+    none?: WorkerJobHistoryWhereInput
+  }
+
+  export type WorkerEducationListRelationFilter = {
+    every?: WorkerEducationWhereInput
+    some?: WorkerEducationWhereInput
+    none?: WorkerEducationWhereInput
+  }
+
   export type WorkerExperienceListRelationFilter = {
     every?: WorkerExperienceWhereInput
     some?: WorkerExperienceWhereInput
@@ -37289,6 +37277,14 @@ export namespace Prisma {
   }
 
   export type WorkerAvailabilityOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerJobHistoryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerEducationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -37781,26 +37777,6 @@ export namespace Prisma {
     _max?: NestedEnumJobApplicationStatusFilter<$PrismaModel>
   }
 
-  export type WorkerJobHistoryListRelationFilter = {
-    every?: WorkerJobHistoryWhereInput
-    some?: WorkerJobHistoryWhereInput
-    none?: WorkerJobHistoryWhereInput
-  }
-
-  export type WorkerEducationListRelationFilter = {
-    every?: WorkerEducationWhereInput
-    some?: WorkerEducationWhereInput
-    none?: WorkerEducationWhereInput
-  }
-
-  export type WorkerJobHistoryOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type WorkerEducationOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
   export type WorkerAdditionalInfoCountOrderByAggregateInput = {
     id?: SortOrder
     workerProfileId?: SortOrder
@@ -37956,14 +37932,9 @@ export namespace Prisma {
     _max?: NestedEnumServiceRequestStatusFilter<$PrismaModel>
   }
 
-  export type WorkerAdditionalInfoScalarRelationFilter = {
-    is?: WorkerAdditionalInfoWhereInput
-    isNot?: WorkerAdditionalInfoWhereInput
-  }
-
   export type WorkerJobHistoryCountOrderByAggregateInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     jobTitle?: SortOrder
     company?: SortOrder
     startMonth?: SortOrder
@@ -37984,7 +37955,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryMaxOrderByAggregateInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     jobTitle?: SortOrder
     company?: SortOrder
     startMonth?: SortOrder
@@ -37999,7 +37970,7 @@ export namespace Prisma {
 
   export type WorkerJobHistoryMinOrderByAggregateInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     jobTitle?: SortOrder
     company?: SortOrder
     startMonth?: SortOrder
@@ -38020,7 +37991,7 @@ export namespace Prisma {
 
   export type WorkerEducationCountOrderByAggregateInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     institution?: SortOrder
     qualification?: SortOrder
     startMonth?: SortOrder
@@ -38041,7 +38012,7 @@ export namespace Prisma {
 
   export type WorkerEducationMaxOrderByAggregateInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     institution?: SortOrder
     qualification?: SortOrder
     startMonth?: SortOrder
@@ -38056,7 +38027,7 @@ export namespace Prisma {
 
   export type WorkerEducationMinOrderByAggregateInput = {
     id?: SortOrder
-    workerAdditionalInfoId?: SortOrder
+    workerProfileId?: SortOrder
     institution?: SortOrder
     qualification?: SortOrder
     startMonth?: SortOrder
@@ -38724,6 +38695,20 @@ export namespace Prisma {
     connect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
   }
 
+  export type WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput> | WorkerJobHistoryCreateWithoutWorkerProfileInput[] | WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput | WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerJobHistoryCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+  }
+
+  export type WorkerEducationCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerEducationCreateWithoutWorkerProfileInput, WorkerEducationUncheckedCreateWithoutWorkerProfileInput> | WorkerEducationCreateWithoutWorkerProfileInput[] | WorkerEducationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutWorkerProfileInput | WorkerEducationCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerEducationCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+  }
+
   export type WorkerExperienceCreateNestedManyWithoutWorkerProfileInput = {
     create?: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput> | WorkerExperienceCreateWithoutWorkerProfileInput[] | WorkerExperienceUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
@@ -38756,6 +38741,20 @@ export namespace Prisma {
     connectOrCreate?: WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput | WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput[]
     createMany?: WorkerAvailabilityCreateManyWorkerProfileInputEnvelope
     connect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+  }
+
+  export type WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput> | WorkerJobHistoryCreateWithoutWorkerProfileInput[] | WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput | WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerJobHistoryCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+  }
+
+  export type WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerEducationCreateWithoutWorkerProfileInput, WorkerEducationUncheckedCreateWithoutWorkerProfileInput> | WorkerEducationCreateWithoutWorkerProfileInput[] | WorkerEducationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutWorkerProfileInput | WorkerEducationCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerEducationCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
   }
 
   export type WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput = {
@@ -38838,6 +38837,34 @@ export namespace Prisma {
     deleteMany?: WorkerAvailabilityScalarWhereInput | WorkerAvailabilityScalarWhereInput[]
   }
 
+  export type WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput> | WorkerJobHistoryCreateWithoutWorkerProfileInput[] | WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput | WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerJobHistoryUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerJobHistoryUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerJobHistoryCreateManyWorkerProfileInputEnvelope
+    set?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    disconnect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    delete?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    update?: WorkerJobHistoryUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerJobHistoryUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerJobHistoryUpdateManyWithWhereWithoutWorkerProfileInput | WorkerJobHistoryUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+  }
+
+  export type WorkerEducationUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerEducationCreateWithoutWorkerProfileInput, WorkerEducationUncheckedCreateWithoutWorkerProfileInput> | WorkerEducationCreateWithoutWorkerProfileInput[] | WorkerEducationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutWorkerProfileInput | WorkerEducationCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerEducationUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerEducationUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerEducationCreateManyWorkerProfileInputEnvelope
+    set?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    disconnect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    delete?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    update?: WorkerEducationUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerEducationUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerEducationUpdateManyWithWhereWithoutWorkerProfileInput | WorkerEducationUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+  }
+
   export type WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput = {
     create?: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput> | WorkerExperienceCreateWithoutWorkerProfileInput[] | WorkerExperienceUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
@@ -38902,6 +38929,34 @@ export namespace Prisma {
     update?: WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput[]
     updateMany?: WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput | WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput[]
     deleteMany?: WorkerAvailabilityScalarWhereInput | WorkerAvailabilityScalarWhereInput[]
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput> | WorkerJobHistoryCreateWithoutWorkerProfileInput[] | WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput | WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerJobHistoryUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerJobHistoryUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerJobHistoryCreateManyWorkerProfileInputEnvelope
+    set?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    disconnect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    delete?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    update?: WorkerJobHistoryUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerJobHistoryUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerJobHistoryUpdateManyWithWhereWithoutWorkerProfileInput | WorkerJobHistoryUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+  }
+
+  export type WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerEducationCreateWithoutWorkerProfileInput, WorkerEducationUncheckedCreateWithoutWorkerProfileInput> | WorkerEducationCreateWithoutWorkerProfileInput[] | WorkerEducationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutWorkerProfileInput | WorkerEducationCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerEducationUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerEducationUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerEducationCreateManyWorkerProfileInputEnvelope
+    set?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    disconnect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    delete?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    update?: WorkerEducationUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerEducationUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerEducationUpdateManyWithWhereWithoutWorkerProfileInput | WorkerEducationUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
   }
 
   export type WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
@@ -39324,34 +39379,6 @@ export namespace Prisma {
     connect?: WorkerProfileWhereUniqueInput
   }
 
-  export type WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput = {
-    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
-    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
-    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-  }
-
-  export type WorkerEducationCreateNestedManyWithoutAdditionalInfoInput = {
-    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
-    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
-    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-  }
-
-  export type WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput = {
-    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
-    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
-    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-  }
-
-  export type WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput = {
-    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
-    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
-    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-  }
-
   export type WorkerAdditionalInfoUpdatelanguagesInput = {
     set?: string[]
     push?: string | string[]
@@ -39390,62 +39417,6 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutWorkerAdditionalInfoInput, WorkerProfileUpdateWithoutWorkerAdditionalInfoInput>, WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput>
   }
 
-  export type WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput = {
-    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
-    upsert?: WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
-    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
-    set?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    disconnect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    delete?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    update?: WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
-    updateMany?: WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput[]
-    deleteMany?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
-  }
-
-  export type WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput = {
-    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
-    upsert?: WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
-    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
-    set?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    disconnect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    delete?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    update?: WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
-    updateMany?: WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput[]
-    deleteMany?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
-  }
-
-  export type WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput = {
-    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
-    upsert?: WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
-    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
-    set?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    disconnect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    delete?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
-    update?: WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
-    updateMany?: WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput[]
-    deleteMany?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
-  }
-
-  export type WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput = {
-    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
-    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
-    upsert?: WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
-    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
-    set?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    disconnect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    delete?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
-    update?: WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
-    updateMany?: WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput[]
-    deleteMany?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
-  }
-
   export type ServiceRequestCreateselectedWorkersInput = {
     set: string[]
   }
@@ -39473,32 +39444,32 @@ export namespace Prisma {
     update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutServiceRequestsInput, ParticipantUpdateWithoutServiceRequestsInput>, ParticipantUncheckedUpdateWithoutServiceRequestsInput>
   }
 
-  export type WorkerAdditionalInfoCreateNestedOneWithoutJobHistoryEntriesInput = {
-    create?: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
-    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutJobHistoryEntriesInput
-    connect?: WorkerAdditionalInfoWhereUniqueInput
+  export type WorkerProfileCreateNestedOneWithoutJobHistoryEntriesInput = {
+    create?: XOR<WorkerProfileCreateWithoutJobHistoryEntriesInput, WorkerProfileUncheckedCreateWithoutJobHistoryEntriesInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutJobHistoryEntriesInput
+    connect?: WorkerProfileWhereUniqueInput
   }
 
-  export type WorkerAdditionalInfoUpdateOneRequiredWithoutJobHistoryEntriesNestedInput = {
-    create?: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
-    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutJobHistoryEntriesInput
-    upsert?: WorkerAdditionalInfoUpsertWithoutJobHistoryEntriesInput
-    connect?: WorkerAdditionalInfoWhereUniqueInput
-    update?: XOR<XOR<WorkerAdditionalInfoUpdateToOneWithWhereWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput>, WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput>
+  export type WorkerProfileUpdateOneRequiredWithoutJobHistoryEntriesNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutJobHistoryEntriesInput, WorkerProfileUncheckedCreateWithoutJobHistoryEntriesInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutJobHistoryEntriesInput
+    upsert?: WorkerProfileUpsertWithoutJobHistoryEntriesInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutJobHistoryEntriesInput, WorkerProfileUpdateWithoutJobHistoryEntriesInput>, WorkerProfileUncheckedUpdateWithoutJobHistoryEntriesInput>
   }
 
-  export type WorkerAdditionalInfoCreateNestedOneWithoutEducationEntriesInput = {
-    create?: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
-    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutEducationEntriesInput
-    connect?: WorkerAdditionalInfoWhereUniqueInput
+  export type WorkerProfileCreateNestedOneWithoutEducationEntriesInput = {
+    create?: XOR<WorkerProfileCreateWithoutEducationEntriesInput, WorkerProfileUncheckedCreateWithoutEducationEntriesInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutEducationEntriesInput
+    connect?: WorkerProfileWhereUniqueInput
   }
 
-  export type WorkerAdditionalInfoUpdateOneRequiredWithoutEducationEntriesNestedInput = {
-    create?: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
-    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutEducationEntriesInput
-    upsert?: WorkerAdditionalInfoUpsertWithoutEducationEntriesInput
-    connect?: WorkerAdditionalInfoWhereUniqueInput
-    update?: XOR<XOR<WorkerAdditionalInfoUpdateToOneWithWhereWithoutEducationEntriesInput, WorkerAdditionalInfoUpdateWithoutEducationEntriesInput>, WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput>
+  export type WorkerProfileUpdateOneRequiredWithoutEducationEntriesNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutEducationEntriesInput, WorkerProfileUncheckedCreateWithoutEducationEntriesInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutEducationEntriesInput
+    upsert?: WorkerProfileUpsertWithoutEducationEntriesInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutEducationEntriesInput, WorkerProfileUpdateWithoutEducationEntriesInput>, WorkerProfileUncheckedUpdateWithoutEducationEntriesInput>
   }
 
   export type WorkerProfileCreateNestedOneWithoutAvailabilityInput = {
@@ -40823,6 +40794,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -40862,6 +40835,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -41105,6 +41080,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -41144,6 +41121,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -41284,6 +41263,8 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -41323,6 +41304,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -41378,6 +41361,8 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -41417,6 +41402,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -41494,8 +41481,6 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput
-    educationEntries?: WorkerEducationCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoUncheckedCreateWithoutWorkerProfileInput = {
@@ -41518,8 +41503,6 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
-    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput
-    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoCreateOrConnectWithoutWorkerProfileInput = {
@@ -41638,6 +41621,82 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkerJobHistoryCreateWithoutWorkerProfileInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: string | null
+    startYear?: number | null
+    endMonth?: string | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: string | null
+    startYear?: number | null
+    endMonth?: string | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerJobHistoryWhereUniqueInput
+    create: XOR<WorkerJobHistoryCreateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerJobHistoryCreateManyWorkerProfileInputEnvelope = {
+    data: WorkerJobHistoryCreateManyWorkerProfileInput | WorkerJobHistoryCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkerEducationCreateWithoutWorkerProfileInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: string | null
+    startYear?: number | null
+    endMonth?: string | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationUncheckedCreateWithoutWorkerProfileInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: string | null
+    startYear?: number | null
+    endMonth?: string | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerEducationWhereUniqueInput
+    create: XOR<WorkerEducationCreateWithoutWorkerProfileInput, WorkerEducationUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerEducationCreateManyWorkerProfileInputEnvelope = {
+    data: WorkerEducationCreateManyWorkerProfileInput | WorkerEducationCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
   export type WorkerExperienceCreateWithoutWorkerProfileInput = {
     id?: string
     domain: $Enums.CareDomain
@@ -41745,8 +41804,6 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput
-    educationEntries?: WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type WorkerAdditionalInfoUncheckedUpdateWithoutWorkerProfileInput = {
@@ -41769,8 +41826,6 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput
-    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type UserUpsertWithoutWorkerProfileInput = {
@@ -41887,6 +41942,74 @@ export namespace Prisma {
     sortOrder?: IntFilter<"WorkerAvailability"> | number
     createdAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+  }
+
+  export type WorkerJobHistoryUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerJobHistoryWhereUniqueInput
+    update: XOR<WorkerJobHistoryUpdateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerJobHistoryCreateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerJobHistoryUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerJobHistoryWhereUniqueInput
+    data: XOR<WorkerJobHistoryUpdateWithoutWorkerProfileInput, WorkerJobHistoryUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerJobHistoryUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: WorkerJobHistoryScalarWhereInput
+    data: XOR<WorkerJobHistoryUpdateManyMutationInput, WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type WorkerJobHistoryScalarWhereInput = {
+    AND?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+    OR?: WorkerJobHistoryScalarWhereInput[]
+    NOT?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+    id?: StringFilter<"WorkerJobHistory"> | string
+    workerProfileId?: StringFilter<"WorkerJobHistory"> | string
+    jobTitle?: StringFilter<"WorkerJobHistory"> | string
+    company?: StringFilter<"WorkerJobHistory"> | string
+    startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
+    startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
+    endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
+    sortOrder?: IntFilter<"WorkerJobHistory"> | number
+    createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+  }
+
+  export type WorkerEducationUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerEducationWhereUniqueInput
+    update: XOR<WorkerEducationUpdateWithoutWorkerProfileInput, WorkerEducationUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerEducationCreateWithoutWorkerProfileInput, WorkerEducationUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerEducationUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerEducationWhereUniqueInput
+    data: XOR<WorkerEducationUpdateWithoutWorkerProfileInput, WorkerEducationUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerEducationUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: WorkerEducationScalarWhereInput
+    data: XOR<WorkerEducationUpdateManyMutationInput, WorkerEducationUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type WorkerEducationScalarWhereInput = {
+    AND?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+    OR?: WorkerEducationScalarWhereInput[]
+    NOT?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+    id?: StringFilter<"WorkerEducation"> | string
+    workerProfileId?: StringFilter<"WorkerEducation"> | string
+    institution?: StringFilter<"WorkerEducation"> | string
+    qualification?: StringFilter<"WorkerEducation"> | string
+    startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
+    startYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: StringNullableFilter<"WorkerEducation"> | string | null
+    endYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
+    sortOrder?: IntFilter<"WorkerEducation"> | number
+    createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
   }
 
   export type WorkerExperienceUpsertWithWhereUniqueWithoutWorkerProfileInput = {
@@ -42476,6 +42599,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -42515,6 +42640,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -42570,6 +42697,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -42609,6 +42738,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -42794,6 +42925,8 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -42833,88 +42966,14 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutWorkerAdditionalInfoInput = {
     where: WorkerProfileWhereUniqueInput
     create: XOR<WorkerProfileCreateWithoutWorkerAdditionalInfoInput, WorkerProfileUncheckedCreateWithoutWorkerAdditionalInfoInput>
-  }
-
-  export type WorkerJobHistoryCreateWithoutAdditionalInfoInput = {
-    id?: string
-    jobTitle: string
-    company: string
-    startMonth?: string | null
-    startYear?: number | null
-    endMonth?: string | null
-    endYear?: number | null
-    currentlyWorking?: boolean
-    sortOrder?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput = {
-    id?: string
-    jobTitle: string
-    company: string
-    startMonth?: string | null
-    startYear?: number | null
-    endMonth?: string | null
-    endYear?: number | null
-    currentlyWorking?: boolean
-    sortOrder?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput = {
-    where: WorkerJobHistoryWhereUniqueInput
-    create: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope = {
-    data: WorkerJobHistoryCreateManyAdditionalInfoInput | WorkerJobHistoryCreateManyAdditionalInfoInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type WorkerEducationCreateWithoutAdditionalInfoInput = {
-    id?: string
-    institution: string
-    qualification: string
-    startMonth?: string | null
-    startYear?: number | null
-    endMonth?: string | null
-    endYear?: number | null
-    currentlyStudying?: boolean
-    sortOrder?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type WorkerEducationUncheckedCreateWithoutAdditionalInfoInput = {
-    id?: string
-    institution: string
-    qualification: string
-    startMonth?: string | null
-    startYear?: number | null
-    endMonth?: string | null
-    endYear?: number | null
-    currentlyStudying?: boolean
-    sortOrder?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type WorkerEducationCreateOrConnectWithoutAdditionalInfoInput = {
-    where: WorkerEducationWhereUniqueInput
-    create: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerEducationCreateManyAdditionalInfoInputEnvelope = {
-    data: WorkerEducationCreateManyAdditionalInfoInput | WorkerEducationCreateManyAdditionalInfoInput[]
-    skipDuplicates?: boolean
   }
 
   export type WorkerProfileUpsertWithoutWorkerAdditionalInfoInput = {
@@ -42964,6 +43023,8 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -43003,75 +43064,9 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
-  }
-
-  export type WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput = {
-    where: WorkerJobHistoryWhereUniqueInput
-    update: XOR<WorkerJobHistoryUpdateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedUpdateWithoutAdditionalInfoInput>
-    create: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput = {
-    where: WorkerJobHistoryWhereUniqueInput
-    data: XOR<WorkerJobHistoryUpdateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedUpdateWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput = {
-    where: WorkerJobHistoryScalarWhereInput
-    data: XOR<WorkerJobHistoryUpdateManyMutationInput, WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerJobHistoryScalarWhereInput = {
-    AND?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
-    OR?: WorkerJobHistoryScalarWhereInput[]
-    NOT?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
-    id?: StringFilter<"WorkerJobHistory"> | string
-    workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
-    jobTitle?: StringFilter<"WorkerJobHistory"> | string
-    company?: StringFilter<"WorkerJobHistory"> | string
-    startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
-    startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
-    endMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
-    endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
-    currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
-    sortOrder?: IntFilter<"WorkerJobHistory"> | number
-    createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
-    updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
-  }
-
-  export type WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput = {
-    where: WorkerEducationWhereUniqueInput
-    update: XOR<WorkerEducationUpdateWithoutAdditionalInfoInput, WorkerEducationUncheckedUpdateWithoutAdditionalInfoInput>
-    create: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput = {
-    where: WorkerEducationWhereUniqueInput
-    data: XOR<WorkerEducationUpdateWithoutAdditionalInfoInput, WorkerEducationUncheckedUpdateWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput = {
-    where: WorkerEducationScalarWhereInput
-    data: XOR<WorkerEducationUpdateManyMutationInput, WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoInput>
-  }
-
-  export type WorkerEducationScalarWhereInput = {
-    AND?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
-    OR?: WorkerEducationScalarWhereInput[]
-    NOT?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
-    id?: StringFilter<"WorkerEducation"> | string
-    workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
-    institution?: StringFilter<"WorkerEducation"> | string
-    qualification?: StringFilter<"WorkerEducation"> | string
-    startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
-    startYear?: IntNullableFilter<"WorkerEducation"> | number | null
-    endMonth?: StringNullableFilter<"WorkerEducation"> | string | null
-    endYear?: IntNullableFilter<"WorkerEducation"> | number | null
-    currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
-    sortOrder?: IntFilter<"WorkerEducation"> | number
-    createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
-    updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
   }
 
   export type ParticipantCreateWithoutServiceRequestsInput = {
@@ -43162,228 +43157,364 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput = {
+  export type WorkerProfileCreateWithoutJobHistoryEntriesInput = {
     id?: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
-    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
-    lgbtqiaSupport?: boolean | null
-    nonSmoker?: boolean | null
-    petFriendly?: boolean | null
-    personality?: string | null
-    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
     createdAt?: Date | string
-    updatedAt?: Date | string
-    workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
-    educationEntries?: WorkerEducationCreateNestedManyWithoutAdditionalInfoInput
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
-  export type WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput = {
+  export type WorkerProfileUncheckedCreateWithoutJobHistoryEntriesInput = {
     id?: string
-    workerProfileId: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
-    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
-    lgbtqiaSupport?: boolean | null
-    nonSmoker?: boolean | null
-    petFriendly?: boolean | null
-    personality?: string | null
-    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
     createdAt?: Date | string
-    updatedAt?: Date | string
-    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
-  export type WorkerAdditionalInfoCreateOrConnectWithoutJobHistoryEntriesInput = {
-    where: WorkerAdditionalInfoWhereUniqueInput
-    create: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
+  export type WorkerProfileCreateOrConnectWithoutJobHistoryEntriesInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutJobHistoryEntriesInput, WorkerProfileUncheckedCreateWithoutJobHistoryEntriesInput>
   }
 
-  export type WorkerAdditionalInfoUpsertWithoutJobHistoryEntriesInput = {
-    update: XOR<WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput>
-    create: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
-    where?: WorkerAdditionalInfoWhereInput
+  export type WorkerProfileUpsertWithoutJobHistoryEntriesInput = {
+    update: XOR<WorkerProfileUpdateWithoutJobHistoryEntriesInput, WorkerProfileUncheckedUpdateWithoutJobHistoryEntriesInput>
+    create: XOR<WorkerProfileCreateWithoutJobHistoryEntriesInput, WorkerProfileUncheckedCreateWithoutJobHistoryEntriesInput>
+    where?: WorkerProfileWhereInput
   }
 
-  export type WorkerAdditionalInfoUpdateToOneWithWhereWithoutJobHistoryEntriesInput = {
-    where?: WorkerAdditionalInfoWhereInput
-    data: XOR<WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput>
+  export type WorkerProfileUpdateToOneWithWhereWithoutJobHistoryEntriesInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutJobHistoryEntriesInput, WorkerProfileUncheckedUpdateWithoutJobHistoryEntriesInput>
   }
 
-  export type WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput = {
+  export type WorkerProfileUpdateWithoutJobHistoryEntriesInput = {
     id?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
-    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
-    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
-    educationEntries?: WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
-  export type WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput = {
+  export type WorkerProfileUncheckedUpdateWithoutJobHistoryEntriesInput = {
     id?: StringFieldUpdateOperationsInput | string
-    workerProfileId?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
-    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
-    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
-  export type WorkerAdditionalInfoCreateWithoutEducationEntriesInput = {
+  export type WorkerProfileCreateWithoutEducationEntriesInput = {
     id?: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
-    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
-    lgbtqiaSupport?: boolean | null
-    nonSmoker?: boolean | null
-    petFriendly?: boolean | null
-    personality?: string | null
-    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
     createdAt?: Date | string
-    updatedAt?: Date | string
-    workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
-    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
-  export type WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput = {
+  export type WorkerProfileUncheckedCreateWithoutEducationEntriesInput = {
     id?: string
-    workerProfileId: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
-    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
-    lgbtqiaSupport?: boolean | null
-    nonSmoker?: boolean | null
-    petFriendly?: boolean | null
-    personality?: string | null
-    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
     createdAt?: Date | string
-    updatedAt?: Date | string
-    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
-  export type WorkerAdditionalInfoCreateOrConnectWithoutEducationEntriesInput = {
-    where: WorkerAdditionalInfoWhereUniqueInput
-    create: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
+  export type WorkerProfileCreateOrConnectWithoutEducationEntriesInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutEducationEntriesInput, WorkerProfileUncheckedCreateWithoutEducationEntriesInput>
   }
 
-  export type WorkerAdditionalInfoUpsertWithoutEducationEntriesInput = {
-    update: XOR<WorkerAdditionalInfoUpdateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput>
-    create: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
-    where?: WorkerAdditionalInfoWhereInput
+  export type WorkerProfileUpsertWithoutEducationEntriesInput = {
+    update: XOR<WorkerProfileUpdateWithoutEducationEntriesInput, WorkerProfileUncheckedUpdateWithoutEducationEntriesInput>
+    create: XOR<WorkerProfileCreateWithoutEducationEntriesInput, WorkerProfileUncheckedCreateWithoutEducationEntriesInput>
+    where?: WorkerProfileWhereInput
   }
 
-  export type WorkerAdditionalInfoUpdateToOneWithWhereWithoutEducationEntriesInput = {
-    where?: WorkerAdditionalInfoWhereInput
-    data: XOR<WorkerAdditionalInfoUpdateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput>
+  export type WorkerProfileUpdateToOneWithWhereWithoutEducationEntriesInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutEducationEntriesInput, WorkerProfileUncheckedUpdateWithoutEducationEntriesInput>
   }
 
-  export type WorkerAdditionalInfoUpdateWithoutEducationEntriesInput = {
+  export type WorkerProfileUpdateWithoutEducationEntriesInput = {
     id?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
-    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
-    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
-    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
-  export type WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput = {
+  export type WorkerProfileUncheckedUpdateWithoutEducationEntriesInput = {
     id?: StringFieldUpdateOperationsInput | string
-    workerProfileId?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
-    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
-    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
-    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
-    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
-    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
-    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
-    personality?: NullableStringFieldUpdateOperationsInput | string | null
-    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
-    bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileCreateWithoutAvailabilityInput = {
@@ -43422,6 +43553,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -43461,6 +43594,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
@@ -43516,6 +43651,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -43555,6 +43692,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
@@ -43595,6 +43734,8 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutCareExperienceInput = {
@@ -43634,6 +43775,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutCareExperienceInput = {
@@ -43689,6 +43832,8 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutCareExperienceInput = {
@@ -43728,6 +43873,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type ServiceRequestCreateManyParticipantInput = {
@@ -44019,6 +44166,34 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkerJobHistoryCreateManyWorkerProfileInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: string | null
+    startYear?: number | null
+    endMonth?: string | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationCreateManyWorkerProfileInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: string | null
+    startYear?: number | null
+    endMonth?: string | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type WorkerExperienceCreateManyWorkerProfileInput = {
     id?: string
     domain: $Enums.CareDomain
@@ -44155,6 +44330,90 @@ export namespace Prisma {
     dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
     startMinute?: IntFieldUpdateOperationsInput | number
     endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -44379,118 +44638,6 @@ export namespace Prisma {
     workerId?: StringFieldUpdateOperationsInput | string
     status?: EnumJobApplicationStatusFieldUpdateOperationsInput | $Enums.JobApplicationStatus
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type WorkerJobHistoryCreateManyAdditionalInfoInput = {
-    id?: string
-    jobTitle: string
-    company: string
-    startMonth?: string | null
-    startYear?: number | null
-    endMonth?: string | null
-    endYear?: number | null
-    currentlyWorking?: boolean
-    sortOrder?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type WorkerEducationCreateManyAdditionalInfoInput = {
-    id?: string
-    institution: string
-    qualification: string
-    startMonth?: string | null
-    startYear?: number | null
-    endMonth?: string | null
-    endYear?: number | null
-    currentlyStudying?: boolean
-    sortOrder?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type WorkerJobHistoryUpdateWithoutAdditionalInfoInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    jobTitle?: StringFieldUpdateOperationsInput | string
-    company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    endYear?: NullableIntFieldUpdateOperationsInput | number | null
-    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
-    sortOrder?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type WorkerJobHistoryUncheckedUpdateWithoutAdditionalInfoInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    jobTitle?: StringFieldUpdateOperationsInput | string
-    company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    endYear?: NullableIntFieldUpdateOperationsInput | number | null
-    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
-    sortOrder?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    jobTitle?: StringFieldUpdateOperationsInput | string
-    company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    endYear?: NullableIntFieldUpdateOperationsInput | number | null
-    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
-    sortOrder?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type WorkerEducationUpdateWithoutAdditionalInfoInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    institution?: StringFieldUpdateOperationsInput | string
-    qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    endYear?: NullableIntFieldUpdateOperationsInput | number | null
-    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
-    sortOrder?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type WorkerEducationUncheckedUpdateWithoutAdditionalInfoInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    institution?: StringFieldUpdateOperationsInput | string
-    qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    endYear?: NullableIntFieldUpdateOperationsInput | number | null
-    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
-    sortOrder?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    institution?: StringFieldUpdateOperationsInput | string
-    qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
-    endYear?: NullableIntFieldUpdateOperationsInput | number | null
-    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
-    sortOrder?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

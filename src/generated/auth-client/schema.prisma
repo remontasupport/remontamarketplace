@@ -241,9 +241,13 @@ model WorkerProfile {
   user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workerServices           WorkerService[]
 
-  // W1 — matching-relevant children key on the canonical worker id
-  availability   WorkerAvailability[]
-  careExperience WorkerExperience[]
+  // W1 — every promoted child keys on the canonical worker id
+  availability WorkerAvailability[]
+
+  jobHistoryEntries WorkerJobHistory[]
+
+  educationEntries WorkerEducation[]
+  careExperience   WorkerExperience[]
 
   @@index([city])
   @@index([isPublished])
@@ -441,10 +445,6 @@ model WorkerAdditionalInfo {
   updatedAt          DateTime      @updatedAt
   workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  // W1 — relations only; the Json columns above stay until W1 phase P7
-  jobHistoryEntries WorkerJobHistory[]
-  educationEntries  WorkerEducation[]
-
   @@index([workerProfileId])
   @@map("worker_additional_info")
 }
@@ -583,45 +583,45 @@ enum CareDomain {
 
 /// From jobHistory Json — 7 uniform keys.
 model WorkerJobHistory {
-  id                     String  @id @default(cuid())
-  workerAdditionalInfoId String
-  jobTitle               String
-  company                String
-  startMonth             String?
-  startYear              Int?
-  endMonth               String?
-  endYear                Int?
-  currentlyWorking       Boolean @default(false)
-  sortOrder              Int     @default(0) // preserves array order
+  id               String  @id @default(cuid())
+  workerProfileId  String
+  jobTitle         String
+  company          String
+  startMonth       String?
+  startYear        Int?
+  endMonth         String?
+  endYear          Int?
+  currentlyWorking Boolean @default(false)
+  sortOrder        Int     @default(0) // preserves array order
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  @@index([workerAdditionalInfoId])
+  @@index([workerProfileId])
   @@map("worker_job_history")
 }
 
 /// From education Json — 7 uniform keys.
 model WorkerEducation {
-  id                     String  @id @default(cuid())
-  workerAdditionalInfoId String
-  institution            String
-  qualification          String
-  startMonth             String?
-  startYear              Int?
-  endMonth               String?
-  endYear                Int?
-  currentlyStudying      Boolean @default(false)
-  sortOrder              Int     @default(0)
+  id                String  @id @default(cuid())
+  workerProfileId   String
+  institution       String
+  qualification     String
+  startMonth        String?
+  startYear         Int?
+  endMonth          String?
+  endYear           Int?
+  currentlyStudying Boolean @default(false)
+  sortOrder         Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  @@index([workerAdditionalInfoId])
+  @@index([workerProfileId])
   @@map("worker_education")
 }
 
