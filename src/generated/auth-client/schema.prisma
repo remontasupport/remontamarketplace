@@ -425,8 +425,6 @@ enum JobApplicationStatus {
 model WorkerAdditionalInfo {
   id                 String        @id(map: "worker_additional_info_new_pkey") @default(cuid())
   workerProfileId    String        @unique
-  jobHistory         Json?         @default("[]")
-  education          Json?         @default("[]")
   languages          String[]      @default([])
   culturalBackground String[]      @default([])
   religion           String[]      @default([])
@@ -438,9 +436,7 @@ model WorkerAdditionalInfo {
   personality        String?
   uniqueService      String[]      @default([])
   funFact            String?
-  availability       Json?         @default("{}")
   bankAccount        Json?
-  experience         Json?         @default("{}")
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)

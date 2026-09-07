@@ -70,8 +70,6 @@ export async function getWorkerAdditionalInfo(): Promise<ActionResponse> {
         workerAdditionalInfo: {
           select: {
             bankAccount: true,
-            jobHistory: true,
-            education: true,
             languages: true,
             culturalBackground: true,
             religion: true,

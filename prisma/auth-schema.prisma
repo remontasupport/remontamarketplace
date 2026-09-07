@@ -5,8 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("AUTH_DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("AUTH_DATABASE_URL")
   // Migrations must not run over the PgBouncer pooler. Queries use the pooled
   // url above; migrate and introspect use the direct endpoint below.
   directUrl = env("DIRECT_DATABASE_URL")
@@ -83,21 +83,21 @@ model CoordinatorProfile {
 }
 
 model Participant {
-  id                   String            @id @default(cuid())
+  id                   String       @id @default(cuid())
   userId               String?
   firstName            String
   lastName             String
   dateOfBirth          DateTime?
   location             String?
   gender               String?
-  conditions           String[]          @default([])
+  conditions           String[]     @default([])
   fundingType          FundingType?
   relationshipToClient String?
-  isSelfManaged        Boolean           @default(false)
+  isSelfManaged        Boolean      @default(false)
   servicesRequested    Json?
   additionalInfo       String?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
   serviceRequests ServiceRequest[]
 
@@ -126,18 +126,18 @@ model Session {
 
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model User {
-  id                   String               @id @default(cuid())
-  email                String               @unique
+  id                   String              @id @default(cuid())
+  email                String              @unique
   passwordHash         String
   role                 UserRole
-  status               AccountStatus        @default(ACTIVE)
-  resetPasswordToken   String?              @unique
+  status               AccountStatus       @default(ACTIVE)
+  resetPasswordToken   String?             @unique
   resetPasswordExpires DateTime?
-  failedLoginAttempts  Int                  @default(0)
+  failedLoginAttempts  Int                 @default(0)
   accountLockedUntil   DateTime?
   lastLoginAt          DateTime?
   lastLoginIp          String?
-  createdAt            DateTime             @default(now())
+  createdAt            DateTime            @default(now())
   updatedAt            DateTime
   accounts             Account[]
   auditLogs            AuditLog[]
@@ -242,12 +242,12 @@ model WorkerProfile {
   workerServices           WorkerService[]
 
   // W1 — every promoted child keys on the canonical worker id
-  availability             WorkerAvailability[]
+  availability WorkerAvailability[]
 
-  jobHistoryEntries        WorkerJobHistory[]
+  jobHistoryEntries WorkerJobHistory[]
 
-  educationEntries         WorkerEducation[]
-  careExperience           WorkerExperience[]
+  educationEntries WorkerEducation[]
+  careExperience   WorkerExperience[]
 
   @@index([city])
   @@index([isPublished])
@@ -358,36 +358,36 @@ model WorkerService {
 }
 
 model Job {
-  id             String    @id @default(cuid())
-  zohoId         String    @unique              // Zoho Lead ID — upsert key
+  id     String @id @default(cuid())
+  zohoId String @unique // Zoho Lead ID — upsert key
 
   // Lead Info
-  status         String                         // Lead_Status e.g. "Recruitment End"
-  firstName      String?                        // First_Name
-  lastName       String?                        // Last_Name
+  status    String // Lead_Status e.g. "Recruitment End"
+  firstName String? // First_Name
+  lastName  String? // Last_Name
 
   // Job Details
-  recruitmentTitle String?                      // Recruitment_Title (custom field)
-  service          String?                      // Service (custom field)
-  description      String?                      // Description
-  jobDescription   String?                      // Job_Description (custom field)
+  recruitmentTitle String? // Recruitment_Title (custom field)
+  service          String? // Service (custom field)
+  description      String? // Description
+  jobDescription   String? // Job_Description (custom field)
 
   // Location
-  city           String?                        // City
-  state          String?                        // State (QLD, NSW, etc.)
+  city  String? // City
+  state String? // State (QLD, NSW, etc.)
 
   // Dates
-  postedAt       DateTime?                      // Created_Time from Zoho
+  postedAt DateTime? // Created_Time from Zoho
 
   // Status
-  active         Boolean   @default(true)       // false = hidden from frontend
+  active Boolean @default(true) // false = hidden from frontend
 
   // System
-  lastSyncedAt   DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  applications   JobApplication[]
+  applications JobApplication[]
 
   @@index([active])
   @@index([active, postedAt])
@@ -403,7 +403,7 @@ model Job {
 model JobApplication {
   id        String               @id @default(cuid())
   jobId     String
-  workerId  String                              // references User.id
+  workerId  String // references User.id
   status    JobApplicationStatus @default(PENDING)
   appliedAt DateTime             @default(now())
   updatedAt DateTime             @default(now()) @updatedAt
@@ -425,8 +425,6 @@ enum JobApplicationStatus {
 model WorkerAdditionalInfo {
   id                 String        @id(map: "worker_additional_info_new_pkey") @default(cuid())
   workerProfileId    String        @unique
-  jobHistory         Json?         @default("[]")
-  education          Json?         @default("[]")
   languages          String[]      @default([])
   culturalBackground String[]      @default([])
   religion           String[]      @default([])
@@ -438,12 +436,12 @@ model WorkerAdditionalInfo {
   personality        String?
   uniqueService      String[]      @default([])
   funFact            String?
-  availability       Json?         @default("{}")
   bankAccount        Json?
-  experience         Json?         @default("{}")
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
-  workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)  @@index([workerProfileId])
+  workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
   @@map("worker_additional_info")
 }
 
@@ -518,20 +516,19 @@ enum FundingType {
   OTHER
 }
 
-
 model ServiceRequest {
-  id             String               @id @default(cuid())
-  requesterId    String
-  participantId  String
-  services       Json
-  details        Json
-  location       String
-  zohoRecordId   String?              @unique
-  assignedWorker Json?
+  id              String               @id @default(cuid())
+  requesterId     String
+  participantId   String
+  services        Json
+  details         Json
+  location        String
+  zohoRecordId    String?              @unique
+  assignedWorker  Json?
   selectedWorkers String[]
-  status         ServiceRequestStatus @default(PENDING)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  status          ServiceRequestStatus @default(PENDING)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
@@ -582,16 +579,16 @@ enum CareDomain {
 
 /// From jobHistory Json — 7 uniform keys.
 model WorkerJobHistory {
-  id                     String  @id @default(cuid())
-  workerProfileId        String
-  jobTitle               String
-  company                String
-  startMonth             String?
-  startYear              Int?
-  endMonth               String?
-  endYear                Int?
-  currentlyWorking       Boolean @default(false)
-  sortOrder              Int     @default(0) // preserves array order
+  id               String  @id @default(cuid())
+  workerProfileId  String
+  jobTitle         String
+  company          String
+  startMonth       String?
+  startYear        Int?
+  endMonth         String?
+  endYear          Int?
+  currentlyWorking Boolean @default(false)
+  sortOrder        Int     @default(0) // preserves array order
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -604,16 +601,16 @@ model WorkerJobHistory {
 
 /// From education Json — 7 uniform keys.
 model WorkerEducation {
-  id                     String  @id @default(cuid())
-  workerProfileId        String
-  institution            String
-  qualification          String
-  startMonth             String?
-  startYear              Int?
-  endMonth               String?
-  endYear                Int?
-  currentlyStudying      Boolean @default(false)
-  sortOrder              Int     @default(0)
+  id                String  @id @default(cuid())
+  workerProfileId   String
+  institution       String
+  qualification     String
+  startMonth        String?
+  startYear         Int?
+  endMonth          String?
+  endYear           Int?
+  currentlyStudying Boolean @default(false)
+  sortOrder         Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

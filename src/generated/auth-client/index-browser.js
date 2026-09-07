@@ -362,8 +362,6 @@ exports.Prisma.JobApplicationScalarFieldEnum = {
 exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   id: 'id',
   workerProfileId: 'workerProfileId',
-  jobHistory: 'jobHistory',
-  education: 'education',
   languages: 'languages',
   culturalBackground: 'culturalBackground',
   religion: 'religion',
@@ -375,9 +373,7 @@ exports.Prisma.WorkerAdditionalInfoScalarFieldEnum = {
   personality: 'personality',
   uniqueService: 'uniqueService',
   funFact: 'funFact',
-  availability: 'availability',
   bankAccount: 'bankAccount',
-  experience: 'experience',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

@@ -23,7 +23,8 @@ const path = require('path')
 const { Client } = require('pg')
 
 const ROOT = path.resolve(__dirname, '..', '..')
-const SQL_FILE = path.join(__dirname, 'ad17-archive.sql')
+// Resolved lazily: argOf is declared below.
+const sqlFile = () => path.join(__dirname, argOf('--sql-file', 'ad17-archive.sql'))
 
 const argOf = (flag, dflt) => {
   const i = process.argv.indexOf(flag)
@@ -80,7 +81,7 @@ function parseStatements(sql) {
 // Each archived column must match its source count exactly. A shortfall means
 // rows were silently missed, which is the one failure this script exists to
 // prevent — so it rolls back rather than reporting a partial archive.
-const PAIRS = [
+const PAIRS_AD17 = [
   ['wp_unique_service', 'a_wp_unique_service', 's_wp_unique_service'],
   ['wp_fun_fact', 'a_wp_fun_fact', 's_wp_fun_fact'],
   ['wp_hobbies', 'a_wp_hobbies', 's_wp_hobbies'],
@@ -89,19 +90,29 @@ const PAIRS = [
   ['wai_unique_service', 'a_wai_unique_service', 's_wai_unique_service'],
 ]
 
+const PAIRS_W1 = [
+  ['rows', 'archived_rows', 'source_rows'],
+  ['jobHistory', 'a_job_history', 's_job_history'],
+  ['education', 'a_education', 's_education'],
+  ['availability', 'a_availability', 's_availability'],
+  ['experience', 'a_experience', 's_experience'],
+]
+
+const PAIRS = process.argv.join(' ').includes('w1-json-cutover') ? PAIRS_W1 : PAIRS_AD17
+
 async function main() {
   loadEnv()
   const confirmed = process.argv.includes('--confirm')
   const urlVar = argOf('--url-var', 'DIRECT_DATABASE_URL')
-  const statements = parseStatements(fs.readFileSync(SQL_FILE, 'utf8'))
+  const statements = parseStatements(fs.readFileSync(sqlFile(), 'utf8'))
 
   if (!confirmed) {
     console.log('PLAN ONLY — nothing will be written. Add --confirm to execute.\n')
     console.log(`Target: ${urlVar}`)
     console.log(`Statements: ${statements.length}\n`)
     for (const s of statements) console.log('  - ' + s.label)
-    console.log('\nAll additive: creates the `archive` schema and `archive.worker_ad17`,')
-    console.log('copies the six AD-17 columns in, verifies the counts match the source.')
+    console.log('\nAll additive: creates the `archive` schema and its snapshot table,')
+    console.log('copies the columns in, verifies the counts match the source.')
     console.log('No source row is modified or deleted.')
     return 0
   }
@@ -153,7 +164,10 @@ async function main() {
     if (!ok) bad++
     console.log(`  ${ok ? 'ok  ' : 'MISS'} ${name.padEnd(20)} archived ${String(a).padStart(5)}  source ${String(s).padStart(5)}`)
   }
-  console.log(`\n  workers archived: ${verification.archived_workers}`)
+  // Only the AD-17 archive reports this; the W1 snapshot counts rows instead.
+  if (verification.archived_workers !== undefined) {
+    console.log(`\n  workers archived: ${verification.archived_workers}`)
+  }
 
   if (bad) {
     await client.query('ROLLBACK')
@@ -164,7 +178,7 @@ async function main() {
 
   await client.query('COMMIT')
   await client.end()
-  console.log('\nCommitted. archive.worker_ad17 holds every AD-17 value.')
+  console.log('\nCommitted. Every value is accounted for in the archive.')
   console.log('Re-run db:migrate:diff to confirm Prisma still reports no drift.')
   return 0
 }

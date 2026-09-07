@@ -24329,8 +24329,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoCountAggregateOutputType = {
     id: number
     workerProfileId: number
-    jobHistory: number
-    education: number
     languages: number
     culturalBackground: number
     religion: number
@@ -24342,9 +24340,7 @@ export namespace Prisma {
     personality: number
     uniqueService: number
     funFact: number
-    availability: number
     bankAccount: number
-    experience: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -24378,8 +24374,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoCountAggregateInputType = {
     id?: true
     workerProfileId?: true
-    jobHistory?: true
-    education?: true
     languages?: true
     culturalBackground?: true
     religion?: true
@@ -24391,9 +24385,7 @@ export namespace Prisma {
     personality?: true
     uniqueService?: true
     funFact?: true
-    availability?: true
     bankAccount?: true
-    experience?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -24474,8 +24466,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoGroupByOutputType = {
     id: string
     workerProfileId: string
-    jobHistory: JsonValue | null
-    education: JsonValue | null
     languages: string[]
     culturalBackground: string[]
     religion: string[]
@@ -24487,9 +24477,7 @@ export namespace Prisma {
     personality: string | null
     uniqueService: string[]
     funFact: string | null
-    availability: JsonValue | null
     bankAccount: JsonValue | null
-    experience: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: WorkerAdditionalInfoCountAggregateOutputType | null
@@ -24514,8 +24502,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     workerProfileId?: boolean
-    jobHistory?: boolean
-    education?: boolean
     languages?: boolean
     culturalBackground?: boolean
     religion?: boolean
@@ -24527,9 +24513,7 @@ export namespace Prisma {
     personality?: boolean
     uniqueService?: boolean
     funFact?: boolean
-    availability?: boolean
     bankAccount?: boolean
-    experience?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -24538,8 +24522,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     workerProfileId?: boolean
-    jobHistory?: boolean
-    education?: boolean
     languages?: boolean
     culturalBackground?: boolean
     religion?: boolean
@@ -24551,9 +24533,7 @@ export namespace Prisma {
     personality?: boolean
     uniqueService?: boolean
     funFact?: boolean
-    availability?: boolean
     bankAccount?: boolean
-    experience?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -24562,8 +24542,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     workerProfileId?: boolean
-    jobHistory?: boolean
-    education?: boolean
     languages?: boolean
     culturalBackground?: boolean
     religion?: boolean
@@ -24575,9 +24553,7 @@ export namespace Prisma {
     personality?: boolean
     uniqueService?: boolean
     funFact?: boolean
-    availability?: boolean
     bankAccount?: boolean
-    experience?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -24586,8 +24562,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoSelectScalar = {
     id?: boolean
     workerProfileId?: boolean
-    jobHistory?: boolean
-    education?: boolean
     languages?: boolean
     culturalBackground?: boolean
     religion?: boolean
@@ -24599,14 +24573,12 @@ export namespace Prisma {
     personality?: boolean
     uniqueService?: boolean
     funFact?: boolean
-    availability?: boolean
     bankAccount?: boolean
-    experience?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkerAdditionalInfoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "jobHistory" | "education" | "languages" | "culturalBackground" | "religion" | "interests" | "workPreferences" | "lgbtqiaSupport" | "nonSmoker" | "petFriendly" | "personality" | "uniqueService" | "funFact" | "availability" | "bankAccount" | "experience" | "createdAt" | "updatedAt", ExtArgs["result"]["workerAdditionalInfo"]>
+  export type WorkerAdditionalInfoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "languages" | "culturalBackground" | "religion" | "interests" | "workPreferences" | "lgbtqiaSupport" | "nonSmoker" | "petFriendly" | "personality" | "uniqueService" | "funFact" | "bankAccount" | "createdAt" | "updatedAt", ExtArgs["result"]["workerAdditionalInfo"]>
   export type WorkerAdditionalInfoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
@@ -24625,8 +24597,6 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       workerProfileId: string
-      jobHistory: Prisma.JsonValue | null
-      education: Prisma.JsonValue | null
       languages: string[]
       culturalBackground: string[]
       religion: string[]
@@ -24638,9 +24608,7 @@ export namespace Prisma {
       personality: string | null
       uniqueService: string[]
       funFact: string | null
-      availability: Prisma.JsonValue | null
       bankAccount: Prisma.JsonValue | null
-      experience: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workerAdditionalInfo"]>
@@ -25069,8 +25037,6 @@ export namespace Prisma {
   interface WorkerAdditionalInfoFieldRefs {
     readonly id: FieldRef<"WorkerAdditionalInfo", 'String'>
     readonly workerProfileId: FieldRef<"WorkerAdditionalInfo", 'String'>
-    readonly jobHistory: FieldRef<"WorkerAdditionalInfo", 'Json'>
-    readonly education: FieldRef<"WorkerAdditionalInfo", 'Json'>
     readonly languages: FieldRef<"WorkerAdditionalInfo", 'String[]'>
     readonly culturalBackground: FieldRef<"WorkerAdditionalInfo", 'String[]'>
     readonly religion: FieldRef<"WorkerAdditionalInfo", 'String[]'>
@@ -25082,9 +25048,7 @@ export namespace Prisma {
     readonly personality: FieldRef<"WorkerAdditionalInfo", 'String'>
     readonly uniqueService: FieldRef<"WorkerAdditionalInfo", 'String[]'>
     readonly funFact: FieldRef<"WorkerAdditionalInfo", 'String'>
-    readonly availability: FieldRef<"WorkerAdditionalInfo", 'Json'>
     readonly bankAccount: FieldRef<"WorkerAdditionalInfo", 'Json'>
-    readonly experience: FieldRef<"WorkerAdditionalInfo", 'Json'>
     readonly createdAt: FieldRef<"WorkerAdditionalInfo", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkerAdditionalInfo", 'DateTime'>
   }
@@ -31579,8 +31543,6 @@ export namespace Prisma {
   export const WorkerAdditionalInfoScalarFieldEnum: {
     id: 'id',
     workerProfileId: 'workerProfileId',
-    jobHistory: 'jobHistory',
-    education: 'education',
     languages: 'languages',
     culturalBackground: 'culturalBackground',
     religion: 'religion',
@@ -31592,9 +31554,7 @@ export namespace Prisma {
     personality: 'personality',
     uniqueService: 'uniqueService',
     funFact: 'funFact',
-    availability: 'availability',
     bankAccount: 'bankAccount',
-    experience: 'experience',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -33491,8 +33451,6 @@ export namespace Prisma {
     NOT?: WorkerAdditionalInfoWhereInput | WorkerAdditionalInfoWhereInput[]
     id?: StringFilter<"WorkerAdditionalInfo"> | string
     workerProfileId?: StringFilter<"WorkerAdditionalInfo"> | string
-    jobHistory?: JsonNullableFilter<"WorkerAdditionalInfo">
-    education?: JsonNullableFilter<"WorkerAdditionalInfo">
     languages?: StringNullableListFilter<"WorkerAdditionalInfo">
     culturalBackground?: StringNullableListFilter<"WorkerAdditionalInfo">
     religion?: StringNullableListFilter<"WorkerAdditionalInfo">
@@ -33504,9 +33462,7 @@ export namespace Prisma {
     personality?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
     uniqueService?: StringNullableListFilter<"WorkerAdditionalInfo">
     funFact?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
-    availability?: JsonNullableFilter<"WorkerAdditionalInfo">
     bankAccount?: JsonNullableFilter<"WorkerAdditionalInfo">
-    experience?: JsonNullableFilter<"WorkerAdditionalInfo">
     createdAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
@@ -33515,8 +33471,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoOrderByWithRelationInput = {
     id?: SortOrder
     workerProfileId?: SortOrder
-    jobHistory?: SortOrderInput | SortOrder
-    education?: SortOrderInput | SortOrder
     languages?: SortOrder
     culturalBackground?: SortOrder
     religion?: SortOrder
@@ -33528,9 +33482,7 @@ export namespace Prisma {
     personality?: SortOrderInput | SortOrder
     uniqueService?: SortOrder
     funFact?: SortOrderInput | SortOrder
-    availability?: SortOrderInput | SortOrder
     bankAccount?: SortOrderInput | SortOrder
-    experience?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     workerProfile?: WorkerProfileOrderByWithRelationInput
@@ -33542,8 +33494,6 @@ export namespace Prisma {
     AND?: WorkerAdditionalInfoWhereInput | WorkerAdditionalInfoWhereInput[]
     OR?: WorkerAdditionalInfoWhereInput[]
     NOT?: WorkerAdditionalInfoWhereInput | WorkerAdditionalInfoWhereInput[]
-    jobHistory?: JsonNullableFilter<"WorkerAdditionalInfo">
-    education?: JsonNullableFilter<"WorkerAdditionalInfo">
     languages?: StringNullableListFilter<"WorkerAdditionalInfo">
     culturalBackground?: StringNullableListFilter<"WorkerAdditionalInfo">
     religion?: StringNullableListFilter<"WorkerAdditionalInfo">
@@ -33555,9 +33505,7 @@ export namespace Prisma {
     personality?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
     uniqueService?: StringNullableListFilter<"WorkerAdditionalInfo">
     funFact?: StringNullableFilter<"WorkerAdditionalInfo"> | string | null
-    availability?: JsonNullableFilter<"WorkerAdditionalInfo">
     bankAccount?: JsonNullableFilter<"WorkerAdditionalInfo">
-    experience?: JsonNullableFilter<"WorkerAdditionalInfo">
     createdAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
@@ -33566,8 +33514,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoOrderByWithAggregationInput = {
     id?: SortOrder
     workerProfileId?: SortOrder
-    jobHistory?: SortOrderInput | SortOrder
-    education?: SortOrderInput | SortOrder
     languages?: SortOrder
     culturalBackground?: SortOrder
     religion?: SortOrder
@@ -33579,9 +33525,7 @@ export namespace Prisma {
     personality?: SortOrderInput | SortOrder
     uniqueService?: SortOrder
     funFact?: SortOrderInput | SortOrder
-    availability?: SortOrderInput | SortOrder
     bankAccount?: SortOrderInput | SortOrder
-    experience?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkerAdditionalInfoCountOrderByAggregateInput
@@ -33595,8 +33539,6 @@ export namespace Prisma {
     NOT?: WorkerAdditionalInfoScalarWhereWithAggregatesInput | WorkerAdditionalInfoScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"WorkerAdditionalInfo"> | string
     workerProfileId?: StringWithAggregatesFilter<"WorkerAdditionalInfo"> | string
-    jobHistory?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
-    education?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
     languages?: StringNullableListFilter<"WorkerAdditionalInfo">
     culturalBackground?: StringNullableListFilter<"WorkerAdditionalInfo">
     religion?: StringNullableListFilter<"WorkerAdditionalInfo">
@@ -33608,9 +33550,7 @@ export namespace Prisma {
     personality?: StringNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | string | null
     uniqueService?: StringNullableListFilter<"WorkerAdditionalInfo">
     funFact?: StringNullableWithAggregatesFilter<"WorkerAdditionalInfo"> | string | null
-    availability?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
     bankAccount?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
-    experience?: JsonNullableWithAggregatesFilter<"WorkerAdditionalInfo">
     createdAt?: DateTimeWithAggregatesFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkerAdditionalInfo"> | Date | string
   }
@@ -35780,8 +35720,6 @@ export namespace Prisma {
 
   export type WorkerAdditionalInfoCreateInput = {
     id?: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoCreatereligionInput | string[]
@@ -35793,9 +35731,7 @@ export namespace Prisma {
     personality?: string | null
     uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
@@ -35804,8 +35740,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoUncheckedCreateInput = {
     id?: string
     workerProfileId: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoCreatereligionInput | string[]
@@ -35817,17 +35751,13 @@ export namespace Prisma {
     personality?: string | null
     uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type WorkerAdditionalInfoUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
@@ -35839,9 +35769,7 @@ export namespace Prisma {
     personality?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
@@ -35850,8 +35778,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     workerProfileId?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
@@ -35863,9 +35789,7 @@ export namespace Prisma {
     personality?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -35873,8 +35797,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoCreateManyInput = {
     id?: string
     workerProfileId: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoCreatereligionInput | string[]
@@ -35886,17 +35808,13 @@ export namespace Prisma {
     personality?: string | null
     uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type WorkerAdditionalInfoUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
@@ -35908,9 +35826,7 @@ export namespace Prisma {
     personality?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -35918,8 +35834,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     workerProfileId?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
@@ -35931,9 +35845,7 @@ export namespace Prisma {
     personality?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -37780,8 +37692,6 @@ export namespace Prisma {
   export type WorkerAdditionalInfoCountOrderByAggregateInput = {
     id?: SortOrder
     workerProfileId?: SortOrder
-    jobHistory?: SortOrder
-    education?: SortOrder
     languages?: SortOrder
     culturalBackground?: SortOrder
     religion?: SortOrder
@@ -37793,9 +37703,7 @@ export namespace Prisma {
     personality?: SortOrder
     uniqueService?: SortOrder
     funFact?: SortOrder
-    availability?: SortOrder
     bankAccount?: SortOrder
-    experience?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -41463,8 +41371,6 @@ export namespace Prisma {
 
   export type WorkerAdditionalInfoCreateWithoutWorkerProfileInput = {
     id?: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoCreatereligionInput | string[]
@@ -41476,17 +41382,13 @@ export namespace Prisma {
     personality?: string | null
     uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type WorkerAdditionalInfoUncheckedCreateWithoutWorkerProfileInput = {
     id?: string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoCreatereligionInput | string[]
@@ -41498,9 +41400,7 @@ export namespace Prisma {
     personality?: string | null
     uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
     funFact?: string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -41786,8 +41686,6 @@ export namespace Prisma {
 
   export type WorkerAdditionalInfoUpdateWithoutWorkerProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
@@ -41799,17 +41697,13 @@ export namespace Prisma {
     personality?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WorkerAdditionalInfoUncheckedUpdateWithoutWorkerProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
-    jobHistory?: NullableJsonNullValueInput | InputJsonValue
-    education?: NullableJsonNullValueInput | InputJsonValue
     languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
     culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
     religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
@@ -41821,9 +41715,7 @@ export namespace Prisma {
     personality?: NullableStringFieldUpdateOperationsInput | string | null
     uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
     funFact?: NullableStringFieldUpdateOperationsInput | string | null
-    availability?: NullableJsonNullValueInput | InputJsonValue
     bankAccount?: NullableJsonNullValueInput | InputJsonValue
-    experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
