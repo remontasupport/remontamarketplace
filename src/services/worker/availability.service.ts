@@ -5,7 +5,6 @@ import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import { rebuildAvailability, safeRebuild, W1_TX, fromMinutes } from "@/lib/w1/promote";
-import { readsFromTables, announceSource } from "@/lib/w1/flags";
 
 /**
  * Backend Service: Worker Availability Management
@@ -71,57 +70,30 @@ export async function getWorkerAvailability(): Promise<ActionResponse<Availabili
       };
     }
 
-    // W1 P5 — read switch. Both branches return the same flat array of
-    // { dayOfWeek, startTime, endTime }. The UI groups by day itself, so order
-    // across days is irrelevant, but slot order within a day is preserved via
-    // sortOrder. dayOfWeek must stay uppercase: the UI does
-    // charAt(0) + slice(1).toLowerCase() to render it.
-    const fromTables = readsFromTables("availability");
-    announceSource("availability", fromTables);
-
-    if (fromTables) {
-      const rows = await authPrisma.workerAvailability.findMany({
-        where: { workerProfileId: workerProfile.id },
-        // Postgres orders an enum by its declaration order, so this is
-        // MONDAY..SUNDAY rather than alphabetical.
-        orderBy: [{ dayOfWeek: "asc" }, { sortOrder: "asc" }, { startMinute: "asc" }],
-      });
-
-      return {
-        success: true,
-        data: rows.map((row) => ({
-          dayOfWeek: row.dayOfWeek as DayOfWeek,
-          // Zero-padded: the UI parses this as dayjs('2000-01-01T' + value).
-          startTime: fromMinutes(row.startMinute),
-          endTime: fromMinutes(row.endMinute),
-        })),
-      };
-    }
-
-    // Get availability from JSON field
-    const availabilityJSON = (workerProfile.workerAdditionalInfo?.availability || {}) as AvailabilityJSON;
-
-    // Convert JSON to array format for UI compatibility
-    const formattedData: AvailabilityData[] = [];
-
-    for (const [day, timeSlots] of Object.entries(availabilityJSON)) {
-      // Handle both single time slot and array of time slots
-      const slotsArray = Array.isArray(timeSlots) ? timeSlots : [timeSlots];
-
-      slotsArray.forEach((timeSlot) => {
-        if (timeSlot && timeSlot.startTime && timeSlot.endTime) {
-          formattedData.push({
-            dayOfWeek: day as DayOfWeek,
-            startTime: timeSlot.startTime,
-            endTime: timeSlot.endTime,
-          });
-        }
-      });
-    }
+    // W1 P5 — reads come from worker_availability.
+    //
+    // Returns a flat array of { dayOfWeek, startTime, endTime }. The UI groups
+    // by day itself, so order across days is irrelevant, but slot order within
+    // a day is preserved via sortOrder. dayOfWeek must stay UPPERCASE: the UI
+    // renders it with charAt(0) + slice(1).toLowerCase().
+    //
+    // The Json column is still written by the dual-write below and remains the
+    // fallback: rolling the deployment back restores the Json path.
+    const rows = await authPrisma.workerAvailability.findMany({
+      where: { workerProfileId: workerProfile.id },
+      // Postgres orders an enum by its declaration order, so this is
+      // MONDAY..SUNDAY rather than alphabetical.
+      orderBy: [{ dayOfWeek: "asc" }, { sortOrder: "asc" }, { startMinute: "asc" }],
+    });
 
     return {
       success: true,
-      data: formattedData,
+      data: rows.map((row) => ({
+        dayOfWeek: row.dayOfWeek as DayOfWeek,
+        // Zero-padded: the UI parses this as dayjs('2000-01-01T' + value).
+        startTime: fromMinutes(row.startMinute),
+        endTime: fromMinutes(row.endMinute),
+      })),
     };
   } catch (error: any) {
     console.error("Error fetching worker availability:", error);
@@ -227,10 +199,10 @@ export async function saveWorkerAvailability(
     // write is the save and must not be held hostage to the derived copy. Its
     // own transaction keeps the delete and insert atomic. Remove at phase P7.
     //
-    // Once W1_READ_TABLES includes "availability", a failed rebuild means the
-    // worker sees "saved successfully" and then their previous hours. Still not
-    // data loss — Json stays authoritative and the reconcile repairs it — but
-    // watch for `[w1:availability] rebuild FAILED`.
+    // Reads now come from this table, so a failed rebuild means the worker sees
+    // "saved successfully" and then their previous hours. Not data loss — Json
+    // stays authoritative and the reconcile repairs it — but watch the logs for
+    // `[w1:availability] rebuild FAILED`.
     await safeRebuild("availability", workerProfile.id, () =>
       authPrisma.$transaction(
         (tx) => rebuildAvailability(tx, workerProfile.id, availabilityJSON),

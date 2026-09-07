@@ -5,7 +5,6 @@ import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import { rebuildJobHistory, rebuildEducation, safeRebuild, W1_TX } from "@/lib/w1/promote";
-import { readsFromTables, announceSource } from "@/lib/w1/flags";
 import {
   updateWorkerBankAccountSchema,
   type UpdateWorkerBankAccountData,
@@ -108,9 +107,7 @@ export async function getWorkerAdditionalInfo(): Promise<ActionResponse> {
     // become "" to match the Json shape exactly rather than relying on the
     // UI's fallback.
     const info = workerProfile.workerAdditionalInfo;
-    if (info && readsFromTables("jobHistory")) {
-      announceSource("jobHistory", true);
-
+    if (info) {
       // Filtered through the relation rather than by workerAdditionalInfoId,
       // because the select above deliberately does not fetch that row's id —
       // adding it would change the payload this action returns.
@@ -152,7 +149,6 @@ export async function getWorkerAdditionalInfo(): Promise<ActionResponse> {
         },
       };
     }
-    announceSource("jobHistory", false);
 
     return {
       success: true,
