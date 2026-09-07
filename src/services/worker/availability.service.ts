@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
+import { rebuildAvailability, safeRebuild, W1_TX } from "@/lib/w1/promote";
 
 /**
  * Backend Service: Worker Availability Management
@@ -23,7 +24,7 @@ export type ActionResponse<T = any> = {
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
 // Time slot type
-export interface TimeSlot {
+export type TimeSlot = {
   startTime: string; // Format: "HH:mm"
   endTime: string;   // Format: "HH:mm"
 }
@@ -180,7 +181,7 @@ export async function saveWorkerAvailability(
       availabilityJSON[day as DayOfWeek] = slots.length === 1 ? slots[0] : slots;
     });
 
-    // Upsert to WorkerAdditionalInfo
+    // The Json write is the save. It must succeed on its own terms.
     await authPrisma.workerAdditionalInfo.upsert({
       where: {
         workerProfileId: workerProfile.id,
@@ -193,6 +194,17 @@ export async function saveWorkerAvailability(
         availability: availabilityJSON,
       },
     });
+
+    // W1 dual-write. Deliberately AFTER the save and unable to fail it: nothing
+    // reads worker_availability yet, so a stale derived copy costs nothing and
+    // the reconcile repairs it. Its own transaction keeps the delete and insert
+    // atomic. Remove entirely at W1 phase P7.
+    await safeRebuild("availability", workerProfile.id, () =>
+      authPrisma.$transaction(
+        (tx) => rebuildAvailability(tx, workerProfile.id, availabilityJSON),
+        W1_TX,
+      ),
+    );
 
     // Revalidate paths
     revalidatePath("/dashboard/worker/profile-building");
@@ -253,7 +265,6 @@ export async function deleteWorkerAvailability(
       delete updatedAvailability[day];
     });
 
-    // Update in database
     if (workerProfile.workerAdditionalInfo) {
       await authPrisma.workerAdditionalInfo.update({
         where: {
@@ -272,6 +283,14 @@ export async function deleteWorkerAvailability(
         },
       });
     }
+
+    // W1 dual-write, as above — after the save, unable to fail it.
+    await safeRebuild("availability", workerProfile.id, () =>
+      authPrisma.$transaction(
+        (tx) => rebuildAvailability(tx, workerProfile.id, updatedAvailability),
+        W1_TX,
+      ),
+    );
 
     // Revalidate paths
     revalidatePath("/dashboard/worker/profile-building");

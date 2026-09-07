@@ -397,6 +397,60 @@ exports.Prisma.ServiceRequestScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkerJobHistoryScalarFieldEnum = {
+  id: 'id',
+  workerAdditionalInfoId: 'workerAdditionalInfoId',
+  jobTitle: 'jobTitle',
+  company: 'company',
+  startMonth: 'startMonth',
+  startYear: 'startYear',
+  endMonth: 'endMonth',
+  endYear: 'endYear',
+  currentlyWorking: 'currentlyWorking',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkerEducationScalarFieldEnum = {
+  id: 'id',
+  workerAdditionalInfoId: 'workerAdditionalInfoId',
+  institution: 'institution',
+  qualification: 'qualification',
+  startMonth: 'startMonth',
+  startYear: 'startYear',
+  endMonth: 'endMonth',
+  endYear: 'endYear',
+  currentlyStudying: 'currentlyStudying',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkerAvailabilityScalarFieldEnum = {
+  id: 'id',
+  workerProfileId: 'workerProfileId',
+  dayOfWeek: 'dayOfWeek',
+  startMinute: 'startMinute',
+  endMinute: 'endMinute',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkerExperienceScalarFieldEnum = {
+  id: 'id',
+  workerProfileId: 'workerProfileId',
+  domain: 'domain',
+  isProfessional: 'isProfessional',
+  isPersonal: 'isPersonal',
+  specificAreas: 'specificAreas',
+  otherAreas: 'otherAreas',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -494,6 +548,24 @@ exports.ServiceRequestStatus = exports.$Enums.ServiceRequestStatus = {
   ARCHIVED: 'ARCHIVED'
 };
 
+exports.DayOfWeek = exports.$Enums.DayOfWeek = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY'
+};
+
+exports.CareDomain = exports.$Enums.CareDomain = {
+  DISABILITY: 'DISABILITY',
+  AGED_CARE: 'AGED_CARE',
+  WORKING_WITH_CHILDREN: 'WORKING_WITH_CHILDREN',
+  MENTAL_HEALTH: 'MENTAL_HEALTH',
+  CHRONIC_MEDICAL: 'CHRONIC_MEDICAL'
+};
+
 exports.Prisma.ModelName = {
   Account: 'Account',
   AuditLog: 'AuditLog',
@@ -514,7 +586,11 @@ exports.Prisma.ModelName = {
   Job: 'Job',
   JobApplication: 'JobApplication',
   WorkerAdditionalInfo: 'WorkerAdditionalInfo',
-  ServiceRequest: 'ServiceRequest'
+  ServiceRequest: 'ServiceRequest',
+  WorkerJobHistory: 'WorkerJobHistory',
+  WorkerEducation: 'WorkerEducation',
+  WorkerAvailability: 'WorkerAvailability',
+  WorkerExperience: 'WorkerExperience'
 };
 
 /**

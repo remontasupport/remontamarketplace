@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
+import { rebuildExperience, safeRebuild, W1_TX } from "@/lib/w1/promote";
 
 /**
  * Backend Service: Worker Experience Management
@@ -19,7 +20,7 @@ export type ActionResponse<T = any> = {
 };
 
 // Experience area data structure
-export interface ExperienceArea {
+export type ExperienceArea = {
   isProfessional: boolean;
   isPersonal: boolean;
   specificAreas: string[];    // Up to 3 specific areas
@@ -159,7 +160,7 @@ export async function saveWorkerExperience(
       }
     }
 
-    // Upsert to WorkerAdditionalInfo
+    // The Json write is the save. It must succeed on its own terms.
     await authPrisma.workerAdditionalInfo.upsert({
       where: {
         workerProfileId: workerProfile.id,
@@ -172,6 +173,17 @@ export async function saveWorkerExperience(
         experience: experienceData,
       },
     });
+
+    // W1 dual-write. Deliberately AFTER the save and unable to fail it: nothing
+    // reads worker_experience yet, so a stale derived copy costs nothing and
+    // the reconcile repairs it. Its own transaction keeps the delete and insert
+    // atomic. Remove entirely at W1 phase P7.
+    await safeRebuild("experience", workerProfile.id, () =>
+      authPrisma.$transaction(
+        (tx) => rebuildExperience(tx, workerProfile.id, experienceData),
+        W1_TX,
+      ),
+    );
 
     // Revalidate paths
     revalidatePath("/dashboard/worker/profile-building");
@@ -232,7 +244,6 @@ export async function deleteWorkerExperience(
       delete updatedExperience[areaId];
     });
 
-    // Update in database
     if (workerProfile.workerAdditionalInfo) {
       await authPrisma.workerAdditionalInfo.update({
         where: {
@@ -251,6 +262,14 @@ export async function deleteWorkerExperience(
         },
       });
     }
+
+    // W1 dual-write, as above — after the save, unable to fail it.
+    await safeRebuild("experience", workerProfile.id, () =>
+      authPrisma.$transaction(
+        (tx) => rebuildExperience(tx, workerProfile.id, updatedExperience),
+        W1_TX,
+      ),
+    );
 
     // Revalidate paths
     revalidatePath("/dashboard/worker/profile-building");

@@ -7,6 +7,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("AUTH_DATABASE_URL")
+  // Migrations must not run over the PgBouncer pooler. Queries use the pooled
+  // url above; migrate and introspect use the direct endpoint below.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Account {
@@ -238,6 +241,10 @@ model WorkerProfile {
   user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workerServices           WorkerService[]
 
+  // W1 — matching-relevant children key on the canonical worker id
+  availability             WorkerAvailability[]
+  careExperience           WorkerExperience[]
+
   @@index([city])
   @@index([isPublished])
   @@index([latitude, longitude])
@@ -434,23 +441,12 @@ model WorkerAdditionalInfo {
   updatedAt          DateTime      @updatedAt
   workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
+  // W1 — relations only; the Json columns above stay until W1 phase P7
+  jobHistoryEntries WorkerJobHistory[]
+  educationEntries  WorkerEducation[]
+
   @@index([workerProfileId])
   @@map("worker_additional_info")
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model worker_services_backup_20260108 {
-  id              String?
-  workerProfileId String?
-  categoryId      String?
-  categoryName    String?
-  subcategoryId   String?
-  subcategoryName String?
-  createdAt       DateTime?
-  updatedAt       DateTime?
-  metadata        Json?
-
-  @@ignore
 }
 
 enum AccountStatus {
@@ -554,4 +550,132 @@ enum ServiceRequestStatus {
   COMPLETED
   CANCELLED
   ARCHIVED
+}
+
+// ============================================================================
+// W1 — JSON promotion. Added 2026-09-06.
+//
+// These four tables are populated by the W1 backfill from the Json columns on
+// worker_additional_info. Those columns REMAIN until W1 reaches phase P7, so
+// both shapes coexist during dual-write. Nothing reads these tables until the
+// read switch is flipped.
+//
+// Design: aidlc-docs/inception/application-design/target-schema.md
+// ============================================================================
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+/// The five care domains found in WorkerAdditionalInfo.experience.
+enum CareDomain {
+  DISABILITY
+  AGED_CARE
+  WORKING_WITH_CHILDREN
+  MENTAL_HEALTH
+  CHRONIC_MEDICAL
+}
+
+/// From jobHistory Json — 7 uniform keys.
+model WorkerJobHistory {
+  id                     String  @id @default(cuid())
+  workerAdditionalInfoId String
+  jobTitle               String
+  company                String
+  startMonth             Int?
+  startYear              Int?
+  endMonth               Int?
+  endYear                Int?
+  currentlyWorking       Boolean @default(false)
+  sortOrder              Int     @default(0) // preserves array order
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+
+  @@index([workerAdditionalInfoId])
+  @@map("worker_job_history")
+}
+
+/// From education Json — 7 uniform keys.
+model WorkerEducation {
+  id                     String  @id @default(cuid())
+  workerAdditionalInfoId String
+  institution            String
+  qualification          String
+  startMonth             Int?
+  startYear              Int?
+  endMonth               Int?
+  endYear                Int?
+  currentlyStudying      Boolean @default(false)
+  sortOrder              Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+
+  @@index([workerAdditionalInfoId])
+  @@map("worker_education")
+}
+
+/// From availability Json, which is keyed by weekday. A day holds either one
+/// {startTime,endTime} object or an array of them; one row per slot handles both.
+///
+/// Minutes from midnight (0-1439) rather than "HH:MM" strings: sortable,
+/// comparable, and endMinute <= startMinute expresses an overnight shift, which
+/// a lexical string compare cannot. Times are local to the worker; no zone is
+/// stored — derive it from state if scheduling ever needs one.
+model WorkerAvailability {
+  id              String    @id @default(cuid())
+  workerProfileId String
+  dayOfWeek       DayOfWeek
+  startMinute     Int
+  endMinute       Int
+  sortOrder       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  // Unique on start AND end, not start alone. Rehearsal against production data
+  // found real days holding two slots that share a start: Saturday 00:00-07:00
+  // alongside 00:00-23:00. Keying on start alone would have discarded one, and
+  // which one survived would have depended on JSON key order.
+  // This still collapses true duplicates — the same day, start and end twice.
+  @@unique([workerProfileId, dayOfWeek, startMinute, endMinute])
+  @@index([workerProfileId])
+  @@index([dayOfWeek])
+  @@map("worker_availability")
+}
+
+/// From experience Json — object keyed by 5 care domains, each with 5 keys.
+/// Makes "professional mental-health experience" an indexed query.
+model WorkerExperience {
+  id              String     @id @default(cuid())
+  workerProfileId String
+  domain          CareDomain
+
+  isProfessional Boolean  @default(false)
+  isPersonal     Boolean  @default(false)
+  specificAreas  String[] @default([])
+  otherAreas     String?
+  description    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workerProfileId, domain])
+  @@index([domain])
+  @@map("worker_experience")
 }

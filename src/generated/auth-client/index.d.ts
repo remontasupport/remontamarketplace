@@ -113,6 +113,33 @@ export type WorkerAdditionalInfo = $Result.DefaultSelection<Prisma.$WorkerAdditi
  * 
  */
 export type ServiceRequest = $Result.DefaultSelection<Prisma.$ServiceRequestPayload>
+/**
+ * Model WorkerJobHistory
+ * From jobHistory Json — 7 uniform keys.
+ */
+export type WorkerJobHistory = $Result.DefaultSelection<Prisma.$WorkerJobHistoryPayload>
+/**
+ * Model WorkerEducation
+ * From education Json — 7 uniform keys.
+ */
+export type WorkerEducation = $Result.DefaultSelection<Prisma.$WorkerEducationPayload>
+/**
+ * Model WorkerAvailability
+ * From availability Json, which is keyed by weekday. A day holds either one
+ * {startTime,endTime} object or an array of them; one row per slot handles both.
+ * 
+ * Minutes from midnight (0-1439) rather than "HH:MM" strings: sortable,
+ * comparable, and endMinute <= startMinute expresses an overnight shift, which
+ * a lexical string compare cannot. Times are local to the worker; no zone is
+ * stored — derive it from state if scheduling ever needs one.
+ */
+export type WorkerAvailability = $Result.DefaultSelection<Prisma.$WorkerAvailabilityPayload>
+/**
+ * Model WorkerExperience
+ * From experience Json — object keyed by 5 care domains, each with 5 keys.
+ * Makes "professional mental-health experience" an indexed query.
+ */
+export type WorkerExperience = $Result.DefaultSelection<Prisma.$WorkerExperiencePayload>
 
 /**
  * Enums
@@ -232,6 +259,30 @@ export const ServiceRequestStatus: {
 
 export type ServiceRequestStatus = (typeof ServiceRequestStatus)[keyof typeof ServiceRequestStatus]
 
+
+export const DayOfWeek: {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY'
+};
+
+export type DayOfWeek = (typeof DayOfWeek)[keyof typeof DayOfWeek]
+
+
+export const CareDomain: {
+  DISABILITY: 'DISABILITY',
+  AGED_CARE: 'AGED_CARE',
+  WORKING_WITH_CHILDREN: 'WORKING_WITH_CHILDREN',
+  MENTAL_HEALTH: 'MENTAL_HEALTH',
+  CHRONIC_MEDICAL: 'CHRONIC_MEDICAL'
+};
+
+export type CareDomain = (typeof CareDomain)[keyof typeof CareDomain]
+
 }
 
 export type JobApplicationStatus = $Enums.JobApplicationStatus
@@ -273,6 +324,14 @@ export const FundingType: typeof $Enums.FundingType
 export type ServiceRequestStatus = $Enums.ServiceRequestStatus
 
 export const ServiceRequestStatus: typeof $Enums.ServiceRequestStatus
+
+export type DayOfWeek = $Enums.DayOfWeek
+
+export const DayOfWeek: typeof $Enums.DayOfWeek
+
+export type CareDomain = $Enums.CareDomain
+
+export const CareDomain: typeof $Enums.CareDomain
 
 /**
  * ##  Prisma Client ʲˢ
@@ -591,6 +650,46 @@ export class PrismaClient<
     * ```
     */
   get serviceRequest(): Prisma.ServiceRequestDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerJobHistory`: Exposes CRUD operations for the **WorkerJobHistory** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerJobHistories
+    * const workerJobHistories = await prisma.workerJobHistory.findMany()
+    * ```
+    */
+  get workerJobHistory(): Prisma.WorkerJobHistoryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerEducation`: Exposes CRUD operations for the **WorkerEducation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerEducations
+    * const workerEducations = await prisma.workerEducation.findMany()
+    * ```
+    */
+  get workerEducation(): Prisma.WorkerEducationDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerAvailability`: Exposes CRUD operations for the **WorkerAvailability** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerAvailabilities
+    * const workerAvailabilities = await prisma.workerAvailability.findMany()
+    * ```
+    */
+  get workerAvailability(): Prisma.WorkerAvailabilityDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerExperience`: Exposes CRUD operations for the **WorkerExperience** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerExperiences
+    * const workerExperiences = await prisma.workerExperience.findMany()
+    * ```
+    */
+  get workerExperience(): Prisma.WorkerExperienceDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1051,7 +1150,11 @@ export namespace Prisma {
     Job: 'Job',
     JobApplication: 'JobApplication',
     WorkerAdditionalInfo: 'WorkerAdditionalInfo',
-    ServiceRequest: 'ServiceRequest'
+    ServiceRequest: 'ServiceRequest',
+    WorkerJobHistory: 'WorkerJobHistory',
+    WorkerEducation: 'WorkerEducation',
+    WorkerAvailability: 'WorkerAvailability',
+    WorkerExperience: 'WorkerExperience'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1070,7 +1173,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "auditLog" | "clientProfile" | "coordinatorProfile" | "participant" | "session" | "user" | "verificationRequirement" | "verificationToken" | "workerProfile" | "document" | "category" | "subcategory" | "categoryDocument" | "subcategoryDocument" | "workerService" | "job" | "jobApplication" | "workerAdditionalInfo" | "serviceRequest"
+      modelProps: "account" | "auditLog" | "clientProfile" | "coordinatorProfile" | "participant" | "session" | "user" | "verificationRequirement" | "verificationToken" | "workerProfile" | "document" | "category" | "subcategory" | "categoryDocument" | "subcategoryDocument" | "workerService" | "job" | "jobApplication" | "workerAdditionalInfo" | "serviceRequest" | "workerJobHistory" | "workerEducation" | "workerAvailability" | "workerExperience"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2554,6 +2657,302 @@ export namespace Prisma {
           }
         }
       }
+      WorkerJobHistory: {
+        payload: Prisma.$WorkerJobHistoryPayload<ExtArgs>
+        fields: Prisma.WorkerJobHistoryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerJobHistoryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerJobHistoryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerJobHistoryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerJobHistoryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>
+          }
+          findMany: {
+            args: Prisma.WorkerJobHistoryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>[]
+          }
+          create: {
+            args: Prisma.WorkerJobHistoryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>
+          }
+          createMany: {
+            args: Prisma.WorkerJobHistoryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerJobHistoryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerJobHistoryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>
+          }
+          update: {
+            args: Prisma.WorkerJobHistoryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerJobHistoryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerJobHistoryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerJobHistoryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerJobHistoryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerJobHistoryPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerJobHistoryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerJobHistory>
+          }
+          groupBy: {
+            args: Prisma.WorkerJobHistoryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerJobHistoryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerJobHistoryCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerJobHistoryCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkerEducation: {
+        payload: Prisma.$WorkerEducationPayload<ExtArgs>
+        fields: Prisma.WorkerEducationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerEducationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerEducationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerEducationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerEducationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>
+          }
+          findMany: {
+            args: Prisma.WorkerEducationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>[]
+          }
+          create: {
+            args: Prisma.WorkerEducationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>
+          }
+          createMany: {
+            args: Prisma.WorkerEducationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerEducationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerEducationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>
+          }
+          update: {
+            args: Prisma.WorkerEducationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerEducationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerEducationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerEducationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerEducationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerEducationPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerEducationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerEducation>
+          }
+          groupBy: {
+            args: Prisma.WorkerEducationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerEducationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerEducationCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerEducationCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkerAvailability: {
+        payload: Prisma.$WorkerAvailabilityPayload<ExtArgs>
+        fields: Prisma.WorkerAvailabilityFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerAvailabilityFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerAvailabilityFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerAvailabilityFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerAvailabilityFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>
+          }
+          findMany: {
+            args: Prisma.WorkerAvailabilityFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>[]
+          }
+          create: {
+            args: Prisma.WorkerAvailabilityCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>
+          }
+          createMany: {
+            args: Prisma.WorkerAvailabilityCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerAvailabilityCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerAvailabilityDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>
+          }
+          update: {
+            args: Prisma.WorkerAvailabilityUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerAvailabilityDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerAvailabilityUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerAvailabilityUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerAvailabilityUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerAvailabilityPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerAvailabilityAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerAvailability>
+          }
+          groupBy: {
+            args: Prisma.WorkerAvailabilityGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerAvailabilityGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerAvailabilityCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerAvailabilityCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkerExperience: {
+        payload: Prisma.$WorkerExperiencePayload<ExtArgs>
+        fields: Prisma.WorkerExperienceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerExperienceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerExperienceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerExperienceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerExperienceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>
+          }
+          findMany: {
+            args: Prisma.WorkerExperienceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>[]
+          }
+          create: {
+            args: Prisma.WorkerExperienceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>
+          }
+          createMany: {
+            args: Prisma.WorkerExperienceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerExperienceCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerExperienceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>
+          }
+          update: {
+            args: Prisma.WorkerExperienceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerExperienceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerExperienceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerExperienceUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerExperienceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerExperiencePayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerExperienceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerExperience>
+          }
+          groupBy: {
+            args: Prisma.WorkerExperienceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerExperienceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerExperienceCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerExperienceCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2670,6 +3069,10 @@ export namespace Prisma {
     jobApplication?: JobApplicationOmit
     workerAdditionalInfo?: WorkerAdditionalInfoOmit
     serviceRequest?: ServiceRequestOmit
+    workerJobHistory?: WorkerJobHistoryOmit
+    workerEducation?: WorkerEducationOmit
+    workerAvailability?: WorkerAvailabilityOmit
+    workerExperience?: WorkerExperienceOmit
   }
 
   /* Types for Logging */
@@ -2841,11 +3244,15 @@ export namespace Prisma {
   export type WorkerProfileCountOutputType = {
     verificationRequirements: number
     workerServices: number
+    availability: number
+    careExperience: number
   }
 
   export type WorkerProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfileCountOutputTypeCountVerificationRequirementsArgs
     workerServices?: boolean | WorkerProfileCountOutputTypeCountWorkerServicesArgs
+    availability?: boolean | WorkerProfileCountOutputTypeCountAvailabilityArgs
+    careExperience?: boolean | WorkerProfileCountOutputTypeCountCareExperienceArgs
   }
 
   // Custom InputTypes
@@ -2871,6 +3278,20 @@ export namespace Prisma {
    */
   export type WorkerProfileCountOutputTypeCountWorkerServicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkerServiceWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountAvailabilityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerAvailabilityWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountCareExperienceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerExperienceWhereInput
   }
 
 
@@ -3013,6 +3434,46 @@ export namespace Prisma {
    */
   export type JobCountOutputTypeCountApplicationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: JobApplicationWhereInput
+  }
+
+
+  /**
+   * Count Type WorkerAdditionalInfoCountOutputType
+   */
+
+  export type WorkerAdditionalInfoCountOutputType = {
+    jobHistoryEntries: number
+    educationEntries: number
+  }
+
+  export type WorkerAdditionalInfoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    jobHistoryEntries?: boolean | WorkerAdditionalInfoCountOutputTypeCountJobHistoryEntriesArgs
+    educationEntries?: boolean | WorkerAdditionalInfoCountOutputTypeCountEducationEntriesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WorkerAdditionalInfoCountOutputType without action
+   */
+  export type WorkerAdditionalInfoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAdditionalInfoCountOutputType
+     */
+    select?: WorkerAdditionalInfoCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkerAdditionalInfoCountOutputType without action
+   */
+  export type WorkerAdditionalInfoCountOutputTypeCountJobHistoryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerJobHistoryWhereInput
+  }
+
+  /**
+   * WorkerAdditionalInfoCountOutputType without action
+   */
+  export type WorkerAdditionalInfoCountOutputTypeCountEducationEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerEducationWhereInput
   }
 
 
@@ -13785,6 +14246,8 @@ export namespace Prisma {
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     workerServices?: boolean | WorkerProfile$workerServicesArgs<ExtArgs>
+    availability?: boolean | WorkerProfile$availabilityArgs<ExtArgs>
+    careExperience?: boolean | WorkerProfile$careExperienceArgs<ExtArgs>
     _count?: boolean | WorkerProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerProfile"]>
 
@@ -13901,6 +14364,8 @@ export namespace Prisma {
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     workerServices?: boolean | WorkerProfile$workerServicesArgs<ExtArgs>
+    availability?: boolean | WorkerProfile$availabilityArgs<ExtArgs>
+    careExperience?: boolean | WorkerProfile$careExperienceArgs<ExtArgs>
     _count?: boolean | WorkerProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkerProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13917,6 +14382,8 @@ export namespace Prisma {
       workerAdditionalInfo: Prisma.$WorkerAdditionalInfoPayload<ExtArgs> | null
       user: Prisma.$UserPayload<ExtArgs>
       workerServices: Prisma.$WorkerServicePayload<ExtArgs>[]
+      availability: Prisma.$WorkerAvailabilityPayload<ExtArgs>[]
+      careExperience: Prisma.$WorkerExperiencePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -14349,6 +14816,8 @@ export namespace Prisma {
     workerAdditionalInfo<T extends WorkerProfile$workerAdditionalInfoArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$workerAdditionalInfoArgs<ExtArgs>>): Prisma__WorkerAdditionalInfoClient<$Result.GetResult<Prisma.$WorkerAdditionalInfoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     workerServices<T extends WorkerProfile$workerServicesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$workerServicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerServicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    availability<T extends WorkerProfile$availabilityArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$availabilityArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    careExperience<T extends WorkerProfile$careExperienceArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$careExperienceArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14870,6 +15339,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkerServiceScalarFieldEnum | WorkerServiceScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.availability
+   */
+  export type WorkerProfile$availabilityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    where?: WorkerAvailabilityWhereInput
+    orderBy?: WorkerAvailabilityOrderByWithRelationInput | WorkerAvailabilityOrderByWithRelationInput[]
+    cursor?: WorkerAvailabilityWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerAvailabilityScalarFieldEnum | WorkerAvailabilityScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.careExperience
+   */
+  export type WorkerProfile$careExperienceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    where?: WorkerExperienceWhereInput
+    orderBy?: WorkerExperienceOrderByWithRelationInput | WorkerExperienceOrderByWithRelationInput[]
+    cursor?: WorkerExperienceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerExperienceScalarFieldEnum | WorkerExperienceScalarFieldEnum[]
   }
 
   /**
@@ -23982,6 +24499,9 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    jobHistoryEntries?: boolean | WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs>
+    educationEntries?: boolean | WorkerAdditionalInfo$educationEntriesArgs<ExtArgs>
+    _count?: boolean | WorkerAdditionalInfoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerAdditionalInfo"]>
 
   export type WorkerAdditionalInfoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -24058,6 +24578,9 @@ export namespace Prisma {
   export type WorkerAdditionalInfoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "jobHistory" | "education" | "languages" | "culturalBackground" | "religion" | "interests" | "workPreferences" | "lgbtqiaSupport" | "nonSmoker" | "petFriendly" | "personality" | "uniqueService" | "funFact" | "availability" | "bankAccount" | "experience" | "createdAt" | "updatedAt", ExtArgs["result"]["workerAdditionalInfo"]>
   export type WorkerAdditionalInfoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    jobHistoryEntries?: boolean | WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs>
+    educationEntries?: boolean | WorkerAdditionalInfo$educationEntriesArgs<ExtArgs>
+    _count?: boolean | WorkerAdditionalInfoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkerAdditionalInfoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -24070,6 +24593,8 @@ export namespace Prisma {
     name: "WorkerAdditionalInfo"
     objects: {
       workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+      jobHistoryEntries: Prisma.$WorkerJobHistoryPayload<ExtArgs>[]
+      educationEntries: Prisma.$WorkerEducationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -24487,6 +25012,8 @@ export namespace Prisma {
   export interface Prisma__WorkerAdditionalInfoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    jobHistoryEntries<T extends WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    educationEntries<T extends WorkerAdditionalInfo$educationEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfo$educationEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -24929,6 +25456,54 @@ export namespace Prisma {
      * Limit how many WorkerAdditionalInfos to delete.
      */
     limit?: number
+  }
+
+  /**
+   * WorkerAdditionalInfo.jobHistoryEntries
+   */
+  export type WorkerAdditionalInfo$jobHistoryEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    where?: WorkerJobHistoryWhereInput
+    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
+    cursor?: WorkerJobHistoryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerJobHistoryScalarFieldEnum | WorkerJobHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerAdditionalInfo.educationEntries
+   */
+  export type WorkerAdditionalInfo$educationEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    where?: WorkerEducationWhereInput
+    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
+    cursor?: WorkerEducationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerEducationScalarFieldEnum | WorkerEducationScalarFieldEnum[]
   }
 
   /**
@@ -26084,6 +26659,4662 @@ export namespace Prisma {
 
 
   /**
+   * Model WorkerJobHistory
+   */
+
+  export type AggregateWorkerJobHistory = {
+    _count: WorkerJobHistoryCountAggregateOutputType | null
+    _avg: WorkerJobHistoryAvgAggregateOutputType | null
+    _sum: WorkerJobHistorySumAggregateOutputType | null
+    _min: WorkerJobHistoryMinAggregateOutputType | null
+    _max: WorkerJobHistoryMaxAggregateOutputType | null
+  }
+
+  export type WorkerJobHistoryAvgAggregateOutputType = {
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    sortOrder: number | null
+  }
+
+  export type WorkerJobHistorySumAggregateOutputType = {
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    sortOrder: number | null
+  }
+
+  export type WorkerJobHistoryMinAggregateOutputType = {
+    id: string | null
+    workerAdditionalInfoId: string | null
+    jobTitle: string | null
+    company: string | null
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    currentlyWorking: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerJobHistoryMaxAggregateOutputType = {
+    id: string | null
+    workerAdditionalInfoId: string | null
+    jobTitle: string | null
+    company: string | null
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    currentlyWorking: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerJobHistoryCountAggregateOutputType = {
+    id: number
+    workerAdditionalInfoId: number
+    jobTitle: number
+    company: number
+    startMonth: number
+    startYear: number
+    endMonth: number
+    endYear: number
+    currentlyWorking: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkerJobHistoryAvgAggregateInputType = {
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    sortOrder?: true
+  }
+
+  export type WorkerJobHistorySumAggregateInputType = {
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    sortOrder?: true
+  }
+
+  export type WorkerJobHistoryMinAggregateInputType = {
+    id?: true
+    workerAdditionalInfoId?: true
+    jobTitle?: true
+    company?: true
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    currentlyWorking?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerJobHistoryMaxAggregateInputType = {
+    id?: true
+    workerAdditionalInfoId?: true
+    jobTitle?: true
+    company?: true
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    currentlyWorking?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerJobHistoryCountAggregateInputType = {
+    id?: true
+    workerAdditionalInfoId?: true
+    jobTitle?: true
+    company?: true
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    currentlyWorking?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkerJobHistoryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerJobHistory to aggregate.
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerJobHistories to fetch.
+     */
+    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerJobHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerJobHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerJobHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerJobHistories
+    **/
+    _count?: true | WorkerJobHistoryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkerJobHistoryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkerJobHistorySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerJobHistoryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerJobHistoryMaxAggregateInputType
+  }
+
+  export type GetWorkerJobHistoryAggregateType<T extends WorkerJobHistoryAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerJobHistory]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerJobHistory[P]>
+      : GetScalarType<T[P], AggregateWorkerJobHistory[P]>
+  }
+
+
+
+
+  export type WorkerJobHistoryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerJobHistoryWhereInput
+    orderBy?: WorkerJobHistoryOrderByWithAggregationInput | WorkerJobHistoryOrderByWithAggregationInput[]
+    by: WorkerJobHistoryScalarFieldEnum[] | WorkerJobHistoryScalarFieldEnum
+    having?: WorkerJobHistoryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerJobHistoryCountAggregateInputType | true
+    _avg?: WorkerJobHistoryAvgAggregateInputType
+    _sum?: WorkerJobHistorySumAggregateInputType
+    _min?: WorkerJobHistoryMinAggregateInputType
+    _max?: WorkerJobHistoryMaxAggregateInputType
+  }
+
+  export type WorkerJobHistoryGroupByOutputType = {
+    id: string
+    workerAdditionalInfoId: string
+    jobTitle: string
+    company: string
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    currentlyWorking: boolean
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkerJobHistoryCountAggregateOutputType | null
+    _avg: WorkerJobHistoryAvgAggregateOutputType | null
+    _sum: WorkerJobHistorySumAggregateOutputType | null
+    _min: WorkerJobHistoryMinAggregateOutputType | null
+    _max: WorkerJobHistoryMaxAggregateOutputType | null
+  }
+
+  type GetWorkerJobHistoryGroupByPayload<T extends WorkerJobHistoryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerJobHistoryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerJobHistoryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerJobHistoryGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerJobHistoryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerJobHistorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    jobTitle?: boolean
+    company?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyWorking?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerJobHistory"]>
+
+  export type WorkerJobHistorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    jobTitle?: boolean
+    company?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyWorking?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerJobHistory"]>
+
+  export type WorkerJobHistorySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    jobTitle?: boolean
+    company?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyWorking?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerJobHistory"]>
+
+  export type WorkerJobHistorySelectScalar = {
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    jobTitle?: boolean
+    company?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyWorking?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkerJobHistoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerAdditionalInfoId" | "jobTitle" | "company" | "startMonth" | "startYear" | "endMonth" | "endYear" | "currentlyWorking" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerJobHistory"]>
+  export type WorkerJobHistoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }
+  export type WorkerJobHistoryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }
+  export type WorkerJobHistoryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerJobHistoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerJobHistory"
+    objects: {
+      additionalInfo: Prisma.$WorkerAdditionalInfoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workerAdditionalInfoId: string
+      jobTitle: string
+      company: string
+      startMonth: number | null
+      startYear: number | null
+      endMonth: number | null
+      endYear: number | null
+      currentlyWorking: boolean
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workerJobHistory"]>
+    composites: {}
+  }
+
+  type WorkerJobHistoryGetPayload<S extends boolean | null | undefined | WorkerJobHistoryDefaultArgs> = $Result.GetResult<Prisma.$WorkerJobHistoryPayload, S>
+
+  type WorkerJobHistoryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerJobHistoryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerJobHistoryCountAggregateInputType | true
+    }
+
+  export interface WorkerJobHistoryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerJobHistory'], meta: { name: 'WorkerJobHistory' } }
+    /**
+     * Find zero or one WorkerJobHistory that matches the filter.
+     * @param {WorkerJobHistoryFindUniqueArgs} args - Arguments to find a WorkerJobHistory
+     * @example
+     * // Get one WorkerJobHistory
+     * const workerJobHistory = await prisma.workerJobHistory.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerJobHistoryFindUniqueArgs>(args: SelectSubset<T, WorkerJobHistoryFindUniqueArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerJobHistory that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerJobHistoryFindUniqueOrThrowArgs} args - Arguments to find a WorkerJobHistory
+     * @example
+     * // Get one WorkerJobHistory
+     * const workerJobHistory = await prisma.workerJobHistory.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerJobHistoryFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerJobHistoryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerJobHistory that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryFindFirstArgs} args - Arguments to find a WorkerJobHistory
+     * @example
+     * // Get one WorkerJobHistory
+     * const workerJobHistory = await prisma.workerJobHistory.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerJobHistoryFindFirstArgs>(args?: SelectSubset<T, WorkerJobHistoryFindFirstArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerJobHistory that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryFindFirstOrThrowArgs} args - Arguments to find a WorkerJobHistory
+     * @example
+     * // Get one WorkerJobHistory
+     * const workerJobHistory = await prisma.workerJobHistory.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerJobHistoryFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerJobHistoryFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerJobHistories that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerJobHistories
+     * const workerJobHistories = await prisma.workerJobHistory.findMany()
+     * 
+     * // Get first 10 WorkerJobHistories
+     * const workerJobHistories = await prisma.workerJobHistory.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workerJobHistoryWithIdOnly = await prisma.workerJobHistory.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkerJobHistoryFindManyArgs>(args?: SelectSubset<T, WorkerJobHistoryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerJobHistory.
+     * @param {WorkerJobHistoryCreateArgs} args - Arguments to create a WorkerJobHistory.
+     * @example
+     * // Create one WorkerJobHistory
+     * const WorkerJobHistory = await prisma.workerJobHistory.create({
+     *   data: {
+     *     // ... data to create a WorkerJobHistory
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerJobHistoryCreateArgs>(args: SelectSubset<T, WorkerJobHistoryCreateArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerJobHistories.
+     * @param {WorkerJobHistoryCreateManyArgs} args - Arguments to create many WorkerJobHistories.
+     * @example
+     * // Create many WorkerJobHistories
+     * const workerJobHistory = await prisma.workerJobHistory.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerJobHistoryCreateManyArgs>(args?: SelectSubset<T, WorkerJobHistoryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerJobHistories and returns the data saved in the database.
+     * @param {WorkerJobHistoryCreateManyAndReturnArgs} args - Arguments to create many WorkerJobHistories.
+     * @example
+     * // Create many WorkerJobHistories
+     * const workerJobHistory = await prisma.workerJobHistory.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerJobHistories and only return the `id`
+     * const workerJobHistoryWithIdOnly = await prisma.workerJobHistory.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerJobHistoryCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerJobHistoryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerJobHistory.
+     * @param {WorkerJobHistoryDeleteArgs} args - Arguments to delete one WorkerJobHistory.
+     * @example
+     * // Delete one WorkerJobHistory
+     * const WorkerJobHistory = await prisma.workerJobHistory.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerJobHistory
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerJobHistoryDeleteArgs>(args: SelectSubset<T, WorkerJobHistoryDeleteArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerJobHistory.
+     * @param {WorkerJobHistoryUpdateArgs} args - Arguments to update one WorkerJobHistory.
+     * @example
+     * // Update one WorkerJobHistory
+     * const workerJobHistory = await prisma.workerJobHistory.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerJobHistoryUpdateArgs>(args: SelectSubset<T, WorkerJobHistoryUpdateArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerJobHistories.
+     * @param {WorkerJobHistoryDeleteManyArgs} args - Arguments to filter WorkerJobHistories to delete.
+     * @example
+     * // Delete a few WorkerJobHistories
+     * const { count } = await prisma.workerJobHistory.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerJobHistoryDeleteManyArgs>(args?: SelectSubset<T, WorkerJobHistoryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerJobHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerJobHistories
+     * const workerJobHistory = await prisma.workerJobHistory.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerJobHistoryUpdateManyArgs>(args: SelectSubset<T, WorkerJobHistoryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerJobHistories and returns the data updated in the database.
+     * @param {WorkerJobHistoryUpdateManyAndReturnArgs} args - Arguments to update many WorkerJobHistories.
+     * @example
+     * // Update many WorkerJobHistories
+     * const workerJobHistory = await prisma.workerJobHistory.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerJobHistories and only return the `id`
+     * const workerJobHistoryWithIdOnly = await prisma.workerJobHistory.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerJobHistoryUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerJobHistoryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerJobHistory.
+     * @param {WorkerJobHistoryUpsertArgs} args - Arguments to update or create a WorkerJobHistory.
+     * @example
+     * // Update or create a WorkerJobHistory
+     * const workerJobHistory = await prisma.workerJobHistory.upsert({
+     *   create: {
+     *     // ... data to create a WorkerJobHistory
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerJobHistory we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerJobHistoryUpsertArgs>(args: SelectSubset<T, WorkerJobHistoryUpsertArgs<ExtArgs>>): Prisma__WorkerJobHistoryClient<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerJobHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryCountArgs} args - Arguments to filter WorkerJobHistories to count.
+     * @example
+     * // Count the number of WorkerJobHistories
+     * const count = await prisma.workerJobHistory.count({
+     *   where: {
+     *     // ... the filter for the WorkerJobHistories we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerJobHistoryCountArgs>(
+      args?: Subset<T, WorkerJobHistoryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerJobHistoryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerJobHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerJobHistoryAggregateArgs>(args: Subset<T, WorkerJobHistoryAggregateArgs>): Prisma.PrismaPromise<GetWorkerJobHistoryAggregateType<T>>
+
+    /**
+     * Group by WorkerJobHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerJobHistoryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerJobHistoryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerJobHistoryGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerJobHistoryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerJobHistoryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerJobHistoryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerJobHistory model
+   */
+  readonly fields: WorkerJobHistoryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerJobHistory.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerJobHistoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    additionalInfo<T extends WorkerAdditionalInfoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfoDefaultArgs<ExtArgs>>): Prisma__WorkerAdditionalInfoClient<$Result.GetResult<Prisma.$WorkerAdditionalInfoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerJobHistory model
+   */
+  interface WorkerJobHistoryFieldRefs {
+    readonly id: FieldRef<"WorkerJobHistory", 'String'>
+    readonly workerAdditionalInfoId: FieldRef<"WorkerJobHistory", 'String'>
+    readonly jobTitle: FieldRef<"WorkerJobHistory", 'String'>
+    readonly company: FieldRef<"WorkerJobHistory", 'String'>
+    readonly startMonth: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly startYear: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly endMonth: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly endYear: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly currentlyWorking: FieldRef<"WorkerJobHistory", 'Boolean'>
+    readonly sortOrder: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly createdAt: FieldRef<"WorkerJobHistory", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkerJobHistory", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerJobHistory findUnique
+   */
+  export type WorkerJobHistoryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerJobHistory to fetch.
+     */
+    where: WorkerJobHistoryWhereUniqueInput
+  }
+
+  /**
+   * WorkerJobHistory findUniqueOrThrow
+   */
+  export type WorkerJobHistoryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerJobHistory to fetch.
+     */
+    where: WorkerJobHistoryWhereUniqueInput
+  }
+
+  /**
+   * WorkerJobHistory findFirst
+   */
+  export type WorkerJobHistoryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerJobHistory to fetch.
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerJobHistories to fetch.
+     */
+    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerJobHistories.
+     */
+    cursor?: WorkerJobHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerJobHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerJobHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerJobHistories.
+     */
+    distinct?: WorkerJobHistoryScalarFieldEnum | WorkerJobHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerJobHistory findFirstOrThrow
+   */
+  export type WorkerJobHistoryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerJobHistory to fetch.
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerJobHistories to fetch.
+     */
+    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerJobHistories.
+     */
+    cursor?: WorkerJobHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerJobHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerJobHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerJobHistories.
+     */
+    distinct?: WorkerJobHistoryScalarFieldEnum | WorkerJobHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerJobHistory findMany
+   */
+  export type WorkerJobHistoryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerJobHistories to fetch.
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerJobHistories to fetch.
+     */
+    orderBy?: WorkerJobHistoryOrderByWithRelationInput | WorkerJobHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerJobHistories.
+     */
+    cursor?: WorkerJobHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerJobHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerJobHistories.
+     */
+    skip?: number
+    distinct?: WorkerJobHistoryScalarFieldEnum | WorkerJobHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerJobHistory create
+   */
+  export type WorkerJobHistoryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerJobHistory.
+     */
+    data: XOR<WorkerJobHistoryCreateInput, WorkerJobHistoryUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerJobHistory createMany
+   */
+  export type WorkerJobHistoryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerJobHistories.
+     */
+    data: WorkerJobHistoryCreateManyInput | WorkerJobHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerJobHistory createManyAndReturn
+   */
+  export type WorkerJobHistoryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerJobHistories.
+     */
+    data: WorkerJobHistoryCreateManyInput | WorkerJobHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerJobHistory update
+   */
+  export type WorkerJobHistoryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerJobHistory.
+     */
+    data: XOR<WorkerJobHistoryUpdateInput, WorkerJobHistoryUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerJobHistory to update.
+     */
+    where: WorkerJobHistoryWhereUniqueInput
+  }
+
+  /**
+   * WorkerJobHistory updateMany
+   */
+  export type WorkerJobHistoryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerJobHistories.
+     */
+    data: XOR<WorkerJobHistoryUpdateManyMutationInput, WorkerJobHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerJobHistories to update
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * Limit how many WorkerJobHistories to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerJobHistory updateManyAndReturn
+   */
+  export type WorkerJobHistoryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerJobHistories.
+     */
+    data: XOR<WorkerJobHistoryUpdateManyMutationInput, WorkerJobHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerJobHistories to update
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * Limit how many WorkerJobHistories to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerJobHistory upsert
+   */
+  export type WorkerJobHistoryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerJobHistory to update in case it exists.
+     */
+    where: WorkerJobHistoryWhereUniqueInput
+    /**
+     * In case the WorkerJobHistory found by the `where` argument doesn't exist, create a new WorkerJobHistory with this data.
+     */
+    create: XOR<WorkerJobHistoryCreateInput, WorkerJobHistoryUncheckedCreateInput>
+    /**
+     * In case the WorkerJobHistory was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerJobHistoryUpdateInput, WorkerJobHistoryUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerJobHistory delete
+   */
+  export type WorkerJobHistoryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerJobHistory to delete.
+     */
+    where: WorkerJobHistoryWhereUniqueInput
+  }
+
+  /**
+   * WorkerJobHistory deleteMany
+   */
+  export type WorkerJobHistoryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerJobHistories to delete
+     */
+    where?: WorkerJobHistoryWhereInput
+    /**
+     * Limit how many WorkerJobHistories to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerJobHistory without action
+   */
+  export type WorkerJobHistoryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerJobHistory
+     */
+    select?: WorkerJobHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerJobHistory
+     */
+    omit?: WorkerJobHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerJobHistoryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkerEducation
+   */
+
+  export type AggregateWorkerEducation = {
+    _count: WorkerEducationCountAggregateOutputType | null
+    _avg: WorkerEducationAvgAggregateOutputType | null
+    _sum: WorkerEducationSumAggregateOutputType | null
+    _min: WorkerEducationMinAggregateOutputType | null
+    _max: WorkerEducationMaxAggregateOutputType | null
+  }
+
+  export type WorkerEducationAvgAggregateOutputType = {
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    sortOrder: number | null
+  }
+
+  export type WorkerEducationSumAggregateOutputType = {
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    sortOrder: number | null
+  }
+
+  export type WorkerEducationMinAggregateOutputType = {
+    id: string | null
+    workerAdditionalInfoId: string | null
+    institution: string | null
+    qualification: string | null
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    currentlyStudying: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerEducationMaxAggregateOutputType = {
+    id: string | null
+    workerAdditionalInfoId: string | null
+    institution: string | null
+    qualification: string | null
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    currentlyStudying: boolean | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerEducationCountAggregateOutputType = {
+    id: number
+    workerAdditionalInfoId: number
+    institution: number
+    qualification: number
+    startMonth: number
+    startYear: number
+    endMonth: number
+    endYear: number
+    currentlyStudying: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkerEducationAvgAggregateInputType = {
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    sortOrder?: true
+  }
+
+  export type WorkerEducationSumAggregateInputType = {
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    sortOrder?: true
+  }
+
+  export type WorkerEducationMinAggregateInputType = {
+    id?: true
+    workerAdditionalInfoId?: true
+    institution?: true
+    qualification?: true
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    currentlyStudying?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerEducationMaxAggregateInputType = {
+    id?: true
+    workerAdditionalInfoId?: true
+    institution?: true
+    qualification?: true
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    currentlyStudying?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerEducationCountAggregateInputType = {
+    id?: true
+    workerAdditionalInfoId?: true
+    institution?: true
+    qualification?: true
+    startMonth?: true
+    startYear?: true
+    endMonth?: true
+    endYear?: true
+    currentlyStudying?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkerEducationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerEducation to aggregate.
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerEducations to fetch.
+     */
+    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerEducationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerEducations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerEducations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerEducations
+    **/
+    _count?: true | WorkerEducationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkerEducationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkerEducationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerEducationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerEducationMaxAggregateInputType
+  }
+
+  export type GetWorkerEducationAggregateType<T extends WorkerEducationAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerEducation]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerEducation[P]>
+      : GetScalarType<T[P], AggregateWorkerEducation[P]>
+  }
+
+
+
+
+  export type WorkerEducationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerEducationWhereInput
+    orderBy?: WorkerEducationOrderByWithAggregationInput | WorkerEducationOrderByWithAggregationInput[]
+    by: WorkerEducationScalarFieldEnum[] | WorkerEducationScalarFieldEnum
+    having?: WorkerEducationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerEducationCountAggregateInputType | true
+    _avg?: WorkerEducationAvgAggregateInputType
+    _sum?: WorkerEducationSumAggregateInputType
+    _min?: WorkerEducationMinAggregateInputType
+    _max?: WorkerEducationMaxAggregateInputType
+  }
+
+  export type WorkerEducationGroupByOutputType = {
+    id: string
+    workerAdditionalInfoId: string
+    institution: string
+    qualification: string
+    startMonth: number | null
+    startYear: number | null
+    endMonth: number | null
+    endYear: number | null
+    currentlyStudying: boolean
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkerEducationCountAggregateOutputType | null
+    _avg: WorkerEducationAvgAggregateOutputType | null
+    _sum: WorkerEducationSumAggregateOutputType | null
+    _min: WorkerEducationMinAggregateOutputType | null
+    _max: WorkerEducationMaxAggregateOutputType | null
+  }
+
+  type GetWorkerEducationGroupByPayload<T extends WorkerEducationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerEducationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerEducationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerEducationGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerEducationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerEducationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    institution?: boolean
+    qualification?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyStudying?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerEducation"]>
+
+  export type WorkerEducationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    institution?: boolean
+    qualification?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyStudying?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerEducation"]>
+
+  export type WorkerEducationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    institution?: boolean
+    qualification?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyStudying?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerEducation"]>
+
+  export type WorkerEducationSelectScalar = {
+    id?: boolean
+    workerAdditionalInfoId?: boolean
+    institution?: boolean
+    qualification?: boolean
+    startMonth?: boolean
+    startYear?: boolean
+    endMonth?: boolean
+    endYear?: boolean
+    currentlyStudying?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkerEducationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerAdditionalInfoId" | "institution" | "qualification" | "startMonth" | "startYear" | "endMonth" | "endYear" | "currentlyStudying" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerEducation"]>
+  export type WorkerEducationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }
+  export type WorkerEducationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }
+  export type WorkerEducationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    additionalInfo?: boolean | WorkerAdditionalInfoDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerEducationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerEducation"
+    objects: {
+      additionalInfo: Prisma.$WorkerAdditionalInfoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workerAdditionalInfoId: string
+      institution: string
+      qualification: string
+      startMonth: number | null
+      startYear: number | null
+      endMonth: number | null
+      endYear: number | null
+      currentlyStudying: boolean
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workerEducation"]>
+    composites: {}
+  }
+
+  type WorkerEducationGetPayload<S extends boolean | null | undefined | WorkerEducationDefaultArgs> = $Result.GetResult<Prisma.$WorkerEducationPayload, S>
+
+  type WorkerEducationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerEducationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerEducationCountAggregateInputType | true
+    }
+
+  export interface WorkerEducationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerEducation'], meta: { name: 'WorkerEducation' } }
+    /**
+     * Find zero or one WorkerEducation that matches the filter.
+     * @param {WorkerEducationFindUniqueArgs} args - Arguments to find a WorkerEducation
+     * @example
+     * // Get one WorkerEducation
+     * const workerEducation = await prisma.workerEducation.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerEducationFindUniqueArgs>(args: SelectSubset<T, WorkerEducationFindUniqueArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerEducation that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerEducationFindUniqueOrThrowArgs} args - Arguments to find a WorkerEducation
+     * @example
+     * // Get one WorkerEducation
+     * const workerEducation = await prisma.workerEducation.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerEducationFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerEducationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerEducation that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationFindFirstArgs} args - Arguments to find a WorkerEducation
+     * @example
+     * // Get one WorkerEducation
+     * const workerEducation = await prisma.workerEducation.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerEducationFindFirstArgs>(args?: SelectSubset<T, WorkerEducationFindFirstArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerEducation that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationFindFirstOrThrowArgs} args - Arguments to find a WorkerEducation
+     * @example
+     * // Get one WorkerEducation
+     * const workerEducation = await prisma.workerEducation.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerEducationFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerEducationFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerEducations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerEducations
+     * const workerEducations = await prisma.workerEducation.findMany()
+     * 
+     * // Get first 10 WorkerEducations
+     * const workerEducations = await prisma.workerEducation.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workerEducationWithIdOnly = await prisma.workerEducation.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkerEducationFindManyArgs>(args?: SelectSubset<T, WorkerEducationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerEducation.
+     * @param {WorkerEducationCreateArgs} args - Arguments to create a WorkerEducation.
+     * @example
+     * // Create one WorkerEducation
+     * const WorkerEducation = await prisma.workerEducation.create({
+     *   data: {
+     *     // ... data to create a WorkerEducation
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerEducationCreateArgs>(args: SelectSubset<T, WorkerEducationCreateArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerEducations.
+     * @param {WorkerEducationCreateManyArgs} args - Arguments to create many WorkerEducations.
+     * @example
+     * // Create many WorkerEducations
+     * const workerEducation = await prisma.workerEducation.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerEducationCreateManyArgs>(args?: SelectSubset<T, WorkerEducationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerEducations and returns the data saved in the database.
+     * @param {WorkerEducationCreateManyAndReturnArgs} args - Arguments to create many WorkerEducations.
+     * @example
+     * // Create many WorkerEducations
+     * const workerEducation = await prisma.workerEducation.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerEducations and only return the `id`
+     * const workerEducationWithIdOnly = await prisma.workerEducation.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerEducationCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerEducationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerEducation.
+     * @param {WorkerEducationDeleteArgs} args - Arguments to delete one WorkerEducation.
+     * @example
+     * // Delete one WorkerEducation
+     * const WorkerEducation = await prisma.workerEducation.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerEducation
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerEducationDeleteArgs>(args: SelectSubset<T, WorkerEducationDeleteArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerEducation.
+     * @param {WorkerEducationUpdateArgs} args - Arguments to update one WorkerEducation.
+     * @example
+     * // Update one WorkerEducation
+     * const workerEducation = await prisma.workerEducation.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerEducationUpdateArgs>(args: SelectSubset<T, WorkerEducationUpdateArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerEducations.
+     * @param {WorkerEducationDeleteManyArgs} args - Arguments to filter WorkerEducations to delete.
+     * @example
+     * // Delete a few WorkerEducations
+     * const { count } = await prisma.workerEducation.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerEducationDeleteManyArgs>(args?: SelectSubset<T, WorkerEducationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerEducations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerEducations
+     * const workerEducation = await prisma.workerEducation.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerEducationUpdateManyArgs>(args: SelectSubset<T, WorkerEducationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerEducations and returns the data updated in the database.
+     * @param {WorkerEducationUpdateManyAndReturnArgs} args - Arguments to update many WorkerEducations.
+     * @example
+     * // Update many WorkerEducations
+     * const workerEducation = await prisma.workerEducation.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerEducations and only return the `id`
+     * const workerEducationWithIdOnly = await prisma.workerEducation.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerEducationUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerEducationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerEducation.
+     * @param {WorkerEducationUpsertArgs} args - Arguments to update or create a WorkerEducation.
+     * @example
+     * // Update or create a WorkerEducation
+     * const workerEducation = await prisma.workerEducation.upsert({
+     *   create: {
+     *     // ... data to create a WorkerEducation
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerEducation we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerEducationUpsertArgs>(args: SelectSubset<T, WorkerEducationUpsertArgs<ExtArgs>>): Prisma__WorkerEducationClient<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerEducations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationCountArgs} args - Arguments to filter WorkerEducations to count.
+     * @example
+     * // Count the number of WorkerEducations
+     * const count = await prisma.workerEducation.count({
+     *   where: {
+     *     // ... the filter for the WorkerEducations we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerEducationCountArgs>(
+      args?: Subset<T, WorkerEducationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerEducationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerEducation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerEducationAggregateArgs>(args: Subset<T, WorkerEducationAggregateArgs>): Prisma.PrismaPromise<GetWorkerEducationAggregateType<T>>
+
+    /**
+     * Group by WorkerEducation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerEducationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerEducationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerEducationGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerEducationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerEducationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerEducationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerEducation model
+   */
+  readonly fields: WorkerEducationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerEducation.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerEducationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    additionalInfo<T extends WorkerAdditionalInfoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerAdditionalInfoDefaultArgs<ExtArgs>>): Prisma__WorkerAdditionalInfoClient<$Result.GetResult<Prisma.$WorkerAdditionalInfoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerEducation model
+   */
+  interface WorkerEducationFieldRefs {
+    readonly id: FieldRef<"WorkerEducation", 'String'>
+    readonly workerAdditionalInfoId: FieldRef<"WorkerEducation", 'String'>
+    readonly institution: FieldRef<"WorkerEducation", 'String'>
+    readonly qualification: FieldRef<"WorkerEducation", 'String'>
+    readonly startMonth: FieldRef<"WorkerEducation", 'Int'>
+    readonly startYear: FieldRef<"WorkerEducation", 'Int'>
+    readonly endMonth: FieldRef<"WorkerEducation", 'Int'>
+    readonly endYear: FieldRef<"WorkerEducation", 'Int'>
+    readonly currentlyStudying: FieldRef<"WorkerEducation", 'Boolean'>
+    readonly sortOrder: FieldRef<"WorkerEducation", 'Int'>
+    readonly createdAt: FieldRef<"WorkerEducation", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkerEducation", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerEducation findUnique
+   */
+  export type WorkerEducationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerEducation to fetch.
+     */
+    where: WorkerEducationWhereUniqueInput
+  }
+
+  /**
+   * WorkerEducation findUniqueOrThrow
+   */
+  export type WorkerEducationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerEducation to fetch.
+     */
+    where: WorkerEducationWhereUniqueInput
+  }
+
+  /**
+   * WorkerEducation findFirst
+   */
+  export type WorkerEducationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerEducation to fetch.
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerEducations to fetch.
+     */
+    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerEducations.
+     */
+    cursor?: WorkerEducationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerEducations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerEducations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerEducations.
+     */
+    distinct?: WorkerEducationScalarFieldEnum | WorkerEducationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerEducation findFirstOrThrow
+   */
+  export type WorkerEducationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerEducation to fetch.
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerEducations to fetch.
+     */
+    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerEducations.
+     */
+    cursor?: WorkerEducationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerEducations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerEducations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerEducations.
+     */
+    distinct?: WorkerEducationScalarFieldEnum | WorkerEducationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerEducation findMany
+   */
+  export type WorkerEducationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerEducations to fetch.
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerEducations to fetch.
+     */
+    orderBy?: WorkerEducationOrderByWithRelationInput | WorkerEducationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerEducations.
+     */
+    cursor?: WorkerEducationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerEducations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerEducations.
+     */
+    skip?: number
+    distinct?: WorkerEducationScalarFieldEnum | WorkerEducationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerEducation create
+   */
+  export type WorkerEducationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerEducation.
+     */
+    data: XOR<WorkerEducationCreateInput, WorkerEducationUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerEducation createMany
+   */
+  export type WorkerEducationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerEducations.
+     */
+    data: WorkerEducationCreateManyInput | WorkerEducationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerEducation createManyAndReturn
+   */
+  export type WorkerEducationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerEducations.
+     */
+    data: WorkerEducationCreateManyInput | WorkerEducationCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerEducation update
+   */
+  export type WorkerEducationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerEducation.
+     */
+    data: XOR<WorkerEducationUpdateInput, WorkerEducationUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerEducation to update.
+     */
+    where: WorkerEducationWhereUniqueInput
+  }
+
+  /**
+   * WorkerEducation updateMany
+   */
+  export type WorkerEducationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerEducations.
+     */
+    data: XOR<WorkerEducationUpdateManyMutationInput, WorkerEducationUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerEducations to update
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * Limit how many WorkerEducations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerEducation updateManyAndReturn
+   */
+  export type WorkerEducationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerEducations.
+     */
+    data: XOR<WorkerEducationUpdateManyMutationInput, WorkerEducationUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerEducations to update
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * Limit how many WorkerEducations to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerEducation upsert
+   */
+  export type WorkerEducationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerEducation to update in case it exists.
+     */
+    where: WorkerEducationWhereUniqueInput
+    /**
+     * In case the WorkerEducation found by the `where` argument doesn't exist, create a new WorkerEducation with this data.
+     */
+    create: XOR<WorkerEducationCreateInput, WorkerEducationUncheckedCreateInput>
+    /**
+     * In case the WorkerEducation was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerEducationUpdateInput, WorkerEducationUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerEducation delete
+   */
+  export type WorkerEducationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerEducation to delete.
+     */
+    where: WorkerEducationWhereUniqueInput
+  }
+
+  /**
+   * WorkerEducation deleteMany
+   */
+  export type WorkerEducationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerEducations to delete
+     */
+    where?: WorkerEducationWhereInput
+    /**
+     * Limit how many WorkerEducations to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerEducation without action
+   */
+  export type WorkerEducationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerEducation
+     */
+    select?: WorkerEducationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerEducation
+     */
+    omit?: WorkerEducationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerEducationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkerAvailability
+   */
+
+  export type AggregateWorkerAvailability = {
+    _count: WorkerAvailabilityCountAggregateOutputType | null
+    _avg: WorkerAvailabilityAvgAggregateOutputType | null
+    _sum: WorkerAvailabilitySumAggregateOutputType | null
+    _min: WorkerAvailabilityMinAggregateOutputType | null
+    _max: WorkerAvailabilityMaxAggregateOutputType | null
+  }
+
+  export type WorkerAvailabilityAvgAggregateOutputType = {
+    startMinute: number | null
+    endMinute: number | null
+    sortOrder: number | null
+  }
+
+  export type WorkerAvailabilitySumAggregateOutputType = {
+    startMinute: number | null
+    endMinute: number | null
+    sortOrder: number | null
+  }
+
+  export type WorkerAvailabilityMinAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    dayOfWeek: $Enums.DayOfWeek | null
+    startMinute: number | null
+    endMinute: number | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerAvailabilityMaxAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    dayOfWeek: $Enums.DayOfWeek | null
+    startMinute: number | null
+    endMinute: number | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerAvailabilityCountAggregateOutputType = {
+    id: number
+    workerProfileId: number
+    dayOfWeek: number
+    startMinute: number
+    endMinute: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkerAvailabilityAvgAggregateInputType = {
+    startMinute?: true
+    endMinute?: true
+    sortOrder?: true
+  }
+
+  export type WorkerAvailabilitySumAggregateInputType = {
+    startMinute?: true
+    endMinute?: true
+    sortOrder?: true
+  }
+
+  export type WorkerAvailabilityMinAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    dayOfWeek?: true
+    startMinute?: true
+    endMinute?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerAvailabilityMaxAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    dayOfWeek?: true
+    startMinute?: true
+    endMinute?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerAvailabilityCountAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    dayOfWeek?: true
+    startMinute?: true
+    endMinute?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkerAvailabilityAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerAvailability to aggregate.
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerAvailabilities to fetch.
+     */
+    orderBy?: WorkerAvailabilityOrderByWithRelationInput | WorkerAvailabilityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerAvailabilityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerAvailabilities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerAvailabilities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerAvailabilities
+    **/
+    _count?: true | WorkerAvailabilityCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkerAvailabilityAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkerAvailabilitySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerAvailabilityMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerAvailabilityMaxAggregateInputType
+  }
+
+  export type GetWorkerAvailabilityAggregateType<T extends WorkerAvailabilityAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerAvailability]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerAvailability[P]>
+      : GetScalarType<T[P], AggregateWorkerAvailability[P]>
+  }
+
+
+
+
+  export type WorkerAvailabilityGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerAvailabilityWhereInput
+    orderBy?: WorkerAvailabilityOrderByWithAggregationInput | WorkerAvailabilityOrderByWithAggregationInput[]
+    by: WorkerAvailabilityScalarFieldEnum[] | WorkerAvailabilityScalarFieldEnum
+    having?: WorkerAvailabilityScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerAvailabilityCountAggregateInputType | true
+    _avg?: WorkerAvailabilityAvgAggregateInputType
+    _sum?: WorkerAvailabilitySumAggregateInputType
+    _min?: WorkerAvailabilityMinAggregateInputType
+    _max?: WorkerAvailabilityMaxAggregateInputType
+  }
+
+  export type WorkerAvailabilityGroupByOutputType = {
+    id: string
+    workerProfileId: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkerAvailabilityCountAggregateOutputType | null
+    _avg: WorkerAvailabilityAvgAggregateOutputType | null
+    _sum: WorkerAvailabilitySumAggregateOutputType | null
+    _min: WorkerAvailabilityMinAggregateOutputType | null
+    _max: WorkerAvailabilityMaxAggregateOutputType | null
+  }
+
+  type GetWorkerAvailabilityGroupByPayload<T extends WorkerAvailabilityGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerAvailabilityGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerAvailabilityGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerAvailabilityGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerAvailabilityGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerAvailabilitySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    dayOfWeek?: boolean
+    startMinute?: boolean
+    endMinute?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerAvailability"]>
+
+  export type WorkerAvailabilitySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    dayOfWeek?: boolean
+    startMinute?: boolean
+    endMinute?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerAvailability"]>
+
+  export type WorkerAvailabilitySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    dayOfWeek?: boolean
+    startMinute?: boolean
+    endMinute?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerAvailability"]>
+
+  export type WorkerAvailabilitySelectScalar = {
+    id?: boolean
+    workerProfileId?: boolean
+    dayOfWeek?: boolean
+    startMinute?: boolean
+    endMinute?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkerAvailabilityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "dayOfWeek" | "startMinute" | "endMinute" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workerAvailability"]>
+  export type WorkerAvailabilityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerAvailabilityIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerAvailabilityIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerAvailabilityPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerAvailability"
+    objects: {
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workerProfileId: string
+      dayOfWeek: $Enums.DayOfWeek
+      startMinute: number
+      endMinute: number
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workerAvailability"]>
+    composites: {}
+  }
+
+  type WorkerAvailabilityGetPayload<S extends boolean | null | undefined | WorkerAvailabilityDefaultArgs> = $Result.GetResult<Prisma.$WorkerAvailabilityPayload, S>
+
+  type WorkerAvailabilityCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerAvailabilityFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerAvailabilityCountAggregateInputType | true
+    }
+
+  export interface WorkerAvailabilityDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerAvailability'], meta: { name: 'WorkerAvailability' } }
+    /**
+     * Find zero or one WorkerAvailability that matches the filter.
+     * @param {WorkerAvailabilityFindUniqueArgs} args - Arguments to find a WorkerAvailability
+     * @example
+     * // Get one WorkerAvailability
+     * const workerAvailability = await prisma.workerAvailability.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerAvailabilityFindUniqueArgs>(args: SelectSubset<T, WorkerAvailabilityFindUniqueArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerAvailability that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerAvailabilityFindUniqueOrThrowArgs} args - Arguments to find a WorkerAvailability
+     * @example
+     * // Get one WorkerAvailability
+     * const workerAvailability = await prisma.workerAvailability.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerAvailabilityFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerAvailabilityFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerAvailability that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityFindFirstArgs} args - Arguments to find a WorkerAvailability
+     * @example
+     * // Get one WorkerAvailability
+     * const workerAvailability = await prisma.workerAvailability.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerAvailabilityFindFirstArgs>(args?: SelectSubset<T, WorkerAvailabilityFindFirstArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerAvailability that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityFindFirstOrThrowArgs} args - Arguments to find a WorkerAvailability
+     * @example
+     * // Get one WorkerAvailability
+     * const workerAvailability = await prisma.workerAvailability.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerAvailabilityFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerAvailabilityFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerAvailabilities that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerAvailabilities
+     * const workerAvailabilities = await prisma.workerAvailability.findMany()
+     * 
+     * // Get first 10 WorkerAvailabilities
+     * const workerAvailabilities = await prisma.workerAvailability.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workerAvailabilityWithIdOnly = await prisma.workerAvailability.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkerAvailabilityFindManyArgs>(args?: SelectSubset<T, WorkerAvailabilityFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerAvailability.
+     * @param {WorkerAvailabilityCreateArgs} args - Arguments to create a WorkerAvailability.
+     * @example
+     * // Create one WorkerAvailability
+     * const WorkerAvailability = await prisma.workerAvailability.create({
+     *   data: {
+     *     // ... data to create a WorkerAvailability
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerAvailabilityCreateArgs>(args: SelectSubset<T, WorkerAvailabilityCreateArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerAvailabilities.
+     * @param {WorkerAvailabilityCreateManyArgs} args - Arguments to create many WorkerAvailabilities.
+     * @example
+     * // Create many WorkerAvailabilities
+     * const workerAvailability = await prisma.workerAvailability.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerAvailabilityCreateManyArgs>(args?: SelectSubset<T, WorkerAvailabilityCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerAvailabilities and returns the data saved in the database.
+     * @param {WorkerAvailabilityCreateManyAndReturnArgs} args - Arguments to create many WorkerAvailabilities.
+     * @example
+     * // Create many WorkerAvailabilities
+     * const workerAvailability = await prisma.workerAvailability.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerAvailabilities and only return the `id`
+     * const workerAvailabilityWithIdOnly = await prisma.workerAvailability.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerAvailabilityCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerAvailabilityCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerAvailability.
+     * @param {WorkerAvailabilityDeleteArgs} args - Arguments to delete one WorkerAvailability.
+     * @example
+     * // Delete one WorkerAvailability
+     * const WorkerAvailability = await prisma.workerAvailability.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerAvailability
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerAvailabilityDeleteArgs>(args: SelectSubset<T, WorkerAvailabilityDeleteArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerAvailability.
+     * @param {WorkerAvailabilityUpdateArgs} args - Arguments to update one WorkerAvailability.
+     * @example
+     * // Update one WorkerAvailability
+     * const workerAvailability = await prisma.workerAvailability.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerAvailabilityUpdateArgs>(args: SelectSubset<T, WorkerAvailabilityUpdateArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerAvailabilities.
+     * @param {WorkerAvailabilityDeleteManyArgs} args - Arguments to filter WorkerAvailabilities to delete.
+     * @example
+     * // Delete a few WorkerAvailabilities
+     * const { count } = await prisma.workerAvailability.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerAvailabilityDeleteManyArgs>(args?: SelectSubset<T, WorkerAvailabilityDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerAvailabilities.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerAvailabilities
+     * const workerAvailability = await prisma.workerAvailability.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerAvailabilityUpdateManyArgs>(args: SelectSubset<T, WorkerAvailabilityUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerAvailabilities and returns the data updated in the database.
+     * @param {WorkerAvailabilityUpdateManyAndReturnArgs} args - Arguments to update many WorkerAvailabilities.
+     * @example
+     * // Update many WorkerAvailabilities
+     * const workerAvailability = await prisma.workerAvailability.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerAvailabilities and only return the `id`
+     * const workerAvailabilityWithIdOnly = await prisma.workerAvailability.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerAvailabilityUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerAvailabilityUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerAvailability.
+     * @param {WorkerAvailabilityUpsertArgs} args - Arguments to update or create a WorkerAvailability.
+     * @example
+     * // Update or create a WorkerAvailability
+     * const workerAvailability = await prisma.workerAvailability.upsert({
+     *   create: {
+     *     // ... data to create a WorkerAvailability
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerAvailability we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerAvailabilityUpsertArgs>(args: SelectSubset<T, WorkerAvailabilityUpsertArgs<ExtArgs>>): Prisma__WorkerAvailabilityClient<$Result.GetResult<Prisma.$WorkerAvailabilityPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerAvailabilities.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityCountArgs} args - Arguments to filter WorkerAvailabilities to count.
+     * @example
+     * // Count the number of WorkerAvailabilities
+     * const count = await prisma.workerAvailability.count({
+     *   where: {
+     *     // ... the filter for the WorkerAvailabilities we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerAvailabilityCountArgs>(
+      args?: Subset<T, WorkerAvailabilityCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerAvailabilityCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerAvailability.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerAvailabilityAggregateArgs>(args: Subset<T, WorkerAvailabilityAggregateArgs>): Prisma.PrismaPromise<GetWorkerAvailabilityAggregateType<T>>
+
+    /**
+     * Group by WorkerAvailability.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerAvailabilityGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerAvailabilityGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerAvailabilityGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerAvailabilityGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerAvailabilityGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerAvailabilityGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerAvailability model
+   */
+  readonly fields: WorkerAvailabilityFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerAvailability.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerAvailabilityClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerAvailability model
+   */
+  interface WorkerAvailabilityFieldRefs {
+    readonly id: FieldRef<"WorkerAvailability", 'String'>
+    readonly workerProfileId: FieldRef<"WorkerAvailability", 'String'>
+    readonly dayOfWeek: FieldRef<"WorkerAvailability", 'DayOfWeek'>
+    readonly startMinute: FieldRef<"WorkerAvailability", 'Int'>
+    readonly endMinute: FieldRef<"WorkerAvailability", 'Int'>
+    readonly sortOrder: FieldRef<"WorkerAvailability", 'Int'>
+    readonly createdAt: FieldRef<"WorkerAvailability", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkerAvailability", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerAvailability findUnique
+   */
+  export type WorkerAvailabilityFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerAvailability to fetch.
+     */
+    where: WorkerAvailabilityWhereUniqueInput
+  }
+
+  /**
+   * WorkerAvailability findUniqueOrThrow
+   */
+  export type WorkerAvailabilityFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerAvailability to fetch.
+     */
+    where: WorkerAvailabilityWhereUniqueInput
+  }
+
+  /**
+   * WorkerAvailability findFirst
+   */
+  export type WorkerAvailabilityFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerAvailability to fetch.
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerAvailabilities to fetch.
+     */
+    orderBy?: WorkerAvailabilityOrderByWithRelationInput | WorkerAvailabilityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerAvailabilities.
+     */
+    cursor?: WorkerAvailabilityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerAvailabilities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerAvailabilities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerAvailabilities.
+     */
+    distinct?: WorkerAvailabilityScalarFieldEnum | WorkerAvailabilityScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerAvailability findFirstOrThrow
+   */
+  export type WorkerAvailabilityFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerAvailability to fetch.
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerAvailabilities to fetch.
+     */
+    orderBy?: WorkerAvailabilityOrderByWithRelationInput | WorkerAvailabilityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerAvailabilities.
+     */
+    cursor?: WorkerAvailabilityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerAvailabilities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerAvailabilities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerAvailabilities.
+     */
+    distinct?: WorkerAvailabilityScalarFieldEnum | WorkerAvailabilityScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerAvailability findMany
+   */
+  export type WorkerAvailabilityFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerAvailabilities to fetch.
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerAvailabilities to fetch.
+     */
+    orderBy?: WorkerAvailabilityOrderByWithRelationInput | WorkerAvailabilityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerAvailabilities.
+     */
+    cursor?: WorkerAvailabilityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerAvailabilities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerAvailabilities.
+     */
+    skip?: number
+    distinct?: WorkerAvailabilityScalarFieldEnum | WorkerAvailabilityScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerAvailability create
+   */
+  export type WorkerAvailabilityCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerAvailability.
+     */
+    data: XOR<WorkerAvailabilityCreateInput, WorkerAvailabilityUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerAvailability createMany
+   */
+  export type WorkerAvailabilityCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerAvailabilities.
+     */
+    data: WorkerAvailabilityCreateManyInput | WorkerAvailabilityCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerAvailability createManyAndReturn
+   */
+  export type WorkerAvailabilityCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerAvailabilities.
+     */
+    data: WorkerAvailabilityCreateManyInput | WorkerAvailabilityCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerAvailability update
+   */
+  export type WorkerAvailabilityUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerAvailability.
+     */
+    data: XOR<WorkerAvailabilityUpdateInput, WorkerAvailabilityUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerAvailability to update.
+     */
+    where: WorkerAvailabilityWhereUniqueInput
+  }
+
+  /**
+   * WorkerAvailability updateMany
+   */
+  export type WorkerAvailabilityUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerAvailabilities.
+     */
+    data: XOR<WorkerAvailabilityUpdateManyMutationInput, WorkerAvailabilityUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerAvailabilities to update
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * Limit how many WorkerAvailabilities to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerAvailability updateManyAndReturn
+   */
+  export type WorkerAvailabilityUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerAvailabilities.
+     */
+    data: XOR<WorkerAvailabilityUpdateManyMutationInput, WorkerAvailabilityUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerAvailabilities to update
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * Limit how many WorkerAvailabilities to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerAvailability upsert
+   */
+  export type WorkerAvailabilityUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerAvailability to update in case it exists.
+     */
+    where: WorkerAvailabilityWhereUniqueInput
+    /**
+     * In case the WorkerAvailability found by the `where` argument doesn't exist, create a new WorkerAvailability with this data.
+     */
+    create: XOR<WorkerAvailabilityCreateInput, WorkerAvailabilityUncheckedCreateInput>
+    /**
+     * In case the WorkerAvailability was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerAvailabilityUpdateInput, WorkerAvailabilityUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerAvailability delete
+   */
+  export type WorkerAvailabilityDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerAvailability to delete.
+     */
+    where: WorkerAvailabilityWhereUniqueInput
+  }
+
+  /**
+   * WorkerAvailability deleteMany
+   */
+  export type WorkerAvailabilityDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerAvailabilities to delete
+     */
+    where?: WorkerAvailabilityWhereInput
+    /**
+     * Limit how many WorkerAvailabilities to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerAvailability without action
+   */
+  export type WorkerAvailabilityDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerAvailability
+     */
+    select?: WorkerAvailabilitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerAvailability
+     */
+    omit?: WorkerAvailabilityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerAvailabilityInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkerExperience
+   */
+
+  export type AggregateWorkerExperience = {
+    _count: WorkerExperienceCountAggregateOutputType | null
+    _min: WorkerExperienceMinAggregateOutputType | null
+    _max: WorkerExperienceMaxAggregateOutputType | null
+  }
+
+  export type WorkerExperienceMinAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    domain: $Enums.CareDomain | null
+    isProfessional: boolean | null
+    isPersonal: boolean | null
+    otherAreas: string | null
+    description: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerExperienceMaxAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    domain: $Enums.CareDomain | null
+    isProfessional: boolean | null
+    isPersonal: boolean | null
+    otherAreas: string | null
+    description: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerExperienceCountAggregateOutputType = {
+    id: number
+    workerProfileId: number
+    domain: number
+    isProfessional: number
+    isPersonal: number
+    specificAreas: number
+    otherAreas: number
+    description: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkerExperienceMinAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    domain?: true
+    isProfessional?: true
+    isPersonal?: true
+    otherAreas?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerExperienceMaxAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    domain?: true
+    isProfessional?: true
+    isPersonal?: true
+    otherAreas?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerExperienceCountAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    domain?: true
+    isProfessional?: true
+    isPersonal?: true
+    specificAreas?: true
+    otherAreas?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkerExperienceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerExperience to aggregate.
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerExperiences to fetch.
+     */
+    orderBy?: WorkerExperienceOrderByWithRelationInput | WorkerExperienceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerExperienceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerExperiences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerExperiences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerExperiences
+    **/
+    _count?: true | WorkerExperienceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerExperienceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerExperienceMaxAggregateInputType
+  }
+
+  export type GetWorkerExperienceAggregateType<T extends WorkerExperienceAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerExperience]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerExperience[P]>
+      : GetScalarType<T[P], AggregateWorkerExperience[P]>
+  }
+
+
+
+
+  export type WorkerExperienceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerExperienceWhereInput
+    orderBy?: WorkerExperienceOrderByWithAggregationInput | WorkerExperienceOrderByWithAggregationInput[]
+    by: WorkerExperienceScalarFieldEnum[] | WorkerExperienceScalarFieldEnum
+    having?: WorkerExperienceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerExperienceCountAggregateInputType | true
+    _min?: WorkerExperienceMinAggregateInputType
+    _max?: WorkerExperienceMaxAggregateInputType
+  }
+
+  export type WorkerExperienceGroupByOutputType = {
+    id: string
+    workerProfileId: string
+    domain: $Enums.CareDomain
+    isProfessional: boolean
+    isPersonal: boolean
+    specificAreas: string[]
+    otherAreas: string | null
+    description: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkerExperienceCountAggregateOutputType | null
+    _min: WorkerExperienceMinAggregateOutputType | null
+    _max: WorkerExperienceMaxAggregateOutputType | null
+  }
+
+  type GetWorkerExperienceGroupByPayload<T extends WorkerExperienceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerExperienceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerExperienceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerExperienceGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerExperienceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerExperienceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    domain?: boolean
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: boolean
+    otherAreas?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerExperience"]>
+
+  export type WorkerExperienceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    domain?: boolean
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: boolean
+    otherAreas?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerExperience"]>
+
+  export type WorkerExperienceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    domain?: boolean
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: boolean
+    otherAreas?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerExperience"]>
+
+  export type WorkerExperienceSelectScalar = {
+    id?: boolean
+    workerProfileId?: boolean
+    domain?: boolean
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: boolean
+    otherAreas?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkerExperienceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "domain" | "isProfessional" | "isPersonal" | "specificAreas" | "otherAreas" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["workerExperience"]>
+  export type WorkerExperienceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerExperienceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerExperienceIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerExperiencePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerExperience"
+    objects: {
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workerProfileId: string
+      domain: $Enums.CareDomain
+      isProfessional: boolean
+      isPersonal: boolean
+      specificAreas: string[]
+      otherAreas: string | null
+      description: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workerExperience"]>
+    composites: {}
+  }
+
+  type WorkerExperienceGetPayload<S extends boolean | null | undefined | WorkerExperienceDefaultArgs> = $Result.GetResult<Prisma.$WorkerExperiencePayload, S>
+
+  type WorkerExperienceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerExperienceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerExperienceCountAggregateInputType | true
+    }
+
+  export interface WorkerExperienceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerExperience'], meta: { name: 'WorkerExperience' } }
+    /**
+     * Find zero or one WorkerExperience that matches the filter.
+     * @param {WorkerExperienceFindUniqueArgs} args - Arguments to find a WorkerExperience
+     * @example
+     * // Get one WorkerExperience
+     * const workerExperience = await prisma.workerExperience.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerExperienceFindUniqueArgs>(args: SelectSubset<T, WorkerExperienceFindUniqueArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerExperience that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerExperienceFindUniqueOrThrowArgs} args - Arguments to find a WorkerExperience
+     * @example
+     * // Get one WorkerExperience
+     * const workerExperience = await prisma.workerExperience.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerExperienceFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerExperienceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerExperience that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceFindFirstArgs} args - Arguments to find a WorkerExperience
+     * @example
+     * // Get one WorkerExperience
+     * const workerExperience = await prisma.workerExperience.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerExperienceFindFirstArgs>(args?: SelectSubset<T, WorkerExperienceFindFirstArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerExperience that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceFindFirstOrThrowArgs} args - Arguments to find a WorkerExperience
+     * @example
+     * // Get one WorkerExperience
+     * const workerExperience = await prisma.workerExperience.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerExperienceFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerExperienceFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerExperiences that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerExperiences
+     * const workerExperiences = await prisma.workerExperience.findMany()
+     * 
+     * // Get first 10 WorkerExperiences
+     * const workerExperiences = await prisma.workerExperience.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workerExperienceWithIdOnly = await prisma.workerExperience.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkerExperienceFindManyArgs>(args?: SelectSubset<T, WorkerExperienceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerExperience.
+     * @param {WorkerExperienceCreateArgs} args - Arguments to create a WorkerExperience.
+     * @example
+     * // Create one WorkerExperience
+     * const WorkerExperience = await prisma.workerExperience.create({
+     *   data: {
+     *     // ... data to create a WorkerExperience
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerExperienceCreateArgs>(args: SelectSubset<T, WorkerExperienceCreateArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerExperiences.
+     * @param {WorkerExperienceCreateManyArgs} args - Arguments to create many WorkerExperiences.
+     * @example
+     * // Create many WorkerExperiences
+     * const workerExperience = await prisma.workerExperience.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerExperienceCreateManyArgs>(args?: SelectSubset<T, WorkerExperienceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerExperiences and returns the data saved in the database.
+     * @param {WorkerExperienceCreateManyAndReturnArgs} args - Arguments to create many WorkerExperiences.
+     * @example
+     * // Create many WorkerExperiences
+     * const workerExperience = await prisma.workerExperience.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerExperiences and only return the `id`
+     * const workerExperienceWithIdOnly = await prisma.workerExperience.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerExperienceCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerExperienceCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerExperience.
+     * @param {WorkerExperienceDeleteArgs} args - Arguments to delete one WorkerExperience.
+     * @example
+     * // Delete one WorkerExperience
+     * const WorkerExperience = await prisma.workerExperience.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerExperience
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerExperienceDeleteArgs>(args: SelectSubset<T, WorkerExperienceDeleteArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerExperience.
+     * @param {WorkerExperienceUpdateArgs} args - Arguments to update one WorkerExperience.
+     * @example
+     * // Update one WorkerExperience
+     * const workerExperience = await prisma.workerExperience.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerExperienceUpdateArgs>(args: SelectSubset<T, WorkerExperienceUpdateArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerExperiences.
+     * @param {WorkerExperienceDeleteManyArgs} args - Arguments to filter WorkerExperiences to delete.
+     * @example
+     * // Delete a few WorkerExperiences
+     * const { count } = await prisma.workerExperience.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerExperienceDeleteManyArgs>(args?: SelectSubset<T, WorkerExperienceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerExperiences.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerExperiences
+     * const workerExperience = await prisma.workerExperience.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerExperienceUpdateManyArgs>(args: SelectSubset<T, WorkerExperienceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerExperiences and returns the data updated in the database.
+     * @param {WorkerExperienceUpdateManyAndReturnArgs} args - Arguments to update many WorkerExperiences.
+     * @example
+     * // Update many WorkerExperiences
+     * const workerExperience = await prisma.workerExperience.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerExperiences and only return the `id`
+     * const workerExperienceWithIdOnly = await prisma.workerExperience.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerExperienceUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerExperienceUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerExperience.
+     * @param {WorkerExperienceUpsertArgs} args - Arguments to update or create a WorkerExperience.
+     * @example
+     * // Update or create a WorkerExperience
+     * const workerExperience = await prisma.workerExperience.upsert({
+     *   create: {
+     *     // ... data to create a WorkerExperience
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerExperience we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerExperienceUpsertArgs>(args: SelectSubset<T, WorkerExperienceUpsertArgs<ExtArgs>>): Prisma__WorkerExperienceClient<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerExperiences.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceCountArgs} args - Arguments to filter WorkerExperiences to count.
+     * @example
+     * // Count the number of WorkerExperiences
+     * const count = await prisma.workerExperience.count({
+     *   where: {
+     *     // ... the filter for the WorkerExperiences we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerExperienceCountArgs>(
+      args?: Subset<T, WorkerExperienceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerExperienceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerExperience.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerExperienceAggregateArgs>(args: Subset<T, WorkerExperienceAggregateArgs>): Prisma.PrismaPromise<GetWorkerExperienceAggregateType<T>>
+
+    /**
+     * Group by WorkerExperience.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerExperienceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerExperienceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerExperienceGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerExperienceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerExperienceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerExperienceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerExperience model
+   */
+  readonly fields: WorkerExperienceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerExperience.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerExperienceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerExperience model
+   */
+  interface WorkerExperienceFieldRefs {
+    readonly id: FieldRef<"WorkerExperience", 'String'>
+    readonly workerProfileId: FieldRef<"WorkerExperience", 'String'>
+    readonly domain: FieldRef<"WorkerExperience", 'CareDomain'>
+    readonly isProfessional: FieldRef<"WorkerExperience", 'Boolean'>
+    readonly isPersonal: FieldRef<"WorkerExperience", 'Boolean'>
+    readonly specificAreas: FieldRef<"WorkerExperience", 'String[]'>
+    readonly otherAreas: FieldRef<"WorkerExperience", 'String'>
+    readonly description: FieldRef<"WorkerExperience", 'String'>
+    readonly createdAt: FieldRef<"WorkerExperience", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkerExperience", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerExperience findUnique
+   */
+  export type WorkerExperienceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerExperience to fetch.
+     */
+    where: WorkerExperienceWhereUniqueInput
+  }
+
+  /**
+   * WorkerExperience findUniqueOrThrow
+   */
+  export type WorkerExperienceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerExperience to fetch.
+     */
+    where: WorkerExperienceWhereUniqueInput
+  }
+
+  /**
+   * WorkerExperience findFirst
+   */
+  export type WorkerExperienceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerExperience to fetch.
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerExperiences to fetch.
+     */
+    orderBy?: WorkerExperienceOrderByWithRelationInput | WorkerExperienceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerExperiences.
+     */
+    cursor?: WorkerExperienceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerExperiences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerExperiences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerExperiences.
+     */
+    distinct?: WorkerExperienceScalarFieldEnum | WorkerExperienceScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerExperience findFirstOrThrow
+   */
+  export type WorkerExperienceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerExperience to fetch.
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerExperiences to fetch.
+     */
+    orderBy?: WorkerExperienceOrderByWithRelationInput | WorkerExperienceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerExperiences.
+     */
+    cursor?: WorkerExperienceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerExperiences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerExperiences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerExperiences.
+     */
+    distinct?: WorkerExperienceScalarFieldEnum | WorkerExperienceScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerExperience findMany
+   */
+  export type WorkerExperienceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerExperiences to fetch.
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerExperiences to fetch.
+     */
+    orderBy?: WorkerExperienceOrderByWithRelationInput | WorkerExperienceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerExperiences.
+     */
+    cursor?: WorkerExperienceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerExperiences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerExperiences.
+     */
+    skip?: number
+    distinct?: WorkerExperienceScalarFieldEnum | WorkerExperienceScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerExperience create
+   */
+  export type WorkerExperienceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerExperience.
+     */
+    data: XOR<WorkerExperienceCreateInput, WorkerExperienceUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerExperience createMany
+   */
+  export type WorkerExperienceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerExperiences.
+     */
+    data: WorkerExperienceCreateManyInput | WorkerExperienceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerExperience createManyAndReturn
+   */
+  export type WorkerExperienceCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerExperiences.
+     */
+    data: WorkerExperienceCreateManyInput | WorkerExperienceCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerExperience update
+   */
+  export type WorkerExperienceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerExperience.
+     */
+    data: XOR<WorkerExperienceUpdateInput, WorkerExperienceUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerExperience to update.
+     */
+    where: WorkerExperienceWhereUniqueInput
+  }
+
+  /**
+   * WorkerExperience updateMany
+   */
+  export type WorkerExperienceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerExperiences.
+     */
+    data: XOR<WorkerExperienceUpdateManyMutationInput, WorkerExperienceUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerExperiences to update
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * Limit how many WorkerExperiences to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerExperience updateManyAndReturn
+   */
+  export type WorkerExperienceUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerExperiences.
+     */
+    data: XOR<WorkerExperienceUpdateManyMutationInput, WorkerExperienceUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerExperiences to update
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * Limit how many WorkerExperiences to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerExperience upsert
+   */
+  export type WorkerExperienceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerExperience to update in case it exists.
+     */
+    where: WorkerExperienceWhereUniqueInput
+    /**
+     * In case the WorkerExperience found by the `where` argument doesn't exist, create a new WorkerExperience with this data.
+     */
+    create: XOR<WorkerExperienceCreateInput, WorkerExperienceUncheckedCreateInput>
+    /**
+     * In case the WorkerExperience was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerExperienceUpdateInput, WorkerExperienceUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerExperience delete
+   */
+  export type WorkerExperienceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerExperience to delete.
+     */
+    where: WorkerExperienceWhereUniqueInput
+  }
+
+  /**
+   * WorkerExperience deleteMany
+   */
+  export type WorkerExperienceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerExperiences to delete
+     */
+    where?: WorkerExperienceWhereInput
+    /**
+     * Limit how many WorkerExperiences to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerExperience without action
+   */
+  export type WorkerExperienceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerExperience
+     */
+    select?: WorkerExperienceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerExperience
+     */
+    omit?: WorkerExperienceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerExperienceInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -26433,6 +31664,72 @@ export namespace Prisma {
   export type ServiceRequestScalarFieldEnum = (typeof ServiceRequestScalarFieldEnum)[keyof typeof ServiceRequestScalarFieldEnum]
 
 
+  export const WorkerJobHistoryScalarFieldEnum: {
+    id: 'id',
+    workerAdditionalInfoId: 'workerAdditionalInfoId',
+    jobTitle: 'jobTitle',
+    company: 'company',
+    startMonth: 'startMonth',
+    startYear: 'startYear',
+    endMonth: 'endMonth',
+    endYear: 'endYear',
+    currentlyWorking: 'currentlyWorking',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkerJobHistoryScalarFieldEnum = (typeof WorkerJobHistoryScalarFieldEnum)[keyof typeof WorkerJobHistoryScalarFieldEnum]
+
+
+  export const WorkerEducationScalarFieldEnum: {
+    id: 'id',
+    workerAdditionalInfoId: 'workerAdditionalInfoId',
+    institution: 'institution',
+    qualification: 'qualification',
+    startMonth: 'startMonth',
+    startYear: 'startYear',
+    endMonth: 'endMonth',
+    endYear: 'endYear',
+    currentlyStudying: 'currentlyStudying',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkerEducationScalarFieldEnum = (typeof WorkerEducationScalarFieldEnum)[keyof typeof WorkerEducationScalarFieldEnum]
+
+
+  export const WorkerAvailabilityScalarFieldEnum: {
+    id: 'id',
+    workerProfileId: 'workerProfileId',
+    dayOfWeek: 'dayOfWeek',
+    startMinute: 'startMinute',
+    endMinute: 'endMinute',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkerAvailabilityScalarFieldEnum = (typeof WorkerAvailabilityScalarFieldEnum)[keyof typeof WorkerAvailabilityScalarFieldEnum]
+
+
+  export const WorkerExperienceScalarFieldEnum: {
+    id: 'id',
+    workerProfileId: 'workerProfileId',
+    domain: 'domain',
+    isProfessional: 'isProfessional',
+    isPersonal: 'isPersonal',
+    specificAreas: 'specificAreas',
+    otherAreas: 'otherAreas',
+    description: 'description',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkerExperienceScalarFieldEnum = (typeof WorkerExperienceScalarFieldEnum)[keyof typeof WorkerExperienceScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -26672,6 +31969,34 @@ export namespace Prisma {
    * Reference to a field of type 'ServiceRequestStatus[]'
    */
   export type ListEnumServiceRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ServiceRequestStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DayOfWeek'
+   */
+  export type EnumDayOfWeekFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DayOfWeek'>
+    
+
+
+  /**
+   * Reference to a field of type 'DayOfWeek[]'
+   */
+  export type ListEnumDayOfWeekFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DayOfWeek[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CareDomain'
+   */
+  export type EnumCareDomainFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CareDomain'>
+    
+
+
+  /**
+   * Reference to a field of type 'CareDomain[]'
+   */
+  export type ListEnumCareDomainFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CareDomain[]'>
     
   /**
    * Deep Input Types
@@ -27472,6 +32797,8 @@ export namespace Prisma {
     workerAdditionalInfo?: XOR<WorkerAdditionalInfoNullableScalarRelationFilter, WorkerAdditionalInfoWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     workerServices?: WorkerServiceListRelationFilter
+    availability?: WorkerAvailabilityListRelationFilter
+    careExperience?: WorkerExperienceListRelationFilter
   }
 
   export type WorkerProfileOrderByWithRelationInput = {
@@ -27511,6 +32838,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
     workerServices?: WorkerServiceOrderByRelationAggregateInput
+    availability?: WorkerAvailabilityOrderByRelationAggregateInput
+    careExperience?: WorkerExperienceOrderByRelationAggregateInput
   }
 
   export type WorkerProfileWhereUniqueInput = Prisma.AtLeast<{
@@ -27553,6 +32882,8 @@ export namespace Prisma {
     workerAdditionalInfo?: XOR<WorkerAdditionalInfoNullableScalarRelationFilter, WorkerAdditionalInfoWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     workerServices?: WorkerServiceListRelationFilter
+    availability?: WorkerAvailabilityListRelationFilter
+    careExperience?: WorkerExperienceListRelationFilter
   }, "id" | "userId">
 
   export type WorkerProfileOrderByWithAggregationInput = {
@@ -28217,6 +33548,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+    jobHistoryEntries?: WorkerJobHistoryListRelationFilter
+    educationEntries?: WorkerEducationListRelationFilter
   }
 
   export type WorkerAdditionalInfoOrderByWithRelationInput = {
@@ -28241,6 +33574,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     workerProfile?: WorkerProfileOrderByWithRelationInput
+    jobHistoryEntries?: WorkerJobHistoryOrderByRelationAggregateInput
+    educationEntries?: WorkerEducationOrderByRelationAggregateInput
   }
 
   export type WorkerAdditionalInfoWhereUniqueInput = Prisma.AtLeast<{
@@ -28268,6 +33603,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerAdditionalInfo"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+    jobHistoryEntries?: WorkerJobHistoryListRelationFilter
+    educationEntries?: WorkerEducationListRelationFilter
   }, "id" | "workerProfileId">
 
   export type WorkerAdditionalInfoOrderByWithAggregationInput = {
@@ -28410,6 +33747,344 @@ export namespace Prisma {
     status?: EnumServiceRequestStatusWithAggregatesFilter<"ServiceRequest"> | $Enums.ServiceRequestStatus
     createdAt?: DateTimeWithAggregatesFilter<"ServiceRequest"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ServiceRequest"> | Date | string
+  }
+
+  export type WorkerJobHistoryWhereInput = {
+    AND?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
+    OR?: WorkerJobHistoryWhereInput[]
+    NOT?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
+    id?: StringFilter<"WorkerJobHistory"> | string
+    workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
+    jobTitle?: StringFilter<"WorkerJobHistory"> | string
+    company?: StringFilter<"WorkerJobHistory"> | string
+    startMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
+    sortOrder?: IntFilter<"WorkerJobHistory"> | number
+    createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+  }
+
+  export type WorkerJobHistoryOrderByWithRelationInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    jobTitle?: SortOrder
+    company?: SortOrder
+    startMonth?: SortOrderInput | SortOrder
+    startYear?: SortOrderInput | SortOrder
+    endMonth?: SortOrderInput | SortOrder
+    endYear?: SortOrderInput | SortOrder
+    currentlyWorking?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    additionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
+  }
+
+  export type WorkerJobHistoryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
+    OR?: WorkerJobHistoryWhereInput[]
+    NOT?: WorkerJobHistoryWhereInput | WorkerJobHistoryWhereInput[]
+    workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
+    jobTitle?: StringFilter<"WorkerJobHistory"> | string
+    company?: StringFilter<"WorkerJobHistory"> | string
+    startMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
+    sortOrder?: IntFilter<"WorkerJobHistory"> | number
+    createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+  }, "id">
+
+  export type WorkerJobHistoryOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    jobTitle?: SortOrder
+    company?: SortOrder
+    startMonth?: SortOrderInput | SortOrder
+    startYear?: SortOrderInput | SortOrder
+    endMonth?: SortOrderInput | SortOrder
+    endYear?: SortOrderInput | SortOrder
+    currentlyWorking?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkerJobHistoryCountOrderByAggregateInput
+    _avg?: WorkerJobHistoryAvgOrderByAggregateInput
+    _max?: WorkerJobHistoryMaxOrderByAggregateInput
+    _min?: WorkerJobHistoryMinOrderByAggregateInput
+    _sum?: WorkerJobHistorySumOrderByAggregateInput
+  }
+
+  export type WorkerJobHistoryScalarWhereWithAggregatesInput = {
+    AND?: WorkerJobHistoryScalarWhereWithAggregatesInput | WorkerJobHistoryScalarWhereWithAggregatesInput[]
+    OR?: WorkerJobHistoryScalarWhereWithAggregatesInput[]
+    NOT?: WorkerJobHistoryScalarWhereWithAggregatesInput | WorkerJobHistoryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
+    workerAdditionalInfoId?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
+    jobTitle?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
+    company?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
+    startMonth?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
+    startYear?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
+    endMonth?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
+    endYear?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
+    currentlyWorking?: BoolWithAggregatesFilter<"WorkerJobHistory"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"WorkerJobHistory"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WorkerJobHistory"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkerJobHistory"> | Date | string
+  }
+
+  export type WorkerEducationWhereInput = {
+    AND?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
+    OR?: WorkerEducationWhereInput[]
+    NOT?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
+    id?: StringFilter<"WorkerEducation"> | string
+    workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
+    institution?: StringFilter<"WorkerEducation"> | string
+    qualification?: StringFilter<"WorkerEducation"> | string
+    startMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    startYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    endYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
+    sortOrder?: IntFilter<"WorkerEducation"> | number
+    createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
+    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+  }
+
+  export type WorkerEducationOrderByWithRelationInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    institution?: SortOrder
+    qualification?: SortOrder
+    startMonth?: SortOrderInput | SortOrder
+    startYear?: SortOrderInput | SortOrder
+    endMonth?: SortOrderInput | SortOrder
+    endYear?: SortOrderInput | SortOrder
+    currentlyStudying?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    additionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
+  }
+
+  export type WorkerEducationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
+    OR?: WorkerEducationWhereInput[]
+    NOT?: WorkerEducationWhereInput | WorkerEducationWhereInput[]
+    workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
+    institution?: StringFilter<"WorkerEducation"> | string
+    qualification?: StringFilter<"WorkerEducation"> | string
+    startMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    startYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    endYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
+    sortOrder?: IntFilter<"WorkerEducation"> | number
+    createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
+    additionalInfo?: XOR<WorkerAdditionalInfoScalarRelationFilter, WorkerAdditionalInfoWhereInput>
+  }, "id">
+
+  export type WorkerEducationOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    institution?: SortOrder
+    qualification?: SortOrder
+    startMonth?: SortOrderInput | SortOrder
+    startYear?: SortOrderInput | SortOrder
+    endMonth?: SortOrderInput | SortOrder
+    endYear?: SortOrderInput | SortOrder
+    currentlyStudying?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkerEducationCountOrderByAggregateInput
+    _avg?: WorkerEducationAvgOrderByAggregateInput
+    _max?: WorkerEducationMaxOrderByAggregateInput
+    _min?: WorkerEducationMinOrderByAggregateInput
+    _sum?: WorkerEducationSumOrderByAggregateInput
+  }
+
+  export type WorkerEducationScalarWhereWithAggregatesInput = {
+    AND?: WorkerEducationScalarWhereWithAggregatesInput | WorkerEducationScalarWhereWithAggregatesInput[]
+    OR?: WorkerEducationScalarWhereWithAggregatesInput[]
+    NOT?: WorkerEducationScalarWhereWithAggregatesInput | WorkerEducationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WorkerEducation"> | string
+    workerAdditionalInfoId?: StringWithAggregatesFilter<"WorkerEducation"> | string
+    institution?: StringWithAggregatesFilter<"WorkerEducation"> | string
+    qualification?: StringWithAggregatesFilter<"WorkerEducation"> | string
+    startMonth?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
+    startYear?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
+    endMonth?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
+    endYear?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
+    currentlyStudying?: BoolWithAggregatesFilter<"WorkerEducation"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"WorkerEducation"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WorkerEducation"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkerEducation"> | Date | string
+  }
+
+  export type WorkerAvailabilityWhereInput = {
+    AND?: WorkerAvailabilityWhereInput | WorkerAvailabilityWhereInput[]
+    OR?: WorkerAvailabilityWhereInput[]
+    NOT?: WorkerAvailabilityWhereInput | WorkerAvailabilityWhereInput[]
+    id?: StringFilter<"WorkerAvailability"> | string
+    workerProfileId?: StringFilter<"WorkerAvailability"> | string
+    dayOfWeek?: EnumDayOfWeekFilter<"WorkerAvailability"> | $Enums.DayOfWeek
+    startMinute?: IntFilter<"WorkerAvailability"> | number
+    endMinute?: IntFilter<"WorkerAvailability"> | number
+    sortOrder?: IntFilter<"WorkerAvailability"> | number
+    createdAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }
+
+  export type WorkerAvailabilityOrderByWithRelationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    dayOfWeek?: SortOrder
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workerProfile?: WorkerProfileOrderByWithRelationInput
+  }
+
+  export type WorkerAvailabilityWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workerProfileId_dayOfWeek_startMinute_endMinute?: WorkerAvailabilityWorkerProfileIdDayOfWeekStartMinuteEndMinuteCompoundUniqueInput
+    AND?: WorkerAvailabilityWhereInput | WorkerAvailabilityWhereInput[]
+    OR?: WorkerAvailabilityWhereInput[]
+    NOT?: WorkerAvailabilityWhereInput | WorkerAvailabilityWhereInput[]
+    workerProfileId?: StringFilter<"WorkerAvailability"> | string
+    dayOfWeek?: EnumDayOfWeekFilter<"WorkerAvailability"> | $Enums.DayOfWeek
+    startMinute?: IntFilter<"WorkerAvailability"> | number
+    endMinute?: IntFilter<"WorkerAvailability"> | number
+    sortOrder?: IntFilter<"WorkerAvailability"> | number
+    createdAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }, "id" | "workerProfileId_dayOfWeek_startMinute_endMinute">
+
+  export type WorkerAvailabilityOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    dayOfWeek?: SortOrder
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkerAvailabilityCountOrderByAggregateInput
+    _avg?: WorkerAvailabilityAvgOrderByAggregateInput
+    _max?: WorkerAvailabilityMaxOrderByAggregateInput
+    _min?: WorkerAvailabilityMinOrderByAggregateInput
+    _sum?: WorkerAvailabilitySumOrderByAggregateInput
+  }
+
+  export type WorkerAvailabilityScalarWhereWithAggregatesInput = {
+    AND?: WorkerAvailabilityScalarWhereWithAggregatesInput | WorkerAvailabilityScalarWhereWithAggregatesInput[]
+    OR?: WorkerAvailabilityScalarWhereWithAggregatesInput[]
+    NOT?: WorkerAvailabilityScalarWhereWithAggregatesInput | WorkerAvailabilityScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WorkerAvailability"> | string
+    workerProfileId?: StringWithAggregatesFilter<"WorkerAvailability"> | string
+    dayOfWeek?: EnumDayOfWeekWithAggregatesFilter<"WorkerAvailability"> | $Enums.DayOfWeek
+    startMinute?: IntWithAggregatesFilter<"WorkerAvailability"> | number
+    endMinute?: IntWithAggregatesFilter<"WorkerAvailability"> | number
+    sortOrder?: IntWithAggregatesFilter<"WorkerAvailability"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WorkerAvailability"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkerAvailability"> | Date | string
+  }
+
+  export type WorkerExperienceWhereInput = {
+    AND?: WorkerExperienceWhereInput | WorkerExperienceWhereInput[]
+    OR?: WorkerExperienceWhereInput[]
+    NOT?: WorkerExperienceWhereInput | WorkerExperienceWhereInput[]
+    id?: StringFilter<"WorkerExperience"> | string
+    workerProfileId?: StringFilter<"WorkerExperience"> | string
+    domain?: EnumCareDomainFilter<"WorkerExperience"> | $Enums.CareDomain
+    isProfessional?: BoolFilter<"WorkerExperience"> | boolean
+    isPersonal?: BoolFilter<"WorkerExperience"> | boolean
+    specificAreas?: StringNullableListFilter<"WorkerExperience">
+    otherAreas?: StringNullableFilter<"WorkerExperience"> | string | null
+    description?: StringNullableFilter<"WorkerExperience"> | string | null
+    createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }
+
+  export type WorkerExperienceOrderByWithRelationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    domain?: SortOrder
+    isProfessional?: SortOrder
+    isPersonal?: SortOrder
+    specificAreas?: SortOrder
+    otherAreas?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workerProfile?: WorkerProfileOrderByWithRelationInput
+  }
+
+  export type WorkerExperienceWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workerProfileId_domain?: WorkerExperienceWorkerProfileIdDomainCompoundUniqueInput
+    AND?: WorkerExperienceWhereInput | WorkerExperienceWhereInput[]
+    OR?: WorkerExperienceWhereInput[]
+    NOT?: WorkerExperienceWhereInput | WorkerExperienceWhereInput[]
+    workerProfileId?: StringFilter<"WorkerExperience"> | string
+    domain?: EnumCareDomainFilter<"WorkerExperience"> | $Enums.CareDomain
+    isProfessional?: BoolFilter<"WorkerExperience"> | boolean
+    isPersonal?: BoolFilter<"WorkerExperience"> | boolean
+    specificAreas?: StringNullableListFilter<"WorkerExperience">
+    otherAreas?: StringNullableFilter<"WorkerExperience"> | string | null
+    description?: StringNullableFilter<"WorkerExperience"> | string | null
+    createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }, "id" | "workerProfileId_domain">
+
+  export type WorkerExperienceOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    domain?: SortOrder
+    isProfessional?: SortOrder
+    isPersonal?: SortOrder
+    specificAreas?: SortOrder
+    otherAreas?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkerExperienceCountOrderByAggregateInput
+    _max?: WorkerExperienceMaxOrderByAggregateInput
+    _min?: WorkerExperienceMinOrderByAggregateInput
+  }
+
+  export type WorkerExperienceScalarWhereWithAggregatesInput = {
+    AND?: WorkerExperienceScalarWhereWithAggregatesInput | WorkerExperienceScalarWhereWithAggregatesInput[]
+    OR?: WorkerExperienceScalarWhereWithAggregatesInput[]
+    NOT?: WorkerExperienceScalarWhereWithAggregatesInput | WorkerExperienceScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WorkerExperience"> | string
+    workerProfileId?: StringWithAggregatesFilter<"WorkerExperience"> | string
+    domain?: EnumCareDomainWithAggregatesFilter<"WorkerExperience"> | $Enums.CareDomain
+    isProfessional?: BoolWithAggregatesFilter<"WorkerExperience"> | boolean
+    isPersonal?: BoolWithAggregatesFilter<"WorkerExperience"> | boolean
+    specificAreas?: StringNullableListFilter<"WorkerExperience">
+    otherAreas?: StringNullableWithAggregatesFilter<"WorkerExperience"> | string | null
+    description?: StringNullableWithAggregatesFilter<"WorkerExperience"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"WorkerExperience"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkerExperience"> | Date | string
   }
 
   export type AccountCreateInput = {
@@ -29306,6 +34981,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUncheckedCreateInput = {
@@ -29344,6 +35021,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUpdateInput = {
@@ -29382,6 +35061,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateInput = {
@@ -29420,6 +35101,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileCreateManyInput = {
@@ -30152,6 +35835,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoUncheckedCreateInput = {
@@ -30175,6 +35860,8 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoUpdateInput = {
@@ -30198,6 +35885,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type WorkerAdditionalInfoUncheckedUpdateInput = {
@@ -30221,6 +35910,8 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type WorkerAdditionalInfoCreateManyInput = {
@@ -30391,6 +36082,380 @@ export namespace Prisma {
     assignedWorker?: NullableJsonNullValueInput | InputJsonValue
     selectedWorkers?: ServiceRequestUpdateselectedWorkersInput | string[]
     status?: EnumServiceRequestStatusFieldUpdateOperationsInput | $Enums.ServiceRequestStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryCreateInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    additionalInfo: WorkerAdditionalInfoCreateNestedOneWithoutJobHistoryEntriesInput
+  }
+
+  export type WorkerJobHistoryUncheckedCreateInput = {
+    id?: string
+    workerAdditionalInfoId: string
+    jobTitle: string
+    company: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    additionalInfo?: WorkerAdditionalInfoUpdateOneRequiredWithoutJobHistoryEntriesNestedInput
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryCreateManyInput = {
+    id?: string
+    workerAdditionalInfoId: string
+    jobTitle: string
+    company: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationCreateInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    additionalInfo: WorkerAdditionalInfoCreateNestedOneWithoutEducationEntriesInput
+  }
+
+  export type WorkerEducationUncheckedCreateInput = {
+    id?: string
+    workerAdditionalInfoId: string
+    institution: string
+    qualification: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    additionalInfo?: WorkerAdditionalInfoUpdateOneRequiredWithoutEducationEntriesNestedInput
+  }
+
+  export type WorkerEducationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationCreateManyInput = {
+    id?: string
+    workerAdditionalInfoId: string
+    institution: string
+    qualification: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAvailabilityCreateInput = {
+    id?: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutAvailabilityInput
+  }
+
+  export type WorkerAvailabilityUncheckedCreateInput = {
+    id?: string
+    workerProfileId: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerAvailabilityUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutAvailabilityNestedInput
+  }
+
+  export type WorkerAvailabilityUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAvailabilityCreateManyInput = {
+    id?: string
+    workerProfileId: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerAvailabilityUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAvailabilityUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerExperienceCreateInput = {
+    id?: string
+    domain: $Enums.CareDomain
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
+    otherAreas?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutCareExperienceInput
+  }
+
+  export type WorkerExperienceUncheckedCreateInput = {
+    id?: string
+    workerProfileId: string
+    domain: $Enums.CareDomain
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
+    otherAreas?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerExperienceUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutCareExperienceNestedInput
+  }
+
+  export type WorkerExperienceUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerExperienceCreateManyInput = {
+    id?: string
+    workerProfileId: string
+    domain: $Enums.CareDomain
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
+    otherAreas?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerExperienceUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerExperienceUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -31223,11 +37288,31 @@ export namespace Prisma {
     none?: WorkerServiceWhereInput
   }
 
+  export type WorkerAvailabilityListRelationFilter = {
+    every?: WorkerAvailabilityWhereInput
+    some?: WorkerAvailabilityWhereInput
+    none?: WorkerAvailabilityWhereInput
+  }
+
+  export type WorkerExperienceListRelationFilter = {
+    every?: WorkerExperienceWhereInput
+    some?: WorkerExperienceWhereInput
+    none?: WorkerExperienceWhereInput
+  }
+
   export type VerificationRequirementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type WorkerServiceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerAvailabilityOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerExperienceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -31716,6 +37801,26 @@ export namespace Prisma {
     _max?: NestedEnumJobApplicationStatusFilter<$PrismaModel>
   }
 
+  export type WorkerJobHistoryListRelationFilter = {
+    every?: WorkerJobHistoryWhereInput
+    some?: WorkerJobHistoryWhereInput
+    none?: WorkerJobHistoryWhereInput
+  }
+
+  export type WorkerEducationListRelationFilter = {
+    every?: WorkerEducationWhereInput
+    some?: WorkerEducationWhereInput
+    none?: WorkerEducationWhereInput
+  }
+
+  export type WorkerJobHistoryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerEducationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type WorkerAdditionalInfoCountOrderByAggregateInput = {
     id?: SortOrder
     workerProfileId?: SortOrder
@@ -31869,6 +37974,261 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumServiceRequestStatusFilter<$PrismaModel>
     _max?: NestedEnumServiceRequestStatusFilter<$PrismaModel>
+  }
+
+  export type WorkerAdditionalInfoScalarRelationFilter = {
+    is?: WorkerAdditionalInfoWhereInput
+    isNot?: WorkerAdditionalInfoWhereInput
+  }
+
+  export type WorkerJobHistoryCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    jobTitle?: SortOrder
+    company?: SortOrder
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    currentlyWorking?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerJobHistoryAvgOrderByAggregateInput = {
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type WorkerJobHistoryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    jobTitle?: SortOrder
+    company?: SortOrder
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    currentlyWorking?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerJobHistoryMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    jobTitle?: SortOrder
+    company?: SortOrder
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    currentlyWorking?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerJobHistorySumOrderByAggregateInput = {
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type WorkerEducationCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    institution?: SortOrder
+    qualification?: SortOrder
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    currentlyStudying?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerEducationAvgOrderByAggregateInput = {
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type WorkerEducationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    institution?: SortOrder
+    qualification?: SortOrder
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    currentlyStudying?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerEducationMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerAdditionalInfoId?: SortOrder
+    institution?: SortOrder
+    qualification?: SortOrder
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    currentlyStudying?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerEducationSumOrderByAggregateInput = {
+    startMonth?: SortOrder
+    startYear?: SortOrder
+    endMonth?: SortOrder
+    endYear?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type EnumDayOfWeekFilter<$PrismaModel = never> = {
+    equals?: $Enums.DayOfWeek | EnumDayOfWeekFieldRefInput<$PrismaModel>
+    in?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    not?: NestedEnumDayOfWeekFilter<$PrismaModel> | $Enums.DayOfWeek
+  }
+
+  export type WorkerAvailabilityWorkerProfileIdDayOfWeekStartMinuteEndMinuteCompoundUniqueInput = {
+    workerProfileId: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+  }
+
+  export type WorkerAvailabilityCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    dayOfWeek?: SortOrder
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerAvailabilityAvgOrderByAggregateInput = {
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type WorkerAvailabilityMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    dayOfWeek?: SortOrder
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerAvailabilityMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    dayOfWeek?: SortOrder
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerAvailabilitySumOrderByAggregateInput = {
+    startMinute?: SortOrder
+    endMinute?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type EnumDayOfWeekWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DayOfWeek | EnumDayOfWeekFieldRefInput<$PrismaModel>
+    in?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    not?: NestedEnumDayOfWeekWithAggregatesFilter<$PrismaModel> | $Enums.DayOfWeek
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDayOfWeekFilter<$PrismaModel>
+    _max?: NestedEnumDayOfWeekFilter<$PrismaModel>
+  }
+
+  export type EnumCareDomainFilter<$PrismaModel = never> = {
+    equals?: $Enums.CareDomain | EnumCareDomainFieldRefInput<$PrismaModel>
+    in?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    not?: NestedEnumCareDomainFilter<$PrismaModel> | $Enums.CareDomain
+  }
+
+  export type WorkerExperienceWorkerProfileIdDomainCompoundUniqueInput = {
+    workerProfileId: string
+    domain: $Enums.CareDomain
+  }
+
+  export type WorkerExperienceCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    domain?: SortOrder
+    isProfessional?: SortOrder
+    isPersonal?: SortOrder
+    specificAreas?: SortOrder
+    otherAreas?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerExperienceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    domain?: SortOrder
+    isProfessional?: SortOrder
+    isPersonal?: SortOrder
+    otherAreas?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerExperienceMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    domain?: SortOrder
+    isProfessional?: SortOrder
+    isPersonal?: SortOrder
+    otherAreas?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumCareDomainWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CareDomain | EnumCareDomainFieldRefInput<$PrismaModel>
+    in?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    not?: NestedEnumCareDomainWithAggregatesFilter<$PrismaModel> | $Enums.CareDomain
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCareDomainFilter<$PrismaModel>
+    _max?: NestedEnumCareDomainFilter<$PrismaModel>
   }
 
   export type UserCreateNestedOneWithoutAccountsInput = {
@@ -32387,6 +38747,20 @@ export namespace Prisma {
     connect?: WorkerServiceWhereUniqueInput | WorkerServiceWhereUniqueInput[]
   }
 
+  export type WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerAvailabilityCreateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput> | WorkerAvailabilityCreateWithoutWorkerProfileInput[] | WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput | WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerAvailabilityCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+  }
+
+  export type WorkerExperienceCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput> | WorkerExperienceCreateWithoutWorkerProfileInput[] | WorkerExperienceUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerExperienceCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+  }
+
   export type VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput = {
     create?: XOR<VerificationRequirementCreateWithoutWorkerProfileInput, VerificationRequirementUncheckedCreateWithoutWorkerProfileInput> | VerificationRequirementCreateWithoutWorkerProfileInput[] | VerificationRequirementUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: VerificationRequirementCreateOrConnectWithoutWorkerProfileInput | VerificationRequirementCreateOrConnectWithoutWorkerProfileInput[]
@@ -32405,6 +38779,20 @@ export namespace Prisma {
     connectOrCreate?: WorkerServiceCreateOrConnectWithoutWorkerProfileInput | WorkerServiceCreateOrConnectWithoutWorkerProfileInput[]
     createMany?: WorkerServiceCreateManyWorkerProfileInputEnvelope
     connect?: WorkerServiceWhereUniqueInput | WorkerServiceWhereUniqueInput[]
+  }
+
+  export type WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerAvailabilityCreateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput> | WorkerAvailabilityCreateWithoutWorkerProfileInput[] | WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput | WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerAvailabilityCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+  }
+
+  export type WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput> | WorkerExperienceCreateWithoutWorkerProfileInput[] | WorkerExperienceUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerExperienceCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
   }
 
   export type WorkerProfileUpdatelanguagesInput = {
@@ -32466,6 +38854,34 @@ export namespace Prisma {
     deleteMany?: WorkerServiceScalarWhereInput | WorkerServiceScalarWhereInput[]
   }
 
+  export type WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerAvailabilityCreateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput> | WorkerAvailabilityCreateWithoutWorkerProfileInput[] | WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput | WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerAvailabilityUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerAvailabilityUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerAvailabilityCreateManyWorkerProfileInputEnvelope
+    set?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    disconnect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    delete?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    connect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    update?: WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput | WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerAvailabilityScalarWhereInput | WorkerAvailabilityScalarWhereInput[]
+  }
+
+  export type WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput> | WorkerExperienceCreateWithoutWorkerProfileInput[] | WorkerExperienceUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerExperienceUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerExperienceUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerExperienceCreateManyWorkerProfileInputEnvelope
+    set?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    disconnect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    delete?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    connect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    update?: WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput | WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerExperienceScalarWhereInput | WorkerExperienceScalarWhereInput[]
+  }
+
   export type VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
     create?: XOR<VerificationRequirementCreateWithoutWorkerProfileInput, VerificationRequirementUncheckedCreateWithoutWorkerProfileInput> | VerificationRequirementCreateWithoutWorkerProfileInput[] | VerificationRequirementUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: VerificationRequirementCreateOrConnectWithoutWorkerProfileInput | VerificationRequirementCreateOrConnectWithoutWorkerProfileInput[]
@@ -32502,6 +38918,34 @@ export namespace Prisma {
     update?: WorkerServiceUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerServiceUpdateWithWhereUniqueWithoutWorkerProfileInput[]
     updateMany?: WorkerServiceUpdateManyWithWhereWithoutWorkerProfileInput | WorkerServiceUpdateManyWithWhereWithoutWorkerProfileInput[]
     deleteMany?: WorkerServiceScalarWhereInput | WorkerServiceScalarWhereInput[]
+  }
+
+  export type WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerAvailabilityCreateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput> | WorkerAvailabilityCreateWithoutWorkerProfileInput[] | WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput | WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerAvailabilityUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerAvailabilityUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerAvailabilityCreateManyWorkerProfileInputEnvelope
+    set?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    disconnect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    delete?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    connect?: WorkerAvailabilityWhereUniqueInput | WorkerAvailabilityWhereUniqueInput[]
+    update?: WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput | WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerAvailabilityScalarWhereInput | WorkerAvailabilityScalarWhereInput[]
+  }
+
+  export type WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput> | WorkerExperienceCreateWithoutWorkerProfileInput[] | WorkerExperienceUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerExperienceUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerExperienceUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerExperienceCreateManyWorkerProfileInputEnvelope
+    set?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    disconnect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    delete?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    connect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+    update?: WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput | WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerExperienceScalarWhereInput | WorkerExperienceScalarWhereInput[]
   }
 
   export type CategoryDocumentCreateNestedManyWithoutDocumentInput = {
@@ -32910,6 +39354,34 @@ export namespace Prisma {
     connect?: WorkerProfileWhereUniqueInput
   }
 
+  export type WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
+    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+  }
+
+  export type WorkerEducationCreateNestedManyWithoutAdditionalInfoInput = {
+    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
+    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+  }
+
+  export type WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
+    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+  }
+
+  export type WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput = {
+    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
+    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+  }
+
   export type WorkerAdditionalInfoUpdatelanguagesInput = {
     set?: string[]
     push?: string | string[]
@@ -32948,6 +39420,62 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutWorkerAdditionalInfoInput, WorkerProfileUpdateWithoutWorkerAdditionalInfoInput>, WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput>
   }
 
+  export type WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
+    upsert?: WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
+    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
+    set?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    disconnect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    delete?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    update?: WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
+    updateMany?: WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput[]
+    deleteMany?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+  }
+
+  export type WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput = {
+    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
+    upsert?: WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
+    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
+    set?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    disconnect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    delete?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    update?: WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
+    updateMany?: WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput[]
+    deleteMany?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput = {
+    create?: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput> | WorkerJobHistoryCreateWithoutAdditionalInfoInput[] | WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput | WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput[]
+    upsert?: WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
+    createMany?: WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope
+    set?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    disconnect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    delete?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    connect?: WorkerJobHistoryWhereUniqueInput | WorkerJobHistoryWhereUniqueInput[]
+    update?: WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
+    updateMany?: WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput[]
+    deleteMany?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+  }
+
+  export type WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput = {
+    create?: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput> | WorkerEducationCreateWithoutAdditionalInfoInput[] | WorkerEducationUncheckedCreateWithoutAdditionalInfoInput[]
+    connectOrCreate?: WorkerEducationCreateOrConnectWithoutAdditionalInfoInput | WorkerEducationCreateOrConnectWithoutAdditionalInfoInput[]
+    upsert?: WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput[]
+    createMany?: WorkerEducationCreateManyAdditionalInfoInputEnvelope
+    set?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    disconnect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    delete?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    connect?: WorkerEducationWhereUniqueInput | WorkerEducationWhereUniqueInput[]
+    update?: WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput | WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput[]
+    updateMany?: WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput | WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput[]
+    deleteMany?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+  }
+
   export type ServiceRequestCreateselectedWorkersInput = {
     set: string[]
   }
@@ -32973,6 +39501,79 @@ export namespace Prisma {
     upsert?: ParticipantUpsertWithoutServiceRequestsInput
     connect?: ParticipantWhereUniqueInput
     update?: XOR<XOR<ParticipantUpdateToOneWithWhereWithoutServiceRequestsInput, ParticipantUpdateWithoutServiceRequestsInput>, ParticipantUncheckedUpdateWithoutServiceRequestsInput>
+  }
+
+  export type WorkerAdditionalInfoCreateNestedOneWithoutJobHistoryEntriesInput = {
+    create?: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
+    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutJobHistoryEntriesInput
+    connect?: WorkerAdditionalInfoWhereUniqueInput
+  }
+
+  export type WorkerAdditionalInfoUpdateOneRequiredWithoutJobHistoryEntriesNestedInput = {
+    create?: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
+    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutJobHistoryEntriesInput
+    upsert?: WorkerAdditionalInfoUpsertWithoutJobHistoryEntriesInput
+    connect?: WorkerAdditionalInfoWhereUniqueInput
+    update?: XOR<XOR<WorkerAdditionalInfoUpdateToOneWithWhereWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput>, WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput>
+  }
+
+  export type WorkerAdditionalInfoCreateNestedOneWithoutEducationEntriesInput = {
+    create?: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
+    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutEducationEntriesInput
+    connect?: WorkerAdditionalInfoWhereUniqueInput
+  }
+
+  export type WorkerAdditionalInfoUpdateOneRequiredWithoutEducationEntriesNestedInput = {
+    create?: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
+    connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutEducationEntriesInput
+    upsert?: WorkerAdditionalInfoUpsertWithoutEducationEntriesInput
+    connect?: WorkerAdditionalInfoWhereUniqueInput
+    update?: XOR<XOR<WorkerAdditionalInfoUpdateToOneWithWhereWithoutEducationEntriesInput, WorkerAdditionalInfoUpdateWithoutEducationEntriesInput>, WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput>
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutAvailabilityInput = {
+    create?: XOR<WorkerProfileCreateWithoutAvailabilityInput, WorkerProfileUncheckedCreateWithoutAvailabilityInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutAvailabilityInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type EnumDayOfWeekFieldUpdateOperationsInput = {
+    set?: $Enums.DayOfWeek
+  }
+
+  export type WorkerProfileUpdateOneRequiredWithoutAvailabilityNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutAvailabilityInput, WorkerProfileUncheckedCreateWithoutAvailabilityInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutAvailabilityInput
+    upsert?: WorkerProfileUpsertWithoutAvailabilityInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutAvailabilityInput, WorkerProfileUpdateWithoutAvailabilityInput>, WorkerProfileUncheckedUpdateWithoutAvailabilityInput>
+  }
+
+  export type WorkerExperienceCreatespecificAreasInput = {
+    set: string[]
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutCareExperienceInput = {
+    create?: XOR<WorkerProfileCreateWithoutCareExperienceInput, WorkerProfileUncheckedCreateWithoutCareExperienceInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutCareExperienceInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type EnumCareDomainFieldUpdateOperationsInput = {
+    set?: $Enums.CareDomain
+  }
+
+  export type WorkerExperienceUpdatespecificAreasInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type WorkerProfileUpdateOneRequiredWithoutCareExperienceNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutCareExperienceInput, WorkerProfileUncheckedCreateWithoutCareExperienceInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutCareExperienceInput
+    upsert?: WorkerProfileUpsertWithoutCareExperienceInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutCareExperienceInput, WorkerProfileUpdateWithoutCareExperienceInput>, WorkerProfileUncheckedUpdateWithoutCareExperienceInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -33385,6 +39986,40 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumServiceRequestStatusFilter<$PrismaModel>
     _max?: NestedEnumServiceRequestStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumDayOfWeekFilter<$PrismaModel = never> = {
+    equals?: $Enums.DayOfWeek | EnumDayOfWeekFieldRefInput<$PrismaModel>
+    in?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    not?: NestedEnumDayOfWeekFilter<$PrismaModel> | $Enums.DayOfWeek
+  }
+
+  export type NestedEnumDayOfWeekWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DayOfWeek | EnumDayOfWeekFieldRefInput<$PrismaModel>
+    in?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DayOfWeek[] | ListEnumDayOfWeekFieldRefInput<$PrismaModel>
+    not?: NestedEnumDayOfWeekWithAggregatesFilter<$PrismaModel> | $Enums.DayOfWeek
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDayOfWeekFilter<$PrismaModel>
+    _max?: NestedEnumDayOfWeekFilter<$PrismaModel>
+  }
+
+  export type NestedEnumCareDomainFilter<$PrismaModel = never> = {
+    equals?: $Enums.CareDomain | EnumCareDomainFieldRefInput<$PrismaModel>
+    in?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    not?: NestedEnumCareDomainFilter<$PrismaModel> | $Enums.CareDomain
+  }
+
+  export type NestedEnumCareDomainWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CareDomain | EnumCareDomainFieldRefInput<$PrismaModel>
+    in?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CareDomain[] | ListEnumCareDomainFieldRefInput<$PrismaModel>
+    not?: NestedEnumCareDomainWithAggregatesFilter<$PrismaModel> | $Enums.CareDomain
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCareDomainFilter<$PrismaModel>
+    _max?: NestedEnumCareDomainFilter<$PrismaModel>
   }
 
   export type UserCreateWithoutAccountsInput = {
@@ -34208,6 +40843,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutUserInput = {
@@ -34245,6 +40882,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutUserInput = {
@@ -34486,6 +41125,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutUserInput = {
@@ -34523,6 +41164,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type ClientProfileUpsertWithoutUserInput = {
@@ -34661,6 +41304,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutVerificationRequirementsInput = {
@@ -34698,6 +41343,8 @@ export namespace Prisma {
     updatedAt: Date | string
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutVerificationRequirementsInput = {
@@ -34751,6 +41398,8 @@ export namespace Prisma {
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutVerificationRequirementsInput = {
@@ -34788,6 +41437,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type VerificationRequirementCreateWithoutWorkerProfileInput = {
@@ -34864,6 +41515,8 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoUncheckedCreateWithoutWorkerProfileInput = {
@@ -34886,6 +41539,8 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput
   }
 
   export type WorkerAdditionalInfoCreateOrConnectWithoutWorkerProfileInput = {
@@ -34974,6 +41629,70 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkerAvailabilityCreateWithoutWorkerProfileInput = {
+    id?: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput = {
+    id?: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerAvailabilityCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerAvailabilityWhereUniqueInput
+    create: XOR<WorkerAvailabilityCreateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerAvailabilityCreateManyWorkerProfileInputEnvelope = {
+    data: WorkerAvailabilityCreateManyWorkerProfileInput | WorkerAvailabilityCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkerExperienceCreateWithoutWorkerProfileInput = {
+    id?: string
+    domain: $Enums.CareDomain
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
+    otherAreas?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerExperienceUncheckedCreateWithoutWorkerProfileInput = {
+    id?: string
+    domain: $Enums.CareDomain
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
+    otherAreas?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerExperienceCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerExperienceWhereUniqueInput
+    create: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerExperienceCreateManyWorkerProfileInputEnvelope = {
+    data: WorkerExperienceCreateManyWorkerProfileInput | WorkerExperienceCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
   export type VerificationRequirementUpsertWithWhereUniqueWithoutWorkerProfileInput = {
     where: VerificationRequirementWhereUniqueInput
     update: XOR<VerificationRequirementUpdateWithoutWorkerProfileInput, VerificationRequirementUncheckedUpdateWithoutWorkerProfileInput>
@@ -35047,6 +41766,8 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type WorkerAdditionalInfoUncheckedUpdateWithoutWorkerProfileInput = {
@@ -35069,6 +41790,8 @@ export namespace Prisma {
     experience?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput
   }
 
   export type UserUpsertWithoutWorkerProfileInput = {
@@ -35155,6 +41878,68 @@ export namespace Prisma {
     metadata?: JsonNullableFilter<"WorkerService">
     createdAt?: DateTimeFilter<"WorkerService"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerService"> | Date | string
+  }
+
+  export type WorkerAvailabilityUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerAvailabilityWhereUniqueInput
+    update: XOR<WorkerAvailabilityUpdateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerAvailabilityCreateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerAvailabilityUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerAvailabilityWhereUniqueInput
+    data: XOR<WorkerAvailabilityUpdateWithoutWorkerProfileInput, WorkerAvailabilityUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerAvailabilityUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: WorkerAvailabilityScalarWhereInput
+    data: XOR<WorkerAvailabilityUpdateManyMutationInput, WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type WorkerAvailabilityScalarWhereInput = {
+    AND?: WorkerAvailabilityScalarWhereInput | WorkerAvailabilityScalarWhereInput[]
+    OR?: WorkerAvailabilityScalarWhereInput[]
+    NOT?: WorkerAvailabilityScalarWhereInput | WorkerAvailabilityScalarWhereInput[]
+    id?: StringFilter<"WorkerAvailability"> | string
+    workerProfileId?: StringFilter<"WorkerAvailability"> | string
+    dayOfWeek?: EnumDayOfWeekFilter<"WorkerAvailability"> | $Enums.DayOfWeek
+    startMinute?: IntFilter<"WorkerAvailability"> | number
+    endMinute?: IntFilter<"WorkerAvailability"> | number
+    sortOrder?: IntFilter<"WorkerAvailability"> | number
+    createdAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerAvailability"> | Date | string
+  }
+
+  export type WorkerExperienceUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerExperienceWhereUniqueInput
+    update: XOR<WorkerExperienceUpdateWithoutWorkerProfileInput, WorkerExperienceUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerExperienceCreateWithoutWorkerProfileInput, WorkerExperienceUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerExperienceWhereUniqueInput
+    data: XOR<WorkerExperienceUpdateWithoutWorkerProfileInput, WorkerExperienceUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: WorkerExperienceScalarWhereInput
+    data: XOR<WorkerExperienceUpdateManyMutationInput, WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type WorkerExperienceScalarWhereInput = {
+    AND?: WorkerExperienceScalarWhereInput | WorkerExperienceScalarWhereInput[]
+    OR?: WorkerExperienceScalarWhereInput[]
+    NOT?: WorkerExperienceScalarWhereInput | WorkerExperienceScalarWhereInput[]
+    id?: StringFilter<"WorkerExperience"> | string
+    workerProfileId?: StringFilter<"WorkerExperience"> | string
+    domain?: EnumCareDomainFilter<"WorkerExperience"> | $Enums.CareDomain
+    isProfessional?: BoolFilter<"WorkerExperience"> | boolean
+    isPersonal?: BoolFilter<"WorkerExperience"> | boolean
+    specificAreas?: StringNullableListFilter<"WorkerExperience">
+    otherAreas?: StringNullableFilter<"WorkerExperience"> | string | null
+    description?: StringNullableFilter<"WorkerExperience"> | string | null
+    createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
   }
 
   export type CategoryDocumentCreateWithoutDocumentInput = {
@@ -35711,6 +42496,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutWorkerServicesInput = {
@@ -35748,6 +42535,8 @@ export namespace Prisma {
     updatedAt: Date | string
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutWorkerServicesInput = {
@@ -35801,6 +42590,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutWorkerServicesInput = {
@@ -35838,6 +42629,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type JobApplicationCreateWithoutJobInput = {
@@ -36021,6 +42814,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutWorkerAdditionalInfoInput = {
@@ -36058,11 +42853,89 @@ export namespace Prisma {
     updatedAt: Date | string
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutWorkerAdditionalInfoInput = {
     where: WorkerProfileWhereUniqueInput
     create: XOR<WorkerProfileCreateWithoutWorkerAdditionalInfoInput, WorkerProfileUncheckedCreateWithoutWorkerAdditionalInfoInput>
+  }
+
+  export type WorkerJobHistoryCreateWithoutAdditionalInfoInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryCreateOrConnectWithoutAdditionalInfoInput = {
+    where: WorkerJobHistoryWhereUniqueInput
+    create: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerJobHistoryCreateManyAdditionalInfoInputEnvelope = {
+    data: WorkerJobHistoryCreateManyAdditionalInfoInput | WorkerJobHistoryCreateManyAdditionalInfoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkerEducationCreateWithoutAdditionalInfoInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationUncheckedCreateWithoutAdditionalInfoInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationCreateOrConnectWithoutAdditionalInfoInput = {
+    where: WorkerEducationWhereUniqueInput
+    create: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerEducationCreateManyAdditionalInfoInputEnvelope = {
+    data: WorkerEducationCreateManyAdditionalInfoInput | WorkerEducationCreateManyAdditionalInfoInput[]
+    skipDuplicates?: boolean
   }
 
   export type WorkerProfileUpsertWithoutWorkerAdditionalInfoInput = {
@@ -36111,6 +42984,8 @@ export namespace Prisma {
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput = {
@@ -36148,6 +43023,76 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+  }
+
+  export type WorkerJobHistoryUpsertWithWhereUniqueWithoutAdditionalInfoInput = {
+    where: WorkerJobHistoryWhereUniqueInput
+    update: XOR<WorkerJobHistoryUpdateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedUpdateWithoutAdditionalInfoInput>
+    create: XOR<WorkerJobHistoryCreateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedCreateWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerJobHistoryUpdateWithWhereUniqueWithoutAdditionalInfoInput = {
+    where: WorkerJobHistoryWhereUniqueInput
+    data: XOR<WorkerJobHistoryUpdateWithoutAdditionalInfoInput, WorkerJobHistoryUncheckedUpdateWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerJobHistoryUpdateManyWithWhereWithoutAdditionalInfoInput = {
+    where: WorkerJobHistoryScalarWhereInput
+    data: XOR<WorkerJobHistoryUpdateManyMutationInput, WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerJobHistoryScalarWhereInput = {
+    AND?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+    OR?: WorkerJobHistoryScalarWhereInput[]
+    NOT?: WorkerJobHistoryScalarWhereInput | WorkerJobHistoryScalarWhereInput[]
+    id?: StringFilter<"WorkerJobHistory"> | string
+    workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
+    jobTitle?: StringFilter<"WorkerJobHistory"> | string
+    company?: StringFilter<"WorkerJobHistory"> | string
+    startMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
+    sortOrder?: IntFilter<"WorkerJobHistory"> | number
+    createdAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerJobHistory"> | Date | string
+  }
+
+  export type WorkerEducationUpsertWithWhereUniqueWithoutAdditionalInfoInput = {
+    where: WorkerEducationWhereUniqueInput
+    update: XOR<WorkerEducationUpdateWithoutAdditionalInfoInput, WorkerEducationUncheckedUpdateWithoutAdditionalInfoInput>
+    create: XOR<WorkerEducationCreateWithoutAdditionalInfoInput, WorkerEducationUncheckedCreateWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerEducationUpdateWithWhereUniqueWithoutAdditionalInfoInput = {
+    where: WorkerEducationWhereUniqueInput
+    data: XOR<WorkerEducationUpdateWithoutAdditionalInfoInput, WorkerEducationUncheckedUpdateWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerEducationUpdateManyWithWhereWithoutAdditionalInfoInput = {
+    where: WorkerEducationScalarWhereInput
+    data: XOR<WorkerEducationUpdateManyMutationInput, WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoInput>
+  }
+
+  export type WorkerEducationScalarWhereInput = {
+    AND?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+    OR?: WorkerEducationScalarWhereInput[]
+    NOT?: WorkerEducationScalarWhereInput | WorkerEducationScalarWhereInput[]
+    id?: StringFilter<"WorkerEducation"> | string
+    workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
+    institution?: StringFilter<"WorkerEducation"> | string
+    qualification?: StringFilter<"WorkerEducation"> | string
+    startMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    startYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    endYear?: IntNullableFilter<"WorkerEducation"> | number | null
+    currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
+    sortOrder?: IntFilter<"WorkerEducation"> | number
+    createdAt?: DateTimeFilter<"WorkerEducation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerEducation"> | Date | string
   }
 
   export type ParticipantCreateWithoutServiceRequestsInput = {
@@ -36236,6 +43181,574 @@ export namespace Prisma {
     additionalInfo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput = {
+    id?: string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
+    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
+    lgbtqiaSupport?: boolean | null
+    nonSmoker?: boolean | null
+    petFriendly?: boolean | null
+    personality?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    funFact?: string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutAdditionalInfoInput
+  }
+
+  export type WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput = {
+    id?: string
+    workerProfileId: string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
+    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
+    lgbtqiaSupport?: boolean | null
+    nonSmoker?: boolean | null
+    petFriendly?: boolean | null
+    personality?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    funFact?: string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutAdditionalInfoInput
+  }
+
+  export type WorkerAdditionalInfoCreateOrConnectWithoutJobHistoryEntriesInput = {
+    where: WorkerAdditionalInfoWhereUniqueInput
+    create: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
+  }
+
+  export type WorkerAdditionalInfoUpsertWithoutJobHistoryEntriesInput = {
+    update: XOR<WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput>
+    create: XOR<WorkerAdditionalInfoCreateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutJobHistoryEntriesInput>
+    where?: WorkerAdditionalInfoWhereInput
+  }
+
+  export type WorkerAdditionalInfoUpdateToOneWithWhereWithoutJobHistoryEntriesInput = {
+    where?: WorkerAdditionalInfoWhereInput
+    data: XOR<WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput>
+  }
+
+  export type WorkerAdditionalInfoUpdateWithoutJobHistoryEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
+    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
+    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    personality?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutAdditionalInfoNestedInput
+  }
+
+  export type WorkerAdditionalInfoUncheckedUpdateWithoutJobHistoryEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
+    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
+    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    personality?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoNestedInput
+  }
+
+  export type WorkerAdditionalInfoCreateWithoutEducationEntriesInput = {
+    id?: string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
+    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
+    lgbtqiaSupport?: boolean | null
+    nonSmoker?: boolean | null
+    petFriendly?: boolean | null
+    personality?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    funFact?: string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutWorkerAdditionalInfoInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutAdditionalInfoInput
+  }
+
+  export type WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput = {
+    id?: string
+    workerProfileId: string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoCreatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoCreateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoCreatereligionInput | string[]
+    interests?: WorkerAdditionalInfoCreateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoCreateworkPreferencesInput | string[]
+    lgbtqiaSupport?: boolean | null
+    nonSmoker?: boolean | null
+    petFriendly?: boolean | null
+    personality?: string | null
+    uniqueService?: WorkerAdditionalInfoCreateuniqueServiceInput | string[]
+    funFact?: string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutAdditionalInfoInput
+  }
+
+  export type WorkerAdditionalInfoCreateOrConnectWithoutEducationEntriesInput = {
+    where: WorkerAdditionalInfoWhereUniqueInput
+    create: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
+  }
+
+  export type WorkerAdditionalInfoUpsertWithoutEducationEntriesInput = {
+    update: XOR<WorkerAdditionalInfoUpdateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput>
+    create: XOR<WorkerAdditionalInfoCreateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedCreateWithoutEducationEntriesInput>
+    where?: WorkerAdditionalInfoWhereInput
+  }
+
+  export type WorkerAdditionalInfoUpdateToOneWithWhereWithoutEducationEntriesInput = {
+    where?: WorkerAdditionalInfoWhereInput
+    data: XOR<WorkerAdditionalInfoUpdateWithoutEducationEntriesInput, WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput>
+  }
+
+  export type WorkerAdditionalInfoUpdateWithoutEducationEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
+    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
+    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    personality?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerAdditionalInfoNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutAdditionalInfoNestedInput
+  }
+
+  export type WorkerAdditionalInfoUncheckedUpdateWithoutEducationEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    jobHistory?: NullableJsonNullValueInput | InputJsonValue
+    education?: NullableJsonNullValueInput | InputJsonValue
+    languages?: WorkerAdditionalInfoUpdatelanguagesInput | string[]
+    culturalBackground?: WorkerAdditionalInfoUpdateculturalBackgroundInput | string[]
+    religion?: WorkerAdditionalInfoUpdatereligionInput | string[]
+    interests?: WorkerAdditionalInfoUpdateinterestsInput | string[]
+    workPreferences?: WorkerAdditionalInfoUpdateworkPreferencesInput | string[]
+    lgbtqiaSupport?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    nonSmoker?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    petFriendly?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    personality?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: WorkerAdditionalInfoUpdateuniqueServiceInput | string[]
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: NullableJsonNullValueInput | InputJsonValue
+    bankAccount?: NullableJsonNullValueInput | InputJsonValue
+    experience?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoNestedInput
+  }
+
+  export type WorkerProfileCreateWithoutAvailabilityInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutAvailabilityInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutAvailabilityInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutAvailabilityInput, WorkerProfileUncheckedCreateWithoutAvailabilityInput>
+  }
+
+  export type WorkerProfileUpsertWithoutAvailabilityInput = {
+    update: XOR<WorkerProfileUpdateWithoutAvailabilityInput, WorkerProfileUncheckedUpdateWithoutAvailabilityInput>
+    create: XOR<WorkerProfileCreateWithoutAvailabilityInput, WorkerProfileUncheckedCreateWithoutAvailabilityInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutAvailabilityInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutAvailabilityInput, WorkerProfileUncheckedUpdateWithoutAvailabilityInput>
+  }
+
+  export type WorkerProfileUpdateWithoutAvailabilityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutAvailabilityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+  }
+
+  export type WorkerProfileCreateWithoutCareExperienceInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutCareExperienceInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutCareExperienceInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutCareExperienceInput, WorkerProfileUncheckedCreateWithoutCareExperienceInput>
+  }
+
+  export type WorkerProfileUpsertWithoutCareExperienceInput = {
+    update: XOR<WorkerProfileUpdateWithoutCareExperienceInput, WorkerProfileUncheckedUpdateWithoutCareExperienceInput>
+    create: XOR<WorkerProfileCreateWithoutCareExperienceInput, WorkerProfileUncheckedCreateWithoutCareExperienceInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutCareExperienceInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutCareExperienceInput, WorkerProfileUncheckedUpdateWithoutCareExperienceInput>
+  }
+
+  export type WorkerProfileUpdateWithoutCareExperienceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutCareExperienceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type ServiceRequestCreateManyParticipantInput = {
@@ -36517,6 +44030,28 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkerAvailabilityCreateManyWorkerProfileInput = {
+    id?: string
+    dayOfWeek: $Enums.DayOfWeek
+    startMinute: number
+    endMinute: number
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerExperienceCreateManyWorkerProfileInput = {
+    id?: string
+    domain: $Enums.CareDomain
+    isProfessional?: boolean
+    isPersonal?: boolean
+    specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
+    otherAreas?: string | null
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type VerificationRequirementUpdateWithoutWorkerProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
     requirementType?: StringFieldUpdateOperationsInput | string
@@ -36612,6 +44147,72 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAvailabilityUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAvailabilityUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dayOfWeek?: EnumDayOfWeekFieldUpdateOperationsInput | $Enums.DayOfWeek
+    startMinute?: IntFieldUpdateOperationsInput | number
+    endMinute?: IntFieldUpdateOperationsInput | number
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerExperienceUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerExperienceUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    domain?: EnumCareDomainFieldUpdateOperationsInput | $Enums.CareDomain
+    isProfessional?: BoolFieldUpdateOperationsInput | boolean
+    isPersonal?: BoolFieldUpdateOperationsInput | boolean
+    specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
+    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -36799,6 +44400,118 @@ export namespace Prisma {
     workerId?: StringFieldUpdateOperationsInput | string
     status?: EnumJobApplicationStatusFieldUpdateOperationsInput | $Enums.JobApplicationStatus
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryCreateManyAdditionalInfoInput = {
+    id?: string
+    jobTitle: string
+    company: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyWorking?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerEducationCreateManyAdditionalInfoInput = {
+    id?: string
+    institution: string
+    qualification: string
+    startMonth?: number | null
+    startYear?: number | null
+    endMonth?: number | null
+    endYear?: number | null
+    currentlyStudying?: boolean
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerJobHistoryUpdateWithoutAdditionalInfoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateWithoutAdditionalInfoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerJobHistoryUncheckedUpdateManyWithoutAdditionalInfoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    jobTitle?: StringFieldUpdateOperationsInput | string
+    company?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUpdateWithoutAdditionalInfoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUncheckedUpdateWithoutAdditionalInfoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerEducationUncheckedUpdateManyWithoutAdditionalInfoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    institution?: StringFieldUpdateOperationsInput | string
+    qualification?: StringFieldUpdateOperationsInput | string
+    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startYear?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endYear?: NullableIntFieldUpdateOperationsInput | number | null
+    currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

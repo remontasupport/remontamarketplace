@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
+import { rebuildJobHistory, rebuildEducation, safeRebuild, W1_TX } from "@/lib/w1/promote";
 import {
   updateWorkerBankAccountSchema,
   type UpdateWorkerBankAccountData,
@@ -272,7 +273,10 @@ export async function updateWorkerWorkHistory(
 
 
     // 5. Upsert worker additional info with work history
-    const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
+    // The Json write is the save. It must succeed on its own terms.
+    // `id` is selected only to key the W1 rebuild below and is stripped from
+    // the response, so the returned shape is unchanged.
+    const info = await authPrisma.workerAdditionalInfo.upsert({
       where: {
         workerProfileId: workerProfile.id,
       },
@@ -284,9 +288,21 @@ export async function updateWorkerWorkHistory(
         jobHistory: validatedData.jobHistory,
       },
       select: {
+        id: true,
         jobHistory: true,
       },
     });
+    const updatedInfo = { jobHistory: info.jobHistory };
+
+    // W1 dual-write. Deliberately AFTER the save and unable to fail it: nothing
+    // reads worker_job_history yet, so a stale derived copy costs nothing and
+    // the reconcile repairs it. Remove entirely at W1 phase P7.
+    await safeRebuild("jobHistory", workerProfile.id, () =>
+      authPrisma.$transaction(
+        (tx) => rebuildJobHistory(tx, info.id, validatedData.jobHistory),
+        W1_TX,
+      ),
+    );
 
 
     // 6. Revalidate the profile page cache
@@ -371,7 +387,8 @@ export async function updateWorkerEducation(
 
 
     // 5. Upsert worker additional info with education
-    const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
+    // The Json write is the save. Response shape unchanged; `id` is stripped.
+    const info = await authPrisma.workerAdditionalInfo.upsert({
       where: {
         workerProfileId: workerProfile.id,
       },
@@ -383,9 +400,19 @@ export async function updateWorkerEducation(
         education: validatedData.education,
       },
       select: {
+        id: true,
         education: true,
       },
     });
+    const updatedInfo = { education: info.education };
+
+    // W1 dual-write, as with work history — after the save, unable to fail it.
+    await safeRebuild("education", workerProfile.id, () =>
+      authPrisma.$transaction(
+        (tx) => rebuildEducation(tx, info.id, validatedData.education),
+        W1_TX,
+      ),
+    );
 
     
 

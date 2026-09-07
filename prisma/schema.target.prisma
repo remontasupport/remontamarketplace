@@ -1,0 +1,996 @@
+// ============================================================================
+// TARGET SCHEMA — Remonta application database
+// ============================================================================
+// Not yet applied. Review target for the restructure; migrations are generated
+// from the diff against the live schema (auth-schema.prisma).
+//
+// Decisions: aidlc-docs/inception/application-design/design-decisions.md
+// Data basis: 8 read-only investigation rounds, 2026-09-04
+//
+// Scope: application database only. The externally-synced contractor directory
+// (DATABASE_URL) keeps its own schema file and is untouched.
+// ============================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/auth-client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("AUTH_DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  WORKER
+  CLIENT
+  COORDINATOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  LOCKED
+  PENDING_VERIFICATION
+}
+
+/// NEW — replaces free-text gender on both personas.
+/// Workers had only "Female"/"Male"; participants used lowercase-hyphenated.
+enum Gender {
+  FEMALE
+  MALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
+}
+
+/// Now actually enforced. PENDING_REVIEW means "all four setup sections done",
+/// NOT "uploaded a file" — the four upload routes stop writing it.
+enum VerificationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum RequirementStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+/// The 100-point ID classification. NOT the same concept as Document.category,
+/// which is the onboarding taxonomy (TRAINING/INSURANCE/COMPLIANCE/...).
+enum DocumentCategory {
+  PRIMARY
+  SECONDARY
+  WORKING_RIGHTS
+  SERVICE_QUALIFICATION
+}
+
+/// EXTENDED — was declared and referenced by no model.
+/// SUPPORT_COORDINATOR and NOMINEE added from observed values.
+enum RepresentativeType {
+  SELF
+  PARENT
+  GUARDIAN
+  FAMILY_MEMBER
+  LEGAL_REPRESENTATIVE
+  SUPPORT_COORDINATOR
+  NOMINEE
+  OTHER
+}
+
+enum FundingType {
+  NDIS
+  AGED_CARE
+  INSURANCE
+  PRIVATE
+  OTHER
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  MATCHED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum JobApplicationStatus {
+  PENDING
+  WITHDRAWN
+}
+
+/// NEW — from WorkerProfile.abn, which held exactly one key.
+enum EngagementType {
+  ABN
+  TFN
+}
+
+/// NEW — exactly one PRIMARY per worker, enforced by a partial unique index
+/// (raw SQL; Prisma cannot express it).
+enum PhotoType {
+  PRIMARY
+  ADDITIONAL
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+/// NEW — the five care domains found in WorkerAdditionalInfo.experience.
+enum CareDomain {
+  DISABILITY
+  AGED_CARE
+  WORKING_WITH_CHILDREN
+  MENTAL_HEALTH
+  CHRONIC_MEDICAL
+}
+
+enum ScheduleFrequency {
+  WEEKLY
+  FORTNIGHTLY
+  ONE_TIME
+}
+
+enum SchedulingMode {
+  FLEXIBLE
+  PREFERRED
+}
+
+enum StartPreference {
+  ASAP
+  SPECIFIC_DATE
+}
+
+enum ServiceRequestWorkerStatus {
+  SHORTLISTED
+  ASSIGNED
+  WITHDRAWN
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGE
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_SUCCESS
+  EMAIL_CHANGE
+  PROFILE_UPDATE
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  EMAIL_VERIFIED
+  ROLE_CHANGE
+  IMPERSONATION_START
+  IMPERSONATION_END
+}
+
+// ============================================================================
+// IDENTITY
+// ============================================================================
+
+model User {
+  id                   String        @id @default(cuid())
+  email                String        @unique
+  passwordHash         String
+  role                 UserRole
+  status               AccountStatus @default(ACTIVE)
+  resetPasswordToken   String?       @unique
+  resetPasswordExpires DateTime?
+  failedLoginAttempts  Int           @default(0)
+  accountLockedUntil   DateTime?
+  lastLoginAt          DateTime?
+  lastLoginIp          String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt // was bare DateTime, set by hand
+
+  workerProfile        WorkerProfile?
+  clientProfile        ClientProfile?
+  coordinatorProfile   CoordinatorProfile?
+  participants         Participant[]
+  auditLogs            AuditLog[]
+  serviceRequests      ServiceRequest[]          // was requesterId, no FK
+  reviewedRequirements VerificationRequirement[] // was reviewedBy, held an email
+  sessions             Session[]
+  accounts             Account[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model ClientProfile {
+  id     String @id @default(cuid()) // was gen_random_uuid()
+  userId String @unique
+
+  firstName String
+  lastName  String
+  mobile    String
+
+  // NEW — neither demand profile stored an address
+  streetAddress String?
+  suburb        String?
+  state         String?
+  postalCode    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("client_profiles")
+}
+
+model CoordinatorProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  firstName    String
+  lastName     String
+  mobile       String
+  organization String?
+  clientTypes  String[] @default([])
+
+  streetAddress String?
+  suburb        String?
+  state         String?
+  postalCode    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("coordinator_profiles")
+}
+
+// ============================================================================
+// WORKER — identity, contact, address. Everything declared later lives in
+// WorkerAdditionalInfo. Registration writes exactly this set.
+// ============================================================================
+
+model WorkerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  firstName  String
+  middleName String?
+  lastName   String
+  mobile     String
+
+  location   String?
+  city       String?
+  state      String? // geocoder output; 9 dirty rows normalised on migration
+  postalCode String?
+  latitude   Float?  // double precision; bbox prefilter + Haversine
+  longitude  Float?
+
+  // Setup progress: four booleans replacing an untrusted Json blob.
+  // profileCompleted is derived (all four true), no longer stored.
+  setupAccountDetails Boolean @default(false)
+  setupCompliance     Boolean @default(false)
+  setupTrainings      Boolean @default(false)
+  setupServices       Boolean @default(false)
+
+  isPublished        Boolean            @default(false)
+  verificationStatus VerificationStatus @default(NOT_STARTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  additionalInfo           WorkerAdditionalInfo?
+  photos                   WorkerPhoto[]
+  serviceCategories        WorkerServiceCategory[]
+  availability             WorkerAvailability[]      // on the canonical key
+  experience               WorkerExperience[]        // on the canonical key
+  verificationRequirements VerificationRequirement[]
+  jobApplications          JobApplication[]          // was User.id, no FK
+  shortlistedOn            ServiceRequestWorker[]
+
+  @@index([userId])
+  @@index([isPublished])
+  @@index([verificationStatus])
+  @@index([city])
+  @@index([state])
+  @@index([postalCode])
+  @@index([latitude, longitude])
+  @@index([isPublished, verificationStatus])
+  @@index([createdAt])
+  @@map("worker_profiles")
+}
+
+model WorkerAdditionalInfo {
+  id              String @id @default(cuid())
+  workerProfileId String @unique
+
+  // Moved from WorkerProfile
+  dateOfBirth    DateTime? // was String?
+  gender         Gender?   // was String?
+  introduction   String?
+  languages      String[]  @default([])
+  hasVehicle     Boolean?  // was String? "Yes"/"No"
+
+  culturalBackground String[] @default([])
+  religion           String[] @default([])
+  interests          String[] @default([])
+  workPreferences    String[] @default([])
+  personality        String?
+  lgbtqiaSupport     Boolean? // tri-state is meaningful
+  nonSmoker          Boolean?
+  petFriendly        Boolean?
+
+  /// From abn.workerEngagementType, which held TWO keys: type and signed.
+  /// The ABN/TFN number itself is deliberately NOT stored — it is collected,
+  /// used to render the contract, and discarded. Correct, and load-bearing for
+  /// TFN in particular. Do not add an abnNumber column.
+  engagementType EngagementType?
+
+  /// Was `signed: true` in the JSON. Gates the onboarding step at
+  /// requirements/setup/page.tsx:164, so losing it would break that gate.
+  /// Boolean, not a timestamp: the source carries no date, and a nullable
+  /// DateTime would make "signed, date unknown" indistinguishable from unsigned.
+  engagementSigned Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile      @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  bankAccount   WorkerBankAccount?
+  jobHistory    WorkerJobHistory[]
+  education     WorkerEducation[]
+
+  @@index([workerProfileId])
+  @@index([gender])
+  @@index([dateOfBirth])
+  @@map("worker_additional_info")
+}
+
+/// Financial data isolated so access can be restricted and encrypted
+/// independently. 286 rows migrate here from an unencrypted Json column.
+model WorkerBankAccount {
+  id                     String   @id @default(cuid())
+  workerAdditionalInfoId String   @unique
+  encryptedPayload       String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+
+  @@map("worker_bank_accounts")
+}
+
+/// Replaces WorkerProfile.photoUrl and additionalPhotos.
+/// Deletes swapMainPhoto() — promoting a photo becomes a type flip.
+model WorkerPhoto {
+  id              String    @id @default(cuid())
+  workerProfileId String
+  url             String
+  type            PhotoType @default(ADDITIONAL)
+  sortOrder       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
+  @@index([workerProfileId, type])
+  @@map("worker_photos")
+}
+
+/// From jobHistory Json — 7 uniform keys, 570 entries.
+model WorkerJobHistory {
+  id                     String  @id @default(cuid())
+  workerAdditionalInfoId String
+  jobTitle               String
+  company                String
+  startMonth             Int?
+  startYear              Int?
+  endMonth               Int?
+  endYear                Int?
+  currentlyWorking       Boolean @default(false)
+  sortOrder              Int     @default(0) // preserves array order
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+
+  @@index([workerAdditionalInfoId])
+  @@map("worker_job_history")
+}
+
+/// From education Json — 7 uniform keys, 395 entries.
+model WorkerEducation {
+  id                     String  @id @default(cuid())
+  workerAdditionalInfoId String
+  institution            String
+  qualification          String
+  startMonth             Int?
+  startYear              Int?
+  endMonth               Int?
+  endYear                Int?
+  currentlyStudying      Boolean @default(false)
+  sortOrder              Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  additionalInfo WorkerAdditionalInfo @relation(fields: [workerAdditionalInfoId], references: [id], onDelete: Cascade)
+
+  @@index([workerAdditionalInfoId])
+  @@map("worker_education")
+}
+
+/// From availability Json. Resolves its shape variance: 219 workers stored one
+/// object per day, 13 stored an array. One row per slot handles both.
+///
+/// Minutes from midnight (0-1439) rather than "HH:MM" strings: sortable,
+/// comparable, and endMinute <= startMinute expresses an overnight shift,
+/// which a lexical string compare cannot. Times are local to the worker; no zone is
+/// stored — derive it from state if scheduling or notifications ever need one.
+model WorkerAvailability {
+  id              String    @id @default(cuid())
+  workerProfileId String
+  dayOfWeek       DayOfWeek
+  startMinute     Int
+  endMinute       Int
+  sortOrder       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workerProfileId, dayOfWeek, startMinute])
+  @@index([workerProfileId])
+  @@index([dayOfWeek])
+  @@map("worker_availability")
+}
+
+/// From experience Json — object keyed by 5 care domains, each with 5 keys.
+/// Makes "professional mental-health experience" an indexed query.
+model WorkerExperience {
+  id              String     @id @default(cuid())
+  workerProfileId String
+  domain          CareDomain
+
+  isProfessional Boolean  @default(false)
+  isPersonal     Boolean  @default(false)
+  specificAreas  String[] @default([])
+  otherAreas     String?
+  description    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workerProfileId, domain])
+  @@index([domain])
+  @@map("worker_experience")
+}
+
+// ============================================================================
+// SERVICE DECLARATION
+// ============================================================================
+
+/// Replaces WorkerService. categoryName and subcategoryNames dropped —
+/// search filters on ids. Existing data verified clean: 0 stale names,
+/// 0 dangling refs across 3,214 rows / 12,030 subcategory links.
+model WorkerServiceCategory {
+  id              String @id @default(cuid())
+  workerProfileId String
+  categoryId      String
+
+  /// How far this worker travels FOR THIS SERVICE. Worker-owned, not
+  /// client-supplied. NOT NULL — null would be ambiguous between
+  /// "unlimited" and "invisible".
+  radiusKm Int @default(25)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile              @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  category      Category                   @relation(fields: [categoryId], references: [id])
+  subcategories WorkerServiceSubcategory[]
+
+  @@unique([workerProfileId, categoryId])
+  @@index([categoryId])
+  @@index([workerProfileId])
+  @@map("worker_service_categories")
+}
+
+/// Replaces the positional parallel arrays subcategoryIds[]/subcategoryNames[].
+model WorkerServiceSubcategory {
+  id                      String @id @default(cuid())
+  workerServiceCategoryId String
+  subcategoryId           String
+
+  createdAt DateTime @default(now())
+
+  workerServiceCategory WorkerServiceCategory @relation(fields: [workerServiceCategoryId], references: [id], onDelete: Cascade)
+  subcategory           Subcategory           @relation(fields: [subcategoryId], references: [id])
+
+  @@unique([workerServiceCategoryId, subcategoryId])
+  @@index([subcategoryId])
+  @@map("worker_service_subcategories")
+}
+
+// ============================================================================
+// COMPLIANCE
+// ============================================================================
+
+model VerificationRequirement {
+  id              String @id @default(cuid())
+  workerProfileId String
+
+  /// NEW, nullable — links a submission to the Document that required it, so
+  /// "has this worker satisfied their obligations" becomes a query instead of
+  /// a name comparison. Backfilled from requirementType; ~40 requirement types
+  /// have no Document row yet and must be seeded first.
+  documentId String?
+
+  requirementType  String // slug, sometimes composite: "Support Worker:cert3-aged-care"
+  requirementName  String // display snapshot only
+  documentCategory DocumentCategory?
+  isRequired       Boolean           @default(true)
+  status           RequirementStatus @default(PENDING)
+
+  documentUrl        String?
+  documentUploadedAt DateTime?
+  submittedAt        DateTime?
+
+  reviewedById    String? // was reviewedBy, holding an email
+  reviewedAt      DateTime?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  expiresAt       DateTime?
+  rejectionReason String?
+  notes           String?
+  metadata        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  reviewedBy    User?         @relation(fields: [reviewedById], references: [id])
+  document      Document?     @relation(fields: [documentId], references: [id])
+
+  @@index([workerProfileId])
+  @@index([status])
+  @@index([documentCategory])
+  @@index([workerProfileId, status])
+  @@index([expiresAt]) // 81 already past, 27 still APPROVED
+  @@index([documentId])
+  @@map("verification_requirements")
+}
+
+// ============================================================================
+// PARTICIPANTS AND FUNDING
+// ============================================================================
+
+model Participant {
+  id        String   @id @default(cuid())
+  userId    String   // was nullable with SetNull — 3 orphans held health data
+  ownerRole UserRole // persona at creation, not inferred from User.role
+
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime?
+  gender      Gender?
+
+  conditions           String[]            @default([])
+  fundingType          FundingType?
+  relationshipToClient RepresentativeType? // was free text, 13 values / 27 rows
+  isSelfManaged        Boolean             @default(false) // sole home
+  additionalInfo       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  fundingPlans    FundingPlan[]
+  serviceRequests ServiceRequest[]
+
+  @@index([userId])
+  @@index([fundingType])
+  @@map("participants")
+}
+
+/// NEW. 1:many, not 1:1 — plans renew, and start/end dates imply history.
+/// Named FundingPlan rather than NdisPlan: only 21 of 45 participants are NDIS.
+/// Capture-only; there is no existing source to backfill.
+model FundingPlan {
+  id            String      @id @default(cuid())
+  participantId String
+  fundingType   FundingType
+
+  planNumber       String? // NDIS participant number where applicable
+  planManagerName  String?
+  planManagerEmail String?
+  planManagerPhone String?
+  invoiceEmail     String?
+  ccEmail          String?
+  startDate        DateTime?
+  endDate          DateTime?
+  isCurrent        Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([participantId])
+  @@index([participantId, isCurrent])
+  @@index([planNumber])
+  @@map("funding_plans")
+}
+
+// ============================================================================
+// SERVICE REQUESTS
+// ============================================================================
+
+model ServiceRequest {
+  id            String @id @default(cuid())
+  requesterId   String // was a bare String with no FK
+  participantId String
+
+  // From the `details` Json blob — its five real production keys, plus the
+  // demand-side attributes the supply side already indexes.
+  description         String
+  specialRequirements String?
+  scheduleNotes       String?
+
+  preferredWorkerGender Gender?
+  preferredLanguages    String[]     @default([]) // mirrors WorkerAdditionalInfo.languages
+  requiredCareDomains   CareDomain[] @default([]) // mirrors WorkerExperience.domain
+
+  frequency         ScheduleFrequency?
+  schedulingMode    SchedulingMode?
+  startPreference   StartPreference?
+  hoursPerPeriod    Int?
+  sessionsPerPeriod Int?
+  startDate         DateTime?
+
+  location  String
+  latitude  Float? // geocoded once at creation, not per search
+  longitude Float?
+
+  status       ServiceRequestStatus @default(PENDING)
+  /// Dormant external reference. n8n is not in use; retained, never written here.
+  zohoRecordId String?              @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  requester   User                     @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  participant Participant              @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  services    ServiceRequestService[]
+  schedule    ServiceRequestSchedule[]
+  shortlist   ServiceRequestWorker[]
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([latitude, longitude])
+  @@map("service_requests")
+}
+
+/// From the `services` Json blob, which was keyed by Category slug ids —
+/// a foreign key hiding inside an object key.
+model ServiceRequestService {
+  id               String @id @default(cuid())
+  serviceRequestId String
+  categoryId       String
+
+  createdAt DateTime @default(now())
+
+  serviceRequest ServiceRequest                    @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  category       Category                          @relation(fields: [categoryId], references: [id])
+  subcategories  ServiceRequestServiceSubcategory[]
+
+  @@unique([serviceRequestId, categoryId])
+  @@index([categoryId])
+  @@map("service_request_services")
+}
+
+/// Mirrors WorkerServiceSubcategory so a request can ask at the same
+/// granularity the supply side stores (43 subcategories, not 6 categories).
+model ServiceRequestServiceSubcategory {
+  id                      String @id @default(cuid())
+  serviceRequestServiceId String
+  subcategoryId           String
+
+  createdAt DateTime @default(now())
+
+  serviceRequestService ServiceRequestService @relation(fields: [serviceRequestServiceId], references: [id], onDelete: Cascade)
+  subcategory           Subcategory           @relation(fields: [subcategoryId], references: [id])
+
+  @@unique([serviceRequestServiceId, subcategoryId])
+  @@index([subcategoryId])
+  @@map("service_request_service_subcategories")
+}
+
+/// Mirrors WorkerAvailability. A DayOfWeek[] array cannot express
+/// "Tuesday mornings" against a supply side that stores start and end times.
+model ServiceRequestSchedule {
+  id               String    @id @default(cuid())
+  serviceRequestId String
+  dayOfWeek        DayOfWeek
+  startMinute      Int?
+  endMinute        Int?
+
+  createdAt DateTime @default(now())
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceRequestId, dayOfWeek, startMinute])
+  @@index([serviceRequestId])
+  @@map("service_request_schedule")
+}
+
+/// Replaces BOTH selectedWorkers String[] and assignedWorker Json.
+/// n8n is not in use, so the deferral that kept assignedWorker as a blob
+/// no longer applies — shortlist and assignment share one typed table.
+model ServiceRequestWorker {
+  id               String                     @id @default(cuid())
+  serviceRequestId String
+  workerProfileId  String
+  status           ServiceRequestWorkerStatus @default(SHORTLISTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequest ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  workerProfile  WorkerProfile  @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceRequestId, workerProfileId])
+  @@index([workerProfileId])
+  @@map("service_request_workers")
+}
+
+// ============================================================================
+// RECRUITMENT
+// ============================================================================
+
+model Job {
+  id     String @id @default(cuid())
+  zohoId String @unique
+
+  status           String
+  firstName        String?
+  lastName         String?
+  recruitmentTitle String?
+  service          String?
+  description      String?
+  jobDescription   String?
+  city             String?
+  state            String?
+  postedAt         DateTime?
+  active           Boolean   @default(true)
+  lastSyncedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  applications JobApplication[]
+
+  @@index([active, postedAt])
+  @@index([active, state])
+  @@index([active, city])
+  @@index([zohoId])
+  @@map("jobs")
+}
+
+model JobApplication {
+  id              String @id @default(cuid())
+  jobId           String
+  workerProfileId String // was workerId, holding User.id with no FK
+
+  status    JobApplicationStatus @default(PENDING)
+  appliedAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  job           Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, workerProfileId])
+  @@index([workerProfileId, status])
+  @@map("job_applications")
+}
+
+// ============================================================================
+// REFERENCE DATA — slug ids are meaningful natural keys, referenced by
+// src/config/*. Renamed to snake_case tables; content unchanged.
+// ============================================================================
+
+model Category {
+  id                    String  @id
+  name                  String
+  requiresQualification Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subcategories   Subcategory[]
+  documents       CategoryDocument[]
+  workerServices  WorkerServiceCategory[]
+  requestServices ServiceRequestService[]
+
+  @@map("categories")
+}
+
+model Subcategory {
+  id                   String  @id
+  categoryId           String
+  name                 String
+  requiresRegistration String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category            Category                          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  additionalDocuments SubcategoryDocument[]
+  workerServices      WorkerServiceSubcategory[]
+  requestServices     ServiceRequestServiceSubcategory[]
+
+  @@index([categoryId])
+  @@map("subcategories")
+}
+
+model Document {
+  id            String  @id
+  /// Onboarding taxonomy: TRAINING | INSURANCE | COMPLIANCE | REGISTRATION |
+  /// TRANSPORT | QUALIFICATION | IDENTITY | BUSINESS.
+  /// NOT the same concept as the DocumentCategory enum.
+  category      String
+  name          String
+  description   String  @db.Text
+  hasExpiration Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryDocuments    CategoryDocument[]
+  subcategoryDocuments SubcategoryDocument[]
+  requirements         VerificationRequirement[]
+
+  @@index([category])
+  @@map("documents")
+}
+
+model CategoryDocument {
+  id             String   @id @default(cuid())
+  categoryId     String
+  documentId     String
+  documentType   String // REQUIRED | OPTIONAL | CONDITIONAL
+  conditionKey   String?
+  requiredIfTrue Boolean?
+
+  createdAt DateTime @default(now())
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, documentId, documentType, conditionKey])
+  @@index([categoryId])
+  @@index([documentId])
+  @@index([categoryId, documentType])
+  @@map("category_documents")
+}
+
+model SubcategoryDocument {
+  id            String @id @default(cuid())
+  subcategoryId String
+  documentId    String
+
+  createdAt DateTime @default(now())
+
+  subcategory Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  document    Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([subcategoryId, documentId])
+  @@index([subcategoryId])
+  @@index([documentId])
+  @@map("subcategory_documents")
+}
+
+// ============================================================================
+// SYSTEM
+// ============================================================================
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  action    AuditAction
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([createdAt])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+/// Retained for the NextAuth adapter contract. Never written under
+/// strategy: 'jwt' — confirmed 0 rows in both.
+model Session {
+  id             String   @id @default(cuid())
+  sessionToken   String   @unique
+  userId         String
+  expires        DateTime
+  impersonatedBy String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// RAW SQL required alongside the migration (Prisma cannot express these):
+//
+//   -- exactly one PRIMARY photo per worker
+//   CREATE UNIQUE INDEX worker_photos_one_primary
+//     ON worker_photos ("workerProfileId") WHERE type = 'PRIMARY';
+//
+//   -- role and profile must agree (6 existing violations must be fixed first)
+//   CREATE TRIGGER users_role_profile_consistent ...
+// ============================================================================
