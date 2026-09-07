@@ -69,6 +69,24 @@ async function main(): Promise<number> {
     return 2
   }
 
+  // Measured, not assumed: two runs over the pooler died partway through, at
+  // workers 200 and ~180, with "Can't reach database server" and "Server has
+  // closed the connection". Individual transactions are fine over PgBouncer —
+  // some 1,500 operations succeeded each time — but holding one client through
+  // 381 sequential transactions is not what a pooler is for, and a half-finished
+  // batch is worse than a refused one.
+  if (target?.pooled) {
+    console.error('  REFUSING TO RUN — this is a pooled connection.')
+    console.error('')
+    console.error('  A pooled connection drops partway through a long batch. Use the')
+    console.error('  direct endpoint for reconcile; the pooler is for the app, whose')
+    console.error('  transactions are short and one per request.')
+    console.error('')
+    console.error('  Remove "-pooler" from the hostname, or use the direct URL var.')
+    console.error('')
+    return 2
+  }
+
   const prisma = new PrismaClient({ datasources: { db: { url } } })
 
   const workers = await prisma.workerAdditionalInfo.findMany({

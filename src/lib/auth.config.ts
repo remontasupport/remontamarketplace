@@ -161,6 +161,33 @@ async function handleNormalLogin(email: string, password: string, rememberMe: bo
 // AUTH CONFIG
 // ============================================================================
 
+/**
+ * Is this the real production deployment, as opposed to a preview?
+ *
+ * Vercel runs EVERY deployment with NODE_ENV=production, previews included, so
+ * NODE_ENV cannot tell them apart. VERCEL_ENV can: it is "production",
+ * "preview" or "development". Outside Vercel it is undefined, so fall back to
+ * NODE_ENV for a self-hosted production build.
+ *
+ * This matters for the session cookie domain below. Pinning it to NEXTAUTH_URL
+ * on a preview sets a cookie for the production host, which the browser then
+ * refuses to store — the user appears to sign in, the session comes back empty,
+ * and the app reports it cannot determine their role. That made preview
+ * deployments unusable for testing anything behind a login.
+ */
+const isProductionDeployment =
+  process.env.VERCEL_ENV === "production" ||
+  (!process.env.VERCEL_ENV && process.env.NODE_ENV === "production");
+
+/**
+ * Pin the cookie to the production domain so it is shared across subdomains.
+ * On a preview, leave it undefined and let the browser scope the cookie to
+ * whatever host served the request.
+ */
+const cookieDomain = isProductionDeployment
+  ? process.env.NEXTAUTH_URL?.replace(/https?:\/\//, "").split(":")[0]
+  : undefined;
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -265,9 +292,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        domain: process.env.NODE_ENV === "production"
-          ? process.env.NEXTAUTH_URL?.replace(/https?:\/\//, "").split(":")[0]
-          : undefined,
+        domain: cookieDomain,
       },
     },
     callbackUrl: {
@@ -277,9 +302,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        domain: process.env.NODE_ENV === "production"
-          ? process.env.NEXTAUTH_URL?.replace(/https?:\/\//, "").split(":")[0]
-          : undefined,
+        domain: cookieDomain,
       },
     },
     csrfToken: {
