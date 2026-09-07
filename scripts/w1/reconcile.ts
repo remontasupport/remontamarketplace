@@ -89,6 +89,51 @@ async function main(): Promise<number> {
 
   const prisma = new PrismaClient({ datasources: { db: { url } } })
 
+  // Refuse to run against a database whose schema is behind this code.
+  //
+  // Both of today's failures had this shape: production ran code expecting
+  // String columns while the database still had INTEGER, and later the
+  // rehearsal branch did the same. In both cases the write simply failed and
+  // the derived tables sat empty — no message pointed at the cause, so the
+  // symptom was "my save did not appear" and the diagnosis took a detour.
+  //
+  // Comparing what the code expects against what is applied turns that into
+  // one line.
+  {
+    const fs2 = require('fs') as typeof import('fs')
+    const path2 = require('path') as typeof import('path')
+    const dir = path2.join(ROOT, 'prisma', 'migrations')
+    const local: string[] = fs2
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .sort()
+
+    const appliedRows = await prisma.$queryRaw<{ migration_name: string }[]>`
+      SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL`
+    const applied = new Set(appliedRows.map((r) => r.migration_name))
+    const pending = local.filter((m) => !applied.has(m))
+
+    if (pending.length) {
+      await prisma.$disconnect()
+      console.error('  REFUSING TO RUN — the database schema is behind this code.')
+      console.error('')
+      console.error('  Migrations this code expects but the database does not have:')
+      for (const m of pending) console.error(`    - ${m}`)
+      console.error('')
+      console.error('  Writing now would fail on every column those migrations change,')
+      console.error('  and the derived tables would look empty for no visible reason.')
+      console.error('')
+      console.error(
+        target?.production
+          ? '  Apply them first:  npm run db:migrate:deploy'
+          : '  Apply them first:  npm run branch:migrate',
+      )
+      console.error('')
+      return 2
+    }
+  }
+
   const workers = await prisma.workerAdditionalInfo.findMany({
     select: {
       id: true,

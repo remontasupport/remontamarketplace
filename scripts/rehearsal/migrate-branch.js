@@ -127,9 +127,11 @@ async function main() {
     console.log('  Status only. Add --deploy to apply pending migrations.')
   } else {
     console.log('')
-    console.log('  Branch migrated. Next:')
-    console.log('    npm run db:parity   -- --url-var REHEARSAL_DATABASE_URL --label w1-before')
-    console.log('    npm run w1:backfill -- --url-var REHEARSAL_DATABASE_URL')
+    console.log('  Branch migrated. The schema moved; the DATA did not — repopulate')
+    console.log('  the derived tables before testing anything that reads them:')
+    console.log('')
+    console.log('    npm run w1:reconcile -- --url-var REHEARSAL_DATABASE_URL --confirm')
+    console.log('    npm run db:parity    -- --url-var REHEARSAL_DATABASE_URL --label after-migrate')
   }
   return 0
 }
