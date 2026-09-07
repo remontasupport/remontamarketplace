@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
-import { rebuildExperience, safeRebuild, W1_TX } from "@/lib/w1/promote";
+import { rebuildExperience, W1_TX } from "@/lib/w1/promote";
 import { readExperience } from "@/lib/w1/read";
 
 /**
@@ -69,9 +69,8 @@ export async function getWorkerExperience(): Promise<ActionResponse<ExperienceDa
     //
     // Keyed by the original slug ("aged-care"), because the UI treats the
     // presence of a key as "this area is selected" and hydrates five fields
-    // from it. The Json column is still written by the dual-write below and
-    // remains the fallback: if this read is ever wrong, rolling the deployment
-    // back restores the Json path with no data loss.
+    // from it. The table is the only source now — the Json column is frozen at
+    // the P5 cutover and read by nothing.
     const experienceData = (await readExperience(workerProfile.id)) as ExperienceData;
 
     return {
@@ -167,33 +166,22 @@ export async function saveWorkerExperience(
       }
     }
 
-    // The Json write is the save. It must succeed on its own terms.
+    // Ensure the worker_additional_info row exists — languages, interests and
+    // the rest still live on it. The `experience` Json column is deliberately
+    // NOT written any more: it is frozen at the P5 cutover, kept as a one-time
+    // snapshot, and read by nothing.
     await authPrisma.workerAdditionalInfo.upsert({
-      where: {
-        workerProfileId: workerProfile.id,
-      },
-      create: {
-        workerProfileId: workerProfile.id,
-        experience: experienceData,
-      },
-      update: {
-        experience: experienceData,
-      },
+      where: { workerProfileId: workerProfile.id },
+      create: { workerProfileId: workerProfile.id },
+      update: {},
     });
 
-    // W1 dual-write. Deliberately AFTER the save and unable to fail it: the Json
-    // write is the save and must not be held hostage to the derived copy. Its
-    // own transaction keeps the delete and insert atomic. Remove at phase P7.
-    //
-    // Reads now come from this table, so a failed rebuild means the worker sees
-    // "saved successfully" and then their previous values. Not data loss — Json
-    // remains authoritative and the reconcile repairs it — and failing the save
-    // instead would be worse. Watch the logs for `[w1:experience] rebuild FAILED`.
-    await safeRebuild("experience", workerProfile.id, () =>
-      authPrisma.$transaction(
-        (tx) => rebuildExperience(tx, workerProfile.id, experienceData),
-        W1_TX,
-      ),
+    // worker_experience IS the save now, so this is deliberately NOT fail-soft.
+    // A failure has to reach the worker; swallowing it would report success
+    // while losing their edit, which is the one outcome worse than an error.
+    await authPrisma.$transaction(
+      (tx) => rebuildExperience(tx, workerProfile.id, experienceData),
+      W1_TX,
     );
 
     // Revalidate paths
@@ -246,8 +234,10 @@ export async function deleteWorkerExperience(
       };
     }
 
-    // Get current experience
-    const currentExperience = (workerProfile.workerAdditionalInfo?.experience || {}) as ExperienceData;
+    // Read the CURRENT state from the table, not the Json. The Json is frozen
+    // at the P5 cutover, so computing a delete from it would resurrect whatever
+    // the worker had then and drop everything since.
+    const currentExperience = (await readExperience(workerProfile.id)) as ExperienceData;
 
     // Remove specified areas
     const updatedExperience: ExperienceData = { ...currentExperience };
@@ -255,31 +245,10 @@ export async function deleteWorkerExperience(
       delete updatedExperience[areaId];
     });
 
-    if (workerProfile.workerAdditionalInfo) {
-      await authPrisma.workerAdditionalInfo.update({
-        where: {
-          workerProfileId: workerProfile.id,
-        },
-        data: {
-          experience: updatedExperience,
-        },
-      });
-    } else {
-      // Create if doesn't exist
-      await authPrisma.workerAdditionalInfo.create({
-        data: {
-          workerProfileId: workerProfile.id,
-          experience: updatedExperience,
-        },
-      });
-    }
-
-    // W1 dual-write, as above — after the save, unable to fail it.
-    await safeRebuild("experience", workerProfile.id, () =>
-      authPrisma.$transaction(
-        (tx) => rebuildExperience(tx, workerProfile.id, updatedExperience),
-        W1_TX,
-      ),
+    // The table write is the save — not fail-soft, for the same reason as above.
+    await authPrisma.$transaction(
+      (tx) => rebuildExperience(tx, workerProfile.id, updatedExperience),
+      W1_TX,
     );
 
     // Revalidate paths

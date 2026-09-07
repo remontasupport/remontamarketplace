@@ -47,6 +47,29 @@ type Totals = { jobHistory: number; education: number; availability: number; exp
 
 async function main(): Promise<number> {
   loadEnv(ROOT)
+
+  // RETIRED — and dangerous to run.
+  //
+  // This rebuilt the typed tables FROM the Json columns, which was correct while
+  // the Json was the source of truth. It no longer is: the writes go straight to
+  // the tables and the Json columns are frozen at the P5 cutover.
+  //
+  // Running this now would overwrite every worker's current profile with a stale
+  // snapshot. It is kept only because its shape documents how the migration was
+  // verified; the guards, the parity gate and the value checks in
+  // scripts/parity/ remain the way to inspect these tables.
+  console.error('')
+  console.error('  RETIRED — do not run this.')
+  console.error('')
+  console.error('  It rebuilds the typed tables FROM the Json columns, and the Json is')
+  console.error('  now frozen. Running it would overwrite every worker profile with a')
+  console.error('  snapshot from the P5 cutover.')
+  console.error('')
+  console.error('  To inspect the tables:  npm run db:parity')
+  console.error('')
+  return 2
+
+  // eslint-disable-next-line no-unreachable
   const confirmed = process.argv.includes('--confirm')
   const urlVar = argOf('--url-var', 'DIRECT_DATABASE_URL')
   const url = process.env[urlVar]

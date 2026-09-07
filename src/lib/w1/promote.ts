@@ -1,18 +1,25 @@
 /**
- * W1 — promoting the worker Json columns into typed tables.
+ * W1 — writing worker profile data into the typed tables.
  *
- * This is the CANONICAL mapping. `scripts/w1/backfill.js` holds a JavaScript
- * copy used for the initial production load; once dual-write is live the
- * reconcile pass runs through this module instead, so this becomes the single
- * implementation and the script retires.
+ * **These tables are now the source of truth.** The Json columns on
+ * worker_additional_info are frozen at the P5 cutover: still present, no longer
+ * written, read by nothing. They are a one-time snapshot, not a live fallback.
  *
- * Contract while W1 is in progress (phases P4-P6):
- *   - the Json columns remain the SOURCE OF TRUTH
- *   - these tables are a derived copy, rebuilt from the Json on every write
- *   - so rebuilding from source is always safe, and always correct
+ * Two consequences worth stating, because the earlier phases assumed the
+ * opposite:
  *
- * Every function here must be called inside the same transaction as the Json
- * write. Half a save is worse than none.
+ *   - a failed write here LOSES the worker's edit, so callers must let it throw
+ *     rather than swallow it. `safeRebuild` used to exist for that and has been
+ *     removed along with the assumption behind it
+ *   - nothing may rebuild these tables FROM the Json any more.
+ *     `scripts/w1/reconcile.ts` and `scripts/w1/backfill.js` both did, and both
+ *     now refuse to run
+ *
+ * Each rebuild function replaces one worker's rows for one field: delete then
+ * insert, inside a transaction so it is never half-applied.
+ *
+ * lib/w1/read.ts is the matching read side. The two together define the shapes,
+ * and neither should be bypassed with an inline query.
  */
 
 import type { Prisma } from '@/generated/auth-client'
@@ -298,9 +305,16 @@ export async function rebuildExperience(
 }
 
 /**
- * Skips are not errors. The Json write is the source of truth and must succeed;
- * a malformed slot should not block a worker from saving their profile. Log it
- * so the parity checks have something to correlate against.
+ * Skips are not errors, but they now mean something stronger than they used to.
+ *
+ * A skipped item is one the write could not represent — a slot with an
+ * unparseable time, a job entry with no title. Previously the Json still held
+ * it, so a skip was a gap in a derived copy. Now the tables are the save, so a
+ * skipped item is simply not stored.
+ *
+ * The write still succeeds: rejecting a whole profile save over one malformed
+ * slot would be worse. But these lines are the record of what was dropped, so
+ * they are worth watching rather than filtering out.
  */
 export function logSkips(scope: string, workerId: string, result: PromoteResult): void {
   if (!result.skipped.length) return
@@ -323,19 +337,10 @@ export function logSkips(scope: string, workerId: string, result: PromoteResult)
  * Revisit at P5: once reads switch to these tables, staleness becomes visible
  * and atomicity starts earning its keep again.
  */
-export async function safeRebuild(
-  scope: string,
-  workerId: string,
-  run: () => Promise<PromoteResult>,
-): Promise<void> {
-  try {
-    logSkips(scope, workerId, await run())
-  } catch (err) {
-    // Deliberately swallowed. The Json write has already committed and remains
-    // authoritative; `npm run w1:reconcile` restores this worker's rows.
-    console.error(
-      `[w1:${scope}] worker ${workerId}: rebuild FAILED, derived rows are stale — ` +
-        `${(err as Error).message}`,
-    )
-  }
-}
+// safeRebuild used to live here. It swallowed a failed rebuild on the grounds
+// that the Json write had already committed and remained authoritative, so the
+// worst case was a stale derived copy that the reconcile would repair.
+//
+// That reasoning died with P5. These tables ARE the save now, so swallowing a
+// failure would report success to the worker while losing their edit. Callers
+// let the write throw instead.

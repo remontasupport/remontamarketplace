@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
-import { rebuildJobHistory, rebuildEducation, safeRebuild, W1_TX } from "@/lib/w1/promote";
+import { rebuildJobHistory, rebuildEducation, W1_TX } from "@/lib/w1/promote";
 import {
   updateWorkerBankAccountSchema,
   type UpdateWorkerBankAccountData,
@@ -326,33 +326,27 @@ export async function updateWorkerWorkHistory(
     }
 
 
-    // 5. Upsert worker additional info with work history
-    // The Json write is the save. It must succeed on its own terms.
-    const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
-      where: {
-        workerProfileId: workerProfile.id,
-      },
-      create: {
-        workerProfileId: workerProfile.id,
-        jobHistory: validatedData.jobHistory,
-      },
-      update: {
-        jobHistory: validatedData.jobHistory,
-      },
-      select: {
-        jobHistory: true,
-      },
+    // 5. Save the work history.
+    // Ensure the worker_additional_info row exists — languages, interests and
+    // the rest still live on it. The `jobHistory` Json column is deliberately
+    // NOT written any more: it is frozen at the P5 cutover and read by nothing.
+    await authPrisma.workerAdditionalInfo.upsert({
+      where: { workerProfileId: workerProfile.id },
+      create: { workerProfileId: workerProfile.id },
+      update: {},
     });
 
-    // W1 dual-write. Deliberately AFTER the save and unable to fail it: nothing
-    // reads worker_job_history yet, so a stale derived copy costs nothing and
-    // the reconcile repairs it. Remove entirely at W1 phase P7.
-    await safeRebuild("jobHistory", workerProfile.id, () =>
-      authPrisma.$transaction(
-        (tx) => rebuildJobHistory(tx, workerProfile.id, validatedData.jobHistory),
-        W1_TX,
-      ),
+    // worker_job_history IS the save now, so this is deliberately NOT
+    // fail-soft. A failure has to reach the worker rather than be logged while
+    // the UI reports success.
+    await authPrisma.$transaction(
+      (tx) => rebuildJobHistory(tx, workerProfile.id, validatedData.jobHistory),
+      W1_TX,
     );
+
+    // Echoed back unchanged: this is what the caller submitted and what the
+    // table now holds.
+    const updatedInfo = { jobHistory: validatedData.jobHistory };
 
 
     // 6. Revalidate the profile page cache
@@ -436,31 +430,22 @@ export async function updateWorkerEducation(
 
 
 
-    // 5. Upsert worker additional info with education
-    // The Json write is the save. It must succeed on its own terms.
-    const updatedInfo = await authPrisma.workerAdditionalInfo.upsert({
-      where: {
-        workerProfileId: workerProfile.id,
-      },
-      create: {
-        workerProfileId: workerProfile.id,
-        education: validatedData.education,
-      },
-      update: {
-        education: validatedData.education,
-      },
-      select: {
-        education: true,
-      },
+    // 5. Save the education.
+    // Ensure the worker_additional_info row exists — the `education` Json
+    // column is frozen at the P5 cutover and read by nothing.
+    await authPrisma.workerAdditionalInfo.upsert({
+      where: { workerProfileId: workerProfile.id },
+      create: { workerProfileId: workerProfile.id },
+      update: {},
     });
 
-    // W1 dual-write, as with work history — after the save, unable to fail it.
-    await safeRebuild("education", workerProfile.id, () =>
-      authPrisma.$transaction(
-        (tx) => rebuildEducation(tx, workerProfile.id, validatedData.education),
-        W1_TX,
-      ),
+    // worker_education IS the save now — not fail-soft, as with work history.
+    await authPrisma.$transaction(
+      (tx) => rebuildEducation(tx, workerProfile.id, validatedData.education),
+      W1_TX,
     );
+
+    const updatedInfo = { education: validatedData.education };
 
     
 
