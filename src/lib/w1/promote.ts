@@ -49,6 +49,15 @@ const DOMAIN: Record<string, string> = {
 }
 
 /**
+ * The reverse map, derived from DOMAIN rather than written out again, so the two
+ * directions cannot drift. Reads need it: the UI keys experience by the original
+ * slug, and treats the presence of a key as "this area is selected".
+ */
+export const DOMAIN_TO_SLUG: Record<string, string> = Object.fromEntries(
+  Object.entries(DOMAIN).map(([slug, enumValue]) => [enumValue, slug]),
+)
+
+/**
  * "HH:MM" to minutes from midnight. Null for anything else, so a bad value is
  * reported rather than silently becoming 0 — which would read as midnight.
  */

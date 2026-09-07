@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
-import { rebuildExperience, safeRebuild, W1_TX } from "@/lib/w1/promote";
+import { rebuildExperience, safeRebuild, W1_TX, DOMAIN_TO_SLUG } from "@/lib/w1/promote";
+import { readsFromTables, announceSource } from "@/lib/w1/flags";
 
 /**
  * Backend Service: Worker Experience Management
@@ -61,6 +62,43 @@ export async function getWorkerExperience(): Promise<ActionResponse<ExperienceDa
       return {
         success: false,
         error: "Worker profile not found.",
+      };
+    }
+
+    // W1 P5 — read switch. Both branches must return an object keyed by the
+    // original slug ("aged-care"), because the UI treats the presence of a key
+    // as "this area is selected" and hydrates five fields from it. Default is
+    // Json; the tables are opt-in per scope via W1_READ_TABLES.
+    const fromTables = readsFromTables("experience");
+    announceSource("experience", fromTables);
+
+    if (fromTables) {
+      const rows = await authPrisma.workerExperience.findMany({
+        where: { workerProfileId: workerProfile.id },
+      });
+
+      const experienceData: ExperienceData = {};
+      for (const row of rows) {
+        const slug = DOMAIN_TO_SLUG[row.domain];
+        // A domain with no slug mapping would silently vanish from the UI, so
+        // skip it loudly rather than quietly.
+        if (!slug) {
+          console.warn(`[w1:read] experience: no slug for domain "${row.domain}"`);
+          continue;
+        }
+        experienceData[slug] = {
+          isProfessional: row.isProfessional,
+          isPersonal: row.isPersonal,
+          specificAreas: row.specificAreas,
+          // description is String? in the table but `string` in the contract
+          description: row.description ?? "",
+          otherAreas: row.otherAreas,
+        };
+      }
+
+      return {
+        success: true,
+        data: experienceData,
       };
     }
 
@@ -174,10 +212,18 @@ export async function saveWorkerExperience(
       },
     });
 
-    // W1 dual-write. Deliberately AFTER the save and unable to fail it: nothing
-    // reads worker_experience yet, so a stale derived copy costs nothing and
-    // the reconcile repairs it. Its own transaction keeps the delete and insert
-    // atomic. Remove entirely at W1 phase P7.
+    // W1 dual-write. Deliberately AFTER the save and unable to fail it: the Json
+    // write is the save and must not be held hostage to the derived copy. Its
+    // own transaction keeps the delete and insert atomic. Remove at phase P7.
+    //
+    // The cost of a failed rebuild changed when the read switch landed. While
+    // reads came from Json, staleness was invisible. With W1_READ_TABLES
+    // including "experience", a failed rebuild means the worker sees "saved
+    // successfully" and then their previous values — confusing, though still
+    // not data loss, since Json remains authoritative and the reconcile
+    // repairs it. Failing the save instead would be worse. If this ever fires
+    // in practice rather than in theory, a scheduled reconcile bounds the
+    // staleness window; watch for `[w1:experience] rebuild FAILED`.
     await safeRebuild("experience", workerProfile.id, () =>
       authPrisma.$transaction(
         (tx) => rebuildExperience(tx, workerProfile.id, experienceData),
