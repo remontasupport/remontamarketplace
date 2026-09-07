@@ -10,6 +10,8 @@
 -- 1. Archive schema
 CREATE SCHEMA IF NOT EXISTS archive;
 
+dadaddasd
+
 -- 2. Archive table
 CREATE TABLE IF NOT EXISTS archive.worker_ad17 (
   "workerProfileId"    text PRIMARY KEY,
