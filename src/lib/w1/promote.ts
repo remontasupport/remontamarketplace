@@ -70,6 +70,23 @@ const str = (v: unknown): string | null =>
 
 const bool = (v: unknown): boolean => v === true || v === 'true'
 
+/**
+ * Month fields hold month NAMES — "January" through "December", measured as
+ * string in 100% of entries in round 9. An earlier version typed them as Int,
+ * so Number("March") produced NaN and every month was written as null.
+ *
+ * endMonth is an empty string in 274 entries, meaning the worker is still there.
+ * Empty and absent mean the same thing, so empty becomes null.
+ */
+const monthOrNull = (v: unknown): string | null => {
+  const s = str(v)
+  return s && s.trim() ? s.trim() : null
+}
+
+/** specificAreas and otherAreas are both arrays — 3,168 elements across 853 domains. */
+const stringArray = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((a): a is string => typeof a === 'string') : []
+
 const intOrNull = (v: unknown): number | null => {
   if (v === null || v === undefined || v === '') return null
   const n = Number(v)
@@ -99,9 +116,9 @@ export async function rebuildJobHistory(
         workerAdditionalInfoId,
         jobTitle,
         company,
-        startMonth: intOrNull(e.startMonth),
+        startMonth: monthOrNull(e.startMonth),
         startYear: intOrNull(e.startYear),
-        endMonth: intOrNull(e.endMonth),
+        endMonth: monthOrNull(e.endMonth),
         endYear: intOrNull(e.endYear),
         currentlyWorking: bool(e.currentlyWorking),
         sortOrder: i,
@@ -136,9 +153,9 @@ export async function rebuildEducation(
         workerAdditionalInfoId,
         institution,
         qualification,
-        startMonth: intOrNull(e.startMonth),
+        startMonth: monthOrNull(e.startMonth),
         startYear: intOrNull(e.startYear),
-        endMonth: intOrNull(e.endMonth),
+        endMonth: monthOrNull(e.endMonth),
         endYear: intOrNull(e.endYear),
         currentlyStudying: bool(e.currentlyStudying),
         sortOrder: i,
@@ -239,10 +256,8 @@ export async function rebuildExperience(
         domain: domain as Prisma.WorkerExperienceCreateManyInput['domain'],
         isProfessional: bool(v.isProfessional),
         isPersonal: bool(v.isPersonal),
-        specificAreas: Array.isArray(v.specificAreas)
-          ? v.specificAreas.filter((a): a is string => typeof a === 'string')
-          : [],
-        otherAreas: str(v.otherAreas),
+        specificAreas: stringArray(v.specificAreas),
+        otherAreas: stringArray(v.otherAreas),
         description: str(v.description),
       })
     }

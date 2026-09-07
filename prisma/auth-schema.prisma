@@ -588,9 +588,9 @@ model WorkerJobHistory {
   workerAdditionalInfoId String
   jobTitle               String
   company                String
-  startMonth             Int?
+  startMonth             String?
   startYear              Int?
-  endMonth               Int?
+  endMonth               String?
   endYear                Int?
   currentlyWorking       Boolean @default(false)
   sortOrder              Int     @default(0) // preserves array order
@@ -610,9 +610,9 @@ model WorkerEducation {
   workerAdditionalInfoId String
   institution            String
   qualification          String
-  startMonth             Int?
+  startMonth             String?
   startYear              Int?
-  endMonth               Int?
+  endMonth               String?
   endYear                Int?
   currentlyStudying      Boolean @default(false)
   sortOrder              Int     @default(0)
@@ -667,7 +667,7 @@ model WorkerExperience {
   isProfessional Boolean  @default(false)
   isPersonal     Boolean  @default(false)
   specificAreas  String[] @default([])
-  otherAreas     String?
+  otherAreas     String[] @default([])
   description    String?
 
   createdAt DateTime @default(now())

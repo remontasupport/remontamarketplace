@@ -26671,17 +26671,13 @@ export namespace Prisma {
   }
 
   export type WorkerJobHistoryAvgAggregateOutputType = {
-    startMonth: number | null
     startYear: number | null
-    endMonth: number | null
     endYear: number | null
     sortOrder: number | null
   }
 
   export type WorkerJobHistorySumAggregateOutputType = {
-    startMonth: number | null
     startYear: number | null
-    endMonth: number | null
     endYear: number | null
     sortOrder: number | null
   }
@@ -26691,9 +26687,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string | null
     jobTitle: string | null
     company: string | null
-    startMonth: number | null
+    startMonth: string | null
     startYear: number | null
-    endMonth: number | null
+    endMonth: string | null
     endYear: number | null
     currentlyWorking: boolean | null
     sortOrder: number | null
@@ -26706,9 +26702,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string | null
     jobTitle: string | null
     company: string | null
-    startMonth: number | null
+    startMonth: string | null
     startYear: number | null
-    endMonth: number | null
+    endMonth: string | null
     endYear: number | null
     currentlyWorking: boolean | null
     sortOrder: number | null
@@ -26734,17 +26730,13 @@ export namespace Prisma {
 
 
   export type WorkerJobHistoryAvgAggregateInputType = {
-    startMonth?: true
     startYear?: true
-    endMonth?: true
     endYear?: true
     sortOrder?: true
   }
 
   export type WorkerJobHistorySumAggregateInputType = {
-    startMonth?: true
     startYear?: true
-    endMonth?: true
     endYear?: true
     sortOrder?: true
   }
@@ -26886,9 +26878,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string
     jobTitle: string
     company: string
-    startMonth: number | null
+    startMonth: string | null
     startYear: number | null
-    endMonth: number | null
+    endMonth: string | null
     endYear: number | null
     currentlyWorking: boolean
     sortOrder: number
@@ -26999,9 +26991,9 @@ export namespace Prisma {
       workerAdditionalInfoId: string
       jobTitle: string
       company: string
-      startMonth: number | null
+      startMonth: string | null
       startYear: number | null
-      endMonth: number | null
+      endMonth: string | null
       endYear: number | null
       currentlyWorking: boolean
       sortOrder: number
@@ -27435,9 +27427,9 @@ export namespace Prisma {
     readonly workerAdditionalInfoId: FieldRef<"WorkerJobHistory", 'String'>
     readonly jobTitle: FieldRef<"WorkerJobHistory", 'String'>
     readonly company: FieldRef<"WorkerJobHistory", 'String'>
-    readonly startMonth: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly startMonth: FieldRef<"WorkerJobHistory", 'String'>
     readonly startYear: FieldRef<"WorkerJobHistory", 'Int'>
-    readonly endMonth: FieldRef<"WorkerJobHistory", 'Int'>
+    readonly endMonth: FieldRef<"WorkerJobHistory", 'String'>
     readonly endYear: FieldRef<"WorkerJobHistory", 'Int'>
     readonly currentlyWorking: FieldRef<"WorkerJobHistory", 'Boolean'>
     readonly sortOrder: FieldRef<"WorkerJobHistory", 'Int'>
@@ -27870,17 +27862,13 @@ export namespace Prisma {
   }
 
   export type WorkerEducationAvgAggregateOutputType = {
-    startMonth: number | null
     startYear: number | null
-    endMonth: number | null
     endYear: number | null
     sortOrder: number | null
   }
 
   export type WorkerEducationSumAggregateOutputType = {
-    startMonth: number | null
     startYear: number | null
-    endMonth: number | null
     endYear: number | null
     sortOrder: number | null
   }
@@ -27890,9 +27878,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string | null
     institution: string | null
     qualification: string | null
-    startMonth: number | null
+    startMonth: string | null
     startYear: number | null
-    endMonth: number | null
+    endMonth: string | null
     endYear: number | null
     currentlyStudying: boolean | null
     sortOrder: number | null
@@ -27905,9 +27893,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string | null
     institution: string | null
     qualification: string | null
-    startMonth: number | null
+    startMonth: string | null
     startYear: number | null
-    endMonth: number | null
+    endMonth: string | null
     endYear: number | null
     currentlyStudying: boolean | null
     sortOrder: number | null
@@ -27933,17 +27921,13 @@ export namespace Prisma {
 
 
   export type WorkerEducationAvgAggregateInputType = {
-    startMonth?: true
     startYear?: true
-    endMonth?: true
     endYear?: true
     sortOrder?: true
   }
 
   export type WorkerEducationSumAggregateInputType = {
-    startMonth?: true
     startYear?: true
-    endMonth?: true
     endYear?: true
     sortOrder?: true
   }
@@ -28085,9 +28069,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string
     institution: string
     qualification: string
-    startMonth: number | null
+    startMonth: string | null
     startYear: number | null
-    endMonth: number | null
+    endMonth: string | null
     endYear: number | null
     currentlyStudying: boolean
     sortOrder: number
@@ -28198,9 +28182,9 @@ export namespace Prisma {
       workerAdditionalInfoId: string
       institution: string
       qualification: string
-      startMonth: number | null
+      startMonth: string | null
       startYear: number | null
-      endMonth: number | null
+      endMonth: string | null
       endYear: number | null
       currentlyStudying: boolean
       sortOrder: number
@@ -28634,9 +28618,9 @@ export namespace Prisma {
     readonly workerAdditionalInfoId: FieldRef<"WorkerEducation", 'String'>
     readonly institution: FieldRef<"WorkerEducation", 'String'>
     readonly qualification: FieldRef<"WorkerEducation", 'String'>
-    readonly startMonth: FieldRef<"WorkerEducation", 'Int'>
+    readonly startMonth: FieldRef<"WorkerEducation", 'String'>
     readonly startYear: FieldRef<"WorkerEducation", 'Int'>
-    readonly endMonth: FieldRef<"WorkerEducation", 'Int'>
+    readonly endMonth: FieldRef<"WorkerEducation", 'String'>
     readonly endYear: FieldRef<"WorkerEducation", 'Int'>
     readonly currentlyStudying: FieldRef<"WorkerEducation", 'Boolean'>
     readonly sortOrder: FieldRef<"WorkerEducation", 'Int'>
@@ -30211,7 +30195,6 @@ export namespace Prisma {
     domain: $Enums.CareDomain | null
     isProfessional: boolean | null
     isPersonal: boolean | null
-    otherAreas: string | null
     description: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -30223,7 +30206,6 @@ export namespace Prisma {
     domain: $Enums.CareDomain | null
     isProfessional: boolean | null
     isPersonal: boolean | null
-    otherAreas: string | null
     description: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -30250,7 +30232,6 @@ export namespace Prisma {
     domain?: true
     isProfessional?: true
     isPersonal?: true
-    otherAreas?: true
     description?: true
     createdAt?: true
     updatedAt?: true
@@ -30262,7 +30243,6 @@ export namespace Prisma {
     domain?: true
     isProfessional?: true
     isPersonal?: true
-    otherAreas?: true
     description?: true
     createdAt?: true
     updatedAt?: true
@@ -30361,7 +30341,7 @@ export namespace Prisma {
     isProfessional: boolean
     isPersonal: boolean
     specificAreas: string[]
-    otherAreas: string | null
+    otherAreas: string[]
     description: string | null
     createdAt: Date
     updatedAt: Date
@@ -30462,7 +30442,7 @@ export namespace Prisma {
       isProfessional: boolean
       isPersonal: boolean
       specificAreas: string[]
-      otherAreas: string | null
+      otherAreas: string[]
       description: string | null
       createdAt: Date
       updatedAt: Date
@@ -30896,7 +30876,7 @@ export namespace Prisma {
     readonly isProfessional: FieldRef<"WorkerExperience", 'Boolean'>
     readonly isPersonal: FieldRef<"WorkerExperience", 'Boolean'>
     readonly specificAreas: FieldRef<"WorkerExperience", 'String[]'>
-    readonly otherAreas: FieldRef<"WorkerExperience", 'String'>
+    readonly otherAreas: FieldRef<"WorkerExperience", 'String[]'>
     readonly description: FieldRef<"WorkerExperience", 'String'>
     readonly createdAt: FieldRef<"WorkerExperience", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkerExperience", 'DateTime'>
@@ -33757,9 +33737,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
     jobTitle?: StringFilter<"WorkerJobHistory"> | string
     company?: StringFilter<"WorkerJobHistory"> | string
-    startMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
     startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
-    endMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
     endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
     currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
     sortOrder?: IntFilter<"WorkerJobHistory"> | number
@@ -33792,9 +33772,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
     jobTitle?: StringFilter<"WorkerJobHistory"> | string
     company?: StringFilter<"WorkerJobHistory"> | string
-    startMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
     startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
-    endMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
     endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
     currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
     sortOrder?: IntFilter<"WorkerJobHistory"> | number
@@ -33831,9 +33811,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
     jobTitle?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
     company?: StringWithAggregatesFilter<"WorkerJobHistory"> | string
-    startMonth?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
+    startMonth?: StringNullableWithAggregatesFilter<"WorkerJobHistory"> | string | null
     startYear?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
-    endMonth?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
+    endMonth?: StringNullableWithAggregatesFilter<"WorkerJobHistory"> | string | null
     endYear?: IntNullableWithAggregatesFilter<"WorkerJobHistory"> | number | null
     currentlyWorking?: BoolWithAggregatesFilter<"WorkerJobHistory"> | boolean
     sortOrder?: IntWithAggregatesFilter<"WorkerJobHistory"> | number
@@ -33849,9 +33829,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
     institution?: StringFilter<"WorkerEducation"> | string
     qualification?: StringFilter<"WorkerEducation"> | string
-    startMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
     startYear?: IntNullableFilter<"WorkerEducation"> | number | null
-    endMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: StringNullableFilter<"WorkerEducation"> | string | null
     endYear?: IntNullableFilter<"WorkerEducation"> | number | null
     currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
     sortOrder?: IntFilter<"WorkerEducation"> | number
@@ -33884,9 +33864,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
     institution?: StringFilter<"WorkerEducation"> | string
     qualification?: StringFilter<"WorkerEducation"> | string
-    startMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
     startYear?: IntNullableFilter<"WorkerEducation"> | number | null
-    endMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: StringNullableFilter<"WorkerEducation"> | string | null
     endYear?: IntNullableFilter<"WorkerEducation"> | number | null
     currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
     sortOrder?: IntFilter<"WorkerEducation"> | number
@@ -33923,9 +33903,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringWithAggregatesFilter<"WorkerEducation"> | string
     institution?: StringWithAggregatesFilter<"WorkerEducation"> | string
     qualification?: StringWithAggregatesFilter<"WorkerEducation"> | string
-    startMonth?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
+    startMonth?: StringNullableWithAggregatesFilter<"WorkerEducation"> | string | null
     startYear?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
-    endMonth?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
+    endMonth?: StringNullableWithAggregatesFilter<"WorkerEducation"> | string | null
     endYear?: IntNullableWithAggregatesFilter<"WorkerEducation"> | number | null
     currentlyStudying?: BoolWithAggregatesFilter<"WorkerEducation"> | boolean
     sortOrder?: IntWithAggregatesFilter<"WorkerEducation"> | number
@@ -34016,7 +33996,7 @@ export namespace Prisma {
     isProfessional?: BoolFilter<"WorkerExperience"> | boolean
     isPersonal?: BoolFilter<"WorkerExperience"> | boolean
     specificAreas?: StringNullableListFilter<"WorkerExperience">
-    otherAreas?: StringNullableFilter<"WorkerExperience"> | string | null
+    otherAreas?: StringNullableListFilter<"WorkerExperience">
     description?: StringNullableFilter<"WorkerExperience"> | string | null
     createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
@@ -34030,7 +34010,7 @@ export namespace Prisma {
     isProfessional?: SortOrder
     isPersonal?: SortOrder
     specificAreas?: SortOrder
-    otherAreas?: SortOrderInput | SortOrder
+    otherAreas?: SortOrder
     description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -34048,7 +34028,7 @@ export namespace Prisma {
     isProfessional?: BoolFilter<"WorkerExperience"> | boolean
     isPersonal?: BoolFilter<"WorkerExperience"> | boolean
     specificAreas?: StringNullableListFilter<"WorkerExperience">
-    otherAreas?: StringNullableFilter<"WorkerExperience"> | string | null
+    otherAreas?: StringNullableListFilter<"WorkerExperience">
     description?: StringNullableFilter<"WorkerExperience"> | string | null
     createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
@@ -34062,7 +34042,7 @@ export namespace Prisma {
     isProfessional?: SortOrder
     isPersonal?: SortOrder
     specificAreas?: SortOrder
-    otherAreas?: SortOrderInput | SortOrder
+    otherAreas?: SortOrder
     description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -34081,7 +34061,7 @@ export namespace Prisma {
     isProfessional?: BoolWithAggregatesFilter<"WorkerExperience"> | boolean
     isPersonal?: BoolWithAggregatesFilter<"WorkerExperience"> | boolean
     specificAreas?: StringNullableListFilter<"WorkerExperience">
-    otherAreas?: StringNullableWithAggregatesFilter<"WorkerExperience"> | string | null
+    otherAreas?: StringNullableListFilter<"WorkerExperience">
     description?: StringNullableWithAggregatesFilter<"WorkerExperience"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WorkerExperience"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkerExperience"> | Date | string
@@ -36090,9 +36070,9 @@ export namespace Prisma {
     id?: string
     jobTitle: string
     company: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyWorking?: boolean
     sortOrder?: number
@@ -36106,9 +36086,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string
     jobTitle: string
     company: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyWorking?: boolean
     sortOrder?: number
@@ -36120,9 +36100,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36136,9 +36116,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36151,9 +36131,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string
     jobTitle: string
     company: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyWorking?: boolean
     sortOrder?: number
@@ -36165,9 +36145,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36180,9 +36160,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36194,9 +36174,9 @@ export namespace Prisma {
     id?: string
     institution: string
     qualification: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyStudying?: boolean
     sortOrder?: number
@@ -36210,9 +36190,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string
     institution: string
     qualification: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyStudying?: boolean
     sortOrder?: number
@@ -36224,9 +36204,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36240,9 +36220,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36255,9 +36235,9 @@ export namespace Prisma {
     workerAdditionalInfoId: string
     institution: string
     qualification: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyStudying?: boolean
     sortOrder?: number
@@ -36269,9 +36249,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36284,9 +36264,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -36376,7 +36356,7 @@ export namespace Prisma {
     isProfessional?: boolean
     isPersonal?: boolean
     specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
-    otherAreas?: string | null
+    otherAreas?: WorkerExperienceCreateotherAreasInput | string[]
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -36390,7 +36370,7 @@ export namespace Prisma {
     isProfessional?: boolean
     isPersonal?: boolean
     specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
-    otherAreas?: string | null
+    otherAreas?: WorkerExperienceCreateotherAreasInput | string[]
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -36402,7 +36382,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36416,7 +36396,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36429,7 +36409,7 @@ export namespace Prisma {
     isProfessional?: boolean
     isPersonal?: boolean
     specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
-    otherAreas?: string | null
+    otherAreas?: WorkerExperienceCreateotherAreasInput | string[]
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -36441,7 +36421,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36454,7 +36434,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37997,9 +37977,7 @@ export namespace Prisma {
   }
 
   export type WorkerJobHistoryAvgOrderByAggregateInput = {
-    startMonth?: SortOrder
     startYear?: SortOrder
-    endMonth?: SortOrder
     endYear?: SortOrder
     sortOrder?: SortOrder
   }
@@ -38035,9 +38013,7 @@ export namespace Prisma {
   }
 
   export type WorkerJobHistorySumOrderByAggregateInput = {
-    startMonth?: SortOrder
     startYear?: SortOrder
-    endMonth?: SortOrder
     endYear?: SortOrder
     sortOrder?: SortOrder
   }
@@ -38058,9 +38034,7 @@ export namespace Prisma {
   }
 
   export type WorkerEducationAvgOrderByAggregateInput = {
-    startMonth?: SortOrder
     startYear?: SortOrder
-    endMonth?: SortOrder
     endYear?: SortOrder
     sortOrder?: SortOrder
   }
@@ -38096,9 +38070,7 @@ export namespace Prisma {
   }
 
   export type WorkerEducationSumOrderByAggregateInput = {
-    startMonth?: SortOrder
     startYear?: SortOrder
-    endMonth?: SortOrder
     endYear?: SortOrder
     sortOrder?: SortOrder
   }
@@ -38203,7 +38175,6 @@ export namespace Prisma {
     domain?: SortOrder
     isProfessional?: SortOrder
     isPersonal?: SortOrder
-    otherAreas?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -38215,7 +38186,6 @@ export namespace Prisma {
     domain?: SortOrder
     isProfessional?: SortOrder
     isPersonal?: SortOrder
-    otherAreas?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -39553,6 +39523,10 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type WorkerExperienceCreateotherAreasInput = {
+    set: string[]
+  }
+
   export type WorkerProfileCreateNestedOneWithoutCareExperienceInput = {
     create?: XOR<WorkerProfileCreateWithoutCareExperienceInput, WorkerProfileUncheckedCreateWithoutCareExperienceInput>
     connectOrCreate?: WorkerProfileCreateOrConnectWithoutCareExperienceInput
@@ -39564,6 +39538,11 @@ export namespace Prisma {
   }
 
   export type WorkerExperienceUpdatespecificAreasInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type WorkerExperienceUpdateotherAreasInput = {
     set?: string[]
     push?: string | string[]
   }
@@ -41665,7 +41644,7 @@ export namespace Prisma {
     isProfessional?: boolean
     isPersonal?: boolean
     specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
-    otherAreas?: string | null
+    otherAreas?: WorkerExperienceCreateotherAreasInput | string[]
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -41677,7 +41656,7 @@ export namespace Prisma {
     isProfessional?: boolean
     isPersonal?: boolean
     specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
-    otherAreas?: string | null
+    otherAreas?: WorkerExperienceCreateotherAreasInput | string[]
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -41936,7 +41915,7 @@ export namespace Prisma {
     isProfessional?: BoolFilter<"WorkerExperience"> | boolean
     isPersonal?: BoolFilter<"WorkerExperience"> | boolean
     specificAreas?: StringNullableListFilter<"WorkerExperience">
-    otherAreas?: StringNullableFilter<"WorkerExperience"> | string | null
+    otherAreas?: StringNullableListFilter<"WorkerExperience">
     description?: StringNullableFilter<"WorkerExperience"> | string | null
     createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
@@ -42866,9 +42845,9 @@ export namespace Prisma {
     id?: string
     jobTitle: string
     company: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyWorking?: boolean
     sortOrder?: number
@@ -42880,9 +42859,9 @@ export namespace Prisma {
     id?: string
     jobTitle: string
     company: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyWorking?: boolean
     sortOrder?: number
@@ -42904,9 +42883,9 @@ export namespace Prisma {
     id?: string
     institution: string
     qualification: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyStudying?: boolean
     sortOrder?: number
@@ -42918,9 +42897,9 @@ export namespace Prisma {
     id?: string
     institution: string
     qualification: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyStudying?: boolean
     sortOrder?: number
@@ -43051,9 +43030,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFilter<"WorkerJobHistory"> | string
     jobTitle?: StringFilter<"WorkerJobHistory"> | string
     company?: StringFilter<"WorkerJobHistory"> | string
-    startMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    startMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
     startYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
-    endMonth?: IntNullableFilter<"WorkerJobHistory"> | number | null
+    endMonth?: StringNullableFilter<"WorkerJobHistory"> | string | null
     endYear?: IntNullableFilter<"WorkerJobHistory"> | number | null
     currentlyWorking?: BoolFilter<"WorkerJobHistory"> | boolean
     sortOrder?: IntFilter<"WorkerJobHistory"> | number
@@ -43085,9 +43064,9 @@ export namespace Prisma {
     workerAdditionalInfoId?: StringFilter<"WorkerEducation"> | string
     institution?: StringFilter<"WorkerEducation"> | string
     qualification?: StringFilter<"WorkerEducation"> | string
-    startMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    startMonth?: StringNullableFilter<"WorkerEducation"> | string | null
     startYear?: IntNullableFilter<"WorkerEducation"> | number | null
-    endMonth?: IntNullableFilter<"WorkerEducation"> | number | null
+    endMonth?: StringNullableFilter<"WorkerEducation"> | string | null
     endYear?: IntNullableFilter<"WorkerEducation"> | number | null
     currentlyStudying?: BoolFilter<"WorkerEducation"> | boolean
     sortOrder?: IntFilter<"WorkerEducation"> | number
@@ -44046,7 +44025,7 @@ export namespace Prisma {
     isProfessional?: boolean
     isPersonal?: boolean
     specificAreas?: WorkerExperienceCreatespecificAreasInput | string[]
-    otherAreas?: string | null
+    otherAreas?: WorkerExperienceCreateotherAreasInput | string[]
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -44187,7 +44166,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -44199,7 +44178,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -44211,7 +44190,7 @@ export namespace Prisma {
     isProfessional?: BoolFieldUpdateOperationsInput | boolean
     isPersonal?: BoolFieldUpdateOperationsInput | boolean
     specificAreas?: WorkerExperienceUpdatespecificAreasInput | string[]
-    otherAreas?: NullableStringFieldUpdateOperationsInput | string | null
+    otherAreas?: WorkerExperienceUpdateotherAreasInput | string[]
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -44407,9 +44386,9 @@ export namespace Prisma {
     id?: string
     jobTitle: string
     company: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyWorking?: boolean
     sortOrder?: number
@@ -44421,9 +44400,9 @@ export namespace Prisma {
     id?: string
     institution: string
     qualification: string
-    startMonth?: number | null
+    startMonth?: string | null
     startYear?: number | null
-    endMonth?: number | null
+    endMonth?: string | null
     endYear?: number | null
     currentlyStudying?: boolean
     sortOrder?: number
@@ -44435,9 +44414,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -44449,9 +44428,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -44463,9 +44442,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     jobTitle?: StringFieldUpdateOperationsInput | string
     company?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyWorking?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -44477,9 +44456,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -44491,9 +44470,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
@@ -44505,9 +44484,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     institution?: StringFieldUpdateOperationsInput | string
     qualification?: StringFieldUpdateOperationsInput | string
-    startMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    startMonth?: NullableStringFieldUpdateOperationsInput | string | null
     startYear?: NullableIntFieldUpdateOperationsInput | number | null
-    endMonth?: NullableIntFieldUpdateOperationsInput | number | null
+    endMonth?: NullableStringFieldUpdateOperationsInput | string | null
     endYear?: NullableIntFieldUpdateOperationsInput | number | null
     currentlyStudying?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number

@@ -217,6 +217,87 @@ SELECT
                       <> coalesce(array_length("subcategoryNames", 1), 0))  AS parallel_array_mismatch
 FROM worker_services;
 
+-- 91. Derived VALUES against source values
+--
+-- This exists because row counts cannot see an empty column. Every count in
+-- this file matched perfectly across four reconcile runs and a production
+-- deploy while 100% of the month fields were NULL and 3,168 array elements had
+-- been flattened into strings. Counting rows proves a row exists; it says
+-- nothing about whether the row carries the data.
+--
+-- Every row below must show derived_populated = source_populated.
+-- A zero on the left with a number on the right is the exact signature of a
+-- field whose type is wrong.
+SELECT 'job_history.startMonth' AS field,
+       (SELECT count(*) FROM worker_job_history WHERE "startMonth" IS NOT NULL) AS derived_populated,
+       (SELECT count(*) FROM worker_additional_info w,
+               LATERAL jsonb_array_elements((w."jobHistory")::jsonb) e
+          WHERE w."jobHistory" IS NOT NULL
+            AND jsonb_typeof((w."jobHistory")::jsonb) = 'array'
+            AND coalesce(e ->> 'startMonth', '') <> '') AS source_populated
+UNION ALL
+SELECT 'job_history.endMonth',
+       (SELECT count(*) FROM worker_job_history WHERE "endMonth" IS NOT NULL),
+       (SELECT count(*) FROM worker_additional_info w,
+               LATERAL jsonb_array_elements((w."jobHistory")::jsonb) e
+          WHERE w."jobHistory" IS NOT NULL
+            AND jsonb_typeof((w."jobHistory")::jsonb) = 'array'
+            AND coalesce(e ->> 'endMonth', '') <> '')
+UNION ALL
+SELECT 'job_history.startYear',
+       (SELECT count(*) FROM worker_job_history WHERE "startYear" IS NOT NULL),
+       (SELECT count(*) FROM worker_additional_info w,
+               LATERAL jsonb_array_elements((w."jobHistory")::jsonb) e
+          WHERE w."jobHistory" IS NOT NULL
+            AND jsonb_typeof((w."jobHistory")::jsonb) = 'array'
+            AND coalesce(e ->> 'startYear', '') <> '')
+UNION ALL
+SELECT 'education.startMonth',
+       (SELECT count(*) FROM worker_education WHERE "startMonth" IS NOT NULL),
+       (SELECT count(*) FROM worker_additional_info w,
+               LATERAL jsonb_array_elements((w."education")::jsonb) e
+          WHERE w."education" IS NOT NULL
+            AND jsonb_typeof((w."education")::jsonb) = 'array'
+            AND coalesce(e ->> 'startMonth', '') <> '')
+UNION ALL
+SELECT 'education.endMonth',
+       (SELECT count(*) FROM worker_education WHERE "endMonth" IS NOT NULL),
+       (SELECT count(*) FROM worker_additional_info w,
+               LATERAL jsonb_array_elements((w."education")::jsonb) e
+          WHERE w."education" IS NOT NULL
+            AND jsonb_typeof((w."education")::jsonb) = 'array'
+            AND coalesce(e ->> 'endMonth', '') <> '')
+UNION ALL
+SELECT 'experience.description',
+       (SELECT count(*) FROM worker_experience WHERE "description" IS NOT NULL AND "description" <> ''),
+       (SELECT count(*) FROM worker_additional_info w,
+               LATERAL jsonb_each((w."experience")::jsonb) d
+          WHERE w."experience" IS NOT NULL
+            AND jsonb_typeof((w."experience")::jsonb) = 'object'
+            AND jsonb_typeof(d.value) = 'object'
+            AND coalesce(d.value ->> 'description', '') <> '')
+UNION ALL
+-- Arrays compare total ELEMENTS, not rows: a row can exist with an empty array.
+SELECT 'experience.otherAreas (elements)',
+       (SELECT coalesce(sum(coalesce(array_length("otherAreas", 1), 0)), 0) FROM worker_experience),
+       (SELECT coalesce(sum(jsonb_array_length(d.value -> 'otherAreas')), 0)
+          FROM worker_additional_info w,
+               LATERAL jsonb_each((w."experience")::jsonb) d
+          WHERE w."experience" IS NOT NULL
+            AND jsonb_typeof((w."experience")::jsonb) = 'object'
+            AND jsonb_typeof(d.value) = 'object'
+            AND jsonb_typeof(d.value -> 'otherAreas') = 'array')
+UNION ALL
+SELECT 'experience.specificAreas (elements)',
+       (SELECT coalesce(sum(coalesce(array_length("specificAreas", 1), 0)), 0) FROM worker_experience),
+       (SELECT coalesce(sum(jsonb_array_length(d.value -> 'specificAreas')), 0)
+          FROM worker_additional_info w,
+               LATERAL jsonb_each((w."experience")::jsonb) d
+          WHERE w."experience" IS NOT NULL
+            AND jsonb_typeof((w."experience")::jsonb) = 'object'
+            AND jsonb_typeof(d.value) = 'object'
+            AND jsonb_typeof(d.value -> 'specificAreas') = 'array');
+
 -- 6. verificationStatus and setup state — the funnel, re-measured each run
 SELECT
   "verificationStatus",

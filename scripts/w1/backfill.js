@@ -324,6 +324,32 @@ function selfTest() {
 
 async function main() {
   loadEnv()
+
+  // SUPERSEDED — do not run this.
+  //
+  // This script performed W1's initial load, then round 9 measured the Json
+  // value types and found its mapping wrong in three places: month fields hold
+  // month NAMES, so Number('March') wrote NULL for every month, and otherAreas
+  // is an array that String() flattened into "a,b". Running it now would
+  // reintroduce exactly that damage.
+  //
+  // src/lib/w1/promote.ts is the canonical mapping and carries the fixes.
+  // Use `npm run w1:reconcile`, which runs the same code the app runs on
+  // every save.
+  if (!process.argv.includes('--self-test')) {
+    console.error('')
+    console.error('  SUPERSEDED — this script is retained for history only.')
+    console.error('')
+    console.error('  Its mapping is known wrong: month fields hold month names, so it')
+    console.error('  writes NULL for every month, and it flattens otherAreas arrays')
+    console.error('  into comma-joined strings. Round 9 measured both.')
+    console.error('')
+    console.error('  Use the canonical implementation instead:')
+    console.error('      npm run w1:reconcile -- --confirm --production')
+    console.error('')
+    return 2
+  }
+
   if (process.argv.includes('--self-test')) return selfTest()
   const confirmed = process.argv.includes('--confirm')
   const urlVar = argOf('--url-var', 'DIRECT_DATABASE_URL')
