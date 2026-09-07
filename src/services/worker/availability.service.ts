@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
-import { rebuildAvailability, safeRebuild, W1_TX } from "@/lib/w1/promote";
+import { rebuildAvailability, safeRebuild, W1_TX, fromMinutes } from "@/lib/w1/promote";
+import { readsFromTables, announceSource } from "@/lib/w1/flags";
 
 /**
  * Backend Service: Worker Availability Management
@@ -67,6 +68,33 @@ export async function getWorkerAvailability(): Promise<ActionResponse<Availabili
       return {
         success: false,
         error: "Worker profile not found.",
+      };
+    }
+
+    // W1 P5 — read switch. Both branches return the same flat array of
+    // { dayOfWeek, startTime, endTime }. The UI groups by day itself, so order
+    // across days is irrelevant, but slot order within a day is preserved via
+    // sortOrder. dayOfWeek must stay uppercase: the UI does
+    // charAt(0) + slice(1).toLowerCase() to render it.
+    const fromTables = readsFromTables("availability");
+    announceSource("availability", fromTables);
+
+    if (fromTables) {
+      const rows = await authPrisma.workerAvailability.findMany({
+        where: { workerProfileId: workerProfile.id },
+        // Postgres orders an enum by its declaration order, so this is
+        // MONDAY..SUNDAY rather than alphabetical.
+        orderBy: [{ dayOfWeek: "asc" }, { sortOrder: "asc" }, { startMinute: "asc" }],
+      });
+
+      return {
+        success: true,
+        data: rows.map((row) => ({
+          dayOfWeek: row.dayOfWeek as DayOfWeek,
+          // Zero-padded: the UI parses this as dayjs('2000-01-01T' + value).
+          startTime: fromMinutes(row.startMinute),
+          endTime: fromMinutes(row.endMinute),
+        })),
       };
     }
 
@@ -195,10 +223,14 @@ export async function saveWorkerAvailability(
       },
     });
 
-    // W1 dual-write. Deliberately AFTER the save and unable to fail it: nothing
-    // reads worker_availability yet, so a stale derived copy costs nothing and
-    // the reconcile repairs it. Its own transaction keeps the delete and insert
-    // atomic. Remove entirely at W1 phase P7.
+    // W1 dual-write. Deliberately AFTER the save and unable to fail it: the Json
+    // write is the save and must not be held hostage to the derived copy. Its
+    // own transaction keeps the delete and insert atomic. Remove at phase P7.
+    //
+    // Once W1_READ_TABLES includes "availability", a failed rebuild means the
+    // worker sees "saved successfully" and then their previous hours. Still not
+    // data loss — Json stays authoritative and the reconcile repairs it — but
+    // watch for `[w1:availability] rebuild FAILED`.
     await safeRebuild("availability", workerProfile.id, () =>
       authPrisma.$transaction(
         (tx) => rebuildAvailability(tx, workerProfile.id, availabilityJSON),

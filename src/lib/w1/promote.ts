@@ -71,6 +71,25 @@ export function toMinutes(value: unknown): number | null {
   return h * 60 + min
 }
 
+/**
+ * The inverse of toMinutes, kept beside it so the pair cannot drift.
+ *
+ * Zero-padding is not cosmetic. The availability UI parses the value as
+ * `dayjs('2000-01-01T' + startTime)`, so "09:00" resolves and "9:00" does not,
+ * and the save-side validation requires `^([0-1][0-9]|2[0-3]):[0-5][0-9]$`.
+ *
+ * Note the asymmetry this exposes: the column can hold an overnight span
+ * (endMinute <= startMinute), which is why minutes replaced "HH:MM" strings in
+ * the first place — but the UI rejects one, both in validateTimes and in the
+ * zod refinement. No overnight spans exist in production today (measured: 0),
+ * so nothing round-trips wrongly. Supporting them is follow-on UI work.
+ */
+export function fromMinutes(total: number): string {
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 const asObject = (v: unknown): Record<string, unknown> | null =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null
 
