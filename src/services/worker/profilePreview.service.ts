@@ -1,6 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
+import { readAllPromoted } from "@/lib/w1/read";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 
@@ -221,7 +222,15 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
         },
         services: servicesGrouped,
         qualifications: workerProfile.verificationRequirements || [],
-        additionalInfo: workerProfile.workerAdditionalInfo || null,
+        // W1 P5 — the four promoted fields come from their tables; everything
+        // else on the row is passed through untouched. Shapes are built in
+        // lib/w1/read.ts so every read site renders them identically.
+        additionalInfo: workerProfile.workerAdditionalInfo
+          ? {
+              ...workerProfile.workerAdditionalInfo,
+              ...(await readAllPromoted(workerProfile.id)),
+            }
+          : null,
       },
     };
   } catch (error) {

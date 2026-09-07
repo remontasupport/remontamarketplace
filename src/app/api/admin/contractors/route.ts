@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { SLUG_TO_DOMAIN } from "@/lib/w1/promote";
 import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { Prisma } from '@/generated/auth-client'
 import { geocodeAddress } from '@/lib/geocoding'
@@ -366,20 +367,31 @@ const filterRegistry: Record<string, FilterBuilder> = {
   /**
    * Experience With Filter (Multi-select)
    * Workers must have ALL selected experience types (AND logic).
-   * Queries WorkerAdditionalInfo.experience JSON column.
-   * Uses module-level EXPERIENCE_KEY_MAP — not recreated per call.
+   *
+   * W1 P5 — queries worker_experience via the relation, hitting the index on
+   * `domain`, instead of probing the experience JSON column by path. Same
+   * results, but the database can actually use an index for it.
+   *
+   * A display name that maps to no known care domain would previously become a
+   * slug that simply matched nothing. It now yields a filter that matches
+   * nothing explicitly, which is the same outcome stated rather than implied.
    */
   experienceWith: (params) => {
     if (!params.experienceWith?.length) return null
     return {
-      AND: params.experienceWith.map(exp => ({
-        workerAdditionalInfo: {
-          experience: {
-            path: [EXPERIENCE_KEY_MAP[exp] ?? exp.toLowerCase().replace(/\s+/g, '-')],
-            not: Prisma.DbNull
-          }
+      AND: params.experienceWith.map(exp => {
+        const slug = EXPERIENCE_KEY_MAP[exp] ?? exp.toLowerCase().replace(/\s+/g, '-')
+        const domain = SLUG_TO_DOMAIN[slug]
+        if (!domain) {
+          console.warn(`[w1:read] admin experienceWith: unknown experience "${exp}"`)
+          return { id: { in: [] } }
         }
-      }))
+        return {
+          careExperience: {
+            some: { domain: domain as Prisma.EnumCareDomainFilter['equals'] },
+          },
+        }
+      })
     }
   },
 }

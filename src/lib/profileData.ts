@@ -5,6 +5,7 @@
  */
 
 import { authPrisma } from "@/lib/auth-prisma";
+import { readAllPromoted } from "@/lib/w1/read";
 
 export type ProfilePreviewData = {
   profile: {
@@ -154,7 +155,14 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
       },
       services: servicesGrouped,
       qualifications: workerProfile.verificationRequirements || [],
-      additionalInfo: workerProfile.workerAdditionalInfo || null,
+      // W1 P5 — the four promoted fields come from their tables; everything
+      // else on the row passes through untouched.
+      additionalInfo: workerProfile.workerAdditionalInfo
+        ? {
+            ...workerProfile.workerAdditionalInfo,
+            ...(await readAllPromoted(workerProfile.id)),
+          }
+        : null,
     };
   } catch (error) {
     console.error('Error fetching profile by userId:', error);

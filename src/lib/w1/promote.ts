@@ -40,7 +40,8 @@ const DAYS = new Set([
   'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
 ])
 
-const DOMAIN: Record<string, string> = {
+/** Slug to CareDomain. Exported because reads and filters need it too. */
+export const SLUG_TO_DOMAIN: Record<string, string> = {
   'disability': 'DISABILITY',
   'aged-care': 'AGED_CARE',
   'working-with-children': 'WORKING_WITH_CHILDREN',
@@ -49,12 +50,12 @@ const DOMAIN: Record<string, string> = {
 }
 
 /**
- * The reverse map, derived from DOMAIN rather than written out again, so the two
+ * The reverse map, derived from SLUG_TO_DOMAIN rather than written out again, so the two
  * directions cannot drift. Reads need it: the UI keys experience by the original
  * slug, and treats the presence of a key as "this area is selected".
  */
 export const DOMAIN_TO_SLUG: Record<string, string> = Object.fromEntries(
-  Object.entries(DOMAIN).map(([slug, enumValue]) => [enumValue, slug]),
+  Object.entries(SLUG_TO_DOMAIN).map(([slug, enumValue]) => [enumValue, slug]),
 )
 
 /**
@@ -269,7 +270,7 @@ export async function rebuildExperience(
 
   if (obj) {
     for (const [slug, value] of Object.entries(obj)) {
-      const domain = DOMAIN[slug]
+      const domain = SLUG_TO_DOMAIN[slug]
       if (!domain) {
         skipped.push(`unknown domain key "${slug}"`)
         continue

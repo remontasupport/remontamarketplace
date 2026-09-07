@@ -4,7 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
-import { rebuildExperience, safeRebuild, W1_TX, DOMAIN_TO_SLUG } from "@/lib/w1/promote";
+import { rebuildExperience, safeRebuild, W1_TX } from "@/lib/w1/promote";
+import { readExperience } from "@/lib/w1/read";
 
 /**
  * Backend Service: Worker Experience Management
@@ -71,28 +72,7 @@ export async function getWorkerExperience(): Promise<ActionResponse<ExperienceDa
     // from it. The Json column is still written by the dual-write below and
     // remains the fallback: if this read is ever wrong, rolling the deployment
     // back restores the Json path with no data loss.
-    const rows = await authPrisma.workerExperience.findMany({
-      where: { workerProfileId: workerProfile.id },
-    });
-
-    const experienceData: ExperienceData = {};
-    for (const row of rows) {
-      const slug = DOMAIN_TO_SLUG[row.domain];
-      // A domain with no slug mapping would silently vanish from the UI, so
-      // skip it loudly rather than quietly.
-      if (!slug) {
-        console.warn(`[w1:read] experience: no slug for domain "${row.domain}"`);
-        continue;
-      }
-      experienceData[slug] = {
-        isProfessional: row.isProfessional,
-        isPersonal: row.isPersonal,
-        specificAreas: row.specificAreas,
-        // description is String? in the table but `string` in the contract
-        description: row.description ?? "",
-        otherAreas: row.otherAreas,
-      };
-    }
+    const experienceData = (await readExperience(workerProfile.id)) as ExperienceData;
 
     return {
       success: true,
