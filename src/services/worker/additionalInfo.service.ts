@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
 import { rebuildJobHistory, rebuildEducation, safeRebuild, W1_TX } from "@/lib/w1/promote";
+import { readsFromTables, announceSource } from "@/lib/w1/flags";
 import {
   updateWorkerBankAccountSchema,
   type UpdateWorkerBankAccountData,
@@ -94,6 +95,64 @@ export async function getWorkerAdditionalInfo(): Promise<ActionResponse> {
         error: "Worker profile not found",
       };
     }
+
+    // W1 P5 — read switch for jobHistory and education.
+    //
+    // Only those two fields are replaced; every other field on the row is
+    // returned exactly as before, because they are not part of W1.
+    //
+    // Contract, from WorkHistorySection and EducationTrainingSection: an array
+    // whose ORDER is the identity (each entry becomes `job-${index}`), with
+    // every field a string that the UI defaults via `|| ""`. Years are Int? in
+    // the table and strings in the contract, so they convert back; nulls
+    // become "" to match the Json shape exactly rather than relying on the
+    // UI's fallback.
+    const info = workerProfile.workerAdditionalInfo;
+    if (info && readsFromTables("jobHistory")) {
+      announceSource("jobHistory", true);
+
+      // Filtered through the relation rather than by workerAdditionalInfoId,
+      // because the select above deliberately does not fetch that row's id —
+      // adding it would change the payload this action returns.
+      const [jobs, courses] = await Promise.all([
+        authPrisma.workerJobHistory.findMany({
+          where: { additionalInfo: { workerProfileId: workerProfile.id } },
+          orderBy: { sortOrder: "asc" },
+        }),
+        authPrisma.workerEducation.findMany({
+          where: { additionalInfo: { workerProfileId: workerProfile.id } },
+          orderBy: { sortOrder: "asc" },
+        }),
+      ]);
+
+      const num = (v: number | null) => (v === null ? "" : String(v));
+
+      return {
+        success: true,
+        data: {
+          ...info,
+          jobHistory: jobs.map((j) => ({
+            jobTitle: j.jobTitle,
+            company: j.company,
+            startMonth: j.startMonth ?? "",
+            startYear: num(j.startYear),
+            endMonth: j.endMonth ?? "",
+            endYear: num(j.endYear),
+            currentlyWorking: j.currentlyWorking,
+          })),
+          education: courses.map((c) => ({
+            qualification: c.qualification,
+            institution: c.institution,
+            startMonth: c.startMonth ?? "",
+            startYear: num(c.startYear),
+            endMonth: c.endMonth ?? "",
+            endYear: num(c.endYear),
+            currentlyStudying: c.currentlyStudying,
+          })),
+        },
+      };
+    }
+    announceSource("jobHistory", false);
 
     return {
       success: true,
