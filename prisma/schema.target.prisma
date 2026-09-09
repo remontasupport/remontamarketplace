@@ -1,11 +1,35 @@
 // ============================================================================
-// TARGET SCHEMA — Remonta application database
+// DESIGN REFERENCE — not a build target, not a buildable schema
 // ============================================================================
-// Not yet applied. Review target for the restructure; migrations are generated
-// from the diff against the live schema (auth-schema.prisma).
+// This file is a specification, kept because parts of it are not built yet.
+// The live schema is auth-schema.prisma. Nothing generates from this file and
+// nothing should: its generator output is deliberately pointed at a junk path
+// so that `prisma generate --schema=prisma/schema.target.prisma` cannot
+// overwrite the real client with one for tables the database does not have.
+//
+// BUILT (W1, live in production since 2026-09-07):
+//   WorkerJobHistory, WorkerEducation, WorkerAvailability, WorkerExperience
+//   Their four source Json columns are dropped. Where this file and
+//   auth-schema.prisma disagree about these four models, auth-schema wins.
+//
+// NOT BUILT — the reason this file still exists:
+//   W2  WorkerPhoto, PhotoType
+//   W3  WorkerServiceCategory, WorkerServiceSubcategory
+//       (these replace WorkerService, whose subcategoryIds and
+//       subcategoryNames are related only by array position)
+//   --  WorkerBankAccount, deferred pending an encryption decision. Copying
+//       bankAccount into a second unencrypted table spreads the exposure
+//       rather than reducing it.
+//   --  FundingPlan and the ServiceRequest* models, beyond the worker slice.
+//
+// Before building any of the above, read the W1 post-mortem in
+// aidlc-docs/construction/plans/w1-plan.md. Two lessons cost real time:
+// measure the VALUES in a Json column before choosing a column type (month
+// NAMES against an Int column produced four hundred rows of silent NULL), and
+// write the value-level parity check BEFORE the migration, not after.
 //
 // Decisions: aidlc-docs/inception/application-design/design-decisions.md
-// Data basis: 8 read-only investigation rounds, 2026-09-04
+// Data basis: 9 read-only investigation rounds, 2026-09-04 to 2026-09-07
 //
 // Scope: application database only. The externally-synced contractor directory
 // (DATABASE_URL) keeps its own schema file and is untouched.
@@ -13,7 +37,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  output        = "../src/generated/auth-client"
+  output        = "../src/generated/DO-NOT-GENERATE-target-client"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -305,6 +329,9 @@ model WorkerProfile {
   serviceCategories        WorkerServiceCategory[]
   availability             WorkerAvailability[]      // on the canonical key
   experience               WorkerExperience[]        // on the canonical key
+  jobHistoryEntries        WorkerJobHistory[]        // live name: *Entries
+  educationEntries         WorkerEducation[]         // live name: *Entries
+  bankAccount              WorkerBankAccount?        // not built; see header
   verificationRequirements VerificationRequirement[]
   jobApplications          JobApplication[]          // was User.id, no FK
   shortlistedOn            ServiceRequestWorker[]
@@ -357,9 +384,6 @@ model WorkerAdditionalInfo {
   updatedAt DateTime @updatedAt
 
   workerProfile WorkerProfile      @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
-  bankAccount   WorkerBankAccount?
-  jobHistory    WorkerJobHistory[]
-  education     WorkerEducation[]
 
   @@index([workerProfileId])
   @@index([gender])
@@ -371,7 +395,7 @@ model WorkerAdditionalInfo {
 /// independently. 286 rows migrate here from an unencrypted Json column.
 model WorkerBankAccount {
   id                     String   @id @default(cuid())
-  workerAdditionalInfoId String   @unique
+  workerProfileId        String   @unique
   encryptedPayload       String
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -464,7 +488,7 @@ model WorkerAvailability {
 
   workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
 
-  @@unique([workerProfileId, dayOfWeek, startMinute])
+  @@unique([workerProfileId, dayOfWeek, startMinute, endMinute])
   @@index([workerProfileId])
   @@index([dayOfWeek])
   @@map("worker_availability")
