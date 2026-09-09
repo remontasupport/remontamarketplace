@@ -11,9 +11,10 @@
  *   - a failed write here LOSES the worker's edit, so callers must let it throw
  *     rather than swallow it. `safeRebuild` used to exist for that and has been
  *     removed along with the assumption behind it
- *   - nothing may rebuild these tables FROM the Json any more.
- *     `scripts/w1/reconcile.ts` and `scripts/w1/backfill.js` both did, and both
- *     now refuse to run
+ *   - nothing may rebuild these tables FROM the Json any more. Two scripts did
+ *     — a backfill and a reconcile — and both were deleted once the columns
+ *     were dropped, since a rebuild from a column that no longer exists would
+ *     have wiped every worker profile
  *
  * Each rebuild function replaces one worker's rows for one field: delete then
  * insert, inside a transaction so it is never half-applied.
