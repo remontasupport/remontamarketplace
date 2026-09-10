@@ -205,42 +205,42 @@ discover halfway through the move.
 ## 6. Generation Steps
 
 ### Step 0 — Pre-flight *(do these before touching anything)*
-- [ ] `git config --system core.longpaths true`; confirm `pnpm install` still succeeds
-- [ ] **Record both Vercel projects' current production deployment IDs** — the rollback targets
-- [ ] Confirm Vercel's current Root Directory and Production Branch settings, and screenshot them
-- [ ] Confirm branch protection status, so a mid-flight push cannot bypass CI
+- [ ] `git config --system core.longpaths true`; confirm `pnpm install` still succeeds — **NOT done**; worked around by running the unit from `C:m-u6`. Still owed before U7 goes a directory deeper.
+- [x] **Record both Vercel projects' current production deployment IDs** — the rollback targets — recorded in `U6/code/U6-rollback-targets.md`, commit `f74c2aa`: marketing `8843hlhft`, application `uv0ctkia2`, both production-badge confirmed and load-verified by the user. **Rollback not rehearsed**, and the application project's slug (`remonta` vs `remonta-app`) still needs confirming before it is relied on.
+- [ ] Confirm Vercel's current Root Directory and Production Branch settings, and screenshot them — **NOT done**
+- [ ] Confirm branch protection status, so a mid-flight push cannot bypass CI — **NOT done**; the four new check names (`App Quality` / `Web Quality`, Node 20.x and 22.x) do not exist in protection yet
 
 ### Step 1 — Branch and move marketing into `apps/web/`
-- [ ] Branch `u6/monorepo` from `main`
-- [ ] `git mv` every marketing path into `apps/web/`, keeping `.gitignore`, `docs/`, `README.md` and `.github/` at root
-- [ ] Verify with `git status` that moves are detected as renames, not delete-plus-add
+- [x] Branch `u6/monorepo` from `main`
+- [x] `git mv` every marketing path into `apps/web/`, keeping `.gitignore`, `docs/`, `README.md` and `.github/` at root
+- [x] Verify with `git status` that moves are detected as renames, not delete-plus-add
 
 ### Step 2 — Bring the application in as `apps/app/`
-- [ ] Import the `app/main` tree as a snapshot (per D5)
-- [ ] Hoist root-level infrastructure it carries — `turbo.json`, `pnpm-workspace.yaml`, `.npmrc`, `aidlc-docs/`, `.aidlc-rule-details/`, `.brd/`
-- [ ] Merge `.gitignore` from both, keeping every rule from each
+- [x] Import the `app/main` tree as a snapshot (per D5)
+- [x] Hoist root-level infrastructure it carries — `turbo.json`, `pnpm-workspace.yaml`, `.npmrc`, `aidlc-docs/`, `.aidlc-rule-details/`, `.brd/`
+- [x] Merge `.gitignore` from both, keeping every rule from each
 
 ### Step 3 — Root workspace package
-- [ ] Create the root `package.json`: `private: true`, `packageManager`, workspace scripts, **no application dependencies**
-- [ ] Confirm `pnpm-workspace.yaml` globs now match two real directories
-- [ ] `pnpm install` at root; confirm it links both apps
+- [x] Create the root `package.json`: `private: true`, `packageManager`, workspace scripts, **no application dependencies**
+- [x] Confirm `pnpm-workspace.yaml` globs now match two real directories
+- [x] `pnpm install` at root; confirm it links both apps
 
 ### Step 4 — Verify Turborepo now has something to orchestrate
-- [ ] `turbo ls` shows **2 packages** (it showed 0 in U5)
-- [ ] `turbo run build` builds both
-- [ ] Second run is a **cache hit** — the caching U5 could not demonstrate
+- [x] `turbo ls` shows **2 packages** (it showed 0 in U5)
+- [x] `turbo run build` builds both — **only at `--concurrency=1`**; parallel runs race on `prisma generate`
+- [ ] Second run is a **cache hit** — the caching U5 could not demonstrate — **NOT achieved**: `Cached: 0 of 2`. One real bug was fixed (`globalDependencies` pointed at a `.quality-baseline` path that had moved into the apps) but it did not explain the misses. Carried as a follow-up: optimisation, not correctness.
 
 ### Step 5 — One or two CI workflows (per D4)
-- [ ] Rewrite CI for the new layout with per-app path filters
-- [ ] Verify YAML parses and every referenced script exists at its new path
+- [x] Rewrite CI for the new layout with per-app path filters
+- [x] Verify YAML parses and every referenced script exists at its new path
 
 ### Step 6 — Local verification, both apps
-- [ ] `apps/web`: build succeeds; quality gate at 76 lint, strict tsc clean
-- [ ] `apps/app`: build succeeds; quality gate at 149 / 523 / 41 tests
-- [ ] No file **content** changed anywhere — paths only, plus the new root files
+- [x] `apps/web`: build succeeds; quality gate at 76 lint, strict tsc clean
+- [x] `apps/app`: build succeeds; quality gate at 149 / 523 / 41 tests
+- [x] No file **content** changed anywhere — paths only, plus the new root files
 
 ### Step 7 — Push and verify previews **before touching Vercel**
-- [ ] Push `u6/monorepo`; open a PR
+- [ ] Push `u6/monorepo`; open a PR — **branch pushed** (`origin/u6/monorepo` at `f74c2aa`); PR not confirmed opened
 - [ ] CI must pass for both apps
 - [ ] **Vercel will still build from the old Root Directory and will likely fail** — that is expected and harmless at this stage
 
@@ -259,7 +259,7 @@ discover halfway through the move.
 - [ ] Delete the branch locally and on `origin`
 
 ### Step 11 — Documentation
-- [ ] `aidlc-docs/construction/U6/code/U6-summary.md`
+- [x] `aidlc-docs/construction/U6/code/U6-summary.md`
 
 ---
 
