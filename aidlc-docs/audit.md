@@ -285,3 +285,11 @@ packages/
 
 ---
 
+## CONSTRUCTION — U3a and U3 Committed and Pushed
+**Timestamp**: 2026-09-10T00:00:00Z
+**User Input**: "what should I do next?" then "Yes" (commit), then ran both pushes
+**AI Response**: "Recommended a sequence with reasoning, notably placing CI BEFORE the Node upgrade rather than after: the U3 workflow runs a Node 20.x and 22.x matrix, so a green 22.x job proves the code works on the target version before the upgrade is attempted, turning it from a hoped-for change into a verified one. Committed the outstanding work as three commits so each unit stays independently revertible: 20dcb94 (U3a OTP consolidation), 9691f33 (U3 CI pipeline), ff4b280 (AI-DLC records). Verified the committed state passes the quality gate — 149 and 523 baselines unchanged, 41 tests passing, working tree clean. User pushed both branches with --force-with-lease, which was recommended over plain --force because the preview branches already existed at earlier commits: app/main 4a20e11..ff4b280 to u1-quality (7 commits total) and main 0bd28dc..94823d9 to u1-marketing (2 commits). PHASE A IS NOW 4 OF 5 UNITS COMPLETE — U1 baselines, U2 test frameworks, U3a OTP consolidation, U3 CI — with only U4 (observability, alerting and the database restore drill) remaining. Nothing structural has moved and production has not been touched, which was the point of sequencing the safety net first. Outstanding user actions recorded: verify the OTP round trip on the app preview (the highest-priority item, since U3a rewrote token signing and no automated test covers the HTTP path, email delivery or client component); confirm NEXTAUTH_SECRET is present in Vercel's Preview environment or the routes will throw; configure branch protection requiring Quality (Node 20.x) and Quality (Node 22.x) on both branches while deliberately NOT requiring Supply chain, since its audit step is informational and would pass regardless; and the Node 22 upgrade once CI confirms 22.x is green."
+**Context**: CONSTRUCTION — Phase A 4/5 complete; U3a and U3 pushed; awaiting user verification
+
+---
+
