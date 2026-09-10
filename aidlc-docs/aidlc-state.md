@@ -4,7 +4,7 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - U2 Test Frameworks (COMPLETE on app/main, awaiting approval)
+- **Current Stage**: CONSTRUCTION - U3 CI Pipeline (COMPLETE, branch protection pending)
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 
 ## Workspace State

@@ -3,7 +3,7 @@
 **Stage**: CONSTRUCTION — Code Generation (Part 1: Planning)
 **Unit**: U1 — Type-Error Baseline
 **Date**: 2026-09-10
-**Status**: APPROVED 2026-09-10. Steps 1-8, 10 COMPLETE on `app/main`. Step 9 (marketing) DEFERRED — requires committing app/main first.
+**Status**: COMPLETE on BOTH branches 2026-09-10. app/main 7a15f9e, main 0bd28dc.
 
 **This plan is the single source of truth for U1 code generation.**
 
@@ -130,7 +130,7 @@ trying to get to.
 ### Step 3 — Capture the TypeScript baseline
 - [x] Run `node scripts/check-baseline.mjs --tool=typescript --update`
 - [x] Creates `.quality-baseline/typescript.txt` with the 149 known errors
-- [ ] Commit the baseline (deferred — commits not authorised)
+- [x] Commit the baseline — 7a15f9e (app/main), 0bd28dc (main)
 - **Traces to**: FR-6.2, D-16
 
 ### Step 4 — Capture the ESLint baseline
@@ -165,9 +165,9 @@ trying to get to.
 - **Traces to**: PS-1
 
 ### Step 9 — Apply to the marketing branch
-- [ ] **DEFERRED** Branch from `main`; apply Steps 1–8, **ESLint only** (marketing has no TypeScript suppression)
-- [ ] Capture marketing's own ESLint baseline
-- [ ] Verify marketing builds
+- [x] Branch from `main` (via git worktree); applied Steps 1-8, **ESLint only** (marketing has no TypeScript suppression)
+- [x] Capture marketing's own ESLint baseline — 76 errors, 29 signatures
+- [x] Verify marketing builds — succeeded
 - **Note**: marketing already type-checks, so no TypeScript baseline is needed there
 
 ### Step 10 — Documentation
