@@ -1,0 +1,123 @@
+# CI for the Remonta application (app/main).
+#
+# This pipeline runs the checks Vercel does not: the type and lint baselines from
+# U1, and the test suite from U2. Without it those exist but are not enforced --
+# a developer can add a type error and nothing stops them.
+#
+# It deliberately does NOT build. Vercel already builds every push and pull
+# request as a preview deployment and never promotes a failed build, so building
+# here would roughly triple the run time for no new signal.
+#
+# No secrets are required. `npm run quality` was verified to exit 0 with every
+# environment variable unset, and `prisma generate` succeeds without a database
+# URL, so this runs safely on forks and pull requests.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main, app/main]
+  push:
+    branches: [main, app/main]
+
+# A new push supersedes the previous run on the same ref. Without this, pushing
+# three times in a minute leaves three runs competing for runners.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      # Do not stop the 22.x job because 20.x failed, or vice versa. Knowing
+      # whether a failure is version-specific is the point of the matrix.
+      fail-fast: false
+      matrix:
+        # 20.x is what developers run today (20.9.0 locally).
+        # 22.x is the intended target -- see the Node upgrade follow-up. Running
+        # both means the upgrade is proven rather than hoped for. Drop 20.x once
+        # the switch is made.
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      # `npm ci` installs from the lock file exactly and fails if package.json
+      # and package-lock.json have drifted -- which is itself a useful check.
+      # postinstall runs `prisma generate` twice, once per schema; both succeed
+      # without a database URL.
+      - name: Install dependencies
+        run: npm ci
+
+      # type-check:baseline  -- fails only on type errors absent from
+      #                         .quality-baseline/typescript.txt (149 known)
+      # lint:baseline        -- same for ESLint (523 known)
+      # test                 -- Vitest, unit and property-based
+      #
+      # Existing debt is tolerated. New debt is not.
+      - name: Quality gate
+        run: npm run quality
+
+  supply-chain:
+    name: Supply chain
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # REPORT ONLY, on purpose.
+      #
+      # There are 56 known vulnerabilities today (7 critical, 17 high, 32
+      # moderate). Failing on them would block every pull request immediately --
+      # the same trap the type and lint baselines were built to avoid.
+      #
+      # Two criticals are worth clearing first and then tightening this step to
+      # `--audit-level=critical` without `continue-on-error`:
+      #   - @auth/core (via @auth/prisma-adapter) -- on the authentication path
+      #   - jspdf -- path traversal; possibly deletable outright, since
+      #     @react-pdf/renderer already covers PDF generation
+      #
+      # Until then this surfaces the state on every run instead of hiding it.
+      - name: Dependency audit (report only)
+        continue-on-error: true
+        run: |
+          echo "::group::npm audit summary"
+          npm audit || true
+          echo "::endgroup::"
+          echo "Audit is REPORT ONLY. See .github/workflows/ci.yml for why, and"
+          echo "aidlc-docs/construction/U3/code/U3-summary.md for the plan to tighten it."
+
+      # SECURITY-10 requires a Software Bill of Materials for production
+      # deployments. `npm sbom` ships with npm 10 -- no extra dependency.
+      - name: Generate SBOM
+        run: npm sbom --sbom-format=cyclonedx > sbom.cyclonedx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          retention-days: 90
