@@ -6,6 +6,7 @@
  */
 
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 
 /**
  * Salt rounds for bcrypt
@@ -103,8 +104,15 @@ export function generateVerificationToken(expiryHours: number = 24) {
  * // Returns: { code: "123456", expires: Date }
  */
 export function generateVerificationCode(expiryMinutes: number = 15) {
-  // Generate 6-digit code (100000 to 999999)
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate 6-digit code (100000 to 999999).
+  //
+  // randomInt, not Math.random. This code is a credential -- it is the only
+  // thing standing between someone and a verified email address. Math.random is
+  // not cryptographically secure and its output is predictable from prior
+  // values, so an attacker who observes a few codes can narrow the next ones.
+  // randomInt draws from the same CSPRNG as the rest of the auth stack, and the
+  // upper bound is exclusive.
+  const code = randomInt(100000, 1000000).toString();
 
   const expires = new Date();
   expires.setMinutes(expires.getMinutes() + expiryMinutes);

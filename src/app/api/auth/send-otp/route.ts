@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
 import { authPrisma, withRetry } from '@/lib/auth-prisma';
 import { generateVerificationCode } from '@/lib/password';
 import { sendVerificationEmail } from '@/lib/email';
-
-const SECRET = process.env.NEXTAUTH_SECRET ?? 'remonta-otp-secret';
-
-export function signOtpToken(email: string, code: string, expiresAt: number): string {
-  return createHmac('sha256', SECRET)
-    .update(`${email}:${code}:${expiresAt}`)
-    .digest('hex');
-}
+import { signOtpToken } from '@/lib/otp';
 
 export async function POST(request: Request) {
   try {
