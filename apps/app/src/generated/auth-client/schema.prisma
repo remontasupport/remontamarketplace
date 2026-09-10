@@ -1,0 +1,676 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/auth-client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("AUTH_DATABASE_URL")
+  // Migrations must not run over the PgBouncer pooler. Queries use the pooled
+  // url above; migrate and introspect use the direct endpoint below.
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  action    AuditAction
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+  user      User?       @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([createdAt])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model ClientProfile {
+  id            String   @id(map: "client_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId        String   @unique(map: "client_profiles_new_userId_key")
+  firstName     String
+  lastName      String
+  mobile        String
+  isSelfManaged Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_client_profiles_userid")
+  @@index([isSelfManaged])
+  @@map("client_profiles")
+}
+
+model CoordinatorProfile {
+  id           String   @id(map: "coordinator_profiles_new_pkey") @default(dbgenerated("(gen_random_uuid())::text"))
+  userId       String   @unique(map: "coordinator_profiles_new_userId_key")
+  firstName    String
+  lastName     String
+  mobile       String
+  organization String?
+  clientTypes  String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_coordinator_profiles_userid")
+  @@map("coordinator_profiles")
+}
+
+model Participant {
+  id                   String       @id @default(cuid())
+  userId               String?
+  firstName            String
+  lastName             String
+  dateOfBirth          DateTime?
+  location             String?
+  gender               String?
+  conditions           String[]     @default([])
+  fundingType          FundingType?
+  relationshipToClient String?
+  isSelfManaged        Boolean      @default(false)
+  servicesRequested    Json?
+  additionalInfo       String?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  serviceRequests ServiceRequest[]
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([location])
+  @@index([fundingType])
+  @@index([isSelfManaged])
+  @@map("participants")
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  sessionToken   String   @unique
+  userId         String
+  expires        DateTime
+  impersonatedBy String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionToken])
+  @@index([userId])
+  @@index([impersonatedBy])
+  @@map("sessions")
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model User {
+  id                   String              @id @default(cuid())
+  email                String              @unique
+  passwordHash         String
+  role                 UserRole
+  status               AccountStatus       @default(ACTIVE)
+  resetPasswordToken   String?             @unique
+  resetPasswordExpires DateTime?
+  failedLoginAttempts  Int                 @default(0)
+  accountLockedUntil   DateTime?
+  lastLoginAt          DateTime?
+  lastLoginIp          String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime
+  accounts             Account[]
+  auditLogs            AuditLog[]
+  sessions             Session[]
+  workerProfile        WorkerProfile?
+  clientProfile        ClientProfile?
+  coordinatorProfile   CoordinatorProfile?
+  participants         Participant[]
+
+  @@index([email])
+  @@index([resetPasswordToken])
+  @@index([role])
+  @@index([status])
+  @@index([accountLockedUntil])
+  @@index([createdAt])
+  @@index([email], map: "idx_users_email")
+  @@index([email, status, accountLockedUntil], map: "idx_users_email_status_locked")
+  @@map("users")
+}
+
+model VerificationRequirement {
+  id                 String            @id @default(cuid())
+  workerProfileId    String
+  requirementType    String
+  requirementName    String
+  isRequired         Boolean           @default(true)
+  status             RequirementStatus @default(PENDING)
+  documentUrl        String?
+  documentUploadedAt DateTime?
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  reviewedBy         String?
+  approvedAt         DateTime?
+  rejectedAt         DateTime?
+  expiresAt          DateTime?
+  rejectionReason    String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime
+  documentCategory   DocumentCategory?
+  notes              String?
+  metadata           Json?
+  workerProfile      WorkerProfile     @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([documentCategory])
+  @@index([requirementType])
+  @@index([requirementName])
+  @@index([status])
+  @@index([workerProfileId])
+  @@index([workerProfileId, requirementType])
+  @@index([workerProfileId, requirementName])
+  @@index([workerProfileId, status])
+  @@index([workerProfileId], map: "idx_verification_requirements_worker_profile")
+  @@map("verification_requirements")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@index([token])
+  @@map("verification_tokens")
+}
+
+model WorkerProfile {
+  id                       String                    @id(map: "worker_profiles_new_pkey") @default(cuid())
+  userId                   String                    @unique
+  firstName                String
+  middleName               String?
+  lastName                 String
+  mobile                   String
+  location                 String?
+  city                     String?
+  state                    String?
+  postalCode               String?
+  age                      Int?
+  dateOfBirth              String?
+  gender                   String?
+  languages                String[]                  @default([])
+  experience               String?
+  introduction             String?
+  qualifications           String?
+  hasVehicle               String?
+  funFact                  String?
+  hobbies                  String?
+  uniqueService            String?
+  photos                   String?
+  additionalPhotos         String?
+  latitude                 Float?
+  longitude                Float?
+  abn                      Json?
+  setupProgress            Json?
+  profileCompleted         Boolean                   @default(false)
+  isPublished              Boolean                   @default(false)
+  verificationStatus       String                    @default("NOT_STARTED")
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime
+  verificationRequirements VerificationRequirement[]
+  workerAdditionalInfo     WorkerAdditionalInfo?
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerServices           WorkerService[]
+
+  // W1 — every promoted child keys on the canonical worker id
+  availability WorkerAvailability[]
+
+  jobHistoryEntries WorkerJobHistory[]
+
+  educationEntries WorkerEducation[]
+  careExperience   WorkerExperience[]
+
+  @@index([city])
+  @@index([isPublished])
+  @@index([latitude, longitude])
+  @@index([postalCode])
+  @@index([state])
+  @@index([userId])
+  @@index([verificationStatus])
+  @@index([gender])
+  @@index([age])
+  @@index([dateOfBirth])
+  @@index([firstName])
+  @@index([lastName])
+  @@index([mobile])
+  @@index([languages], type: Gin)
+  @@index([isPublished, city])
+  @@index([isPublished, gender])
+  @@index([isPublished, verificationStatus])
+  @@index([createdAt])
+  @@map("worker_profiles")
+}
+
+model Document {
+  id                   String                @id
+  name                 String
+  category             String
+  description          String
+  hasExpiration        Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  categoryDocuments    CategoryDocument[]
+  subcategoryDocuments SubcategoryDocument[]
+
+  @@index([category])
+  @@index([category], map: "idx_document_category")
+}
+
+model Category {
+  id                    String             @id
+  name                  String
+  requiresQualification Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  documents             CategoryDocument[]
+  subcategories         Subcategory[]
+}
+
+model Subcategory {
+  id                   String                @id
+  categoryId           String
+  name                 String
+  requiresRegistration String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  additionalDocuments  SubcategoryDocument[]
+
+  @@index([categoryId])
+}
+
+model CategoryDocument {
+  id             String   @id @default(cuid())
+  categoryId     String
+  documentId     String
+  documentType   String
+  conditionKey   String?
+  requiredIfTrue Boolean?
+  createdAt      DateTime @default(now())
+  category       Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, documentId, documentType, conditionKey])
+  @@index([categoryId])
+  @@index([documentId])
+}
+
+model SubcategoryDocument {
+  id            String      @id @default(cuid())
+  subcategoryId String
+  documentId    String
+  createdAt     DateTime    @default(now())
+  document      Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([subcategoryId, documentId])
+  @@index([subcategoryId])
+  @@index([documentId])
+}
+
+model WorkerService {
+  id               String        @id @default(dbgenerated("(gen_random_uuid())::text"))
+  workerProfileId  String
+  categoryId       String
+  categoryName     String
+  subcategoryIds   String[]      @default([])
+  subcategoryNames String[]      @default([])
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now()) @updatedAt
+  workerProfile    WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "worker_services_workerprofileid_fkey")
+
+  @@unique([workerProfileId, categoryId], map: "worker_services_unique")
+  @@index([categoryId], map: "worker_services_categoryid_idx")
+  @@index([categoryName], map: "worker_services_categoryname_idx")
+  @@index([workerProfileId, categoryName], map: "worker_services_workerprofileid_categoryname_idx")
+  @@index([workerProfileId], map: "worker_services_workerprofileid_idx")
+  @@map("worker_services")
+}
+
+model Job {
+  id     String @id @default(cuid())
+  zohoId String @unique // Zoho Lead ID — upsert key
+
+  // Lead Info
+  status    String // Lead_Status e.g. "Recruitment End"
+  firstName String? // First_Name
+  lastName  String? // Last_Name
+
+  // Job Details
+  recruitmentTitle String? // Recruitment_Title (custom field)
+  service          String? // Service (custom field)
+  description      String? // Description
+  jobDescription   String? // Job_Description (custom field)
+
+  // Location
+  city  String? // City
+  state String? // State (QLD, NSW, etc.)
+
+  // Dates
+  postedAt DateTime? // Created_Time from Zoho
+
+  // Status
+  active Boolean @default(true) // false = hidden from frontend
+
+  // System
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  applications JobApplication[]
+
+  @@index([active])
+  @@index([active, postedAt])
+  @@index([active, state])
+  @@index([active, city])
+  @@index([zohoId])
+  @@index([postedAt])
+  @@index([state])
+  @@index([city])
+  @@map("jobs")
+}
+
+model JobApplication {
+  id        String               @id @default(cuid())
+  jobId     String
+  workerId  String // references User.id
+  status    JobApplicationStatus @default(PENDING)
+  appliedAt DateTime             @default(now())
+  updatedAt DateTime             @default(now()) @updatedAt
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, workerId])
+  @@index([workerId])
+  @@index([jobId])
+  @@index([workerId, status])
+  @@map("job_applications")
+}
+
+enum JobApplicationStatus {
+  PENDING
+  WITHDRAWN
+}
+
+model WorkerAdditionalInfo {
+  id                 String        @id(map: "worker_additional_info_new_pkey") @default(cuid())
+  workerProfileId    String        @unique
+  languages          String[]      @default([])
+  culturalBackground String[]      @default([])
+  religion           String[]      @default([])
+  interests          String[]      @default([])
+  workPreferences    String[]      @default([])
+  lgbtqiaSupport     Boolean?
+  nonSmoker          Boolean?
+  petFriendly        Boolean?
+  personality        String?
+  uniqueService      String[]      @default([])
+  funFact            String?
+  bankAccount        Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  workerProfile      WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
+  @@map("worker_additional_info")
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  LOCKED
+  PENDING_VERIFICATION
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_CHANGE
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_SUCCESS
+  EMAIL_CHANGE
+  PROFILE_UPDATE
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  EMAIL_VERIFIED
+  ROLE_CHANGE
+  IMPERSONATION_START
+  IMPERSONATION_END
+}
+
+enum DocumentCategory {
+  PRIMARY
+  SECONDARY
+  WORKING_RIGHTS
+  SERVICE_QUALIFICATION
+}
+
+enum RequirementStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum UserRole {
+  WORKER
+  CLIENT
+  COORDINATOR
+  ADMIN
+}
+
+enum VerificationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum RepresentativeType {
+  SELF
+  PARENT
+  GUARDIAN
+  FAMILY_MEMBER
+  LEGAL_REPRESENTATIVE
+  OTHER
+}
+
+enum FundingType {
+  NDIS
+  AGED_CARE
+  INSURANCE
+  PRIVATE
+  OTHER
+}
+
+model ServiceRequest {
+  id              String               @id @default(cuid())
+  requesterId     String
+  participantId   String
+  services        Json
+  details         Json
+  location        String
+  zohoRecordId    String?              @unique
+  assignedWorker  Json?
+  selectedWorkers String[]
+  status          ServiceRequestStatus @default(PENDING)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("service_requests")
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  MATCHED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+// ============================================================================
+// W1 — JSON promotion. Added 2026-09-06.
+//
+// These four tables are populated by the W1 backfill from the Json columns on
+// worker_additional_info. Those columns REMAIN until W1 reaches phase P7, so
+// both shapes coexist during dual-write. Nothing reads these tables until the
+// read switch is flipped.
+//
+// Design: aidlc-docs/inception/application-design/target-schema.md
+// ============================================================================
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+/// The five care domains found in WorkerAdditionalInfo.experience.
+enum CareDomain {
+  DISABILITY
+  AGED_CARE
+  WORKING_WITH_CHILDREN
+  MENTAL_HEALTH
+  CHRONIC_MEDICAL
+}
+
+/// From jobHistory Json — 7 uniform keys.
+model WorkerJobHistory {
+  id               String  @id @default(cuid())
+  workerProfileId  String
+  jobTitle         String
+  company          String
+  startMonth       String?
+  startYear        Int?
+  endMonth         String?
+  endYear          Int?
+  currentlyWorking Boolean @default(false)
+  sortOrder        Int     @default(0) // preserves array order
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
+  @@map("worker_job_history")
+}
+
+/// From education Json — 7 uniform keys.
+model WorkerEducation {
+  id                String  @id @default(cuid())
+  workerProfileId   String
+  institution       String
+  qualification     String
+  startMonth        String?
+  startYear         Int?
+  endMonth          String?
+  endYear           Int?
+  currentlyStudying Boolean @default(false)
+  sortOrder         Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId])
+  @@map("worker_education")
+}
+
+/// From availability Json, which is keyed by weekday. A day holds either one
+/// {startTime,endTime} object or an array of them; one row per slot handles both.
+///
+/// Minutes from midnight (0-1439) rather than "HH:MM" strings: sortable,
+/// comparable, and endMinute <= startMinute expresses an overnight shift, which
+/// a lexical string compare cannot. Times are local to the worker; no zone is
+/// stored — derive it from state if scheduling ever needs one.
+model WorkerAvailability {
+  id              String    @id @default(cuid())
+  workerProfileId String
+  dayOfWeek       DayOfWeek
+  startMinute     Int
+  endMinute       Int
+  sortOrder       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  // Unique on start AND end, not start alone. Rehearsal against production data
+  // found real days holding two slots that share a start: Saturday 00:00-07:00
+  // alongside 00:00-23:00. Keying on start alone would have discarded one, and
+  // which one survived would have depended on JSON key order.
+  // This still collapses true duplicates — the same day, start and end twice.
+  @@unique([workerProfileId, dayOfWeek, startMinute, endMinute])
+  @@index([workerProfileId])
+  @@index([dayOfWeek])
+  @@map("worker_availability")
+}
+
+/// From experience Json — object keyed by 5 care domains, each with 5 keys.
+/// Makes "professional mental-health experience" an indexed query.
+model WorkerExperience {
+  id              String     @id @default(cuid())
+  workerProfileId String
+  domain          CareDomain
+
+  isProfessional Boolean  @default(false)
+  isPersonal     Boolean  @default(false)
+  specificAreas  String[] @default([])
+  otherAreas     String[] @default([])
+  description    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([workerProfileId, domain])
+  @@index([domain])
+  @@map("worker_experience")
+}

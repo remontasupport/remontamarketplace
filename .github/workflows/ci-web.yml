@@ -1,0 +1,71 @@
+# CI for the Remonta marketing site (apps/web).
+#
+# Counterpart to ci-app.yml, with one meaningful difference: this product has
+# ZERO TypeScript errors, so `type-check` runs tsc STRICTLY and fails on any
+# error at all. No baseline is needed here. Only ESLint has one, at 76.
+#
+# There is no test step yet -- U2 established Vitest on the application only.
+# When tests land here, `quality` picks them up and this file does not change.
+#
+# Does not build: Vercel already does, and never promotes a failure.
+
+name: CI (web)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/workflows/ci-web.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/workflows/ci-web.yml"
+
+concurrency:
+  group: ci-web-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Web Quality (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # type-check    -- strict tsc, zero tolerance (this product has 0 errors)
+      # lint:baseline -- fails only on errors absent from
+      #                  apps/web/.quality-baseline/eslint.txt (76 known)
+      - name: Quality gate
+        run: pnpm --filter @remonta/web run quality

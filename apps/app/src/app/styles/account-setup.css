@@ -1,0 +1,307 @@
+/* Account Setup Styles */
+
+/* Brand Colors */
+:root {
+  --brand-primary: #0C1628;
+  --brand-secondary: #A3DEDE;
+}
+
+/* Override form-page-container when it contains account-step-container */
+.form-page-container:has(.account-step-container) {
+  margin: 0 !important;
+  padding: 1rem 0rem !important;
+  max-width: 100% !important;
+}
+
+
+/* Account Step Container - Matches Services spacing */
+.account-step-container {
+  min-height: 50vh;
+  margin-left: -1rem !important;
+  margin-right: -1rem !important;
+  padding-left: 3rem !important;
+  padding-right: 3rem !important;
+}
+
+/* Align header elements with the adjusted container */
+.form-page-container:has(.account-step-container) .form-page-header {
+  margin-left: -1rem !important;
+  padding-left: 3rem !important;
+}
+
+/* Reduce space between content and navigation */
+.form-page-container:has(.account-step-container) .step-content {
+  margin-bottom: 0rem;
+}
+
+/* Align navigation buttons with the adjusted container */
+.form-page-container:has(.account-step-container) .step-navigation {
+  margin-left: -1rem !important;
+  padding-top: 0.5rem !important;
+  padding-left: 3rem !important;
+}
+
+/* Override form-page-content grid for account steps */
+.account-step-container .form-page-content {
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Increase width of info box */
+.account-step-container .info-box {
+  max-width: 600px;
+}
+
+/* Page header styles */
+.account-step-container .page-header {
+  margin-bottom: 1.5rem;
+}
+
+.account-step-container .page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 0.5rem;
+}
+
+.account-step-container .page-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 1.5rem;
+}
+
+/* Mobile Optimization for Account Setup Steps - COMPLETE OVERRIDE */
+@media (max-width: 768px) {
+  /* CRITICAL: Override form-page-container parent */
+  .form-page-container:has(.account-step-container) {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Account step container - ZERO padding/margin, container handles spacing */
+  .account-step-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 1rem !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Form page content - add horizontal padding HERE */
+  .account-step-container .form-page-content {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 1rem !important;
+    gap: 1rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Content columns - full width, no extra padding */
+  .account-step-container .content-columns {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 1.5rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Main and info columns - full width */
+  .account-step-container .main-column,
+  .account-step-container .info-column,
+  .account-step-container .form-column {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* All direct children of main-column - full width */
+  .account-step-container .main-column > *,
+  .account-step-container .main-column button,
+  .account-step-container .main-column div {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Page header - full width */
+  .account-step-container .page-header {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin-bottom: 1rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Page title - responsive sizing */
+  .account-step-container .page-title {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Page subtitle */
+  .account-step-container .page-subtitle {
+    font-size: 0.875rem !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Info box - full width with padding */
+  .account-step-container .info-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Account form - full width */
+  .account-step-container .account-form {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Override any desktop header/navigation alignment */
+  .form-page-container:has(.account-step-container) .form-page-header {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .form-page-container:has(.account-step-container) .step-navigation {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Slightly smaller padding on very small screens */
+  .account-step-container .form-page-content {
+    padding: 0 0.875rem !important;
+  }
+
+  .form-page-container:has(.account-step-container) .form-page-header {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .form-page-container:has(.account-step-container) .step-navigation {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .account-step-container .page-title {
+    font-size: 1.375rem !important;
+  }
+
+  .account-step-container .info-box {
+    padding: 0.875rem !important;
+  }
+
+  .account-step-container .content-columns {
+    gap: 1rem !important;
+  }
+}
+
+/* Tax ID Selection (ABN/TFN Radio Buttons) */
+.tax-id-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+.radio-option:hover {
+  border-color: var(--brand-secondary);
+  background-color: #f9fafb;
+}
+
+.radio-option:has(input:checked) {
+  border-color: var(--brand-primary);
+  background-color: #f0fdfa;
+}
+
+.radio-option input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--brand-primary);
+  cursor: pointer;
+}
+
+.radio-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #374151;
+  font-family: 'Poppins', sans-serif;
+}
+
+.tax-id-input {
+  margin-top: 0.5rem;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Info box spacing for tax ID step */
+.tax-id-selection + .tax-id-input + .info-column .info-box,
+.form-column:has(.tax-id-selection) ~ .info-column .info-box {
+  margin-top: 1.5rem;
+}
+
+/* Mobile adjustments for radio buttons */
+@media (max-width: 768px) {
+  .tax-id-selection {
+    gap: 0.5rem;
+  }
+
+  .radio-option {
+    padding: 0.875rem;
+  }
+
+  .radio-label {
+    font-size: 0.875rem;
+  }
+}

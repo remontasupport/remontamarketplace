@@ -1,0 +1,69 @@
+"use client";
+
+import { BRAND_COLORS } from "@/lib/constants";
+
+interface ParticipantListItemProps {
+  participant: {
+    id: string;
+    name: string;
+    preferredName?: string;
+    photo?: string | null;
+    location?: string;
+    services?: string[];
+  };
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+export default function ParticipantListItem({
+  participant,
+  isSelected,
+  onClick,
+}: ParticipantListItemProps) {
+  const { name, photo } = participant;
+
+  const initials = name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
+        isSelected
+          ? "border-indigo-500 bg-indigo-50"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+          {photo ? (
+            <img
+              src={photo}
+              alt={name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-base font-semibold" style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}>
+              {initials}
+            </div>
+          )}
+        </div>
+
+        {/* Name + location */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 font-poppins truncate">
+            {name}
+          </h3>
+          {participant.location && (
+            <p className="text-sm text-gray-500 font-poppins truncate mt-0.5">{participant.location}</p>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
