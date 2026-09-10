@@ -4,7 +4,7 @@
 **Date**: 2026-09-10
 **Branch**: `app/main`
 **Scope**: Tier 2 (S1=B) — consolidation, secret, timing-safe comparison, secure code generation
-**Status**: Complete, **pending preview verification of the OTP round trip**
+**Status**: **COMPLETE and VERIFIED** — OTP round trip confirmed working on the `remonta-app` preview, 2026-09-10
 
 ---
 
@@ -161,10 +161,10 @@ determinism fix, so it was never counted. It is nonetheless genuinely resolved.
 
 ---
 
-## 7. ⚠️ Required Before This Reaches Production
+## 7. ✅ Preview Verification — DONE (2026-09-10)
 
-**The OTP round trip must be exercised on a preview deployment**: request a code from the client
-registration form, receive the email, and verify it.
+**The OTP round trip was exercised on the `remonta-app` preview and works as expected**: a code was
+requested from the client registration form, received by email, and accepted on entry.
 
 No automated test covers the full path through the routes — the tests pin the signing function,
 not the HTTP flow, the email delivery or the client component. This is the PS-2 check that matters
@@ -182,7 +182,7 @@ designed, but easy to misread as a regression.
 | Invariant | Status |
 |---|---|
 | **PS-1** Both apps build and deploy | ✅ `app/main` verified; marketing untouched by this unit |
-| **PS-2** Preview-verified | ⏳ **Required — see §7** |
+| **PS-2** Preview-verified | ✅ **DONE 2026-09-10** — OTP round trip exercised on the `remonta-app` preview; code sent, received and accepted |
 | **PS-3** Single `git revert` | ✅ One new module, two routes, one helper, three test files |
 | **PS-4** Additive before subtractive | ⚠️ Partial — local copies deleted in the same change that adds the shared module. Splitting would have left two signers, which is the problem being fixed. The compatibility property test is the compensating control. |
 | **PS-5** No destructive DB change | ✅ N/A |

@@ -161,7 +161,7 @@ there is ESLint work only.
 | Invariant | Status |
 |---|---|
 | **PS-1** Both apps build and deploy | ✅ both verified — `app/main` and `main` builds succeed |
-| **PS-2** Preview-verified before production | ⏳ Pending deployment |
+| **PS-2** Preview-verified before production | ✅ DONE 2026-09-10 — CI green on both Node versions, both Vercel deployments completed |
 | **PS-3** Single `git revert` | ✅ Three modified files, three new files, nothing to unwind |
 | **PS-4** Additive before subtractive | ✅ Nothing removed |
 | **PS-5** No destructive DB change | ✅ N/A — no database interaction |
