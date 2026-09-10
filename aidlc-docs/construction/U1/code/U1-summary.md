@@ -3,7 +3,7 @@
 **Unit**: U1 (Phase A — Safety Net)
 **Date**: 2026-09-10
 **Branch**: `app/main`
-**Status**: Steps 1–8 and 10 complete on `app/main`. **Step 9 (marketing branch) deferred** — see §6.
+**Status**: COMPLETE on **both** branches. `app/main` 7a15f9e, `main` 0bd28dc. See §11 for the marketing side.
 
 ---
 
@@ -130,10 +130,10 @@ The probe files used for the two failure tests were created under
 
 ---
 
-## 6. Step 9 Deferred — Marketing Branch
+## 6. Step 9 — Marketing Branch (superseded by §11, kept as the record of why it was held)
 
-U1 applies to both products, but they remain separate branches until U6. The marketing side is
-**not** done.
+At the time this was written, U1 applies to both products but they remain separate branches until U6. The marketing side was
+**not** done. **This was resolved on 2026-09-10 — see §11.**
 
 It was not attempted because the `app/main` changes are uncommitted. Switching to `main` now would
 either carry them across — wrong, since marketing needs different changes — or fail outright.
@@ -160,7 +160,7 @@ there is ESLint work only.
 
 | Invariant | Status |
 |---|---|
-| **PS-1** Both apps build and deploy | ✅ `app/main` build verified. Marketing pending Step 9. |
+| **PS-1** Both apps build and deploy | ✅ both verified — `app/main` and `main` builds succeed |
 | **PS-2** Preview-verified before production | ⏳ Pending deployment |
 | **PS-3** Single `git revert` | ✅ Three modified files, three new files, nothing to unwind |
 | **PS-4** Additive before subtractive | ✅ Nothing removed |
@@ -176,8 +176,59 @@ there is ESLint work only.
 
 | Item | Where |
 |---|---|
-| Apply U1 to the marketing branch (Step 9) | Requires committing `app/main` first |
+| ~~Apply U1 to the marketing branch~~ | ✅ **Done** — `main` commit 0bd28dc |
 | Wire `npm run quality` into CI | **U3** |
 | Clear the 22 type errors in `src/lib` and `src/services/worker` | **U10** (D3=C) |
 | Consider gating warnings once errors reach zero | Future |
 | Remove suppression flags | FR-6.1b — when baselines reach zero |
+
+---
+
+## 11. Step 9 Completed — Marketing Branch (2026-09-10)
+
+Applied via a **git worktree** rather than switching branches in place, so the `app/main` checkout
+and its `node_modules` were never disturbed. The worktree lived in the session scratchpad, had
+marketing's own dependencies installed, and was removed afterwards.
+
+### Measured on `main`
+
+| Metric | Before | After |
+|---|---|---|
+| ESLint problems | **4,691** | **95** |
+| ESLint errors | 1,174 | **76** |
+| TypeScript errors | **0** | 0 |
+
+**98% of marketing's lint output was generated code** — higher than app/main's 75%, because this
+tree carries *two* generated trees (`src/generated/auth-client` and `src/generated/src`).
+
+### Marketing needs no TypeScript baseline
+
+`main` has **zero type errors** and no `typescript.ignoreBuildErrors`. Its `type-check` script
+therefore runs `tsc --noEmit` **strictly**, failing on any error at all — a stronger gate than
+app/main can have until its 149 are cleared.
+
+### The contrast is worth recording
+
+| | Type errors | Lint errors |
+|---|---|---|
+| `main` (marketing) | **0** | 76 |
+| `app/main` (application) | 149 | 523 |
+
+This is the first hard measurement of how differently the two products are maintained, and it
+bears on the consolidation: when they merge into one workspace in U6, the application's debt
+becomes visible alongside marketing's clean tree. Shared packages must not inherit the worse
+standard.
+
+### Commits
+
+| Branch | Commit |
+|---|---|
+| `app/main` | `7a15f9e` U1, `f604f7a` U2, `c6831f9` + `4a20e11` AI-DLC artifacts |
+| `main` | `0bd28dc` U1 |
+
+### Also fixed
+
+`/aidlc-docs` was in `.gitignore`, so the first attempt to commit the documentation was silently
+skipped. This is very likely why the earlier AI-DLC session's artifacts are missing — the schema
+still references `aidlc-docs/inception/application-design/target-schema.md`, which does not exist.
+The rule has been removed and the artifacts are now tracked.
