@@ -8,9 +8,13 @@
 # request as a preview deployment and never promotes a failed build, so building
 # here would roughly triple the run time for no new signal.
 #
-# No secrets are required. `npm run quality` was verified to exit 0 with every
+# No secrets are required. `pnpm run quality` was verified to exit 0 with every
 # environment variable unset, and `prisma generate` succeeds without a database
 # URL, so this runs safely on forks and pull requests.
+#
+# Package manager: pnpm since U5. The version is pinned by the `packageManager`
+# field in package.json, which pnpm/action-setup reads -- one source of truth for
+# local, CI and Vercel.
 
 name: CI
 
@@ -49,18 +53,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # pnpm is installed BEFORE setup-node, because setup-node's pnpm cache
+      # resolution needs the binary to already exist.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
+          cache: pnpm
 
-      # `npm ci` installs from the lock file exactly and fails if package.json
-      # and package-lock.json have drifted -- which is itself a useful check.
-      # postinstall runs `prisma generate` twice, once per schema; both succeed
-      # without a database URL.
+      # --frozen-lockfile is pnpm's equivalent of `npm ci`: install exactly what
+      # the lockfile says, and fail if package.json has drifted from it -- which
+      # is itself a useful check. postinstall runs `prisma generate` twice, once
+      # per schema; both succeed without a database URL.
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       # type-check:baseline  -- fails only on type errors absent from
       #                         .quality-baseline/typescript.txt (149 known)
@@ -69,7 +78,7 @@ jobs:
       #
       # Existing debt is tolerated. New debt is not.
       - name: Quality gate
-        run: npm run quality
+        run: pnpm run quality
 
   supply-chain:
     name: Supply chain
@@ -79,23 +88,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       # REPORT ONLY, on purpose.
       #
       # There are 56 known vulnerabilities today (7 critical, 17 high, 32
-      # moderate). Failing on them would block every pull request immediately --
-      # the same trap the type and lint baselines were built to avoid.
+      # moderate). Failing on them would block every pull request -- the same
+      # trap the type and lint baselines were built to avoid.
       #
-      # Two criticals are worth clearing first and then tightening this step to
-      # `--audit-level=critical` without `continue-on-error`:
+      # Two criticals are worth clearing first, after which this should become
+      # `pnpm audit --audit-level critical` without continue-on-error:
       #   - @auth/core (via @auth/prisma-adapter) -- on the authentication path
       #   - jspdf -- path traversal; possibly deletable outright, since
       #     @react-pdf/renderer already covers PDF generation
@@ -104,18 +116,23 @@ jobs:
       - name: Dependency audit (report only)
         continue-on-error: true
         run: |
-          echo "::group::npm audit summary"
-          npm audit || true
+          echo "::group::pnpm audit summary"
+          pnpm audit || true
           echo "::endgroup::"
           echo "Audit is REPORT ONLY. See .github/workflows/ci.yml for why, and"
           echo "aidlc-docs/construction/U3/code/U3-summary.md for the plan to tighten it."
 
-      # SECURITY-10 requires a Software Bill of Materials for production
-      # deployments. `npm sbom` ships with npm 10 -- no extra dependency.
+      # SECURITY-10 requires a Software Bill of Materials.
+      #
+      # `npm sbom` was used before U5 but is npm-only. cdxgen reads the pnpm
+      # lockfile and emits CycloneDX. continue-on-error because an SBOM tool
+      # failing should not block a merge -- the artifact is for audit, not a gate.
       - name: Generate SBOM
-        run: npm sbom --sbom-format=cyclonedx > sbom.cyclonedx.json
+        continue-on-error: true
+        run: npx --yes @cyclonedx/cdxgen@^11 -t pnpm -o sbom.cyclonedx.json
 
       - name: Upload SBOM
+        if: hashFiles('sbom.cyclonedx.json') != ''
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx

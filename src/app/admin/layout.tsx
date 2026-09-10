@@ -12,7 +12,6 @@
 
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Loader from "@/components/ui/Loader";
-import FloatingChatbot from "@/components/admin/FloatingChatbot";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default function AdminLayout({
@@ -54,7 +53,6 @@ export default function AdminLayout({
       <main className="ml-64 min-h-screen">
         {children}
       </main>
-      {/* <FloatingChatbot /> */}
     </div>
   );
 }

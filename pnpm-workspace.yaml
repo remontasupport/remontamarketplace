@@ -1,0 +1,11 @@
+# pnpm workspace definition.
+#
+# Only the root package exists today. `apps/*` and `packages/*` are declared
+# ahead of the directories themselves so that U6 (which moves both products into
+# apps/) and U7 (which creates the first shared packages) are directory moves
+# rather than configuration changes as well.
+#
+# pnpm ignores globs that match nothing, so listing them now is harmless.
+packages:
+  - "apps/*"
+  - "packages/*"
