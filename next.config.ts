@@ -1,6 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ---------------------------------------------------------------------------
+  // These two suppressions REMAIN ON PURPOSE. They are not an oversight.
+  //
+  // The project carries a real backlog: 149 TypeScript errors and 523 ESLint
+  // errors as of 2026-09-10. Turning either check on here would fail every
+  // build immediately, so removing these flags is not a config change — it is a
+  // prerequisite project.
+  //
+  // The gate lives elsewhere. `npm run quality` compares the current findings
+  // against .quality-baseline/ and fails on anything NOT already recorded
+  // there. Existing debt is tolerated; new debt is rejected. CI runs it on
+  // every pull request (unit U3).
+  //
+  // Remove `ignoreBuildErrors` when .quality-baseline/typescript.txt is empty.
+  // Remove `ignoreDuringBuilds` when .quality-baseline/eslint.txt is empty.
+  // Until then, deleting these lines only breaks the build without improving
+  // anything.
+  //
+  // Baseline counts are recorded in aidlc-docs/construction/U1/code/.
+  // ---------------------------------------------------------------------------
   eslint: {
     ignoreDuringBuilds: true,
   },
