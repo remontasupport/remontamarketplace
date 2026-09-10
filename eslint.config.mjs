@@ -18,6 +18,12 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Prisma emits its client here and it is committed so Vercel can bundle it.
+      // Linting machine-generated code accounted for the large majority of the
+      // 4,691 problems reported before this line existed - almost all
+      // no-unused-expressions and no-this-alias, which are code-generation
+      // artifacts rather than defects.
+      "src/generated/**",
     ],
   },
 ];

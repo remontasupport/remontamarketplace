@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // This suppression REMAINS ON PURPOSE. There are 76 ESLint errors as of
+  // 2026-09-10 (down from 1,174 before src/generated was excluded), so turning
+  // the check on here would fail every build.
+  //
+  // The gate lives elsewhere: `npm run quality` runs tsc strictly -- this
+  // product has ZERO type errors and needs no baseline -- and compares ESLint
+  // findings against .quality-baseline/eslint.txt, failing on anything not
+  // already recorded. Existing debt is tolerated; new debt is rejected.
+  //
+  // Remove this line when .quality-baseline/eslint.txt is empty.
   eslint: {
     ignoreDuringBuilds: true,
   },
