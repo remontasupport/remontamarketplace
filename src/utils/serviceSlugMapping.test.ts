@@ -110,14 +110,44 @@ describe("isServiceInDatabase", () => {
     expect(isServiceInDatabase("")).toBe(false);
   });
 
-  it("agrees with the mapping table for arbitrary input", () => {
-    // PBT-03. The predicate must never disagree with the table it reads.
+  it("is true exactly for the known service names", () => {
+    // PBT-03. The oracle is getAllServiceNames(), not `candidate in
+    // SERVICE_NAME_TO_SLUG`.
+    //
+    // The `in` version was the original oracle here and it was WRONG: `in`
+    // walks the prototype chain, so `"toString" in SERVICE_NAME_TO_SLUG` is
+    // true while isServiceInDatabase("toString") is correctly false. fast-check
+    // found it -- Counterexample: ["toString"] -- on a seed that an earlier run
+    // happened not to draw.
+    //
+    // The implementation was right all along. It uses
+    // Object.values(...).includes(...), which only sees own values, so it is
+    // immune to the prototype-chain confusion that a naive `in` check would
+    // have. See the regression test below.
+    const known = new Set(getAllServiceNames());
+
     fc.assert(
       fc.property(fc.string({ maxLength: 40 }), (candidate) => {
-        expect(isServiceInDatabase(candidate)).toBe(
-          candidate in SERVICE_NAME_TO_SLUG,
-        );
+        expect(isServiceInDatabase(candidate)).toBe(known.has(candidate));
       }),
     );
+  });
+
+  it("returns false for inherited Object.prototype members", () => {
+    // Regression guard for the counterexample above. If someone ever rewrites
+    // this predicate as `name in SERVICE_NAME_TO_SLUG` or
+    // `!!SERVICE_NAME_TO_SLUG[name]`, these start returning true and a caller
+    // could treat "constructor" as a real service.
+    for (const inherited of [
+      "toString",
+      "constructor",
+      "valueOf",
+      "hasOwnProperty",
+      "__proto__",
+      "isPrototypeOf",
+      "propertyIsEnumerable",
+    ]) {
+      expect(isServiceInDatabase(inherited)).toBe(false);
+    }
   });
 });
