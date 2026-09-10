@@ -66,4 +66,3 @@ prisma/*.db-journal
 # but stale temp files from interrupted `prisma generate` runs must not be
 *.tmp[0-9]*
 
-/aidlc-docs
