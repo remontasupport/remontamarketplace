@@ -4,7 +4,8 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - Phase A 4/5 verified (U1, U2, U3a, U3); U4 next
+- **Current Stage**: CONSTRUCTION - Phase B, U5 (pnpm + Turborepo)
+- **Phase A**: U1, U2, U3a, U3 COMPLETE and VERIFIED. **U4 resequenced** to run between U13 and U14 by user decision (2026-09-10) — monitoring deferred until the monorepo is done.
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 
 ## Workspace State

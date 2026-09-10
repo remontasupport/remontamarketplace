@@ -5,6 +5,23 @@
 
 ---
 
+## Resequencing Note (2026-09-10)
+
+**U4 moved out of Phase A** by user decision, to run **between U13 and U14**. Monitoring is
+deferred until the monorepo work is complete.
+
+Consequences:
+- **U5 now depends on U3**, not U4
+- **U6 and U8 deploy to production with no monitoring in place.** Both share the failure mode where
+  the build succeeds and the runtime fails, so detection rests entirely on PS-2 preview
+  verification until U4 lands. This is an accepted risk, recorded rather than mitigated.
+- **U4 must still precede U15**, which drops three tables behind a 1-day dormancy with an
+  unverified backup behind it (P8). That constraint does not move.
+
+The diagram below shows the original Phase A placement; read U4 as running after U13.
+
+---
+
 ## Dependency Graph
 
 ```mermaid
@@ -87,9 +104,9 @@ U13. U15 ContractorProfile retirement (dark red, irreversible) requires U14.
 |---|---|---|---|
 | U1 | — | U2 | — |
 | U2 | U1 | U3 | — |
-| U3 | U2 | U4 | — |
-| U4 | U3 | U5 | — |
-| U5 | U4 | U6 | — |
+| U3 | U2 | **U5** | — |
+| **U4** *(resequenced)* | U13 | U14 | — |
+| U5 | **U3** | U6 | — |
 | U6 | U5 | U7 | — |
 | U7 | U6 | U8, U12, U13 | — |
 | U8 | U7 | U9 | U12 |
@@ -97,11 +114,11 @@ U13. U15 ContractorProfile retirement (dark red, irreversible) requires U14.
 | U10 | U9 | U11 | U12 |
 | U11 | U10 | U13, U14 | U12 |
 | U12 | U7 | — | U8–U11, U13 |
-| U13 | U7, U11 | U14 | U12 |
-| U14 | U11, U13 | U15 | — |
+| U13 | U7, U11 | **U4** | U12 |
+| U14 | U11, U13, **U4** | U15 | — |
 | U15 | U14 | — | — |
 
-**Critical path**: U1 → U2 → U3 → U4 → U5 → U6 → U7 → U8 → U9 → U10 → U11 → U13 → U14 → U15
+**Critical path** *(after resequencing)*: U1 → U2 → U3 → U5 → U6 → U7 → U8 → U9 → U10 → U11 → U13 → **U4** → U14 → U15
 (14 of 15 units). Only **U12** sits off it.
 
 That the critical path is nearly the whole set is a direct consequence of the production-safety
@@ -117,8 +134,8 @@ unit is responsible.
 |---|---|
 | U1 → U2 | Test config must type-check under the restored compiler |
 | U2 → U3 | CI cannot run tests that do not exist |
-| U3 → U4 | Alerting and health checks belong under the same gate as everything else |
-| U4 → U5 | **Ordering choice, not technical necessity.** With P3=A every unit deploys to production, so observability must exist before the first structural change. Answer P7 drove this. |
+| U13 → U4 | **Resequenced.** Monitoring deferred until the monorepo is done (user decision, 2026-09-10) |
+| U4 → U14 | **The constraint that did not move.** U15 drops three tables behind a 1-day dormancy with a backup that P8 recorded as never verified. The restore drill must precede it. |
 | U5 → U6 | Directories cannot move into a workspace that does not exist |
 | U6 → U7 | Packages live beside `apps/`, which U6 creates |
 | U7 → U8 | `packages/db` depends on `packages/schemas` |
@@ -136,7 +153,9 @@ unit is responsible.
 
 | Unit | Production risk | Failure mode | Recovery |
 |---|---|---|---|
-| U1–U4 | **None** | Runtime path untouched | `git revert` |
+| U1–U3 | **None** | Runtime path untouched | `git revert` |
+| U3a | Low | OTP signing changed — verified by hand on preview | `git revert` |
+| U4 | **None** | Additive instrumentation only | `git revert` |
 | U5 | Low | pnpm surfaces a phantom dependency; build fails | `git revert` |
 | **U6** | **High** | Build succeeds, runtime broken | **Promote recorded deployment ID — seconds** |
 | U7 | Low | Import path missed; build fails | `git revert` |

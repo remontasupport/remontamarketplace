@@ -39,7 +39,13 @@ Deploys avoid business hours (P6=B — hours to be confirmed before U1).
 
 # PHASE A — Safety Net
 
-No unit in this phase changes anything in the runtime path. Phase A exists so every later unit has
+> **As executed**: U1, U2, **U3a** (inserted — OTP signing consolidation) and U3. U4 was
+> resequenced to run between U13 and U14. All four executed units are complete and verified as of
+> 2026-09-10.
+
+No unit in this phase changes anything in the runtime path, with one exception: U3a, which was
+inserted after planning and does change the OTP path. It was verified by hand on a preview.
+Otherwise, Phase A exists so every later unit has
 something beneath it.
 
 ## U1 — Type-Error Baseline
@@ -76,7 +82,19 @@ something beneath it.
 - **Depends on**: U1, U2. **Traces to**: FR-6.3, FR-6.6, FR-8.2, NFR-3.6, SECURITY-10, SECURITY-13.
 - **Estimate**: 3–5 days.
 
-## U4 — Observability Baseline and Restore Verification
+## U4 — Observability Baseline and Restore Verification *(MOVED — now runs between U13 and U14)*
+
+> **RESEQUENCED 2026-09-10 (user decision).** Moved out of Phase A to sit **between U13 and
+> U14** — after the packages are extracted, before the behaviour changes. The user chose to defer
+> monitoring until the monorepo work is done.
+>
+> **The restore drill cannot move later than this.** U15 drops three tables behind a 1-day
+> dormancy and the backup is the only thing behind it, and P8 recorded that a restore has never
+> been verified.
+>
+> **Accepted risk**: U6 (Vercel root change) and U8 (Prisma relocation) both deploy to production
+> before any monitoring exists, and both share the failure mode where the build succeeds and the
+> runtime fails. Detection rests entirely on PS-2 preview verification until U4 lands.
 
 > **Added in response to P7 and P8.** P7: no monitoring exists. P8: a restore has never been
 > verified. With P3=A (each unit deploys to production immediately), the original plan meant
@@ -110,7 +128,7 @@ something beneath it.
 - **Exit criteria**: `pnpm install` reproduces the dependency tree; all Turborepo tasks run; both apps build and deploy unchanged.
 - **Production safety**: PS-1 ✓, PS-2 ✓, PS-3 ✓, PS-6 ✓. Dependency-resolution change only.
 - **Risk**: pnpm's strict isolation may surface previously-hoisted phantom dependencies. This is the point — but it can fail the build, so verify on preview carefully.
-- **Depends on**: U4. **Traces to**: FR-1.5, FR-1.6, NFR-6.2.
+- **Depends on**: U3 (U4 resequenced out of Phase A). **Traces to**: FR-1.5, FR-1.6, NFR-6.2.
 - **Estimate**: 3–5 days.
 
 ## U6 — `apps/` Relocation and Root Directory Change

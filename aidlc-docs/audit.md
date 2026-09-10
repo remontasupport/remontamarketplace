@@ -309,3 +309,11 @@ packages/
 
 ---
 
+## CONSTRUCTION — U4 Resequenced by User Decision
+**Timestamp**: 2026-09-10T00:00:00Z
+**User Input**: "We can take care of the mointoring later after the mono repo is done" then "Yes, proceed"
+**AI Response**: "User elected to defer U4 (observability and restore drill) until after the monorepo work. Raised the specific risk ONCE rather than repeatedly: U6 (Vercel Root Directory change) and U8 (Prisma relocation) are the two units whose failure mode is 'build succeeds, runtime fails' — Vercel promotes a green build and then every database query 500s because the engine did not bundle — which is precisely the failure that preview verification can miss and monitoring catches. Per P7 the user would currently learn of it from a user report. Offered a cheap middle option of just /api/health plus error alerting, a couple of hours rather than a week, leaving structured logging, correlation IDs, retention and security headers for later; presented as non-blocking. Also stated the one constraint that cannot move: the restore drill must precede U15, which drops ContractorProfile, ContractorsbyArea and the legacy Job behind a 1-day dormancy with a backup that P8 recorded as never verified — proving the restore works while nothing depends on it is materially different from discovering it does not during a recovery. Placed U4 between U13 and U14, which satisfies that constraint and matches the user's instruction, and proceeded on approval. Updated three documents for consistency rather than leaving a note that contradicts the tables: unit-of-work.md carries a resequencing block on U4 recording the decision, the accepted risk and the constraint, with U5's dependency corrected from U4 to U3 and the Phase A header amended to record what was actually executed including the inserted U3a; unit-of-work-dependency.md gained a resequencing note and had its dependency matrix, critical path and dependency-rationale table rewritten so U3 blocks U5, U13 blocks U4, U4 blocks U14, and the risk table now lists U3a separately as the one low-risk runtime change in Phase A; aidlc-state.md records Phase A complete with U4 resequenced. New critical path: U1, U2, U3, U5, U6, U7, U8, U9, U10, U11, U13, U4, U14, U15."
+**Context**: CONSTRUCTION — U4 resequenced to between U13 and U14; Phase B begins with U5
+
+---
+
