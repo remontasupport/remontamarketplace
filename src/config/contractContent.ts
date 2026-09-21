@@ -1,11 +1,41 @@
 /**
  * Contract Content Configuration
- * Contains the full text of ABN (Contractor) and TFN (Casual Employee) agreements
+ * Contains the full text of ABN (Provider) and TFN (Casual Employee) agreements
  */
+
+/** How a document applies to a role in a compliance matrix. */
+export type ContractRequirement = "required" | "conditional" | "none";
+
+export interface ContractTableRow {
+  label: string;
+  /** One entry per column in `ContractTable.columns`, in order. */
+  cells: ContractRequirement[];
+}
+
+/**
+ * A role-by-document compliance matrix.
+ *
+ * Cells are stored semantically rather than as glyphs because the three
+ * renderers cannot agree on a character set. The web viewer is UTF-8 and can
+ * show the source document's tick and circle, but both PDF generators use
+ * jsPDF's standard Helvetica, which is WinAnsi-encoded. U+2713 and U+25CB are
+ * absent from WinAnsi and jsPDF substitutes them silently — a tick comes out
+ * as an apostrophe. Each renderer therefore picks glyphs it can actually draw.
+ */
+export interface ContractTable {
+  /** Column headers, excluding the leading row-label column. */
+  columns: string[];
+  rowLabelHeader: string;
+  rows: ContractTableRow[];
+  /** Rendered beneath the table. */
+  notes?: string[];
+}
 
 export interface ContractSection {
   title: string;
   content: string[];
+  /** Rendered after `content` when present. */
+  table?: ContractTable;
 }
 
 export interface ContractContent {
@@ -16,31 +46,31 @@ export interface ContractContent {
 }
 
 /**
- * ABN Contractor Agreement - 15 Sections
- * Remonta Platform Contractor Agreement (ABN)
+ * ABN Provider Agreement - 16 Sections plus Annexure A
+ * Remonta Platform Provider Agreement (ABN), v2
  */
 export const ABN_CONTRACT: ContractContent = {
-  title: "Remonta Platform Contractor Agreement",
-  subtitle: "(ABN) - Independent Contractor – Platform Access & Services Agreement",
+  title: "Remonta Platform Provider Agreement",
+  subtitle: "(ABN) - Independent Provider – Platform Access & Services Agreement",
   sections: [
     {
       title: "1. Engagement & Platform Role",
       content: [
         "1.1 The Company operates a platform that facilitates connections between clients, participants, organisations, and independent service providers.",
-        "1.2 The Contractor is engaged as an independent contractor, not an employee, to make their services available via the Remonta platform.",
-        "1.3 The Contractor acknowledges that the Company acts solely as an intermediary and platform facilitator and does not direct, control, or supervise how services are performed.",
+        "1.2 The Provider is engaged as an independent contractor, not an employee, to make their services available via the Remonta platform.",
+        "1.3 The Provider acknowledges that the Company acts solely as an intermediary and platform facilitator and does not direct, control, or supervise how services are performed.",
         "1.4 NDIS Registration Status",
         "1.4.1 The Company is a registered provider under the National Disability Insurance Scheme (NDIS).",
-        "1.4.2 Where services introduced through the platform are funded or regulated by the NDIS, the Contractor acknowledges that services must be delivered in accordance with:",
+        "1.4.2 Where services introduced through the platform are funded or regulated by the NDIS, the Provider acknowledges that services must be delivered in accordance with:",
         "• the NDIS Practice Standards; and",
         "• the NDIS Code of Conduct.",
         "1.4.3 This clause does not:",
         "• create an agency relationship;",
-        "• alter the Contractor's independent business status; or",
+        "• alter the Provider's independent business status; or",
         "• give the Company control over the manner in which services are delivered.",
         "1.5 Nothing in this Agreement creates a relationship of employment, partnership, joint venture, or agency.",
-        "1.6 The Company does not guarantee any minimum volume of work, and the Contractor is under no obligation to accept any work offered via the platform.",
-        "1.7 Where the Contractor is a company, the Contractor is fully responsible for all personnel engaged to deliver services under this Agreement.",
+        "1.6 The Company does not guarantee any minimum volume of work, and the Provider is under no obligation to accept any work offered via the platform.",
+        "1.7 Where the Provider is a company, the Provider is fully responsible for all personnel engaged to deliver services under this Agreement.",
       ],
     },
     {
@@ -52,7 +82,7 @@ export const ABN_CONTRACT: ContractContent = {
         "• disability and support services",
         "• therapeutic or allied health services",
         "• other NDIS and non-NDIS professional services",
-        "2.2 The Contractor determines how services are delivered, subject to:",
+        "2.2 The Provider determines how services are delivered, subject to:",
         "• applicable laws and regulations",
         "• NDIS requirements (where relevant)",
         "• platform rules and compliance obligations",
@@ -64,7 +94,7 @@ export const ABN_CONTRACT: ContractContent = {
       content: [
         "3.1 This Agreement commences on the Effective Date and continues until terminated in accordance with this Agreement.",
         "3.2 Either party may terminate this Agreement by providing fourteen (14) days' written notice.",
-        "3.3 The Company may terminate this Agreement immediately where the Contractor:",
+        "3.3 The Company may terminate this Agreement immediately where the Provider:",
         "• breaches a material term of this Agreement",
         "• fails compliance, screening, or audit requirements",
         "• poses a risk to clients, participants, or the platform",
@@ -72,18 +102,18 @@ export const ABN_CONTRACT: ContractContent = {
       ],
     },
     {
-      title: "4. Contractor Obligations",
+      title: "4. Provider Obligations",
       content: [
-        "4.1 The Contractor must comply with:",
+        "4.1 The Provider must comply with:",
         "• all platform policies and procedures",
         "• any updates issued by the Company",
         "• NDIS Practice Standards (where applicable)",
-        "4.2 The Contractor must complete and maintain all required platform records, including where relevant:",
+        "4.2 The Provider must complete and maintain all required platform records, including where relevant:",
         "• before and after photos",
         "• job completion forms",
         "• Job Safety Analysis (JSA)",
         "• Safe Work Method Statements (SWMS)",
-        "4.3 The Contractor must submit accurate and timely reports, including but not limited to:",
+        "4.3 The Provider must submit accurate and timely reports, including but not limited to:",
         "• progress notes",
         "• service delivery logs",
         "• incident reports",
@@ -95,8 +125,8 @@ export const ABN_CONTRACT: ContractContent = {
     {
       title: "5. Compliance, Screening & Training",
       content: [
-        "5.1 The Contractor must complete all mandatory training modules required by the platform, including NDIS-related training where applicable.",
-        "5.2 Prior to providing services, the Contractor must supply valid evidence of:",
+        "5.1 The Provider must complete all mandatory training modules required by the platform, including NDIS-related training where applicable.",
+        "5.2 Prior to providing services, the Provider must supply valid evidence of:",
         "• an active ABN and business trading status",
         "• NDIS Worker Screening Check (where applicable)",
         "• Working with Children Check (where applicable)",
@@ -104,29 +134,31 @@ export const ABN_CONTRACT: ContractContent = {
         "• relevant qualifications and certifications",
         "• First Aid and CPR certification (where applicable)",
         "• public liability and professional indemnity insurance",
-        "5.3 The Contractor is responsible for maintaining all compliance documentation in a current and valid state.",
-        "5.4 Where the Contractor is a company, these obligations extend to all personnel engaged to deliver services.",
+        "5.3 The Provider is responsible for maintaining all compliance documentation in a current and valid state.",
+        "5.4 Where the Provider is a company, these obligations extend to all personnel engaged to deliver services.",
+        "5.5 The Provider warrants that they hold all compliance, screening, qualification, and insurance requirements necessary to deliver the services, in accordance with Company policy and NDIS requirements.",
+        "5.6 The Provider must provide the Company with evidence of the compliance requirements set out in Annexure A within fourteen (14) days of the Effective Date.",
       ],
     },
     {
       title: "6. Workplace Health & Safety",
       content: [
-        "6.1 The Contractor is solely responsible for:",
+        "6.1 The Provider is solely responsible for:",
         "• workplace health and safety compliance",
         "• safe systems of work",
         "• provision and use of appropriate PPE",
         "• maintenance and safety of tools and equipment",
-        "6.2 The Company does not supervise, direct, or control the Contractor's work methods.",
+        "6.2 The Company does not supervise, direct, or control the Provider's work methods.",
       ],
     },
     {
       title: "7. Payment & Invoicing",
       content: [
-        "7.1 The Contractor must submit invoices in accordance with platform requirements, including all required reports, documentation, and job references.",
+        "7.1 The Provider must submit invoices in accordance with platform requirements, including all required reports, documentation, and job references.",
         "7.2 All invoices are subject to a four (4) week processing period, commencing from the date the Company receives a valid and compliant invoice.",
         "7.3 Payment will be made after completion of the processing period, provided all compliance, verification, and reporting requirements have been satisfied.",
-        "7.4 The Contractor acknowledges that the processing period is required for verification, reconciliation, and audit purposes.",
-        "7.5 The Contractor is solely responsible for:",
+        "7.4 The Provider acknowledges that the processing period is required for verification, reconciliation, and audit purposes.",
+        "7.5 The Provider is solely responsible for:",
         "• GST (if registered)",
         "• income tax",
         "• superannuation",
@@ -135,13 +167,22 @@ export const ABN_CONTRACT: ContractContent = {
         "• documentation or reports are incomplete or inaccurate",
         "• compliance obligations are not met",
         "• an audit, investigation, or dispute is ongoing",
+        "7.7 The rate payable to the Provider for each service is agreed between the Company and the Provider in a separate service-specific agreement, which the Provider must accept and sign before that service commences.",
+        "7.8 Rates agreed under clause 7.7 are confidential and must not be disclosed to clients, participants, or other providers.",
+        "7.9 The Provider must notify the Company as soon as they become aware that they are unable to attend a service they have accepted.",
+        "7.10 Where the Provider cancels a service they have accepted with less than two (2) clear business days' notice, and without reasonable cause, the Company may charge the Provider a cancellation fee or set off an equivalent amount against amounts otherwise payable to the Provider.",
+        "7.11 A cancellation fee will only be charged where:",
+        "• the service could not be reallocated to another provider; and",
+        "• the Company has incurred a cost or loss as a result of the cancellation, including the loss of a client engagement.",
+        "7.12 Reasonable cause includes illness, injury, emergency, or other circumstances beyond the Provider's reasonable control. The Company may request evidence, and will not charge a cancellation fee where reasonable cause is established.",
+        "7.13 Nothing in clauses 7.9 to 7.12 requires the Provider to accept any service offered via the platform.",
       ],
     },
     {
       title: "8. Platform Conduct, Branding & Marketing",
       content: [
-        "8.1 The Contractor must maintain professional conduct when delivering services connected to the platform.",
-        "8.2 The Contractor may be required to:",
+        "8.1 The Provider must maintain professional conduct when delivering services connected to the platform.",
+        "8.2 The Provider may be required to:",
         "• provide platform marketing materials to clients upon request",
         "• present professionally when delivering services",
         "• comply with reasonable branding or identification requirements",
@@ -151,27 +192,27 @@ export const ABN_CONTRACT: ContractContent = {
     {
       title: "9. Confidentiality & Data Protection",
       content: [
-        "9.1 The Contractor must keep confidential all information relating to:",
+        "9.1 The Provider must keep confidential all information relating to:",
         "• the Company",
         "• clients and participants",
         "• platform operations, pricing, and data",
         "9.2 Confidentiality obligations survive termination of this Agreement.",
-        "9.3 The Contractor must comply with all applicable privacy and data protection laws.",
+        "9.3 The Provider must comply with all applicable privacy and data protection laws.",
       ],
     },
     {
       title: "10. Conflict of Interest",
       content: [
-        "10.1 The Contractor must promptly disclose any actual or potential conflicts of interest.",
-        "10.2 The Contractor must not engage in conduct that undermines client trust, platform integrity, or Company relationships.",
+        "10.1 The Provider must promptly disclose any actual or potential conflicts of interest.",
+        "10.2 The Provider must not engage in conduct that undermines client trust, platform integrity, or Company relationships.",
       ],
     },
     {
       title: "11. Non-Circumvention & Non-Poaching",
       content: [
-        "11.1 During the term of this Agreement and for twelve (12) months after termination, the Contractor must not, without written consent:",
+        "11.1 During the term of this Agreement and for twelve (12) months after termination, the Provider must not, without written consent:",
         "• bypass the platform to work directly with any client introduced by Remonta",
-        "• solicit or poach Remonta clients, contractors, or staff",
+        "• solicit or poach Remonta clients, providers, or staff",
         "11.2 Any breach may result in:",
         "• withheld payments",
         "• immediate termination",
@@ -194,21 +235,104 @@ export const ABN_CONTRACT: ContractContent = {
     {
       title: "14. ABN Declaration",
       content: [
-        "14.1 The Contractor warrants that:",
+        "14.1 The Provider warrants that:",
         "• they hold a valid and active ABN",
         "• they operate an independent business",
         "• they are not entitled to employee benefits under this Agreement",
       ],
     },
     {
-      title: "15. Entire Agreement",
+      title: "15. Terms & Conditions",
       content: [
-        "15.1 This Agreement constitutes the entire agreement between the parties and supersedes all prior agreements, understandings, or arrangements.",
+        "15.1 The Provider accepts the Company's terms and conditions as in force at the Effective Date.",
+        "15.2 The Company reserves the right to update its terms and conditions at any time.",
+        "15.3 The Company will notify the Provider of any such updates.",
       ],
+    },
+    {
+      title: "16. Entire Agreement",
+      content: [
+        "16.1 This Agreement constitutes the entire agreement between the parties and supersedes all prior agreements, understandings, or arrangements.",
+      ],
+    },
+    {
+      title: "Annexure A – Compliance Requirements",
+      content: [
+        "Referred to in clause 5.6",
+        "The Provider must provide the Company with valid evidence of each document that applies to their role within fourteen (14) days of the Effective Date.",
+        "1. Required for all roles",
+        "• 100 Points of ID",
+        "• ABN (Provider)",
+        "• Police Check",
+        "• NDIS Worker Screening Check",
+        "• Right to Work Documents",
+        "• Resume / Experience Evidence",
+        "• NDIS Worker Orientation Modules",
+        "• New Worker NDIS Induction Module",
+        "• Supporting Effective Communication",
+        "• Infection Control Training",
+        "• Public Liability Insurance (min $10M)",
+        "Required for all roles where applicable:",
+        "• Working With Children Check",
+        "2. Additional requirements by role",
+      ],
+      table: {
+        rowLabelHeader: "ADDITIONAL DOCUMENT",
+        columns: [
+          "Support Worker",
+          "Support Worker (High Intensity)",
+          "Cleaner / Gardener",
+          "Nurse",
+          "Personal Trainer",
+          "Allied Health",
+        ],
+        rows: [
+          {
+            label: "Supporting Safe and Enjoyable Meals",
+            cells: ["required", "required", "none", "required", "none", "conditional"],
+          },
+          {
+            label: "First Aid & CPR",
+            cells: ["conditional", "required", "none", "required", "required", "required"],
+          },
+          {
+            label: "Manual Handling Training",
+            cells: ["none", "conditional", "none", "required", "required", "conditional"],
+          },
+          {
+            label: "Medication Training",
+            cells: ["none", "conditional", "none", "required", "none", "none"],
+          },
+          {
+            label: "Behaviour Support Training",
+            cells: ["none", "conditional", "none", "required", "none", "conditional"],
+          },
+          {
+            label: "AHPRA registration or professional association membership",
+            cells: ["none", "none", "none", "required", "required", "required"],
+          },
+          {
+            label: "Highest Relevant Qualification Certificate",
+            cells: ["conditional", "required", "conditional", "required", "required", "required"],
+          },
+          {
+            label: "Driver's Licence, Car Registration & Insurance (if transporting)",
+            cells: ["required", "required", "none", "none", "none", "none"],
+          },
+          {
+            label: "Professional Indemnity Insurance",
+            cells: ["none", "none", "none", "required", "required", "required"],
+          },
+        ],
+        notes: [
+          "Allied Health includes: Art Therapist, Audiologist, Counsellor, Dietitian, Exercise Physiologist, Music Therapist, Occupational Therapist, Orthoptist, Physiotherapist, Podiatrist, Psychologist, Social Worker, Speech Pathologist.",
+          "All documents must be current and valid when provided, and maintained in a valid state for the term of this Agreement in accordance with clause 5.3. Where the Provider is a company, these requirements apply to every person engaged by the Provider to deliver services under this Agreement.",
+        ],
+      },
     },
   ],
   closingStatement:
-    "By accepting this Agreement, the Contractor confirms that they have read, understood, and agree to all terms and acknowledge their obligations as an independent contractor operating via the Remonta platform.",
+    "By accepting this Agreement, the Provider confirms that they have read, understood, and agree to all terms and acknowledge their obligations as an independent contractor operating via the Remonta platform.",
 };
 
 /**
