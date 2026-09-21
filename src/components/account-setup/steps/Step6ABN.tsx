@@ -238,7 +238,7 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
                     )}
                     <div>
                       <p style={{ margin: 0, fontWeight: 500, color: "#333" }}>
-                        {selectedType === "abn" ? "Contractor Agreement" : "Casual Employment Agreement"}
+                        {selectedType === "abn" ? "Provider Agreement" : "Casual Employment Agreement"}
                       </p>
                       <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.875rem", color: contractSigned || contractUploaded ? "#22c55e" : "#666" }}>
                         {contractSigned
