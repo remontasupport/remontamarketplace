@@ -320,3 +320,48 @@ The failure was invisible in every automated signal — the build passed, CI pas
 was served. Only a human opening the page and then the browser console found it. That is a
 concrete instance of the gap **U4** (observability) was meant to close, and it was found during a
 unit where the accepted risk of deferring U4 was explicitly recorded.
+
+## Steps 7 and 9 — Marketing Cutover COMPLETE (2026-09-22)
+
+Pull request **#4** merged as `5515399`. 17 commits, 1,003 files. `main` is now the monorepo trunk.
+
+| Step | Status |
+|---|---|
+| 4 — Marketing Root Directory → `apps/web` | ✅ |
+| 5 — Preview built with the new root | ✅ `a9b07c5` |
+| 6 — Preview verified | ✅ loads; newsroom empty due to Sanity CORS on preview origins (not a regression) |
+| 7 — Merge to `main` | ✅ `5515399` |
+| 9 — Marketing production verified | ✅ **site loads correctly** |
+
+**Marketing production now builds and serves from `apps/web`.** The highest-risk mechanism in the
+unit — changing a Vercel Root Directory on a live project — is proven on a live site.
+
+### Two things worth recording about the merge
+
+**The PR carried 17 commits, not the 13 first estimated.** The count was measured against a local
+`main` that was 3 commits ahead of `origin/main`. GitHub compares against `origin/main`, which had
+never received marketing's U1 (`0bd28dc`), U3 (`94823d9`) or U5 (`c9b5c58`). Consequence:
+`u5-marketing` and `u5-marketing-fix` are now **fully superseded** — the monorepo carries
+marketing's U1/U3/U5, and the root `.npmrc` covers both apps with `node-linker=hoisted`, which was
+the open question `u5-marketing-fix` existed to answer.
+
+**No GitHub Actions checks ran on the pull request.** `origin/main` had **no** `.github/workflows`
+at all — it sat at `9a09ac2`, predating marketing's U3 — and GitHub will not run workflows for a
+pull request when they do not exist on the base branch. So this PR *added* CI rather than being
+checked by it.
+
+What stood in place of CI: local gates (app 149/523/54, web 76 lint + strict `tsc` clean),
+`turbo run build` 2 of 2, and a successful marketing preview build and load. Real evidence, but
+from one machine rather than a clean runner. **This was the last unchecked merge** — the workflows
+now exist on `main`, so every subsequent push and pull request is gated.
+
+### Remaining
+
+| Step | Action |
+|---|---|
+| 8b | Application: Root Directory → `apps/app`, **Production Branch `app/main` → `main`** |
+| 9b | Verify application production — a database-backed page, per PS-2 |
+| 10 | Tag and delete `app/main` |
+
+Follow-ups: register a preview origin in Sanity CORS; close the superseded `u5-marketing` and
+`u1-*` pull requests.
