@@ -74,5 +74,7 @@
       "cache": false,
       "persistent": true
     }
-  }
+  },
+  "envMode": "loose",
+  "//": " ENVMODE: loose, deliberately. Turborepo 2.x defaults to strict, which passes ONLY the vars listed in env/globalEnv to each task and strips the rest. That broke the first Vercel build of the monorepo: the apps read ~45 variables each (ACCELERATE_DATABASE_URL, the Zoho webhooks, Upstash, Resend), and modules that read them at import time throw during page-data collection. It was invisible locally because each app has .env files on disk that Next reads directly; Vercel has none and relies on process.env, which strict mode filters. loose restores exactly the pre-monorepo behaviour -- no variable is hidden -- which is what PS-6 requires of a unit that moves structure and must not change behaviour. COST: env vars no longer contribute to the cache key, so a changed variable will not invalidate a cached build. That is not a regression today because caching does not work yet (turbo reports 0 of 2 cached). FOLLOW-UP for U7: declare the real variable set per app and return to strict."
 }
