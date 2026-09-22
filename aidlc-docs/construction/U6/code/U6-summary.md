@@ -221,3 +221,42 @@ build serving the wrong app.
 | Branch protection needs the four new check names | With Step 9 |
 | Copy `.env` into `apps/app/` for local development | Any developer |
 | Windows `MAX_PATH` — work was done at `C:\rm-u6` | Long paths still not enabled system-wide |
+
+---
+
+# Step 8 Progress — 2026-09-22
+
+## Pre-flight: complete
+
+| Item | Status |
+|---|---|
+| Rollback deployment IDs re-recorded | ✅ marketing `8843hlhft`, application `izjuyh7pl` |
+| Production badges confirmed | ✅ both, via Environment=Production filter |
+| Rollback rehearsal performed | ✅ promoted previous, confirmed, promoted back — both worked |
+
+The stale 2026-09-10 targets were caught in the process: `uv0ctkia2` now sits *behind* the pnpm
+migration and promoting it would have reverted production. Marketing's `8843hlhft` was still
+valid, since marketing has not deployed since 2026-08-31.
+
+## Marketing Root Directory → `apps/web`
+
+Changed. First build afterwards still failed with:
+
+```
+Error: The Next.js output directory ".next" was not found at "/vercel/path0/.next"
+```
+
+**That path is diagnostic.** `/vercel/path0` is the repository root; with Root Directory set to
+`apps/web` the error would name `/vercel/path0/apps/web/.next`. So that build ran *without* the new
+setting.
+
+Ruled out as causes: there is no root `vercel.json`; `apps/web/vercel.json` is `{"crons": []}` with
+no `buildCommand`; `apps/web/package.json` declares `prisma generate && next build`.
+
+Most likely the deployment predated the setting change, or Vercel's **Redeploy** reused the
+original deployment's configuration snapshot rather than current project settings. A *new*
+deployment is required to pick up a changed Root Directory.
+
+Also to verify: the **"Include files outside of the Root Directory in the Build Step"** checkbox
+must be enabled, or the build cannot see `pnpm-lock.yaml`, `pnpm-workspace.yaml` or `turbo.json`
+at the workspace root and the install fails.
