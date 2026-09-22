@@ -365,3 +365,33 @@ now exist on `main`, so every subsequent push and pull request is gated.
 
 Follow-ups: register a preview origin in Sanity CORS; close the superseded `u5-marketing` and
 `u1-*` pull requests.
+
+## Step 8b — Application Re-point (2026-09-22)
+
+Both settings changed together on `remonta-app`:
+
+| Setting | From | To |
+|---|---|---|
+| Root Directory | *(repository root)* | `apps/app` |
+| Production Branch | `app/main` | **`main`** |
+
+Neither works alone: `apps/app` while tracking `app/main` builds a directory that does not exist on
+that branch; `main` with the old root looks for an application that is not there.
+
+**Verified on a preview before production.** Branch `u6/app-verify` (`a360d68`) was pushed *after*
+the settings change specifically so `remonta-app` would build it as a Preview under the new root —
+a branch other than `main` cannot become Production, so this was safe by construction.
+
+| Check | Result |
+|---|---|
+| Preview build under Root Directory `apps/app` | ✅ |
+| Sign-in and a database-backed page on the preview | ✅ |
+
+That second row is **PS-2**, and it mattered more here than anywhere else in the unit: the Prisma
+client was moved today from the shared `node_modules` location into `apps/app/src/generated/client`,
+a path that had never run on Vercel. A green build proves compilation; only a real query proves the
+engine shipped inside the serverless function. The failure mode `unit-of-work.md` recorded as the
+accepted risk for U6 and U8 — *build succeeds, runtime fails* — is precisely this, and U4's
+monitoring being deferred means a human loading a page was the only detector available.
+
+Production remained on `izjuyh7pl` throughout, serving all four domains.
