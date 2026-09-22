@@ -4,7 +4,7 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - U5 COMPLETE (pnpm on both branches); U6 next
+- **Current Stage**: CONSTRUCTION - U5 COMPLETE and VERIFIED (PS-2 satisfied 2026-09-22); merge pending, then U6
 - **Phase A**: U1, U2, U3a, U3 COMPLETE and VERIFIED. **U4 resequenced** to run between U13 and U14 by user decision (2026-09-10) — monitoring deferred until the monorepo is done.
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 
@@ -93,12 +93,58 @@ runner. This is consistent with the user's answer to D1 (quality gates first).
   - Coverage: 54/54 FR, 30/31 NFR, 11/13 TD — gaps deliberate and recorded
 
 ### CONSTRUCTION PHASE (per unit)
-- [ ] **Functional Design** — EXECUTE (selectively, behaviour-changing units)
-- [ ] **NFR Requirements** — EXECUTE
-- [ ] **NFR Design** — EXECUTE
-- [ ] **Infrastructure Design** — EXECUTE
-- [ ] **Code Generation** — EXECUTE (always)
-- [ ] **Build and Test** — EXECUTE (always)
+
+**Per-unit stage tracking.** Units are completed fully (design + code) before the next begins.
+Phase A ran Code Generation only — the design stages were assessed as not applicable to
+tooling-and-gates units that change no behaviour.
+
+| Unit | Phase | Stages executed | Status |
+|---|---|---|---|
+| U1 — quality baselines | A | Code Generation | ✅ COMPLETE, CI-verified |
+| U2 — Vitest + fast-check | A | Code Generation | ✅ COMPLETE, CI-verified |
+| U3a — OTP consolidation | A | Code Generation | ✅ COMPLETE, **manually verified** (OTP round trip on preview, 2026-09-10) |
+| U3 — CI pipeline | A | Code Generation | ✅ COMPLETE, green on Node 20.x and 22.x |
+| U4 — observability | — | — | ⏸️ **RESEQUENCED** to between U13 and U14 (user decision 2026-09-10) |
+| U5 — pnpm + Turborepo | B | Code Generation | ✅ **COMPLETE and VERIFIED** — 6/6 checks green, PS-2 satisfied 2026-09-22 |
+| U6 — `apps/` relocation | B | not started | ⬜ next |
+
+### U5 status detail (2026-09-22)
+
+Complete on both branches. All six checks green on PR `u5-pnpm` → `app/main`, including both
+Vercel deployments. **PS-2 SATISFIED 2026-09-22** — a database-backed dashboard was loaded on the
+preview and queries succeeded, confirming the Prisma engine bundles and runs under pnpm. U5 is
+verified and ready to merge.
+
+**D4 REVERSED.** U5 originally chose D4=A (isolated linker) for phantom-dependency detection.
+Five preview deployments established that pnpm's isolated layout cannot deploy on Vercel:
+
+| Branch | `vercel.json` | Linker | Prisma output | Result |
+|---|---|---|---|---|
+| `u5-pnpm` (initial) | original, 3 globs | isolated | node_modules | ❌ |
+| `u5-test-nomono` | original | isolated | node_modules | ❌ |
+| `u5-test-nofn` | `src/generated/**` | isolated | node_modules | ❌ |
+| `u5-fix-output` | `src/generated/**` | isolated | src/generated | ❌ |
+| `u5-fix-hoisted` | original | **hoisted** | node_modules | ✅ |
+
+All failures were "internal Vercel error" with an empty build log; local builds succeed in every
+configuration. The linker is the only variable that changes the outcome. **The root cause inside
+Vercel is NOT established** — only the boundary is. An earlier theory that `includeFiles` could
+not reach the Prisma engine through pnpm's symlinks is true and measured, but is not the cause:
+`u5-fix-output` moved the client into the source tree and still failed.
+
+**Consequence for U6 and U7**: phantom-dependency detection is absent while `node-linker=hoisted`
+is set. Those are the units that move code between package boundaries — exactly when undeclared
+dependencies appear. Treat any dependency error during them with extra suspicion; pnpm will no
+longer raise it. Removing the line requires the Vercel failure understood rather than guessed
+(support ticket with the failing deployment IDs). Tracked for **U8**.
+
+### Per-unit stage checklist (applies to each remaining unit)
+- [ ] **Functional Design** — CONDITIONAL (behaviour-changing units)
+- [ ] **NFR Requirements** — CONDITIONAL
+- [ ] **NFR Design** — CONDITIONAL
+- [ ] **Infrastructure Design** — CONDITIONAL
+- [ ] **Code Generation** — ALWAYS
+- [ ] **Build and Test** — ALWAYS (after all units)
 
 ### OPERATIONS PHASE
 - [ ] **Operations** — placeholder
