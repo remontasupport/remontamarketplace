@@ -31,7 +31,9 @@ is behind the current state, not a fallback.
 | Commit date | 2026-08-31 | 2026-09-22 |
 | Domains | marketing domains | `app.remontaservices.com.au` **+3** |
 | Verified loading | ✅ (dashboard confirmed by user) | ✅ (dashboard confirmed by user) |
-| **Vercel deployment ID** | **`8843hlhft`** — pending confirmation, see below | ⬜ **STILL NEEDED** |
+| **Vercel deployment ID** | **`8843hlhft`** | **`izjuyh7pl`** |
+| Rollback URL | https://remontamarketplace-8843hlhft-remontas-projects.vercel.app/ | https://remonta-izjuyh7pl-remontas-projects.vercel.app/ |
+| Production badge confirmed | ⬜ to confirm | ⬜ to confirm |
 
 ### The commit SHA is not sufficient, and this is the distinction that matters
 
@@ -47,6 +49,13 @@ That second row is why the deployment ID is required rather than merely preferab
 U6 window the production branch holds the old structure while the project expects the new root,
 so a rebuild is the one thing that cannot be relied on. The whole point of recording a deployment
 ID is to have a recovery path that involves **no build at all**.
+
+### Note on the application project slug
+
+The application project displays as **`remonta-app`** but its deployment URLs use the slug
+**`remonta-`** (e.g. `remonta-izjuyh7pl-remontas-projects.vercel.app`). The 2026-09-10 file noted
+the same discrepancy. Worth knowing under pressure: searching for `remonta-app-<slug>` will not
+match.
 
 ### Where to find it
 
