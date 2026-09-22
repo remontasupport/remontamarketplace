@@ -7,7 +7,7 @@
  * - Optimized for serverless/Next.js API routes
  */
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@/generated/client'
 import { withAccelerate } from '@prisma/extension-accelerate'
 
 const createPrismaClient = () => {

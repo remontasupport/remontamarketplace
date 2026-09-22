@@ -1,5 +1,10 @@
 generator client {
   provider = "prisma-client-js"
+  // Explicit output, inside this app. Without it both apps generate to the
+  // shared node_modules/@prisma/client at the workspace root and whichever
+  // runs last overwrites the other (U6, 2026-09-22).
+  output        = "../src/generated/client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
