@@ -3,11 +3,12 @@ import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 import { getContractContent } from '@/config/contractContent'
 import jsPDF from 'jspdf'
+import { drawContractTable, PDF_TABLE_LEGEND } from '@/lib/contractPdf'
 
 /**
  * GET /api/admin/reports/agreement/abn
  * GET /api/admin/reports/agreement/tfn
- * Generate a blank template PDF of the contractor or casual employment agreement
+ * Generate a blank template PDF of the provider or casual employment agreement
  */
 export async function GET(
   request: NextRequest,
@@ -72,7 +73,7 @@ export async function GET(
     addSpacing(5)
     addText('and', 10)
     addSpacing(3)
-    addText(`${type === 'abn' ? 'Contractor' : 'Employee'} Name: _______________`, 10, true)
+    addText(`${type === 'abn' ? 'Provider' : 'Employee'} Name: _______________`, 10, true)
     addText(`${type === 'abn' ? 'ABN' : 'TFN'}: _______________`, 10)
     addText('Located at: _______________', 10)
     addSpacing(10)
@@ -85,6 +86,19 @@ export async function GET(
         const indent = paragraph.startsWith('•') || paragraph.startsWith('-') ? 10 : 0
         addText(paragraph, 9, false, indent)
       })
+      if (section.table) {
+        addSpacing(2)
+        addText(PDF_TABLE_LEGEND, 9)
+        addSpacing(2)
+        yPosition = drawContractTable(doc, section.table, {
+          margin,
+          pageWidth,
+          pageHeight,
+          startY: yPosition,
+        })
+        addSpacing(4)
+        section.table.notes?.forEach((note) => addText(note, 8))
+      }
       addSpacing(5)
     })
 
@@ -99,7 +113,7 @@ export async function GET(
     // Signature section
     addText('SIGNED:', 10, true)
     addSpacing(5)
-    addText(`${type === 'abn' ? 'Contractor' : 'Employee'} Signature: _______________`, 10)
+    addText(`${type === 'abn' ? 'Provider' : 'Employee'} Signature: _______________`, 10)
     addSpacing(5)
     addText('Name: _______________', 10)
     addText('Date: _______________', 10)

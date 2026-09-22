@@ -8,6 +8,7 @@
 import { useState, useCallback } from "react";
 import { jsPDF } from "jspdf";
 import { getContractContent } from "@/config/contractContent";
+import { drawContractTable, PDF_TABLE_LEGEND } from "@/lib/contractPdf";
 import ContractViewer from "./ContractViewer";
 import SignaturePad from "./SignaturePad";
 import Image from "next/image";
@@ -57,7 +58,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
   const contract = getContractContent(contractType);
   const isContractor = contractType === "abn";
-  const partyLabel = isContractor ? "Contractor" : "Employee";
+  const partyLabel = isContractor ? "Provider" : "Employee";
 
   const handleSignatureChange = useCallback((dataUrl: string | null) => {
     setSignature(dataUrl);
@@ -139,6 +140,19 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
         const indent = paragraph.startsWith("•") || paragraph.startsWith("-") ? 10 : 0;
         addText(paragraph, 9, false, indent);
       });
+      if (section.table) {
+        addSpacing(2);
+        addText(PDF_TABLE_LEGEND, 9);
+        addSpacing(2);
+        yPosition = drawContractTable(doc, section.table, {
+          margin,
+          pageWidth,
+          pageHeight,
+          startY: yPosition,
+        });
+        addSpacing(4);
+        section.table.notes?.forEach((note) => addText(note, 8));
+      }
       addSpacing(5);
     });
 
@@ -183,7 +197,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
     if (!partyName.trim()) {
       setError(
         isContractor
-          ? "Please enter the Company / Business / Sole Trader (Contractor) name"
+          ? "Please enter the Company / Business / Sole Trader (Provider) name"
           : "Please enter the Employee name"
       );
       return;
@@ -431,7 +445,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
               <div className="preamble-field-group">
                 <label className="preamble-field-label">
                   {isContractor
-                    ? "Company / Business / Sole Trader (Contractor) Name"
+                    ? "Company / Business / Sole Trader (Provider) Name"
                     : "Employee Name"}{" "}
                   <span className="preamble-required">*</span>
                 </label>
@@ -439,7 +453,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
                   type="text"
                   value={partyName}
                   onChange={(e) => setPartyName(e.target.value)}
-                  placeholder={isContractor ? "Enter company or contractor name" : "Enter employee name"}
+                  placeholder={isContractor ? "Enter company or provider name" : "Enter employee name"}
                   className="preamble-input"
                 />
               </div>

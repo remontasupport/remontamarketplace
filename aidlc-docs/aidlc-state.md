@@ -4,9 +4,7 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - **U6 IN PROGRESS**: steps 1-6 complete and committed on branch `u6/monorepo` (`f74c2aa`, pushed to origin). Steps 7-10 - push/PR verification, the Vercel re-point, merge to `main`, retire `app/main` - are OUTSTANDING and require Vercel dashboard access.
-- **Active working tree**: `C:\rm-u6` on branch `u6/monorepo`. The primary directory `C:\Users\Toton\Desktop\Remonta\remontamarketplace` sits on `app/main` at `6695212` (U5), which U6 supersedes and step 10 retires.
-- **Nothing is deployed**: Vercel untouched, `main` unchanged. Rollback targets recorded (marketing `8843hlhft`, application `uv0ctkia2`) but NOT rehearsed.
+- **Current Stage**: CONSTRUCTION - U6 steps 1-6 complete on `u6/reconcile`; steps 7-10 (push, Vercel re-point, merge, retire `app/main`) outstanding
 - **Phase A**: U1, U2, U3a, U3 COMPLETE and VERIFIED. **U4 resequenced** to run between U13 and U14 by user decision (2026-09-10) — monitoring deferred until the monorepo is done.
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 
@@ -95,53 +93,58 @@ runner. This is consistent with the user's answer to D1 (quality gates first).
   - Coverage: 54/54 FR, 30/31 NFR, 11/13 TD — gaps deliberate and recorded
 
 ### CONSTRUCTION PHASE (per unit)
-- [ ] **Functional Design** — EXECUTE (selectively, behaviour-changing units)
-- [ ] **NFR Requirements** — EXECUTE
-- [ ] **NFR Design** — EXECUTE
-- [ ] **Infrastructure Design** — EXECUTE
-- [ ] **Code Generation** — EXECUTE (always)
-- [ ] **Build and Test** — EXECUTE (always, after all units)
 
-#### Unit Progress
+**Per-unit stage tracking.** Units are completed fully (design + code) before the next begins.
+Phase A ran Code Generation only — the design stages were assessed as not applicable to
+tooling-and-gates units that change no behaviour.
 
-Sequence after the U4 resequencing: U1, U2, U3, U5, U6, U7, U8, U9, U10, U11, U12, U13, **U4**, U14, U15.
+| Unit | Phase | Stages executed | Status |
+|---|---|---|---|
+| U1 — quality baselines | A | Code Generation | ✅ COMPLETE, CI-verified |
+| U2 — Vitest + fast-check | A | Code Generation | ✅ COMPLETE, CI-verified |
+| U3a — OTP consolidation | A | Code Generation | ✅ COMPLETE, **manually verified** (OTP round trip on preview, 2026-09-10) |
+| U3 — CI pipeline | A | Code Generation | ✅ COMPLETE, green on Node 20.x and 22.x |
+| U4 — observability | — | — | ⏸️ **RESEQUENCED** to between U13 and U14 (user decision 2026-09-10) |
+| U5 — pnpm + Turborepo | B | Code Generation | ✅ **COMPLETE and VERIFIED** — 6/6 checks green, PS-2 satisfied 2026-09-22 |
+| U6 — `apps/` relocation | B | Code Generation | 🔶 **STEPS 1–6 OF 10** — relocation done, `apps/app` refreshed 2026-09-22; NOT deployed |
 
-| Unit | Status | Evidence |
-|---|---|---|
-| U1 — baseline quality gates | COMPLETE, verified | `0bd28dc` app + marketing; CI green on both PRs |
-| U2 — test frameworks | COMPLETE, verified | 41 tests passing |
-| U3a — OTP consolidation | COMPLETE, verified | Only Phase A runtime change; OTP round trip confirmed by hand on preview |
-| U3 — CI pipeline | COMPLETE, verified | `94823d9`; CI green Node 20.x and 22.x |
-| U5 — pnpm + Turborepo | COMPLETE | `6695212` (app/main), `c9b5c58` (marketing). Caught 2 phantom deps |
-| **U6 — `apps/` relocation** | **STEPS 1-6 OF 10** | `0485312` (961 files), `f74c2aa` (rollback targets). NOT deployed |
-| U7 — `packages/*` extraction | NOT STARTED | Blocked on U6 merge |
-| U8 — Prisma relocation | NOT STARTED | The other "build succeeds, runtime fails" unit |
-| U9-U13 | NOT STARTED | |
-| U4 — observability + restore drill | RESEQUENCED, not started | Must precede U15 |
-| U14, U15 | NOT STARTED | U15 holds the only irreversible action in the migration |
+### U5 status detail (2026-09-22)
 
-#### U6 — Outstanding Work
+Complete on both branches. All six checks green on PR `u5-pnpm` → `app/main`, including both
+Vercel deployments. **PS-2 SATISFIED 2026-09-22** — a database-backed dashboard was loaded on the
+preview and queries succeeded, confirming the Prisma engine bundles and runs under pnpm. U5 is
+verified and ready to merge.
 
-| Step | Status |
-|---|---|
-| 0 — pre-flight | PARTIAL: deployment IDs recorded. **Long paths not enabled, rollback not rehearsed, Vercel settings not screenshotted, branch protection not confirmed** |
-| 7 — push, PR, CI green on both apps | PARTIAL: branch pushed to `origin/u6/monorepo`; PR and CI not confirmed. Vercel builds will fail from the old Root Directory — expected and harmless |
-| 8 — re-point Vercel, marketing first | NOT DONE: marketing Root Dir → `apps/web`; application Root Dir → `apps/app` **and Production Branch `app/main` → `main`** — the most consequential setting in the unit |
-| 9 — merge to `main`, verify production | NOT DONE: must confirm **each project serves the right product** — a green build serving the wrong app is this unit's real failure mode, not a failed build |
-| 10 — tag `archive/app-main-final`, delete `app/main` | NOT DONE |
+**D4 REVERSED.** U5 originally chose D4=A (isolated linker) for phantom-dependency detection.
+Five preview deployments established that pnpm's isolated layout cannot deploy on Vercel:
 
-#### Carried Follow-ups
+| Branch | `vercel.json` | Linker | Prisma output | Result |
+|---|---|---|---|---|
+| `u5-pnpm` (initial) | original, 3 globs | isolated | node_modules | ❌ |
+| `u5-test-nomono` | original | isolated | node_modules | ❌ |
+| `u5-test-nofn` | `src/generated/**` | isolated | node_modules | ❌ |
+| `u5-fix-output` | `src/generated/**` | isolated | src/generated | ❌ |
+| `u5-fix-hoisted` | original | **hoisted** | node_modules | ✅ |
 
-| Item | Origin | Severity |
-|---|---|---|
-| Turborepo cache never hits (`Cached: 0 of 2`) | U6 | Optimisation, not correctness |
-| `turbo run build` needs `--concurrency=1`; parallel `prisma generate` races on Windows | U6 | Workaround in place |
-| Branch protection needs the 4 new check names (`App Quality` / `Web Quality` x Node 20.x, 22.x) | U6 | Do with step 9 |
-| Developers must copy `.env` / `.env.local` into `apps/app/` — Next loads env relative to the app root | U6 | Local dev only; Vercel injects directly |
-| Windows `MAX_PATH` — work done from `C:\rm-u6`; long paths still not enabled system-wide | U5, U6 | Worsens at U7 |
-| `/api/admin/chat` orphaned after the chatbot deletion (ADMIN-guarded, left in place) | U5 | Low |
-| `nodemailer` 6.10.1 vs `@auth/core` `^7.0.7` peer conflict — the sole reason for `legacy-peer-deps` | U5 | U13 resolves |
-| Restore has never been verified (P8) | U4 | **Blocks U15** |
+All failures were "internal Vercel error" with an empty build log; local builds succeed in every
+configuration. The linker is the only variable that changes the outcome. **The root cause inside
+Vercel is NOT established** — only the boundary is. An earlier theory that `includeFiles` could
+not reach the Prisma engine through pnpm's symlinks is true and measured, but is not the cause:
+`u5-fix-output` moved the client into the source tree and still failed.
+
+**Consequence for U6 and U7**: phantom-dependency detection is absent while `node-linker=hoisted`
+is set. Those are the units that move code between package boundaries — exactly when undeclared
+dependencies appear. Treat any dependency error during them with extra suspicion; pnpm will no
+longer raise it. Removing the line requires the Vercel failure understood rather than guessed
+(support ticket with the failing deployment IDs). Tracked for **U8**.
+
+### Per-unit stage checklist (applies to each remaining unit)
+- [ ] **Functional Design** — CONDITIONAL (behaviour-changing units)
+- [ ] **NFR Requirements** — CONDITIONAL
+- [ ] **NFR Design** — CONDITIONAL
+- [ ] **Infrastructure Design** — CONDITIONAL
+- [ ] **Code Generation** — ALWAYS
+- [ ] **Build and Test** — ALWAYS (after all units)
 
 ### OPERATIONS PHASE
 - [ ] **Operations** — placeholder

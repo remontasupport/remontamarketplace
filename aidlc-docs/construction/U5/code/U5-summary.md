@@ -2,8 +2,8 @@
 
 **Unit**: U5 (Phase B — Workspace, in place)
 **Date**: 2026-09-10
-**Decisions**: D1=B (delete the chatbot), D2=A (`packageManager` + Corepack), D3=A (both products), D4=A (isolated linker)
-**Status**: Complete on both branches. `main` committed `c9b5c58`; `app/main` uncommitted.
+**Decisions**: D1=B (delete the chatbot), D2=A (`packageManager` + Corepack), D3=A (both products), ~~D4=A (isolated linker)~~ → **D4 REVERSED 2026-09-22 to `node-linker=hoisted`** (see Addendum)
+**Status**: Code complete on both branches. `main` `c9b5c58`; `app/main` `fd4af99` (PR `u5-pnpm`, all six checks green). **PS-2 VERIFIED** 2026-09-22 (dashboard loads, queries succeed).
 
 ---
 
@@ -97,6 +97,10 @@ with its zero TypeScript errors: the marketing tree is simply in better shape.
 `node-linker` is **not** set to `hoisted` (D4=A). Hoisting would have given pnpm's speed and none
 of its safety — both phantom dependencies above would have silently kept working.
 
+> ⚠️ **SUPERSEDED 2026-09-22.** D4 was reversed: `node-linker=hoisted` is now set, because pnpm's
+> isolated layout could not deploy on Vercel. The reasoning above still stands as the reason to
+> remove it again — see the Addendum at the end of this document.
+
 ---
 
 ## 4. Turborepo
@@ -173,7 +177,7 @@ every path. If installs start failing after U6, this is the first thing to check
 | Invariant | Status |
 |---|---|
 | **PS-1** Both apps build and deploy | ✅ both verified locally |
-| **PS-2** Preview-verified | ⏳ **must load a database-backed page**, not just a static one |
+| **PS-2** Preview-verified | ✅ **VERIFIED 2026-09-22** — dashboard loaded on preview; see Addendum |
 | **PS-3** Single `git revert` | ✅ restores `package-lock.json`; Vercel reverts to npm on the next build |
 | **PS-4** Additive before subtractive | ⚠️ Partial — `package-lock.json` deleted as `pnpm-lock.yaml` arrives. Keeping both would make Vercel's package-manager detection ambiguous, which is worse. |
 | **PS-5** No destructive DB change | ✅ N/A |
@@ -195,3 +199,94 @@ production.
 | Windows `MAX_PATH` may bite once paths deepen | **U6** — watch for it |
 | Turborepo caching cannot be exercised until packages exist | **U6/U7** |
 | `pnpm audit` count differs from `npm audit` | Recorded above; audit remains report-only |
+
+---
+
+# Addendum — 2026-09-22: Vercel Deployment Failure and D4 Reversal
+
+U5 was recorded complete on 2026-09-10 but had **never been deployed**. The AI-DLC commits
+were not merged to `origin/app/main`, so Vercel had never built under pnpm. Opening the pull
+request on 2026-09-22 exercised that path for the first time, and **both Vercel deployments
+failed**.
+
+## What Failed, and How It Was Narrowed
+
+CI passed throughout — `pnpm install --frozen-lockfile` works on Node 20.x and 22.x. But
+`ci.yml` deliberately does not build, leaving Vercel as the only thing that does. Local builds
+from a clean `pnpm install` succeeded in every configuration tried, so the failure could not be
+reproduced off-platform.
+
+Narrowed by elimination across five preview deployments:
+
+| Branch | `vercel.json` | Linker | Prisma output | Result |
+|---|---|---|---|---|
+| `u5-pnpm` | original, 3 globs | isolated | node_modules | ❌ |
+| `u5-test-nomono` | original | isolated | node_modules | ❌ |
+| `u5-test-nofn` | `src/generated/**` | isolated | node_modules | ❌ |
+| `u5-fix-output` | `src/generated/**` | isolated | **src/generated** | ❌ |
+| `u5-fix-hoisted` | original | **hoisted** | node_modules | ✅ |
+
+Every failure reported "The deployment failed because of an internal Vercel error" with an
+**empty build log**. `u5-test-nomono` ruled out `turbo.json` and `pnpm-workspace.yaml`.
+`u5-test-nofn` ruled out Next's own file tracing being sufficient.
+
+**The linker is the only variable that changes the outcome.**
+
+## A Theory That Was Wrong, Recorded Because It Was Acted On
+
+The working hypothesis was that `vercel.json`'s `includeFiles` globs
+(`node_modules/@prisma/client/**`, `node_modules/.prisma/**`) cannot reach the Prisma engine
+under pnpm, which places it at
+`node_modules/.pnpm/@prisma+client@<hash>/node_modules/.prisma/client/`.
+
+**That part is true and was measured.** On a clean pnpm install, root `.prisma` does not exist
+and `@prisma/client` is a symlink. The `node_modules/.prisma` directory on the development
+machine is dated **2026-03-05**, six months before the migration — an npm-era leftover that made
+the local tree look correct and hid the discrepancy.
+
+**But it is not the cause.** `u5-fix-output` gave `prisma/schema.prisma` an explicit
+`output = "../src/generated/client"`, matching what `auth-schema.prisma` already does, putting
+the engine in the source tree where `includeFiles` reaches it — **and it still failed**. That
+falsified the theory. It was reverted.
+
+A secondary possibility for that specific failure: `src/generated` would have held ~82 MB across
+both clients, and `includeFiles` injects it into every function, which could independently exceed
+function size limits. Not investigated further, since the branch was abandoned.
+
+**The root cause inside Vercel is not established.** Only the boundary is.
+
+Also tried and rejected: `public-hoist-pattern[]=*prisma*` does **not** work, because
+`@prisma/client` is a direct dependency, which pnpm links at the root regardless of hoist
+patterns.
+
+## The Fix, and What It Costs
+
+`.npmrc` gains `node-linker=hoisted`, **reversing D4=A**.
+
+Hoisting restores npm-like flat resolution. The two phantom dependencies U5 found are already
+declared, so nothing regresses today — but the guard against new ones is gone, **including
+through U6 and U7**, the units that move code between package boundaries and therefore the
+window where phantom dependencies are most likely to appear.
+
+During U6 and U7: treat any dependency error with extra suspicion. pnpm will no longer raise it.
+
+Removing the line requires the Vercel failure actually understood — a support ticket carrying the
+failing deployment IDs, since the build log is empty and local reproduction succeeds. **Tracked
+for U8.**
+
+## Production Safety, Restated
+
+| Invariant | Status |
+|---|---|
+| **PS-1** Both apps build and deploy | ✅ both Vercel deployments green on `u5-pnpm` |
+| **PS-2** Preview-verified | ✅ **VERIFIED 2026-09-22** — dashboard loaded on the preview, database-backed, no errors |
+| **PS-3** Single `git revert` | ✅ unchanged |
+
+**Production was never touched.** Vercel does not promote a failed build, so every failure above
+was a failed preview. The npm-built deployment served throughout.
+
+## Process Note
+
+The failure was found on a preview branch because the push was deliberately routed to
+`u5-pnpm` rather than to `app/main`. Had U5 been pushed to the production branch as originally
+planned, this would have been a failed production deploy instead.

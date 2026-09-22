@@ -189,7 +189,7 @@ export default function ReportsContent() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Agreement Templates</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-              {/* Contractor Agreement (ABN) */}
+              {/* Provider Agreement (ABN) */}
               <div className="border border-gray-200 rounded-lg p-6 hover:border-orange-300 transition-colors">
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-orange-100 rounded-lg">
@@ -198,8 +198,8 @@ export default function ReportsContent() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">Contractor Agreement (ABN)</h3>
-                    <p className="text-sm text-gray-500 mt-1">Remonta Platform Contractor Agreement — Independent Contractor template</p>
+                    <h3 className="font-medium text-gray-900">Provider Agreement (ABN)</h3>
+                    <p className="text-sm text-gray-500 mt-1">Remonta Platform Provider Agreement — Independent Provider template</p>
                     <button
                       onClick={() => handleGenerateAgreement('abn')}
                       disabled={generatingAgreement !== null || generatingReport !== null}
