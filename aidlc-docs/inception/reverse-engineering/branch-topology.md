@@ -175,3 +175,48 @@ Open questions for Requirements Analysis:
 - Which product owns the Zoho integration and its OAuth flow?
 - Does the contractor-search integration stay a cross-database call, or does the data move?
 - Is the mobile application in scope now, or a later phase gated on backend extraction?
+
+---
+
+## Vercel Deployment Topology (discovered 2026-09-22)
+
+This document previously recorded **git** topology only. It said nothing about which branch each
+Vercel project promotes to production — a gap that matters because **U6 changes the Root Directory
+on both projects**, and its rollback plan depends on knowing which deployments are production ones.
+
+Measured from the Vercel dashboard:
+
+| Vercel project | Production branch | Production domains | Last production deploy (as at 2026-09-22) |
+|---|---|---|---|
+| `remonta-app` | **`app/main`** | `app.remontaservices.com.au` **+3 more** | `6ebb7b1` — 2026-09-22, pnpm, **verified working** |
+| `remontamarketplace` | **`main`** | (marketing domains) | `9a09ac2` "fixed the provide-support" — **2026-08-31** |
+
+Both projects are connected to the **same** GitHub repository, `remontasupport/remontamarketplace`,
+and both build from the **repository root**. That is the coupling U6 exists to separate: today a
+push to either branch causes *both* projects to build it, one as production and one as a preview.
+
+### Consequences for U6
+
+1. **`app/main` is a production branch.** A merge into it deploys to four live domains. It is not
+   an integration branch in any safe sense.
+2. **Rollback targets to record before changing any Root Directory setting**:
+   - `remonta-app` → deployment for `6ebb7b1`
+   - `remontamarketplace` → deployment for `9a09ac2` (2026-08-31)
+3. **Marketing production is three weeks stale** relative to the app. Its last deploy predates the
+   entire AI-DLC effort, so merging `u5-marketing` will be its first deployment in three weeks —
+   and its first ever under pnpm.
+4. The plan's instruction to run U6 **per project, marketing first** is confirmed correct: marketing
+   carries one product on one branch, and its blast radius is smaller.
+
+### Open risk for the marketing side
+
+`main` has **no `.npmrc`**, so it runs pnpm's **isolated** linker — the configuration that failed
+five consecutive Vercel deployments on the app (see `construction/U5/code/U5-summary.md`, Addendum).
+Marketing also carries Prisma (`@prisma/client`, `prisma`, and `prisma generate` in its build
+command), so it is exposed to the same failure mode.
+
+A fix is prepared but deliberately **not applied**: branch `u5-marketing-fix` (`48fb35d`) adds
+`node-linker=hoisted`. It should be applied **only if** `u5-marketing`'s preview deployment fails,
+since applying it otherwise would give up pnpm's phantom-dependency detection on the one product
+where that detection has already proven its worth — it caught `@portabletext/react` undeclared in
+live newsroom-rendering code.
