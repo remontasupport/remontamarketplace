@@ -33,7 +33,8 @@ is behind the current state, not a fallback.
 | Verified loading | ✅ (dashboard confirmed by user) | ✅ (dashboard confirmed by user) |
 | **Vercel deployment ID** | **`8843hlhft`** | **`izjuyh7pl`** |
 | Rollback URL | https://remontamarketplace-8843hlhft-remontas-projects.vercel.app/ | https://remonta-izjuyh7pl-remontas-projects.vercel.app/ |
-| Production badge confirmed | ⬜ to confirm | ⬜ to confirm |
+| Production badge confirmed | ✅ `9a09ac2`, Production, Aug 31 | ✅ `4a826b2`, Production, Ready 2m 6s |
+| Confirmed by | Deployments list, Environment=Production filter | Deployments list, Environment=Production filter |
 
 ### The commit SHA is not sufficient, and this is the distinction that matters
 
