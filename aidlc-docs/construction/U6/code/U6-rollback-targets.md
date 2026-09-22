@@ -9,15 +9,17 @@ rebuild**. This is the primary recovery mechanism for the highest-risk unit in t
 
 ---
 
-## ⚠️ Why the 2026-09-10 Targets Must Not Be Used
+## ⚠️ The Two 2026-09-10 Targets Are NOT Equally Valid
 
 The original file recorded `uv0ctkia2` (application) and `8843hlhft` (marketing) on 2026-09-10.
+They have diverged in status and must be treated differently.
 
-**Promoting `uv0ctkia2` today would roll back the entire pnpm migration and the Provider
-Agreement v2 work**, both of which reached production on 2026-09-22. It is behind the current
-state, not a safe fallback. Those values are retained below for history only.
+**Application — `uv0ctkia2` is DANGEROUS.** Promoting it today would roll back the entire pnpm
+migration and the Provider Agreement v2 work, both of which reached production on 2026-09-22. It
+is behind the current state, not a fallback.
 
----
+**Marketing — `8843hlhft` is probably still CURRENT.** Marketing has not deployed since
+2026-08-31, so the 2026-09-10 recording captured the same deployment that is live today.
 
 ## Current Production State (2026-09-22)
 
@@ -29,7 +31,7 @@ state, not a safe fallback. Those values are retained below for history only.
 | Commit date | 2026-08-31 | 2026-09-22 |
 | Domains | marketing domains | `app.remontaservices.com.au` **+3** |
 | Verified loading | ✅ (dashboard confirmed by user) | ✅ (dashboard confirmed by user) |
-| **Vercel deployment ID** | ⬜ **STILL NEEDED** | ⬜ **STILL NEEDED** |
+| **Vercel deployment ID** | **`8843hlhft`** — pending confirmation, see below | ⬜ **STILL NEEDED** |
 
 ### The commit SHA is not sufficient, and this is the distinction that matters
 
@@ -74,4 +76,20 @@ than assumed.
 | | Marketing | Application |
 |---|---|---|
 | Deployment ID | `8843hlhft` | `uv0ctkia2` |
-| Status | Superseded | **Behind the pnpm migration — would revert production** |
+| Status | **Probably still CURRENT** — see correction | **Behind the pnpm migration — would revert production** |
+
+### Correction, 2026-09-22
+
+This document initially marked *both* 2026-09-10 targets as superseded. That was correct for the
+application and **wrong for marketing**.
+
+Marketing has not deployed to production since **2026-08-31** (`9a09ac2`, "fixed the
+provide-support"). The 2026-09-10 recording therefore captured the *same* deployment that is live
+today, so `8843hlhft` remains a valid rollback target rather than a stale one.
+
+The asymmetry is the point: the application deployed twice on 2026-09-22 and its old target is now
+dangerous; marketing has been untouched for three weeks and its old target still holds. A blanket
+"the old IDs are stale" rule would have been wrong in one direction and is worth not repeating.
+
+**To confirm**: in `remontamarketplace` → Deployments → Environment = Production, check that the
+top row (`9a09ac2`, Aug 31) is the deployment whose URL carries `8843hlhft`.
