@@ -1,0 +1,5 @@
+U6 application re-point verification marker.
+
+This file exists only to give the remonta-app Vercel project a branch to build
+as a PREVIEW under Root Directory = apps/app, before anything reaches
+production. Delete it once the re-point is verified.
