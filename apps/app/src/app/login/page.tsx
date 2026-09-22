@@ -1,0 +1,368 @@
+"use client";
+
+/**
+ * Login Page
+ *
+ * Handles authentication for all user types (Worker, Client, Coordinator)
+ * Automatically redirects to the appropriate dashboard based on user role
+ */
+
+import { useState, useEffect, Suspense } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { getRedirectPathForRole } from "@/types/auth";
+import Link from 'next/link';
+
+/**
+ * Extracts a safe relative redirect path from a callbackUrl.
+ * withAuth provides the full absolute URL (e.g. https://app.remontaservices.com.au/dashboard/...)
+ * so we extract the pathname+search and validate it's an internal dashboard route.
+ * Returns null if the URL is not safe (e.g. external domain).
+ */
+function getSafeRedirectPath(url: string): string | null {
+  if (!url) return null;
+
+  // Already a relative path — validate it's not protocol-relative (//)
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+
+  // Absolute URL — extract path only if it's a recognised internal route
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname + parsed.search + parsed.hash;
+    if (path.startsWith("/dashboard/") || path.startsWith("/admin/") || path.startsWith("/apply")) return path;
+  } catch {
+    // Malformed URL — ignore
+  }
+
+  return null;
+}
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Support two paths:
+  // 1. Direct ?apply=ID  (e.g. middleware forwarded it)
+  // 2. apply=ID embedded inside ?callbackUrl  (e.g. withAuth redirect for unauthenticated users)
+  const rawCallbackUrl = searchParams.get("callbackUrl") ?? "";
+  const applyJobId = searchParams.get("apply") ?? (() => {
+    try {
+      return new URL(rawCallbackUrl, "https://x").searchParams.get("apply");
+    } catch {
+      return null;
+    }
+  })();
+  const { data: session, status } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // On mount, check localStorage for an active lockout
+  useEffect(() => {
+    const lockoutUntil = localStorage.getItem("lockoutUntil");
+    if (lockoutUntil) {
+      const remaining = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 1000);
+      if (remaining > 0) {
+        setLockoutSeconds(remaining);
+      } else {
+        localStorage.removeItem("lockoutUntil");
+      }
+    }
+  }, []);
+
+  // Countdown timer for account lockout
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setTimeout(() => {
+      setLockoutSeconds((s) => {
+        const next = Math.max(0, s - 1);
+        if (next === 0) localStorage.removeItem("lockoutUntil");
+        return next;
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [lockoutSeconds]);
+
+  // Auto-redirect if user is already authenticated
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role) {
+      // Honour the deep-link callbackUrl (e.g. from an email link) if it's safe.
+      // Fall back to the default role-based dashboard otherwise.
+      const safeCallback = getSafeRedirectPath(rawCallbackUrl);
+      let redirectPath = safeCallback ?? getRedirectPathForRole(session.user.role);
+      if (!safeCallback && applyJobId && session.user.role === "WORKER") {
+        redirectPath += `?apply=${applyJobId}`;
+      }
+      window.location.href = redirectPath;
+    }
+  }, [status, session, router, applyJobId, rawCallbackUrl]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      // Attempt to sign in
+      const result = await signIn("credentials", {
+        email,
+        password,
+        rememberMe: rememberMe.toString(),
+        redirect: false, // We handle redirect manually
+      });
+
+      if (result?.error) {
+        if (result.error.startsWith("ACCOUNT_LOCKED:")) {
+          const seconds = parseInt(result.error.split(":")[1]) || 30;
+          localStorage.setItem("lockoutUntil", (Date.now() + seconds * 1000).toString());
+          setLockoutSeconds(seconds);
+          setError("");
+        } else {
+          setError("Invalid email or password");
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch the session to get user role
+      const response = await fetch("/api/auth/session");
+      const session = await response.json();
+
+      if (session?.user?.role) {
+        // Honour the deep-link callbackUrl (e.g. from an email link) if it's safe.
+        // Fall back to the default role-based dashboard otherwise.
+        const safeCallback = getSafeRedirectPath(rawCallbackUrl);
+        let redirectPath = safeCallback ?? getRedirectPathForRole(session.user.role);
+        if (!safeCallback && applyJobId && session.user.role === "WORKER") {
+          redirectPath += `?apply=${applyJobId}`;
+        }
+
+        router.push(redirectPath);
+        router.refresh();
+      } else {
+        setError("Unable to determine user role");
+        setIsLoading(false);
+      }
+    } catch (error) {
+
+      setError("An error occurred during login");
+      setIsLoading(false);
+    }
+  };
+
+  // Show loading state while checking session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-gray-900 border-r-transparent"></div>
+              <p className="text-sm text-gray-600 font-poppins">Checking authentication...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-4">
+          {/* Remonta Logo */}
+          <div className="flex justify-center">
+            <Link href="https://www.remontaservices.com.au/">
+            <Image
+              src="/logo/logo.svg"
+
+              alt="Remonta Logo"
+              width={180}
+              height={60}
+              priority
+              className="h-auto"
+            />
+            </Link>
+
+          </div>
+          <CardTitle className="text-3xl font-cooper text-gray-900 text-center">
+            Welcome Back
+          </CardTitle>
+          <CardDescription className="text-center font-poppins">
+            Sign in to your Remonta account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error Alert */}
+            {lockoutSeconds > 0 ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="font-poppins">
+                  Too many failed attempts. Try again in{" "}
+                  <span className="font-semibold">{lockoutSeconds}</span>{" "}
+                  second{lockoutSeconds !== 1 ? "s" : ""}.
+                </AlertDescription>
+              </Alert>
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="font-poppins">{error}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-base font-poppins font-semibold">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading || lockoutSeconds > 0}
+                className="font-poppins"
+              />
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-base font-poppins font-semibold">
+                  Password
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => router.push("/forgot-password")}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-poppins font-medium"
+                  disabled={isLoading || lockoutSeconds > 0}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading || lockoutSeconds > 0}
+                  className="font-poppins pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800"
+                  disabled={isLoading || lockoutSeconds > 0}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center gap-2">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={isLoading || lockoutSeconds > 0}
+                className="h-4 w-4 rounded border-gray-300 accent-[#0C1628] cursor-pointer"
+              />
+              <label htmlFor="rememberMe" className="text-sm font-poppins text-gray-600 cursor-pointer select-none">
+                Remember me
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full bg-[#0C1628] hover:bg-[#1a2740] text-white font-poppins font-medium"
+              disabled={isLoading || lockoutSeconds > 0}
+            >
+              {isLoading ? "Signing in..." : lockoutSeconds > 0 ? `Try again in ${lockoutSeconds}s` : "Sign in"}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-4 text-gray-500 font-poppins">
+                  Don't have an account?
+                </span>
+              </div>
+            </div>
+
+            {/* Registration Links */}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 font-poppins text-center">
+                Register as:
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 font-poppins"
+                  onClick={() => router.push("/registration/worker")}
+                  disabled={isLoading}
+                >
+                  Worker
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 font-poppins"
+                  onClick={() => router.push("/registration/clients")}
+                  disabled={isLoading}
+                >
+                  Client
+                </Button>
+                {/* Coordinator registration temporarily disabled */}
+                {/* <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 font-poppins text-xs"
+                  onClick={() => router.push("/registration/support-coordinator")}
+                  disabled={isLoading}
+                >
+                  Coordinator
+                </Button> */}
+              </div>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}

@@ -1,0 +1,77 @@
+# Supply-chain checks for the whole workspace.
+#
+# Separate from the per-app workflows because it covers one shared lockfile --
+# splitting it per app would report the same findings twice.
+#
+# REPORT ONLY. There is an existing vulnerability backlog, and failing on it
+# would block every pull request -- the same trap the type and lint baselines
+# were built to avoid. It reports on every run instead of hiding, with a
+# documented path to tightening.
+
+name: CI (supply chain)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  supply-chain:
+    name: Supply chain
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Two criticals are worth clearing first, after which this should become
+      # `pnpm audit --audit-level critical` without continue-on-error:
+      #   - @auth/core (via @auth/prisma-adapter) -- on the authentication path
+      #   - jspdf -- path traversal; possibly deletable outright, since
+      #     @react-pdf/renderer already covers PDF generation
+      #
+      # Note: pnpm audit counts per dependency PATH where npm counted per
+      # package, so the totals are much larger than the npm-era figures. No new
+      # vulnerabilities -- different arithmetic.
+      - name: Dependency audit (report only)
+        continue-on-error: true
+        run: |
+          echo "::group::pnpm audit summary"
+          pnpm audit || true
+          echo "::endgroup::"
+          echo "Audit is REPORT ONLY. See aidlc-docs/construction/U3/code/U3-summary.md."
+
+      # SECURITY-10: Software Bill of Materials. cdxgen reads the pnpm lockfile.
+      # continue-on-error because an SBOM tool failing should not block a merge --
+      # the artifact is for audit, not a gate.
+      - name: Generate SBOM
+        continue-on-error: true
+        run: npx --yes @cyclonedx/cdxgen@^11 -t pnpm -o sbom.cyclonedx.json
+
+      - name: Upload SBOM
+        if: hashFiles('sbom.cyclonedx.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cyclonedx.json
+          retention-days: 90

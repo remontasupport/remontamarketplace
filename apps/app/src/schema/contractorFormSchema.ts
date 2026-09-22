@@ -1,0 +1,64 @@
+import * as z from "zod";
+
+export const contractorFormSchema = z.object({
+  // Step 1 - Location
+  location: z.string().min(1, "Please enter a valid Suburb"),
+
+  // Step 2 - Personal Information
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string()
+    .min(1, "Email address is required")
+    .email("Please enter a valid email address"),
+  mobile: z.string()
+    .min(1, "Mobile number is required")
+    .refine((mobile) => {
+      const cleanMobile = mobile.replace(/\D/g, '');
+      return (
+        (cleanMobile.length === 10 && cleanMobile.startsWith('04')) ||
+        (cleanMobile.length === 11 && cleanMobile.startsWith('614')) ||
+        (mobile.startsWith('+61') && cleanMobile.length === 11 && cleanMobile.startsWith('614'))
+      );
+    }, "Please enter a valid Australian mobile number (e.g., 04XX XXX XXX)"),
+  password: z.string()
+    .min(8, "Use 8 characters or more for your password")
+    .refine(
+      (password) => {
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasLowercase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[@!#$%^&*(),.?":{}|<>]/.test(password);
+        return hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+      },
+      "Password must include uppercase and lowercase letters, numbers and special characters (e.g. @, !, #, %, %)"
+    ),
+
+  // Step 3 - Services
+  services: z.array(z.string()).min(1, "Please select at least one service"),
+  supportWorkerCategories: z.array(z.string()).optional(),
+
+  // Step 4 - Photo & Consent
+  photo: z.string().min(1, "Profile photo is required"),
+  consentProfileShare: z.boolean().refine((val) => val === true, "Profile sharing consent is required"),
+
+  // Optional fields
+  availability: z.string().optional(),
+  startDate: z.string().optional(),
+});
+
+export type ContractorFormData = z.infer<typeof contractorFormSchema>;
+
+export const contractorFormDefaults = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  mobile: "",
+  password: "",
+  services: [],
+  supportWorkerCategories: [],
+  location: "",
+  availability: "",
+  startDate: "",
+  photo: "",
+  consentProfileShare: false,
+};

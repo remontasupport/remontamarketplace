@@ -1,0 +1,139 @@
+/**
+ * Other Requirements Upload API
+ *
+ * Handles optional document uploads to Vercel Blob storage
+ * Stores in verification_requirements table
+ * Accepts PDFs and images for additional certifications
+ *
+ * POST /api/upload/other-requirements
+ */
+
+import { NextResponse } from "next/server";
+import { put } from "@vercel/blob";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth.config";
+import { authPrisma } from "@/lib/auth-prisma";
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+
+export async function POST(request: Request) {
+
+
+  try {
+    // 1. Authentication
+    const session = await getServerSession(authOptions);
+    
+
+    if (!session?.user?.id) {
+    
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 2. Parse form data
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const documentType = formData.get("documentType") as string;
+    const documentName = formData.get("documentName") as string; // Custom name from user
+
+    if (!file) {
+     
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (!documentName || documentName.trim() === "") {
+     
+      return NextResponse.json({ error: "Document name is required" }, { status: 400 });
+    }
+
+    // 3. Validate file
+ 
+
+    if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+
+      return NextResponse.json(
+        { error: "Invalid file type. Only PDF, JPG, PNG, WebP, and HEIC are allowed." },
+        { status: 400 }
+      );
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+     
+      return NextResponse.json(
+        { error: "File too large. Maximum size is 50MB." },
+        { status: 400 }
+      );
+    }
+
+  
+
+    // 4. Get worker profile
+   
+    const workerProfile = await authPrisma.workerProfile.findUnique({
+      where: { userId: session.user.id },
+      select: { id: true },
+    });
+
+    if (!workerProfile) {
+   
+      return NextResponse.json({ error: "Worker profile not found" }, { status: 404 });
+    }
+
+   
+
+    // 5. Upload to Vercel Blob
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const timestamp = Date.now();
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const blobPath = `other-requirements/${session.user.id}/${timestamp}-${sanitizedFileName}`;
+
+    const blob = await put(blobPath, buffer, {
+      access: "public",
+      contentType: file.type,
+      addRandomSuffix: false,
+    });
+
+
+    // 6. Create new document record
+    // Note: Unlike other requirements, we allow multiple documents of the same type
+    // So we always create a new record instead of updating existing ones
+
+    const verificationReq = await authPrisma.verificationRequirement.create({
+      data: {
+        workerProfileId: workerProfile.id,
+        requirementType: "other-requirement",
+        requirementName: documentName.trim(), // Save user's custom name to requirementName
+        isRequired: false, // Optional documents
+        documentUrl: blob.url,
+        documentUploadedAt: new Date(),
+        status: "SUBMITTED",
+        submittedAt: new Date(),
+        updatedAt: new Date(),
+        documentCategory: null, // Not a primary/secondary/working rights document
+      },
+    });
+
+
+    return NextResponse.json({
+      success: true,
+      id: verificationReq.id,
+      url: blob.url,
+      documentName: documentName.trim(),
+      message: "Other requirement uploaded successfully",
+    });
+
+  } catch (error: any) {
+   
+    return NextResponse.json(
+      {
+        error: "Upload failed",
+        details: process.env.NODE_ENV === "development" ? error.message : undefined,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
+  }
+}

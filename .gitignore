@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,14 +11,14 @@
 !.yarn/versions
 
 # testing
-/coverage
+coverage/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
@@ -51,14 +51,55 @@ next-env.d.ts
 *.sublime-project
 
 # OS
-.DS_Store
 Thumbs.db
 
 # Local development
-.vercel
 .turbo
 *.local
 
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+
+# testing
+
+# next.js
+
+# production
+
+# misc
+
+# debug
+
+# env files (can opt-in for committing if needed)
+
+# vercel
+
+# typescript
+
+# IDE
+
+# OS
+
+# Local development
+
+# Prisma
+# src/generated/ - MUST be committed for Vercel deployment
+# but stale temp files from interrupted `prisma generate` runs must not be
+*.tmp[0-9]*
+
+
+# Prisma emits a node_modules folder INSIDE its generated client, and that
+# client is committed on purpose so Vercel can bundle it (see next.config.ts
+# outputFileTracingIncludes). The recursive node_modules/ rule above would
+# swallow it, so it is excepted here explicitly.
+#
+# Before U6 this was not needed: node_modules was root-anchored as
+# /node_modules and never matched a nested path. Moving the apps into apps/*
+# forced the rule to become recursive, which caught this as a side effect.
+!src/generated/**/node_modules/
+!apps/*/src/generated/**/node_modules/

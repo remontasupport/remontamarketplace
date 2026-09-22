@@ -1,0 +1,678 @@
+/**
+ * Contractor Profile - Canva-Style Design
+ * Two-column layout matching the beautiful PDF design
+ * Colors: Beige (#F5E6D3) + Dark Navy (#0C1628) + White
+ */
+
+/* ============================================================================
+   MAIN CONTAINER
+   ============================================================================ */
+
+.profile-container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 2rem 0;
+}
+
+.profile-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Back Button */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+/* Edit Toggle Button */
+.edit-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  color: #4f46e5;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: 2px solid #4f46e5;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.edit-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.edit-toggle-button.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: #10b981;
+}
+
+.edit-toggle-button.active:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Download PDF Button */
+.download-pdf-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transition: all 0.3s;
+  cursor: pointer;
+  border: none;
+}
+
+.download-pdf-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.download-pdf-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================================================
+   PROFILE CARD - Two Column Canva Design
+   ============================================================================ */
+
+.profile-card {
+  background: white;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+  position: relative;
+  /* A4 aspect ratio: width 210mm, height 297mm = 1:1.414 */
+  width: 100%;
+  max-width: 1200px;
+  aspect-ratio: 210 / 297;
+  height: auto;
+}
+
+.profile-content {
+  display: flex;
+  position: relative;
+  height: 100%;
+}
+
+/* ============================================================================
+   CIRCULAR PHOTO - Centered in Left Column
+   ============================================================================ */
+
+/* Tertiary Background Rectangle Behind Photo */
+.photo-background-tertiary {
+  position: absolute;
+  top: 6.5rem;
+  left: 0;
+  width: 35%;
+  height: 283px;
+  background: #F8E8D8;
+  z-index: 5;
+}
+
+.profile-photo-circle {
+  position: absolute;
+  top: 5.5rem;
+  left: 17.5%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: white;
+  padding: 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* Hover effect for edit mode */
+.profile-photo-circle:hover {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Overlay hint when hovering in edit mode */
+.profile-photo-circle[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.profile-photo-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.profile-photo-inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 3.5rem;
+  font-weight: 600;
+}
+
+/* Photo Change Overlay */
+.photo-change-overlay {
+  position: absolute;
+  bottom: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-photo-circle:hover .photo-change-overlay {
+  opacity: 1;
+}
+
+/* Hidden file input */
+.hidden {
+  display: none;
+}
+
+/* Change Photo Button */
+.photo-change-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  white-space: nowrap;
+}
+
+.photo-change-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+}
+
+.photo-change-button:active {
+  transform: translateY(0);
+}
+
+/* ============================================================================
+   LEFT COLUMN - Brand Secondary Background
+   ============================================================================ */
+
+.profile-left-column {
+  width: 35%;
+  background: #B1C3CD;
+  padding: 28rem 1.5rem 3rem 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Section Titles - Left Column */
+.left-section-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.25rem;
+  margin-top: 0;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.experience-section .left-section-title {
+  margin-bottom: 0;
+}
+
+/* Contact Section */
+.contact-section {
+  margin-bottom: 2.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.875rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.contact-item svg {
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* About Me Section */
+.about-section {
+  margin-top: 2.5rem;
+  margin-bottom: 3.5rem;
+}
+
+.about-item {
+  margin-bottom: 1.25rem;
+}
+
+.about-label {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.about-label svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  color: #6b7280;
+}
+
+.about-value {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-left: 0.5rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Editable Field Styling */
+.editable-field {
+  outline: none;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+  cursor: text;
+  display: inline-block;
+  min-width: 50px;
+  user-select: all;
+}
+
+.editable-field:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.editable-field:focus {
+  background-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+}
+
+/* White variant for dark backgrounds */
+.editable-field-white:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.editable-field-white:focus {
+  background-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+/* Experience Section */
+.experience-section {
+  margin-bottom: 3.5rem;
+}
+
+/* Add Experience Button */
+.add-experience-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4f46e5;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid #4f46e5;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Poppins', sans-serif;
+}
+
+.add-experience-btn:hover {
+  background: rgba(79, 70, 229, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Remove Item Button */
+.remove-item-btn {
+  font-size: 1.25rem;
+  color: #ef4444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: all 0.2s;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.remove-item-btn:hover {
+  color: #dc2626;
+  transform: scale(1.2);
+}
+
+/* White variant for dark backgrounds */
+.remove-item-btn-white {
+  color: #fca5a5;
+}
+
+.remove-item-btn-white:hover {
+  color: #f87171;
+  transform: scale(1.2);
+}
+
+.experience-item {
+  display: flex;
+  gap: 0.875rem;
+  margin-bottom: 0.875rem;
+}
+
+.experience-dot {
+  width: 10px;
+  height: 10px;
+  background: #0C1628;
+  border-radius: 50%;
+  margin-top: 0.45rem;
+  flex-shrink: 0;
+}
+
+.experience-text {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #374151;
+  line-height: 1.6;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.experience-text .editable-field {
+  flex: 1;
+}
+
+/* ============================================================================
+   RIGHT COLUMN - Dark Navy Background
+   ============================================================================ */
+
+.profile-right-column {
+  width: 65%;
+  background: #0C1628;
+  padding: 3rem 3.5rem 3rem 3.5rem;
+  height: 100%;
+  color: white;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Remonta Logo */
+.remonta-logo {
+  position: absolute;
+  top: 2.5rem;
+  right: 35.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+/* Worker Header with Tertiary Background */
+.worker-header-tertiary {
+  background: #F8E8D8;
+  padding: 1.5rem 3rem 1.5rem 1rem;
+  margin: 0 -3.5rem;
+  margin-top: 3.5rem;
+  margin-bottom: 2.5rem;
+  min-height: 240px;
+  box-sizing: border-box;
+}
+
+/* Worker Name & Title */
+.worker-header {
+  margin-bottom: 0.75rem;
+}
+
+.worker-name {
+  font-size: 2.7rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.2;
+}
+
+.worker-title {
+  font-size: 1.5rem;
+  color: #1f2937;
+  padding-bottom: 0.65rem;
+  border-bottom: 3px solid #1f2937;
+  display: inline-block;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Bio Section */
+.worker-bio {
+  font-size: 1.075rem;
+  font-weight: 500;
+  line-height: 1.65;
+  color: #1f2937;
+  margin: 0;
+  margin-top: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.worker-bio .editable-field {
+  display: inline;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Section Titles - Right Column */
+.right-section-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1.25rem;
+  margin-top: 1.25rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Adjust spacing when with add button */
+.flex .right-section-title {
+  margin-bottom: 0;
+}
+
+/* Services Section */
+.services-list {
+  margin-bottom: 1.5rem;
+}
+
+/* Add Service Button */
+.add-service-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Poppins', sans-serif;
+}
+
+.add-service-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.service-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.service-bullet {
+  width: 9px;
+  height: 9px;
+  background: white;
+  border-radius: 50%;
+  margin-top: 0.55rem;
+  flex-shrink: 0;
+}
+
+.service-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: white;
+  line-height: 1.7;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.service-text .editable-field {
+  flex: 1;
+}
+
+/* Quote Sections (Hobbies, Unique Service, Why Enjoy Work) */
+.quote-section {
+  margin: 1.5rem 0;
+}
+
+.quote-section:last-child {
+  margin-bottom: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.quote-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.75rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.quote-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #d1d5db;
+  font-style: italic;
+  line-height: 1.7;
+  font-family: 'Poppins', sans-serif;
+  display: inline;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.quote-text .editable-field {
+  display: inline;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+  .profile-content {
+    flex-direction: column;
+  }
+
+  .profile-left-column,
+  .profile-right-column {
+    width: 100%;
+  }
+
+  .profile-left-column {
+    padding-top: 24.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .worker-name {
+    font-size: 2rem;
+  }
+
+  .profile-photo-circle {
+    width: 220px;
+    height: 220px;
+  }
+
+  .profile-left-column {
+    padding-top: 20.5rem;
+  }
+}

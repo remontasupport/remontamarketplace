@@ -1,0 +1,156 @@
+/**
+ * Dynamic Training Steps Generator
+ *
+ * Generates training steps dynamically from API requirements data
+ * Maps training requirements to components and creates step configuration
+ */
+
+import {
+  WorkerRequirements,
+  RequirementDocument,
+} from "@/hooks/queries/useWorkerRequirements";
+import {
+  getComponentForDocument,
+  hasCustomComponent,
+} from "@/config/complianceDocumentMapping";
+import GenericComplianceDocument from "@/components/requirements-setup/steps/GenericComplianceDocument";
+
+export interface DynamicTrainingStep {
+  id: number;
+  slug: string;
+  title: string;
+  component: React.ComponentType<any>;
+  documentId: string;
+  requirement: RequirementDocument;
+  apiEndpoint?: string;
+}
+
+/**
+ * NDIS trainings that are combined into a single page
+ * These IDs will be filtered out from appearing as separate steps
+ * They are all handled by the "ndis-worker-orientation" combined page
+ */
+const COMBINED_NDIS_TRAININGS = [
+  "ndis-induction-module",
+  "effective-communication",
+  "safe-enjoyable-meals",
+];
+
+/**
+ * Display order for training steps
+ *
+ * The requirements API returns documents in whatever order Postgres yields them
+ * (the query has no ORDER BY), so without this the step order shifts whenever
+ * rows are inserted. Anything not listed here keeps its API order and is
+ * appended after the known steps.
+ *
+ * NOTE: "first-aid-cpr" is a legacy document ID that now carries First Aid
+ * only — CPR was split out into its own "cpr" document. Both IDs are listed
+ * so the pair always renders adjacent.
+ */
+const TRAINING_STEP_ORDER = [
+  "ndis-worker-orientation",
+  "infection-control-training",
+  "infection-control",
+  "first-aid-cpr",
+  "first-aid",
+  "cpr",
+  "manual-handling",
+  "medication-training",
+  "behaviour-support",
+];
+
+/** Position in TRAINING_STEP_ORDER; unknown IDs sort last, keeping API order. */
+function trainingOrderIndex(documentId: string): number {
+  const index = TRAINING_STEP_ORDER.indexOf(documentId);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+/**
+ * Generate training steps from trainings array in requirements
+ *
+ * @param requirements - Worker requirements data from API
+ * @returns Array of dynamic training steps
+ */
+export function generateTrainingSteps(
+  requirements: WorkerRequirements | undefined
+): DynamicTrainingStep[] {
+  if (!requirements?.requirements?.trainings) {
+    return [];
+  }
+
+  const { trainings } = requirements.requirements;
+
+  // Filter out trainings that are combined into the ndis-worker-orientation page
+  const filteredTrainings = trainings.filter(
+    (req) => !COMBINED_NDIS_TRAININGS.includes(req.id)
+  );
+
+  // Apply the explicit display order (Array.prototype.sort is stable, so
+  // unlisted trainings keep their relative API order at the end)
+  const orderedTrainings = [...filteredTrainings].sort(
+    (a, b) => trainingOrderIndex(a.id) - trainingOrderIndex(b.id)
+  );
+
+  // Generate steps from ordered trainings
+  const steps: DynamicTrainingStep[] = orderedTrainings.map((req, index) => {
+    // Check if there's a custom component for this training
+    const customMapping = getComponentForDocument(req.id);
+
+    // Use custom component if available, otherwise use generic component
+    const component = customMapping?.component || GenericComplianceDocument;
+    const apiEndpoint = customMapping?.apiEndpoint || "/api/worker/compliance-documents";
+
+    // Generate slug from document ID
+    const slug = req.id;
+
+    return {
+      id: index + 1,
+      slug,
+      title: req.name,
+      component,
+      documentId: req.id,
+      requirement: req,
+      apiEndpoint,
+    };
+  });
+
+  return steps;
+}
+
+/**
+ * Get step URL helper for dynamic training steps
+ *
+ * @param slug - The step slug
+ * @returns The URL for the step
+ */
+export const getTrainingStepUrl = (slug: string) =>
+  `/dashboard/worker/trainings/setup?step=${slug}`;
+
+/**
+ * Find step by slug in dynamic steps array
+ *
+ * @param steps - Array of dynamic training steps
+ * @param slug - The slug to search for
+ * @returns The step if found, undefined otherwise
+ */
+export function findStepBySlug(
+  steps: DynamicTrainingStep[],
+  slug: string
+): DynamicTrainingStep | undefined {
+  return steps.find((step) => step.slug === slug);
+}
+
+/**
+ * Get step index by slug
+ *
+ * @param steps - Array of dynamic training steps
+ * @param slug - The slug to search for
+ * @returns The zero-based index, or -1 if not found
+ */
+export function getStepIndex(
+  steps: DynamicTrainingStep[],
+  slug: string
+): number {
+  return steps.findIndex((step) => step.slug === slug);
+}

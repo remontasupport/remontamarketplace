@@ -1,0 +1,45 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
+import Header from './Header'
+
+export default function ConditionalHeader() {
+  const pathname = usePathname()
+
+  // Don't render header for dashboard pages (they have their own layout with sidebar)
+  if (pathname?.startsWith('/dashboard')) {
+    return null
+  }
+
+  // Don't render header for registration pages (they have their own layout)
+  if (pathname?.startsWith('/registration')) {
+    return null
+  }
+
+  // Don't render header for admin pages
+  if (pathname?.startsWith('/admin')) {
+    return null
+  }
+
+  // Don't render header for shared profile pages (public access, clean view)
+  if (pathname?.startsWith('/share')) {
+    return null
+  }
+
+  // Don't render header for worker profile pages
+  if (pathname?.startsWith('/workers')) {
+    return null
+  }
+
+  // Don't render header for the standalone application form
+  if (pathname?.startsWith('/apply')) {
+    return null
+  }
+
+  // Don't render header for authentication pages
+  if (pathname === '/login' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/setup-password') {
+    return null
+  }
+
+  return <Header />
+}
