@@ -260,3 +260,63 @@ deployment is required to pick up a changed Root Directory.
 Also to verify: the **"Include files outside of the Root Directory in the Build Step"** checkbox
 must be enabled, or the build cannot see `pnpm-lock.yaml`, `pnpm-workspace.yaml` or `turbo.json`
 at the workspace root and the install fails.
+
+## Preview Verification: Newsroom Empty — Sanity CORS, Not a Regression
+
+The marketing preview built successfully but its newsroom rendered "No Articles Yet".
+
+**Diagnosis: the preview origin is not registered in Sanity's allowed origins.**
+
+`apps/web/src/app/newsroom/page.tsx` is a **client component**. It fetches from the visitor's
+browser in `useEffect`, and swallows failures:
+
+```ts
+} catch (error) {
+  console.error('Error loading articles:', error)
+} finally {
+  setLoading(false)      // → renders the empty state
+}
+```
+
+So a blocked request produces an ordinary-looking empty page: no error screen, nothing in the
+build log. Browser console showed:
+
+```
+Error fetching articles: Error: Request error while attempting to reach
+https://98ycfc5t.apicdn.sanity.io/v2024-01-01/data/query/production?query=*[_type == "article" ...]
+    at s.onerror (...)
+```
+
+The project ID, dataset and query are all correct. The request fails at the network layer —
+`onerror`, never completing — which is how a CORS block presents to a browser client.
+
+### Why this is not caused by U6
+
+- All four newsroom and Sanity files are **byte-identical** to `main` (verified by hash)
+- `@portabletext/react@^4.0.3` is declared
+- `apps/web` had **zero** modifications in this unit
+- The same code serves articles correctly in production right now
+
+Sanity registers allowed origins per project. The production domain is registered; each preview
+deployment gets a unique `*.vercel.app` hostname that is not. **This would have affected any
+marketing preview at any time.** It went unnoticed because marketing had never had a preview
+deployment verified — `u5-marketing` was pushed on 2026-09-10 and never checked.
+
+### Consequence, and why it should be fixed anyway
+
+Production is unaffected: its origin is already allowed.
+
+But **no marketing preview will ever show articles** until a preview origin is registered, which
+silently weakens preview verification for this product — and preview verification is the mechanism
+PS-2 depends on. Adding `https://*.vercel.app` (or the project's preview domain) under
+**Sanity → Project → API → CORS Origins** restores it.
+
+Recorded as a follow-up rather than done here: it is a Sanity dashboard change, outside the
+repository, and unrelated to the relocation.
+
+### A second-order observation
+
+The failure was invisible in every automated signal — the build passed, CI passed, no error page
+was served. Only a human opening the page and then the browser console found it. That is a
+concrete instance of the gap **U4** (observability) was meant to close, and it was found during a
+unit where the accepted risk of deferring U4 was explicitly recorded.
