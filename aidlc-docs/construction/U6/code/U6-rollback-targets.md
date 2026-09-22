@@ -1,70 +1,77 @@
 # U6 — Rollback Targets
 
-**Recorded**: 2026-09-10, before any Vercel setting was changed
-**Purpose**: the deployments to promote if U6 breaks production
+**Recorded**: 2026-09-10 — **SUPERSEDED**
+**Re-recorded**: 2026-09-22, before any Vercel setting is changed
+**Purpose**: what to promote if U6 breaks production
 
-Vercel deployments are immutable. Promoting one of these restores the pre-U6 state in seconds
-with no rebuild. This is the primary recovery mechanism for the highest-risk unit in the
-migration.
-
----
-
-## Marketing
-
-| | |
-|---|---|
-| Vercel project | `remontamarketplace` |
-| Deployment ID | **`8843hlhft`** |
-| URL | https://remontamarketplace-8843hlhft-remontas-projects.vercel.app/ |
-| Production badge confirmed | ✅ yes |
-| Loads correctly | ✅ confirmed by user |
-
-## Application
-
-| | |
-|---|---|
-| Vercel project | `remonta` *(slug from the URL — see note below)* |
-| Deployment ID | **`uv0ctkia2`** |
-| URL | https://remonta-uv0ctkia2-remontas-projects.vercel.app/ |
-| Production badge confirmed | ✅ yes |
-| Loads correctly | ✅ confirmed by user |
-
-### Note on the application project's name
-
-The deployment URL resolves the project slug as **`remonta`**, but the Vercel GitHub bot commented
-on PR #1 with a project named **`remonta-app`**. These are most likely the same project — Vercel
-uses a URL slug that can differ from the display name — but **confirm they are the same project
-before relying on this as a rollback target.** Promoting a deployment in the wrong project during
-an incident would be its own incident.
+Vercel deployments are immutable. Promoting one restores the pre-U6 state in **seconds with no
+rebuild**. This is the primary recovery mechanism for the highest-risk unit in the migration.
 
 ---
 
-## How to Use These
+## ⚠️ Why the 2026-09-10 Targets Must Not Be Used
 
-Do **not** paste the URL anywhere. The URL identifies and verifies; promotion is a dashboard
-action:
+The original file recorded `uv0ctkia2` (application) and `8843hlhft` (marketing) on 2026-09-10.
 
-1. Vercel → the affected project → **Deployments**
-2. Find the row matching the deployment ID above
-3. **⋯ → Promote to Production**
-4. Confirm the site serves correctly
-
-Takes seconds. No rebuild, because the artifact already exists.
+**Promoting `uv0ctkia2` today would roll back the entire pnpm migration and the Provider
+Agreement v2 work**, both of which reached production on 2026-09-22. It is behind the current
+state, not a safe fallback. Those values are retained below for history only.
 
 ---
 
-## When These Stop Being Valid
+## Current Production State (2026-09-22)
 
-- **After U6 merges and is verified healthy**, these become the "previous" state rather than the current one. Still valid as a rollback target, but the window for wanting them closes.
-- **Vercel deployment retention is not infinite.** Within days these will certainly exist; over months they may be pruned. If U6 is paused for a long period, re-record before resuming.
+| | Marketing | Application |
+|---|---|---|
+| Vercel project | `remontamarketplace` | `remonta-app` |
+| Production branch | `main` | `app/main` |
+| **Live commit** | **`9a09ac2`** "fixed the provide-support" | **`4a826b2`** "AI-DLC: record Vercel deployment topology" |
+| Commit date | 2026-08-31 | 2026-09-22 |
+| Domains | marketing domains | `app.remontaservices.com.au` **+3** |
+| Verified loading | ✅ (dashboard confirmed by user) | ✅ (dashboard confirmed by user) |
+| **Vercel deployment ID** | ⬜ **STILL NEEDED** | ⬜ **STILL NEEDED** |
+
+### The commit SHA is not sufficient, and this is the distinction that matters
+
+A commit SHA identifies **what** is live. A deployment ID identifies **the immutable build** that
+can be promoted.
+
+| Recovery path | Mechanism | Time | Can it fail? |
+|---|---|---|---|
+| Promote a **deployment ID** | Serves an existing immutable build | **seconds** | No — the build already succeeded |
+| Redeploy a **commit SHA** | Rebuilds from source | minutes | **Yes** — and during U6 a rebuild from the root is exactly what is failing |
+
+That second row is why the deployment ID is required rather than merely preferable. During the
+U6 window the production branch holds the old structure while the project expects the new root,
+so a rebuild is the one thing that cannot be relied on. The whole point of recording a deployment
+ID is to have a recovery path that involves **no build at all**.
+
+### Where to find it
+
+Vercel → project → **Deployments** → filter Environment = Production → open the current one.
+Either:
+- the **URL slug**, e.g. `remonta-app-<slug>-remontas-projects.vercel.app` → record `<slug>`, or
+- the **`dpl_…` ID** shown on the deployment page or via its `…` menu
 
 ---
 
-## What This Does Not Cover
+## Rollback Rehearsal
 
-U6 touches **no data** — no schema change, no migration, no writes. So there is nothing for a
-database backup to protect here, and these two deployments are the whole recovery story.
+Per **Q2=A**, to be performed on the **marketing** project before any setting changes:
 
-That changes at **U15**, which drops three tables. That unit needs a verified database restore,
-which **U4** provides and which has not yet been done (P8 recorded that a restore has never been
-performed).
+- [ ] Promote the previous production deployment
+- [ ] Confirm the marketing site loads
+- [ ] Promote the current production deployment back
+- [ ] Confirm the site loads again
+
+Called for in the original plan and never done. U6 is where the mechanism should be proven rather
+than assumed.
+
+---
+
+## Historical (2026-09-10 — do not use)
+
+| | Marketing | Application |
+|---|---|---|
+| Deployment ID | `8843hlhft` | `uv0ctkia2` |
+| Status | Superseded | **Behind the pnpm migration — would revert production** |
