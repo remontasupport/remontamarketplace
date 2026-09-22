@@ -71,10 +71,16 @@ Either:
 
 Per **Q2=A**, to be performed on the **marketing** project before any setting changes:
 
-- [ ] Promote the previous production deployment
-- [ ] Confirm the marketing site loads
-- [ ] Promote the current production deployment back
-- [ ] Confirm the site loads again
+- [x] Promote the previous production deployment
+- [x] Confirm the marketing site loads
+- [x] Promote the current production deployment back
+- [x] Confirm the site loads again
+
+**Performed 2026-09-22. Both promotions worked and the site loaded correctly in both states.**
+
+The recovery mechanism for the highest-risk unit in the migration is now demonstrated rather than
+assumed, and the operator has used the control once before needing it. Called for in the original
+plan on 2026-09-10 and skipped then.
 
 Called for in the original plan and never done. U6 is where the mechanism should be proven rather
 than assumed.
