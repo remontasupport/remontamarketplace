@@ -4,7 +4,7 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - U8 code complete and preview-verified (2026-09-23); merge pending, then U9.
+- **Current Stage**: CONSTRUCTION - U8 merged, production check pending. **U9 PAUSED at user request (2026-09-23)** for worker-dashboard work outside the unit sequence.
 - **Phase A**: U1, U2, U3a, U3 COMPLETE and VERIFIED. **U4 resequenced** to run between U13 and U14 by user decision (2026-09-10) — monitoring deferred until the monorepo is done.
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 

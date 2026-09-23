@@ -10,7 +10,7 @@
     "postinstall": "prisma generate",
     "type-check": "tsc --noEmit",
     "lint:baseline": "node scripts/check-baseline.mjs --tool=eslint",
-    "quality": "npm run type-check && npm run lint:baseline"
+    "quality": "pnpm run type-check && pnpm run lint:baseline"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
