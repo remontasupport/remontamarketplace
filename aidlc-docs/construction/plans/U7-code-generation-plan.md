@@ -3,7 +3,7 @@
 **Unit**: U7 (Phase B — Workspace)
 **Depends on**: U6 ✅ complete and verified
 **Traces to**: ~~FR-1.4~~ (deferred with mobile), FR-3.2, FR-3.6, FR-9.1, FR-9.3, NFR-6.1, NFR-6.4, P-5
-**Status**: **PART 2 — GENERATION.** Q1=B, Q2=A, Q3=C (mobile deferred), Q4=A, Q5=A.
+**Status**: ✅ **COMPLETE** — merged `d5a4120`, production-verified 2026-09-23. Q1=B, Q2=A, Q3=C (mobile deferred), Q4=A, Q5=A.
 
 ---
 
@@ -204,7 +204,7 @@ Checkboxes ticked as work completes, in the same interaction as the work.
 - [x] Gates: app 149/518/54, web 76 + strict `tsc` clean
 - [x] `turbo run build` — 2 successful, 2 total
 - [x] **Preview verified** — sign-in, dashboard, **and a form** (the U7-specific check: schema imports now resolve through the package). Marketing preview loads.
-- [ ] Production verified after merge
+- [x] Production verified after merge — sign-in and a form on `app.remontaservices.com.au`
 
 ### Step 6 — Documentation
 - [x] `aidlc-docs/construction/U7/code/U7-summary.md`
