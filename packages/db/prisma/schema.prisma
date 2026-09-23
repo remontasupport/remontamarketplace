@@ -1,6 +1,25 @@
 generator client {
   provider      = "prisma-client-js"
-  output        = "../src/generated/auth-client"
+  // OUTPUT POINTS BACK INTO apps/app, AND THAT IS DELIBERATE (U8, Q1=A).
+  //
+  // This package owns the schema and the migrations -- which is what FR-3.3 asks.
+  // It does NOT own the generated artifact, because Vercel cannot bundle it from here.
+  //
+  // Vercel resolves vercel.json includeFiles relative to the project Root Directory,
+  // which for the application is apps/app. A path of ../../packages/db/** lies outside
+  // that root and cannot be addressed. The generated client is ~124 MB including the
+  // rhel-openssl-3.0.x query engine, and U5 established across FIVE consecutive failed
+  // deployments that this platform fails at Prisma bundling in ways that produce an
+  // empty build log and an "internal Vercel error" -- a root cause never established.
+  //
+  // So the schema moved and the artifact stayed. Generating into a consumer is unusual
+  // and would otherwise read as a mistake; it is a deliberate trade of architectural
+  // tidiness for a deployment path that is known to work.
+  //
+  // Revisit when the Vercel bundling behaviour is actually understood -- the support
+  // ticket is an open follow-up from U5.
+  output        = "../../../apps/app/src/generated/auth-client"
+
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 

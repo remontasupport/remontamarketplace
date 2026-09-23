@@ -27,13 +27,28 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Ensure Prisma engine binaries are included in Vercel deployment
-  // CRITICAL: Must include for ALL routes that use Prisma (API routes + Server Components)
+  // Ensure the Prisma query engines reach the deployed functions.
+  //
+  // CORRECTED IN U8. This previously listed ./node_modules/@prisma/client/**/*, which
+  // stopped being the resolution path in U6 when each schema was given an explicit
+  // output -- the app imports @/generated/client and @/generated/auth-client and does
+  // not reach node_modules for either. Worse, ./src/generated/client/**/* was MISSING,
+  // so the main client was never traced at all. Production kept working only because
+  // vercel.json includeFiles covers src/generated/** wholesale, which meant a real gap
+  // sat here unnoticed behind a config that happened to be redundant.
+  //
+  // Both clients are now listed explicitly, and both are inside apps/app -- which is
+  // what U8 Q1=A preserves, because Vercel cannot address paths outside the project
+  // Root Directory. See packages/db/README.md.
   outputFileTracingIncludes: {
-    '/**': ['./node_modules/@prisma/client/**/*', './src/generated/auth-client/**/*'],
+    '/**': ['./src/generated/client/**/*', './src/generated/auth-client/**/*'],
   },
-  // Tell Next.js not to bundle Prisma Clients (BOTH main and auth)
-  // CRITICAL: This prevents webpack from trying to bundle the native binaries
+  // Keep webpack away from the native engine binaries.
+  //
+  // @prisma/client stays listed because the generated clients require it internally at
+  // runtime even though no application file imports it directly. .prisma/client is its
+  // default-output sibling -- cheap insurance if a future schema is generated without
+  // an explicit output.
   serverExternalPackages: ['@prisma/client', '.prisma/client'],
   experimental: {
     // Increase Server Action body size limit for file uploads (default is 1MB)

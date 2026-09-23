@@ -195,50 +195,6 @@ exports.Prisma.JobScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.DocumentScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  category: 'category',
-  description: 'description',
-  hasExpiration: 'hasExpiration',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.CategoryScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  requiresQualification: 'requiresQualification',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.SubcategoryScalarFieldEnum = {
-  id: 'id',
-  categoryId: 'categoryId',
-  name: 'name',
-  requiresRegistration: 'requiresRegistration',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.CategoryDocumentScalarFieldEnum = {
-  id: 'id',
-  categoryId: 'categoryId',
-  documentId: 'documentId',
-  documentType: 'documentType',
-  conditionKey: 'conditionKey',
-  requiredIfTrue: 'requiredIfTrue',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.SubcategoryDocumentScalarFieldEnum = {
-  id: 'id',
-  subcategoryId: 'subcategoryId',
-  documentId: 'documentId',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -258,12 +214,7 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   ContractorProfile: 'ContractorProfile',
   ContractorsbyArea: 'ContractorsbyArea',
-  Job: 'Job',
-  Document: 'Document',
-  Category: 'Category',
-  Subcategory: 'Subcategory',
-  CategoryDocument: 'CategoryDocument',
-  SubcategoryDocument: 'SubcategoryDocument'
+  Job: 'Job'
 };
 
 /**
