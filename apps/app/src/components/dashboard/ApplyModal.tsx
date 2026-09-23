@@ -8,7 +8,7 @@ import QueryProvider from "@/providers/QueryProvider";
 import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import Loader from "@/components/ui/Loader";
 import "@/app/styles/profile-preview.css";
-import { checkRequiredSections, EXEMPT_SERVICES } from "@/utils/profileSections";
+import { checkRequiredSections } from "@/utils/profileSections";
 
 const N8N_WEBHOOK_URL = "https://n8n.srv1137899.hstgr.cloud/webhook/ea912076-f38d-4484-bd05-40e6cb5ae6c1";
 
@@ -89,10 +89,29 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
 
   const { profile, services, qualifications, additionalInfo } = profileData ?? {};
 
-  const isExemptService = EXEMPT_SERVICES.some(s => jobService?.toLowerCase().includes(s.toLowerCase()));
-  const { canApply, missingSections } = isExemptService
-    ? { canApply: true, missingSections: [] }
-    : checkRequiredSections(additionalInfo);
+  // Apply is no longer gated on profile completeness (product decision, 2026-09-23).
+  //
+  // This previously read:
+  //   const isExemptService = EXEMPT_SERVICES.some(s =>
+  //     jobService?.toLowerCase().includes(s.toLowerCase()))
+  //   const { canApply, missingSections } = isExemptService
+  //     ? { canApply: true, missingSections: [] }
+  //     : checkRequiredSections(additionalInfo)
+  //
+  // checkRequiredSections demanded Experience, Fun Fact, Languages, Interests
+  // and About Me all be filled, with cleaning and yard maintenance exempt. That
+  // was a SECOND, DIFFERENT gate from the 80%-completion one on the job card —
+  // the two used unrelated rules, so a worker could pass the card and still find
+  // this submit button disabled.
+  //
+  // Both are removed together. Leaving this one would have made the card change
+  // pointless and the failure less explicable, since the card's tooltip went away
+  // with it.
+  //
+  // missingSections is kept and still computed, because the modal uses it to
+  // PROMPT for the missing sections. Informing someone their profile is thin is
+  // not the same as stopping them applying.
+  const { missingSections } = checkRequiredSections(additionalInfo)
 
   const initials =
     profile?.firstName && profile?.lastName
@@ -261,7 +280,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
 
           {/* Footer buttons */}
           <div className="flex flex-col gap-2 px-6 py-4 border-t border-gray-100 flex-shrink-0">
-            {!isLoading && !canApply && (
+            {!isLoading && missingSections.length > 0 && (
               <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -322,7 +341,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
                 </button>
                 <button
                   onClick={handleApply}
-                  disabled={isSubmitting || isLoading || !canApply}
+                  disabled={isSubmitting || isLoading}
                   className="px-6 py-2.5 rounded-2xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Applying…' : 'Apply'}

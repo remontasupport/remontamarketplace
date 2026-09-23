@@ -4,8 +4,8 @@
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "dev": "npm run db:generate && next dev --turbopack",
-    "dev:quick": "next dev --turbopack",
+    "dev": "next dev --turbopack",
+    "dev:generate": "pnpm run db:generate && next dev --turbopack",
     "build": "prisma generate && prisma generate --schema=../../packages/db/prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "eslint",
@@ -14,7 +14,7 @@
     "lint:baseline": "node scripts/check-baseline.mjs --tool=eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "quality": "npm run type-check:baseline && npm run lint:baseline && npm run test",
+    "quality": "pnpm run type-check:baseline && pnpm run lint:baseline && pnpm run test",
     "postinstall": "prisma generate && prisma generate --schema=../../packages/db/prisma/schema.prisma",
     "db:generate": "prisma generate && prisma generate --schema=../../packages/db/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema=../../packages/db/prisma/schema.prisma",
@@ -107,5 +107,6 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.9"
   },
-  "//build": "WARNING: vercel.json in this directory carries its own buildCommand, and Vercel PREFERS IT OVER THIS SCRIPT. The two must be kept in step. U8 changed this one and missed vercel.json, and the deploy failed with \"Could not load --schema from provided path prisma/auth-schema.prisma\" while turbo run build passed locally -- because turbo reads this file and only Vercel reads that one. The note cannot live in vercel.json: its schema rejects unknown properties outright, including comment keys, unlike turbo.json which tolerates a single // key."
+  "//build": "WARNING: vercel.json in this directory carries its own buildCommand, and Vercel PREFERS IT OVER THIS SCRIPT. The two must be kept in step. U8 changed this one and missed vercel.json, and the deploy failed with \"Could not load --schema from provided path prisma/auth-schema.prisma\" while turbo run build passed locally -- because turbo reads this file and only Vercel reads that one. The note cannot live in vercel.json: its schema rejects unknown properties outright, including comment keys, unlike turbo.json which tolerates a single // key.",
+  "//dev": "dev no longer regenerates Prisma on every start. It used to, and on Windows that fails with EPERM whenever another process already holds query_engine-windows.dll.node open -- which happens every time a second dev server starts, or a restart races the previous one exiting. Generation belongs at install time and postinstall already does it. After changing a schema run db:generate, or use dev:generate. dev:quick was removed because dev is now identical to it."
 }

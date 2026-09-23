@@ -5,8 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Loader from "@/components/ui/Loader";
 import JobCard from "@/components/dashboard/JobCard";
 import ApplyModal from "@/components/dashboard/ApplyModal";
-import { SetupProgress, getCompletionPercentage } from "@/types/setupProgress";
-import { EXEMPT_SERVICES } from "@/utils/profileSections";
+import { SetupProgress } from "@/types/setupProgress";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
 
 interface Job {
@@ -30,28 +29,62 @@ interface NewsSliderProps {
 
 const CARDS_PER_PAGE = 6; // 3 columns × 2 rows
 
-const SERVICE_OPTIONS = [
-  'Support Work',
-  'Cleaning',
-  'Gardening',
-  'Physiotherapy',
-  'Occupational Therapy',
-  'Exercise Physiology',
-  'Psychology',
-  'Behavioural Support',
-  'Social Work',
-  'Speech Pathology',
-  'Personal Training',
-  'Nursing (RN/EN)',
-  'Home Modifications',
-];
+/**
+ * Build the service filter options from the jobs actually present.
+ *
+ * This replaced a hardcoded list:
+ *
+ *   ['Support Work', 'Cleaning', 'Gardening', 'Physiotherapy',
+ *    'Occupational Therapy', 'Exercise Physiology', 'Psychology',
+ *    'Behavioural Support', 'Social Work', 'Speech Pathology',
+ *    'Personal Training', 'Nursing (RN/EN)', 'Home Modifications']
+ *
+ * which had drifted from the data it filtered. Measured against the live table:
+ * ELEVEN of those thirteen options matched NOTHING. A worker could select
+ * "Physiotherapy" and get an empty list with no explanation — indistinguishable
+ * from a broken page. Meanwhile "House or yard maintenance", six live jobs, had
+ * no option at all and was unreachable except through "All Services".
+ *
+ * The cause is two vocabularies: the dropdown used short labels, while
+ * `service` holds whatever the Zoho sync writes — NDIS support categories like
+ * "Assistance with daily personal activities", and the literal "Support Work".
+ * Nothing kept them in step, and nothing would have.
+ *
+ * Deriving from the data means an option can never match nothing, and the list
+ * follows Zoho's vocabulary automatically instead of needing to be chased.
+ */
+function serviceOptions(jobs: Job[]): string[] {
+  const seen = new Set<string>()
+  for (const job of jobs) {
+    const service = job.service?.trim()
+    if (service) seen.add(service)
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b))
+}
 
 export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = [], setupProgress }: NewsSliderProps) {
   // Live client-side override: useProfilePreview is reactive (staleTime:0 + window focus + event).
   // Falls back to the server-rendered prop while the query is loading (no flicker).
   const { data: previewData } = useProfilePreview();
   const liveSetupProgress = previewData?.setupProgress ?? setupProgress;
-  const canApply = liveSetupProgress ? getCompletionPercentage(liveSetupProgress) >= 80 : true;
+  // Apply is no longer gated on profile completion (product decision, 2026-09-23).
+  //
+  // This previously read:
+  //   const canApply = liveSetupProgress
+  //     ? getCompletionPercentage(liveSetupProgress) >= 80
+  //     : true
+  //
+  // and each card then OR'd it with EXEMPT_SERVICES, so cleaning and yard
+  // maintenance were applyable before the profile was complete while care roles
+  // were not. Both halves are gone: every worker can apply to every job.
+  //
+  // The matching gate inside ApplyModal was removed at the same time. Removing
+  // only this one would have left the card clickable and the modal's submit
+  // button dead — worse than the gate it replaced, because the tooltip
+  // explaining why would have gone with it.
+  //
+  // liveSetupProgress is still read below for ProfileCompletionReminder, which
+  // is a prompt rather than a gate and is deliberately kept.
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -125,12 +158,20 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
     );
   }
 
+  // Options come from the jobs in hand, so every one of them matches something.
+  const availableServices = serviceOptions(jobs);
+
   // Filter jobs by selected service and/or area search, then sort
   const filteredJobs = jobs
     .filter((job) => {
-      const matchesService = selectedService
-        ? job.service?.toLowerCase().includes(selectedService.toLowerCase())
-        : true;
+      // Exact match, not substring.
+      //
+      // The old list held keywords ("Cleaning") that had to match inside longer
+      // stored values ("House cleaning and other household activities"), so
+      // `includes` was necessary. Options are now whole stored values, and
+      // `includes` on those would over-match: any service whose name contains
+      // another's would silently pull in the wrong jobs.
+      const matchesService = selectedService ? job.service === selectedService : true;
 
       const matchesArea = searchArea
         ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
@@ -192,7 +233,7 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
             className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
           >
             <option value="">All Services</option>
-            {SERVICE_OPTIONS.map((service) => (
+            {availableServices.map((service) => (
               <option key={service} value={service}>
                 {service}
               </option>
@@ -283,7 +324,6 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
                 <JobCard
                   job={job}
                   applied={localAppliedIds.has(job.id)}
-                  canApply={canApply || EXEMPT_SERVICES.some(s => job.service?.toLowerCase().includes(s.toLowerCase()))}
                   onApply={() => {
                     const params = new URLSearchParams(searchParams.toString());
                     params.set('apply', job.id);
@@ -311,7 +351,6 @@ export default function NewsSlider({ jobs, isLoading = false, appliedJobIds = []
                 key={job.id}
                 job={job}
                 applied={localAppliedIds.has(job.id)}
-                canApply={canApply || EXEMPT_SERVICES.some(s => job.service?.toLowerCase().includes(s.toLowerCase()))}
                 onApply={() => {
                   const params = new URLSearchParams(searchParams.toString());
                   params.set('apply', job.id);

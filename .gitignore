@@ -103,3 +103,11 @@ prisma/*.db-journal
 # forced the rule to become recursive, which caught this as a side effect.
 !src/generated/**/node_modules/
 !apps/*/src/generated/**/node_modules/
+
+# Local backup of PRODUCTION job rows, written by
+# apps/app/scripts/real-jobs-backup.ts before it deletes anything.
+#
+# It contains live business data pulled straight out of the jobs table --
+# real recruitment titles, descriptions and locations. It exists so a delete
+# during testing is reversible, and it must never reach the repository.
+.real-jobs-backup.json
