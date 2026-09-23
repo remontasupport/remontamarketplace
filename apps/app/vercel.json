@@ -17,6 +17,5 @@
       "includeFiles": "src/generated/**",
       "maxDuration": 30
     }
-  },
-  "//buildCommand": "This OVERRIDES the build script in package.json -- Vercel prefers vercel.json. U8 moved the auth schema to packages/db and this line was missed on the first attempt, so the deploy failed with \"Could not load --schema from provided path prisma/auth-schema.prisma\". If the schema path changes again, BOTH this file and package.json must change together."
+  }
 }

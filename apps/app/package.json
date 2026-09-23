@@ -106,5 +106,6 @@
     "vite": "^5.4.21",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.9"
-  }
+  },
+  "//build": "WARNING: vercel.json in this directory carries its own buildCommand, and Vercel PREFERS IT OVER THIS SCRIPT. The two must be kept in step. U8 changed this one and missed vercel.json, and the deploy failed with \"Could not load --schema from provided path prisma/auth-schema.prisma\" while turbo run build passed locally -- because turbo reads this file and only Vercel reads that one. The note cannot live in vercel.json: its schema rejects unknown properties outright, including comment keys, unlike turbo.json which tolerates a single // key."
 }
