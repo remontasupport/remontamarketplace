@@ -1,0 +1,17 @@
+{
+  "name": "@remonta/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Owns the Prisma schema and migrations for the application database. Schema and tooling only in U8 — see README for why it exports no runtime code yet.",
+  "scripts": {
+    "generate": "prisma generate --schema=prisma/schema.prisma",
+    "migrate:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "migrate:status": "prisma migrate status --schema=prisma/schema.prisma",
+    "migrate:dev": "prisma migrate dev --schema=prisma/schema.prisma",
+    "studio": "prisma studio --schema=prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "prisma": "^6.16.2"
+  },
+  "//scripts": "These operate on the schema this package owns, but they require AUTH_DATABASE_URL and DIRECT_DATABASE_URL to be present in the environment. Prisma resolves .env relative to where it runs, and the .env file lives in apps/app -- so running these from here fails with P1012 unless the variables are already exported (CI and deploy environments inject them, so they work there). For local use prefer the apps/app scripts, which run from a directory where .env resolves and point --schema back at this package."
+}
