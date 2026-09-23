@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "_comment": [
+    "Base TypeScript options shared by every package and app in the workspace.",
+    "",
+    "apps/app/tsconfig.json and apps/web/tsconfig.json were byte-identical before U7,",
+    "which is why this extraction is a pure deduplication rather than a reconciliation.",
+    "",
+    "Deliberately framework-neutral: nothing here mentions Next, the DOM or JSX, so",
+    "packages/schemas can extend it without inheriting anything that would violate P-5.",
+    "Next-specific options live in tsconfig.next.json, which the two web apps extend instead."
+  ],
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true
+  },
+  "exclude": ["node_modules"]
+}
