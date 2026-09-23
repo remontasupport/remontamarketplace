@@ -4,7 +4,7 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - U6 marketing cutover COMPLETE (`main` is the trunk); application Root Directory + Production Branch re-point outstanding
+- **Current Stage**: CONSTRUCTION - U6 COMPLETE and VERIFIED (2026-09-23). `main` is the monorepo trunk, both products live from `apps/`. U7 next.
 - **Phase A**: U1, U2, U3a, U3 COMPLETE and VERIFIED. **U4 resequenced** to run between U13 and U14 by user decision (2026-09-10) — monitoring deferred until the monorepo is done.
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 
@@ -106,7 +106,7 @@ tooling-and-gates units that change no behaviour.
 | U3 — CI pipeline | A | Code Generation | ✅ COMPLETE, green on Node 20.x and 22.x |
 | U4 — observability | — | — | ⏸️ **RESEQUENCED** to between U13 and U14 (user decision 2026-09-10) |
 | U5 — pnpm + Turborepo | B | Code Generation | ✅ **COMPLETE and VERIFIED** — 6/6 checks green, PS-2 satisfied 2026-09-22 |
-| U6 — `apps/` relocation | B | Code Generation | 🔶 **MARKETING CUT OVER** — `main` is the monorepo trunk, marketing production serves from `apps/web`; application re-point outstanding |
+| U6 — `apps/` relocation | B | Code Generation | ✅ **COMPLETE and VERIFIED** — both products live from the monorepo; PS-2 satisfied on both |
 
 ### U5 status detail (2026-09-22)
 

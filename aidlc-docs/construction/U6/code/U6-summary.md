@@ -395,3 +395,65 @@ accepted risk for U6 and U8 — *build succeeds, runtime fails* — is precisely
 monitoring being deferred means a human loading a page was the only detector available.
 
 Production remained on `izjuyh7pl` throughout, serving all four domains.
+
+---
+
+# U6 COMPLETE — Application Production Verified (2026-09-23)
+
+`app.remontaservices.com.au` signed in and loaded a database-backed dashboard from the monorepo.
+That was the last unverified surface: the preview ran on Preview-scoped environment variables,
+production has its own ~45 including database URLs and `NEXTAUTH_SECRET`.
+
+**Both products now build and serve from one branch, one repository, one workspace.**
+
+| Step | Status |
+|---|---|
+| 1–3 Relocation, `.gitignore` recursion, gates | ✅ |
+| 4–6 Marketing Root Directory, preview, verify | ✅ |
+| 7 Merge to `main` | ✅ `5515399` (PR #4, 17 commits, 1,003 files) |
+| 8 Marketing → `apps/web` | ✅ |
+| 8b Application → `apps/app`, Production Branch → `main` | ✅ |
+| 9 Marketing production verified | ✅ site + newsroom |
+| 9b Application production verified | ✅ **sign-in + dashboard, PS-2 satisfied** |
+| 10a Tag `app/main` | ✅ `pre-monorepo/app-main` → `4a826b2` |
+| 10b Delete `app/main` | ⬜ deliberately deferred |
+
+## Final Shape
+
+```
+main
+├── apps/app        the application    → remonta-app         → app.remontaservices.com.au +3
+├── apps/web        the marketing site → remontamarketplace  → marketing domains
+├── package.json    pnpm workspace + Turborepo
+├── .npmrc          node-linker=hoisted (U8 removes)
+└── .github/workflows/  ci-app.yml, ci-web.yml, ci-supply-chain.yml
+```
+
+`turbo ls` → 2 packages. App gate 149/523/54, web gate 76 lint + strict `tsc` clean.
+
+## Problems Found and Fixed During the Cutover
+
+| Problem | Cause | Fix |
+|---|---|---|
+| Vercel internal error, empty build log (×5) | pnpm isolated linker | `node-linker=hoisted` — root cause inside Vercel never established |
+| Marketing failed strict `tsc` | Both apps generated Prisma to one shared `node_modules` client; last build won | Explicit `output` per app |
+| Vercel build failed, undeclared env warnings | Turborepo 2.x `envMode: strict` passed 9 of ~45 variables | `envMode: loose` |
+| `.next` not found at repository root | Root Directory not yet re-pointed | Steps 8 / 8b |
+| Newsroom empty on preview | Sanity CORS — preview origins unregistered | Not a regression; follow-up |
+| `apps/app` three weeks stale | Branch predated Provider Agreement v2 and the U5 fix | Re-snapshot from `app/main` |
+
+## Deliberately Not Done
+
+**`app/main` is tagged but not deleted.** The tag makes deletion reversible, and there is no
+benefit to deleting on the same day the monorepo went live. It costs nothing to leave it while
+the new arrangement beds in.
+
+## Carried Into U7
+
+`node-linker=hoisted` means pnpm no longer fails on undeclared dependencies. **U7 extracts the
+first shared packages, which is exactly when phantom dependencies appear.** Treat any dependency
+error during U7 with more suspicion than usual — the tool will not raise it. U5 caught two this
+way before the guard was disabled, one of them live newsroom-rendering code.
+
+Other follow-ups: register a preview origin in Sanity CORS; declare the real per-app environment
+variable set and return `envMode` to strict; Turborepo caching still reports 0 of 2.
