@@ -74,6 +74,9 @@ importers:
       '@react-pdf/renderer':
         specifier: ^4.3.1
         version: 4.9.0(react@19.1.0)
+      '@remonta/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
       '@tanstack/react-query':
         specifier: ^5.90.5
         version: 5.102.8(react@19.1.0)
@@ -124,7 +127,7 @@ importers:
         version: 15.5.7(@babel/core@7.29.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-auth:
         specifier: ^4.24.11
-        version: 4.24.15(next@15.5.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 4.24.15(next@15.5.7(@babel/core@7.29.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       nodemailer:
         specifier: ^6.10.1
         version: 6.10.1
@@ -177,6 +180,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.7
+      '@remonta/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.3
@@ -285,6 +291,9 @@ importers:
       '@react-email/render':
         specifier: ^1.3.1
         version: 1.4.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@remonta/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
       '@sanity/client':
         specifier: ^6.29.1
         version: 6.29.1
@@ -323,7 +332,7 @@ importers:
         version: 15.5.7(@babel/core@7.29.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-auth:
         specifier: ^4.24.11
-        version: 4.24.15(next@15.5.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 4.24.15(next@15.5.7(@babel/core@7.29.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-sanity:
         specifier: ^11.4.2
         version: 11.6.13(@sanity/client@6.29.1)(@sanity/icons@3.8.0(react@19.1.0))(@sanity/types@4.22.1(@types/react@19.3.0))(next@15.5.7(@babel/core@7.29.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react-is@19.3.0)(react@19.1.0)(sanity@4.22.1(@emotion/is-prop-valid@1.4.0)(@portabletext/sanity-bridge@1.2.14(@types/react@19.3.0))(@types/node@20.19.43)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(styled-components@6.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(tsx@4.23.13)(typescript@5.9.3)(yaml@2.9.0))(styled-components@6.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(typescript@5.9.3)
@@ -370,6 +379,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.7
+      '@remonta/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.3
@@ -409,6 +421,34 @@ importers:
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/config:
+    devDependencies:
+      '@eslint/eslintrc':
+        specifier: ^3
+        version: 3.3.7
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)
+
+  packages/schemas:
+    dependencies:
+      zod:
+        specifier: ^4.1.11
+        version: 4.6.1
+    devDependencies:
+      '@remonta/config':
+        specifier: workspace:*
+        version: link:../config
+      '@typescript-eslint/parser':
+        specifier: ^8
+        version: 8.70.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -15378,7 +15418,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  next-auth@4.24.15(next@15.5.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  next-auth@4.24.15(next@15.5.7(@babel/core@7.29.7)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nodemailer@6.10.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@babel/runtime': 7.29.7
       '@panva/hkdf': 1.2.1

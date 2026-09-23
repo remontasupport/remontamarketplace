@@ -4,7 +4,7 @@
 - **Project Name**: remonta (Remonta Marketplace)
 - **Project Type**: Brownfield
 - **Start Date**: 2026-09-09T02:12:02Z
-- **Current Stage**: CONSTRUCTION - U6 COMPLETE and VERIFIED (2026-09-23). `main` is the monorepo trunk, both products live from `apps/`. U7 next.
+- **Current Stage**: CONSTRUCTION - U7 code complete and preview-verified (2026-09-23); merge pending, then U8
 - **Phase A**: U1, U2, U3a, U3 COMPLETE and VERIFIED. **U4 resequenced** to run between U13 and U14 by user decision (2026-09-10) — monitoring deferred until the monorepo is done.
 - **Rule Details Directory**: `.aidlc-rule-details/` (AI-DLC rule kit v1.0.1)
 
@@ -107,6 +107,7 @@ tooling-and-gates units that change no behaviour.
 | U4 — observability | — | — | ⏸️ **RESEQUENCED** to between U13 and U14 (user decision 2026-09-10) |
 | U5 — pnpm + Turborepo | B | Code Generation | ✅ **COMPLETE and VERIFIED** — 6/6 checks green, PS-2 satisfied 2026-09-22 |
 | U6 — `apps/` relocation | B | Code Generation | ✅ **COMPLETE and VERIFIED** — both products live from the monorepo; PS-2 satisfied on both |
+| U7 — `packages/config` + `packages/schemas` | B | Code Generation | 🔶 **CODE COMPLETE, preview-verified** — P-1..P-5 enforced and proven by deliberate violation; mobile deferred (Q3=C); merge pending |
 
 ### U5 status detail (2026-09-22)
 

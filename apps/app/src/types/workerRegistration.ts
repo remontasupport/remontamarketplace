@@ -1,32 +1,5 @@
-/**
- * Worker Registration Types
- * Used by registration endpoints and processing logic
- */
-
-export interface WorkerRegistrationJobData {
-  // User credentials
-  email: string;
-  password: string;
-
-  // Personal info
-  firstName: string;
-  lastName: string;
-  mobile: string;
-
-  // Worker details
-  location?: string;
-  photo?: string; // Profile photo URL
-
-  // Services
-  services?: string[]; // Selected service category IDs
-  supportWorkerCategories?: string[]; // Selected support worker subcategory IDs
-
-  // Geocoded location (if already geocoded)
-  geocodedLocation?: {
-    city: string | null;
-    state: string | null;
-    postalCode: string | null;
-    latitude: number | null;
-    longitude: number | null;
-  };
-}
+// U7 re-export shim. The implementation moved to @remonta/schemas so both
+// apps and a future mobile client share one contract (T2=A). This file keeps
+// existing imports working unchanged; it is deleted in a later unit once call
+// sites point at the package directly.
+export * from '@remonta/schemas/types/workerRegistration'

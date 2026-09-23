@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "_comment": [
+    "Next.js application options, layered on tsconfig.base.json.",
+    "",
+    "Extended by apps/app and apps/web. Deliberately NOT extended by packages/schemas:",
+    "the dom lib, jsx and the next plugin are exactly what P-5 forbids there.",
+    "",
+    "The apps still declare their own paths and include, because both are relative to",
+    "the app directory and cannot be inherited meaningfully from a package."
+  ],
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }]
+  }
+}

@@ -69,3 +69,19 @@ jobs:
       #                  apps/web/.quality-baseline/eslint.txt (76 known)
       - name: Quality gate
         run: pnpm --filter @remonta/web run quality
+
+      # PACKAGE BOUNDARIES (P-1..P-5, U7).
+      #
+      # Lints the shared packages themselves. The app gate above does not reach
+      # them, so without this step the boundary rules would exist and never run --
+      # which is worse than not having them, because it looks like they are enforced.
+      #
+      # P-5 is the one that matters most here: packages/schemas must not import
+      # Next, React, the DOM or Prisma. Breaking it does not break the web apps, so
+      # nothing else would notice until someone tried to consume it from Expo.
+      #
+      # Verified in U7 by a deliberate violation: an import of @remonta/db from
+      # apps/web and of next/headers plus @prisma/client from packages/schemas were
+      # each rejected with the rule's stated reason, then reverted.
+      - name: Package boundaries
+        run: pnpm --filter @remonta/schemas run quality

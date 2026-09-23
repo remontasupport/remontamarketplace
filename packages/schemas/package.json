@@ -1,0 +1,31 @@
+{
+  "name": "@remonta/schemas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The shared contract between server, web and a future mobile client: Zod schemas for every API input and form, the types derived from them, domain enums and reference data.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema/*": "./src/schema/*.ts",
+    "./types": "./src/types/index.ts",
+    "./types/*": "./src/types/*.ts",
+    "./validations/*": "./src/validations/*.ts",
+    "./data/*": "./src/data/*.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "quality": "pnpm run lint"
+  },
+  "dependencies": {
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@remonta/config": "workspace:*",
+    "@typescript-eslint/parser": "^8",
+    "eslint": "^9",
+    "typescript": "^5"
+  },
+  "//scripts": "quality is lint-only, on purpose. The 15 pre-existing type errors in the moved schema files are ALREADY tracked in apps/app/.quality-baseline/typescript.txt, recorded there as ../../packages/schemas/src/schema/* -- apps/app type-checks this package through its imports. Adding a second strict tsc here would either fail on errors that are already accounted for, or require a duplicate baseline to keep in sync with the first. The job this gate exists to do is enforce the P-1..P-5 boundaries, and that is what lint does."
+}
