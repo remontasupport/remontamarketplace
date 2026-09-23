@@ -11,6 +11,7 @@
     "studio": "prisma studio --schema=prisma/schema.prisma"
   },
   "devDependencies": {
+    "@prisma/client": "^6.16.2",
     "prisma": "^6.16.2"
   },
   "//scripts": "These operate on the schema this package owns, but they require AUTH_DATABASE_URL and DIRECT_DATABASE_URL to be present in the environment. Prisma resolves .env relative to where it runs, and the .env file lives in apps/app -- so running these from here fails with P1012 unless the variables are already exported (CI and deploy environments inject them, so they work there). For local use prefer the apps/app scripts, which run from a directory where .env resolves and point --schema back at this package."
