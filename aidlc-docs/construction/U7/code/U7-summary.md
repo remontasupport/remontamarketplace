@@ -3,7 +3,7 @@
 **Unit**: U7 (Phase B — Workspace)
 **Date**: 2026-09-23
 **Decisions**: Q1=B (full scope), Q2=A (re-export shims), **Q3=C (mobile deferred)**, Q4=A (ESLint boundaries), Q5=A (Tailwind theme deferred to U12)
-**Status**: Code complete, preview-verified. Branch `u7/packages`, commit `a52c789`. Awaiting merge.
+**Status**: ✅ **COMPLETE and VERIFIED IN PRODUCTION** (2026-09-23). Merged as `d5a4120` (PR #5). Sign-in and a form confirmed working on `app.remontaservices.com.au`; marketing live.
 
 ---
 
@@ -173,7 +173,7 @@ P-1..P-5, and lint does that.
 | Invariant | Status |
 |---|---|
 | **PS-1** Both apps deployable | ✅ `turbo run build` 2 of 2 |
-| **PS-2** Preview-verified | ✅ sign-in, dashboard, **and a form** — plus marketing homepage and newsroom |
+| **PS-2** Preview-verified | ✅ sign-in, dashboard, **and a form**, on preview AND production |
 | **PS-3** Single `git revert` | ✅ shims mean no call site changed |
 | **PS-4** Additive before subtractive | ✅ old locations still resolve |
 | **PS-5** No destructive DB change | ✅ N/A |
