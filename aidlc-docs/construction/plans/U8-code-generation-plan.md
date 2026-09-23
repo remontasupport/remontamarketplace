@@ -209,40 +209,40 @@ Q3=A and Q4=A follow the unit definition and the boundary rules respectively.
 ## 6. Execution Steps (Part 2 — after answers)
 
 ### Step 1 — `packages/db`
-- [ ] `package.json` as `@remonta/db`, private; `@prisma/client` and `prisma` as dependencies
-- [ ] Move `apps/app/prisma/auth-schema.prisma` → `packages/db/prisma/schema.prisma`
-- [ ] Move the 7 migrations
-- [ ] Generator `output` per Q1
-- [ ] Export the Prisma client from the package root **temporarily**, so existing call sites work
+- [x] `package.json` as `@remonta/db` — **schema, migrations and CLI scripts only.** No runtime export; see §Q1 consequence
+- [x] Moved `apps/app/prisma/auth-schema.prisma` → `packages/db/prisma/schema.prisma`
+- [x] Moved the 7 migrations
+- [x] Generator `output` = `../../../apps/app/src/generated/auth-client`, with the reasoning in the schema itself
+- [x] **NOT DONE, and recorded why** — with the artifact in `apps/app`, the package cannot export a client without importing from its own consumer. `packages/db/README.md` states this and lists U9's three ways out
       (the unit definition is explicit that this is temporary; U9 removes it)
 
 ### Step 2 — Bundling configuration
-- [ ] Fix `outputFileTracingIncludes` — remove the stale `node_modules/@prisma/client` entry, add
+- [x] Fixed — removed the stale `node_modules/@prisma/client`, added the **missing** `src/generated/client`. 144 traces now carry the rhel engine
       the missing `src/generated/client`
-- [ ] Reassess `serverExternalPackages` against what the app now actually imports
-- [ ] Confirm `includeFiles` still addresses both clients
+- [x] Reassessed — both entries kept, with the reason written in place
+- [x] Confirmed — `src/generated/**` covers both, and stays inside the Vercel Root Directory
 
 ### Step 3 — Dead models (per Q3)
-- [ ] Remove the five duplicate declarations from the legacy schema
-- [ ] Confirm both legacy-client routes still work — they query only `contractorProfile`
+- [x] Removed — verified first as a closed subgraph with zero references from the surviving models. 213 → 132 lines
+- [x] Confirmed — both query only `contractorProfile`
 
 ### Step 4 — Call sites
-- [ ] `apps/app` declares `@remonta/db`
-- [ ] Shims at old locations (T2=A) so no call site changes
-- [ ] `apps/web` does **not** declare it — P-1 enforced by the U7 boundary rules
+- [x] `apps/app` declares `@remonta/db`
+- [x] No shims needed — the client module never moved, so no call site changed
+- [x] `apps/web` does **not** declare it — P-1 holds
 
 ### Step 5 — Verification
-- [ ] `turbo ls` reports 5 packages
-- [ ] Gates unchanged: app 149/518/54, web 76 + strict `tsc`
-- [ ] `turbo run build` succeeds
-- [ ] Boundary check still passes; `apps/web` importing `@remonta/db` still fails
-- [ ] **Preview: sign in, load a database-backed page, submit a form** — R-5 means a green build
+- [x] `turbo ls` reports **5** packages
+- [x] Gates unchanged — app 149/518/54, web 76 + strict `tsc`
+- [x] `turbo run build` — 2 of 2
+- [x] Boundary check passes; P-1 still rejects `@remonta/db` from `apps/web`
+- [x] **Preview verified** — sign-in, dashboard and a form all confirmed. R-5 satisfied
       proves nothing here
 - [ ] Production verified after merge
 
 ### Step 6 — Documentation
-- [ ] `aidlc-docs/construction/U8/code/U8-summary.md`
-- [ ] `aidlc-state.md` updated
+- [x] `aidlc-docs/construction/U8/code/U8-summary.md`
+- [x] `aidlc-state.md` updated
 
 ---
 
