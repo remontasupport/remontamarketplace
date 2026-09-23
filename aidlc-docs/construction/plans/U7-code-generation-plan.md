@@ -174,41 +174,41 @@ X) Other (please describe after [Answer]: tag below)
 Checkboxes ticked as work completes, in the same interaction as the work.
 
 ### Step 1 — `packages/config`
-- [ ] `package.json` as `@remonta/config`, private, no runtime dependencies
-- [ ] `tsconfig.base.json` — the compiler options both apps currently duplicate
-- [ ] Flat ESLint config including the boundary rules (per Q4)
-- [ ] Prettier config
-- [ ] Both apps extend it; verify baselines **unchanged** (149/523 app, 76 web)
+- [x] `package.json` as `@remonta/config`, private, no runtime dependencies
+- [x] `tsconfig.base.json` — plus `tsconfig.next.json`; the two app tsconfigs were byte-identical, so this was pure deduplication
+- [x] Flat ESLint config including P-1..P-5 (`eslint.boundaries.mjs`)
+- [x] Prettier config — defined, deliberately NOT applied repo-wide (a mass reformat inside a structural unit would violate PS-6)
+- [x] Both apps extend it; baselines verified — 149 type / 518 lint (5 moved out with the files) / 76 web
 
 ### Step 2 — `packages/schemas`
-- [ ] `package.json` as `@remonta/schemas`, `zod` its only dependency
-- [ ] Move files per Q1; `next-auth.d.ts` stays in `apps/app`
-- [ ] Reconcile the two `types/index.ts` versions — differences reviewed, not merged blindly
-- [ ] Deduplicate `australianPostcodes.ts` (285 lines) and `contractor.ts` (89 lines)
-- [ ] Old locations become shims per Q2
-- [ ] Verify **zero** Next, React, DOM or Prisma in the dependency tree
+- [x] `package.json` as `@remonta/schemas`, `zod` its only runtime dependency
+- [x] 12 files moved; `next-auth.d.ts` stayed in `apps/app` as P-5 requires
+- [x] Reconciled — the difference was exactly two lines; the app version is a clean superset
+- [x] Deduplicated — 285→4, 89→4, 59→4 lines. 433 lines of byte-identical duplication removed
+- [x] Shims at every old location; **no call site changed**
+- [x] Verified — `zod` is the only runtime dependency, and P-5 rejects the rest
 
 ### Step 3 — `apps/mobile` — **DEFERRED (Q3=C)**
 - [x] **Not done in U7.** No dependents, so nothing else is affected.
-- [ ] The **P-3** rule is still written into the shared ESLint config, inert until the package
+- [x] The **P-3** rule is still written into the shared ESLint config, inert until the package
       exists — so mobile arrives into an already-enforced boundary rather than needing one added
-- [ ] **FR-1.4 reassigned** — record against the unit that creates `apps/mobile`
+- [x] **FR-1.4 reassigned** — record against the unit that creates `apps/mobile`
 
 ### Step 4 — Boundary check in CI
-- [ ] Implement per Q4
-- [ ] **Prove it fails** — introduce a deliberate violation, confirm CI rejects it, revert
-- [ ] Wire into `ci-app.yml` / `ci-web.yml`
+- [x] Implemented as ESLint `no-restricted-imports` in `packages/config`
+- [x] **Proven** — `@remonta/db` from `apps/web` rejected (P-1); `next/headers` and `@prisma/client` from `packages/schemas` rejected (P-5). Both reverted.
+- [x] Wired into both workflows as a `Package boundaries` step — the app gate does not reach the packages
 
 ### Step 5 — Verification
-- [ ] `turbo ls` reports **4** packages — `@remonta/app`, `@remonta/web`, `@remonta/config`, `@remonta/schemas` (mobile deferred)
-- [ ] Both gates unchanged: 149/523/54 and 76 + strict `tsc`
-- [ ] `turbo run build` succeeds for both apps
-- [ ] Preview verified per PS-2 — sign-in and a database-backed page
+- [x] `turbo ls` reports **4** packages
+- [x] Gates: app 149/518/54, web 76 + strict `tsc` clean
+- [x] `turbo run build` — 2 successful, 2 total
+- [x] **Preview verified** — sign-in, dashboard, **and a form** (the U7-specific check: schema imports now resolve through the package). Marketing preview loads.
 - [ ] Production verified after merge
 
 ### Step 6 — Documentation
-- [ ] `aidlc-docs/construction/U7/code/U7-summary.md`
-- [ ] `aidlc-state.md` updated
+- [x] `aidlc-docs/construction/U7/code/U7-summary.md`
+- [x] `aidlc-state.md` updated
 
 ---
 
