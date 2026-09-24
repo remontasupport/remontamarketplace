@@ -8,7 +8,7 @@
 import { useState, useCallback } from "react";
 import { jsPDF } from "jspdf";
 import { getContractContent } from "@/config/contractContent";
-import { drawContractTable, PDF_TABLE_LEGEND } from "@/lib/contractPdf";
+import { drawSectionExtras } from "@/lib/contractPdf";
 import ContractViewer from "./ContractViewer";
 import SignaturePad from "./SignaturePad";
 import Image from "next/image";
@@ -50,6 +50,8 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
   const [partyName, setPartyName] = useState("");
   const [partyTaxId, setPartyTaxId] = useState(initialTaxId);
   const [partyAddress, setPartyAddress] = useState("");
+  // ABN only: clause 14.2 relies on the Provider's declared GST status
+  const [gstRegistered, setGstRegistered] = useState<"yes" | "no" | "">("");
 
   // Signature date
   const [signatureDate, setSignatureDate] = useState<string>(
@@ -128,7 +130,12 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
     addText("and", 10, false);
     addSpacing(3);
     addText(`${partyName} ("${partyLabel}")`, 10, true);
-    addText(`${isContractor ? "ABN" : "TFN"}: ${partyTaxId}`, 10, false);
+    if (isContractor) {
+      addText(`Active ABN: ${partyTaxId}`, 10, false);
+      addText(`GST Registered: ${gstRegistered === "yes" ? "Yes" : "No"}`, 10, false);
+    } else {
+      addText(`TFN: ${partyTaxId}`, 10, false);
+    }
     addText(`Located at: ${partyAddress}`, 10, false);
     addSpacing(10);
 
@@ -140,19 +147,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
         const indent = paragraph.startsWith("•") || paragraph.startsWith("-") ? 10 : 0;
         addText(paragraph, 9, false, indent);
       });
-      if (section.table) {
-        addSpacing(2);
-        addText(PDF_TABLE_LEGEND, 9);
-        addSpacing(2);
-        yPosition = drawContractTable(doc, section.table, {
-          margin,
-          pageWidth,
-          pageHeight,
-          startY: yPosition,
-        });
-        addSpacing(4);
-        section.table.notes?.forEach((note) => addText(note, 8));
-      }
+      yPosition = drawSectionExtras(doc, section, { margin, pageWidth, pageHeight, startY: yPosition });
       addSpacing(5);
     });
 
@@ -190,7 +185,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
     const fileName = `${contract.title.replace(/\s+/g, "_")}_${partyName.replace(/\s+/g, "_")}_${signatureDate}.pdf`;
     return { doc, fileName };
-  }, [contract, agreementDate, partyName, partyTaxId, partyAddress, partyLabel, isContractor, signature, signatureDate]);
+  }, [contract, agreementDate, partyName, partyTaxId, gstRegistered, partyAddress, partyLabel, isContractor, signature, signatureDate]);
 
   const handleSubmit = useCallback(async () => {
     // Validate preamble fields
@@ -204,6 +199,10 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
     }
     if (!partyTaxId.trim()) {
       setError(`Please enter the ${isContractor ? "ABN" : "TFN"}`);
+      return;
+    }
+    if (isContractor && !gstRegistered) {
+      setError("Please confirm whether you are registered for GST");
       return;
     }
     if (!partyAddress.trim()) {
@@ -315,7 +314,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
     setIsSubmitting(false);
     setIsSuccess(true);
-  }, [contractType, signature, agreed, partyName, partyTaxId, partyAddress, agreementDate, signatureDate, partyLabel, isContractor, generatePdfDocument]);
+  }, [contractType, signature, agreed, partyName, partyTaxId, gstRegistered, partyAddress, agreementDate, signatureDate, partyLabel, isContractor, generatePdfDocument]);
 
   const handleClose = useCallback(() => {
     window.close();
@@ -472,6 +471,36 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
                   inputMode="numeric"
                 />
               </div>
+
+              {isContractor && (
+                <fieldset className="preamble-field-group preamble-radio-group-wrapper">
+                  <legend className="preamble-field-label">
+                    GST Registered <span className="preamble-required">*</span>
+                  </legend>
+                  <div className="preamble-radio-group">
+                    <label className="preamble-radio-option">
+                      <input
+                        type="radio"
+                        name="gstRegistered"
+                        value="yes"
+                        checked={gstRegistered === "yes"}
+                        onChange={() => setGstRegistered("yes")}
+                      />
+                      Yes
+                    </label>
+                    <label className="preamble-radio-option">
+                      <input
+                        type="radio"
+                        name="gstRegistered"
+                        value="no"
+                        checked={gstRegistered === "no"}
+                        onChange={() => setGstRegistered("no")}
+                      />
+                      No
+                    </label>
+                  </div>
+                </fieldset>
+              )}
 
               <div className="preamble-field-group">
                 <label className="preamble-field-label">

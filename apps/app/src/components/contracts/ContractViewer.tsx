@@ -7,8 +7,10 @@
 
 import {
   getContractContent,
+  ContractChecklist,
   ContractContent,
   ContractRequirement,
+  ContractSection,
   ContractTable,
 } from "@/config/contractContent";
 
@@ -16,11 +18,11 @@ interface ContractViewerProps {
   contractType: "abn" | "tfn";
 }
 
-// The web viewer is UTF-8, so it can show the source document's own marks.
-// The PDF generators cannot — see the note on ContractTable.
+// The source agreement's own marks. The PDF generators draw the same glyphs
+// from ZapfDingbats — see lib/contractPdf.ts.
 const REQUIREMENT_MARK: Record<ContractRequirement, string> = {
   required: "✓",
-  conditional: "○",
+  conditional: "■",
   none: "",
 };
 
@@ -30,14 +32,46 @@ const REQUIREMENT_LABEL: Record<ContractRequirement, string> = {
   none: "Not required",
 };
 
+function RequirementLegend() {
+  return (
+    <p className="contract-table-legend">
+      <span aria-hidden="true">{REQUIREMENT_MARK.required}</span> Required
+      {"   "}
+      <span aria-hidden="true">{REQUIREMENT_MARK.conditional}</span> Required where applicable
+    </p>
+  );
+}
+
+function Checklist({ checklist }: { checklist: ContractChecklist }) {
+  return (
+    <>
+      <p>{checklist.title}</p>
+      {checklist.items.map((item) => (
+        <p key={item.label} className="contract-bullet">
+          {item.label} (<span aria-hidden="true">{REQUIREMENT_MARK[item.requirement]}</span>
+          <span className="sr-only">{REQUIREMENT_LABEL[item.requirement]}</span>)
+        </p>
+      ))}
+    </>
+  );
+}
+
+/** Legend, checklist, then table — the source document's order. */
+function SectionExtras({ section }: { section: ContractSection }) {
+  if (!section.checklist && !section.table) return null;
+  return (
+    <>
+      <RequirementLegend />
+      {section.checklist && <Checklist checklist={section.checklist} />}
+      {section.table && <ComplianceTable table={section.table} />}
+    </>
+  );
+}
+
 function ComplianceTable({ table }: { table: ContractTable }) {
   return (
     <>
-      <p className="contract-table-legend">
-        <span aria-hidden="true">{REQUIREMENT_MARK.required}</span> Required
-        {"   "}
-        <span aria-hidden="true">{REQUIREMENT_MARK.conditional}</span> Required where applicable
-      </p>
+      {table.title && <p>{table.title}</p>}
       <div className="contract-table-scroll">
         <table className="contract-table">
           <thead>
@@ -110,7 +144,7 @@ export default function ContractViewer({ contractType }: ContractViewerProps) {
                 return <p key={paraIndex}>{paragraph}</p>;
               }
             })}
-            {section.table && <ComplianceTable table={section.table} />}
+            <SectionExtras section={section} />
           </div>
         </div>
       ))}

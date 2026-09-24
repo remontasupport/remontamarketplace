@@ -3,7 +3,7 @@ import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 import { getContractContent } from '@/config/contractContent'
 import jsPDF from 'jspdf'
-import { drawContractTable, PDF_TABLE_LEGEND } from '@/lib/contractPdf'
+import { drawSectionExtras } from '@/lib/contractPdf'
 
 /**
  * GET /api/admin/reports/agreement/abn
@@ -74,7 +74,12 @@ export async function GET(
     addText('and', 10)
     addSpacing(3)
     addText(`${type === 'abn' ? 'Provider' : 'Employee'} Name: _______________`, 10, true)
-    addText(`${type === 'abn' ? 'ABN' : 'TFN'}: _______________`, 10)
+    addText(
+      type === 'abn'
+        ? 'Active ABN: _______________     GST Registered: [ ] Yes   [ ] No'
+        : 'TFN: _______________',
+      10
+    )
     addText('Located at: _______________', 10)
     addSpacing(10)
 
@@ -86,19 +91,7 @@ export async function GET(
         const indent = paragraph.startsWith('•') || paragraph.startsWith('-') ? 10 : 0
         addText(paragraph, 9, false, indent)
       })
-      if (section.table) {
-        addSpacing(2)
-        addText(PDF_TABLE_LEGEND, 9)
-        addSpacing(2)
-        yPosition = drawContractTable(doc, section.table, {
-          margin,
-          pageWidth,
-          pageHeight,
-          startY: yPosition,
-        })
-        addSpacing(4)
-        section.table.notes?.forEach((note) => addText(note, 8))
-      }
+      yPosition = drawSectionExtras(doc, section, { margin, pageWidth, pageHeight, startY: yPosition })
       addSpacing(5)
     })
 
