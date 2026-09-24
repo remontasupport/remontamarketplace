@@ -16,13 +16,15 @@ export interface ContractTableRow {
  * A role-by-document compliance matrix.
  *
  * Cells are stored semantically rather than as glyphs because the three
- * renderers cannot agree on a character set. The web viewer is UTF-8 and can
- * show the source document's tick and circle, but both PDF generators use
- * jsPDF's standard Helvetica, which is WinAnsi-encoded. U+2713 and U+25CB are
- * absent from WinAnsi and jsPDF substitutes them silently — a tick comes out
- * as an apostrophe. Each renderer therefore picks glyphs it can actually draw.
+ * renderers cannot share a character set. The web viewer is UTF-8 and shows
+ * the source document's tick and box directly. Both PDF generators set text in
+ * jsPDF's WinAnsi-encoded Helvetica, where U+2713 and U+25A0 are absent and
+ * substituted silently — a tick comes out as an apostrophe — so they draw the
+ * same marks from the ZapfDingbats standard font instead.
  */
 export interface ContractTable {
+  /** Heading rendered above the table, e.g. "2. Additional requirements by role". */
+  title?: string;
   /** Column headers, excluding the leading row-label column. */
   columns: string[];
   rowLabelHeader: string;
@@ -31,10 +33,25 @@ export interface ContractTable {
   notes?: string[];
 }
 
+export interface ContractChecklistItem {
+  label: string;
+  requirement: Exclude<ContractRequirement, "none">;
+}
+
+/** A bulleted list where each item carries the same mark as a table cell. */
+export interface ContractChecklist {
+  title: string;
+  items: ContractChecklistItem[];
+}
+
+/**
+ * Render order: `content`, then — when a checklist or table is present — one
+ * mark legend, then `checklist`, then `table`.
+ */
 export interface ContractSection {
   title: string;
   content: string[];
-  /** Rendered after `content` when present. */
+  checklist?: ContractChecklist;
   table?: ContractTable;
 }
 
@@ -47,7 +64,7 @@ export interface ContractContent {
 
 /**
  * ABN Provider Agreement - 16 Sections plus Annexure A
- * Remonta Platform Provider Agreement (ABN), v2
+ * Remonta Platform Provider Agreement (ABN), v3
  */
 export const ABN_CONTRACT: ContractContent = {
   title: "Remonta Platform Provider Agreement",
@@ -120,6 +137,8 @@ export const ABN_CONTRACT: ContractContent = {
         "• risk management and emergency plans",
         "• behavioural support or therapy assessment reports (where applicable)",
         "4.4 Payment is conditional upon submission of complete and compliant documentation.",
+        "4.5 Prior to commencing services, the Provider must confirm with the participant (or their representative) whether a current support plan and emergency plan are in place. Where no such plan exists, the Provider must develop and document one during the first shift.",
+        "4.6 The Provider must sign the applicable rate agreement before commencing services.",
       ],
     },
     {
@@ -176,6 +195,7 @@ export const ABN_CONTRACT: ContractContent = {
         "• the Company has incurred a cost or loss as a result of the cancellation, including the loss of a client engagement.",
         "7.12 Reasonable cause includes illness, injury, emergency, or other circumstances beyond the Provider's reasonable control. The Company may request evidence, and will not charge a cancellation fee where reasonable cause is established.",
         "7.13 Nothing in clauses 7.9 to 7.12 requires the Provider to accept any service offered via the platform.",
+        "7.14 The Provider must provide the relevant job number and job details in the invoice.",
       ],
     },
     {
@@ -239,6 +259,7 @@ export const ABN_CONTRACT: ContractContent = {
         "• they hold a valid and active ABN",
         "• they operate an independent business",
         "• they are not entitled to employee benefits under this Agreement",
+        "14.2 The Company relies on the Provider's declared ABN and GST registration status and is not liable for any inaccuracy in that declaration.",
       ],
     },
     {
@@ -260,23 +281,26 @@ export const ABN_CONTRACT: ContractContent = {
       content: [
         "Referred to in clause 5.6",
         "The Provider must provide the Company with valid evidence of each document that applies to their role within fourteen (14) days of the Effective Date.",
-        "1. Required for all roles",
-        "• 100 Points of ID",
-        "• ABN (Provider)",
-        "• Police Check",
-        "• NDIS Worker Screening Check",
-        "• Right to Work Documents",
-        "• Resume / Experience Evidence",
-        "• NDIS Worker Orientation Modules",
-        "• New Worker NDIS Induction Module",
-        "• Supporting Effective Communication",
-        "• Infection Control Training",
-        "• Public Liability Insurance (min $10M)",
-        "Required for all roles where applicable:",
-        "• Working With Children Check",
-        "2. Additional requirements by role",
       ],
+      checklist: {
+        title: "1. Required for all roles",
+        items: [
+          { label: "100 Points of ID", requirement: "required" },
+          { label: "Resume / Experience Evidence", requirement: "required" },
+          { label: "ABN (Provider)", requirement: "required" },
+          { label: "NDIS Worker Orientation Modules", requirement: "required" },
+          { label: "Police Check", requirement: "required" },
+          { label: "New Worker NDIS Induction Module", requirement: "required" },
+          { label: "NDIS Worker Screening Check", requirement: "required" },
+          { label: "Supporting Effective Communication", requirement: "required" },
+          { label: "Working With Children Check", requirement: "conditional" },
+          { label: "Infection Control Training", requirement: "required" },
+          { label: "Right to Work Documents", requirement: "required" },
+          { label: "Public Liability Insurance (min $10M)", requirement: "required" },
+        ],
+      },
       table: {
+        title: "2. Additional requirements by role",
         rowLabelHeader: "ADDITIONAL DOCUMENT",
         columns: [
           "Support Worker",
@@ -289,15 +313,15 @@ export const ABN_CONTRACT: ContractContent = {
         rows: [
           {
             label: "Supporting Safe and Enjoyable Meals",
-            cells: ["required", "required", "none", "required", "none", "conditional"],
+            cells: ["required", "required", "required", "none", "none", "conditional"],
           },
           {
             label: "First Aid & CPR",
-            cells: ["conditional", "required", "none", "required", "required", "required"],
+            cells: ["conditional", "required", "required", "required", "required", "none"],
           },
           {
             label: "Manual Handling Training",
-            cells: ["none", "conditional", "none", "required", "required", "conditional"],
+            cells: ["conditional", "required", "required", "none", "none", "conditional"],
           },
           {
             label: "Medication Training",

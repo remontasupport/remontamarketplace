@@ -30,7 +30,11 @@ function everyStringIn(contract: ContractContent): string[] {
   const strings = [contract.title, contract.subtitle, contract.closingStatement];
   for (const section of contract.sections) {
     strings.push(section.title, ...section.content);
+    if (section.checklist) {
+      strings.push(section.checklist.title, ...section.checklist.items.map((item) => item.label));
+    }
     if (section.table) {
+      if (section.table.title) strings.push(section.table.title);
       strings.push(section.table.rowLabelHeader, ...section.table.columns);
       strings.push(...section.table.rows.map((row) => row.label));
       strings.push(...(section.table.notes ?? []));
@@ -83,6 +87,45 @@ describe("ABN_CONTRACT — Annexure A", () => {
       .find((section) => section.title.startsWith("5."))
       ?.content.find((line) => line.startsWith("5.6"));
     expect(clause56).toContain("Annexure A");
+  });
+
+  it("matches the v3 source document's compliance matrix cell for cell", () => {
+    // Read from the ZapfDingbats glyph positions in the v3 PDF; three rows
+    // changed from v2, and the plain-text extraction cannot show which column
+    // a mark sits in.
+    const matrix = Object.fromEntries(
+      (annexure?.table?.rows ?? []).map((row) => [row.label, row.cells])
+    );
+    expect(matrix).toEqual({
+      "Supporting Safe and Enjoyable Meals": ["required", "required", "required", "none", "none", "conditional"],
+      "First Aid & CPR": ["conditional", "required", "required", "required", "required", "none"],
+      "Manual Handling Training": ["conditional", "required", "required", "none", "none", "conditional"],
+      "Medication Training": ["none", "conditional", "none", "required", "none", "none"],
+      "Behaviour Support Training": ["none", "conditional", "none", "required", "none", "conditional"],
+      "AHPRA registration or professional association membership": ["none", "none", "none", "required", "required", "required"],
+      "Highest Relevant Qualification Certificate": ["conditional", "required", "conditional", "required", "required", "required"],
+      "Driver's Licence, Car Registration & Insurance (if transporting)": ["required", "required", "none", "none", "none", "none"],
+      "Professional Indemnity Insurance": ["none", "none", "none", "required", "required", "required"],
+    });
+  });
+
+  it("lists the v3 documents required for all roles, in order, with their marks", () => {
+    expect(annexure?.checklist?.title).toBe("1. Required for all roles");
+    expect(annexure?.checklist?.items).toEqual([
+      { label: "100 Points of ID", requirement: "required" },
+      { label: "Resume / Experience Evidence", requirement: "required" },
+      { label: "ABN (Provider)", requirement: "required" },
+      { label: "NDIS Worker Orientation Modules", requirement: "required" },
+      { label: "Police Check", requirement: "required" },
+      { label: "New Worker NDIS Induction Module", requirement: "required" },
+      { label: "NDIS Worker Screening Check", requirement: "required" },
+      { label: "Supporting Effective Communication", requirement: "required" },
+      { label: "Working With Children Check", requirement: "conditional" },
+      { label: "Infection Control Training", requirement: "required" },
+      { label: "Right to Work Documents", requirement: "required" },
+      { label: "Public Liability Insurance (min $10M)", requirement: "required" },
+    ]);
+    expect(annexure?.table?.title).toBe("2. Additional requirements by role");
   });
 
   it("covers the six roles from the source document", () => {

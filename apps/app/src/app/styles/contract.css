@@ -170,6 +170,32 @@
   color: #333333;
 }
 
+.preamble-radio-group-wrapper {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.preamble-radio-group-wrapper legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.preamble-radio-group {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.preamble-radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #333333;
+  cursor: pointer;
+}
+
 /* ============================================
    CONTRACT CONTENT
    ============================================ */
