@@ -1139,3 +1139,19 @@ The Layout section now lists the new packages.
 - The hotfix branch stays unpushed until the user says so.
 
 ---
+
+## 2026-09-25 — Session paused
+
+**User input (verbatim):**
+> Please save the pending state and tasks so I can continue tomorrow
+
+**AI action:** Rewrote the resume point in `aidlc-state.md`:
+- where S1 stands;
+- the unpushed hotfix and how to ship it;
+- the open tasks, in order;
+- the user's pending actions;
+- the local environment needed to continue.
+
+Committed on `s1/worker-registration`. Nothing pushed.
+
+---

@@ -4,7 +4,65 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Steps 1–5 and 5b (overload protection, user request: load shedding, bulkhead, worker-thread hashing, bounded DB pool, k6 burst test) committed and verified. apps/api platform core is in place (pipeline, binder, outbox, rate limit, CAPTCHA, SafeHttpClient); it refuses to boot until step 7 binds the registration handlers (expected). apps/api/.env holds the user's secrets (not read) plus CORS_ORIGINS and RECAPTCHA_ALLOWED_HOSTNAMES. Local DB: docker container remonta-s1-pg, database s1test (localities loaded). Step 6 (deriveStage, 23-edge stage machine, HOME placement) committed and verified; its decisions (stage from current rows only, published-renewal stays PUBLISHED, zero obligations never verified) are recorded in the plan for the user to review. Step 7 (registration module) committed and verified; the real server now boots locally (`pnpm --filter @remonta/api build && node --env-file=.env dist/main.js`, port 4000). CRM notification deferred by the user (gate before any production switch). Step 8 committed (live email send not yet tested). Step 9 done: 9.1 suburbs from au_localities; 9.2 packages/form-engine; 9.3 worker sign-up on the form engine behind the legacy|api switch (user chose the dynamic form architecture, recorded in CLAUDE.md); 9.4 sign-in lookup fix (ILIKE wildcard bug + index) and reconciler indexes. Next: step 10 (backfill scripts for worker_locations and worker_onboarding, dry run by default).
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-9 done (plus 5b and 9b). **Paused 2026-09-25; see "Resume here" below.**
+
+## Resume here (paused 2026-09-25)
+
+### 1. First: the sign-in hotfix (ready, NOT pushed -- user decision)
+- **Branch** `fix/signin-email-lookup`, based on `origin/main` 25eb04e: 2 commits, 5 files.
+- **Where:** a separate git worktree at `C:Users	otonDesktopNew folderRemonta-hotfix`, with its own node_modules and a copy of `apps/app/.env`.
+  - `ca7bb69`: exact `lower(email)` lookup. Fixes the ILIKE wildcard bug, where `a_b@` matched `axb@` and `%@domain` matched another account.
+  - `0aaa571`: sign-in no longer caches the account (password hash, status) in Redis for 1 h. Before, the old password worked after a reset and suspended accounts could sign in.
+- **Verified:** `@remonta/app` quality 149/518, 62 tests; 7 DB tests (3 of 4 fail against the old code); `next build` 99 pages.
+- **Already merged into S1** (`63f0056`), so the two branches cannot conflict back.
+- **To ship it** (CLAUDE.md process):
+  1. `git -C ../Remonta-hotfix push origin fix/signin-email-lookup`
+  2. PR: https://github.com/remontasupport/remontamarketplace/compare/main...fix%2Fsignin-email-lookup?expand=1 -- check it shows **2 commits, 5 files**.
+  3. Preview: sign in; sign in with CAPITALS in the email; on a test account, reset the password and confirm the OLD password is refused at once.
+  4. "Merge pull request" (not squash), then the same checks on production.
+- **Afterwards:** `git worktree remove ../Remonta-hotfix` (it holds a copy of `.env`).
+
+### 2. Then S1 step 10 -- backfill scripts (plan section 5, step 10)
+- `backfill-worker-locations.ts`: legacy postcode + location to `au_localities`, via `apps/api/src/modules/locations/domain/legacy-match.ts`. Match on the `location` string and postcode, **not** `city`: apps/app's parseLocation corrupts 23 suburbs, e.g. "Mount Victoria" becomes "Mount". Report matched, unmatched and ambiguous; never guess.
+- `backfill-worker-onboarding.ts`: `deriveStage` for every worker, `source = BACKFILL`, best timestamps. Reuse the reconciler's `obligationsFrom` / `reconcileWorker` logic.
+- Both idempotent, dry run by default, `--apply` to write. Rehearse on a Neon branch (user creates it).
+
+### 3. Remaining S1 steps
+- **Step 11 (CI + docs):**
+  - `ci-api.yml`: quality, PostGIS service container, DB tests via TEST_DATABASE_URL, the openapi.json drift test;
+  - add `@remonta/db`, `@remonta/form-engine` and `@remonta/api-contract` quality to CI;
+  - CLAUDE.md: apps/api commands and the localities refresh procedure.
+- **Step 12 (Build and Test):**
+  - all gates;
+  - local end-to-end in both switch modes;
+  - the Vercel preview checks;
+  - rerun `packages/db/bench` (every key query under 5 ms at 100 k);
+  - decide whether to commit a refreshed `apps/app/src/generated/auth-client` (it differs by the S1 models; Vercel regenerates at build).
+- **Before any production switch to `api`:**
+  - the deferred CRM notification must exist (the user skipped it for now);
+  - production migrations (record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first) → `localities:refresh` → backfill dry runs → user approval → `--apply`.
+
+### 4. Waiting on the user
+- **Push decision** for the hotfix (above).
+- **A test email send:** `apps/api/.env` has `EMAIL_FROM` set to Resend's test sender (onboarding@resend.dev), which only delivers to the Resend account owner. Set a verified Remonta sender for real inboxes, or approve one test send.
+- **reCAPTCHA:** a full api-mode sign-up needs a real token, which needs the site key to allow `localhost` (Google reCAPTCHA admin), or it is tested on the Vercel preview.
+- **A Neon branch** for rehearsing the migrations and backfills (before step 12).
+- **Open follow-ups, not S1:**
+  - the stale `UserRole` type in packages/schemas;
+  - two duplicate `users.email` indexes to drop (a contract step);
+  - move the other hand-built forms (8 suburb pickers, 11 multi-step pages) onto the form engine one at a time;
+  - admin users search still uses `contains` + insensitive (harmless wildcards, admin only).
+
+### 5. Local environment to continue
+- **Docker Desktop** must be running: container `remonta-s1-pg` (postgis/postgis:16-3.4, port 55432).
+  - Database `s1test`: all S1 migrations applied (patched in place), 15,467 localities loaded; used by every DB test via `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test`.
+  - If the container is gone: recreate the database from `template0`, run `migrate deploy`, then `localities:refresh --apply` (packages/db README).
+- **`apps/api/.env`:** the user's secrets (never read by Claude) plus non-secret values Claude added (CORS_ORIGINS, RECAPTCHA_ALLOWED_HOSTNAMES, IP_HASH_SECRET, EMAIL_FROM, APP_BASE_URL).
+  - Run: `cd apps/api && pnpm run build && node --env-file=.env dist/main.js` (port 4000). Unset any shell AUTH_DATABASE_URL first: `--env-file` does not override it.
+- **`apps/app` dev against the local DB** (never with its .env as is -- it points at production DB and Redis):
+  `AUTH_DATABASE_URL=…/s1test DATABASE_URL=…/s1test DIRECT_DATABASE_URL=…/s1test UPSTASH_REDIS_REST_URL= UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev -p 3000`
+- **G-NAF extract:** `C:datagnaf` (for future `localities:build`). k6 binary: this session's scratchpad (download again if needed).
+- **Uncommitted in the S1 tree:** only regenerated Prisma clients (`apps/*/src/generated`). Never commit them without checking `git diff --ignore-all-space --numstat`.
 
 ## Workspace State
 - **Existing Code**: Yes
