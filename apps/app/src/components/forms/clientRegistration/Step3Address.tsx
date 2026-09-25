@@ -16,7 +16,7 @@ interface Step3AddressProps {
 
 interface Suburb {
   name: string;
-  postcode: number;
+  postcode: string; // a string since S1, so NT postcodes keep their leading zero
   state: {
     abbreviation: string;
   };

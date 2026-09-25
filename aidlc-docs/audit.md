@@ -936,3 +936,30 @@ No Kafka; the queue choice stays with OI-08.
 - Recommendation: indexes first; caching where a query is hot (it already exists for job listings; suburbs are in memory); read replicas only if measurements later demand it; no sharding, Kafka or Cassandra.
 
 ---
+
+## 2026-09-25 — Step 9 started
+
+**User input (verbatim):**
+> yes, start step 9
+
+**AI action:** Starting S1 step 9, which covers:
+- `apps/app` feature folder;
+- the legacy|api switch;
+- `/api/suburbs` reading `au_localities`;
+- removing the unsafe routes;
+- the connection-resilience items;
+- step 9b (sign-in lookup index, reconciler indexes).
+
+---
+
+## 2026-09-25 — S1 step 9.1: suburb search from au_localities in apps/app
+
+**AI action:**
+- `apps/app/src/lib/suburbs/`: `searchSuburbs` reads `au_localities` with one parameterised query (same ranking as apps/api; LIKE wildcards escaped). It serves `/api/suburbs` (CDN cache 1 h) and the `fetchSuburbs` action. Callers: 7 components plus client registration; response shape unchanged, plus `id`.
+- `postcode` is now a string, which fixes lost leading zeros for NT ("0870"). One consumer type was updated.
+- If the table is missing (42P01, i.e. before the migration reaches production), it falls back to the previous Google lookup, moved verbatim to `google.ts` minus a stray `'use server'` that would have exposed it as an action. Any other error is not masked.
+- **Own bug found by ESLint, not by my test:** a heredoc lost backslashes in `escapeLike`, which inserted a literal `${c}`. The "%%" test passed by accident. Fixed, and added a direct unit test.
+- **Verified:** 7 tests (4 on local PostGIS: ranking, shape, 0870, postcode, later word, wildcards; plus the fallback and no-masking cases); `@remonta/app` quality holds 149 / 516 (down from 518).
+- Not run against the real Next dev server, because `apps/app/.env` points at the production database.
+
+---
