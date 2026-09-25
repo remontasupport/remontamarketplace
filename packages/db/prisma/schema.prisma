@@ -830,6 +830,19 @@ model WorkerOnboarding {
 }
 
 /// Append-only history of stage changes. Rows are never updated or deleted.
+/// Scheduled jobs (onboarding reconciler, photo purge): the lease that makes only
+/// one instance run a job, its last run, and the reconciler's watermark.
+model ScheduledJob {
+  name           String    @id
+  lockedUntil    DateTime?
+  lastStartedAt  DateTime?
+  lastFinishedAt DateTime?
+  lastResult     Json?
+  watermark      DateTime?
+
+  @@map("scheduled_jobs")
+}
+
 model WorkerOnboardingTransition {
   id              BigInt                     @id @default(autoincrement())
   workerProfileId String
@@ -863,6 +876,7 @@ model OutboxEvent {
   processedAt   DateTime?
 
   @@index([status, nextAttemptAt])
+  @@index([type, createdAt])
   @@map("outbox_events")
 }
 

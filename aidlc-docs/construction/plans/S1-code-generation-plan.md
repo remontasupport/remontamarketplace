@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–7 done and verified (step 4 before step 3; 5b added; CRM deferred).
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–8 done and verified (step 4 before step 3; 5b added; CRM deferred).
 
 ---
 
@@ -193,10 +193,42 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
   - Obligations are not known at sign-up (the catalogue is not in apps/api yet), so the marker starts SIGNED_UP with zero counts; the reconciler fills them in.
 
 ### Step 8 — `apps/api` events and jobs
-- [→] ~~`NotifyCrmOfRegistration`~~ **Deferred (user, 2026-09-25: "you can skip the CRM updates for now").** `zohoLeadId` is still validated and stored. The n8n URLs are optional config.
-- [ ] `SendRegistrationConfirmation` (Resend, idempotency key = event ID, truthful wording) · `SendExistingAccountNotice` (1 per email per 10 min)
-- [ ] `PurgeUnclaimedRegistrationPhotos` (daily) · `OnboardingReconciler` (every 5 min, watermark, `source = RECONCILER`)
+- [→] ~~`NotifyCrmOfRegistration`~~ **Deferred (user, 2026-09-25: "you can skip the CRM updates for now").** `zohoLeadId` is still validated and stored. The n8n URLs are optional config. Production must not switch to `api` until it exists (step 12 gate).
+- [x] `SendRegistrationConfirmation` (Resend through SafeHttpClient, idempotency key per event, truthful wording: "your account is ready, you can sign in now")
+- [x] `SendExistingAccountNotice`, with sign-in and reset links. Decided when the event is **queued**, not when it is sent: at most one per account per 10 minutes, none within 10 minutes of the account's creation (R5: the browser retrying its own sign-up), serialised by a per-account advisory lock
+- [x] `PurgeUnclaimedRegistrationPhotos` (daily; the blob first, then the row; a failed blob delete keeps the row for the next run)
+- [x] `OnboardingReconciler`:
+  - runs every 5 minutes, with a watermark and a 60 s overlap;
+  - picks up changed profiles, requirements, sign-ins and just-passed expiries, plus every worker without a marker;
+  - uses `source = RECONCILER`, an optimistic lock, and records jumps;
+  - creates or moves HOME from the legacy address via `legacy-match.ts`, which step 10 reuses. It never guesses: ambiguous or unknown addresses get no HOME.
+- [x] A scheduler with a lease per job (`scheduled_jobs`), so each job runs on one instance only. Also an outbox retention job (DONE rows deleted after 30 days; DEAD rows kept) and the rate-limit purge moved onto the scheduler.
 - **Verify:** outbox retry PBT (the n8n payload snapshot tests move with the deferred CRM handler)
+- **Verified 2026-09-25:**
+  - Tests: `@remonta/api` 214. That includes the outbox retry property (DONE exactly when a send succeeds within 6 attempts; never retried once final; given up after 62 min), 10 scheduler/purge/retention/email tests and 7 reconciler tests on PostGIS.
+  - 10 deliberate bugs, each caught:
+    - scheduler ignoring the lease, or its interval;
+    - matcher trusting the city column first, or guessing an ambiguous postcode;
+    - `EXPIRED` status ignored;
+    - no idempotency key;
+    - no per-account lock;
+    - no R5 skip;
+    - no 10-minute window.
+  - Two of them first survived and exposed weak tests, which were fixed: the lease test was masked by the due check, and the lock test never really raced.
+  - The real server boots and runs all four jobs with 0 errors.
+  - All gates and `turbo run build` pass.
+- **Decisions / deviations:**
+  - New tables in the unreleased migrations: `scheduled_jobs` (s1_onboarding) and the `outbox_events(type, createdAt)` index (s1_registration). The migration cycle was re-verified.
+  - Resend 4xx (except 429) is a `PermanentFailure`: the event is DEAD at once instead of being retried six times.
+  - Legacy `verification_requirements` mapping:
+    - `PENDING` counts as uploaded only if a document is attached;
+    - `SUBMITTED` → uploaded;
+    - `EXPIRED` → a lapsed approval;
+    - one row per `requirementType`, the latest update winning;
+    - only `isRequired` rows count.
+  - `firstSignInAt` is approximated from `users.lastLoginAt` when the reconciler first sees it.
+  - New config: `EMAIL_FROM`, `APP_BASE_URL`, `RECONCILER_INTERVAL_MS`.
+- **Not verified:** a real email send. With the Resend test sender, Resend delivers only to the account owner's address; sending needs the user's go-ahead and, for real inboxes, a verified Remonta sender in `EMAIL_FROM`.
 
 ### Step 9 — `apps/app`: organise, remove, switch, suburb fix
 - [ ] Feature folder `features/worker-registration/` (S1-design §4.1); re-check every import of a moved file

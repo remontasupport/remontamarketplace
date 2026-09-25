@@ -63,24 +63,40 @@ export async function registerWorker(input: WorkerRegistration, deps: RegisterDe
   const passwordHash = await deps.hasher.hash(input.password)
 
   const existing = await deps.db.user.findUnique({ where: { email: input.email }, select: { id: true } })
-  if (existing) return existingAccount(existing.id, deps.db, ctx)
+  if (existing) return existingAccount(existing.id, deps.db, ctx, now())
 
   try {
     await unitOfWork(deps.db, (tx) => createAccount(tx, input, passwordHash, services, breach, now(), ctx))
   } catch (err) {
     if (err instanceof EmailTaken) {
       const taken = await deps.db.user.findUniqueOrThrow({ where: { email: input.email }, select: { id: true } })
-      return existingAccount(taken.id, deps.db, ctx)
+      return existingAccount(taken.id, deps.db, ctx, now())
     }
     throw err
   }
   return ACCEPTED
 }
 
-async function existingAccount(userId: string, db: Db, ctx: RegisterContext) {
+/** At most one "someone tried" notice per account in this window (S1-design 3.5). */
+export const EXISTING_ACCOUNT_NOTICE_WINDOW_MS = 10 * 60_000
+
+async function existingAccount(userId: string, db: Db, ctx: RegisterContext, now: Date) {
   ctx.audit.skip('email already registered: no account change')
-  // The owner is told someone tried (step 8 sends it, at most once per 10 minutes).
-  await unitOfWork(db, (tx) => enqueue(tx, { type: 'RegistrationAttemptOnExistingAccount', payload: { userId } }))
+  // Decided here, when queueing, rather than in the email handler: a handler that
+  // counted before sending would lose the notice if the send failed and was
+  // retried. The per-account lock makes simultaneous attempts queue one notice.
+  await unitOfWork(db, async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'existing-account-notice:' + userId}))`
+    const since = new Date(now.getTime() - EXISTING_ACCOUNT_NOTICE_WINDOW_MS)
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { createdAt: true } })
+    // R5: seconds after the account was created, this is the browser retrying its own sign-up.
+    if (user.createdAt > since) return
+    const recent = await tx.$queryRaw<unknown[]>`
+      SELECT 1 FROM outbox_events
+       WHERE type = 'RegistrationAttemptOnExistingAccount' AND payload->>'userId' = ${userId} AND "createdAt" > ${since}
+       LIMIT 1`
+    if (recent.length === 0) await enqueue(tx, { type: 'RegistrationAttemptOnExistingAccount', payload: { userId } }, now)
+  })
   return ACCEPTED
 }
 

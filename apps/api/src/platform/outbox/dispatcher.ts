@@ -9,7 +9,7 @@
 // PENDING with exponential back-off, and after MAX_ATTEMPTS -> DEAD plus an alert log.
 import type { FastifyBaseLogger } from 'fastify'
 import type { Db } from '../persistence/db'
-import { backoffMs, MAX_ATTEMPTS, type OutboxEvent, type OutboxHandler } from './outbox'
+import { afterFailure, PermanentFailure, type OutboxEvent, type OutboxHandler } from './outbox'
 
 export interface DispatcherOptions {
   batchSize?: number
@@ -90,8 +90,9 @@ export class OutboxDispatcher {
          WHERE id = ${event.id}::uuid`
     } catch (err) {
       const message = (err instanceof Error ? err.message : String(err)).slice(0, 1000)
-      const dead = event.attempts >= MAX_ATTEMPTS || !handler
-      const next = new Date(this.now().getTime() + backoffMs(event.attempts))
+      const { status, retryInMs } = afterFailure(event.attempts, !handler || err instanceof PermanentFailure)
+      const dead = status === 'DEAD'
+      const next = new Date(this.now().getTime() + retryInMs)
       await this.db.$executeRaw`
         UPDATE outbox_events
            SET status = ${dead ? 'DEAD' : 'PENDING'}::"OutboxStatus", "lockedUntil" = NULL,

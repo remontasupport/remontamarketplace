@@ -56,6 +56,20 @@ CREATE TABLE "worker_onboarding_transitions" (
         CHECK ("fromStage" IS DISTINCT FROM "toStage")
 );
 
+-- CreateTable
+-- Scheduled jobs (the reconciler, photo purge): which instance holds the lease,
+-- when each last ran, and the reconciler's watermark. One row per job.
+CREATE TABLE "scheduled_jobs" (
+    "name" TEXT NOT NULL,
+    "lockedUntil" TIMESTAMP(3),
+    "lastStartedAt" TIMESTAMP(3),
+    "lastFinishedAt" TIMESTAMP(3),
+    "lastResult" JSONB,
+    "watermark" TIMESTAMP(3),
+
+    CONSTRAINT "scheduled_jobs_pkey" PRIMARY KEY ("name")
+);
+
 -- CreateIndex
 CREATE INDEX "worker_onboarding_stage_stageEnteredAt_idx" ON "worker_onboarding"("stage", "stageEnteredAt");
 

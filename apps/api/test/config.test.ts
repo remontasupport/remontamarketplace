@@ -10,6 +10,8 @@ const complete = {
   N8N_REGISTRATION_WEBHOOK_URL: 'https://n8n.example.test/webhook/a',
   N8N_WEBHOOK_URL: 'https://n8n.example.test/webhook/b',
   IP_HASH_SECRET: 'x'.repeat(32),
+  EMAIL_FROM: 'Remonta <noreply@remontaservices.com.au>',
+  APP_BASE_URL: 'https://app.remontaservices.com.au',
 }
 
 function problems(env: Record<string, string | undefined>): string[] {

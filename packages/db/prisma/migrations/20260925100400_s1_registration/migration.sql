@@ -64,6 +64,9 @@ CREATE TABLE "rate_limit_buckets" (
 -- CreateIndex
 CREATE INDEX "outbox_events_status_nextAttemptAt_idx" ON "outbox_events"("status", "nextAttemptAt");
 
+-- CreateIndex (the existing-account notice dedupe looks up recent events of a type)
+CREATE INDEX "outbox_events_type_createdAt_idx" ON "outbox_events"("type", "createdAt");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "registration_photo_uploads_blobKey_key" ON "registration_photo_uploads"("blobKey");
 

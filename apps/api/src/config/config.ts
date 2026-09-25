@@ -42,6 +42,11 @@ const envSchema = z.object({
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
 
   RESEND_API_KEY: z.string().min(10, 'missing or too short'),
+  /** Sender for Remonta's emails, e.g. "Remonta <noreply@remontaservices.com.au>" (a Resend-verified domain). */
+  EMAIL_FROM: z.string().min(3),
+  /** apps/app's origin, for the links in emails (/login, /forgot-password). */
+  APP_BASE_URL: origin,
+  RECONCILER_INTERVAL_MS: z.coerce.number().int().min(10_000).max(3_600_000).default(300_000),
   // CRM notification is deferred (user, 2026-09-25): not required until it is built.
   N8N_REGISTRATION_WEBHOOK_URL: httpsUrl.optional(),
   N8N_WEBHOOK_URL: httpsUrl.optional(),

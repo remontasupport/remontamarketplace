@@ -8,7 +8,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { contracts, platformContract, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
-import { CONSENT_WORDING_VERSION } from '@remonta/schemas/schema/workerRegistrationSchema'
+import { CONSENT_WORDING_VERSION, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
+import pino from 'pino'
+import { registerWorker } from '../../src/modules/registration/application/register-worker'
 import bcrypt from 'bcryptjs'
 import fc from 'fast-check'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -222,8 +224,26 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       expect(users).toHaveLength(1)
       expect(users[0]!.workerProfile!.firstName).toBe('Mary-Jane')
       expect(await bcrypt.compare('Str0ng!pass', users[0]!.passwordHash)).toBe(true)
+      // R5: seconds after creating the account, a repeat is the browser retrying -- no notice.
       const types = await db.$queryRaw<{ type: string }[]>`SELECT type FROM outbox_events WHERE payload->>'userId' = ${users[0]!.id} ORDER BY "createdAt"`
-      expect(types.map((r) => r.type)).toEqual(['WorkerRegistered', 'RegistrationAttemptOnExistingAccount'])
+      expect(types.map((r) => r.type)).toEqual(['WorkerRegistered'])
+    })
+
+    it('an attempt on an older account queues one notice per 10 minutes, even when attempts arrive together', async () => {
+      const first = await body()
+      await register(first)
+      const user = await db.user.findUniqueOrThrow({ where: { email: first.email } })
+      await db.user.update({ where: { id: user.id }, data: { createdAt: new Date(Date.now() - 3_600_000) } })
+      const notices = async () => (await db.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM outbox_events WHERE type = 'RegistrationAttemptOnExistingAccount' AND payload->>'userId' = ${user.id}`)[0]!.n
+      const attempts = await Promise.all([1, 2, 3].map(async () => register(await body({ email: first.email }))))
+      expect(attempts.map((r) => r.statusCode)).toEqual([202, 202, 202])
+      expect(await notices()).toBe(1n)
+      await register(await body({ email: first.email }))
+      expect(await notices()).toBe(1n)
+      // Outside the window, the next attempt notifies again.
+      await db.$executeRaw`UPDATE outbox_events SET "createdAt" = now() - interval '11 minutes' WHERE type = 'RegistrationAttemptOnExistingAccount' AND payload->>'userId' = ${user.id}`
+      await register(await body({ email: first.email }))
+      expect(await notices()).toBe(2n)
     })
 
     it('property: for any valid sign-up, the response for an existing email equals the one for a new email', async () => {
@@ -248,6 +268,19 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       expect(x.body).toBe(y.body)
       expect(await db.user.count({ where: { email: b.email } })).toBe(1)
     })
+  })
+
+  it('the per-account lock: 20 truly simultaneous attempts queue exactly one notice', async () => {
+    const first = await body()
+    await register(first)
+    const user = await db.user.findUniqueOrThrow({ where: { email: first.email } })
+    await db.user.update({ where: { id: user.id }, data: { createdAt: new Date(Date.now() - 3_600_000) } })
+    const instant = { hash: async () => 'x', verify: async () => false, close: async () => {} }
+    const input = workerRegistrationSchema.parse(await body({ email: first.email }))
+    const quiet = { audit: { record: async () => {}, skip: () => {} }, log: pino({ level: 'silent' }), rawZohoLeadId: undefined }
+    await Promise.all(Array.from({ length: 20 }, () => registerWorker(input, { db, hasher: instant, breaches: { check: async () => ({ status: 'clear' }) } }, quiet)))
+    const n = (await db.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM outbox_events WHERE type = 'RegistrationAttemptOnExistingAccount' AND payload->>'userId' = ${user.id}`)[0]!.n
+    expect(n).toBe(1n)
   })
 
   describe('refusals', () => {

@@ -19,6 +19,12 @@ import { LocalDiskPhotoStore, VercelBlobPhotoStore } from './modules/registratio
 import { PwnedPasswordsChecker } from './modules/registration/adapters/pwned-passwords'
 import { registrationHandlers } from './modules/registration/registration.handlers'
 import { WorkerPoolHasher } from './platform/security/password-hasher'
+import { notificationHandlers } from './modules/notifications/notification.handlers'
+import { onboardingReconcilerJob } from './modules/onboarding/reconciler'
+import { purgeUnclaimedPhotosJob } from './modules/registration/jobs/purge-photos'
+import { ResendMailer } from './platform/email/mailer'
+import { Scheduler, type Job } from './platform/jobs/scheduler'
+import { outboxRetentionJob } from './platform/outbox/retention'
 
 async function main() {
   const config = loadConfig(process.env)
@@ -27,6 +33,7 @@ async function main() {
   const rateLimiter = new PostgresRateLimiter(db)
 
   const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
+  const photoStore = config.PHOTO_STORE === 'vercel-blob' ? new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN!) : new LocalDiskPhotoStore(config.PHOTO_LOCAL_DIR)
   const handlerSets = [
     platformHandlers(db),
     registrationHandlers({
@@ -34,12 +41,13 @@ async function main() {
       hasher,
       breaches: new PwnedPasswordsChecker(http),
       localities: new LocalityDirectory(db),
-      store: config.PHOTO_STORE === 'vercel-blob' ? new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN!) : new LocalDiskPhotoStore(config.PHOTO_LOCAL_DIR),
+      store: photoStore,
       ipHashSecret: config.IP_HASH_SECRET,
     }),
   ] as unknown as HandlerSet[]
-  // Outbox event handlers by type (step 8).
-  const outboxHandlers = new Map<string, OutboxHandler>()
+  // Outbox event handlers by type. The CRM notification is deferred (user, 2026-09-25).
+  const mailer = new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
+  const outboxHandlers: Map<string, OutboxHandler> = notificationHandlers({ db, mailer, appBaseUrl: config.APP_BASE_URL })
 
   const shedder = new LoadShedder({ maxInFlight: config.MAX_IN_FLIGHT, maxEventLoopDelayMs: config.MAX_EVENT_LOOP_DELAY_MS })
   const app = await createApp({
@@ -61,11 +69,23 @@ async function main() {
   const log = app.getHttpAdapter().getInstance().log
   const dispatcher = new OutboxDispatcher(db, outboxHandlers, log)
   dispatcher.start(config.OUTBOX_POLL_MS)
-  const purge = setInterval(() => void rateLimiter.purgeExpired().catch((err) => log.error({ err }, 'rate-limit purge failed')), 10 * 60_000)
+  const jobs: Job[] = [
+    onboardingReconcilerJob(db, log, { everyMs: config.RECONCILER_INTERVAL_MS }),
+    purgeUnclaimedPhotosJob(db, photoStore),
+    outboxRetentionJob(db),
+    {
+      name: 'rate-limit-purge',
+      everyMs: 10 * 60_000,
+      timeoutMs: 60_000,
+      run: async () => ({ summary: { deleted: await rateLimiter.purgeExpired() } }),
+    },
+  ]
+  const scheduler = new Scheduler(db, jobs, log)
+  scheduler.start()
 
   const shutdown = async (signal: string) => {
     log.info({ signal }, 'shutting down')
-    clearInterval(purge)
+    await scheduler.stop()
     await dispatcher.stop()
     await hasher.close()
     await app.close()

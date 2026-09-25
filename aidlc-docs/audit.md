@@ -838,3 +838,50 @@ No Kafka; the queue choice stays with OI-08.
 - **Test gaps found and closed:** hashing on the existing-email branch was not checked, and the atomicity test did not check audit/outbox counts. Also, one smoke run failed only because Git Bash's `/tmp` is invisible to Windows curl.
 
 ---
+
+## 2026-09-25 — Clarification: .jpg photos
+
+**User input (verbatim):**
+> So .jpg is not acceptable in image?
+
+**AI action:** Clarified that JPEG (.jpg/.jpeg) is accepted, along with PNG, WebP and HEIC. The refused test file was an HTML page renamed to .jpg: the check reads the file's contents, not its name. No change.
+
+---
+
+## 2026-09-25 — Step 8 started
+
+**User input (verbatim):**
+> yes, start step 8
+
+**AI action:** Starting S1 step 8 without the CRM notification (deferred):
+- confirmation email;
+- existing-account notice;
+- photo purge;
+- onboarding reconciler.
+
+---
+
+## 2026-09-25 — S1 step 8: sign-up emails, jobs, reconciler
+
+**AI action:**
+- `apps/api`:
+  - `platform/email/mailer.ts` (Resend);
+  - `modules/notifications` (templates and outbox handlers);
+  - `platform/jobs/scheduler.ts` (a lease per job);
+  - `modules/registration/jobs/purge-photos.ts`;
+  - `platform/outbox/retention.ts`;
+  - `modules/onboarding/reconciler.ts`;
+  - `modules/locations/domain/legacy-match.ts`.
+- Outbox: `PermanentFailure`, and `afterFailure` as a pure policy.
+- Migrations: `scheduled_jobs` table and `outbox_events(type, createdAt)` index (both unreleased; cycle re-verified).
+- Appended non-secret `EMAIL_FROM` (Resend test sender) and `APP_BASE_URL=http://localhost:3000` to `apps/api/.env`.
+- **Design correction during the step:** my first notice handler counted the rate limit before sending, which loses the notice if the send fails and is retried. The once-per-10-minutes and R5 rules moved to enqueue time, under a per-account advisory lock.
+- **Verified:**
+  - 214 tests;
+  - 10 mutations caught; two first survived and exposed weak tests (the lease test masked by the due check; the lock test not truly concurrent), both fixed;
+  - the real server runs all four jobs with 0 errors;
+  - all gates and `turbo run build` pass.
+- **Own mistakes, recorded:** a test passed a bigint to `make_interval`; a watermark test used an input equal to the expected output; one boot check was invalid because the shell still pointed at a dropped database (`--env-file` does not override set variables).
+- **Not verified:** a live email send (needs the user's go-ahead).
+
+---

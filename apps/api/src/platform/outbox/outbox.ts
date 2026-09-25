@@ -29,6 +29,23 @@ export interface OutboxEvent {
   attempts: number
 }
 
+/**
+ * Thrown by a handler when retrying cannot help (a malformed payload, an address
+ * the provider rejects): the event goes straight to DEAD instead of being retried.
+ */
+export class PermanentFailure extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'PermanentFailure'
+  }
+}
+
+/** What happens to an event after a failed attempt (attempts already counts it). */
+export function afterFailure(attempts: number, permanent: boolean): { status: 'PENDING' | 'DEAD'; retryInMs: number } {
+  const dead = permanent || attempts >= MAX_ATTEMPTS
+  return { status: dead ? 'DEAD' : 'PENDING', retryInMs: dead ? 0 : backoffMs(attempts) }
+}
+
 /** A handler must be idempotent on event.id: it can run more than once. */
 export type OutboxHandler = (event: OutboxEvent, signal: AbortSignal) => Promise<void>
 
