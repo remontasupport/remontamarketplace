@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–2 done and verified on local PostGIS.
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–4 done and verified (step 4 before step 3).
 
 ---
 
@@ -98,10 +98,14 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
   - **Key column renamed** `gnafLocalityPid` → `localityPid` (user decision; commit 8193815).
 
 ### Step 3 — `packages/api-contract` (new)
-- [ ] Package, strict tsconfig, ESLint boundary (no Nest, Prisma, React or DOM imports, P-5 style); a failing fixture proves the rule rejects
-- [ ] `meta()` security-metadata type; `registration.contract.ts` (3 entries); `public-endpoints.json`
-- [ ] D1 check: ts-rest + Zod 4
+- [x] Package, strict tsconfig, ESLint boundary **P-6** (no Nest, Prisma, React/Next or Node built-ins in `src/`); a fixture with 7 forbidden imports proves the rule rejects
+- [x] `meta()` security-metadata type (validated at load); `registration.contract.ts` (3 entries); `public-endpoints.json` (each with a reason)
+- [x] D1 check: ts-rest + Zod 4 — **fails** (see below); fallback taken as pre-agreed
 - **Verify:** package quality passes; the boundary rule fails on a deliberate bad import
+- **Verified 2026-09-25:** `@remonta/api-contract` quality (lint, strict tsc incl. compile-time type tests, 31 tests); 11 checks each shown to reject a bad contract; 6 malformed-meta cases rejected; a stale `@ts-expect-error` fails tsc; `@remonta/app` (149/518, 62), `@remonta/web` (76), `@remonta/schemas` quality and `turbo run build` pass.
+- **D1 outcome:** ts-rest 3.52.1 (latest stable, Mar 2025) requires Zod 3; with Zod 4 its inferred request/response types are `never` and `generateOpenApi` emits `"schema": {}`. 3.53 exists only as a June 2025 RC whose OpenAPI package still needs Zod 3. **In-house instead:** `defineContract` + derived types (`BodyInput`/`BodyOutput`/`RequestInput`/`SuccessResponse`), `createClient` (validates responses), `toOpenApi` (OpenAPI 3.1 via `z.toJSONSchema`, with `x-remonta-security` per operation), `checkContracts` (for tests now, apps/api boot in step 5). Consequence for step 5: no `@ts-rest/nest`; the binder is ours.
+- **Decisions:** `searchLocalities` rate limit 120/min per IP, 6,000/min global, cached 1 h (the design left it open); one error shape for all entries (`errors.ts`). `openapi.json` is committed and a test fails on drift (CI wiring in step 11).
+- **Follow-up (not S1):** `packages/schemas` `UserRole` (`CLIENT | SUPPORT_WORKER | ADMIN`) is stale against the database enum; the contract uses the database values.
 
 ### Step 4 — `packages/schemas`: `workerRegistrationSchema` (done before step 3: the contract imports it)
 - [x] Strict schema (S1-design §3.3 with `localityId`), email/mobile normalisers, consent version constant

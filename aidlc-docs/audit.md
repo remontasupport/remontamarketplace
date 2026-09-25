@@ -641,3 +641,30 @@ Gave the user the fix steps.
 - **Gates:** `@remonta/schemas` quality is now lint + `typecheck:strict` (new files only) + tests; it passes, as does `@remonta/app` quality.
 
 ---
+
+## 2026-09-25 — S1 step 3: packages/api-contract
+
+**AI action:**
+- New package `@remonta/api-contract`:
+  - `defineContract` and derived types;
+  - `meta()` (security metadata, validated at load, no defaults);
+  - `errors.ts` (one error shape);
+  - `checkContracts` (uniqueness, /v1 paths, path params, strict bodies/queries, no passthrough responses, cache rules, file limits, public allow-list in both directions);
+  - `createClient` (typed, validates responses);
+  - `toOpenApi` (OpenAPI 3.1 via `z.toJSONSchema`, `x-remonta-security` per operation);
+  - `registration.contract.ts` (searchLocalities, uploadRegistrationPhoto, submitWorkerRegistration);
+  - `public-endpoints.json`;
+  - committed `openapi.json` with a drift test.
+- New boundary rule **P-6** in `packages/config/eslint.boundaries.mjs`. A fixture of 7 forbidden imports proves it rejects.
+- The contract imports `workerRegistrationSchema` by subpath, so the schemas index (with its tracked type errors) does not enter strict tsc.
+- `packages/schemas`: raw `.max(200)` bounds added before trimming on names, service ids and the locality query, so the inventory shows a bound and the server never trims unbounded input.
+- **Verified:**
+  - 31 tests in the package;
+  - every check and meta rule shown to reject;
+  - compile-time type tests proven able to fail;
+  - app, web and schemas quality, and `turbo run build`, pass.
+- **Decisions:**
+  - localities rate limit 120/min/IP and 6,000/min global, cached 1 h;
+  - follow-up: the stale `UserRole` type in `packages/schemas`.
+
+---

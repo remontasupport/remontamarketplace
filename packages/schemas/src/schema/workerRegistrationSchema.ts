@@ -54,6 +54,7 @@ const ZOHO_LEAD_ID = /^[0-9]{1,32}$/
 const personName = (label: string) =>
   z
     .string()
+    .max(200) // raw bound before trimming; the 50 below is the real rule
     .transform((s) => s.trim().replace(/\s+/g, ' '))
     .pipe(
       z
@@ -97,6 +98,7 @@ const password = z
 
 const identifier = z
   .string()
+  .max(200)
   .transform((s) => s.trim())
   .pipe(z.string().min(1).max(100))
 

@@ -1,0 +1,14 @@
+[
+  {
+    "route": "GET /v1/localities",
+    "reason": "Suburb autocomplete on the sign-up form, before any account exists. Returns public G-NAF suburb names only."
+  },
+  {
+    "route": "POST /v1/registrations/worker/photo",
+    "reason": "Sign-up photo, before any account exists. Returns a staged upload id, never a URL; unclaimed uploads are purged after 24 h."
+  },
+  {
+    "route": "POST /v1/registrations/worker",
+    "reason": "Worker sign-up creates the account, so it cannot require one. Protected by reCAPTCHA v3 (fails closed) and per-IP and global rate limits."
+  }
+]

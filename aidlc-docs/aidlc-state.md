@@ -4,7 +4,7 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Steps 1–2 committed and verified on local PostGIS (step 2: G-NAF Aug 2026 → 15,467 suburb–postcode rows in packages/db/data/au_localities.csv; build/refresh scripts, 57 tests). G-NAF extract at C:\data\gnaf. Next: step 3 (packages/api-contract, incl. the ts-rest + Zod 4 check).
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Steps 1–4 committed and verified (step 4 before step 3, which imports it). D1: ts-rest cannot infer from Zod 4, so packages/api-contract is an in-house defineContract + typed client + OpenAPI generator. G-NAF extract at C:\data\gnaf. Next: step 5 (apps/api platform core: NestJS 11 + Fastify, config, pipeline, outbox, contract binder); needs RECAPTCHA_SECRET_KEY etc. in apps/api/.env from the user.
 
 ## Workspace State
 - **Existing Code**: Yes
