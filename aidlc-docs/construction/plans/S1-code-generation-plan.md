@@ -277,10 +277,20 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
 
 ### Step 9b — Query performance (user, 2026-09-25: "fast as possible" at 10,000+ users)
 Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in its README). The system is read-heavy, so, following the user's notes: indexes first, then caching, then read replicas. Nothing here needs sharding, Kafka or a write-optimised database.
-- [ ] **Sign-in lookup:** today's `mode: "insensitive"` becomes `ILIKE`, a full scan of `users` on every sign-in (47 ms at 100 k, growing). Add `users (lower(email))` (CONCURRENTLY, its own migration) and look up `lower(email) = lower($1)` in `apps/app` sign-in (0.009 ms). This changes production sign-in, so it gets its own preview check (sign in with mixed-case input)
-- [ ] **Reconciler indexes** (CONCURRENTLY, own migration): `worker_profiles("updatedAt")`, `verification_requirements` (`updatedAt`, `submittedAt`, `reviewedAt`, `expiresAt`), `users("lastLoginAt")`. Scan goes from 61 ms to 1.6 ms
+- [x] **Sign-in lookup:** today's `mode: "insensitive"` becomes `ILIKE`, a full scan of `users` on every sign-in (47 ms at 100 k, growing). Add `users (lower(email))` (CONCURRENTLY, its own migration) and look up `lower(email) = lower($1)` in `apps/app` sign-in (0.009 ms). This changes production sign-in, so it gets its own preview check (sign in with mixed-case input)
+- [x] **Reconciler indexes** (CONCURRENTLY, own migration): `worker_profiles("updatedAt")`, `verification_requirements` (`updatedAt`, `submittedAt`, `reviewedAt`, `expiresAt`), `users("lastLoginAt")`. Scan goes from 61 ms to 1.6 ms
 - [ ] **Later (a contract step, not S1):** drop the two duplicate `users.email` indexes, after checking nothing depends on their names
 - [ ] Step 12: rerun the benchmark; every key query must use an index and stay under 5 ms at 100 k workers
+- **Done 2026-09-25 (9.4):**
+  - Seven migrations `s1_idx_*`, one CONCURRENTLY index each; the six column indexes are also declared in the schema.
+  - `apps/app/src/lib/user-lookup.ts` (`lower(email) = lower($1)`), used by sign-in, impersonation and the admin impersonate route.
+- **Security finding (fixed by the same change):** Prisma's `mode: "insensitive"` equals is `ILIKE` with no escaping. A sign-in lookup for `a_b@…` returned `axb@…`, and `%@domain` returned another user. Passwords were still checked, but a guess could be aimed at an unknown account, and failed attempts could push it towards lock-out.
+- **Verified:**
+  - Migrations: all 12 S1 migrations forward, all 7 new indexes valid, drift limited to the known point columns (Prisma ignores the expression index), every down.sql newest-first with an empty diff against `main`, re-apply.
+  - Plan at 100 k users: `users_lower_email_idx`, 0.2 ms. The lookup test seeds 20 k rows, because a tiny table gave a misleading plan.
+  - Tests: 4 for the lookup, with reverting to ILIKE shown to fail; all gates and `turbo run build` pass.
+- **Also noted, not changed:** sign-in caches the user row, including `passwordHash` and the lock state, in Redis for 1 h (`CACHE_KEYS.user`). Worth reviewing in slice 2 (Identity).
+- **Production:** the index migrations run with the other S1 migrations in step 12; CONCURRENTLY means no write lock on `users` / `worker_profiles` / `verification_requirements`. Sign-in is correct before the index exists, just not yet fast.
 
 ### Step 10 — Backfill scripts (dry run by default)
 - [ ] `backfill-worker-locations.ts`: postcode + suburb → `au_localities`; the report lists matched, unmatched and ambiguous; unmatched rows are never guessed

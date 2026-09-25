@@ -57,6 +57,14 @@ anything else in a diff against a migrated database is real. The same applies to
 partial unique index `worker_locations_one_home_per_worker` and the CHECK constraints in
 the S1 migrations -- Prisma does not know about them and will not recreate them.
 
+## Indexes Prisma cannot express
+
+`users_lower_email_idx` on `users (lower(email))` (S1 step 9b) exists only in its
+migration: the schema cannot declare an expression index. Prisma ignores it --
+`migrate diff` does not propose dropping it (verified) -- so do not "fix" the schema
+by adding a plain `@@index([email])`, and do not remove the migration. Sign-in depends
+on it (`apps/app/src/lib/user-lookup.ts`).
+
 ## Testing a `down.sql` locally
 
 Use a database created from `template0`, not the `postgis/postgis` image's default

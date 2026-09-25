@@ -174,6 +174,7 @@ model User {
   @@index([createdAt])
   @@index([email], map: "idx_users_email")
   @@index([email, status, accountLockedUntil], map: "idx_users_email_status_locked")
+  @@index([lastLoginAt]) // S1 step 9b: onboarding reconciler
   @@map("users")
 }
 
@@ -209,6 +210,10 @@ model VerificationRequirement {
   @@index([workerProfileId, requirementName])
   @@index([workerProfileId, status])
   @@index([workerProfileId], map: "idx_verification_requirements_worker_profile")
+  @@index([updatedAt]) // S1 step 9b: onboarding reconciler
+  @@index([submittedAt]) // S1 step 9b: onboarding reconciler
+  @@index([reviewedAt]) // S1 step 9b: onboarding reconciler
+  @@index([expiresAt]) // S1 step 9b: onboarding reconciler
   @@map("verification_requirements")
 }
 
@@ -298,6 +303,7 @@ model WorkerProfile {
   @@index([isPublished, gender])
   @@index([isPublished, verificationStatus])
   @@index([createdAt])
+  @@index([updatedAt]) // S1 step 9b: onboarding reconciler
   @@map("worker_profiles")
 }
 

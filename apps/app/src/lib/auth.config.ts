@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authPrisma, withRetry } from "./auth-prisma";
+import { userIdByEmail } from "./user-lookup";
 import { UserRole } from "@/types/auth";
 import { getOrFetch, getCached, setCached, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
 
@@ -40,8 +41,10 @@ async function handleImpersonation(email: string, token: string) {
     throw new Error("Impersonation token expired")
   }
 
-  const user = await authPrisma.user.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
+  // Exact lower-case match (lib/user-lookup): no ILIKE wildcards, indexed.
+  const userId = await userIdByEmail(email)
+  const user = userId && await authPrisma.user.findUnique({
+    where: { id: userId },
     select: {
       id: true, email: true, role: true, status: true,
       workerProfile: { select: { firstName: true, lastName: true } },
@@ -77,8 +80,11 @@ async function handleNormalLogin(email: string, password: string, rememberMe: bo
 
   const user = await getOrFetch(
     CACHE_KEYS.user(normalizedEmail),
-    () => withRetry(() => authPrisma.user.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
+    // Exact lower-case match (lib/user-lookup): no ILIKE wildcards, indexed.
+    () => withRetry(async () => {
+      const userId = await userIdByEmail(email)
+      return userId ? authPrisma.user.findUnique({
+      where: { id: userId },
       select: {
         id: true, email: true, passwordHash: true, role: true,
         status: true, failedLoginAttempts: true, accountLockedUntil: true,
@@ -86,7 +92,8 @@ async function handleNormalLogin(email: string, password: string, rememberMe: bo
         clientProfile: { select: { firstName: true, lastName: true } },
         coordinatorProfile: { select: { firstName: true, lastName: true } },
       },
-    })),
+    }) : null
+    }),
     CACHE_TTL.USER_DATA
   )
 

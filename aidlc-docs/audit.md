@@ -1056,3 +1056,41 @@ The backend is already one contract and one handler file per area, not per endpo
 The Layout section now lists the new packages.
 
 ---
+
+## 2026-09-25 — Step 9.4 (9b) started
+
+**User input (verbatim):**
+> yes, start 9.4
+
+**AI action:** Starting step 9b:
+- `users (lower(email))` index and the sign-in lookup change in `apps/app`;
+- reconciler indexes;
+- each index CONCURRENTLY in its own migration, per the migrations README.
+
+---
+
+**AI action (cont.), security finding:**
+- Prisma's `mode: "insensitive"` equals compiles to `email ILIKE $1` with **no escaping of `_` or `%`**. Verified on the local database: a sign-in lookup for `a_b@…` returned `axb@…`, and `%@domain` returned another user.
+- Affected: `apps/app` `lib/auth.config.ts` (normal sign-in and impersonation) and `app/api/admin/impersonate`.
+- Effects:
+  - a password guess can be aimed at an account whose email is unknown;
+  - failed attempts can push a victim's account towards lock-out;
+  - and a full scan of `users` on every sign-in.
+- 9.4 replaces the lookup with an exact `lower(email) = lower($1)` match, which is wildcard-safe and indexed.
+- **Also noted (not changed here):** sign-in caches the user row, including `passwordHash` and the lock state, in Redis for 1 h (`CACHE_KEYS.user`).
+
+---
+
+## 2026-09-25 — S1 step 9.4 (9b): sign-in lookup and indexes
+
+**AI action:**
+- 7 CONCURRENTLY index migrations, plus the schema `@@index` lines.
+- `lib/user-lookup.ts`, used by `auth.config` (normal sign-in and impersonation) and `api/admin/impersonate`. That fixes the ILIKE wildcard lookup and the full scan.
+- Migrations README: expression-index note.
+- **Verified:** full migration cycle; plan at 100 k (index, 0.2 ms); 4 lookup tests with the ILIKE mutation caught; all gates pass.
+- **Own mistakes, recorded:**
+  - a naming loop produced two 15-digit migration timestamps (fixed before any run);
+  - a plan test on a tiny table asserted the wrong thing (now seeds 20 k rows);
+  - a heredoc turned `"\n"` into a line break (fixed).
+
+---
