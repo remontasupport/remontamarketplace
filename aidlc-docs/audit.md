@@ -475,3 +475,37 @@ S1-design Q1–Q3 are still open; asked again.
 - Regenerated `client/` and `apps/web` clients differ only in absolute paths; not committed.
 
 ---
+
+## 2026-09-25 — Docker not yet installed
+
+**User input (verbatim):**
+> I haven't installed the docker yet
+
+**AI action:** Proposed carrying on with the work that needs no database (steps 3 and 4, and the build half of step 2 against fixtures). Database verification of step 1 is deferred until Docker is installed, or a Neon branch is used instead. Asked the user which to do.
+
+---
+
+## 2026-09-25 — Docker troubleshooting
+
+**User input (verbatim):**
+> I've installed it already but the terminal says docker --version
+> 'docker' is not recognized as an internal or external command,
+> operable program or batch file.
+
+**AI action:** Diagnosed:
+- Docker Desktop 29.8.0 is installed per user (`%LOCALAPPDATA%\Programs\DockerDesktop`), and its `resources\bin` is on the user PATH. The existing terminal predates the install.
+- The engine isn't running.
+- WSL isn't installed, and no hypervisor is active.
+
+Gave the user the fix steps.
+
+---
+
+## 2026-09-25 — Session paused
+
+**User input (verbatim):**
+> I'll restart now, did you save this state so I can comeback later?
+
+**AI action:** Updated `aidlc-state.md` with the exact resume point and committed the AI-DLC docs to `s1/worker-registration`.
+
+---
