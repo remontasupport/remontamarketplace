@@ -272,7 +272,10 @@ exports.Prisma.WorkerProfileScalarFieldEnum = {
   isPublished: 'isPublished',
   verificationStatus: 'verificationStatus',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  consentProfileShareAt: 'consentProfileShareAt',
+  consentWordingVersion: 'consentWordingVersion',
+  zohoLeadId: 'zohoLeadId'
 };
 
 exports.Prisma.DocumentScalarFieldEnum = {
@@ -447,6 +450,98 @@ exports.Prisma.WorkerExperienceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.AuLocalityScalarFieldEnum = {
+  id: 'id',
+  gnafLocalityPid: 'gnafLocalityPid',
+  suburb: 'suburb',
+  searchName: 'searchName',
+  state: 'state',
+  postcode: 'postcode',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  sourceVersion: 'sourceVersion',
+  retiredAt: 'retiredAt',
+  supersededById: 'supersededById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkerLocationScalarFieldEnum = {
+  id: 'id',
+  workerProfileId: 'workerProfileId',
+  kind: 'kind',
+  localityId: 'localityId',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  travelRadiusKm: 'travelRadiusKm',
+  precision: 'precision',
+  source: 'source',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkerOnboardingScalarFieldEnum = {
+  workerProfileId: 'workerProfileId',
+  stage: 'stage',
+  stageEnteredAt: 'stageEnteredAt',
+  signedUpAt: 'signedUpAt',
+  firstSignInAt: 'firstSignInAt',
+  firstDocumentAt: 'firstDocumentAt',
+  documentsSubmittedAt: 'documentsSubmittedAt',
+  verifiedAt: 'verifiedAt',
+  publishedAt: 'publishedAt',
+  lastActivityAt: 'lastActivityAt',
+  mandatoryTotal: 'mandatoryTotal',
+  mandatoryUploaded: 'mandatoryUploaded',
+  mandatoryApproved: 'mandatoryApproved',
+  catalogueVersion: 'catalogueVersion',
+  version: 'version',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkerOnboardingTransitionScalarFieldEnum = {
+  id: 'id',
+  workerProfileId: 'workerProfileId',
+  fromStage: 'fromStage',
+  toStage: 'toStage',
+  at: 'at',
+  cause: 'cause',
+  actorId: 'actorId',
+  source: 'source'
+};
+
+exports.Prisma.OutboxEventScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  payload: 'payload',
+  status: 'status',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lockedUntil: 'lockedUntil',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  processedAt: 'processedAt'
+};
+
+exports.Prisma.RegistrationPhotoUploadScalarFieldEnum = {
+  id: 'id',
+  blobKey: 'blobKey',
+  contentType: 'contentType',
+  sizeBytes: 'sizeBytes',
+  ipHash: 'ipHash',
+  createdAt: 'createdAt',
+  claimedAt: 'claimedAt',
+  claimedByWorkerProfileId: 'claimedByWorkerProfileId'
+};
+
+exports.Prisma.RateLimitBucketScalarFieldEnum = {
+  key: 'key',
+  windowStart: 'windowStart',
+  count: 'count',
+  expiresAt: 'expiresAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -490,7 +585,8 @@ exports.AuditAction = exports.$Enums.AuditAction = {
   EMAIL_VERIFIED: 'EMAIL_VERIFIED',
   ROLE_CHANGE: 'ROLE_CHANGE',
   IMPERSONATION_START: 'IMPERSONATION_START',
-  IMPERSONATION_END: 'IMPERSONATION_END'
+  IMPERSONATION_END: 'IMPERSONATION_END',
+  ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED'
 };
 
 exports.FundingType = exports.$Enums.FundingType = {
@@ -562,6 +658,46 @@ exports.CareDomain = exports.$Enums.CareDomain = {
   CHRONIC_MEDICAL: 'CHRONIC_MEDICAL'
 };
 
+exports.LocationKind = exports.$Enums.LocationKind = {
+  HOME: 'HOME',
+  SERVICE_AREA: 'SERVICE_AREA'
+};
+
+exports.LocationPrecision = exports.$Enums.LocationPrecision = {
+  LOCALITY: 'LOCALITY',
+  ADDRESS: 'ADDRESS'
+};
+
+exports.LocationSource = exports.$Enums.LocationSource = {
+  REGISTRATION: 'REGISTRATION',
+  ONBOARDING: 'ONBOARDING',
+  ADMIN: 'ADMIN',
+  RECONCILER: 'RECONCILER',
+  BACKFILL: 'BACKFILL'
+};
+
+exports.OnboardingStage = exports.$Enums.OnboardingStage = {
+  SIGNED_UP: 'SIGNED_UP',
+  DOCUMENTS_IN_PROGRESS: 'DOCUMENTS_IN_PROGRESS',
+  DOCUMENTS_SUBMITTED: 'DOCUMENTS_SUBMITTED',
+  ACTION_REQUIRED: 'ACTION_REQUIRED',
+  VERIFIED: 'VERIFIED',
+  PUBLISHED: 'PUBLISHED'
+};
+
+exports.OnboardingTransitionSource = exports.$Enums.OnboardingTransitionSource = {
+  API: 'API',
+  RECONCILER: 'RECONCILER',
+  BACKFILL: 'BACKFILL'
+};
+
+exports.OutboxStatus = exports.$Enums.OutboxStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  DONE: 'DONE',
+  DEAD: 'DEAD'
+};
+
 exports.Prisma.ModelName = {
   Account: 'Account',
   AuditLog: 'AuditLog',
@@ -586,7 +722,14 @@ exports.Prisma.ModelName = {
   WorkerJobHistory: 'WorkerJobHistory',
   WorkerEducation: 'WorkerEducation',
   WorkerAvailability: 'WorkerAvailability',
-  WorkerExperience: 'WorkerExperience'
+  WorkerExperience: 'WorkerExperience',
+  AuLocality: 'AuLocality',
+  WorkerLocation: 'WorkerLocation',
+  WorkerOnboarding: 'WorkerOnboarding',
+  WorkerOnboardingTransition: 'WorkerOnboardingTransition',
+  OutboxEvent: 'OutboxEvent',
+  RegistrationPhotoUpload: 'RegistrationPhotoUpload',
+  RateLimitBucket: 'RateLimitBucket'
 };
 
 /**
