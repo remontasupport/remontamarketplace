@@ -38,7 +38,6 @@ export type ProfilePreviewData = {
     religion: any;
     interests: any;
     workPreferences: any;
-    bankAccount: any;
     jobHistory: any;
     education: any;
     lgbtqiaSupport: boolean | null;
@@ -81,7 +80,6 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
             religion: true,
             interests: true,
             workPreferences: true,
-            bankAccount: true,
             lgbtqiaSupport: true,
             uniqueService: true,
             funFact: true,

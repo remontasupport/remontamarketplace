@@ -57,7 +57,6 @@ export type ProfilePreviewResponse = {
       religion: any;
       interests: any;
       workPreferences: any;
-      bankAccount: any;
       jobHistory: any;
       education: any;
       lgbtqiaSupport: boolean | null;
@@ -135,7 +134,6 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
             religion: true,
             interests: true,
             workPreferences: true,
-            bankAccount: true,
             lgbtqiaSupport: true,
             uniqueService: true,
             funFact: true,
