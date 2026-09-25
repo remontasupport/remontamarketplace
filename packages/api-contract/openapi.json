@@ -62,7 +62,8 @@
               "window": "1m"
             }
           ],
-          "maxBodyKb": 1
+          "maxBodyKb": 1,
+          "loadShedding": "exempt"
         }
       }
     },

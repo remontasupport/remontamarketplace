@@ -92,6 +92,11 @@ describe('checkContracts rejects', () => {
       /exceeds maxBodyKb/,
     ],
   ]
+  cases.push([
+    'a load-shedding exemption on an entry with input',
+    [[defineContract('test', { a: { method: 'POST', path: '/v1/a', summary: '', body: { kind: 'json', schema: z.strictObject({}) }, responses: res, meta: { ...roles, loadShedding: 'exempt' } } })], []],
+    /only a GET with no input may be exempt/,
+  ])
   it.each(cases)('%s', (_label, args, problem) => {
     expect(checkContracts(...args).join('\n')).toMatch(problem)
   })

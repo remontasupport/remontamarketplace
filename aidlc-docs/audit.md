@@ -722,3 +722,49 @@ The n8n URLs are hard-coded in `apps/app` today (`register-async`, `register` ro
   - `pino` was only reachable through hoisting, so it is now declared.
 
 ---
+
+## 2026-09-25 — Question: Kafka for request bursts
+
+**User input (verbatim):**
+> before you start. I also want you to handle cases where in if to many request at the same time, I think we need to use Kafka for that?
+
+**AI action:** Paused step 6. Checked OI-08 (queue technology, open) and the existing load-test folder. Answered with a recommendation (overload protection in apps/api, not Kafka) and asked the user to choose.
+
+---
+
+**User input (verbatim, question answer):**
+> Overload protection now (Recommended)
+
+**AI action:** Adding step 5b to the plan before step 6:
+- load shedding (fast 503 with Retry-After);
+- a concurrency cap (bulkhead) for expensive work such as password hashing;
+- a bounded DB pool, with pool timeouts mapped to 503;
+- a k6 burst test with recorded results.
+
+No Kafka; the queue choice stays with OI-08.
+
+---
+
+## 2026-09-25 — S1 step 5b: overload protection
+
+**AI action:**
+- Added to `apps/api`:
+  - `LoadShedder`: in-flight and event-loop signals; fast 503 with Retry-After;
+  - `Bulkhead`;
+  - `WorkerPoolHasher`: bcryptjs cost 12 in worker threads, behind a bulkhead;
+  - bounded Prisma pool, with P2024 or an unreachable database mapped to 503.
+- Contract: `meta.loadShedding: 'exempt'` (GET with no input only; checked), set on `GET /v1/health`.
+- k6 burst test (`apps/api/load/`), using the k6 v2.3.0 binary in the scratchpad.
+- **Results** (20 sign-ups/s for 20 s):
+  - no protection: health 6.0 s median / 22 s p95, and sign-ups time out;
+  - shedding with hashing still on the loop: health shed (24% OK);
+  - worker threads (2): health 1 ms / 2 ms, 100% OK; 33% of sign-ups accepted in 1.6 s, the rest a fast 503;
+  - 4 threads: 64% accepted.
+- **Findings:**
+  - main-thread hashing defeats in-process protection (the process cannot accept connections), so worker threads are required;
+  - the health check must be exempt from shedding;
+  - DB clock vs app clock skew (~60 ms) made enqueued events "not yet due", so enqueue now uses the app clock;
+  - the first comparison was invalid (a stale process held the port) and was rerun with kill-by-port.
+- **Verified:** `@remonta/api` 116 tests; all gates and `turbo run build` pass.
+
+---

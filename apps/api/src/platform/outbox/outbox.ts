@@ -9,10 +9,16 @@ export interface OutboxEventInput {
   payload: Prisma.InputJsonValue
 }
 
-/** Enqueue inside the caller's transaction. Returns the event id (the idempotency key). */
-export async function enqueue(tx: Tx, event: OutboxEventInput): Promise<string> {
+/**
+ * Enqueue inside the caller's transaction. Returns the event id (the idempotency key).
+ *
+ * nextAttemptAt is set from the app clock, not the column default: the dispatcher
+ * compares against the app clock, and mixing the database's clock in made a new
+ * event "not yet due" whenever the database ran ahead (measured ~60 ms locally).
+ */
+export async function enqueue(tx: Tx, event: OutboxEventInput, now: Date = new Date()): Promise<string> {
   const id = randomUUID()
-  await tx.outboxEvent.create({ data: { id, type: event.type, payload: event.payload } })
+  await tx.outboxEvent.create({ data: { id, type: event.type, payload: event.payload, nextAttemptAt: now } })
   return id
 }
 

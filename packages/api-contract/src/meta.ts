@@ -33,6 +33,12 @@ export interface Meta {
   audit?: string
   /** Cache-Control max-age for a public, non-personal GET. */
   cacheSeconds?: number
+  /**
+   * 'exempt': never refused by load shedding. Only for cheap probes (a GET with no
+   * input), so a health check keeps answering during a burst instead of getting the
+   * instance restarted by its load balancer.
+   */
+  loadShedding?: 'exempt'
 }
 
 const metaSchema = z.strictObject({
@@ -53,6 +59,7 @@ const metaSchema = z.strictObject({
   maxBodyKb: z.number().int().positive().max(10240),
   audit: z.string().regex(/^[A-Z][A-Z_]+$/).optional(),
   cacheSeconds: z.number().int().positive().max(86400).optional(),
+  loadShedding: z.literal('exempt').optional(),
 })
 
 /** Declares an entry's security metadata; throws at load time if it is malformed. */

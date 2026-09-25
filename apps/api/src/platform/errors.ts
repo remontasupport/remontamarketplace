@@ -35,7 +35,14 @@ export function errorBody(status: ErrorStatus, requestId: string, fields?: Recor
 /** Maps anything thrown to a status we are willing to return. */
 export function statusOf(err: unknown): ErrorStatus {
   if (err instanceof ApiError) return err.status
+  if (isOverloadedDatabase(err)) return 503
   const code = (err as { statusCode?: unknown })?.statusCode
   if (typeof code === 'number' && code in ERROR_CODES && code !== 500) return code as ErrorStatus
   return 500
+}
+
+/** The pool had no free connection in time (P2024), or the database is unreachable. */
+export function isOverloadedDatabase(err: unknown): boolean {
+  const e = err as { code?: unknown; name?: unknown } | null
+  return e?.code === 'P2024' || e?.name === 'PrismaClientInitializationError'
 }

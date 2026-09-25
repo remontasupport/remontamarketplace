@@ -16,6 +16,7 @@ import { bindContracts, recordRoutes, verifyRoutes } from './platform/contract/b
 import type { HandlerSet } from './platform/contract/handlers'
 import { ApiError, errorBody, statusOf } from './platform/errors'
 import { genReqId, loggerOptions } from './platform/logging'
+import type { LoadShedder } from './platform/load/load-shedder'
 import type { PipelineDeps } from './platform/pipeline/pipeline'
 
 export interface AppOptions {
@@ -24,6 +25,8 @@ export interface AppOptions {
   handlerSets: readonly HandlerSet[]
   publicEndpoints: readonly PublicEndpoint[]
   deps: PipelineDeps
+  /** Step 5b. Omitted: no shedding (tests that are not about load). */
+  shedder?: LoadShedder
   logLevel?: string
 }
 
@@ -67,11 +70,21 @@ export async function createApp(opts: AppOptions): Promise<NestFastifyApplicatio
 
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter, { logger: false, abortOnError: false })
 
-  // 1. Request id (genReqId), security headers, CORS allow-list, HTTPS only.
+  // 1. Request id (genReqId), security headers, load shedding, CORS allow-list, HTTPS only.
+  const admitted = new WeakSet<object>()
+  fastify.addHook('onResponse', async (request) => {
+    if (admitted.delete(request)) opts.shedder?.release()
+  })
   fastify.addHook('onRequest', async (request, reply) => {
     reply.header('x-request-id', request.id)
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) reply.header(k, v)
     reply.header('cache-control', 'no-store')
+    // Load shedding comes before any work, including the HTTPS check.
+    if (opts.shedder && !request.routeOptions.config?.shedExempt) {
+      const d = opts.shedder.tryAdmit()
+      if (!d.admit) throw new ApiError(503, `shed: ${d.reason}`, undefined, { 'retry-after': String(d.retryAfter) })
+      admitted.add(request)
+    }
     if (opts.config.requireHttps) {
       reply.header('strict-transport-security', 'max-age=31536000; includeSubDomains')
       if (request.protocol !== 'https') throw new ApiError(403, 'https required')
@@ -93,6 +106,7 @@ export async function createApp(opts: AppOptions): Promise<NestFastifyApplicatio
     if (status >= 500) request.log.error({ err }, 'request failed')
     else request.log.info({ status, cause: err instanceof ApiError ? err.cause_ : err.message }, 'request refused')
     if (err instanceof ApiError && err.headers) reply.headers(err.headers)
+    else if (status === 503) reply.header('retry-after', '2')
     const fields = err instanceof ApiError ? err.fields : undefined
     return reply.status(status).send(errorBody(status, request.id, fields))
   })

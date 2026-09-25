@@ -1,6 +1,7 @@
 // The environment, parsed once at boot (S1-design 2.7). A missing or malformed
 // value stops the service -- the opposite of today's fail-open CAPTCHA. Errors name
 // the variable and the problem, never the value (P6).
+import { availableParallelism } from 'node:os'
 import * as z from 'zod'
 
 const list = z
@@ -45,6 +46,23 @@ const envSchema = z.object({
   N8N_WEBHOOK_URL: httpsUrl,
 
   OUTBOX_POLL_MS: z.coerce.number().int().min(100).max(60000).default(2000),
+
+  // Overload protection (step 5b). Defaults suit one small instance; tune from the
+  // k6 burst results (apps/api/load/README.md).
+  /** Requests in flight on this instance before new ones get a fast 503. */
+  MAX_IN_FLIGHT: z.coerce.number().int().min(1).max(10000).default(256),
+  /** Event-loop delay (p99, ms) above which new requests get a fast 503. */
+  MAX_EVENT_LOOP_DELAY_MS: z.coerce.number().int().min(10).max(10000).default(200),
+  /** Database connections this instance may hold. Neon caps the total across instances. */
+  DB_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
+  /** Seconds a query waits for a free connection before failing with 503. */
+  DB_POOL_TIMEOUT_S: z.coerce.number().int().min(1).max(60).default(5),
+  /**
+   * Worker threads hashing passwords at once; the rest queue briefly, then get 503.
+   * Default: cores - 1 (at most 8). Capacity scales linearly: ~3.3 sign-ups/s per
+   * thread at bcrypt cost 12 (k6 burst test, 2026-09-25).
+   */
+  HASH_CONCURRENCY: z.coerce.number().int().min(1).max(64).default(Math.min(8, Math.max(1, availableParallelism() - 1))),
 })
 
 export type Env = z.output<typeof envSchema>

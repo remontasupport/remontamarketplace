@@ -10,13 +10,14 @@ import type { HandlerSet } from './platform/contract/handlers'
 import { SafeHttpClient } from './platform/http/safe-http-client'
 import { OutboxDispatcher } from './platform/outbox/dispatcher'
 import type { OutboxHandler } from './platform/outbox/outbox'
+import { LoadShedder } from './platform/load/load-shedder'
 import { createDb } from './platform/persistence/db'
 import { PostgresRateLimiter } from './platform/rate-limit/rate-limiter'
 import { platformHandlers } from './modules/platform/platform.handlers'
 
 async function main() {
   const config = loadConfig(process.env)
-  const db = createDb(config.AUTH_DATABASE_URL)
+  const db = createDb(config.AUTH_DATABASE_URL, { poolSize: config.DB_POOL_SIZE, poolTimeoutS: config.DB_POOL_TIMEOUT_S })
   const http = new SafeHttpClient({ allowedHosts: config.outboundHosts })
   const rateLimiter = new PostgresRateLimiter(db)
 
@@ -25,8 +26,11 @@ async function main() {
   // Outbox event handlers by type (step 8).
   const outboxHandlers = new Map<string, OutboxHandler>()
 
+  const shedder = new LoadShedder({ maxInFlight: config.MAX_IN_FLIGHT, maxEventLoopDelayMs: config.MAX_EVENT_LOOP_DELAY_MS })
+  // The registration module takes a Bulkhead of HASH_CONCURRENCY for bcrypt (step 7).
   const app = await createApp({
     config,
+    shedder,
     contracts,
     handlerSets,
     publicEndpoints: publicEndpoints as PublicEndpoint[],

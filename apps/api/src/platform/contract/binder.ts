@@ -11,6 +11,13 @@ import type { FastifyInstance, RouteOptions } from 'fastify'
 import { buildRouteHandler, type PipelineDeps } from '../pipeline/pipeline'
 import type { Handler, HandlerSet } from './handlers'
 
+declare module 'fastify' {
+  interface FastifyContextConfig {
+    /** From meta.loadShedding; read by the load-shedding hook in app.ts. */
+    shedExempt?: boolean
+  }
+}
+
 export class BootError extends Error {
   constructor(readonly problems: string[]) {
     super(`apps/api will not start -- contract problems:\n  ${problems.join('\n  ')}`)
@@ -61,6 +68,7 @@ export function bindContracts(app: FastifyInstance, opts: BindOptions): void {
       // Step 2: over-size JSON is refused before parsing. Multipart streams are
       // bounded per file in the pipeline instead (Fastify's bodyLimit skips them).
       bodyLimit: entry.meta.maxBodyKb * 1024,
+      config: { shedExempt: entry.meta.loadShedding === 'exempt' },
       handler: buildRouteHandler(id, entry, handler, opts.deps),
     }
     app.route(route)

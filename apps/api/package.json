@@ -12,7 +12,8 @@
     "lint": "eslint",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "quality": "pnpm run prisma:generate && pnpm run lint && pnpm run typecheck && pnpm run test"
+    "quality": "pnpm run prisma:generate && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "load:harness": "tsx load/harness.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
@@ -23,6 +24,7 @@
     "@prisma/client": "^6.16.2",
     "@remonta/api-contract": "workspace:*",
     "@remonta/schemas": "workspace:*",
+    "bcryptjs": "^3.0.3",
     "fastify": "5.11.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
@@ -40,6 +42,7 @@
     "pino": "^10.3.1",
     "prisma": "^6.16.2",
     "tsup": "^8.5.0",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "unplugin-swc": "^1.5.7",
     "vitest": "^2.1.9"

@@ -15,6 +15,7 @@ export const platformContract = defineContract('platform', {
       bot: 'none',
       rateLimit: [{ per: 'ip', limit: 60, window: '1m' }],
       maxBodyKb: 1,
+      loadShedding: 'exempt',
     }),
   },
 })

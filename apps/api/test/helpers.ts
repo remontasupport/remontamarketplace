@@ -49,6 +49,7 @@ export async function testApp(opts: {
   handlerSets: readonly HandlerSet[]
   publicEndpoints?: readonly PublicEndpoint[]
   config?: Partial<AppOptions['config']>
+  shedder?: AppOptions['shedder']
 }): Promise<TestApp> {
   const rateLimiter = new FakeRateLimiter()
   const captcha = new FakeCaptcha()
@@ -58,6 +59,7 @@ export async function testApp(opts: {
     handlerSets: opts.handlerSets,
     publicEndpoints: opts.publicEndpoints ?? [],
     deps: { rateLimiter, captcha, authenticator: new FakeAuthenticator() },
+    shedder: opts.shedder,
   })
   return { fastify: app.getHttpAdapter().getInstance() as unknown as FastifyInstance, rateLimiter, captcha, close: () => app.close() }
 }

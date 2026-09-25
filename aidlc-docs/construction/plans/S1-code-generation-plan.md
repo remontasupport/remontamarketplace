@@ -135,6 +135,26 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
   - **`.env`** is loaded with `node --env-file` (Node 20.11 has no `process.loadEnvFile`).
   - Vercel installs the whole workspace, so its installs now include `apps/api` dependencies (slower install; builds unaffected).
 
+### Step 5b — `apps/api` overload protection (added 2026-09-25, user request)
+The user asked about bursts of simultaneous requests and suggested Kafka. The recommendation was overload protection inside `apps/api` instead; the queue choice stays with OI-08. The user chose it.
+- [x] **Load shedding** (`LoadShedder`): a fast 503 with `Retry-After` when in-flight requests exceed `MAX_IN_FLIGHT` (256) or the event-loop p99 exceeds `MAX_EVENT_LOOP_DELAY_MS` (200). Runs before any work. The health check is exempt via `meta.loadShedding: 'exempt'`, which `checkContracts` allows only on a GET with no input.
+- [x] **Bulkhead** (`Bulkhead`): bounded concurrency and queue with a queue timeout; overflow gets a 503.
+- [x] **Worker-thread password hashing** (`WorkerPoolHasher`): bcryptjs cost 12 in `HASH_CONCURRENCY` worker threads (default cores − 1, at most 8), behind a bulkhead. Hashes are bcryptjs-compatible, so `apps/app` sign-in accepts them. Step 7 uses it for registration.
+- [x] **Bounded DB pool:** `DB_POOL_SIZE` (10) and `DB_POOL_TIMEOUT_S` (5); a pool timeout (P2024) or an unreachable database maps to 503 + `Retry-After`, not 500.
+- [x] **k6 burst test** (`apps/api/load/`): harness plus scenario, with results recorded in `load/README.md`.
+- **Verified 2026-09-25:**
+  - `@remonta/api` 116 tests, including shedding under real concurrency, no slot leaks across any mix of outcomes (PBT), bulkhead bounds (PBT), real pool exhaustion on PostGIS giving P2024 → 503, event loop kept free while hashing, and hashes accepted by `bcryptjs.compare`.
+  - Burst at 20 sign-ups/s:
+    - no protection: health checks took 6–22 s and sign-ups timed out;
+    - with protection and 2 threads: health checks at 1–2 ms (100% OK); 33% of sign-ups accepted in about 1.6 s, the rest a fast 503;
+    - 4 threads: 64% accepted.
+  - All other gates and `turbo run build` pass.
+- **Findings:**
+  - (1) While bcryptjs hashes on the main thread, the process cannot accept connections, so in-process shedding cannot help. Moving hashing off the thread was required, not optional.
+  - (2) The health check must be exempt, or a burst gets the instance restarted.
+  - (3) Enqueue now stamps `nextAttemptAt` from the app clock. The database clock ran about 60 ms ahead, which made new events "not yet due".
+  - (4) The first burst comparison was invalid (a stale process held the port) and was rerun.
+
 ### Step 6 — `apps/api` domain: onboarding stage and location rules
 - [ ] `deriveStage(facts)` (pure) + transition edges
 - [ ] PBT: total and deterministic; every change is an allowed edge; replaying facts = computing from the final facts
