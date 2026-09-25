@@ -609,3 +609,35 @@ Gave the user the fix steps.
 - Lockfile: adds the `@remonta/db` devDependencies; pnpm also re-keyed `next-auth`'s `next` peer to include `@babel/core` (same versions; the build passes).
 
 ---
+
+## 2026-09-25 — Step 3 started
+
+**User input (verbatim):**
+> yes, start step 3
+
+**AI action:** Starting S1 step 3: `packages/api-contract`, beginning with the D1 check (ts-rest with Zod 4).
+
+---
+
+## 2026-09-25 — S1 D1 result, and step 4 done ahead of step 3
+
+**AI action:**
+- **D1 (ts-rest + Zod 4): does not work.**
+  - ts-rest 3.52.1 (latest stable, March 2025) requires Zod 3.
+  - 3.53.0-rc.1 (June 2025, unreleased) drops that from core only; `@ts-rest/open-api` still needs Zod 3.
+  - Tested in a scratch project with Zod 4.1.11:
+    - ts-rest's `ServerInferRequest`, `ClientInferRequest` and `ServerInferResponses` all collapse to `never`;
+    - `generateOpenApi` silently emits `"schema": {}` for the body, so a drift check on it could never fail.
+  - Zod 4's own `z.toJSONSchema` produces the full schema.
+  - As pre-agreed in plan D1 (logged, not re-asked): the contract keeps the designed shape with a thin in-house `defineContract`, typed client and OpenAPI generator in `packages/api-contract`.
+- **Order:** step 4 is done before step 3, because the contract's registration body is `workerRegistrationSchema`.
+- **Step 4:** `packages/schemas/src/schema/workerRegistrationSchema.ts`.
+  - Form schema and request schema (form + `captchaToken`).
+  - Normalisers: email (trim, lower-case) and AU mobile (to E.164).
+  - `CONSENT_WORDING_VERSION`.
+  - Today's password rule kept verbatim.
+  - Malformed `zohoLeadId` becomes undefined rather than an error.
+- **Tests:** 40, including PBT for parity, idempotence and E.164 stability. Three deliberate bugs are each caught.
+- **Gates:** `@remonta/schemas` quality is now lint + `typecheck:strict` (new files only) + tests; it passes, as does `@remonta/app` quality.
+
+---

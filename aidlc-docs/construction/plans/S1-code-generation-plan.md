@@ -103,10 +103,12 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
 - [ ] D1 check: ts-rest + Zod 4
 - **Verify:** package quality passes; the boundary rule fails on a deliberate bad import
 
-### Step 4 — `packages/schemas`: `workerRegistrationSchema`
-- [ ] Strict schema (S1-design §3.3 with `localityId`), email/mobile normalisers, consent version constant
-- [ ] PBT: page/server parity, normaliser idempotence, E.164 stability
+### Step 4 — `packages/schemas`: `workerRegistrationSchema` (done before step 3: the contract imports it)
+- [x] Strict schema (S1-design §3.3 with `localityId`), email/mobile normalisers, consent version constant
+- [x] PBT: page/server parity, normaliser idempotence, E.164 stability
 - **Verify:** `@remonta/schemas` quality (P-1..P-5) passes
+- **Verified 2026-09-25:** 40 tests; three deliberate bugs (E.164 without `+`, non-strict request, weaker server password rule) each caught; `@remonta/schemas` quality (now lint + strict tsc on the new files + tests) and `@remonta/app` quality (149/518, 62) pass.
+- **Shape:** `workerRegistrationFormSchema` (what the page validates) and `workerRegistrationSchema` = form + `captchaToken` (the request); parity between them is a property test. `packages/schemas` gains `typecheck:strict` scoped to files listed in `tsconfig.strict.json`, so new code is strictly checked without re-checking the 15 tracked errors.
 
 ### Step 5 — `apps/api` platform core
 - [ ] Scaffold: NestJS 11 + Fastify, Vitest, strict tsc, ESLint (shared config), `.env.example`

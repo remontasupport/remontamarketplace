@@ -19,6 +19,7 @@ export * from './schema/clientFormSchema'
 export * from './schema/contractorFormSchema'
 export * from './schema/registrationSchema'
 export * from './schema/workerProfileSchema'
+export * from './schema/workerRegistrationSchema'
 
 // './schema/serviceRequestSchema' is deliberately NOT re-exported here, and the
 // reason is a pre-existing duplication this extraction surfaced:
