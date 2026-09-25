@@ -1040,3 +1040,19 @@ The backend is already one contract and one handler file per area, not per endpo
 
 ---
 - Unstaged the regenerated `apps/app/src/generated/*` clients. `auth-client` differs by the S1 models; `apps/app` does not use them (raw SQL for suburbs), and Vercel regenerates at build. Whether to commit a refreshed `auth-client` is a step 12 check.
+
+## 2026-09-25 — CLAUDE.md: record the dynamic form strategy
+
+**User input (verbatim):**
+> can you update the claude.md with the stratetegies we used in the Form? that approach is what I like, a dynamic
+
+**AI action:** Added a "Dynamic by default" section to CLAUDE.md, covering:
+- contract-driven endpoints;
+- the three-layer form engine;
+- the rules for adding a form or a field kind;
+- the checks that enforce it (P-6, P-7, defineForm);
+- the Server/Client trap.
+
+The Layout section now lists the new packages.
+
+---

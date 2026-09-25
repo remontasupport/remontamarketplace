@@ -132,12 +132,15 @@ is no error — just the old list.
 
 ```
 main
-├── apps/app        the application    → remonta-app
-├── apps/web        the marketing site → remontamarketplace
+├── apps/app          the application    → remonta-app
+├── apps/web          the marketing site → remontamarketplace
+├── apps/api          the backend (NestJS + Fastify); local/CI only until AWS
 └── packages/
-    ├── config      tsconfig, ESLint (incl. P-1..P-5), Prettier
-    ├── schemas     Zod schemas + types. NO Next/React/DOM/Prisma (P-5)
-    └── db          Prisma schema + migrations
+    ├── config        tsconfig, ESLint (incl. P-1..P-7), Prettier
+    ├── schemas       Zod schemas + types. NO Next/React/DOM/Prisma (P-5)
+    ├── api-contract  every apps/api endpoint, declared once (P-6)
+    ├── form-engine   form logic: definitions, rules, submission (P-7)
+    └── db            Prisma schema + migrations
 ```
 
 `apps/web` must never import `@remonta/db` or a `domain-*` package (**P-1**, **P-2**) —
@@ -146,6 +149,72 @@ neither alone is sufficient.
 
 Secrets live in `apps/app/.env` and `.env.local`, gitignored. Root-level copies are
 stale leftovers from before the monorepo — ignore them.
+
+---
+
+## Dynamic by default: declare it once, don't hand-build it
+
+**The preferred approach in this codebase.** A new endpoint or a new form is **data
+added to a declaration**, never a new hand-written file per API or per screen. Shared
+machinery is written once and reused everywhere.
+
+### Endpoints: one contract per area (`packages/api-contract`)
+
+- `<area>.contract.ts` lists **every** endpoint of an area as an entry: method, path,
+  Zod body/query/response schemas and `meta()` security settings (access, CAPTCHA,
+  rate limits, body limit, audit). There are no defaults: an entry without `access` or
+  `rateLimit` does not compile.
+- `apps/api` binds **one handler per entry** (`modules/<area>/<area>.handlers.ts`), and a
+  single pipeline runs every entry. Never add a Nest controller (a lint rule forbids it),
+  and never re-implement a limit, a CAPTCHA check or error handling in a handler.
+- Clients call through `createClient(contract)`; nobody hand-writes `fetch` to apps/api.
+- **Adding an endpoint:** one entry, one handler function, then a `public-endpoints.json`
+  line if it is public. The service refuses to boot if any entry is unbound.
+
+### Forms: a definition, rendered by an engine
+
+Three layers. Keep them apart:
+
+| Layer | Where | Holds | Never holds |
+|---|---|---|---|
+| **Logic** | `packages/form-engine` | field-kind rules, validation from the contract, request mapping, submission with retries, the on-device draft | React, React Native, react-hook-form, Next, Node built-ins, the server (**P-7**) |
+| **UI** | `apps/app/src/components/ui/form-wizard/` | presentational components: values in, callbacks out. `FormWizardView`, and one component **per field kind** in `fields.tsx` | fetching, business rules, the form library |
+| **Glue** | `apps/app/src/features/forms/` | `useFormWizard` (react-hook-form + engine), `FormWizard` (field kind → component), `adapters/` (browser storage, connectivity, reCAPTCHA, image shrink, suburb search), `definitions/` | rendering details, rules |
+
+- **A form is a definition** (`features/forms/definitions/<form>.ts`): steps, fields
+  (each of a `kind`), the contract entry it submits to, the CAPTCHA action, constants,
+  and values taken from the URL. See `workerRegistration.ts`.
+- **Validation comes from the contract entry's schema.** Never write a second copy of a
+  rule in the page; the engine picks it from the contract so the page and apps/api
+  agree. A test asserts "what the form accepts, the contract accepts".
+- **Adding a form:** one definition file, plus a thin client wrapper if a server page
+  renders it (see the trap below). Nothing else.
+- **Adding a field kind:** a rule entry in `packages/form-engine/src/kinds.ts`, one
+  presentational component in `components/ui/form-wizard/fields.tsx`, and one case in
+  `FormWizard`'s `FieldSlot`. It is then available to every form.
+- **Resilience comes free with the engine:**
+  - every form gets retries with back-off honouring `Retry-After`, and a fresh CAPTCHA token per attempt;
+  - an offline pause, and the draft on the device (mark secrets `neverSaved`);
+  - server field errors are mapped back to the right step.
+- **Moving a legacy form over:** give the definition a `legacy` adapter with the old
+  rules and the exact old request. That keeps a switch back to legacy a true rollback.
+- **Existing hand-built forms** (8 suburb pickers, 11 multi-step pages) move onto the
+  engine one at a time. Don't add new ones.
+
+### Checks that enforce it
+
+- `defineForm` throws at import if a field, constant or URL value is not in the
+  contract entry's body, or if a field appears twice.
+- **P-6** (api-contract) and **P-7** (form-engine) are lint rules, each with a test
+  proving it rejects. A boundary rule that has never failed may be unenforceable.
+- The contract checks (`checkContracts`) run in tests and at apps/api boot.
+
+### Trap: definitions cannot cross the Server/Client boundary
+
+A definition holds functions (the legacy adapter), and Next cannot pass functions from
+a Server Component to a Client Component. Typecheck does not catch it; it crashes at
+runtime. The server page passes **only data** (the backend), and a `"use client"`
+wrapper imports the definition (`WorkerRegistrationWizard.tsx`).
 
 ---
 
