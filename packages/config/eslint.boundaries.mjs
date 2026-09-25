@@ -174,3 +174,34 @@ export const apiContractBoundaries = {
     ],
   },
 };
+
+/**
+ * P-7 — packages/form-engine is form LOGIC only: definitions, rules, mapping,
+ * submission. The web app renders it with React; a future mobile app would render
+ * it with React Native. So it imports neither, nor the DOM helpers of either, nor
+ * the server's world. Browser-specific adapters (reCAPTCHA loader, image shrink)
+ * live in apps/app and are passed in.
+ */
+export const formEngineBoundaries = {
+  rules: {
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            group: ["react", "react/*", "react-dom", "react-dom/*", "react-native", "react-native/*", "react-hook-form", "next", "next/*"],
+            message: "P-7: packages/form-engine must not import a UI framework. Rendering belongs to apps/app (components/ui/form-wizard).",
+          },
+          {
+            group: ["@nestjs/*", "@prisma/client", "@prisma/client/*", "@remonta/db", "@remonta/db/*"],
+            message: "P-7: packages/form-engine must not import the server or the database. It talks to apps/api through @remonta/api-contract.",
+          },
+          {
+            group: ["node:*", "fs", "path", "crypto", "os", "child_process"],
+            message: "P-7: packages/form-engine must not import Node built-ins: it runs in the browser and on phones.",
+          },
+        ],
+      },
+    ],
+  },
+};

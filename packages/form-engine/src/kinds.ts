@@ -1,0 +1,93 @@
+// What each field KIND means, independent of how it is drawn: its empty value, its
+// validation, and what it puts in the request body. The UI draws a kind; this file
+// decides it. One entry per kind, shared by every form.
+import * as z from "zod";
+import type { FieldDef } from "./types";
+
+export type Mode = "legacy" | "api";
+
+export interface KindContext {
+  field: FieldDef;
+  mode: Mode;
+  /** The contract body's schema for each field name (api mode's rules). */
+  contractShape: Record<string, z.ZodType>;
+  /** The previous rules for fields that changed (legacy mode only). */
+  legacyShape: Record<string, z.ZodType>;
+}
+
+export interface KindRules {
+  /** Form-state keys this field owns, with their empty values. */
+  defaults(field: FieldDef): Record<string, unknown>;
+  /** Validation for each key it owns, in the given mode. */
+  schemas(ctx: KindContext): Record<string, z.ZodType>;
+  /** What it contributes to the api request body. */
+  toBody(field: FieldDef, values: Record<string, unknown>): Record<string, unknown>;
+}
+
+/** The rule for `name`: the legacy one in legacy mode if it changed, else the contract's. */
+function ruleFor(ctx: KindContext, name: string): z.ZodType {
+  const rule = (ctx.mode === "legacy" ? ctx.legacyShape[name] : undefined) ?? ctx.contractShape[name];
+  if (!rule) throw new Error(`field ${name} is not in the contract body`);
+  return rule;
+}
+
+const plain: KindRules = {
+  defaults: (f) => ({ [f.name]: "" }),
+  schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name) }),
+  toBody: (f, v) => ({ [f.name]: v[f.name] }),
+};
+
+export const localityValue = z.object({
+  /** au_localities id; null only from the pre-migration fallback lookup. */
+  id: z.number().int().positive().nullable(),
+  name: z.string().min(1),
+  state: z.string().min(2),
+  postcode: z.string().regex(/^\d{3,4}$/),
+});
+export type LocalityValue = z.infer<typeof localityValue>;
+
+const CHOOSE_SUBURB = "Please choose your suburb from the list";
+
+export const KINDS: Record<FieldDef["kind"], KindRules> = {
+  text: plain,
+  email: plain,
+  phone: plain,
+  password: plain,
+
+  locality: {
+    defaults: (f) => ({ [f.name]: null }),
+    schemas: (ctx) => ({
+      [ctx.field.name]: localityValue
+        .nullable()
+        .refine((v) => v !== null, CHOOSE_SUBURB)
+        // apps/api needs the id; the legacy backend takes the label.
+        .refine((v) => ctx.mode === "legacy" || v?.id != null, CHOOSE_SUBURB),
+    }),
+    toBody: (f, v) => ({ [f.name]: (v[f.name] as LocalityValue | null)?.id }),
+  },
+
+  services: {
+    defaults: (f) => ({ [f.name]: [], ...(f.kind === "services" ? { [f.subcategoriesName]: [] } : {}) }),
+    schemas: (ctx) => {
+      const f = ctx.field as Extract<FieldDef, { kind: "services" }>;
+      return { [f.name]: ruleFor(ctx, f.name), [f.subcategoriesName]: ruleFor(ctx, f.subcategoriesName) };
+    },
+    toBody: (f, v) => {
+      const s = f as Extract<FieldDef, { kind: "services" }>;
+      return { [s.name]: v[s.name], [s.subcategoriesName]: v[s.subcategoriesName] };
+    },
+  },
+
+  photo: {
+    defaults: (f) => ({ [f.name]: "" }),
+    // Empty is the only thing to catch here; the server checks the id itself.
+    schemas: (ctx) => ({ [ctx.field.name]: z.string().min(1, "Profile photo is required") }),
+    toBody: (f, v) => ({ [f.name]: v[f.name] }),
+  },
+
+  consent: {
+    defaults: (f) => ({ [f.name]: false }),
+    schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name) }),
+    toBody: (f) => ({ [f.name]: true }),
+  },
+};

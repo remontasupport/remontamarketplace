@@ -8,7 +8,7 @@ import { errorResponseSchema, type ErrorResponse } from './errors'
 
 export type ClientResult<E extends EntryDef> =
   | ({ ok: true } & SuccessResponse<E>)
-  | { ok: false; status: number; body: ErrorResponse | null }
+  | { ok: false; status: number; body: ErrorResponse | null; /** From Retry-After on 429/503: how long to wait before retrying. */ retryAfterSeconds?: number }
 
 type Args<E extends EntryDef> = {
   [K in keyof RequestInput<E> as RequestInput<E>[K] extends undefined ? never : K]: RequestInput<E>[K]
@@ -57,7 +57,14 @@ export function createClient<C extends ContractDef>(contract: Contract<C>, opts:
         return { ok: true, status: res.status, body: parsed.data }
       }
       const err = errorResponseSchema.safeParse(json)
-      return { ok: false, status: res.status, body: err.success ? err.data : null }
+      const header = res.headers.get('retry-after')
+      const retryAfter = header === null || header.trim() === '' ? NaN : Number(header)
+      return {
+        ok: false,
+        status: res.status,
+        body: err.success ? err.data : null,
+        ...(Number.isFinite(retryAfter) && retryAfter >= 0 ? { retryAfterSeconds: retryAfter } : {}),
+      }
     }
   }
   return client as Client<C>
