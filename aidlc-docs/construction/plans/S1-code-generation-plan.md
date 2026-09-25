@@ -237,13 +237,43 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
 - [ ] Remove `api/auth/register/route.ts` (the file only: the sibling `register/client/` and `register/coordinator/` routes are live and stay), `api/auth/check-email/route.ts` + the step-2 call, `Step7Verification.tsx` (if unimported); n8n URL to config in `register-async`
 - **Verify:** `@remonta/app` quality within baselines; build; no import of a removed file remains (`grep`)
 
+### Step 9 revision (user, 2026-09-25): a schema-driven form engine replaces per-screen files
+**Supersedes S1-design §4.1** ("one feature folder, a file per step").
+- **Why:** `apps/app` has 8 hand-copied suburb autocompletes and 11 hand-built multi-step pages. The user asked for a dynamic approach, not a file per API or per screen. The backend already works this way (one contract and one handler file per area).
+- **Design** (`apps/app/src/features/forms/`):
+  - `defineForm({ steps, fields, submit: <contract entry>, captcha, constants, fromQuery, adapters })`: a form is **data**.
+  - `<FormWizard>`: written once. It covers steps, progress, per-step validation, server field errors, the draft on the device (fields marked `neverSaved` excluded), the offline banner, retries with a fresh CAPTCHA token per attempt, status messages and the success redirect.
+  - **Field kinds**, one component each, shared by every form: `text`, `email`, `phone`, `password`, `locality`, `services`, `photo`, `consent`. Each kind knows its value, how it maps to the contract field, and its validation.
+  - **Validation comes from the contract** entry's schema (api mode). A legacy adapter supplies today's `contractorFormSchema` rules and the legacy body, so **legacy mode stays exactly as today, including name rules** (user decision: the stricter name rule applies in api mode only).
+- **Order:** 9.2 engine and field kinds → 9.3 the worker sign-up definition (both modes) and the switch → 9.4 step 9b. Other forms (client registration, the 8 suburb pickers) move later, one per change.
+- The uncommitted per-screen work becomes the engine's internals: `retry`, `draft`, `useRecaptcha`, `useOnlineStatus`, `shrinkImage`, and the step UIs become field kinds.
+
+**Built 2026-09-25 (9.2 `f313a9a`, 9.3 in the next commit)**, in three layers (user request: "store the form to the ui folder … separate the logic"):
+1. **Logic**, framework-free: `packages/form-engine`. P-7 bans React, React Native, react-hook-form, Next, the server, the database and Node built-ins (proven by a lint probe).
+2. **UI**, presentational only, in `apps/app/src/components/ui/form-wizard/`:
+   - `FormWizardView` and `WizardIntro`;
+   - `fields.tsx`: TextField, PasswordField, LocalityField, ServicesField (plus the pure `toggleService` / `saveSubcategories`), PhotoField, ConsentField.
+   Named `form-wizard`, not `form`: `components/ui/form.tsx` already exists.
+3. **Glue**, in `apps/app/src/features/forms/`:
+   - `useFormWizard` (react-hook-form + engine);
+   - `FormWizard` (a field kind to a component);
+   - `adapters/`: browser storage and connectivity, reCAPTCHA, image shrink, suburb search;
+   - `definitions/workerRegistration.ts` (worker sign-up as data, with the legacy adapter), plus `WorkerRegistrationWizard`, because a definition holds functions and cannot cross the server/client boundary.
+- **Verified:**
+  - Tests: engine 22 (form = contract acceptance property, fresh token per attempt, Retry-After, offline, draft never stores the password); app 8 (the definition; legacy mode posts the exact pre-S1 body; the switch; the services-picking property).
+  - Real run: `apps/app` in dev, against the local database with Redis disabled (`.env` points at production Redis), in api mode with `apps/api` running. The page renders (200); `/api/suburbs` answers from `au_localities`.
+  - All gates and `turbo run build` pass.
+  - `apps/app` baselines tightened to 144 type / 496 lint (the replaced screens carried the removed findings).
+- **Caught before it shipped:** passing the definition (with functions) from the server page to the client wizard would have crashed at runtime; typecheck cannot see it. Fixed with the client wrapper.
+- **Not yet verified in a browser:** stepping through the wizard and a full api-mode sign-up with a real reCAPTCHA token (this needs the site key to allow localhost, or a preview deployment). Covered by step 12's preview check.
+
 ### Step 9 additions (user, 2026-09-25): the sign-up page survives a bad connection
-- [ ] Automatic retries with back-off for network errors, timeouts, 429 and 503, honouring `Retry-After`. Resending is safe: the server returns the identical 202 and never creates a duplicate
-- [ ] A **fresh reCAPTCHA token for every attempt**: v3 tokens are single-use and expire after 2 minutes. Today's page reuses one token, so a retry after a network blip fails (existing bug)
-- [ ] Offline detection: a banner, Submit held, automatic resume
-- [ ] Progress kept on the device (browser storage), **never the password**, cleared on success
-- [ ] Photo uploaded separately with its own retry and progress, and **shrunk on the device** first
-- [ ] Clear states: sending / still trying / done -- sign in now
+- [x] Automatic retries with back-off for network errors, timeouts, 429 and 503, honouring `Retry-After`. Resending is safe: the server returns the identical 202 and never creates a duplicate
+- [x] A **fresh reCAPTCHA token for every attempt**: v3 tokens are single-use and expire after 2 minutes. Today's page reuses one token, so a retry after a network blip fails (existing bug)
+- [x] Offline detection: a banner, Submit held, automatic resume
+- [x] Progress kept on the device (browser storage), **never the password**, cleared on success
+- [x] Photo uploaded separately with its own retry and progress, and **shrunk on the device** first
+- [x] Clear states: sending / still trying / done -- sign in now
 
 ### Step 9b — Query performance (user, 2026-09-25: "fast as possible" at 10,000+ users)
 Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in its README). The system is read-heavy, so, following the user's notes: indexes first, then caching, then read replicas. Nothing here needs sharding, Kafka or a write-optimised database.

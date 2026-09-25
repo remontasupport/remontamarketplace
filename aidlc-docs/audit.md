@@ -963,3 +963,80 @@ No Kafka; the queue choice stays with OI-08.
 - Not run against the real Next dev server, because `apps/app/.env` points at the production database.
 
 ---
+
+## 2026-09-25 — Question mid-step 9: reusing legacy logic
+
+**User input (verbatim):**
+> Hey before you continue, are you reusing the logic of the legacy code?
+
+**AI action:** Paused step 9.2/9.3; nothing committed since 9.1. Answered what is reused as-is, what is moved with small edits, and what is re-implemented, and why. The type errors in `packages/schemas/registrationSchema.ts` shown by tsc at this point are the known, baselined ones, not new.
+
+---
+
+## 2026-09-25 — Clarification: what "Step3Services" is
+
+**User input (verbatim):**
+> This is what I mean when centralising the api, when you say Step3Services, does it mean it has a file that named Step3Services?
+
+**AI action:** Explained that `Step3Services` is a file (a React screen component for sign-up step 3), and how the UI files differ from the centralised logic in `apps/api`. Showed the feature folder layout. Still waiting on the (a)/(b) name-rule question.
+
+---
+
+## 2026-09-25 — Request: a dynamic architecture, not a file per API or per screen
+
+**User input (verbatim):**
+> Can you create another most robust approach in architecture? I don't want to create a file for each API, I want an advance approach for this, a dynamic approach
+
+**AI action:** Paused step 9 (uncommitted work is kept in the working tree). Checked how much form code is duplicated today:
+- suburb autocompletes (the same fetch, debounce and dropdown);
+- form pages built by hand.
+
+Proposed a schema-driven design for the user to approve before changing the plan:
+- one form definition per form;
+- one component per field **type**;
+- a generic wizard (steps, validation, retries, drafts);
+- submission bound to a contract entry.
+
+The backend is already one contract and one handler file per area, not per endpoint.
+
+---
+
+**User input (verbatim, question answers):**
+> "Should step 9 switch to the schema-driven form engine (one definition per form, one component per field type, one generic wizard)?"="Yes, form engine (Recommended)", "The stricter name rule (letters, spaces, ' and - only; max 50): which modes?"="Api mode only (Recommended)"
+
+**AI action:** Revised the design and the plan:
+- S1-design §4.1 is superseded by a form engine in `apps/app/src/features/forms/`: `defineForm`, `FormWizard`, one component per field kind, validation from the contract.
+- Worker sign-up is the first definition. Legacy mode validates with today's `contractorFormSchema` rules and posts today's body; api mode validates with the contract's schema.
+- Other forms move to the engine later, one at a time.
+
+---
+
+## 2026-09-25 — Form UI in the ui folder; logic separated
+
+**User input (verbatim):**
+> can you store the form to the ui folder? and is it possible to separate the logic as well
+
+**AI action:** Adopted a three-layer layout for the form engine:
+1. **Logic**, framework-free, in a new package `packages/form-engine` (no React, Next or DOM, enforced like P-6): definitions' types, `defineForm`, field-kind rules, schema from the contract, request body mapping, submit through the contract client, retry, draft.
+2. **UI**, presentational only (props in, callbacks out; no fetching, no business rules), in `apps/app/src/components/ui/form/`: the wizard layout and one component per field kind.
+3. **Glue** in `apps/app/src/features/forms/`: the React hook that wires react-hook-form to the engine, the browser adapters (reCAPTCHA, online status, image shrink, suburb search) and the form definitions.
+
+---
+
+## 2026-09-25 — S1 steps 9.2 and 9.3: form engine and worker sign-up on it
+
+**AI action:**
+- 9.2 (`f313a9a`): `packages/form-engine` (logic) and P-7.
+- 9.3:
+  - `components/ui/form-wizard/` (UI) and `features/forms/` (glue, adapters, the worker sign-up definition);
+  - `/registration/worker` is now a server page that reads the switch (Redis `switch:registration`, then `REGISTRATION_BACKEND`, then legacy; an api setting without `NEXT_PUBLIC_API_URL` or `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` falls back to legacy);
+  - `PhotoUpload` gains an optional `upload` hook;
+  - removed: `api/auth/register/route.ts` (no caller), `Step7Verification` and `SupportWorkerDialog` (no importers), the per-screen step files, and the step fields in `registrationUtils`.
+- **Legacy mode:** the previous rules (names included, per the user) and the exact previous body; the check-email step is kept in legacy mode only.
+- **Real run:** local dev against the local database, with Redis disabled to protect the production cache; the page and suburb search work.
+- **Found by reading before running:** functions in a Server-to-Client prop, fixed.
+- Baselines tightened. All gates pass.
+- **Not yet done in a browser:** a full sign-up.
+
+---
+- Unstaged the regenerated `apps/app/src/generated/*` clients. `auth-client` differs by the S1 models; `apps/app` does not use them (raw SQL for suburbs), and Vercel regenerates at build. Whether to commit a refreshed `auth-client` is a step 12 check.
