@@ -9,6 +9,7 @@ const complete = {
   RESEND_API_KEY: 're_SECRETsecret',
   N8N_REGISTRATION_WEBHOOK_URL: 'https://n8n.example.test/webhook/a',
   N8N_WEBHOOK_URL: 'https://n8n.example.test/webhook/b',
+  IP_HASH_SECRET: 'x'.repeat(32),
 }
 
 function problems(env: Record<string, string | undefined>): string[] {
@@ -27,10 +28,10 @@ describe('loadConfig', () => {
     expect(c.CORS_ORIGINS).toEqual(['http://localhost:3000', 'https://app.remontaservices.com.au'])
     expect(c.outboundHosts).toEqual(['www.google.com', 'api.resend.com', 'api.pwnedpasswords.com', 'n8n.example.test'])
     expect(c.requireHttps).toBe(false)
-    expect(loadConfig({ ...complete, NODE_ENV: 'production' }).requireHttps).toBe(true)
+    expect(loadConfig({ ...complete, NODE_ENV: 'production', PHOTO_STORE: 'vercel-blob', BLOB_READ_WRITE_TOKEN: 'vercel_blob_rw_token_000000' }).requireHttps).toBe(true)
   })
 
-  it.each(['AUTH_DATABASE_URL', 'CORS_ORIGINS', 'RECAPTCHA_SECRET_KEY', 'RECAPTCHA_ALLOWED_HOSTNAMES', 'RESEND_API_KEY', 'N8N_REGISTRATION_WEBHOOK_URL', 'N8N_WEBHOOK_URL'])(
+  it.each(['AUTH_DATABASE_URL', 'CORS_ORIGINS', 'RECAPTCHA_SECRET_KEY', 'RECAPTCHA_ALLOWED_HOSTNAMES', 'RESEND_API_KEY', 'IP_HASH_SECRET'])(
     'refuses to start without %s -- and a blank value counts as missing',
     (key) => {
       expect(problems({ ...complete, [key]: undefined }).join()).toContain(key)
@@ -47,6 +48,16 @@ describe('loadConfig', () => {
     ['a score outside 0..1', { RECAPTCHA_MIN_SCORE: '2' }],
   ])('refuses %s', (_label, patch) => {
     expect(problems({ ...complete, ...patch })).not.toEqual([])
+  })
+
+  it('does not require the n8n URLs while the CRM notification is deferred', () => {
+    expect(problems({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined, N8N_WEBHOOK_URL: undefined })).toEqual([])
+    expect(loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined, N8N_WEBHOOK_URL: undefined }).outboundHosts).not.toContain('n8n.example.test')
+  })
+
+  it('needs a Blob token for Vercel Blob, and refuses local photo storage in production', () => {
+    expect(problems({ ...complete, PHOTO_STORE: 'vercel-blob' }).join()).toContain('BLOB_READ_WRITE_TOKEN')
+    expect(problems({ ...complete, NODE_ENV: 'production' }).join()).toContain('PHOTO_STORE')
   })
 
   it('never echoes a value in its errors (P6)', () => {

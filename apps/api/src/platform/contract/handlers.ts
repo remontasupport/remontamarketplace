@@ -21,6 +21,8 @@ export interface HandlerContext {
   ip: string
   userAgent: string | undefined
   principal: Principal | null
+  /** The body as received, before validation: only for noticing what validation dropped (e.g. a malformed zohoLeadId). */
+  rawBody: unknown
   log: FastifyBaseLogger
   audit: AuditRecorder
 }

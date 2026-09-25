@@ -871,6 +871,8 @@ model OutboxEvent {
 model RegistrationPhotoUpload {
   id                       String    @id @default(uuid()) @db.Uuid
   blobKey                  String    @unique
+  /// The public URL the store returned; copied to worker_profiles.photos on claim.
+  url                      String
   contentType              String
   sizeBytes                Int
   ipHash                   String

@@ -795,3 +795,46 @@ No Kafka; the queue choice stays with OI-08.
 - Decisions recorded in the plan for the user to review.
 
 ---
+
+## 2026-09-25 — Plain-language summary requested
+
+**User input (verbatim):**
+> can you explain to me what was built so far in simple terms? also can I run the server to test? or not yet?
+
+**AI action:** Explained S1 so far in plain terms. The real server cannot start yet: it deliberately refuses to boot until step 7 adds the sign-up handlers. Offered what can be run now (the test suites; the load harness with its health endpoint and a simulated sign-up). The three step 6 decisions are still awaiting the user's answer.
+
+---
+
+## 2026-09-25 — Step 6 decisions approved; CRM notification skipped
+
+**User input (verbatim):**
+> Ok, by the way you can skip the CRM updates for now
+
+**AI action:**
+- Took "Ok" as approval of the three step 6 decisions: stage from current rows only; a published worker's pending renewal stays PUBLISHED; zero obligations are never verified.
+- **CRM skipped for S1:** `NotifyCrmOfRegistration` (both n8n payloads, Q1 = A) is deferred.
+  - The n8n URLs are no longer required configuration.
+  - `zohoLeadId` is still validated and stored, so nothing is lost.
+- **Consequence (recorded):** registrations through `apps/api` do not reach the CRM. That is harmless in S1, because production stays on the legacy path. Switching production to `api` requires the CRM notification first; that is now a gate in step 12.
+- Starting step 7.
+
+---
+
+## 2026-09-25 — S1 step 7: registration module
+
+**AI action:**
+- `apps/api/src/modules/`:
+  - `localities/locality-directory.ts`: in-memory search, reloaded hourly;
+  - `registration/`: magic-byte image detection; Vercel Blob and local photo stores; HIBP checker (k-anonymity); `stage-photo`; `register-worker` (R1–R5, the single transaction); handlers wired in `main.ts`.
+- Migration: `registration_photo_uploads.url` added to the unreleased `s1_registration`; the migration cycle was re-verified.
+- Config:
+  - n8n URLs optional (CRM deferred);
+  - new `IP_HASH_SECRET` (a random local value appended to `apps/api/.env`), `PHOTO_STORE`, `PHOTO_LOCAL_DIR`, `BLOB_READ_WRITE_TOKEN`.
+- **Verified:**
+  - 189 tests, including 18 registration integration tests with the byte-identical-response property;
+  - 8 mutations caught; one first-attempt mutation was invalid (a placeholder crash) and was redone as "no transaction";
+  - live smoke test with the real server: boot, search, photo 201/415, real reCAPTCHA 403, live HIBP;
+  - all gates and `turbo run build` pass.
+- **Test gaps found and closed:** hashing on the existing-email branch was not checked, and the atomicity test did not check audit/outbox counts. Also, one smoke run failed only because Git Bash's `/tmp` is invisible to Windows curl.
+
+---

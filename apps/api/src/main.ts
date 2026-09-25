@@ -13,7 +13,12 @@ import type { OutboxHandler } from './platform/outbox/outbox'
 import { LoadShedder } from './platform/load/load-shedder'
 import { createDb } from './platform/persistence/db'
 import { PostgresRateLimiter } from './platform/rate-limit/rate-limiter'
+import { LocalityDirectory } from './modules/localities/locality-directory'
 import { platformHandlers } from './modules/platform/platform.handlers'
+import { LocalDiskPhotoStore, VercelBlobPhotoStore } from './modules/registration/adapters/photo-store'
+import { PwnedPasswordsChecker } from './modules/registration/adapters/pwned-passwords'
+import { registrationHandlers } from './modules/registration/registration.handlers'
+import { WorkerPoolHasher } from './platform/security/password-hasher'
 
 async function main() {
   const config = loadConfig(process.env)
@@ -21,13 +26,22 @@ async function main() {
   const http = new SafeHttpClient({ allowedHosts: config.outboundHosts })
   const rateLimiter = new PostgresRateLimiter(db)
 
-  // Each module adds its handler set here (registration: step 7).
-  const handlerSets: HandlerSet[] = [platformHandlers(db) as unknown as HandlerSet]
+  const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
+  const handlerSets = [
+    platformHandlers(db),
+    registrationHandlers({
+      db,
+      hasher,
+      breaches: new PwnedPasswordsChecker(http),
+      localities: new LocalityDirectory(db),
+      store: config.PHOTO_STORE === 'vercel-blob' ? new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN!) : new LocalDiskPhotoStore(config.PHOTO_LOCAL_DIR),
+      ipHashSecret: config.IP_HASH_SECRET,
+    }),
+  ] as unknown as HandlerSet[]
   // Outbox event handlers by type (step 8).
   const outboxHandlers = new Map<string, OutboxHandler>()
 
   const shedder = new LoadShedder({ maxInFlight: config.MAX_IN_FLIGHT, maxEventLoopDelayMs: config.MAX_EVENT_LOOP_DELAY_MS })
-  // The registration module takes a Bulkhead of HASH_CONCURRENCY for bcrypt (step 7).
   const app = await createApp({
     config,
     shedder,
@@ -53,6 +67,7 @@ async function main() {
     log.info({ signal }, 'shutting down')
     clearInterval(purge)
     await dispatcher.stop()
+    await hasher.close()
     await app.close()
     await db.$disconnect()
     process.exit(0)

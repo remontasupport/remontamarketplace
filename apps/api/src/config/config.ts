@@ -42,8 +42,16 @@ const envSchema = z.object({
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
 
   RESEND_API_KEY: z.string().min(10, 'missing or too short'),
-  N8N_REGISTRATION_WEBHOOK_URL: httpsUrl,
-  N8N_WEBHOOK_URL: httpsUrl,
+  // CRM notification is deferred (user, 2026-09-25): not required until it is built.
+  N8N_REGISTRATION_WEBHOOK_URL: httpsUrl.optional(),
+  N8N_WEBHOOK_URL: httpsUrl.optional(),
+
+  /** Keys the IP hash stored with staged photos, so raw IPs are never stored. */
+  IP_HASH_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
+  /** Where registration photos go. 'local' writes to PHOTO_LOCAL_DIR (development only). */
+  PHOTO_STORE: z.enum(['local', 'vercel-blob']).default('local'),
+  PHOTO_LOCAL_DIR: z.string().default('.uploads'),
+  BLOB_READ_WRITE_TOKEN: z.string().min(20).optional(),
 
   OUTBOX_POLL_MS: z.coerce.number().int().min(100).max(60000).default(2000),
 
@@ -88,6 +96,10 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     throw new ConfigError(parsed.error.issues.map((i) => `${i.path.join('.') || '(env)'}: ${i.code === 'invalid_type' ? 'required' : i.message}`))
   }
   const e = parsed.data
+  const extra: string[] = []
+  if (e.PHOTO_STORE === 'vercel-blob' && !e.BLOB_READ_WRITE_TOKEN) extra.push('BLOB_READ_WRITE_TOKEN: required when PHOTO_STORE=vercel-blob')
+  if (e.NODE_ENV === 'production' && e.PHOTO_STORE === 'local') extra.push('PHOTO_STORE: local storage is not allowed in production')
+  if (extra.length) throw new ConfigError(extra)
   return {
     ...e,
     requireHttps: e.REQUIRE_HTTPS ? e.REQUIRE_HTTPS === 'true' : e.NODE_ENV === 'production',
@@ -95,8 +107,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
       'www.google.com', // reCAPTCHA siteverify
       'api.resend.com',
       'api.pwnedpasswords.com', // HIBP k-anonymity range API
-      new URL(e.N8N_REGISTRATION_WEBHOOK_URL).hostname,
-      new URL(e.N8N_WEBHOOK_URL).hostname,
+      ...[e.N8N_REGISTRATION_WEBHOOK_URL, e.N8N_WEBHOOK_URL].filter((u): u is string => !!u).map((u) => new URL(u).hostname),
     ].filter((h, i, all) => all.indexOf(h) === i),
   }
 }

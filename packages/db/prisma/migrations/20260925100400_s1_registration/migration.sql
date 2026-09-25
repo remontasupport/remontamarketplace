@@ -38,6 +38,8 @@ CREATE TABLE "outbox_events" (
 CREATE TABLE "registration_photo_uploads" (
     "id" UUID NOT NULL,
     "blobKey" TEXT NOT NULL,
+    -- The public URL the store returned; copied to worker_profiles.photos on claim.
+    "url" TEXT NOT NULL,
     "contentType" TEXT NOT NULL,
     "sizeBytes" INTEGER NOT NULL,
     "ipHash" TEXT NOT NULL,

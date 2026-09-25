@@ -20,8 +20,9 @@ export interface SafeRequest<S extends z.ZodType | undefined> {
   url: string
   headers?: Record<string, string>
   body?: string | URLSearchParams
-  /** Parse the JSON body with this schema. Omit to ignore the body (status only). */
+  /** Parse the body with this schema (JSON, or the text itself with responseType 'text'). Omit to ignore the body. */
   schema?: S
+  responseType?: 'json' | 'text'
   /** Treat these statuses as success too (default: 2xx). */
   okStatuses?: readonly number[]
   timeoutMs?: number
@@ -87,11 +88,13 @@ export class SafeHttpClient {
     if (text === null) return fail({ kind: 'too-large' })
     if (!req.schema) return { ok: true, status: res.status, data: undefined as T }
 
-    let json: unknown
-    try {
-      json = JSON.parse(text)
-    } catch {
-      return fail({ kind: 'invalid-response', issues: 'not JSON' })
+    let json: unknown = text
+    if (req.responseType !== 'text') {
+      try {
+        json = JSON.parse(text)
+      } catch {
+        return fail({ kind: 'invalid-response', issues: 'not JSON' })
+      }
     }
     const parsed = req.schema.safeParse(json)
     if (!parsed.success) return fail({ kind: 'invalid-response', issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ') })

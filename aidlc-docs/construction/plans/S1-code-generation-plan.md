@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–6 done and verified (step 4 before step 3; 5b added).
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–7 done and verified (step 4 before step 3; 5b added; CRM deferred).
 
 ---
 
@@ -174,17 +174,29 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
 - **Finding for step 10:** `apps/app`'s `parseLocation` mis-parses 23 real suburbs: names containing a full state name ("Mount Victoria, NSW 2786" → city "Mount") and all OT territories (state null). Existing workers there likely have a wrong `city`. The dual-write sets the columns from the suburb record, so new values are correct. The backfill must match on postcode + the `location` string, not `city`.
 
 ### Step 7 — `apps/api` registration module
-- [ ] `GET /v1/localities?q=` (prefix match on suburb or postcode, current rows only, max 10, cached)
-- [ ] Photo upload (magic-byte check, server-generated key, staged row, `PhotoStore` port → Vercel Blob)
-- [ ] Registration use case: R1–R5; the single transaction (data model §4: user, profile + legacy location columns, services, HOME location, onboarding, transition, audit, outbox)
-- [ ] HIBP check (k-anonymity; unreachable → accept, record, warn: Q2 = A)
+- [x] `GET /v1/localities?q=`: prefix match on suburb or postcode, then later-word matches ("kilda" finds St Kilda); "suburb postcode" narrows by both; current rows only; at most 10; held in memory and reloaded hourly; `Cache-Control` 1 h
+- [x] Photo upload: magic-byte check (JPEG/PNG/WebP/HEIC); server-generated key `workers/registration/<uuid>.<ext>`; staged row with an HMAC IP hash; `PhotoStore` port with Vercel Blob and local-disk adapters (`PHOTO_STORE`; local is refused in production)
+- [x] Registration use case: R1–R5 in the single transaction (data model §4): user, profile + legacy location columns, services, HOME location, onboarding marker + first transition, audit, outbox. The photo is claimed inside the same transaction
+- [x] HIBP check (k-anonymity, padding; unreachable → accept, record in the audit metadata, warn: Q2 = A). Checked for every email before the lookup, so a refusal reveals nothing
 - **Verify:** unit tests; PBT: the response for an existing email is byte-identical to the one for a new email
+- **Verified 2026-09-25:**
+  - Tests: `@remonta/api` 189. That includes 18 registration tests on PostGIS: every row of the transaction; byte-identical responses as a property; two simultaneous sign-ups with one email; photo claimed once, expired, never issued; breached password refused for new and existing emails alike; atomic rollback on an injected failure (all 8 tables unchanged).
+  - 8 deliberate bugs each caught: 409 for an existing email; no hash for an existing email; photo claimable twice; no transaction; breach check only for new emails; both retired-suburb guards removed; and others.
+  - Live smoke test with the user's `.env`: the server boots; suburb search works; a JPEG is staged (201) and HTML renamed .jpg is refused (415); a fake token is refused by the real reCAPTCHA (403, `invalid-input-response`); live HIBP reports "password" breached (52 M).
+  - All gates and `turbo run build` pass.
+- **Decisions / deviations:**
+  - `registration_photo_uploads.url` added to the unreleased `s1_registration` migration: the store's URL, copied to `worker_profiles.photos` on claim (migration cycle re-verified).
+  - The mobile is stored as E.164 (`+614…`); legacy stored it as typed.
+  - The suburb is checked in the database inside the transaction, not in the hourly cache, and `placeHome` also refuses a retired suburb (two guards).
+  - The Vercel Blob SDK calls Vercel's fixed API host directly: the one outbound call not made through SafeHttpClient, with no caller-supplied URL.
+  - New config: `IP_HASH_SECRET` (required), `PHOTO_STORE`, `PHOTO_LOCAL_DIR`, `BLOB_READ_WRITE_TOKEN` (required for Vercel Blob). The n8n URLs are now optional.
+  - Obligations are not known at sign-up (the catalogue is not in apps/api yet), so the marker starts SIGNED_UP with zero counts; the reconciler fills them in.
 
 ### Step 8 — `apps/api` events and jobs
-- [ ] `NotifyCrmOfRegistration`: **both** n8n payloads, exactly as today (Q1 = A), URLs `N8N_REGISTRATION_WEBHOOK_URL`, `N8N_WEBHOOK_URL`
+- [→] ~~`NotifyCrmOfRegistration`~~ **Deferred (user, 2026-09-25: "you can skip the CRM updates for now").** `zohoLeadId` is still validated and stored. The n8n URLs are optional config.
 - [ ] `SendRegistrationConfirmation` (Resend, idempotency key = event ID, truthful wording) · `SendExistingAccountNotice` (1 per email per 10 min)
 - [ ] `PurgeUnclaimedRegistrationPhotos` (daily) · `OnboardingReconciler` (every 5 min, watermark, `source = RECONCILER`)
-- **Verify:** payload snapshot tests against today's two payloads, field for field; outbox retry PBT
+- **Verify:** outbox retry PBT (the n8n payload snapshot tests move with the deferred CRM handler)
 
 ### Step 9 — `apps/app`: organise, remove, switch, suburb fix
 - [ ] Feature folder `features/worker-registration/` (S1-design §4.1); re-check every import of a moved file
@@ -209,6 +221,7 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
 - [ ] Local end to end with the switch on `api`: localities search → photo → register → rows present in all tables → outbox events delivered to test endpoints
 - [ ] The same run with the switch on `legacy`: nothing regressed
 - [ ] Vercel preview: sign in, load a dashboard, submit the registration form (legacy path), suburb search returns the complete list
+- [ ] **Gate before any production switch to `api`:** the deferred CRM notification must exist, or registrations made through `apps/api` never reach the CRM
 - [ ] **Production (separate approval):** record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first (decides whether the `s1_postgis` down applies) → apply the migrations → load localities → backfill dry runs → you approve → `--apply` → merge (a merge commit, not squash) → verify production
 
 ---

@@ -119,3 +119,4 @@ apps/api/prisma/
 apps/api/generated/
 apps/api/dist/
 !apps/api/.env.example
+apps/api/.uploads/
