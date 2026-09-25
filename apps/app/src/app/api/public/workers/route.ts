@@ -110,6 +110,7 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lng: nu
 function buildWhereClause(params: PublicFilterParams): Prisma.WorkerProfileWhereInput {
   const conditions: Prisma.WorkerProfileWhereInput[] = [
     { user: { status: 'ACTIVE' } },
+    { isPublished: true },
   ]
 
   if (params.typeOfSupport && params.typeOfSupport !== 'all') {

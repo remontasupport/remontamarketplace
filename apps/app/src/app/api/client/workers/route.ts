@@ -349,11 +349,12 @@ function buildWhereClause(
 ): Prisma.WorkerProfileWhereInput {
   const conditions: Prisma.WorkerProfileWhereInput[] = []
 
-  // Base condition: only ACTIVE users with completed profiles
+  // Base condition: only ACTIVE, published users with completed profiles
   conditions.push({
-    user:      { status: 'ACTIVE' },
-    firstName: { not: '' },
-    lastName:  { not: '' },
+    user:        { status: 'ACTIVE' },
+    isPublished: true,
+    firstName:   { not: '' },
+    lastName:    { not: '' },
   })
 
   // Default listing only: require a bio/introduction to be present
