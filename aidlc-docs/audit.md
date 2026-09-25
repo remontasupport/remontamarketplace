@@ -509,3 +509,25 @@ Gave the user the fix steps.
 **AI action:** Updated `aidlc-state.md` with the exact resume point and committed the AI-DLC docs to `s1/worker-registration`.
 
 ---
+
+## 2026-09-25 — Session resumed
+
+**User input (verbatim):**
+> let us continue the AI dlc
+
+**AI action:** Docker engine 29.8.0 now responds (WSL 2, `docker-desktop` distro). Resuming at S1 step 1 DB verification: apply the forward migrations and every `down.sql` on local PostGIS (`postgis/postgis:16-3.4`), then a drift check.
+
+---
+
+## 2026-09-25 — S1 step 1 verified on local PostGIS
+
+**AI action:**
+- `postgis/postgis:16-3.4` container; the cycle was run on a database created from `template0`. The image's default database pre-installs `postgis_topology` and `tiger_geocoder`, which made the first run's `CREATE EXTENSION` a no-op and blocked `DROP EXTENSION`, so that run was discarded.
+- Forward: the full history applies. Drift against the schema is limited to the two GENERATED `point` columns, which Prisma reads as defaults (expected).
+- 27 constraint probes, all as designed: generated point, the (pid, postcode) key, states incl. OT, postcode, bounds, self-supersede, one HOME per worker, radius on HOME only (1–500), locality delete restricted, onboarding counts, no-op transition, photo size, outbox attempts, cascade on profile delete. Each rejection was checked to name its intended constraint.
+- Down: the `s1_registration` guard refuses while an `ACCOUNT_REGISTERED` row exists. All five `down.sql` run newest-first, and the resulting schema has an empty `migrate diff` against `main`'s schema. Re-apply after reversal succeeds.
+- **Finding:** the `s1_postgis` down would remove PostGIS even if it pre-dated S1, because the forward step uses `IF NOT EXISTS`. Added a warning to `down.sql` and a pre-check to the plan's production step.
+- Migrations README: generated-column drift note and the local `down.sql` test procedure.
+- One run was invalidated by my own shell error (env var expanded before it was set) and rerun; noted here for completeness.
+
+---

@@ -4,7 +4,7 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Step 1 committed (08e37a2), DB verification pending Docker (user installing WSL 2 + Docker Desktop, 2026-09-25). Next: verify step 1 on local PostGIS once `docker run hello-world` works; step 2 needs the G-NAF download (folder from user); step 3 (contract package) can start without Docker.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Step 1 committed (08e37a2) and verified on local PostGIS 2026-09-25 (forward, 27 constraint probes, all down.sql, exact reversal, re-apply). Next: step 2 needs the G-NAF download (folder from user); step 3 (contract package) can start meanwhile.
 
 ## Workspace State
 - **Existing Code**: Yes

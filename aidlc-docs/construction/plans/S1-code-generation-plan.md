@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Step 1 done (DB verification pending Docker).
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Step 1 done and verified on local PostGIS.
 
 ---
 
@@ -80,7 +80,7 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
 - [x] Migrations, each with `down.sql`: `s1_postgis` · `s1_localities` · `s1_worker_locations` (partial unique HOME index, GiST) · `s1_onboarding` (indexes `(stage, stage_entered_at)`, `(stage, last_activity_at)`) · `s1_registration` (profile columns, outbox, photo uploads, rate limit, enum value)
 - [→] ~~Second generator~~ **Moved to step 5 (deviation):** a second `generator` in the shared schema would also run in the `apps/app` Vercel build (its buildCommand runs a plain `prisma generate` on this schema), which is the Prisma-bundling path that failed five times in U5. Instead, `apps/api` derives a copy of the schema with its own output at build time; the shared schema and the `apps/app` build stay untouched.
 - **Verify:** `migrate diff` shows only additions; forward and `down.sql` run on local PostGIS (after Docker) and on a Neon branch before step 12; `apps/app` client unchanged except the new models
-- **Verified 2026-09-25:** `prisma validate` passes; the migrations contain every statement `migrate diff` generates (the only differences are the hand-written GENERATED `point` columns); `@remonta/app` quality (ts 149 known, eslint 518 known, 62/62 tests) and `@remonta/schemas` quality pass. **Pending Docker:** apply forward + `down.sql` on local PostGIS, and a drift check (`migrate diff --from-migrations`).
+- **Verified 2026-09-25:** `prisma validate` passes; the migrations contain every statement `migrate diff` generates (the only differences are the hand-written GENERATED `point` columns); `@remonta/app` quality (ts 149 known, eslint 518 known, 62/62 tests) and `@remonta/schemas` quality pass. **Verified on local PostGIS 2026-09-25** (`postgis/postgis:16-3.4`, database from `template0`): full history applies forward; 27 constraint probes behave as designed, each rejection naming its intended constraint; the `s1_registration` down refuses while an `ACCOUNT_REGISTERED` row exists; all five `down.sql` run newest-first and leave a schema identical to `main` (empty `migrate diff`); re-apply after reversal succeeds. Only drift: the two GENERATED `point` columns read as defaults (documented in the migrations README). **Still to do on the Neon branch before step 12:** same cycle, and record whether PostGIS was already installed (the `s1_postgis` down must be skipped if so).
 
 ### Step 2 — `packages/db`: G-NAF build + load scripts
 - [ ] `scripts/localities/build.ts` (streaming reader, the filter rule, CSV writer, attribution)
@@ -151,7 +151,7 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
 - [ ] Local end to end with the switch on `api`: localities search → photo → register → rows present in all tables → outbox events delivered to test endpoints
 - [ ] The same run with the switch on `legacy`: nothing regressed
 - [ ] Vercel preview: sign in, load a dashboard, submit the registration form (legacy path), suburb search returns the complete list
-- [ ] **Production (separate approval):** apply the migrations → load localities → backfill dry runs → you approve → `--apply` → merge (a merge commit, not squash) → verify production
+- [ ] **Production (separate approval):** record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first (decides whether the `s1_postgis` down applies) → apply the migrations → load localities → backfill dry runs → you approve → `--apply` → merge (a merge commit, not squash) → verify production
 
 ---
 

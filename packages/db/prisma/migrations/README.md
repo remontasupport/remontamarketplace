@@ -41,3 +41,34 @@ belongs in its own migration.
 `prisma/legacy-sql/` — six scripts from a manual `worker_services` migration predating
 this history. Kept for reference. **None of them should be run.** One is named
 `quick_restore_and_migrate.sql`; treat it as a historical artifact, not a tool.
+
+## Generated `point` columns: edit every future `migrate dev` output
+
+`au_localities.point` and `worker_locations.point` are `GENERATED ALWAYS AS (...) STORED`
+geography columns (S1). Prisma cannot express a generated column and reads the
+expression as a default, so every `migrate dev` / `migrate diff` against a migrated
+database proposes:
+
+    ALTER TABLE "au_localities" ALTER COLUMN "point" DROP DEFAULT;
+    ALTER TABLE "worker_locations" ALTER COLUMN "point" DROP DEFAULT;
+
+**Delete those lines from any generated migration.** They are the only expected drift;
+anything else in a diff against a migrated database is real. The same applies to the
+partial unique index `worker_locations_one_home_per_worker` and the CHECK constraints in
+the S1 migrations -- Prisma does not know about them and will not recreate them.
+
+## Testing a `down.sql` locally
+
+Use a database created from `template0`, not the `postgis/postgis` image's default
+database: that one ships with `postgis_topology` and `postgis_tiger_geocoder`
+pre-installed, which makes `CREATE EXTENSION` a no-op and blocks `DROP EXTENSION`.
+
+    docker run -d --name pg -e POSTGRES_PASSWORD=postgres -p 55432:5432 postgis/postgis:16-3.4
+    docker exec pg psql -U postgres -c "create database clean template template0"
+    # AUTH_DATABASE_URL = DIRECT_DATABASE_URL = postgresql://postgres:postgres@localhost:55432/clean
+    npx prisma migrate deploy --schema=prisma/schema.prisma
+    # run each down.sql newest first, then compare with the previous schema:
+    npx prisma migrate diff --from-url "$AUTH_DATABASE_URL" --to-schema-datamodel <previous schema.prisma> --script
+
+An empty diff means the reversal is exact. After a reversal, delete the reversed rows
+from `_prisma_migrations` before re-applying.
