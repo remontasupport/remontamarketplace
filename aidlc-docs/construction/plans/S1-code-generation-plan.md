@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–5 done and verified (step 4 before step 3).
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–6 done and verified (step 4 before step 3; 5b added).
 
 ---
 
@@ -156,10 +156,22 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
   - (4) The first burst comparison was invalid (a stale process held the port) and was rerun.
 
 ### Step 6 — `apps/api` domain: onboarding stage and location rules
-- [ ] `deriveStage(facts)` (pure) + transition edges
-- [ ] PBT: total and deterministic; every change is an allowed edge; replaying facts = computing from the final facts
-- [ ] HOME placement from a locality (centroid, `LOCALITY`, 50 km)
+- [x] `deriveStage(facts)` (pure) + transition edges (`modules/onboarding/domain/`)
+- [x] PBT: total and deterministic; every change is an allowed edge; replaying facts = computing from the final facts
+- [x] HOME placement from a locality (centroid, `LOCALITY`, 50 km) + the legacy `worker_profiles` columns (`modules/locations/domain/home.ts`)
 - **Verify:** tests pass; each PBT property shown to fail on a deliberately broken rule
+- **Verified 2026-09-25:**
+  - 34 new tests, including 11 properties and a witness event for each of the 23 edges;
+  - 6 deliberately broken rules (obligation order, rejection ignored, zero obligations counted as verified, not total, wall clock instead of `facts.now`, live worker with a missing document) are each caught by properties, not only by examples;
+  - legacy parity over all 15,467 suburbs;
+  - `@remonta/api` quality: 150 tests.
+- **Decisions and deviations (for review):**
+  - **The stage is derived only from what the source rows hold now.** An earlier draft used "was verified before"; a property test (counterexample: upload, approve, new obligation) showed the API, the 5-minute reconciler and the backfill could then disagree for the same worker. Consequence: a verified, **unpublished** worker given a new obligation is `DOCUMENTS_IN_PROGRESS` (the diagram said `ACTION_REQUIRED`). A published one is still `ACTION_REQUIRED`.
+  - **A published worker stays `PUBLISHED` while a replacement awaits review.** The first draft flagged an early renewal as `ACTION_REQUIRED`, which means "waiting on the worker".
+  - **No mandatory obligations → never `VERIFIED`/`PUBLISHED`** ("nothing to check is not checked"); published with none → `ACTION_REQUIRED`.
+  - A document expiring exactly now counts as expired.
+  - **Edges:** the design drew 10; single real events produce 23. All are listed in `transitions.ts` with their cause. The reconciler records a multi-event jump as-is, marked `singleStep: false`.
+- **Finding for step 10:** `apps/app`'s `parseLocation` mis-parses 23 real suburbs: names containing a full state name ("Mount Victoria, NSW 2786" → city "Mount") and all OT territories (state null). Existing workers there likely have a wrong `city`. The dual-write sets the columns from the suburb record, so new values are correct. The backfill must match on postcode + the `location` string, not `city`.
 
 ### Step 7 — `apps/api` registration module
 - [ ] `GET /v1/localities?q=` (prefix match on suburb or postcode, current rows only, max 10, cached)

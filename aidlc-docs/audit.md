@@ -768,3 +768,30 @@ No Kafka; the queue choice stays with OI-08.
 - **Verified:** `@remonta/api` 116 tests; all gates and `turbo run build` pass.
 
 ---
+
+## 2026-09-25 — Step 6 started
+
+**User input (verbatim):**
+> Yes start it
+
+**AI action:** Starting S1 step 6: onboarding stage derivation and HOME placement (pure domain, with PBT).
+
+---
+
+## 2026-09-25 — S1 step 6: onboarding stage and HOME placement
+
+**AI action:**
+- `apps/api/src/modules/onboarding/domain/`:
+  - `stage.ts`: `deriveStage` (pure) and `countsOf`;
+  - `transitions.ts`: 23 edges, each with its cause, and `changeOf`.
+- `apps/api/src/modules/locations/domain/home.ts`: `placeHome` (centroid, LOCALITY, 50 km, refuses a retired suburb, radius within the DB CHECK) and the legacy location columns.
+- Tests: 34, including 11 properties and one witness per edge; 6 deliberately broken rules are each caught by the properties.
+- **What the properties found:**
+  1. 13 single-event transitions not in the design diagram, now listed with their causes.
+  2. My draft flagged a published worker's early renewal as ACTION_REQUIRED; fixed so it stays PUBLISHED while the replacement is under review.
+  3. My draft's "was verified before" fact made the API and the reconciler/backfill disagree (minimal counterexample: upload, approve, new obligation). The stage is now derived from current rows only, so a verified, unpublished worker given a new obligation is DOCUMENTS_IN_PROGRESS, not ACTION_REQUIRED.
+  4. The first property set let "not total" and some precedence bugs through; added specification properties and a biased generator.
+- **Finding (existing bug):** `apps/app` `parseLocation` mis-parses 23 real suburbs (state names inside suburb names; OT). This affects the step 10 backfill matching.
+- Decisions recorded in the plan for the user to review.
+
+---
