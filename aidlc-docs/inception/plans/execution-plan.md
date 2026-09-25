@@ -1,380 +1,195 @@
-# Execution Plan — Monorepo Consolidation
+# Execution Plan — Remonta Backend (`apps/api`), first release
 
-**Project**: Remonta Marketplace
-**Stage**: INCEPTION — Workflow Planning
-**Date**: 2026-09-09
-**Status**: Awaiting approval — delivery model confirmed incremental (D-40)
+**Inputs:** `requirements.md` (approved 2026-09-25), `user-stories/stories.md` + `personas.md` (approved 2026-09-25), `.brd/phase-0..8` (2026-09-23), archived reverse engineering (`aidlc-docs/archive/monorepo-migration/inception/reverse-engineering/`, 2026-09-09).
 
 ---
 
-## 1. Detailed Analysis Summary
+## Detailed Analysis Summary
 
-### Transformation Scope
-
-- **Transformation Type**: **Architectural** — repository restructure plus data-store consolidation. Not an infrastructure migration (the runtime stays Vercel serverless on Neon PostgreSQL) and not a single-component change.
-- **Primary Changes**:
-  1. Two products currently maintained as two divergent git branches become two apps in one monorepo
-  2. Shared code extracted into six packages
-  3. Two databases consolidate to one; the marketing product loses direct database access entirely
-  4. `ContractorProfile` and its live Zoho sync are retired; `WorkerProfile` becomes the single worker record
-  5. Quality gates (type checking, CI, test frameworks) established from nothing
-- **Related Components**: all 691 source files across both products, both Prisma schemas, both Vercel projects, and the Zoho, Blob and Redis integrations.
+### Transformation Scope (brownfield)
+- **Transformation type:** Architectural. A new deployable service (`apps/api`, NestJS on Fastify, AWS ECS Fargate in Sydney) takes over six domains from a Next.js monolith (`apps/app`, on Vercel) through a strangler, sharing one live database
+- **Primary changes:** new `apps/api` service; auth hardening and a per-domain switch in `apps/app`; expand/contract schema cleanup in `packages/db`; shared validation in `packages/schemas`; new AWS infrastructure (Fargate, load balancer, S3 in AU, queue, Redis in AU, secrets); new CI/CD for container deploys with canary
+- **Not changed:** `apps/web` (marketing). It must not gain database access (P-1, P-2)
 
 ### Change Impact Assessment
-
-| Area | Impact | Detail |
+| Area | Impact | Description |
 |---|---|---|
-| **User-facing changes** | **Yes** | Marketing's public worker directory changes data source (`ContractorProfile` → `WorkerProfile` via `/api/public/workers`). The app's contractor search changes source and visibility rules. Coordinator dashboard gains role enforcement it currently lacks. |
-| **Structural changes** | **Yes — the core of the work** | Monolithic per-branch products become a Turborepo workspace with 3 apps and 6 packages. |
-| **Data model changes** | **Yes** | `ContractorProfile`, `ContractorsbyArea` and the legacy `Job` retired. Five dead model declarations removed from the app's `schema.prisma`. Marketing database decommissioned. |
-| **API changes** | **Yes** | Six routes retired (`/api/contractors`, `/api/contractors/[id]`, `/api/contractors-by-area`, `/api/sync-contractors`, `/api/webhooks/zoho-contractor`, and marketing's duplicate `/api/sync-jobs`). One new worker-search endpoint. One route removed for security (`/api/admin/fix-qualifications`). Nine drifted shared endpoints reconciled to one implementation each. |
-| **NFR impact** | **Yes — substantial** | 40 blocking extension rules now apply. Security headers, structured logging, alerting, health checks, SBOM and vulnerability scanning must be introduced; none exist today. |
+| User-facing | **Yes** | Truthful registration messages, new notifications, document expiry, publication rules, immediate suspension, admin MFA, gender options, masked bank details |
+| Structural | **Yes** | A second runtime and deployment target; `apps/app` becomes a client of `apps/api` for six domains |
+| Data model | **Yes** | Session records, audit store (append-only), versioned catalogue, unique constraint on requirements, DOB text → date, verification-status enum cleanup, gender widening, consent version, encrypted bank fields. All expand/contract |
+| API | **Yes** | New REST + OpenAPI surface with a generated TypeScript client; retired `apps/app` endpoints (fix-qualifications, upload-token, indicative rates) |
+| NFR | **Yes** | Three blocking extensions (Security, Resiliency, PBT); SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min; AU data residency; observability stack |
 
 ### Component Relationships
+- **Primary component:** `apps/api` (new): major
+- **Infrastructure components:** AWS (Fargate, ALB, S3, SQS or ElastiCache, Secrets Manager, CloudWatch) as infrastructure-as-code (tool chosen in Infrastructure Design): major, new
+- **Shared components:**
+  - `packages/db` (Prisma schema + migrations): major, expand/contract. **Note:** three schema files exist today (`packages/db/prisma/schema.prisma` 24 models; `apps/app/prisma/schema.prisma` 3; `apps/app/prisma/schema.target.prisma` 32). Which one is the source of truth must be settled in Reverse Engineering before any migration
+  - `packages/schemas` (Zod): minor → major. Shared validators for registration, onboarding and documents (PBT property: server and client accept the same inputs)
+  - `packages/config`: minor. NestJS lint/tsconfig presets; P-rules extended so `apps/web` can't import `apps/api` internals
+- **Dependent components:** `apps/app`: major for auth (token issuance, session store, revocation) and per-domain switches; minor per domain afterwards (call the generated client)
+- **Supporting components:** GitHub Actions (`ci-app.yml`, `ci-web.yml`, `ci-supply-chain.yml`, plus a new `ci-api.yml` and deploy pipeline); observability SaaS (PII removed); Resend; n8n
 
-- **Primary Components**: `apps/web` (marketing, from `main`), `apps/app` (application, from `app/main`)
-- **New Shared Components**: `packages/db`, `packages/schemas`, `packages/domain`, `packages/api-client`, `packages/ui`, `packages/config`
-- **Infrastructure Components**: `vercel.json` ×2, `next.config.ts` ×2, Turborepo config, pnpm workspace, CI pipeline (new)
-- **Dependent Components**: `apps/mobile` (scaffold only, consumes `api-client` and `schemas`)
-- **Supporting Components**: Prisma generate pipeline, the committed generated client, Zoho/Blob/Redis integration clients
-
-| Component | Change Type | Change Reason | Priority |
+| Component | Change type | Reason | Priority |
 |---|---|---|---|
-| `apps/app` | Major | Source of most extracted code; loses 2 routes, gains 1 | Critical |
-| `apps/web` | Major | Loses all database access; directory re-pointed to API | Critical |
-| `packages/domain` | Major (new) | Server Action split required — see RISK-7 | Critical |
-| `packages/db` | Major (new) | Single consolidated schema, generated client relocation | Critical |
-| `packages/schemas` | Minor (new) | Move of existing Zod schemas and types | Important |
-| `packages/api-client` | Minor (new) | New typed client over existing endpoints | Important |
-| `packages/ui` | Major (new) | Single-stack primitives serving both web apps | Important |
-| `packages/config` | Configuration (new) | Shared lint/ts/prettier/tailwind | Important |
-| Prisma bundling config | Configuration | Paths break when the client moves — see R-5 | Critical |
-| `apps/mobile` | Minor (new) | Expo scaffold only | Optional |
+| `packages/db` | Major | Data-model changes; every domain depends on it | Critical |
+| `apps/api` | Major (new) | The service itself | Critical |
+| AWS infrastructure | Major (new) | Deployment target | Critical |
+| `apps/app` auth | Major | Token exchange + session revocation (E1) | Critical |
+| `packages/schemas` | Major | Shared validation | Important |
+| `apps/app` per-domain switches | Minor, repeated | Strangler cut-over (E8) | Important |
+| CI/CD | Major | Container build, canary deploy, rollback | Important |
+| `packages/config` | Minor | Presets + boundary rules | Optional |
+| `apps/web` | None | Guarded by P-1/P-2 | — |
 
 ### Risk Assessment
+- **Risk level:** **High.** A shared production database, auth changes touching every user, regulated data (NDIS, identity documents), and a fixed 1–2 month date. It is not Critical because the strangler lets each domain be switched back without a deploy (FR-MIG-01)
+- **Rollback complexity:** Moderate. App rollback = redeploy the previous pinned image; domain rollback = flip the switch; schema = forward-only expand/contract (contract steps ship separately after a backup)
+- **Testing complexity:** Complex. PBT under full enforcement (15 named properties), contract tests between `apps/app` and `apps/api`, migration-script tests, and preview checks per CLAUDE.md step 5
 
-- **Risk Level**: **HIGH**
-- **Rollback Complexity**: **Difficult** — D-24 requires database-aware rollback, and the `ContractorProfile` retirement crosses a data boundary. Mitigated by FR-10.6's verify-then-drop sequence.
-- **Testing Complexity**: **Complex** — no correctness tests exist today, so the safety net must be built before it can be relied upon.
-
-**Principal risk drivers**:
-1. Both products are live in production throughout
-2. **149 existing TypeScript errors** (measured 2026-09-09) currently suppressed by `ignoreBuildErrors`
-3. Zero unit or integration tests
-4. A live Zoho integration being retired against unverified population overlap (RISK-10)
-5. Solo developer (D-20) — mitigated by the move to incremental delivery (D-40), see §7
+### Scope vs. date (flagged for Units Generation)
+55 stories, new infrastructure and three blocking extensions is a lot for 1–2 months with 1–2 developers. Clarification 10 = A says the date holds and scope narrows. The plan therefore **orders units so each one ships and can be switched on independently**, and the release can stop cleanly at any unit boundary. Units Generation will propose where the cut line falls.
 
 ---
 
-## 2. Measured Type-Error Backlog
-
-`npx tsc --noEmit` was run against `app/main` to size the first unit. **149 errors.**
-
-| Location | Errors |
-|---|---|
-| `src/app/dashboard` | 37 |
-| `src/app/api` | 30 |
-| `src/components/pdf` | 20 |
-| `src/schema` | 15 |
-| `src/lib` | 14 |
-| `src/components/dashboard` | 14 |
-| `src/services/worker` | 8 |
-| `src/components/requirements-setup` | 5 |
-| `src/components/services-setup` | 4 |
-| other | 2 |
-
-| Error code | Count | Meaning |
-|---|---|---|
-| TS2339 | 57 | Property does not exist on type |
-| TS2322 | 25 | Type not assignable |
-| TS7006 | 14 | Implicit `any` parameter |
-| TS2345 | 13 | Argument type mismatch |
-| TS2304 | 11 | Cannot find name |
-| TS2769 | 10 | No overload matches |
-
-**This matters more than the count suggests.** 14 errors sit in `src/lib` and 8 in
-`src/services/worker` — precisely the code destined for `packages/domain` and `packages/db`.
-Moving code with unresolved type errors into shared packages propagates them to every consumer.
-Errors in `src/schema` (15) affect `packages/schemas`, which mobile will depend on.
-
-Sample errors indicate real defects, not merely missing annotations — for example
-`setupProgress.service.ts:1572` compares a `RequirementStatus` against `"PENDING_REVIEW"`, a value
-that enum does not contain, so the comparison is always false.
-
----
-
-## 3. Workflow Visualization
+## Workflow Visualization
 
 ```mermaid
 flowchart TD
-    Start(["Monorepo Consolidation Request"])
+    Start(["User Request"])
 
-    subgraph INCEPTION["INCEPTION PHASE"]
+    subgraph INCEPTION["🔵 INCEPTION PHASE"]
         WD["Workspace Detection<br/><b>COMPLETED</b>"]
-        RE["Reverse Engineering<br/><b>COMPLETED</b>"]
+        RE["Reverse Engineering<br/>(targeted refresh)<br/><b>EXECUTE</b>"]
         RA["Requirements Analysis<br/><b>COMPLETED</b>"]
-        US["User Stories<br/><b>SKIPPED</b>"]
-        WP["Workflow Planning<br/><b>IN PROGRESS</b>"]
+        US["User Stories<br/><b>COMPLETED</b>"]
+        WP["Workflow Planning<br/><b>COMPLETED</b>"]
         AD["Application Design<br/><b>EXECUTE</b>"]
-        UG["Units Generation<br/><b>EXECUTE</b>"]
+        UG["Units Generation<br/>(Planning + Generation)<br/><b>EXECUTE</b>"]
     end
 
-    subgraph CONSTRUCTION["CONSTRUCTION PHASE"]
-        FD["Functional Design<br/>per unit<br/><b>EXECUTE</b>"]
-        NFRA["NFR Requirements<br/>per unit<br/><b>EXECUTE</b>"]
-        NFRD["NFR Design<br/>per unit<br/><b>EXECUTE</b>"]
-        ID["Infrastructure Design<br/>per unit<br/><b>EXECUTE</b>"]
-        CG["Code Generation<br/>per unit<br/><b>EXECUTE</b>"]
+    subgraph CONSTRUCTION["🟢 CONSTRUCTION PHASE (per unit)"]
+        FD["Functional Design<br/><b>EXECUTE</b>"]
+        NFRA["NFR Requirements<br/><b>EXECUTE</b>"]
+        NFRD["NFR Design<br/><b>EXECUTE</b>"]
+        ID["Infrastructure Design<br/><b>EXECUTE</b>"]
+        CG["Code Generation<br/>(Planning + Generation)<br/><b>EXECUTE</b>"]
         BT["Build and Test<br/><b>EXECUTE</b>"]
     end
 
-    subgraph OPERATIONS["OPERATIONS PHASE"]
+    subgraph OPERATIONS["🟡 OPERATIONS PHASE"]
         OPS["Operations<br/><b>PLACEHOLDER</b>"]
     end
 
     Start --> WD
-    WD --> RE
-    RE --> RA
+    WD --> RA
     RA --> US
     US --> WP
-    WP --> AD
+    WP --> RE
+    RE --> AD
     AD --> UG
     UG --> FD
     FD --> NFRA
     NFRA --> NFRD
     NFRD --> ID
     ID --> CG
-    CG -->|Next Unit| FD
     CG --> BT
+    BT -.->|next unit| FD
     BT --> OPS
-    BT --> Done(["Complete"])
+    OPS --> End(["Complete"])
 
     style WD fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style RE fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style RA fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style US fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style WP fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style CG fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style BT fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
-    style US fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
+    style RE fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
     style AD fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
     style UG fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
     style FD fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
     style NFRA fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
     style NFRD fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
     style ID fill:#FFA726,stroke:#E65100,stroke-width:3px,stroke-dasharray: 5 5,color:#000
+    style CG fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
+    style BT fill:#4CAF50,stroke:#1B5E20,stroke-width:3px,color:#fff
     style OPS fill:#BDBDBD,stroke:#424242,stroke-width:2px,stroke-dasharray: 5 5,color:#000
-    style INCEPTION fill:#BBDEFB,stroke:#1565C0,stroke-width:3px,color:#000
-    style CONSTRUCTION fill:#C8E6C9,stroke:#2E7D32,stroke-width:3px,color:#000
-    style OPERATIONS fill:#FFF59D,stroke:#F57F17,stroke-width:3px,color:#000
     style Start fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
-    style Done fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
+    style End fill:#CE93D8,stroke:#6A1B9A,stroke-width:3px,color:#000
+    style INCEPTION fill:#BBDEFB
+    style CONSTRUCTION fill:#C8E6C9
+    style OPERATIONS fill:#FFF59D
 
     linkStyle default stroke:#333,stroke-width:2px
 ```
 
-### Text Alternative
-
-**INCEPTION PHASE**: Workspace Detection (COMPLETED) → Reverse Engineering (COMPLETED) →
-Requirements Analysis (COMPLETED) → User Stories (SKIPPED at user request) → Workflow Planning
-(IN PROGRESS) → Application Design (EXECUTE) → Units Generation (EXECUTE).
-
-**CONSTRUCTION PHASE**, looping per unit: Functional Design (EXECUTE) → NFR Requirements
-(EXECUTE) → NFR Design (EXECUTE) → Infrastructure Design (EXECUTE) → Code Generation (EXECUTE),
-then back to Functional Design for the next unit. After all units complete: Build and Test
-(EXECUTE).
-
-**OPERATIONS PHASE**: Operations (PLACEHOLDER, not implemented).
+Reverse Engineering runs **after** Workflow Planning here because its scope (OI-09) is decided in this stage.
 
 ---
 
-## 4. Phases to Execute
+## Phases to Execute
 
-### INCEPTION PHASE
+### 🔵 INCEPTION PHASE
+- [x] Workspace Detection (COMPLETED)
+- [ ] Reverse Engineering — **EXECUTE (targeted refresh)**. Resolves OI-09
+  - **Rationale:** the archived technical RE (2026-09-09, HEAD `c541580`) predates the monorepo migration; 186 commits have landed since and every code path it cites has moved (`src/…` → `apps/app/src/…`). `.brd` covers business behaviour only. Application Design needs a current technical map of the **in-scope domains only**
+  - **Scope:**
+    1. A code map per in-scope domain (identity/auth, registration, onboarding, compliance, account & access, notifications): route handlers, server actions, `lib/` services, Prisma models, current monorepo paths
+    2. The NextAuth flow as it runs today (callbacks, the 60-minute login cache, cookie lifetimes)
+    3. **Which Prisma schema is the source of truth** (three files exist) and what the live Neon schema actually is
+    4. Everything `apps/app` calls across the six domains, which becomes the switch-over surface for FR-MIG-01
+    5. Out-of-scope code that reads in-scope tables (a regression risk for FR-MIG-03)
+  - **Not in scope:** out-of-scope domains beyond item 5, and re-deriving business rules already in `.brd`
+- [x] Requirements Analysis (COMPLETED 2026-09-25)
+- [x] User Stories (COMPLETED 2026-09-25)
+- [x] Workflow Planning (this document)
+- [ ] Application Design — **EXECUTE**
+  - **Rationale:** an entirely new service. NestJS modules and boundaries, the token-exchange contract, the session store, the audit store, the queue abstraction, the storage abstraction, the catalogue/requirements engine, and where each `apps/app` call is redirected. RESILIENCY-01 is confirmed here
+- [ ] Units Generation — **EXECUTE**
+  - **Rationale:** six domains plus a platform foundation must ship as independent strangler slices, each switchable on its own, in an order that lets the fixed date cut at a unit boundary
 
-- [x] **Workspace Detection** — COMPLETED
-- [x] **Reverse Engineering** — COMPLETED (10 artifacts)
-- [x] **Requirements Analysis** — COMPLETED (39 decisions, FR-1..FR-10, NFR-1..NFR-7, 10 risks)
-- [x] **User Stories** — **SKIPPED**
-  - **Rationale**: Skipped at explicit user request. My assessment recommended executing it, because the migration changes user-visible behaviour across four personas and the search-visibility rules (FR-4.2, FR-10.7) form the RISK-2 security boundary. **Consequence**: acceptance criteria for those visibility rules must be captured during Functional Design instead. Recorded so the gap is deliberate rather than accidental.
-- [x] **Workflow Planning** — IN PROGRESS
-- [ ] **Application Design** — **EXECUTE**
-  - **Rationale**: Six new packages must have their boundaries, public interfaces and dependency directions defined before any code moves. Specifically: which of the 24 `src/lib` modules belong in `packages/domain`; how the 56 Server Actions split into framework-neutral functions plus thin wrappers (RISK-7); what `packages/api-client` exposes; and how `packages/db` is consumed without leaking to `apps/web` (D-35). This is the single highest-value design stage for this work.
-- [ ] **Units Generation** — **EXECUTE**
-  - **Rationale**: The work spans 3 apps and 6 packages with real ordering constraints. Decomposition into units with an explicit dependency graph is required to sequence safely and to keep both products deployable throughout (NFR-2.1).
+### 🟢 CONSTRUCTION PHASE (per unit)
+- [ ] Functional Design — **EXECUTE**
+  - **Rationale:** four state machines, the requirements engine, the publication rule (always-required vs. override), expiry behaviour, verification-status derivation, and data-correction logic. These are the PBT targets
+- [ ] NFR Requirements — **EXECUTE**
+  - **Rationale:** values the stories defer ("set in NFR Requirements"): session lifetime, rate limits, lockout threshold, audit retention, export deadline. Also OI-08 (queue technology, Redis residency) and the extension rules
+- [ ] NFR Design — **EXECUTE**
+  - **Rationale:** resiliency patterns (retries, DLQ, timeouts, idempotency, circuit breakers), canary + auto-rollback, observability with PII removed, field-level encryption; RESILIENCY-14 is asked here
+- [ ] Infrastructure Design — **EXECUTE**
+  - **Rationale:** new AWS footprint in `ap-southeast-2`: Fargate multi-AZ, ALB, S3 (OI-07), queue, Redis, secrets, networking to Neon, IaC tool choice, CI/CD deploy pipeline
+- [ ] Code Generation — **EXECUTE (always)**
+- [ ] Build and Test — **EXECUTE (always)**
 
-### CONSTRUCTION PHASE (per unit)
-
-- [ ] **Functional Design** — **EXECUTE** (selectively per unit)
-  - **Rationale**: Execute for units that change behaviour — worker search re-pointing and its visibility rules, `ContractorProfile` retirement sequencing, the Server Action split. Skip for pure-move units where behaviour is unchanged. Also carries the acceptance criteria displaced by skipping User Stories.
-- [ ] **NFR Requirements** — **EXECUTE**
-  - **Rationale**: All three extensions are enabled with 40 blocking rules. Security (headers, authorization, rate limiting, supply chain), resiliency (RTO/RPO hours, backup and restore, health checks) and PBT (framework selection, property identification) requirements must be stated per unit.
-- [ ] **NFR Design** — **EXECUTE**
-  - **Rationale**: NFR Requirements executes, so its patterns must be designed. Includes structured logging, alerting, CSP and HSTS, and the property-based testing approach — none of which exist today.
-- [ ] **Infrastructure Design** — **EXECUTE**
-  - **Rationale**: Deployment topology changes materially — two Vercel projects targeting app directories in one repo, Turborepo remote caching, blue/green semantics, database-aware rollback (D-24), and the Prisma generated-client bundling problem (R-5) which is already the most fragile part of the current deployment.
-- [ ] **Code Generation** — **EXECUTE** (always)
-- [ ] **Build and Test** — **EXECUTE** (always)
-
-### OPERATIONS PHASE
-
-- [ ] **Operations** — PLACEHOLDER
+### 🟡 OPERATIONS PHASE
+- [ ] Operations — PLACEHOLDER. The lightweight incident process (C2.3 B) is drafted in NFR Design and finalised here
 
 ---
 
-## 5. Proposed Unit Decomposition
+## Package Change Sequence
 
-Provisional — Units Generation will finalise this. Presented now so the sequence can be reviewed.
+Hybrid: **sequential on the critical path, parallel within a unit.**
 
-| Unit | Name | Scope | Depends on |
+| Order | Package | Change | Why this position |
 |---|---|---|---|
-| **U1** | Quality Foundation | Remove `ignoreBuildErrors`/`ignoreDuringBuilds`, baseline the 149 errors, establish test runner + PBT framework, CI pipeline, `packages/config` | — |
-| **U2** | Monorepo Scaffold | Turborepo + pnpm workspace, import both products as snapshots (D-09), empty package shells | U1 |
-| **U3** | Data and Contracts | `packages/db` (consolidated Prisma), `packages/schemas` (Zod + types, dependency-free) | U2 |
-| **U4** | Domain Extraction | `packages/domain` — Server Action split (RISK-7); thin wrappers remain in `apps/app` | U3 |
-| **U5** | Shared UI | `packages/ui` — single-stack tokens and primitives, consumed by both web apps | U2 |
-| **U6** | API Client | `packages/api-client` — typed client over `apps/app` endpoints | U3 |
-| **U7** | Search Re-point + Security | FR-4 (worker search on `WorkerProfile`), FR-5 (four security fixes), FR-10.7 (endpoint segregation). **U7 is atomic — RISK-2 forbids shipping FR-4.2 without FR-5.2** | U3, U6 |
-| **U8** | ContractorProfile Retirement | FR-10.4 and FR-10.6 verify-then-drop sequence, including the mandatory population comparison | U7 |
-| **U9** | Deployment and Process | Vercel project config, Prisma bundling (R-5), blue/green, database-aware rollback, process artifacts (FR-8). **No cutover event** under D-40 | U4, U5, U7 |
-| **U10** | Mobile Scaffold | `apps/mobile` Expo shell only — no features (D-29) | U6 |
+| 1 | `packages/db` | Expand migrations only | Every consumer depends on it; expand-only keeps old `apps/app` working |
+| 2 | `packages/schemas` | Shared validators | `apps/api` and `apps/app` both import them |
+| 3 | `packages/config` | NestJS presets, boundary rules | Needed before `apps/api` lints |
+| 4 | Infrastructure + CI/CD | Foundation environment, pipeline | `apps/api` needs somewhere to deploy |
+| 5 | `apps/api` | Domain modules, per unit | — |
+| 6 | `apps/app` | Token issuance first (E1), then one domain switch per unit | Can only switch to what exists |
+| 7 | `packages/db` | Contract migrations | Only after a domain is declared complete (FR-MIG-02) |
 
-### Dependency graph
-
-```
-U1 → U2 → U3 → U4 ─┐
-          │  └→ U6 ─┼→ U7 → U8
-          └→ U5 ────┤
-                    └→ U9
-              U6 → U10
-```
-
-**Critical path**: U1 → U2 → U3 → U4 → U9
-**Parallelisable**: U5 alongside U3/U4; U10 any time after U6
-**Atomic**: U7 must ship as one change (RISK-2)
+- **Critical path:** `packages/db` expand → foundation infra → Identity & Sessions (token exchange) → every other domain
+- **Coordination points:** the OpenAPI contract (generated client, versioned); the Prisma schema (single source, settled in RE); the per-domain switch configuration
+- **Testing checkpoints:** after each unit: CI quality gates, the preview check (sign in, a database-backed dashboard, a form submit), and a switch → switch-back rehearsal on the preview before production
 
 ---
 
-## 6. Module Update Strategy
+## Estimated Timeline
+- **Stages remaining:** 3 inception (RE, Application Design, Units Generation) + 6 construction stages per unit
+- **Duration:** constrained to the fixed 1–2 month date (C10 A). Units Generation proposes the cut line, with any units past it becoming the next release
 
-- **Update Approach**: **Hybrid** — sequential on the critical path, parallel for U5 and U10
-- **Critical Path**: U1 (quality gates) blocks everything. U3 (`packages/db`, `packages/schemas`) blocks U4, U6, U7
-- **Coordination Points**:
-  - `packages/schemas` is consumed by `apps/app`, `packages/api-client` and eventually `apps/mobile` — breaking changes ripple to three consumers
-  - `packages/db` must never be imported by `apps/web` (D-35); enforce with lint rule or package boundary check
-  - The Prisma generated client is force-bundled by both `next.config.ts` and `vercel.json`; U3 and U9 must coordinate on this
-- **Testing Checkpoints**: after U1 (gates function), after U3 (both apps build against shared packages), after U7 (search behaves correctly and is properly guarded), and at every unit boundary (full k6 regression before U9 completes)
-- **Rollback Strategy**: per-unit revert while both products remain deployable (NFR-2.1) — under D-40 incremental delivery this is the ONLY rollback path, since no parallel copy exists. U8 is the exception — its rollback is the dormancy period, and it becomes irreversible only at step 5
-
----
-
-## 7. Delivery Model — CONFIRMED: Incremental
-
-**Decision (user, 2026-09-09): incremental delivery** — D-40, revising D4=C. RISK-3 resolved.
-
-The existing repository is restructured progressively, one unit at a time. There is one codebase
-throughout, no second copy to keep in sync, and no cutover event.
-
-| | Parallel (original D-17) | **Incremental (confirmed)** |
-|---|---|---|
-| Working tree | Two copies of both products until cutover | **One tree, restructured progressively** |
-| Feature work during migration | Lands **twice** | **Lands once** |
-| Cutover | Single high-stakes event | **No cutover event** |
-| Drift risk | High — the mechanism that produced the current branch divergence | **Low** |
-| Fit with solo developer (D-20) | Poor | **Good** |
-
-### What this changes in execution
-
-1. **U2 (Monorepo Scaffold) restructures the live repository** rather than creating a separate
-   tree. `apps/` and `packages/` directories are introduced and code is moved into them in place.
-2. **Every unit must leave both products deployable** (NFR-2.1). This is now a hard per-unit exit
-   criterion, not merely a goal — there is no parallel copy to fall back on.
-3. **Temporary shims are expected and legitimate.** Some units need path aliases or re-export
-   files so old and new import paths both resolve while a move is in progress. These are tracked
-   as deliberate, time-boxed artifacts and removed by the unit that completes the move.
-4. **U9 is no longer a cutover unit.** It becomes deployment configuration and process artifacts
-   only — the Vercel projects are re-pointed at app directories as part of U2, then refined.
-5. **Feature work can continue on the same tree** without double-landing, which matters given
-   D-20 (solo) and D-18 (no deadline).
-
-### Accepted cost
-
-The repository holds a mixed structure mid-migration — partly the old layout, partly packages.
-This is visually untidy and can feel slow because there is no dramatic finish line. In exchange,
-nothing is ever broken and work can stop at any unit boundary with a working system.
-
----
-
-## 8. Estimated Timeline
-
-Rough, for a solo developer with this as main focus (D-20, D-18). Ranges are wide because the
-149-error backlog contains real defects whose fixes are not yet scoped.
-
-| Unit | Estimate | Notes |
-|---|---|---|
-| U1 Quality Foundation | 2–4 weeks | Dominated by the type-error backlog and standing up test infrastructure from zero |
-| U2 Monorepo Scaffold | 1 week | |
-| U3 Data and Contracts | 1–2 weeks | |
-| U4 Domain Extraction | 3–5 weeks | **Largest unit** — 56 Server Actions to split |
-| U5 Shared UI | 2–3 weeks | Single-stack primitives; full consolidation deferred by D-14 |
-| U6 API Client | 1–2 weeks | |
-| U7 Search + Security | 1–2 weeks | Atomic |
-| U8 Retirement | 1 week + dormancy | Dormancy is calendar time, not effort |
-| U9 Deployment and Process | 1–2 weeks | R-5 is the risk here |
-| U10 Mobile Scaffold | 1 week | Parallelisable |
-
-- **Total active effort**: approximately **14–23 weeks**, less if U5 and U10 run in parallel
-- **Total stages to execute**: 6 (2 INCEPTION + 4 CONSTRUCTION per-unit, plus Code Generation and Build and Test)
-
-**Treat these as planning ranges, not commitments.** The largest uncertainties are the true cost
-of the 149 type errors and the Server Action split in U4.
-
----
-
-## 9. Success Criteria
-
-**Primary Goal**: both products live in one repository as independently deployable apps, sharing
-code through packages, with product ownership expressed by directory rather than branch name.
-
-**Key Deliverables**
-1. Turborepo + pnpm monorepo: 3 apps, 6 packages
-2. Both products deploying independently from that repository
-3. One database; the marketing product holding no database credential
-4. `ContractorProfile` retired, `WorkerProfile` the single worker record
-5. Four security findings resolved
-6. Type checking, CI and test frameworks operational
-7. `packages/schemas` and `packages/api-client` consumable by Expo
-8. Process artifacts: change management, CI/CD, rollback, DR testing, incident response
-
-**Quality Gates**
-- [ ] `tsc --noEmit` passes, or fails only on baselined errors (FR-6.2)
-- [ ] CI can block a merge (FR-6.3)
-- [ ] Unit, integration and property-based tests run in CI
-- [ ] No package imports `packages/db` except `apps/app` and `packages/domain`
-- [ ] `apps/web` has no database connection string in its environment
-- [ ] Security compliance summary clean for all applicable SECURITY rules
-- [ ] Resiliency compliance summary clean for all applicable RESILIENCY rules
-- [ ] PBT compliance summary clean for all applicable PBT rules
-- [ ] k6 load tests show no regression against current production
-- [ ] Both products deployable at every unit boundary (NFR-2.1)
-
-**Integration Testing**: marketing directory renders correctly from `/api/public/workers`; the
-app's search returns correct results under ADMIN authorization; the job sync continues
-uninterrupted; no cross-package boundary violations.
-
-**Operational Readiness**: structured logging with correlation IDs, alerting on authentication and
-authorization failures, health checks for both apps, 90-day log retention, verified backup and
-restore for the consolidated database.
-
----
-
-## 10. Open Items Carried Into Construction
-
-| Item | Source | Required by |
-|---|---|---|
-| Verify `ContractorProfile` / `WorkerProfile` population overlap | RISK-10, FR-10.6 step 1 | Before U8 |
-| Confirm or decline `apps/marketing` + `apps/web` rename | RISK-9 | Before U2 |
-| ~~Confirm delivery model~~ — **RESOLVED: incremental** (D-40) | RISK-3, §7 | Done 2026-09-09 |
-| Confirm build-then-replace rather than deliberate marketing downtime (D-40 incremental makes this the default; RISK-1 statement still stands unretracted) | RISK-1 | Before U7 |
-| Narrow D-02 to state the application owns the live Zoho integration | Requirements §2 note | Before U8 |
-| Rotate the exposed Neon credential | RISK-6, NFR-3.5 | Immediately |
-| Capture search-visibility acceptance criteria displaced by skipping User Stories | §4 | During U7 Functional Design |
+## Success Criteria
+- **Primary goal:** the six first-release domains served by `apps/api` in production, with `apps/app` switched over and no regression in out-of-scope domains
+- **Key deliverables:** `apps/api` service; AWS infrastructure as code; CI/CD with canary and rollback; expand/contract migrations; generated API client; audit trail; notifications through the queue
+- **Quality gates:** the existing baselines (`app` / `web` / `schemas` quality, `turbo build`); a new `apps/api` quality gate; 15 PBT properties passing; Security, Resiliency and PBT extension compliance at each stage; CLAUDE.md preview and production checks per unit
+- **Integration testing:** `apps/app` ↔ `apps/api` contract tests; switch and switch-back per domain on the preview
+- **Operational readiness:** logs, metrics, traces, alerts and the dead-letter-queue alarm working before the first domain is switched in production
