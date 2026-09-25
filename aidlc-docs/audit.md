@@ -1094,3 +1094,48 @@ The Layout section now lists the new packages.
   - a heredoc turned `"\n"` into a line break (fixed).
 
 ---
+
+## 2026-09-25 — Hotfix first; question about the sign-in Redis cache
+
+**User input (verbatim):**
+> Fix first, also what do you mean by sign-in caches the user record in Redis for an hour?
+
+**AI action:**
+- Creating a hotfix branch `fix/signin-email-lookup` from `origin/main`, containing only the exact email lookup (no S1 migrations; the index arrives with S1).
+- Checking where the cached sign-in record is invalidated, to answer the question accurately.
+
+---
+
+**AI action (cont.):**
+- Hotfix `fix/signin-email-lookup` (worktree `../Remonta-hotfix`, from `origin/main` 25eb04e), commit `ca7bb69`: 1 commit, 4 files (`user-lookup.ts` + test, `auth.config.ts`, `admin/impersonate`). No migrations.
+- **Verified on the main baseline:** `@remonta/app` quality 149/518 and 62 tests; lookup tests 3/3 on the local database; `next build` compiles (99 pages).
+- Not pushed yet.
+- **Cache finding, confirmed in code:**
+  - `handleNormalLogin` caches the user row (including `passwordHash`, `status`, `failedLoginAttempts`, `accountLockedUntil`) in Upstash for 1 h (`CACHE_TTL.USER_DATA`), and checks the password and the status against the cached copy;
+  - `reset-password`, `setup-password` and the admin status route never invalidate it;
+  - `invalidateUserCaches` exists but has no callers.
+- **Consequences:** after a password reset, the old password keeps working for up to 1 h; a suspended account can still sign in for up to 1 h; bcrypt hashes are stored in a third-party cache.
+
+---
+
+**User input (verbatim, question answers):**
+> "Should the hotfix also stop caching sign-in credentials in Redis (fixes: old password working up to 1 h after a reset, suspended accounts signing in, hashes in Upstash)?"="Yes, same hotfix (Recommended)", "The hotfix is committed locally. Push the branch and open the PR now?"="Don't push yet"
+
+**AI action:** Adding the cache removal to `fix/signin-email-lookup`. It stays local.
+
+---
+
+**AI action (cont.):**
+- Hotfix second commit: stop caching sign-in credentials.
+- Test via the real `authorize` with a working in-memory cache mock. Against the previous code, 3 of 4 fail: the old password still works after a reset, and a suspended account signs in.
+- **Verified:** `@remonta/app` quality 149/518; 7 DB tests; `next build` passes. The branch has 2 commits and 5 files, and is not pushed (user decision).
+- The same change must be carried into the S1 branch, which still has `getOrFetch` in `auth.config.ts`.
+
+---
+
+**AI action (cont.):**
+- Merged `fix/signin-email-lookup` into `s1/worker-registration` (`63f0056`). Kept S1's `user-lookup.ts` and test; took the hotfix's `auth.config.ts` (verified to differ only by the cache removal).
+- `@remonta/app` quality 144/496; 15 DB tests pass on S1.
+- The hotfix branch stays unpushed until the user says so.
+
+---
