@@ -10,7 +10,7 @@
 
 ### 1. First: the sign-in hotfix (ready, NOT pushed -- user decision)
 - **Branch** `fix/signin-email-lookup`, based on `origin/main` 25eb04e: 2 commits, 5 files.
-- **Where:** a separate git worktree at `C:Users	otonDesktopNew folderRemonta-hotfix`, with its own node_modules and a copy of `apps/app/.env`.
+- **Where:** a separate git worktree at `C:/Users/toton/Desktop/New folder/Remonta-hotfix`, with its own node_modules and a copy of `apps/app/.env`.
   - `ca7bb69`: exact `lower(email)` lookup. Fixes the ILIKE wildcard bug, where `a_b@` matched `axb@` and `%@domain` matched another account.
   - `0aaa571`: sign-in no longer caches the account (password hash, status) in Redis for 1 h. Before, the old password worked after a reset and suspended accounts could sign in.
 - **Verified:** `@remonta/app` quality 149/518, 62 tests; 7 DB tests (3 of 4 fail against the old code); `next build` 99 pages.
@@ -61,7 +61,7 @@
   - Run: `cd apps/api && pnpm run build && node --env-file=.env dist/main.js` (port 4000). Unset any shell AUTH_DATABASE_URL first: `--env-file` does not override it.
 - **`apps/app` dev against the local DB** (never with its .env as is -- it points at production DB and Redis):
   `AUTH_DATABASE_URL=…/s1test DATABASE_URL=…/s1test DIRECT_DATABASE_URL=…/s1test UPSTASH_REDIS_REST_URL= UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev -p 3000`
-- **G-NAF extract:** `C:datagnaf` (for future `localities:build`). k6 binary: this session's scratchpad (download again if needed).
+- **G-NAF extract:** `C:/data/gnaf` (for future `localities:build`). k6 binary: this session's scratchpad (download again if needed).
 - **Uncommitted in the S1 tree:** only regenerated Prisma clients (`apps/*/src/generated`). Never commit them without checking `git diff --ignore-all-space --numstat`.
 
 ## Workspace State
