@@ -237,6 +237,21 @@ The user asked about bursts of simultaneous requests and suggested Kafka. The re
 - [ ] Remove `api/auth/register/route.ts` (the file only: the sibling `register/client/` and `register/coordinator/` routes are live and stay), `api/auth/check-email/route.ts` + the step-2 call, `Step7Verification.tsx` (if unimported); n8n URL to config in `register-async`
 - **Verify:** `@remonta/app` quality within baselines; build; no import of a removed file remains (`grep`)
 
+### Step 9 additions (user, 2026-09-25): the sign-up page survives a bad connection
+- [ ] Automatic retries with back-off for network errors, timeouts, 429 and 503, honouring `Retry-After`. Resending is safe: the server returns the identical 202 and never creates a duplicate
+- [ ] A **fresh reCAPTCHA token for every attempt**: v3 tokens are single-use and expire after 2 minutes. Today's page reuses one token, so a retry after a network blip fails (existing bug)
+- [ ] Offline detection: a banner, Submit held, automatic resume
+- [ ] Progress kept on the device (browser storage), **never the password**, cleared on success
+- [ ] Photo uploaded separately with its own retry and progress, and **shrunk on the device** first
+- [ ] Clear states: sending / still trying / done -- sign in now
+
+### Step 9b — Query performance (user, 2026-09-25: "fast as possible" at 10,000+ users)
+Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in its README). The system is read-heavy, so, following the user's notes: indexes first, then caching, then read replicas. Nothing here needs sharding, Kafka or a write-optimised database.
+- [ ] **Sign-in lookup:** today's `mode: "insensitive"` becomes `ILIKE`, a full scan of `users` on every sign-in (47 ms at 100 k, growing). Add `users (lower(email))` (CONCURRENTLY, its own migration) and look up `lower(email) = lower($1)` in `apps/app` sign-in (0.009 ms). This changes production sign-in, so it gets its own preview check (sign in with mixed-case input)
+- [ ] **Reconciler indexes** (CONCURRENTLY, own migration): `worker_profiles("updatedAt")`, `verification_requirements` (`updatedAt`, `submittedAt`, `reviewedAt`, `expiresAt`), `users("lastLoginAt")`. Scan goes from 61 ms to 1.6 ms
+- [ ] **Later (a contract step, not S1):** drop the two duplicate `users.email` indexes, after checking nothing depends on their names
+- [ ] Step 12: rerun the benchmark; every key query must use an index and stay under 5 ms at 100 k workers
+
 ### Step 10 — Backfill scripts (dry run by default)
 - [ ] `backfill-worker-locations.ts`: postcode + suburb → `au_localities`; the report lists matched, unmatched and ambiguous; unmatched rows are never guessed
 - [ ] `backfill-worker-onboarding.ts`: `deriveStage` for every worker, `source = BACKFILL`, best available timestamps

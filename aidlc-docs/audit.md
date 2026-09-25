@@ -885,3 +885,54 @@ No Kafka; the queue choice stays with OI-08.
 - **Not verified:** a live email send (needs the user's go-ahead).
 
 ---
+
+## 2026-09-25 — Explanation: the daily clean-up jobs
+
+**User input (verbatim):**
+> can you explain this Daily: unused sign-up photos older than 24 hours are deleted, and delivered follow-up jobs older than 30 days are cleared.
+
+**AI action:** Explained the unclaimed-photo purge and the outbox retention in plain terms. No change.
+
+---
+
+## 2026-09-25 — Question: the user's connection dropping during sign-up
+
+**User input (verbatim):**
+> Oh okay. By the way in the API are you also handling if the internet of the user down during the sign up? WHAT IS THE PRODUCTION READY SOLUTION FOR THAT CASE?
+
+**AI action:**
+- Checked what the legacy page does today (`fetchWithRetry`, form state).
+- Explained that the server side is already safe: one transaction, and a retry returns the identical 202 with no duplicate account.
+- The remaining work is in the page (step 9):
+  - keep progress locally, never the password;
+  - detect offline;
+  - retry with back-off, honouring Retry-After;
+  - fetch a fresh reCAPTCHA token for each attempt;
+  - retry the photo separately and shrink it before upload;
+  - show clear states.
+- Asked whether to add this to step 9.
+
+---
+
+## 2026-09-25 — Step 9 additions; fast queries at scale
+
+**User input (verbatim):**
+> Yes, also I want the system to be easily queried, for example if I have 10000 or more users, and they sign in, I want the query to be fast as possible, I made a md file that you can reference about what system should we use c:\Users\toton\Downloads\system-design-notes.md
+
+**AI action:**
+- Adding the six connection-resilience points to step 9.
+- Reading the user's notes file before recommending anything.
+
+---
+
+**AI action (cont.):**
+- Read the notes; the system is read-heavy. Benchmarked a separate local database with 100,000 workers and 500,000 requirements.
+- **Findings:**
+  - `apps/app` sign-in uses `mode: "insensitive"` (ILIKE): 47 ms, a full scan of users on every sign-in. An exact or `lower(email)` index lookup takes 0.009 ms.
+  - The reconciler change scan takes 61 ms at 100 k; with indexes on the change columns, 1.6 ms.
+  - `users.email` has two duplicate indexes.
+  - All dashboard and admin marker queries are already indexed (0.008–1 ms); stage counts take 8.8 ms.
+- Saved the benchmark in `packages/db/bench/`. Added the step 9 connection-resilience items and a new step 9b (query performance) to the plan.
+- Recommendation: indexes first; caching where a query is hot (it already exists for job listings; suburbs are in memory); read replicas only if measurements later demand it; no sharding, Kafka or Cassandra.
+
+---
