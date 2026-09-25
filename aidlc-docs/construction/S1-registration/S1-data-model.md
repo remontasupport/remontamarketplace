@@ -38,7 +38,7 @@ erDiagram
       float lat
       float lng
       geography point "PostGIS, GiST index; generated from lat/lng"
-      text gnaf_locality_pid "stable G-NAF ID; unique with postcode, the key for updates"
+      text locality_pid "G-NAF LOCALITY_PID (stable); unique with postcode, the key for updates"
       text source_version "dataset + release, e.g. GNAF-202608"
       timestamptz retired_at "null = current; set when a release drops it"
       int superseded_by FK "the locality that replaced it, if any"
@@ -59,7 +59,7 @@ erDiagram
     }
 ```
 
-- **`au_localities`**: one row per Australian **suburb–postcode pair** with its centroid. A suburb that spans two postcodes has two rows, because the worker picks "Parramatta 2150", not "Parramatta". The unique key is `(gnaf_locality_pid, postcode)` (corrected in the code generation plan, 2026-09-25). It is seeded from an **open official dataset**: **Geoscape G-NAF + Administrative Boundaries (Localities)** from data.gov.au (open G-NAF EULA, based on CC BY 4.0; commercial use allowed; quarterly releases). Suburb–postcode pairs and centroids are derived from the real addresses in each locality; ABS SAL 2021 (CC BY 4.0) is the fallback. Attribution recorded. *(Source confirmed by the user 2026-09-25.)* It is versioned (`source_version`) and refreshed by a reviewed script (§2.1a).
+- **`au_localities`**: one row per Australian **suburb–postcode pair** with its centroid. A suburb that spans two postcodes has two rows, because the worker picks "Parramatta 2150", not "Parramatta". The unique key is `(locality_pid, postcode)` (corrected in the code generation plan, 2026-09-25). `locality_pid` holds G-NAF's `LOCALITY.LOCALITY_PID`, the ID `LOCALITY_POINT` joins on, not G-NAF's `GNAF_LOCALITY_PID` column, which is empty for 1,699 of 17,581 localities (renamed from `gnaf_locality_pid`, 2026-09-25). It is seeded from an **open official dataset**: **Geoscape G-NAF + Administrative Boundaries (Localities)** from data.gov.au (open G-NAF EULA, based on CC BY 4.0; commercial use allowed; quarterly releases). Suburb–postcode pairs and centroids are derived from the real addresses in each locality; ABS SAL 2021 (CC BY 4.0) is the fallback. Attribution recorded. *(Source confirmed by the user 2026-09-25.)* It is versioned (`source_version`) and refreshed by a reviewed script (§2.1a).
 - **`worker_locations`**:
   - **Exactly one `HOME` row** per worker (partial unique index), which carries the travel radius.
   - **Zero or more `SERVICE_AREA` rows**, which are extra suburbs they cover.
@@ -75,7 +75,7 @@ Suburbs change rarely (new estates, renames, boundary changes), so the table is 
 2. It prints a **diff report**: added, renamed, moved centroid, dropped. For each dropped locality it gives the number of workers placed there.
 3. After the report is approved, one transaction applies it:
    - **Added:** inserted.
-   - **Changed:** updated in place, matched on `gnaf_locality_pid`, so the `id` and every worker's link stay the same.
+   - **Changed:** updated in place, matched on `(locality_pid, postcode)`, so the `id` and every worker's link stay the same.
    - **Dropped:** **never deleted**. `retired_at` is set, and `superseded_by` is set when G-NAF names a successor. Retired rows disappear from the search but stay valid for workers already placed there, and those workers are listed for review.
 4. `source_version` records the release. The run is audited.
 

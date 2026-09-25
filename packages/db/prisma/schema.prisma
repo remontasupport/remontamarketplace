@@ -722,19 +722,21 @@ model WorkerExperience {
 /// (packages/db/data/au_localities.csv). Rows are never deleted: a locality
 /// dropped by a release is retired, so worker locations that point at it stay valid.
 model AuLocality {
-  id              Int                                    @id @default(autoincrement())
-  gnafLocalityPid String
-  suburb          String
+  id             Int                                    @id @default(autoincrement())
+  /// G-NAF LOCALITY.LOCALITY_PID ("loc…" or a legacy number) -- the key LOCALITY_POINT
+  /// joins on. NOT G-NAF's GNAF_LOCALITY_PID column, which is often empty.
+  localityPid    String
+  suburb         String
   /// Lower-case, single-spaced suburb name; what the search box matches on.
-  searchName      String
-  state           String
-  postcode        String
-  latitude        Float
-  longitude       Float
-  point           Unsupported("geography(Point, 4326)")?
-  sourceVersion   String
-  retiredAt       DateTime?
-  supersededById  Int?
+  searchName     String
+  state          String
+  postcode       String
+  latitude       Float
+  longitude      Float
+  point          Unsupported("geography(Point, 4326)")?
+  sourceVersion  String
+  retiredAt      DateTime?
+  supersededById Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -743,7 +745,7 @@ model AuLocality {
   supersedes      AuLocality[]     @relation("LocalitySuccession")
   workerLocations WorkerLocation[]
 
-  @@unique([gnafLocalityPid, postcode])
+  @@unique([localityPid, postcode])
   @@index([searchName])
   @@index([postcode])
   @@index([point], type: Gist)

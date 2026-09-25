@@ -531,3 +531,38 @@ Gave the user the fix steps.
 - One run was invalidated by my own shell error (env var expanded before it was set) and rerun; noted here for completeness.
 
 ---
+
+## 2026-09-25 — G-NAF download link
+
+**User input (verbatim):**
+> CAN YOU PROVIDE THE LINK FOR GNAF
+
+**AI action:** Gave the data.gov.au G-NAF dataset page and which file to pick: the full G-NAF release in GDA2020 PSV format, not G-NAF Core, because the build needs the `LOCALITY`, `LOCALITY_POINT` and `ADDRESS_DETAIL` tables.
+
+---
+
+## 2026-09-25 — G-NAF downloaded
+
+**User input (verbatim):**
+> c:\Users\toton\Downloads\g-naf_aug26_allstates_gda2020_psv_110.zip
+
+**AI action:** Checked the zip's integrity. Extracted only the tables step 2 needs (LOCALITY, LOCALITY_POINT, ADDRESS_DETAIL and the authority code tables) to `C:\data\gnaf`, outside the repo.
+
+---
+
+**AI action (cont.):** Extracted 43 tables (2.1 GB) to `C:\data\gnaf\G-NAF\G-NAF AUGUST 2026\`, plus `Contents.txt` and `create_tables_ansi.sql`. Findings that shape step 2:
+- 17,581 localities, 0 retired in the release file. Classes: G 15,643 · I (Indigenous location) 1,546 · U 241 · T 130 · D 19 · H 2.
+- `LOCALITY_POINT.LOCALITY_PID` joins on `LOCALITY.LOCALITY_PID` (17,581 of 17,581 match), not on `GNAF_LOCALITY_PID` (360 match; 1,699 empty). `LOCALITY_PID` is therefore the stable key. The column `au_localities.gnafLocalityPid` must hold `LOCALITY_PID`, and its name invites confusion with G-NAF's own `GNAF_LOCALITY_PID`. Raised with the user.
+
+---
+
+## 2026-09-25 — Rename au_localities.gnafLocalityPid → localityPid
+
+**User input (verbatim, question answer):**
+> Rename now (Recommended)
+
+**AI action:**
+- Renamed the column in `schema.prisma` (with a doc comment), in the `s1_localities` migration (column and unique index `au_localities_localityPid_postcode_key`), in `S1-data-model.md` §2.1/§2.1a and in the plan. The migration is not yet on any shared database, so editing it in place is safe.
+- Re-verified on a fresh `template0` database: validate, forward apply, drift limited to the two GENERATED columns, 27/27 probes, all five downs, empty diff against `main`'s schema, re-apply. `@remonta/app` quality passes (62/62 tests).
+
+---

@@ -20,7 +20,7 @@
 | §3.4 transaction | + `worker_locations` HOME (50 km), `worker_onboarding` (SIGNED_UP), first transition | Data model §4 |
 | — | + reconciler (5 min) and two backfill scripts | Data model §3.4, §2.2 |
 
-**One correction to the data model, made in this plan:** a suburb can span more than one postcode, and the worker picks "Parramatta 2150", not "Parramatta". So `au_localities` has **one row per (suburb, postcode) pair**. The unique key is `(gnaf_locality_pid, postcode)`, not `gnaf_locality_pid` alone. Refreshes match on that pair. `S1-data-model.md` §2.1 is updated to match when this plan is approved.
+**One correction to the data model, made in this plan:** a suburb can span more than one postcode, and the worker picks "Parramatta 2150", not "Parramatta". So `au_localities` has **one row per (suburb, postcode) pair**. The unique key is `(locality_pid, postcode)`, not `locality_pid` alone (`locality_pid` = G-NAF `LOCALITY.LOCALITY_PID`; renamed from `gnaf_locality_pid` 2026-09-25 because G-NAF has a different, often-empty column called `GNAF_LOCALITY_PID`). Refreshes match on that pair. `S1-data-model.md` §2.1 is updated to match when this plan is approved.
 
 ---
 

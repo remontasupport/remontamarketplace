@@ -10,7 +10,8 @@
 -- CreateTable
 CREATE TABLE "au_localities" (
     "id" SERIAL NOT NULL,
-    "gnafLocalityPid" TEXT NOT NULL,
+    -- G-NAF LOCALITY.LOCALITY_PID, not its GNAF_LOCALITY_PID column (often empty)
+    "localityPid" TEXT NOT NULL,
     "suburb" TEXT NOT NULL,
     "searchName" TEXT NOT NULL,
     "state" TEXT NOT NULL,
@@ -38,7 +39,7 @@ CREATE TABLE "au_localities" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "au_localities_gnafLocalityPid_postcode_key" ON "au_localities"("gnafLocalityPid", "postcode");
+CREATE UNIQUE INDEX "au_localities_localityPid_postcode_key" ON "au_localities"("localityPid", "postcode");
 
 -- CreateIndex
 CREATE INDEX "au_localities_searchName_idx" ON "au_localities"("searchName");
