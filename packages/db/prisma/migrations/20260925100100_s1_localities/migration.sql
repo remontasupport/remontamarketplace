@@ -50,5 +50,22 @@ CREATE INDEX "au_localities_postcode_idx" ON "au_localities"("postcode");
 -- CreateIndex
 CREATE INDEX "au_localities_point_idx" ON "au_localities" USING GIST ("point");
 
+-- CreateTable
+CREATE TABLE "au_locality_refreshes" (
+    "id" SERIAL NOT NULL,
+    "sourceVersion" TEXT NOT NULL,
+    "planHash" TEXT NOT NULL,
+    "inserted" INTEGER NOT NULL,
+    "updated" INTEGER NOT NULL,
+    "restored" INTEGER NOT NULL,
+    "retired" INTEGER NOT NULL,
+    "unchanged" INTEGER NOT NULL,
+    "details" JSONB NOT NULL,
+    "appliedBy" TEXT NOT NULL,
+    "appliedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "au_locality_refreshes_pkey" PRIMARY KEY ("id")
+);
+
 -- AddForeignKey
 ALTER TABLE "au_localities" ADD CONSTRAINT "au_localities_supersededById_fkey" FOREIGN KEY ("supersededById") REFERENCES "au_localities"("id") ON DELETE SET NULL ON UPDATE CASCADE;

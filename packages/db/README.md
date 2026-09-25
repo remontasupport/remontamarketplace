@@ -91,3 +91,37 @@ pnpm --filter @remonta/app run db:migrate:deploy  # apply migrations
 The generator's `output` is relative to the **schema file**, not the working directory, so the
 client still lands in `apps/app/src/generated/auth-client` regardless of where generation is
 invoked from.
+
+## The suburb list (`au_localities`)
+
+Every Australian suburb–postcode pair, from Geoscape G-NAF. Two steps, so that every
+update is a reviewable PR:
+
+**1. Build (offline).** Download the latest G-NAF release (GDA2020, PSV -- *not* G-NAF
+Core) from data.gov.au, unzip it, then:
+
+    pnpm --filter @remonta/db localities:build --release=YYYYMM --src=<unzipped folder>
+
+It streams `LOCALITY`, `LOCALITY_POINT` and `ADDRESS_DETAIL` (~17 M addresses, ~35 s)
+and rewrites `data/au_localities.csv`, `au_localities.meta.json` and `ATTRIBUTION.md`.
+The selection rule is at the top of `scripts/localities/select.ts`; the meta file
+records what it dropped and why, and lists every row kept on `PRIMARY_POSTCODE` alone --
+**review those in the PR**. Rebuilding the same release is byte-identical. Never edit
+the CSV by hand: the refresh checks it against the meta file's checksum.
+
+**2. Load.** With `DIRECT_DATABASE_URL` set:
+
+    pnpm --filter @remonta/db localities:refresh                    # dry run: the plan and its hash
+    pnpm --filter @remonta/db localities:refresh --apply --expect=<hash>
+
+The dry run lists what is added, changed, restored and retired, and how many workers
+are placed at each retired suburb. `--apply` recomputes the plan under a table lock and
+refuses unless it is still the reviewed one. Rows are never deleted -- a dropped suburb
+is retired (`retiredAt`, and `supersededById` when a successor is unambiguous), so no
+worker location is ever orphaned. Each applied run is recorded in
+`au_locality_refreshes`. Re-running the same CSV plans nothing.
+
+**Tests.** `pnpm --filter @remonta/db test` runs the unit and property tests on a
+fixture release. With `TEST_DATABASE_URL` pointing at a migrated **local** PostGIS
+database (see `prisma/migrations/README.md`), it also runs the refresh against it --
+it truncates the locality tables, so it refuses any non-localhost URL.

@@ -752,6 +752,26 @@ model AuLocality {
   @@map("au_localities")
 }
 
+/// One row per applied localities:refresh run -- the audit trail for au_localities.
+/// A dry run writes nothing; an --apply with nothing to change writes nothing.
+model AuLocalityRefresh {
+  id            Int      @id @default(autoincrement())
+  sourceVersion String
+  /// planHash() of what was applied; matches the --expect value that was reviewed.
+  planHash      String
+  inserted      Int
+  updated       Int
+  restored      Int
+  retired       Int
+  unchanged     Int
+  /// Keys of every changed row, and the workers placed at each retired one.
+  details       Json
+  appliedBy     String
+  appliedAt     DateTime @default(now())
+
+  @@map("au_locality_refreshes")
+}
+
 /// Where a worker is. Exactly one HOME row per worker (partial unique index,
 /// hand-written), carrying the travel radius. SERVICE_AREA is reserved: option A
 /// (radius only) was chosen on 2026-09-25, so nothing writes it yet.

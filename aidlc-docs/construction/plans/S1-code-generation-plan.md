@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Step 1 done and verified on local PostGIS.
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–2 done and verified on local PostGIS.
 
 ---
 
@@ -83,11 +83,19 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
 - **Verified 2026-09-25:** `prisma validate` passes; the migrations contain every statement `migrate diff` generates (the only differences are the hand-written GENERATED `point` columns); `@remonta/app` quality (ts 149 known, eslint 518 known, 62/62 tests) and `@remonta/schemas` quality pass. **Verified on local PostGIS 2026-09-25** (`postgis/postgis:16-3.4`, database from `template0`): full history applies forward; 27 constraint probes behave as designed, each rejection naming its intended constraint; the `s1_registration` down refuses while an `ACCOUNT_REGISTERED` row exists; all five `down.sql` run newest-first and leave a schema identical to `main` (empty `migrate diff`); re-apply after reversal succeeds. Only drift: the two GENERATED `point` columns read as defaults (documented in the migrations README). **Still to do on the Neon branch before step 12:** same cycle, and record whether PostGIS was already installed (the `s1_postgis` down must be skipped if so).
 
 ### Step 2 — `packages/db`: G-NAF build + load scripts
-- [ ] `scripts/localities/build.ts` (streaming reader, the filter rule, CSV writer, attribution)
-- [ ] `scripts/localities/refresh.ts` (staging, diff report, `--apply`, retire-not-delete, audit)
-- [ ] Unit tests with a fixture G-NAF extract (10 localities, including one with two postcodes and one dropped between releases)
-- [ ] **You download** G-NAF from data.gov.au (large); I run the build and commit `au_localities.csv`
+- [x] `scripts/localities/build.ts` (streaming reader, the filter rule, CSV writer, attribution)
+- [x] `scripts/localities/refresh.ts` (diff report, `--apply --expect=<hash>`, retire-not-delete, audit)
+- [x] Unit tests with a fixture G-NAF extract (11 localities incl. Melbourne with two postcodes and one dropped between releases A and B)
+- [x] G-NAF Aug 2026 downloaded by the user; `au_localities.csv` built (15,467 rows) and committed
 - **Verify:** re-running `refresh` on the same CSV reports 0 changes; PBT: no refresh ever orphans a `worker_locations` row
+- **Verified 2026-09-25:** 50 unit/PBT tests + 7 integration tests on local PostGIS (57); each plan property shown to fail on a deliberately broken rule (3 mutations); real release: rebuild byte-identical, dry run → apply (hash `074d18238f0f0465`) → re-run plans 0 changes; migration cycle re-run (exact reversal); `@remonta/app`/`web`/`schemas` quality and `turbo run build` pass.
+- **Deviations:**
+  - **Plan computed in memory, not in a staging table.** Reading, planning and applying happen in one transaction under `SHARE ROW EXCLUSIVE`; a dry run is a READ ONLY transaction. Same guarantee (production untouched until `--apply`), and the diff is a pure function that can be property-tested.
+  - **`--apply` needs `--expect=<planHash>`** from the reviewed dry run, so a database that changed in between is refused.
+  - **New table `au_locality_refreshes`** (added to the unreleased `s1_localities` migration): the audit trail §2.1a asks for. `audit_logs` has no fitting action and adding one needs an enum migration.
+  - **Filter rule refined from the real data:** postcodes come from current *principal* addresses only; address-less localities are kept only if gazetted with a plausible `PRIMARY_POSTCODE` (placeholders 0000/9998/9999 rejected). Only Melbourne (3000/3004) has two postcodes, so the table has 15,467 rows, not the 16–18 k estimated.
+  - **One centroid per locality** (`LOCALITY_POINT`), shared by its postcode rows. Only Melbourne is affected.
+  - **Key column renamed** `gnafLocalityPid` → `localityPid` (user decision; commit 8193815).
 
 ### Step 3 — `packages/api-contract` (new)
 - [ ] Package, strict tsconfig, ESLint boundary (no Nest, Prisma, React or DOM imports, P-5 style); a failing fixture proves the rule rejects

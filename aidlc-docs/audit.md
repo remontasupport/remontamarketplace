@@ -566,3 +566,46 @@ Gave the user the fix steps.
 - Re-verified on a fresh `template0` database: validate, forward apply, drift limited to the two GENERATED columns, 27/27 probes, all five downs, empty diff against `main`'s schema, re-apply. `@remonta/app` quality passes (62/62 tests).
 
 ---
+
+## 2026-09-25 — Step 2 started
+
+**User input (verbatim):**
+> yes, start step 2
+
+**AI action:** Starting S1 step 2: the G-NAF build and load scripts in `packages/db`.
+
+---
+
+## 2026-09-25 — S1 step 2: G-NAF build and load scripts
+
+**AI action:**
+- `packages/db` gains TypeScript tooling (tsx, vitest, fast-check, pg — all already in the lockfile via `apps/app`), `typecheck`/`test`/`quality` scripts, and `localities:build` / `localities:refresh`.
+- `scripts/localities/`:
+  - `names` (display casing; search is casing-independent);
+  - `csv` (canonical order, checksummed);
+  - `select` (the filter rule, pure);
+  - `gnaf` (streaming reader);
+  - `plan` (pure refresh plan);
+  - `refresh-db` (one transaction under lock; `--apply` needs `--expect=<planHash>`);
+  - CLIs;
+  - a fixture release A/B written with the real G-NAF headers.
+- Real data (Aug 2026): 17,581 localities, 16,970,406 addresses read in 34 s, giving **15,467 rows**.
+  - Only Melbourne has two postcodes (3000/3004).
+  - 6 rows are kept on `PRIMARY_POSTCODE` (listed in the meta file for review).
+  - First build found the placeholder "Unnamed Locality QLD 9998": 9998 added to the rejected placeholders (with 0000/9999) and rebuilt.
+- **Deviations** (recorded in the plan):
+  - the plan is computed in memory under a table lock instead of in a staging table;
+  - `--expect` hash gate;
+  - new `au_locality_refreshes` audit table in the unreleased `s1_localities` migration;
+  - filter rule refined from the data;
+  - one centroid per locality.
+- **Verified:**
+  - 57 tests: 50 unit/PBT, plus 7 integration on local PostGIS;
+  - three deliberate bugs in the plan logic are each caught by the properties;
+  - rebuild is byte-identical;
+  - refresh dry run → apply → re-run gives 0 changes;
+  - the migration cycle still reverses exactly;
+  - `@remonta/app` (149/518, 62 tests), `@remonta/web` (76), `@remonta/schemas` quality and `turbo run build` pass.
+- Lockfile: adds the `@remonta/db` devDependencies; pnpm also re-keyed `next-auth`'s `next` peer to include `@babel/core` (same versions; the build passes).
+
+---
