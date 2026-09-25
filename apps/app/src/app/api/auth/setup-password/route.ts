@@ -1,18 +1,29 @@
 /**
  * Setup Password API Endpoint
  *
- * Allows workers with default password to set their own password
+ * Invited workers still on the default password ask for a link to set
+ * their own. The password itself is set through /reset-password with a
+ * single-use token sent to the account's email, so knowing an email
+ * address is not enough to take over the account.
  * POST /api/auth/setup-password
  */
 
 import { NextResponse } from 'next/server';
 import { authPrisma } from '@/lib/auth-prisma';
-import { hashPassword, verifyPassword } from '@/lib/password';
+import { generateVerificationToken, verifyPassword } from '@/lib/password';
+import { sendPasswordResetEmail } from '@/lib/email';
 import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
+
+// Same response whatever the outcome, so the endpoint does not reveal
+// which emails have accounts or which accounts still need a password.
+const GENERIC_RESPONSE = {
+  success: true,
+  message: 'If this email belongs to an account that still needs a password, we have sent a link to set it. The link expires in 1 hour.',
+};
 
 export async function POST(request: Request) {
   // ============================================
-  // RATE LIMITING (Prevent brute force)
+  // RATE LIMITING (Prevent abuse)
   // ============================================
   const rateLimitResult = await applyRateLimit(request, strictApiRateLimit);
   if (!rateLimitResult.success) {
@@ -20,45 +31,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { email, password } = await request.json();
+    const { email } = await request.json();
 
-    // ============================================
-    // INPUT VALIDATION
-    // ============================================
-
-    if (!email || !password) {
+    if (!email || typeof email !== 'string') {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Email is required' },
         { status: 400 }
       );
     }
 
-    // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
-
-    // ============================================
-    // VALIDATE PASSWORD STRENGTH
-    // ============================================
-
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
-        { status: 400 }
-      );
-    }
-
-    // Validate password complexity
-    const hasUppercase = /[A-Z]/.test(password);
-    const hasLowercase = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[@!#$%^&*(),.?":{}|<>]/.test(password);
-
-    if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
-      return NextResponse.json(
-        { error: 'Password must include uppercase, lowercase, numbers, and special characters' },
-        { status: 400 }
-      );
-    }
 
     // ============================================
     // FIND USER & VERIFY CONDITIONS
@@ -68,86 +50,61 @@ export async function POST(request: Request) {
       where: { email: normalizedEmail },
       select: {
         id: true,
-        email: true,
         passwordHash: true,
         role: true,
         status: true,
-        accountLockedUntil: true,
+        workerProfile: {
+          select: { firstName: true },
+        },
       },
     });
 
-    // Generic error message to prevent email enumeration
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email address' },
-        { status: 400 }
-      );
+    if (!user || user.role !== 'WORKER' || user.status !== 'ACTIVE') {
+      return NextResponse.json(GENERIC_RESPONSE);
     }
-
-    // Verify user is a WORKER
-    if (user.role !== 'WORKER') {
-      return NextResponse.json(
-        { error: 'Invalid email address' },
-        { status: 400 }
-      );
-    }
-
-    // Verify account is ACTIVE
-    if (user.status !== 'ACTIVE') {
-      return NextResponse.json(
-        { error: 'Account is not active. Please contact support.' },
-        { status: 400 }
-      );
-    }
-
-    // Check if account is locked
-    if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
-      return NextResponse.json(
-        { error: 'Account is temporarily locked. Please try again later.' },
-        { status: 400 }
-      );
-    }
-
-    // ============================================
-    // CRITICAL SECURITY CHECK: Verify default password
-    // ============================================
 
     const isDefaultPassword = await verifyPassword('WelcomeRemonta', user.passwordHash);
 
     if (!isDefaultPassword) {
-      return NextResponse.json(
-        { error: 'Password has already been set. Please use the login page or reset your password.' },
-        { status: 400 }
-      );
+      return NextResponse.json(GENERIC_RESPONSE);
     }
 
     // ============================================
-    // HASH NEW PASSWORD
+    // GENERATE SINGLE-USE TOKEN
     // ============================================
 
-    const newPasswordHash = await hashPassword(password);
-
-    // ============================================
-    // UPDATE PASSWORD IN DATABASE
-    // ============================================
+    const { token: setupToken, expires: setupExpires } = generateVerificationToken(1); // 1 hour expiry
 
     await authPrisma.user.update({
       where: { id: user.id },
       data: {
-        passwordHash: newPasswordHash,
-        failedLoginAttempts: 0,
-        accountLockedUntil: null,
+        resetPasswordToken: setupToken,
+        resetPasswordExpires: setupExpires,
       },
     });
 
     // ============================================
-    // AUDIT LOG (fire-and-forget)
+    // SEND LINK
+    // ============================================
+
+    try {
+      await sendPasswordResetEmail(
+        normalizedEmail,
+        setupToken,
+        user.workerProfile?.firstName || 'User'
+      );
+    } catch (emailError) {
+      // Don't reveal delivery failures; the worker can request again
+    }
+
+    // ============================================
+    // AUDIT LOG
     // ============================================
 
     await authPrisma.auditLog.create({
       data: {
         userId: user.id,
-        action: 'PASSWORD_RESET_SUCCESS',
+        action: 'PASSWORD_RESET_REQUEST',
         metadata: {
           setupMethod: 'self_service',
           setupType: 'initial_password_setup',
@@ -157,19 +114,12 @@ export async function POST(request: Request) {
       // Don't fail if audit log fails
     });
 
-    // ============================================
-    // SUCCESS RESPONSE
-    // ============================================
-
-    return NextResponse.json({
-      success: true,
-      message: 'Password set successfully. You can now log in with your new password.',
-    });
+    return NextResponse.json(GENERIC_RESPONSE);
 
   } catch (error) {
 
     return NextResponse.json(
-      { error: 'Failed to set password. Please try again.' },
+      { error: 'Failed to process request. Please try again.' },
       { status: 500 }
     );
   }
