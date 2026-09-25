@@ -4,7 +4,7 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Steps 1–4 committed and verified (step 4 before step 3, which imports it). D1: ts-rest cannot infer from Zod 4, so packages/api-contract is an in-house defineContract + typed client + OpenAPI generator. G-NAF extract at C:\data\gnaf. Next: step 5 (apps/api platform core: NestJS 11 + Fastify, config, pipeline, outbox, contract binder); needs RECAPTCHA_SECRET_KEY etc. in apps/api/.env from the user.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Plan: aidlc-docs/construction/plans/S1-code-generation-plan.md (approved). Steps 1–5 committed and verified. apps/api platform core is in place (pipeline, binder, outbox, rate limit, CAPTCHA, SafeHttpClient); it refuses to boot until step 7 binds the registration handlers (expected). apps/api/.env holds the user's secrets (not read) plus CORS_ORIGINS and RECAPTCHA_ALLOWED_HOSTNAMES. Local DB: docker container remonta-s1-pg, database s1test (localities loaded). Next: step 6 (onboarding stage derivation + HOME placement, pure domain + PBT).
 
 ## Workspace State
 - **Existing Code**: Yes

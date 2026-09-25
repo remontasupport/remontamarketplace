@@ -111,3 +111,11 @@ prisma/*.db-journal
 # real recruitment titles, descriptions and locations. It exists so a delete
 # during testing is reversible, and it must never reach the repository.
 .real-jobs-backup.json
+
+# apps/api (S1). Unlike apps/app, its Prisma client is generated at build time and
+# never committed (S1-design 2.6): the derived schema copy, the client and the
+# bundle are all build outputs. The .env.example lists the variable names only.
+apps/api/prisma/
+apps/api/generated/
+apps/api/dist/
+!apps/api/.env.example

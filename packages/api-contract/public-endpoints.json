@@ -1,5 +1,9 @@
 [
   {
+    "route": "GET /v1/health",
+    "reason": "Liveness probe for the load balancer and monitoring. Returns only {status: ok}; no data."
+  },
+  {
     "route": "GET /v1/localities",
     "reason": "Suburb autocomplete on the sign-up form, before any account exists. Returns public G-NAF suburb names only."
   },

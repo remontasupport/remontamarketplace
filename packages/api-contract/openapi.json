@@ -5,6 +5,67 @@
     "version": "1"
   },
   "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "platform.health",
+        "summary": "Liveness: the process is up and its database answers.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ok"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": "public",
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "ip",
+              "limit": 60,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
     "/v1/localities": {
       "get": {
         "operationId": "registration.searchLocalities",

@@ -4,7 +4,7 @@
 **Branch:** `s1/worker-registration`, from `main` @ `25eb04e`
 **Designs:** `construction/S1-registration/S1-design.md` (approved; Q1–Q3 = A) · `construction/S1-registration/S1-data-model.md` (decisions complete)
 **Stories:** US-REG-01..06, US-NOT-01; enablers US-NOT-03, US-AUD-01, US-MIG-01, US-MIG-07
-**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–4 done and verified (step 4 before step 3).
+**Status:** **PART 2 — GENERATION.** Plan approved 2026-09-25. Steps 1–5 done and verified (step 4 before step 3).
 
 ---
 
@@ -115,13 +115,25 @@ Each step is **one commit**, verified before the next starts. `[ ]` → `[x]` as
 - **Shape:** `workerRegistrationFormSchema` (what the page validates) and `workerRegistrationSchema` = form + `captchaToken` (the request); parity between them is a property test. `packages/schemas` gains `typecheck:strict` scoped to files listed in `tsconfig.strict.json`, so new code is strictly checked without re-checking the 15 tracked errors.
 
 ### Step 5 — `apps/api` platform core
-- [ ] Scaffold: NestJS 11 + Fastify, Vitest, strict tsc, ESLint (shared config), `.env.example`
-- [ ] `config` (Zod env, fail on missing) · `observability` (Pino, request ID, redaction list) · `errors`
-- [ ] `pipeline` steps 1–11 · `policy` · `rate-limit` (Postgres) · `captcha` (reCAPTCHA v3, fails closed) · `http-clients/SafeHttpClient`
-- [ ] `persistence` (Prisma client, unit-of-work) · `outbox` (writer, dispatcher with `SKIP LOCKED`, back-off, dead-letter)
-- [ ] `contract` binder + startup checks (every entry has a handler, access, rate limit; public allow-list)
-- [ ] Route-security enumeration test (401/403/413/429/400 for every entry)
+- [x] Scaffold: NestJS 11 + Fastify, Vitest (SWC), strict tsc, ESLint, `.env.example`; tsup bundle
+- [x] `config` (Zod env, fail on missing, values never echoed) · `observability` (Pino, request ID, redaction list) · `errors`
+- [x] `pipeline` steps 1–11 · `policy` (roles; DenyAll authenticator until slice 2) · `rate-limit` (Postgres) · `captcha` (reCAPTCHA v3, fails closed) · `http-clients/SafeHttpClient`
+- [x] `persistence` (derived Prisma client as `#db`, unit-of-work) · `outbox` (writer, dispatcher with lease + `SKIP LOCKED`, back-off, dead-letter)
+- [x] `contract` binder + startup checks (every entry has a handler, no stray handlers, allow-list, no route outside a contract)
+- [x] Route-security enumeration test (401/403/413/415/429/503/400 for every entry)
 - **Verify:** `@remonta/api` quality; the service refuses to boot with a missing secret and with an unbound contract entry (both proven by tests)
+- **Verified 2026-09-25:** `@remonta/api` quality (lint, strict tsc, 104 tests incl. 14 on local PostGIS); 8 deliberate bugs each caught (rate limiter failing open, CAPTCHA outage as a pass, response check removed, audit enforcement removed, unbound entries allowed, lease ignored, …); the built `dist/main.js` refuses to start on missing config and, with complete config, on the three unbound registration entries (expected until step 7); all other gates and `turbo run build` (3 apps) pass.
+- **Deviations / decisions:**
+  - **NestJS 11.2.6**, not the newer 12.x: the approved version. **Fastify pinned to 5.11.3**, the version `@nestjs/platform-fastify` pins, so there is one copy.
+  - **No Nest controllers.** Nest is the module system; every route is created by the contract binder on the Fastify instance. A lint rule forbids Nest route decorators (tested). Nest's own not-found/error handlers are disabled so every response has the contract's error shape.
+  - **Health endpoint** `GET /v1/health` added as a `platform` contract (on the public allow-list), because no route may exist outside a contract.
+  - **Output shaping fails closed:** response schemas are strict, so a handler returning an undeclared field gets a 500 (logged) instead of a silently stripped response.
+  - **Audit enforcement:** an entry with `audit` must record it in its transaction or explicitly skip it (e.g. existing-email registration).
+  - **Back-off** 2, 4, 8, 16, 32 min: 6 attempts over about 62 min.
+  - **`SKIP LOCKED` is throughput, not correctness:** a mutation test showed double delivery is prevented by the PROCESSING status + lease re-check; an adversarial in-flight test now guards that.
+  - **Prisma client** generated from a derived schema copy into `apps/api/generated/db` (gitignored), imported via the `#db` package import, external to the bundle.
+  - **`.env`** is loaded with `node --env-file` (Node 20.11 has no `process.loadEnvFile`).
+  - Vercel installs the whole workspace, so its installs now include `apps/api` dependencies (slower install; builds unaffected).
 
 ### Step 6 — `apps/api` domain: onboarding stage and location rules
 - [ ] `deriveStage(facts)` (pure) + transition edges

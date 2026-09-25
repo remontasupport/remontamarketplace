@@ -668,3 +668,57 @@ Gave the user the fix steps.
   - follow-up: the stale `UserRole` type in `packages/schemas`.
 
 ---
+
+## 2026-09-25 — apps/api does not exist yet
+
+**User input (verbatim):**
+> i DONT SEE THE PATH apps/api/
+
+**AI action:** Confirmed `apps/api/` did not exist (step 5 scaffolds it). Created `apps/api/` holding only a gitignored `.env` skeleton:
+- key names with no secret values;
+- the database URLs set to the local PostGIS test database (`s1test`), not Neon;
+- comments saying where each value comes from.
+
+The n8n URLs are hard-coded in `apps/app` today (`register-async`, `register` routes), not in `.env`. Verified with `git check-ignore` that the file is ignored.
+
+---
+
+## 2026-09-25 — Step 5 started
+
+**User input (verbatim):**
+> yes, start step 5
+
+**AI action:** Starting S1 step 5: the `apps/api` platform core.
+
+---
+
+## 2026-09-25 — S1 step 5: apps/api platform core
+
+**AI action:**
+- New `apps/api` (NestJS 11.2.6, Fastify 5.11.3, tsup bundle, Vitest with SWC).
+- Components:
+  - config (Zod; refuses to start, never echoes values);
+  - logging (Pino, request id, redaction);
+  - error mapping (one shape, generic messages);
+  - the 11-step pipeline;
+  - contract binder with startup checks;
+  - Postgres rate limiter (fails closed);
+  - reCAPTCHA v3 verifier (fails closed; action, hostname and score checked);
+  - SafeHttpClient (allow-list, https, no redirects, timeout, size bound, schema-checked);
+  - derived Prisma client (`#db`) and unit of work;
+  - outbox writer and dispatcher (lease, SKIP LOCKED, back-off 2–32 min, DEAD after 6);
+  - audit recorder with enforcement;
+  - DenyAll authenticator until slice 2.
+- `packages/api-contract` gains `platform.contract.ts` (`GET /v1/health`) and an allow-list entry.
+- **User's `.env`:** the secrets already parse, meaning the user filled them; their values were not read. Appended the non-secret `CORS_ORIGINS=http://localhost:3000` and `RECAPTCHA_ALLOWED_HOSTNAMES=localhost`.
+- **Verified:**
+  - 104 tests: route-security enumeration over every entry, plus pipeline, config, outbound, 14 DB integration tests and lint rules;
+  - 8 deliberate bugs each caught;
+  - `dist/main.js` refuses to start on missing config, and on the unbound registration entries (expected until step 7);
+  - all gates and `turbo run build` (3 apps) pass.
+- **Findings:**
+  - a stray multipart text field returned 413 instead of 400 (fixed);
+  - `SKIP LOCKED` is not what prevents double delivery (the lease re-check is), so the original race test was not adversarial; an in-flight test was added;
+  - `pino` was only reachable through hoisting, so it is now declared.
+
+---
