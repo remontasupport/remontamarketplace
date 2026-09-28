@@ -341,10 +341,13 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
 - **Verify:** CI green on the branch — **pending the push** (the branch has never been pushed; user decision). Rehearsed locally instead, 2026-09-28: the exact CI sequence on a fresh database (`ci_sim` from template0): migrate (all migrations) → db quality 57 → suburb list 15,467 rows via the plan hash → api lint, strict tsc and all 323 tests pass. Workflow YAML parsed and its step order checked.
 
 ### Step 12 — Build & Test (its own AI-DLC stage)
-- [ ] All gates (CLAUDE.md §2) + `@remonta/api` quality
-- [ ] Local end to end with the switch on `api`: localities search → photo → register → rows present in all tables → outbox events delivered to test endpoints
-- [ ] The same run with the switch on `legacy`: nothing regressed
-- [ ] Vercel preview: sign in, load a dashboard, submit the registration form (legacy path), suburb search returns the complete list
+- [x] All gates (CLAUDE.md §2) + `@remonta/api` quality — **2026-09-28, all against the Docker database, nothing production-facing:** app 144/496 + 85 tests; web; schemas 46; api-contract 33; form-engine 49; api 323; `turbo run build`: app 139 routes, web 48 (database variables overridden to the local database for the builds).
+- [x] Local end to end with the switch on `api` — done by the user in the browser (send code, verify, availability, services, photo, complete; rows in every table). Outbox delivery: the confirmation email needs a verified Resend sender (test sender delivers only to the account owner) — not a code matter.
+- [x] The same run with the switch on `legacy`: nothing regressed — the exact pre-S1 request to `/api/auth/register-async` on a local dev server in legacy mode → 201, user + profile with the legacy location columns + service row; then one api start: the reconciler gave the worker its marker (SIGNED_UP, dated from the sign-up) and its HOME (Parramatta, source RECONCILER).
+  - **Finding:** the legacy route posted to a HARD-CODED production n8n webhook (the step 9 "n8n URL to config" item had not landed). Now `N8N_REGISTRATION_WEBHOOK_URL` with today's URL as the default — production unchanged; the local run pointed it at a closed port. Without this, the local legacy run would have notified the live CRM workflow.
+- [x] `packages/db/bench` rerun at 100 k workers: sign-in by lower(email) 0.010 ms; profile 0.009; documents 0.010; admin backlog 0.022; stuck > 7 days 2.7 ms; reconciler change scan 2.7 ms — every request-serving query under 5 ms. Workers-per-stage 15 ms and workers-without-marker 35 ms are the full counts the bench already exempts (cache / 5-minute job). The legacy ILIKE sign-in is still 52 ms until the hotfix merges.
+- [x] Regenerated Prisma clients: **not committed** — they differ by this machine's absolute paths (plus the S1 models in auth-client), and `postinstall` regenerates them on every install (CI, Vercel).
+- [ ] Vercel preview: sign in, load a dashboard, submit the registration form (legacy path), suburb search returns the complete list — **needs the push (user)**
 - [ ] **Gate before any production switch to `api`:** the deferred CRM notification must exist, or registrations made through `apps/api` never reach the CRM
 - [ ] **Production (separate approval):** record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first (decides whether the `s1_postgis` down applies) → apply the migrations → load localities → backfill dry runs → you approve → `--apply` → merge (a merge commit, not squash) → verify production
 

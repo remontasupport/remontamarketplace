@@ -1468,3 +1468,20 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.) -- step 11 done:** `.github/workflows/ci-api.yml` (API Quality: PostGIS service container, migrate from empty, db quality, suburb list via the plan hash, api-contract, form-engine, api quality with the DB tests). CLAUDE.md: api gates, the CI check name, an "apps/api" section and the localities refresh procedure. Rehearsed the CI sequence locally on a fresh database `ci_sim`: migrate → db 57 tests → 15,467 localities → api lint/tsc/323 tests pass; database dropped afterwards. CI green on the branch is pending the push.
 
 ---
+
+**User input (verbatim):**
+> Start now, make sure the production is not compromise
+
+**AI action:** Step 12 started, local parts only. Rules for this run: no push, no merge, no production database or webhook reachable from any command; every gate and end-to-end run points at the Docker database; external side effects (n8n, CRM) blanked in the legacy run.
+
+---
+**AI action (cont.) -- step 12, local part, progress:**
+- Finding: `apps/app/src/app/api/auth/register-async/route.ts` posts to a HARD-CODED production n8n webhook, so a local legacy sign-up would have reached the live CRM workflow. Made it configuration (`N8N_REGISTRATION_WEBHOOK_URL`, the same name apps/api uses) with today's URL as the default: production behaviour unchanged; the local run points it at a closed local port.
+- Gates: app quality 144/496, 85 tests; web quality; schemas 46; api-contract 33; form-engine 49; api quality 323 (all against the Docker database).
+- Regenerated Prisma clients: apps/app `client` and apps/web differ only by absolute paths of this machine; `auth-client` additionally by the S1 models. Decision: not committed -- `postinstall` regenerates them on every install (CI, Vercel), and the copies embed machine paths.
+- Stopped the api, the dev server and Studio for the builds (restart on request).
+
+---
+**AI action (cont.) -- step 12 local items done:** both builds pass (app 139 routes, web 48; database variables overridden to local for the builds); bench at 100 k: every request-serving query under 5 ms; legacy end to end: the exact pre-S1 request → 201 with the legacy columns, then the reconciler gave the worker its marker and HOME on the api's first run. The legacy route's hard-coded n8n webhook is now configuration with today's URL as the default (production unchanged). Nothing pushed; no production endpoint contacted; all processes stopped afterwards. Remaining step 12 items need the user: the push (CI + previews) and the Neon branch rehearsal.
+
+---

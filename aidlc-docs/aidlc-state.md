@@ -4,7 +4,7 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-11 done (plus 5b, 9b, and step 13 = email verification before the password, a scope change of 2026-09-28). Next is step 12. See "Resume here" below.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-11 done (plus 5b, 9b, and step 13 = email verification before the password, a scope change of 2026-09-28). Step 12: every local item done 2026-09-28; what remains needs the user (push → CI + Vercel preview; Neon branch rehearsal; production gate). See "Resume here" below.
 
 ## Resume here (updated 2026-09-28)
 
@@ -34,12 +34,8 @@
 
 ### 3. Remaining S1 steps
 - **Step 11 (CI + docs): DONE 2026-09-28** (`ci-api.yml`, CLAUDE.md). CI itself runs only once the branch is pushed; rehearsed locally on a fresh database (all 323 api tests).
-- **Step 12 (Build and Test):**
-  - all gates;
-  - local end-to-end in both switch modes;
-  - the Vercel preview checks;
-  - rerun `packages/db/bench` (every key query under 5 ms at 100 k);
-  - decide whether to commit a refreshed `apps/app/src/generated/auth-client` (it differs by the S1 models; Vercel regenerates at build).
+- **Step 12 (Build and Test): local items DONE 2026-09-28** (all gates, both builds, both switch modes end to end, the bench, the generated-client decision = do not commit). See the plan for the numbers.
+  - **Remaining, each needs the user:** push the branch (turns on `API Quality` and the Vercel previews) → preview checks (sign in, a dashboard, the legacy sign-up, the suburb list); a Neon branch → migrations, `localities:refresh`, both backfill dry runs, review, `--apply`.
 - **Before any production switch to `api`:**
   - the deferred CRM notification must exist (the user skipped it for now);
   - production migrations (record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first) → `localities:refresh` → backfill dry runs → user approval → `--apply`.
