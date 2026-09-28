@@ -8,7 +8,7 @@ import type { Db } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
 import { candidatePool, localityCandidates } from '../onboarding/reconciler'
 import { placeHome, type Locality } from './domain/home'
-import { matchLegacyLocation, type MatchResult } from './domain/legacy-match'
+import { matchLegacyLocation, type MatchResult, type MatchVia } from './domain/legacy-match'
 
 export interface ReviewRow {
   workerProfileId: string
@@ -27,7 +27,7 @@ export interface LocationBackfillReport {
   alreadyPlaced: number
   /** Workers without a HOME row. */
   examined: number
-  matched: { location: number; columns: number; postcode: number }
+  matched: Record<MatchVia, number>
   written: number
   ambiguous: ReviewRow[]
   unmatched: ReviewRow[]
@@ -53,7 +53,7 @@ export async function backfillWorkerLocations(db: Db, opts: BackfillOptions): Pr
     now,
     alreadyPlaced: await db.workerLocation.count({ where: { kind: 'HOME' } }),
     examined: 0,
-    matched: { location: 0, columns: 0, postcode: 0 },
+    matched: { location: 0, columns: 0, postcode: 0, 'suburb-in-text': 0, 'suburb-and-postcode': 0 },
     written: 0,
     ambiguous: [],
     unmatched: [],
@@ -73,6 +73,7 @@ export async function backfillWorkerLocations(db: Db, opts: BackfillOptions): Pr
     if (page.length === 0) break
     after = page.at(-1)!.id
 
+    const pending: { workerProfileId: string; localityId: number }[] = []
     for (const p of page) {
       report.examined++
       const match = matchLegacyLocation(p, await candidatePool(p, candidatesFor))
@@ -86,27 +87,47 @@ export async function backfillWorkerLocations(db: Db, opts: BackfillOptions): Pr
         continue
       }
       report.matched[match.via]++
-      if (!opts.apply) continue
-      try {
-        const written = await unitOfWork(db, async (tx) => {
-          // Re-checked inside the transaction: the reconciler may have got there first.
-          if (await tx.workerLocation.findFirst({ where: { workerProfileId: p.id, kind: 'HOME' }, select: { id: true } })) return false
-          const locality = await tx.auLocality.findUniqueOrThrow({ where: { id: match.localityId } })
-          const placed = placeHome(locality as Locality, 'BACKFILL')
-          if (!placed.ok) throw new Error(`locality ${locality.id} retired since it was matched`)
-          await tx.workerLocation.create({ data: { id: crypto.randomUUID(), workerProfileId: p.id, ...placed.home, updatedAt: now } })
-          return true
-        })
-        if (written) report.written++
-        else report.alreadyPlaced++
-      } catch (err) {
-        report.failed.push({ workerProfileId: p.id, error: err instanceof Error ? err.message : String(err) })
-      }
+      if (opts.apply) pending.push({ workerProfileId: p.id, localityId: match.localityId })
     }
+    if (pending.length) await writeHomes(db, pending, now, report)
     opts.onProgress?.(report.examined)
     if (page.length < batch) break
   }
   return report
+}
+
+/**
+ * One transaction per page: workers placed by now are skipped (the reconciler may
+ * have got there first), the rest get their HOME in one createMany. If the page
+ * fails as a whole, each worker is retried alone so the one bad row is reported
+ * and the others still land.
+ */
+async function writeHomes(db: Db, items: readonly { workerProfileId: string; localityId: number }[], now: Date, report: LocationBackfillReport, perWorker = false): Promise<void> {
+  try {
+    const { written, skipped } = await unitOfWork(db, async (tx) => {
+      const ids = items.map((i) => i.workerProfileId)
+      const placedAlready = new Set((await tx.workerLocation.findMany({ where: { workerProfileId: { in: ids }, kind: 'HOME' }, select: { workerProfileId: true } })).map((r) => r.workerProfileId))
+      const fresh = items.filter((i) => !placedAlready.has(i.workerProfileId))
+      const localities = new Map((await tx.auLocality.findMany({ where: { id: { in: [...new Set(fresh.map((i) => i.localityId))] } } })).map((l) => [l.id, l as Locality]))
+      const rows = fresh.map((i) => {
+        const locality = localities.get(i.localityId)
+        if (!locality) throw new Error(`locality ${i.localityId} missing`)
+        const placed = placeHome(locality, 'BACKFILL')
+        if (!placed.ok) throw new Error(`locality ${i.localityId} retired since it was matched`)
+        return { id: crypto.randomUUID(), workerProfileId: i.workerProfileId, ...placed.home, updatedAt: now }
+      })
+      if (rows.length) await tx.workerLocation.createMany({ data: rows })
+      return { written: rows.length, skipped: items.length - fresh.length }
+    })
+    report.written += written
+    report.alreadyPlaced += skipped
+  } catch (err) {
+    if (!perWorker && items.length > 1) {
+      for (const i of items) await writeHomes(db, [i], now, report, true)
+      return
+    }
+    report.failed.push({ workerProfileId: items[0]!.workerProfileId, error: err instanceof Error ? err.message : String(err) })
+  }
 }
 
 export function formatLocationReport(r: LocationBackfillReport, limit = 25): string {
@@ -119,7 +140,8 @@ export function formatLocationReport(r: LocationBackfillReport, limit = 25): str
     `${r.apply ? 'APPLIED' : 'DRY RUN (nothing written)'} at ${r.now.toISOString()}`,
     `  already placed (HOME exists)  ${r.alreadyPlaced}`,
     `  without a HOME                ${r.examined}`,
-    `    matched    ${m.location + m.columns + m.postcode}  (by location string ${m.location}, by columns ${m.columns}, by single-suburb postcode ${m.postcode})${r.apply ? `  written: ${r.written}` : ''}`,
+    `    matched    ${Object.values(m).reduce((a, x) => a + x, 0)}${r.apply ? `  written: ${r.written}` : ''}`,
+    `      by the form's own string ${m.location} · by the columns ${m.columns} · suburb named inside a longer text ${m['suburb-in-text']} · suburb + postcode with a wrong state ${m['suburb-and-postcode']} · single-suburb postcode ${m.postcode}`,
     `    ambiguous  ${r.ambiguous.length}  -- review, never guessed`,
     ...list(r.ambiguous),
     `    unmatched  ${r.unmatched.length}  -- review, never guessed`,

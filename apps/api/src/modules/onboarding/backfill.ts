@@ -6,7 +6,7 @@ import type { Db } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
 import { initialMarker, type Approximation, type LegacyRequirement } from './domain/initial-marker'
 import { STAGES, type Stage } from './domain/stage'
-import { createInitialMarker, REQUIREMENT_SELECT } from './reconciler'
+import { createInitialMarkers, REQUIREMENT_SELECT, type LegacyWorker } from './reconciler'
 
 export interface OnboardingBackfillReport {
   apply: boolean
@@ -61,30 +61,45 @@ export async function backfillWorkerOnboarding(db: Db, opts: BackfillOptions): P
     if (page.length === 0) break
     after = page.at(-1)!.id
 
+    const pending: LegacyWorker[] = []
     for (const p of page) {
-      const w = { workerProfileId: p.id, isPublished: p.isPublished, createdAt: p.createdAt, updatedAt: p.updatedAt, lastLoginAt: p.user.lastLoginAt, requirements: p.verificationRequirements as LegacyRequirement[] }
+      const w: LegacyWorker = { workerProfileId: p.id, isPublished: p.isPublished, createdAt: p.createdAt, updatedAt: p.updatedAt, lastLoginAt: p.user.lastLoginAt, requirements: p.verificationRequirements as LegacyRequirement[] }
       const m = initialMarker(w, now)
       report.examined++
       report.byStage[m.stage]++
       for (const a of m.approximations) report.approximations[a] = (report.approximations[a] ?? 0) + 1
-      if (!opts.apply) continue
-      try {
-        const written = await unitOfWork(db, async (tx) => {
-          // Re-checked inside the transaction: the reconciler may have got there first.
-          if (await tx.workerOnboarding.findUnique({ where: { workerProfileId: p.id }, select: { workerProfileId: true } })) return false
-          await createInitialMarker(tx, w, now, 'BACKFILL', 'backfill')
-          return true
-        })
-        if (written) report.written++
-        else report.alreadyMarked++
-      } catch (err) {
-        report.failed.push({ workerProfileId: p.id, error: err instanceof Error ? err.message : String(err) })
-      }
+      if (opts.apply) pending.push(w)
     }
+    if (pending.length) await writeMarkers(db, pending, now, report)
     opts.onProgress?.(report.examined)
     if (page.length < batch) break
   }
   return report
+}
+
+/**
+ * One transaction per page: the markers that exist by now are skipped (the
+ * reconciler may have got there first), the rest are written with two createMany.
+ * If the page fails as a whole, each worker is retried alone so the one bad row is
+ * reported and the others still land.
+ */
+async function writeMarkers(db: Db, workers: readonly LegacyWorker[], now: Date, report: OnboardingBackfillReport, perWorker = false): Promise<void> {
+  try {
+    const { written, skipped } = await unitOfWork(db, async (tx) => {
+      const existing = new Set((await tx.workerOnboarding.findMany({ where: { workerProfileId: { in: workers.map((w) => w.workerProfileId) } }, select: { workerProfileId: true } })).map((r) => r.workerProfileId))
+      const fresh = workers.filter((w) => !existing.has(w.workerProfileId))
+      await createInitialMarkers(tx, fresh, now, 'BACKFILL', 'backfill')
+      return { written: fresh.length, skipped: workers.length - fresh.length }
+    })
+    report.written += written
+    report.alreadyMarked += skipped
+  } catch (err) {
+    if (!perWorker && workers.length > 1) {
+      for (const w of workers) await writeMarkers(db, [w], now, report, true)
+      return
+    }
+    report.failed.push({ workerProfileId: workers[0]!.workerProfileId, error: err instanceof Error ? err.message : String(err) })
+  }
 }
 
 export function formatOnboardingReport(r: OnboardingBackfillReport): string {

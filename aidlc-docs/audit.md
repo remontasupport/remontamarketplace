@@ -1555,3 +1555,122 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.) -- FINDING:** PR #11 (`s1/worker-registration`, head 5aa6cbe) is **merged** into main (main = 282ac0f) while `API Quality` was red; the test-only fix eee55d8 is on the branch but not in main. main deploys production for both products. Checking, read-only: the merge commit type, main's CI runs, and production HTTP endpoints (home, login, the sign-up page, suburb search, categories).
 
 ---
+
+**User input (verbatim):**
+> Is it safe now to deploy the backend?
+
+**AI action:** Answered: not yet -- listed the gates from the plan (production migrations rehearsed on a Neon branch, the CRM notification, hosting + config, a verified sender) and the safe order; distinguished deploying the api from switching the sign-up to it.
+
+---
+
+**User input (verbatim):**
+> how to do this? Merge the small PR with the test fix
+
+**AI action:** Gave the steps: open the compare link, check 3 commits, create the PR with the given description, wait for the checks (the api one takes a few minutes), then "Merge pull request". Offered to watch the checks.
+
+---
+
+**User input (verbatim):**
+> I created the PR, watch the checks
+
+**AI action:** Watching the checks on e4cacc1 (the follow-up PR) through the API; will report when all complete.
+
+---
+
+**User input (verbatim):**
+> Opps I already merged it
+
+**AI action:** Merged before the checks finished again. Checking the PR's checks (they keep running on the commit) and main's push CI; the change is test + docs only, so production behaviour is unchanged.
+
+---
+**AI action (cont.):** PR #12 merged at 09:38:39Z (merge 6452bb3). Its `API Quality` had already passed on Node 20 and 22; only the report-only supply-chain scan was still running. main's push CI re-running on 6452bb3. Local `main` fast-forwarded to 6452bb3; `s1/worker-registration` is entirely in main. Production behaviour unchanged (test + docs only).
+
+---
+
+**User input (verbatim):**
+> Do not go ahead unless we will finish this first api to deploy and use it
+
+**AI action:** Understood as: no other work until the api is deployed and in use; everything from here is on that path only. Replied with the finishing sequence and what is needed from the user (Neon branch; AWS account; Resend domain) versus what can start now (Infrastructure Design + Dockerfile, the CRM notification, the production config).
+
+---
+
+**User input (verbatim):**
+> I already have a branch in neon named rehearse-w1 , can we use this? & 'c:\Users\toton\Downloads\Screenshot 2026-09-28 174841.png'
+
+**AI action:** Screenshot shows Neon project Remonta, branch rehearse-w1, database workerprofiles, legacy tables only (no S1 tables). Answered: usable, on two conditions -- reset it from the parent so the copy is current, and put its DIRECT connection string in apps/api/.env as REHEARSAL_DATABASE_URL (never read by Claude; host compared against the production host before any command runs).
+
+---
+
+**User input (verbatim):**
+> How about we create another fresh Database?
+
+**AI action:** Advised: a fresh Neon BRANCH of production (a new copy) is ideal and equivalent to resetting rehearse-w1; an EMPTY database is not, because the rehearsal's value is the backfill reports on real workers and the migration chain on the real schema state.
+
+---
+
+**User input (verbatim):**
+> I used the rehearsal-w1 and pasted the connection string to the .env file
+
+**AI action:** Rehearsal step 1 (read-only): guard that the rehearsal host differs from the production host (neither printed), then `migrate status` and data recency on the branch.
+
+---
+
+**User input (verbatim):**
+> Done reset from parent
+
+**AI action:** Re-running the read-only checks on the reset branch: migrate status and data recency.
+
+---
+**AI action (cont.):** After the reset the branch is faithful: 1,865 users / 1,789 profiles / 10,112 requirements, data of 2026-09-28, W1 complete, only the 12 S1 migrations pending, PostGIS absent (so `s1_postgis`'s down applies). Applying the S1 migrations on the rehearsal branch now (step 2 of the rehearsal).
+
+---
+**AI action (cont.) -- rehearsal on rehearse-w1 (production copy of 2026-09-28):** S1 migrations applied (9 tables, PostGIS 3.5.7, 7 indexes, rows intact); all 12 down.sql newest first -> `migrate diff` against the pre-S1 schema EMPTY; re-applied; suburb list loaded (plan 074d18238f0f0465, 15,467 rows). Backfill dry runs: locations 1,789 without HOME -> 1,633 matched, 96 ambiguous, 60 unmatched; onboarding 1,789 -> SIGNED_UP 925, IN_PROGRESS 19, SUBMITTED 729, ACTION_REQUIRED 105, VERIFIED 11, PUBLISHED 0; 1,392 firstSignInAt estimates. Analysing the failure patterns before the user's review.
+
+---
+**AI action (cont.):** Failure analysis of the 156 location rows: 50 three-digit NT postcodes, 57 street addresses / extra words around the suburb, 19 metro name + suburb postcode, 2 "TA", 1 trailing space, 1 full state name, 4 no data, 4 overseas, 44 other (typos, LGA names, Australia Post centre names). Deterministic rules added to `legacy-match.ts` (postcode padding, state aliases/trim, suburb+postcode with a wrong state, a suburb named inside a longer text, "DC/BC/MC" suffixes); `candidatePool` feeds normalised postcodes; the report counts each rule. 21 matcher tests incl. a never-guesses property; affected suites 99 pass. Onboarding check: production has ONE published worker (with a lapsed/rejected document -> ACTION_REQUIRED, so 0 PUBLISHED is right); required requirements: SUBMITTED 3,466 / APPROVED 520 / REJECTED 158 / PENDING 22 -- 729 workers await review. Re-running the dry run.
+
+---
+**AI action (cont.):** Refinements: the exact city-column match runs before the in-text rule; among names found in the text the longest wins only when it contains all the others ("Redbank Plains" also names "Redbank"). Dry run 3 on the branch: **1,719 of 1,789 matched (96%)** -- by the form's string 1,073, by the columns 598, suburb inside a longer text 32, suburb+postcode with a wrong state 1, single-suburb postcode 15; **59 ambiguous** (metro names with a suburb's postcode, misspelt suburbs, council/region names, street-only texts, wrong postcodes) and **11 unmatched** (7 empty/overseas, 4 unusable). Matcher tests 23 (never-guesses property). Awaiting the user's review before applying on the branch.
+
+---
+
+**User input (verbatim):**
+> Let's be clear with this before doing any move. We need to migrate first the data from the authentication branch to the rehearse-w1, and then use the rehearse-w1 branch moving forward, am I right?
+
+**AI action:** Corrected the model: rehearse-w1 is a disposable copy for rehearsal only; production stays on its main branch, which receives the same steps after the rehearsal; no data moves between branches. "Authentication" is just the env-variable name (AUTH_DATABASE_URL) for the production database.
+
+---
+
+**User input (verbatim):**
+> Wait. I noticed 2 columns in the rehearse-w1, the geography and geometry, what does it usage?
+
+**AI action:** Explained: `geography_columns` and `geometry_columns` (and `spatial_ref_sys`) are PostGIS's own catalog views/table installed by the extension, not ours; our spatial data is the `point` geography column on au_localities and worker_locations, used for distance search with the GiST index. They are removed with the extension by the s1_postgis reverse script.
+
+---
+
+**User input (verbatim):**
+> Both reports look right, apply them on the branch
+
+**AI action:** Applying both backfills on rehearse-w1 (locations, then onboarding), then re-running each to prove a second run writes nothing, then verifying the rows.
+
+---
+**AI action (cont.):** The first apply ran at ~1 worker/s (one transaction and ~6 round trips per worker to Sydney): 287 HOME rows in 10 min, ~2 h projected for both backfills. Stopped it (idempotent; the 287 stay). Both backfills now write one transaction per page of 500 (createMany; workers placed/marked meanwhile skipped; a failing page falls back to per-worker so the bad row is reported); `createInitialMarkers` (batched) added, the single form delegates. Tests 82 pass. Resumed the apply on the branch.
+
+---
+**AI action (cont.) -- rehearsal COMPLETE on rehearse-w1:** locations apply (batched) 1,418 written in ~4 min (301 already placed from the stopped run) → total 1,719 HOME rows, all with `point`; second apply wrote 0. Onboarding apply 1,789 markers + 1,789 BACKFILL transitions in ~3 min; second apply wrote 0. Stage distribution identical to the dry run. Wrote the production runbook `aidlc-docs/construction/S1-registration/S1-production-run.md` (sequence, timings, rollback, preconditions) -- awaiting the user's approval to run on production; the matcher/batching commits need a PR to main first.
+
+---
+
+**User input (verbatim):**
+> check if the backfill finished
+
+**AI action:** Confirmed from the branch: 1,719 HOME rows, 1,789 markers, no backfill process running.
+
+---
+
+**User input (verbatim):**
+> Did you update the ai dlc state?
+
+**AI action:** Confirmed what the state file, the plan and the audit trail record as of now; showed the current resume section.
+
+---

@@ -349,7 +349,8 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
 - [x] Regenerated Prisma clients: **not committed** — they differ by this machine's absolute paths (plus the S1 models in auth-client), and `postinstall` regenerates them on every install (CI, Vercel).
 - [ ] Vercel preview: sign in, load a dashboard, submit the registration form (legacy path), suburb search returns the complete list — **needs the push (user)**
 - [ ] **Gate before any production switch to `api`:** the deferred CRM notification must exist, or registrations made through `apps/api` never reach the CRM
-- [ ] **Production (separate approval):** record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first (decides whether the `s1_postgis` down applies) → apply the migrations → load localities → backfill dry runs → you approve → `--apply` → merge (a merge commit, not squash) → verify production
+- [x] **Rehearsed on a Neon branch (2026-09-28, `rehearse-w1`, a reset copy of production):** migrations forward → all 12 `down.sql` newest first → diff against the pre-S1 schema empty → forward again; suburb list (plan `074d18238f0f0465`); backfill dry runs reviewed and approved by the user; applied (1,719 HOME rows, 1,789 markers, ~7 min batched) and re-applied (0 written). Runbook with timings and rollback: `S1-registration/S1-production-run.md`.
+- [ ] **Production (separate approval):** the runbook above, on the user's go, after the matcher/batching commits reach main
 
 ---
 

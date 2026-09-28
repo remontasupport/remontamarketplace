@@ -16,7 +16,7 @@ import type { Job } from '../../platform/jobs/scheduler'
 import type { Db, Tx } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
 import { placeHome, type Locality } from '../locations/domain/home'
-import { matchLegacyLocation, type Candidate } from '../locations/domain/legacy-match'
+import { matchLegacyLocation, normalisePostcode, type Candidate } from '../locations/domain/legacy-match'
 import { initialMarker, maxDate, minDate, obligationsFrom, type LegacyRequirement } from './domain/initial-marker'
 import { countsOf, deriveStage, type Stage } from './domain/stage'
 import { changeOf } from './domain/transitions'
@@ -109,12 +109,22 @@ export interface LegacyWorker {
  * derived stage), dated from the facts. The backfill and the reconciler share it.
  */
 export async function createInitialMarker(tx: Tx, w: LegacyWorker, now: Date, source: 'RECONCILER' | 'BACKFILL', cause: string) {
-  const { approximations, ...m } = initialMarker(w, now)
-  await tx.workerOnboarding.create({ data: { workerProfileId: w.workerProfileId, ...m, updatedAt: now } })
-  await tx.workerOnboardingTransition.create({
-    data: { workerProfileId: w.workerProfileId, fromStage: null, toStage: m.stage, at: m.stageEnteredAt, cause, source },
+  return (await createInitialMarkers(tx, [w], now, source, cause))[0]!
+}
+
+/**
+ * The batched form the backfill uses: one createMany for the markers and one for
+ * the opening transitions, whatever the page size -- a round trip per worker was
+ * a second each against a remote database (rehearsal, 2026-09-28).
+ */
+export async function createInitialMarkers(tx: Tx, workers: readonly LegacyWorker[], now: Date, source: 'RECONCILER' | 'BACKFILL', cause: string) {
+  const markers = workers.map((w) => ({ workerProfileId: w.workerProfileId, ...initialMarker(w, now) }))
+  if (markers.length === 0) return []
+  await tx.workerOnboarding.createMany({ data: markers.map(({ approximations: _a, ...m }) => ({ ...m, updatedAt: now })) })
+  await tx.workerOnboardingTransition.createMany({
+    data: markers.map((m) => ({ workerProfileId: m.workerProfileId, fromStage: null, toStage: m.stage, at: m.stageEnteredAt, cause, source })),
   })
-  return { ...m, approximations }
+  return markers.map(({ workerProfileId: _id, ...m }) => m)
 }
 
 /** Candidates for every postcode the legacy columns mention, so the matcher sees them all. */
@@ -123,9 +133,10 @@ export async function candidatePool(
   candidatesFor: (postcode: string) => Promise<Candidate[]>,
 ): Promise<(postcode: string) => Candidate[]> {
   const postcodes = new Set<string>()
-  const fromLocation = p.location ? /(\d{4})\s*$/.exec(p.location)?.[1] : undefined
+  const fromLocation = normalisePostcode(p.location ? /(d{3,4})s*$/.exec(p.location)?.[1] : undefined)
   if (fromLocation) postcodes.add(fromLocation)
-  if (p.postalCode && /^\d{4}$/.test(p.postalCode.trim())) postcodes.add(p.postalCode.trim())
+  const fromColumn = normalisePostcode(p.postalCode)
+  if (fromColumn) postcodes.add(fromColumn)
   const pool = new Map<string, Candidate[]>()
   for (const pc of postcodes) pool.set(pc, await candidatesFor(pc))
   return (pc) => pool.get(pc) ?? []
