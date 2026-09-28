@@ -109,12 +109,22 @@ export interface LegacyWorker {
  * derived stage), dated from the facts. The backfill and the reconciler share it.
  */
 export async function createInitialMarker(tx: Tx, w: LegacyWorker, now: Date, source: 'RECONCILER' | 'BACKFILL', cause: string) {
-  const { approximations, ...m } = initialMarker(w, now)
-  await tx.workerOnboarding.create({ data: { workerProfileId: w.workerProfileId, ...m, updatedAt: now } })
-  await tx.workerOnboardingTransition.create({
-    data: { workerProfileId: w.workerProfileId, fromStage: null, toStage: m.stage, at: m.stageEnteredAt, cause, source },
+  return (await createInitialMarkers(tx, [w], now, source, cause))[0]!
+}
+
+/**
+ * The batched form the backfill uses: one createMany for the markers and one for
+ * the opening transitions, whatever the page size -- a round trip per worker was
+ * a second each against a remote database (rehearsal, 2026-09-28).
+ */
+export async function createInitialMarkers(tx: Tx, workers: readonly LegacyWorker[], now: Date, source: 'RECONCILER' | 'BACKFILL', cause: string) {
+  const markers = workers.map((w) => ({ workerProfileId: w.workerProfileId, ...initialMarker(w, now) }))
+  if (markers.length === 0) return []
+  await tx.workerOnboarding.createMany({ data: markers.map(({ approximations: _a, ...m }) => ({ ...m, updatedAt: now })) })
+  await tx.workerOnboardingTransition.createMany({
+    data: markers.map((m) => ({ workerProfileId: m.workerProfileId, fromStage: null, toStage: m.stage, at: m.stageEnteredAt, cause, source })),
   })
-  return { ...m, approximations }
+  return markers.map(({ workerProfileId: _id, ...m }) => m)
 }
 
 /** Candidates for every postcode the legacy columns mention, so the matcher sees them all. */

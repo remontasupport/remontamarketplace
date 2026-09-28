@@ -1633,3 +1633,27 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Refinements: the exact city-column match runs before the in-text rule; among names found in the text the longest wins only when it contains all the others ("Redbank Plains" also names "Redbank"). Dry run 3 on the branch: **1,719 of 1,789 matched (96%)** -- by the form's string 1,073, by the columns 598, suburb inside a longer text 32, suburb+postcode with a wrong state 1, single-suburb postcode 15; **59 ambiguous** (metro names with a suburb's postcode, misspelt suburbs, council/region names, street-only texts, wrong postcodes) and **11 unmatched** (7 empty/overseas, 4 unusable). Matcher tests 23 (never-guesses property). Awaiting the user's review before applying on the branch.
 
 ---
+
+**User input (verbatim):**
+> Let's be clear with this before doing any move. We need to migrate first the data from the authentication branch to the rehearse-w1, and then use the rehearse-w1 branch moving forward, am I right?
+
+**AI action:** Corrected the model: rehearse-w1 is a disposable copy for rehearsal only; production stays on its main branch, which receives the same steps after the rehearsal; no data moves between branches. "Authentication" is just the env-variable name (AUTH_DATABASE_URL) for the production database.
+
+---
+
+**User input (verbatim):**
+> Wait. I noticed 2 columns in the rehearse-w1, the geography and geometry, what does it usage?
+
+**AI action:** Explained: `geography_columns` and `geometry_columns` (and `spatial_ref_sys`) are PostGIS's own catalog views/table installed by the extension, not ours; our spatial data is the `point` geography column on au_localities and worker_locations, used for distance search with the GiST index. They are removed with the extension by the s1_postgis reverse script.
+
+---
+
+**User input (verbatim):**
+> Both reports look right, apply them on the branch
+
+**AI action:** Applying both backfills on rehearse-w1 (locations, then onboarding), then re-running each to prove a second run writes nothing, then verifying the rows.
+
+---
+**AI action (cont.):** The first apply ran at ~1 worker/s (one transaction and ~6 round trips per worker to Sydney): 287 HOME rows in 10 min, ~2 h projected for both backfills. Stopped it (idempotent; the 287 stay). Both backfills now write one transaction per page of 500 (createMany; workers placed/marked meanwhile skipped; a failing page falls back to per-worker so the bad row is reported); `createInitialMarkers` (batched) added, the single form delegates. Tests 82 pass. Resumed the apply on the branch.
+
+---
