@@ -1657,3 +1657,6 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** The first apply ran at ~1 worker/s (one transaction and ~6 round trips per worker to Sydney): 287 HOME rows in 10 min, ~2 h projected for both backfills. Stopped it (idempotent; the 287 stay). Both backfills now write one transaction per page of 500 (createMany; workers placed/marked meanwhile skipped; a failing page falls back to per-worker so the bad row is reported); `createInitialMarkers` (batched) added, the single form delegates. Tests 82 pass. Resumed the apply on the branch.
 
 ---
+**AI action (cont.) -- rehearsal COMPLETE on rehearse-w1:** locations apply (batched) 1,418 written in ~4 min (301 already placed from the stopped run) → total 1,719 HOME rows, all with `point`; second apply wrote 0. Onboarding apply 1,789 markers + 1,789 BACKFILL transitions in ~3 min; second apply wrote 0. Stage distribution identical to the dry run. Wrote the production runbook `aidlc-docs/construction/S1-registration/S1-production-run.md` (sequence, timings, rollback, preconditions) -- awaiting the user's approval to run on production; the matcher/batching commits need a PR to main first.
+
+---
