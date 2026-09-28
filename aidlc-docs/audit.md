@@ -1555,3 +1555,34 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.) -- FINDING:** PR #11 (`s1/worker-registration`, head 5aa6cbe) is **merged** into main (main = 282ac0f) while `API Quality` was red; the test-only fix eee55d8 is on the branch but not in main. main deploys production for both products. Checking, read-only: the merge commit type, main's CI runs, and production HTTP endpoints (home, login, the sign-up page, suburb search, categories).
 
 ---
+
+**User input (verbatim):**
+> Is it safe now to deploy the backend?
+
+**AI action:** Answered: not yet -- listed the gates from the plan (production migrations rehearsed on a Neon branch, the CRM notification, hosting + config, a verified sender) and the safe order; distinguished deploying the api from switching the sign-up to it.
+
+---
+
+**User input (verbatim):**
+> how to do this? Merge the small PR with the test fix
+
+**AI action:** Gave the steps: open the compare link, check 3 commits, create the PR with the given description, wait for the checks (the api one takes a few minutes), then "Merge pull request". Offered to watch the checks.
+
+---
+
+**User input (verbatim):**
+> I created the PR, watch the checks
+
+**AI action:** Watching the checks on e4cacc1 (the follow-up PR) through the API; will report when all complete.
+
+---
+
+**User input (verbatim):**
+> Opps I already merged it
+
+**AI action:** Merged before the checks finished again. Checking the PR's checks (they keep running on the commit) and main's push CI; the change is test + docs only, so production behaviour is unchanged.
+
+---
+**AI action (cont.):** PR #12 merged at 09:38:39Z (merge 6452bb3). Its `API Quality` had already passed on Node 20 and 22; only the report-only supply-chain scan was still running. main's push CI re-running on 6452bb3. Local `main` fast-forwarded to 6452bb3; `s1/worker-registration` is entirely in main. Production behaviour unchanged (test + docs only).
+
+---
