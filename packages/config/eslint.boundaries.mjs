@@ -135,3 +135,73 @@ export const domainBoundaries = {
     ],
   },
 };
+
+/**
+ * P-6 — packages/api-contract holds declarations only: Zod schemas, paths and
+ * security metadata. apps/api (Nest) implements it and apps/app (browser) calls it,
+ * so it must import neither side's world. S1-design 2.2.
+ *
+ * Node built-ins are banned too: the typed client runs in the browser. Scripts and
+ * tests (openapi.json generation, the drift check) may use them and are outside
+ * the files this rule is applied to.
+ */
+export const apiContractBoundaries = {
+  rules: {
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            group: ["@nestjs/*", "fastify", "fastify/*", "express", "express/*"],
+            message:
+              "P-6: packages/api-contract must not import the server framework. The contract is declarations; handlers bind to it in apps/api.",
+          },
+          {
+            group: ["@prisma/client", "@prisma/client/*", "@remonta/db", "@remonta/db/*"],
+            message:
+              "P-6: packages/api-contract must not import Prisma or @remonta/db. It describes the API, not storage, and ships to the browser.",
+          },
+          {
+            group: ["next", "next/*", "react", "react/*", "react-dom", "react-dom/*"],
+            message: "P-6: packages/api-contract must not import Next or React. It is consumed by apps/app, not part of it.",
+          },
+          {
+            group: ["node:*", "fs", "path", "crypto", "http", "https", "os", "child_process"],
+            message: "P-6: packages/api-contract src/ must not import Node built-ins: the typed client runs in the browser.",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+/**
+ * P-7 — packages/form-engine is form LOGIC only: definitions, rules, mapping,
+ * submission. The web app renders it with React; a future mobile app would render
+ * it with React Native. So it imports neither, nor the DOM helpers of either, nor
+ * the server's world. Browser-specific adapters (reCAPTCHA loader, image shrink)
+ * live in apps/app and are passed in.
+ */
+export const formEngineBoundaries = {
+  rules: {
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            group: ["react", "react/*", "react-dom", "react-dom/*", "react-native", "react-native/*", "react-hook-form", "next", "next/*"],
+            message: "P-7: packages/form-engine must not import a UI framework. Rendering belongs to apps/app (components/ui/form-wizard).",
+          },
+          {
+            group: ["@nestjs/*", "@prisma/client", "@prisma/client/*", "@remonta/db", "@remonta/db/*"],
+            message: "P-7: packages/form-engine must not import the server or the database. It talks to apps/api through @remonta/api-contract.",
+          },
+          {
+            group: ["node:*", "fs", "path", "crypto", "os", "child_process"],
+            message: "P-7: packages/form-engine must not import Node built-ins: it runs in the browser and on phones.",
+          },
+        ],
+      },
+    ],
+  },
+};

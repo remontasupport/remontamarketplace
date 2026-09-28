@@ -11,7 +11,6 @@
 1	src/app/api/admin/reports/daily/route.ts::TS2345
 1	src/app/api/admin/reports/weekly/route.ts::TS2345
 5	src/app/api/admin/verification/route.ts::TS2339
-5	src/app/api/auth/register/route.ts::TS2304
 1	src/app/api/blob/upload-token/route.ts::TS2322
 1	src/app/api/client/participants/[id]/route.ts::TS2322
 1	src/app/api/client/participants/[id]/route.ts::TS2339

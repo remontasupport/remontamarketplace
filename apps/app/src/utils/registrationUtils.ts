@@ -1,16 +1,4 @@
-import { ContractorFormData } from "@/schema/contractorFormSchema";
-
-// Move fieldMap outside function to prevent recreation on every call
-const STEP_VALIDATION_FIELDS: Record<number, (keyof ContractorFormData)[]> = {
-  1: ["location"],
-  2: ["firstName", "lastName", "email", "mobile", "password"],
-  3: ["services"],
-  4: ["photo", "consentProfileShare"],
-};
-
-export const getStepValidationFields = (step: number): (keyof ContractorFormData)[] => {
-  return STEP_VALIDATION_FIELDS[step] || [];
-};
+// The worker sign-up step fields moved to features/worker-registration/formSchema.ts (S1).
 
 export const isValidAustralianMobile = (mobile: string): boolean => {
   const cleanMobile = mobile.replace(/\D/g, '');

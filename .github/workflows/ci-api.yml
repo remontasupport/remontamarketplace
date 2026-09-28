@@ -1,0 +1,126 @@
+# CI for the backend service (apps/api) and the packages it is built from.
+#
+# Separate from ci-app.yml because this one needs a database: the api's tests run
+# against a real PostGIS (the registration transaction, the reconciler, the
+# backfills, the hostile-input suite), and packages/db's refresh test does too.
+# A service container gives every run a fresh database; nothing here touches
+# Neon. No secrets required.
+#
+# Order matters:
+#   1. migrate the empty database (all migrations, PostGIS included);
+#   2. packages/db quality -- its refresh test TRUNCATEs au_localities and leaves it empty;
+#   3. load the committed suburb list (dry run for the plan hash, then apply it);
+#   4. api-contract and form-engine quality (no database), then apps/api quality.
+#
+# apps/api is not deployed by Vercel (S1: local and CI only), so this workflow is
+# the only place its tests run outside a developer's machine.
+
+name: CI (api)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/workflows/ci-api.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".github/workflows/ci-api.yml"
+
+concurrency:
+  group: ci-api-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The service container below. Same database for Prisma (pooled and direct
+  # are one and the same locally) and for the tests.
+  AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/s1test
+  DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/s1test
+  TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/s1test
+
+jobs:
+  quality:
+    name: API Quality (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+
+    services:
+      postgres:
+        # The same image developers run locally (packages/db README).
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: s1test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Every migration, from the baseline on, against an empty database. This is
+      # also the only automated proof that the migration chain still applies cleanly.
+      - name: Migrate the test database
+        run: pnpm --filter @remonta/db run migrate:deploy
+
+      # typecheck + the localities build/plan/refresh tests. The refresh test
+      # truncates au_localities, which is why the suburb list is loaded AFTER it.
+      - name: Package quality (db)
+        run: pnpm --filter @remonta/db run quality
+
+      # The committed G-NAF suburb list, the way production gets it: a dry run
+      # prints the plan and its hash; the apply must name that hash.
+      - name: Load the suburb list
+        run: |
+          plan=$(pnpm --filter @remonta/db localities:refresh | tee /dev/stderr | grep -oE 'expect=[0-9a-f]+' | cut -d= -f2)
+          test -n "$plan" || { echo "no plan hash in the dry run output"; exit 1; }
+          pnpm --filter @remonta/db localities:refresh --apply --expect="$plan" --by=ci
+
+      # Contract checks, the typed client, the OpenAPI drift test (openapi.json
+      # must be regenerated and committed when the contract changes).
+      - name: Package quality (api-contract)
+        run: pnpm --filter @remonta/api-contract run quality
+
+      # The form logic and its P-7 boundary (no React, Next, DOM or Node built-ins).
+      - name: Package quality (form-engine)
+        run: pnpm --filter @remonta/form-engine run quality
+
+      # prisma generate, lint (incl. the no-controllers rule), strict tsc, and the
+      # whole test suite -- the PostGIS-backed suites run because TEST_DATABASE_URL
+      # points at localhost.
+      - name: API quality gate
+        run: pnpm --filter @remonta/api run quality

@@ -1,0 +1,11 @@
+{
+  "extends": "@remonta/config/tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "types": ["node"],
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["scripts/**/*.ts", "vitest.config.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "@remonta/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The backend service (NestJS 11 + Fastify). Every route comes from @remonta/api-contract and passes the central security pipeline. S1: runs locally and in CI only.",
+  "type": "module",
+  "scripts": {
+    "prisma:generate": "node scripts/prisma-schema.mjs && prisma generate --schema=prisma/schema.prisma",
+    "build": "pnpm run prisma:generate && tsup",
+    "start": "node --env-file=.env --enable-source-maps dist/main.js",
+    "dev": "pnpm run prisma:generate && tsup --watch --onSuccess \"node --env-file=.env --enable-source-maps dist/main.js\"",
+    "lint": "eslint",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "quality": "pnpm run prisma:generate && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "load:harness": "tsx load/harness.ts",
+    "backfill:locations": "node --env-file=.env --import tsx scripts/backfill-worker-locations.ts",
+    "backfill:onboarding": "node --env-file=.env --import tsx scripts/backfill-worker-onboarding.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/multipart": "^9.3.0",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-fastify": "^11.1.6",
+    "@prisma/client": "^6.16.2",
+    "@remonta/api-contract": "workspace:*",
+    "@remonta/schemas": "workspace:*",
+    "@vercel/blob": "^2.8.0",
+    "bcryptjs": "^3.0.3",
+    "fastify": "5.11.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@remonta/config": "workspace:*",
+    "@swc/core": "^1.13.5",
+    "@types/node": "^20",
+    "@types/pg": "^8.18.0",
+    "@typescript-eslint/parser": "^8",
+    "eslint": "^9",
+    "fast-check": "^4.9.0",
+    "pg": "^8.20.0",
+    "pino": "^10.3.1",
+    "prisma": "^6.16.2",
+    "tsup": "^8.5.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "unplugin-swc": "^1.5.7",
+    "vitest": "^2.1.9"
+  },
+  "imports": {
+    "#db": {
+      "types": "./generated/db/index.d.ts",
+      "default": "./generated/db/index.js"
+    }
+  }
+}

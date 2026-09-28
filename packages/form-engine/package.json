@@ -1,0 +1,30 @@
+{
+  "name": "@remonta/form-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Framework-free form logic: form definitions bound to contract entries, field-kind rules, validation from the contract, request mapping, submission with retries, and the on-device draft. No React, Next, DOM or Node built-ins, so the web app and a future mobile app share it.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "quality": "pnpm run lint && pnpm run typecheck && pnpm run test"
+  },
+  "dependencies": {
+    "@remonta/api-contract": "workspace:*",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@remonta/config": "workspace:*",
+    "@remonta/schemas": "workspace:*",
+    "@types/node": "^20",
+    "@typescript-eslint/parser": "^8",
+    "eslint": "^9",
+    "fast-check": "^4.9.0",
+    "typescript": "^5",
+    "vitest": "^2.1.9"
+  }
+}

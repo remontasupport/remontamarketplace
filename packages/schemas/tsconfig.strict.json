@@ -1,0 +1,13 @@
+{
+  "extends": "@remonta/config/tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"]
+  },
+  "files": [
+    "src/schema/workerRegistrationSchema.ts",
+    "src/schema/workerRegistrationSchema.test.ts"
+  ]
+}

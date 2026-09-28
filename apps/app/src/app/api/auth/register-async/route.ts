@@ -112,7 +112,12 @@ export async function POST(request: Request) {
     // ============================================
     // N8N WEBHOOK (server-to-server)
     // ============================================
-    fetch("https://n8n.srv1137899.hstgr.cloud/webhook/4b03c15d-f903-43c4-9633-27d1719deb44", {
+    // The URL is configuration (S1 step 9 item, landed at step 12): production
+    // keeps today's URL as the default, and a local run can point it elsewhere
+    // -- otherwise a test sign-up on a laptop would reach the live CRM workflow.
+    // apps/api reads the same variable name.
+    const n8nRegistrationWebhook = process.env.N8N_REGISTRATION_WEBHOOK_URL || "https://n8n.srv1137899.hstgr.cloud/webhook/4b03c15d-f903-43c4-9633-27d1719deb44";
+    fetch(n8nRegistrationWebhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

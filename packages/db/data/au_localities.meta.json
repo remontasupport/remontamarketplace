@@ -1,0 +1,80 @@
+{
+  "sourceVersion": "GNAF-202608",
+  "dataset": "Geoscape G-NAF (GDA2020, PSV), data.gov.au",
+  "rows": 15467,
+  "csvSha256": "699f7f634004f861a282ccfbec33fadb199b2c7f2c728a91347581f11c082a6d",
+  "report": {
+    "localities": 17581,
+    "rows": 15467,
+    "keptByClass": {
+      "T": 13,
+      "G": 15344,
+      "D": 16,
+      "U": 91,
+      "H": 2
+    },
+    "droppedByReason": {
+      "no-addresses-not-gazetted": 1816,
+      "no-addresses-no-plausible-postcode": 299,
+      "no-centroid": 0,
+      "centroid-out-of-bounds": 0
+    },
+    "droppedByClass": {
+      "T": 117,
+      "D": 3,
+      "G": 299,
+      "U": 150,
+      "I": 1546
+    },
+    "primaryPostcodeFallbacks": [
+      {
+        "localityPid": "locb7afbc55ea85",
+        "suburb": "Washpool",
+        "state": "NSW",
+        "postcode": "2460"
+      },
+      {
+        "localityPid": "locafb4635370ee",
+        "suburb": "Dural",
+        "state": "NSW",
+        "postcode": "2330"
+      },
+      {
+        "localityPid": "loc0b163c37aedb",
+        "suburb": "Wog Wog",
+        "state": "NSW",
+        "postcode": "2550"
+      },
+      {
+        "localityPid": "loc38068fa09667",
+        "suburb": "Shelly Beach",
+        "state": "QLD",
+        "postcode": "4810"
+      },
+      {
+        "localityPid": "loce9efa5a9608b",
+        "suburb": "Bellfield",
+        "state": "VIC",
+        "postcode": "3381"
+      },
+      {
+        "localityPid": "loc1332dec9b76a",
+        "suburb": "Thomson",
+        "state": "VIC",
+        "postcode": "3825"
+      }
+    ],
+    "multiPostcode": [
+      {
+        "localityPid": "loc9901d119afda",
+        "suburb": "Melbourne",
+        "state": "VIC",
+        "postcodes": [
+          "3000",
+          "3004"
+        ]
+      }
+    ],
+    "invalidAddressPostcodes": []
+  }
+}

@@ -1,112 +1,242 @@
-# Requirements Clarification Questions
+# Requirements Clarification Questions — New Backend System
 
-**Stage**: INCEPTION — Requirements Analysis (follow-up round)
-**Created**: 2026-09-09
+Thanks for answering all 23 questions. Some answers pull against each other, you asked
+for a recommendation on the framework, and the Resiliency extension you enabled requires
+seven more decisions at this stage.
 
-Thank you — all 20 questions are answered. Two things need a second pass before I can write
-`requirements.md`:
-
-1. **One direct contradiction** between A1 and A2, which your A3 answer reframes entirely.
-2. **Eight mandatory questions from the Resiliency extension**, which you opted into (F2 = A).
-   That extension requires these decisions be made by you, not inferred by me.
-
-Please answer below the `[Answer]:` tags as before.
+Where I recommend an option, it's listed first and marked **(Recommended)**. Answer the same
+way as before, by putting a letter after `[Answer]:`.
 
 ---
 
-## Section J — Contractor Data (contradiction + new information)
+## Part 1 — Contradictions and ambiguities
 
-### The contradiction
+### Contradiction 1: "Independent" vs. shared database, auth and traffic
+Q2 you chose **C) Independent, sharing nothing (no shared database, auth or code)**, but also:
+- Q5 **A**: `apps/app` calls the backend
+- Q9 **A**: it uses the existing Neon database and Prisma schema
+- Q10 **A**: it validates the existing NextAuth tokens
+- Q15 **A**: old and new run side by side, and domains move over one at a time
 
-- **A1 = A**: move `ContractorProfile` **into the application database**; marketing then reads it back via an API.
-- **A2 = D**: "Not applicable — my answer to A1 keeps the data where the sync already writes."
+Those four answers all mean the backend shares the database, auth and users with `apps/app`.
+My reading is that you meant **separate code and a separate technology**, not a separate system.
 
-These cannot both hold. A1 = A *moves* the data out of the marketing database, so A2 cannot be
-"not applicable". If the table moves, something must decide where the Zoho sync writes.
+#### Clarification 1
+What does "independent" mean for the new backend?
 
-### The new information, which probably dissolves it
+A) **Separate code and deployment, shared data.** It's a separate NestJS service with its own deployment, but it shares the existing database and auth tokens with `apps/app` while domains move over (Recommended — matches Q5, Q9, Q10, Q15)
 
-- **A3**: "The ContractorProfile are just fake ones, I created those by inserting to the table"
-
-That changes the question, because it means there may be no real data to move at all.
-
-### What I found in the code
-
-The marketing branch has **real, substantial** Zoho → `ContractorProfile` machinery:
-
-| File (on `main`) | What it does |
-|---|---|
-| `src/app/api/sync-contractors/route.ts` | Batched sync (BATCH_SIZE 50, 3 retries), geocoding, Blob file handling |
-| `src/app/api/webhooks/zoho-contractor/route.ts` | Live webhook handling Zoho `insert` / `update` / `delete` |
-| `src/app/api/contractors-by-area/route.ts` | Reads `ContractorProfile` |
-
-This is not scaffolding — it is production-shaped code. So either that sync is **not currently
-running** and your hand-inserted rows are all the table holds, or it **is running** and your rows
-sit alongside real synced ones.
-
-### Question J1
-Is the Zoho → `ContractorProfile` sync currently live in production?
-
-A) **No, it is dormant.** The sync and webhook exist but are not running. Every row in `ContractorProfile` is test data I inserted by hand.
-
-B) **Yes, it is running.** Real contractors sync from Zoho, and my hand-inserted rows are additional test records mixed in.
-
-C) **It ran previously but is now stopped.** The table holds a mix of stale real data and my test rows.
-
-D) I am not certain — this needs checking before deciding.
+B) **Fully independent.** A new database, its own auth, and `apps/app` doesn't call it. (Q5, Q9, Q10 and Q15 would need new answers.)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: Yes it is currently renning in production but It can be eliminate now, by meaning eliminating, we can let an error to the website markwting while building the api that points to the workerprofile.
+[Answer]: A
 
-### Question J2
-Given the data is (at least partly) disposable test data, what should actually happen?
+### Ambiguity 2: Framework (Nest vs. Nuxt) and where the code lives (Q6, Q7)
+You asked which of NestJS and Nuxt is the better backend. My recommendation is **NestJS**:
 
-A) **No data migration at all.** Point the web app's contractor search at the real `WorkerProfile` records in the application database, drop the `ContractorProfile` dependency from the app entirely, and discard the fake rows. Marketing keeps `ContractorProfile` and its Zoho sync untouched.
+- **Nuxt** is a full-stack framework for **Vue** frontends. Its server layer (Nitro) is built to serve a Vue app. Your frontend is React/Next.js, so Nuxt would add a second UI framework without giving you a structured backend.
+- **NestJS** is built for exactly this. Its building blocks map directly onto rules you enabled:
+  - Guards enforce deny-by-default authorization (SECURITY-08)
+  - Validation pipes check every input (SECURITY-05)
+  - A global exception filter keeps errors safe for users (SECURITY-15)
+  - `@nestjs/terminus` provides health checks (RESILIENCY-06)
+  - `@nestjs/bullmq` provides the job queue (Q12)
+  - `@nestjs/swagger` generates OpenAPI docs (Q8)
+  - OpenTelemetry instrumentation is available for tracing (Q18)
+- I suggest running it on the **Fastify adapter** for lower overhead.
+- The trade-off: Nest takes more setup than a lightweight framework (Fastify or Hono), which counts against a 1–2 month timeline. Clarification 10 deals with that.
 
-B) **Move the table as originally answered.** Migrate `ContractorProfile` into the application database, fake rows and all, and have marketing read it back via an API.
+On **where the code lives**: the backend and `apps/app` will write to the same database while domains move over. There should be **one** Prisma schema and **one** migration history. Two codebases that each change the same schema is the most likely way for this migration to break production.
 
-C) **Move the table but discard the fake rows** — migrate the schema only, re-populate from Zoho afterwards.
+#### Clarification 2
+Where should the NestJS backend live?
 
-D) **Retire `ContractorProfile` entirely** — it is superseded by `WorkerProfile`; remove the model, the sync and the webhook from both products.
+A) `apps/api` in this monorepo. It shares `packages/db` (one Prisma schema, one migration history) and `packages/schemas`, gets built by Turborepo, and gets checked by the same CI quality gates (Recommended)
 
-X) Other (please describe after [Answer]: tag below)
+B) A separate repository. We'd need to decide which repo owns database migrations, and the other repo would copy the schema
 
-[Answer]: Point the web app's contractor search at the real `WorkerProfile` records in the application database, and drop the `ContractorProfile` dependency from the app entirely
-
-> **My recommendation is A.** The web app touches `ContractorProfile` in exactly 3 queries, and if
-> those rows are fake, the app's contractor search is currently showing fabricated workers to
-> users. Pointing it at real `WorkerProfile` data removes the cross-product database dependency,
-> requires no data migration, and leaves marketing's Zoho ownership (your answer to Q3) intact.
-> It also resolves the TD-5 security finding at the same time, since that unguarded page is the
-> only consumer.
-
-### Question J3
-If the app's contractor search moves to `WorkerProfile`, should it show only published, verified workers?
-
-A) Yes — only `isPublished = true` and verification APPROVED, matching the public directory rules.
-
-B) Show all workers regardless of publication status, since this is an admin-facing search.
-
-C) Published only, but ignore verification status.
+C) A different framework (Fastify or Hono) instead of NestJS — name it after the tag
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: B
+[Answer]: a
+
+### Ambiguity 3: API style (Q8 D vs. Q5 A)
+Q8 **D** means REST for external callers plus tRPC for internal clients. But Q5 names **only `apps/app`** as a caller, so there are no external callers yet. Also, tRPC isn't native to NestJS: it would need a community adapter and would sit alongside Nest's own controller model.
+
+#### Clarification 3
+Which API style for the first release?
+
+A) REST + OpenAPI, with a typed TypeScript client generated from the OpenAPI spec for `apps/app`. Standard, and works the same for external callers later (Recommended)
+
+B) REST using `ts-rest` contracts defined in `packages/schemas` (the Zod schemas are shared). This gives tRPC-style type safety while the wire format stays plain REST. (Requires Clarification 2 = A.)
+
+C) Keep Q8 D: REST for external callers + tRPC for `apps/app`
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: a
+
+### Ambiguity 4: Changing a schema while two systems use it (Q9, Q15)
+Q9 said to keep the existing database but clean and fix the schema along the way. Q15 said old and new run side by side. That means `apps/app` will still be reading and writing tables that the new backend wants to change. A rename or drop that doesn't account for the old app breaks production immediately. (CLAUDE.md: "a green build with every query failing is the standard failure mode".)
+
+#### Clarification 4
+How should schema changes be made during the migration?
+
+A) **Expand/contract.** Every change is backward-compatible: add the new column or table → backfill → switch readers → then remove the old column once `apps/app` no longer uses it. Prisma stays the ORM, and `packages/db` stays the only place migrations come from (Recommended)
+
+B) **Separate Postgres schema.** The backend creates its own tables in a separate Postgres schema (e.g. `api`) and copies data over one domain at a time. Old tables aren't changed until their domain has fully moved
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: A
+
+### Contradiction 5: Keeping NextAuth (Q10 A) vs. the Security baseline (Q21 A) and identity in the first release (Q4 A)
+I checked the current setup (`apps/app/src/lib/auth.config.ts:277-282`, `next-auth ^4.24.11`):
+- The session is a **NextAuth v4 JWT that lasts 30 days**, and there's **no server-side session record**
+- Logging out can't revoke a token that has already been issued, which **fails SECURITY-12** ("Sessions MUST have server-side expiration, be invalidated on logout")
+- The tokens are encrypted with `NEXTAUTH_SECRET` and carry no audience or issuer, so the backend can't do the audience/issuer checks **SECURITY-08** requires
+
+Q4 also puts identity, accounts and roles in the first release, so it needs to be clear what "identity" covers if login stays in NextAuth.
+
+#### Clarification 5
+How should authentication work for the first release?
+
+A) **Login stays in `apps/app` (NextAuth) for now, with a fix for the Security baseline.** Sessions get a server-side session/version record so logout and account suspension take effect immediately, and a much shorter lifetime. `apps/app` sends the backend a short-lived signed token with audience and issuer. The backend's "identity" domain covers users, roles and account status; the login screens move in a later phase (Recommended)
+
+B) **The backend owns auth from the first release.** It issues short-lived access tokens and refresh tokens or server sessions, and NextAuth in `apps/app` becomes a thin client that calls it. More work up front, but no rework later
+
+C) **Move to a managed identity provider now** (e.g. Clerk, Auth0, Cognito). Existing password hashes and users need a migration plan
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: a
+
+### Ambiguity 6: The backend as system of record (Q13 B) vs. first-release scope (Q4 A, B)
+Q13 **B** makes the backend the system of record, with Zoho receiving copies. The first release covers identity and worker onboarding/compliance. Today, new worker registrations are meant to reach Zoho via n8n, but that push is broken (`N8N_WEBHOOK_URL` is unset — `.brd/phase-0` B, audit XC-02).
+
+#### Clarification 6
+What does the first release do with Zoho?
+
+A) From the first release, the backend owns workers, accounts and compliance status, and pushes copies of those records to Zoho through the job queue, with retries and visibility. This replaces the broken n8n push for these domains (Recommended)
+
+B) The first release doesn't touch Zoho. Zoho sync arrives with the later domains (requests, recruitment)
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: b
+
+### Ambiguity 7: Compliance obligations (Q17 = C only)
+You chose only **C (data stays in Australia)**. Three things suggest A, B and D may apply too. **Please confirm this with whoever handles compliance at Remonta** — I'm raising it, not giving legal advice.
+- The backend stores NDIS participant details and worker identity documents. Organisations that provide health or disability services usually fall under the Australian Privacy Principles whatever their turnover.
+- NDIS providers have their own record-keeping obligations.
+- The Security baseline you enabled already requires an audit trail of critical data changes: who, what, when, before and after (**SECURITY-13**). `.brd/phase-2` §2.6 found gaps in the current audit trail.
+
+#### Clarification 7
+Which obligations should the requirements record?
+
+A) C plus A, B and D: data stays in Australia, the Privacy Act/APPs, NDIS requirements, and a full audit trail of who viewed or changed sensitive records (Recommended, subject to your compliance check)
+
+B) C plus D: data in Australia plus an audit trail of changes (the Security baseline minimum). Privacy Act and NDIS obligations are handled outside engineering
+
+C) C only, as originally answered (the audit trail of changes is still required by SECURITY-13)
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: a
+
+### Ambiguity 8: What must stay in Australia
+I confirmed the Neon database is in **Sydney** (`ap-southeast-2`). I have **not** checked these, which also hold data:
+- Vercel Blob (compliance documents)
+- Upstash Redis (cache and rate limits)
+- The container host
+- The job queue
+- The observability vendor (Q18 B: logs, traces and error reports can contain personal data)
+
+#### Clarification 8
+How far does "data stays in Australia" reach?
+
+A) Primary data must be in Australia: database, files/documents, backups, cache and queue. Observability tools may be hosted elsewhere, provided personal data is removed from logs, traces and error reports (Recommended — SECURITY-03 already bans personal data in logs)
+
+B) Everything must be in Australia, including logs, traces, error tracking and email/SMS providers
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: A
+
+### Ambiguity 9: Which container platform (Q11)
+Clarification 8 means the platform needs an **Australian region**. The Neon database runs on **AWS Sydney**, so running the backend in the same region keeps database latency lowest.
+
+#### Clarification 9
+Which container platform?
+
+A) **AWS ECS Fargate in `ap-southeast-2` (Sydney).** Same region as Neon. Spreading across availability zones is built in (RESILIENCY-08), and the Security rules map directly onto its features: load balancer access logs (SECURITY-02), IAM (SECURITY-06), security groups (SECURITY-07). More infrastructure to set up (Recommended)
+
+B) **Google Cloud Run in `australia-southeast1` (Sydney).** Simpler to run and scales automatically, but it's on a different cloud from the database (still in the same city)
+
+C) **Fly.io, Railway or Render.** Simplest, but whether each has an Australian region, and which of the Security/Resiliency features it supports, would need checking in Infrastructure Design
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: A
+
+### Contradiction 10: Timeline vs. scope (Q19 A)
+Q19 **A** gives 1–2 months with 1–2 developers. The other answers add up to:
+- A new framework and service
+- Identity plus onboarding/compliance
+- Changing the schema of a live database
+- Moving domains over one at a time
+- A job queue
+- Metrics, tracing and alerting
+- All three extensions as **blocking** rules (15 security, 15 resiliency and 10 PBT rules)
+
+That's realistic in 1–2 months only with a tightly defined first release.
+
+#### Clarification 10
+What gives, if something has to?
+
+A) **Keep the date; narrow the first release.** Identity/accounts (per Clarification 5) + worker onboarding and compliance verification on the new backend, `apps/app` switched over for those screens, and all extensions enforced. The Zoho push, n8n decisions and other domains come in later releases (Recommended)
+
+B) **Keep the scope; extend the date to 3–4 months**
+
+C) **Keep date and scope; relax some extension rules** to advisory (non-blocking) for the first release — name which after the tag
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: A
+
+### Ambiguity 11: Which parts of `.brd/` are in scope (Q3 B)
+Q3 **B** said you'd name which parts of `.brd/` are in or out. Here's a proposal based on Q4 (A, B):
+
+**In scope for the first release:**
+- `.brd/phase-2`: actors and the permissions matrix, including fixing the cases where the UI and the API disagree (§2.4)
+- `.brd/phase-3`: J1 worker registration, J2 worker onboarding, J3 compliance verification, J8 account and access
+- `.brd/phase-4`: §4.1–4.3 (identity, profile and document rules), §4.7 (rate limits), §4.8 (defaults), §4.10 (derived values), and §4.11 (rules currently enforced only in the browser, which move to the server)
+- `.brd/phase-4` §4.9 state machines: worker verification status, compliance document status, worker publication, account status
+- `.brd/phase-5`: the worker-lifecycle emails and SMS tied to the above
+
+**Out of scope for the first release:** J4 search, J5 service requests, J6 recruitment, J7 admin reporting, J9 content, and the pricing artefacts (§3.1).
+
+#### Clarification 11
+Is this scope right?
+
+A) Yes, use it as proposed
+
+B) Yes, with changes (list them after the tag)
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: A
 
 ---
 
-## Section K — Resiliency Extension (mandatory)
+## Part 2 — Resiliency extension decisions (required by the rules you enabled)
 
-You opted into the Resiliency baseline (F2 = A). That extension explicitly requires these eight
-decisions to be made by you rather than chosen on your behalf. They drive Application Design, NFR
-Requirements, NFR Design and Infrastructure Design later.
+These come directly from the Resiliency baseline (Q22 = A), which says these decisions are
+yours, not mine. Where your repo already has a process, I've noted it.
 
-Context for your answers: both products are **Vercel-hosted serverless** with **Neon PostgreSQL**.
-Much of the traditional infrastructure surface (load balancers, VPCs, auto-scaling groups) does
-not exist here, so several of these are simpler than they look.
-
-### Question K1: RTO/RPO Goals and Disaster Recovery Strategy
+### Resiliency 1 (RESILIENCY-02): RTO/RPO Goals and Disaster Recovery Strategy
 What are your Recovery Time Objective (RTO) and Recovery Point Objective (RPO) goals? These determine the appropriate Disaster Recovery strategy and infrastructure redundancy level.
 
 A) RPO/RTO: Hours — Backup & Restore strategy. Lowest cost ($). Data backed up, no services deployed. Redeploy from IaC and restore from backups on failure. Suitable for non-critical workloads.
@@ -121,10 +251,27 @@ E) N/A — Single-region deployment is acceptable, no cross-region DR needed. Re
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: A
+[Answer]: C
 
-### Question K2: Change Management Process
+### Resiliency 2 (RESILIENCY-08): Regional Topology
+Does this workload require multi-region deployment, or is single-region with multi-zone redundancy sufficient?
+
+*Note: Clarification 8 limits you to Australian regions (Sydney `ap-southeast-2`, Melbourne `ap-southeast-4` on AWS).*
+
+A) Single-region, multi-zone — tolerates zone failure, not full-region failure. Lower cost. (Aligns with RTO/RPO options A/B/E.)
+
+B) Multi-region active-passive — survives region failure with failover. Higher cost. (Aligns with Warm Standby / Pilot Light cross-region.)
+
+C) Multi-region active-active — survives region failure with no downtime. Highest cost. (Aligns with Active/Active.)
+
+X) Other (describe after [Answer]: tag below)
+
+[Answer]: C
+
+### Resiliency 3 (RESILIENCY-03): Change Management Process
 How should production changes for this workload be governed? AI-DLC will conform the design to your answer rather than inventing a process.
+
+*Note: your repo already has a documented process in `CLAUDE.md`: branch → PR → CI (App Quality, Web Quality, Supply chain, Package boundaries) → verify the preview → "Merge pull request" → verify production. That counts as option A.*
 
 A) Use our existing organizational change management process — provide the name/tool (e.g., ServiceNow, Jira Change, internal CAB). AI-DLC will reference it and ensure deployable artifacts fit that process (change records, approval gates).
 
@@ -132,27 +279,27 @@ B) No formal process exists yet — AI-DLC should propose a lightweight change m
 
 C) N/A — this workload is exempt from formal change management (e.g., internal tooling). Document the exemption rationale.
 
-X) Other (please describe after [Answer]: tag below)
+X) Other (describe after [Answer]: tag below)
 
-[Answer]: B
+[Answer]: A
 
-### Question K3: CI/CD and Deployment Tooling
+### Resiliency 4 (RESILIENCY-04): CI/CD and Deployment Tooling
 What CI/CD tooling and deployment process should this workload use?
+
+*Note: the repo already uses GitHub Actions (`.github/`) for CI; deployments to Vercel happen automatically on merge. A container backend needs its own deploy step.*
 
 A) Use our existing CI/CD pipeline — provide the tool (e.g., GitHub Actions, GitLab CI, Jenkins, CodePipeline). AI-DLC will produce artifacts compatible with it.
 
 B) No pipeline exists — AI-DLC should propose a CI/CD pipeline definition appropriate to the chosen IaC and runtime.
 
-X) Other (please describe after [Answer]: tag below)
+X) Other (describe after [Answer]: tag below)
 
-[Answer]: B
+[Answer]: A, and open for improvement
 
-> Note: Reverse Engineering found **no CI pipeline** in the repository — no `.github/workflows` or
-> equivalent. Deployment is Vercel's Git integration. Given your D1 = A answer (quality gates
-> first), B is the likely fit.
-
-### Question K4: Rollback Mechanism
+### Resiliency 5 (RESILIENCY-04): Rollback Mechanism
 How should a failed production deployment be rolled back?
+
+*Note: if Clarification 4 = A (expand/contract), app rollbacks never need a schema reversal, which makes A or B safe.*
 
 A) Redeploy previous IaC/artifact version (version-pinned rollback)
 
@@ -164,15 +311,11 @@ D) Database-aware rollback required (schema/data migration reversal) — flag fo
 
 E) Use our organization's existing rollback procedure — provide reference
 
-X) Other (please describe after [Answer]: tag below)
+X) Other (describe after [Answer]: tag below)
 
-[Answer]: D
+[Answer]: d
 
-> Note: Vercel provides instant rollback to a previous deployment natively, which maps to A.
-> However, this migration involves Prisma schema changes across two databases, so D may apply to
-> the migration phases specifically. You can answer with both if that fits.
-
-### Question K5: Deployment Style
+### Resiliency 6 (RESILIENCY-04): Deployment Style
 What deployment strategy is acceptable for this workload's risk profile?
 
 A) Direct / in-place (lowest cost, highest blast radius) — acceptable for non-critical workloads
@@ -183,100 +326,17 @@ C) Blue/green (zero-downtime cutover, higher cost)
 
 D) Canary (progressive traffic shift with automated rollback)
 
-X) Other (please describe after [Answer]: tag below)
+X) Other (describe after [Answer]: tag below)
 
-[Answer]: What do you recommend?
+[Answer]: d
 
-### Question K6: Regional Topology
-Does this workload require multi-region deployment, or is single-region with multi-zone redundancy sufficient?
-
-A) Single-region, multi-zone — tolerates zone failure, not full-region failure. Lower cost. (Aligns with RTO/RPO options A/B/E.)
-
-B) Multi-region active-passive — survives region failure with failover. Higher cost. (Aligns with Warm Standby / Pilot Light cross-region.)
-
-C) Multi-region active-active — survives region failure with no downtime. Highest cost. (Aligns with Active/Active.)
-
-X) Other (please describe after [Answer]: tag below)
-
-[Answer]: I am not sure, the ai dlc decide what's best
-
-> Note: your Neon database is in `ap-southeast-2` (Sydney). Answer B or C would require changes
-> well beyond the scope of this migration.
-
-### Question K7: Resiliency Testing Approach
-How will resiliency mechanisms (failover, recovery) be validated?
-
-A) Use our existing DR testing / game day / chaos engineering practice — provide the reference. AI-DLC will document test scenarios that fit it.
-
-B) No practice exists — AI-DLC should propose a DR testing schedule and chaos experiment plan for adoption.
-
-C) Defer to the Operations phase — capture test scenarios now, execute during Operations.
-
-X) Other (please describe after [Answer]: tag below)
-
-[Answer]: B
-
-### Question K8: Incident Response Process
+### Resiliency 7 (RESILIENCY-15): Incident Response Process
 How are production incidents handled for this workload?
 
 A) Use our existing incident response process — provide the reference (e.g., PagerDuty runbooks, internal IR/on-call process). AI-DLC will align alerting and runbooks to it.
 
 B) No formal process exists — AI-DLC should propose a lightweight incident response and Correction of Errors (COE) process for adoption.
 
-X) Other (please describe after [Answer]: tag below)
+X) Other (describe after [Answer]: tag below)
 
-[Answer]: B
-
----
-
-## Section L — Scope Confirmation (one risk worth naming)
-
-Your answers combine into a larger scope than may be obvious, so I want to confirm it rather than
-assume it.
-
-- **C2 = A**: consolidate all four UI libraries and three styling approaches as part of this work
-- **C3 = A**: both products must look visually identical
-- **D1 = A**: restore type checking and CI as a prerequisite phase
-- **D4 = C**: build the monorepo in parallel and cut over when ready
-- **E1 = B**: fix four security findings during the migration
-- **F1/F2/F3 = A**: all three extensions enforced as blocking constraints
-
-Taken together that is: a parallel monorepo build, a full UI system consolidation across
-163 components, a type-safety and CI programme from zero, four security fixes, and three
-blocking compliance regimes — before the mobile work you have also scoped.
-
-The UI consolidation is the item I would question. It is the largest single piece, it touches
-every component in both products, and it is not required by the monorepo split — a shared package
-can be introduced with one stack while existing code migrates gradually (that was option C2 = B).
-
-### Question L1
-Having seen the combined scope, do you want to keep C2 = A?
-
-A) **Yes, keep full consolidation** — do it once, properly, accepting the larger effort and timeline.
-
-B) **Change to C2 = B** — the shared package uses one stack; existing app code migrates opportunistically afterwards. Smaller and lower risk, gets the monorepo landed sooner.
-
-C) **Split it** — land the monorepo first with C2 = B, then run UI consolidation as a distinct follow-on effort.
-
-X) Other (please describe after [Answer]: tag below)
-
-[Answer]: C
-
-### Question L2
-Roughly how many people will work on this, and is this the team's main focus or alongside feature work?
-
-A) Solo, and this is the main focus
-
-B) Solo, alongside ongoing feature work on both products
-
-C) Small team (2–4), main focus
-
-D) Small team (2–4), alongside ongoing feature work
-
-X) Other (please describe after [Answer]: tag below)
-
-[Answer]: A
-
-> Why I ask: D4 = C (parallel build) means maintaining two copies of both products until cutover.
-> If feature work continues during that window, every change must land twice. That is the main
-> failure mode for parallel migrations, and it affects how I sequence the plan.
+[Answer]: a

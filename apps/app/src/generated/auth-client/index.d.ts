@@ -140,6 +140,48 @@ export type WorkerAvailability = $Result.DefaultSelection<Prisma.$WorkerAvailabi
  * Makes "professional mental-health experience" an indexed query.
  */
 export type WorkerExperience = $Result.DefaultSelection<Prisma.$WorkerExperiencePayload>
+/**
+ * Model AuLocality
+ * One row per Australian suburb–postcode pair, from Geoscape G-NAF
+ * (packages/db/data/au_localities.csv). Rows are never deleted: a locality
+ * dropped by a release is retired, so worker locations that point at it stay valid.
+ */
+export type AuLocality = $Result.DefaultSelection<Prisma.$AuLocalityPayload>
+/**
+ * Model WorkerLocation
+ * Where a worker is. Exactly one HOME row per worker (partial unique index,
+ * hand-written), carrying the travel radius. SERVICE_AREA is reserved: option A
+ * (radius only) was chosen on 2026-09-25, so nothing writes it yet.
+ */
+export type WorkerLocation = $Result.DefaultSelection<Prisma.$WorkerLocationPayload>
+/**
+ * Model WorkerOnboarding
+ * The onboarding marker: one row per worker. `stage` is derived by deriveStage()
+ * in apps/api and is never set by a client.
+ */
+export type WorkerOnboarding = $Result.DefaultSelection<Prisma.$WorkerOnboardingPayload>
+/**
+ * Model WorkerOnboardingTransition
+ * Append-only history of stage changes. Rows are never updated or deleted.
+ */
+export type WorkerOnboardingTransition = $Result.DefaultSelection<Prisma.$WorkerOnboardingTransitionPayload>
+/**
+ * Model OutboxEvent
+ * Transactional outbox: written in the same transaction as the business change,
+ * delivered by the apps/api dispatcher. Handlers are idempotent on `id`.
+ */
+export type OutboxEvent = $Result.DefaultSelection<Prisma.$OutboxEventPayload>
+/**
+ * Model RegistrationPhotoUpload
+ * A photo uploaded during sign-up, before the account exists. The registration
+ * request references it by id and claims it once; unclaimed rows are purged after 24 h.
+ */
+export type RegistrationPhotoUpload = $Result.DefaultSelection<Prisma.$RegistrationPhotoUploadPayload>
+/**
+ * Model RateLimitBucket
+ * Fixed-window rate-limit counters for apps/api, until a Redis decision (OI-08).
+ */
+export type RateLimitBucket = $Result.DefaultSelection<Prisma.$RateLimitBucketPayload>
 
 /**
  * Enums
@@ -177,7 +219,8 @@ export const AuditAction: {
   EMAIL_VERIFIED: 'EMAIL_VERIFIED',
   ROLE_CHANGE: 'ROLE_CHANGE',
   IMPERSONATION_START: 'IMPERSONATION_START',
-  IMPERSONATION_END: 'IMPERSONATION_END'
+  IMPERSONATION_END: 'IMPERSONATION_END',
+  ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED'
 };
 
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction]
@@ -283,6 +326,64 @@ export const CareDomain: {
 
 export type CareDomain = (typeof CareDomain)[keyof typeof CareDomain]
 
+
+export const OnboardingStage: {
+  SIGNED_UP: 'SIGNED_UP',
+  DOCUMENTS_IN_PROGRESS: 'DOCUMENTS_IN_PROGRESS',
+  DOCUMENTS_SUBMITTED: 'DOCUMENTS_SUBMITTED',
+  ACTION_REQUIRED: 'ACTION_REQUIRED',
+  VERIFIED: 'VERIFIED',
+  PUBLISHED: 'PUBLISHED'
+};
+
+export type OnboardingStage = (typeof OnboardingStage)[keyof typeof OnboardingStage]
+
+
+export const OnboardingTransitionSource: {
+  API: 'API',
+  RECONCILER: 'RECONCILER',
+  BACKFILL: 'BACKFILL'
+};
+
+export type OnboardingTransitionSource = (typeof OnboardingTransitionSource)[keyof typeof OnboardingTransitionSource]
+
+
+export const LocationKind: {
+  HOME: 'HOME',
+  SERVICE_AREA: 'SERVICE_AREA'
+};
+
+export type LocationKind = (typeof LocationKind)[keyof typeof LocationKind]
+
+
+export const LocationPrecision: {
+  LOCALITY: 'LOCALITY',
+  ADDRESS: 'ADDRESS'
+};
+
+export type LocationPrecision = (typeof LocationPrecision)[keyof typeof LocationPrecision]
+
+
+export const LocationSource: {
+  REGISTRATION: 'REGISTRATION',
+  ONBOARDING: 'ONBOARDING',
+  ADMIN: 'ADMIN',
+  RECONCILER: 'RECONCILER',
+  BACKFILL: 'BACKFILL'
+};
+
+export type LocationSource = (typeof LocationSource)[keyof typeof LocationSource]
+
+
+export const OutboxStatus: {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  DONE: 'DONE',
+  DEAD: 'DEAD'
+};
+
+export type OutboxStatus = (typeof OutboxStatus)[keyof typeof OutboxStatus]
+
 }
 
 export type JobApplicationStatus = $Enums.JobApplicationStatus
@@ -332,6 +433,30 @@ export const DayOfWeek: typeof $Enums.DayOfWeek
 export type CareDomain = $Enums.CareDomain
 
 export const CareDomain: typeof $Enums.CareDomain
+
+export type OnboardingStage = $Enums.OnboardingStage
+
+export const OnboardingStage: typeof $Enums.OnboardingStage
+
+export type OnboardingTransitionSource = $Enums.OnboardingTransitionSource
+
+export const OnboardingTransitionSource: typeof $Enums.OnboardingTransitionSource
+
+export type LocationKind = $Enums.LocationKind
+
+export const LocationKind: typeof $Enums.LocationKind
+
+export type LocationPrecision = $Enums.LocationPrecision
+
+export const LocationPrecision: typeof $Enums.LocationPrecision
+
+export type LocationSource = $Enums.LocationSource
+
+export const LocationSource: typeof $Enums.LocationSource
+
+export type OutboxStatus = $Enums.OutboxStatus
+
+export const OutboxStatus: typeof $Enums.OutboxStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -690,6 +815,76 @@ export class PrismaClient<
     * ```
     */
   get workerExperience(): Prisma.WorkerExperienceDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.auLocality`: Exposes CRUD operations for the **AuLocality** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AuLocalities
+    * const auLocalities = await prisma.auLocality.findMany()
+    * ```
+    */
+  get auLocality(): Prisma.AuLocalityDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerLocation`: Exposes CRUD operations for the **WorkerLocation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerLocations
+    * const workerLocations = await prisma.workerLocation.findMany()
+    * ```
+    */
+  get workerLocation(): Prisma.WorkerLocationDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerOnboarding`: Exposes CRUD operations for the **WorkerOnboarding** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerOnboardings
+    * const workerOnboardings = await prisma.workerOnboarding.findMany()
+    * ```
+    */
+  get workerOnboarding(): Prisma.WorkerOnboardingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workerOnboardingTransition`: Exposes CRUD operations for the **WorkerOnboardingTransition** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkerOnboardingTransitions
+    * const workerOnboardingTransitions = await prisma.workerOnboardingTransition.findMany()
+    * ```
+    */
+  get workerOnboardingTransition(): Prisma.WorkerOnboardingTransitionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.outboxEvent`: Exposes CRUD operations for the **OutboxEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OutboxEvents
+    * const outboxEvents = await prisma.outboxEvent.findMany()
+    * ```
+    */
+  get outboxEvent(): Prisma.OutboxEventDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.registrationPhotoUpload`: Exposes CRUD operations for the **RegistrationPhotoUpload** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RegistrationPhotoUploads
+    * const registrationPhotoUploads = await prisma.registrationPhotoUpload.findMany()
+    * ```
+    */
+  get registrationPhotoUpload(): Prisma.RegistrationPhotoUploadDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.rateLimitBucket`: Exposes CRUD operations for the **RateLimitBucket** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RateLimitBuckets
+    * const rateLimitBuckets = await prisma.rateLimitBucket.findMany()
+    * ```
+    */
+  get rateLimitBucket(): Prisma.RateLimitBucketDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1154,7 +1349,14 @@ export namespace Prisma {
     WorkerJobHistory: 'WorkerJobHistory',
     WorkerEducation: 'WorkerEducation',
     WorkerAvailability: 'WorkerAvailability',
-    WorkerExperience: 'WorkerExperience'
+    WorkerExperience: 'WorkerExperience',
+    AuLocality: 'AuLocality',
+    WorkerLocation: 'WorkerLocation',
+    WorkerOnboarding: 'WorkerOnboarding',
+    WorkerOnboardingTransition: 'WorkerOnboardingTransition',
+    OutboxEvent: 'OutboxEvent',
+    RegistrationPhotoUpload: 'RegistrationPhotoUpload',
+    RateLimitBucket: 'RateLimitBucket'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1173,7 +1375,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "auditLog" | "clientProfile" | "coordinatorProfile" | "participant" | "session" | "user" | "verificationRequirement" | "verificationToken" | "workerProfile" | "document" | "category" | "subcategory" | "categoryDocument" | "subcategoryDocument" | "workerService" | "job" | "jobApplication" | "workerAdditionalInfo" | "serviceRequest" | "workerJobHistory" | "workerEducation" | "workerAvailability" | "workerExperience"
+      modelProps: "account" | "auditLog" | "clientProfile" | "coordinatorProfile" | "participant" | "session" | "user" | "verificationRequirement" | "verificationToken" | "workerProfile" | "document" | "category" | "subcategory" | "categoryDocument" | "subcategoryDocument" | "workerService" | "job" | "jobApplication" | "workerAdditionalInfo" | "serviceRequest" | "workerJobHistory" | "workerEducation" | "workerAvailability" | "workerExperience" | "auLocality" | "workerLocation" | "workerOnboarding" | "workerOnboardingTransition" | "outboxEvent" | "registrationPhotoUpload" | "rateLimitBucket"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2953,6 +3155,524 @@ export namespace Prisma {
           }
         }
       }
+      AuLocality: {
+        payload: Prisma.$AuLocalityPayload<ExtArgs>
+        fields: Prisma.AuLocalityFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AuLocalityFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AuLocalityFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>
+          }
+          findFirst: {
+            args: Prisma.AuLocalityFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AuLocalityFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>
+          }
+          findMany: {
+            args: Prisma.AuLocalityFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>[]
+          }
+          create: {
+            args: Prisma.AuLocalityCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>
+          }
+          createMany: {
+            args: Prisma.AuLocalityCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AuLocalityCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>[]
+          }
+          delete: {
+            args: Prisma.AuLocalityDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>
+          }
+          update: {
+            args: Prisma.AuLocalityUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>
+          }
+          deleteMany: {
+            args: Prisma.AuLocalityDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AuLocalityUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AuLocalityUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>[]
+          }
+          upsert: {
+            args: Prisma.AuLocalityUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuLocalityPayload>
+          }
+          aggregate: {
+            args: Prisma.AuLocalityAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAuLocality>
+          }
+          groupBy: {
+            args: Prisma.AuLocalityGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AuLocalityGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AuLocalityCountArgs<ExtArgs>
+            result: $Utils.Optional<AuLocalityCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkerLocation: {
+        payload: Prisma.$WorkerLocationPayload<ExtArgs>
+        fields: Prisma.WorkerLocationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerLocationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerLocationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerLocationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerLocationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>
+          }
+          findMany: {
+            args: Prisma.WorkerLocationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>[]
+          }
+          create: {
+            args: Prisma.WorkerLocationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>
+          }
+          createMany: {
+            args: Prisma.WorkerLocationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerLocationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerLocationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>
+          }
+          update: {
+            args: Prisma.WorkerLocationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerLocationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerLocationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerLocationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerLocationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerLocationPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerLocationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerLocation>
+          }
+          groupBy: {
+            args: Prisma.WorkerLocationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerLocationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerLocationCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerLocationCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkerOnboarding: {
+        payload: Prisma.$WorkerOnboardingPayload<ExtArgs>
+        fields: Prisma.WorkerOnboardingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerOnboardingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerOnboardingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerOnboardingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerOnboardingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>
+          }
+          findMany: {
+            args: Prisma.WorkerOnboardingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>[]
+          }
+          create: {
+            args: Prisma.WorkerOnboardingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>
+          }
+          createMany: {
+            args: Prisma.WorkerOnboardingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerOnboardingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerOnboardingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>
+          }
+          update: {
+            args: Prisma.WorkerOnboardingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerOnboardingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerOnboardingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerOnboardingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerOnboardingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerOnboardingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerOnboarding>
+          }
+          groupBy: {
+            args: Prisma.WorkerOnboardingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerOnboardingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerOnboardingCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerOnboardingCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkerOnboardingTransition: {
+        payload: Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>
+        fields: Prisma.WorkerOnboardingTransitionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkerOnboardingTransitionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkerOnboardingTransitionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkerOnboardingTransitionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkerOnboardingTransitionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>
+          }
+          findMany: {
+            args: Prisma.WorkerOnboardingTransitionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>[]
+          }
+          create: {
+            args: Prisma.WorkerOnboardingTransitionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>
+          }
+          createMany: {
+            args: Prisma.WorkerOnboardingTransitionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkerOnboardingTransitionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkerOnboardingTransitionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>
+          }
+          update: {
+            args: Prisma.WorkerOnboardingTransitionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkerOnboardingTransitionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkerOnboardingTransitionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkerOnboardingTransitionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkerOnboardingTransitionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkerOnboardingTransitionPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkerOnboardingTransitionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkerOnboardingTransition>
+          }
+          groupBy: {
+            args: Prisma.WorkerOnboardingTransitionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkerOnboardingTransitionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkerOnboardingTransitionCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkerOnboardingTransitionCountAggregateOutputType> | number
+          }
+        }
+      }
+      OutboxEvent: {
+        payload: Prisma.$OutboxEventPayload<ExtArgs>
+        fields: Prisma.OutboxEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OutboxEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OutboxEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+          }
+          findFirst: {
+            args: Prisma.OutboxEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OutboxEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+          }
+          findMany: {
+            args: Prisma.OutboxEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>[]
+          }
+          create: {
+            args: Prisma.OutboxEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+          }
+          createMany: {
+            args: Prisma.OutboxEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OutboxEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>[]
+          }
+          delete: {
+            args: Prisma.OutboxEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+          }
+          update: {
+            args: Prisma.OutboxEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.OutboxEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OutboxEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OutboxEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.OutboxEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+          }
+          aggregate: {
+            args: Prisma.OutboxEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOutboxEvent>
+          }
+          groupBy: {
+            args: Prisma.OutboxEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OutboxEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OutboxEventCountArgs<ExtArgs>
+            result: $Utils.Optional<OutboxEventCountAggregateOutputType> | number
+          }
+        }
+      }
+      RegistrationPhotoUpload: {
+        payload: Prisma.$RegistrationPhotoUploadPayload<ExtArgs>
+        fields: Prisma.RegistrationPhotoUploadFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RegistrationPhotoUploadFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RegistrationPhotoUploadFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>
+          }
+          findFirst: {
+            args: Prisma.RegistrationPhotoUploadFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RegistrationPhotoUploadFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>
+          }
+          findMany: {
+            args: Prisma.RegistrationPhotoUploadFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>[]
+          }
+          create: {
+            args: Prisma.RegistrationPhotoUploadCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>
+          }
+          createMany: {
+            args: Prisma.RegistrationPhotoUploadCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RegistrationPhotoUploadCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>[]
+          }
+          delete: {
+            args: Prisma.RegistrationPhotoUploadDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>
+          }
+          update: {
+            args: Prisma.RegistrationPhotoUploadUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>
+          }
+          deleteMany: {
+            args: Prisma.RegistrationPhotoUploadDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RegistrationPhotoUploadUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RegistrationPhotoUploadUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>[]
+          }
+          upsert: {
+            args: Prisma.RegistrationPhotoUploadUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RegistrationPhotoUploadPayload>
+          }
+          aggregate: {
+            args: Prisma.RegistrationPhotoUploadAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRegistrationPhotoUpload>
+          }
+          groupBy: {
+            args: Prisma.RegistrationPhotoUploadGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RegistrationPhotoUploadGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RegistrationPhotoUploadCountArgs<ExtArgs>
+            result: $Utils.Optional<RegistrationPhotoUploadCountAggregateOutputType> | number
+          }
+        }
+      }
+      RateLimitBucket: {
+        payload: Prisma.$RateLimitBucketPayload<ExtArgs>
+        fields: Prisma.RateLimitBucketFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RateLimitBucketFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RateLimitBucketFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          findFirst: {
+            args: Prisma.RateLimitBucketFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RateLimitBucketFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          findMany: {
+            args: Prisma.RateLimitBucketFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>[]
+          }
+          create: {
+            args: Prisma.RateLimitBucketCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          createMany: {
+            args: Prisma.RateLimitBucketCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RateLimitBucketCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>[]
+          }
+          delete: {
+            args: Prisma.RateLimitBucketDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          update: {
+            args: Prisma.RateLimitBucketUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          deleteMany: {
+            args: Prisma.RateLimitBucketDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RateLimitBucketUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RateLimitBucketUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>[]
+          }
+          upsert: {
+            args: Prisma.RateLimitBucketUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RateLimitBucketPayload>
+          }
+          aggregate: {
+            args: Prisma.RateLimitBucketAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRateLimitBucket>
+          }
+          groupBy: {
+            args: Prisma.RateLimitBucketGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RateLimitBucketGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RateLimitBucketCountArgs<ExtArgs>
+            result: $Utils.Optional<RateLimitBucketCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3073,6 +3793,13 @@ export namespace Prisma {
     workerEducation?: WorkerEducationOmit
     workerAvailability?: WorkerAvailabilityOmit
     workerExperience?: WorkerExperienceOmit
+    auLocality?: AuLocalityOmit
+    workerLocation?: WorkerLocationOmit
+    workerOnboarding?: WorkerOnboardingOmit
+    workerOnboardingTransition?: WorkerOnboardingTransitionOmit
+    outboxEvent?: OutboxEventOmit
+    registrationPhotoUpload?: RegistrationPhotoUploadOmit
+    rateLimitBucket?: RateLimitBucketOmit
   }
 
   /* Types for Logging */
@@ -3248,6 +3975,9 @@ export namespace Prisma {
     jobHistoryEntries: number
     educationEntries: number
     careExperience: number
+    locations: number
+    onboardingTransitions: number
+    registrationPhotos: number
   }
 
   export type WorkerProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3257,6 +3987,9 @@ export namespace Prisma {
     jobHistoryEntries?: boolean | WorkerProfileCountOutputTypeCountJobHistoryEntriesArgs
     educationEntries?: boolean | WorkerProfileCountOutputTypeCountEducationEntriesArgs
     careExperience?: boolean | WorkerProfileCountOutputTypeCountCareExperienceArgs
+    locations?: boolean | WorkerProfileCountOutputTypeCountLocationsArgs
+    onboardingTransitions?: boolean | WorkerProfileCountOutputTypeCountOnboardingTransitionsArgs
+    registrationPhotos?: boolean | WorkerProfileCountOutputTypeCountRegistrationPhotosArgs
   }
 
   // Custom InputTypes
@@ -3310,6 +4043,27 @@ export namespace Prisma {
    */
   export type WorkerProfileCountOutputTypeCountCareExperienceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkerExperienceWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountLocationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerLocationWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountOnboardingTransitionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerOnboardingTransitionWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountRegistrationPhotosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationPhotoUploadWhereInput
   }
 
 
@@ -3452,6 +4206,46 @@ export namespace Prisma {
    */
   export type JobCountOutputTypeCountApplicationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: JobApplicationWhereInput
+  }
+
+
+  /**
+   * Count Type AuLocalityCountOutputType
+   */
+
+  export type AuLocalityCountOutputType = {
+    supersedes: number
+    workerLocations: number
+  }
+
+  export type AuLocalityCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    supersedes?: boolean | AuLocalityCountOutputTypeCountSupersedesArgs
+    workerLocations?: boolean | AuLocalityCountOutputTypeCountWorkerLocationsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AuLocalityCountOutputType without action
+   */
+  export type AuLocalityCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocalityCountOutputType
+     */
+    select?: AuLocalityCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AuLocalityCountOutputType without action
+   */
+  export type AuLocalityCountOutputTypeCountSupersedesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuLocalityWhereInput
+  }
+
+  /**
+   * AuLocalityCountOutputType without action
+   */
+  export type AuLocalityCountOutputTypeCountWorkerLocationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerLocationWhereInput
   }
 
 
@@ -13864,6 +14658,9 @@ export namespace Prisma {
     verificationStatus: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    consentProfileShareAt: Date | null
+    consentWordingVersion: string | null
+    zohoLeadId: string | null
   }
 
   export type WorkerProfileMaxAggregateOutputType = {
@@ -13896,6 +14693,9 @@ export namespace Prisma {
     verificationStatus: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    consentProfileShareAt: Date | null
+    consentWordingVersion: string | null
+    zohoLeadId: string | null
   }
 
   export type WorkerProfileCountAggregateOutputType = {
@@ -13931,6 +14731,9 @@ export namespace Prisma {
     verificationStatus: number
     createdAt: number
     updatedAt: number
+    consentProfileShareAt: number
+    consentWordingVersion: number
+    zohoLeadId: number
     _all: number
   }
 
@@ -13977,6 +14780,9 @@ export namespace Prisma {
     verificationStatus?: true
     createdAt?: true
     updatedAt?: true
+    consentProfileShareAt?: true
+    consentWordingVersion?: true
+    zohoLeadId?: true
   }
 
   export type WorkerProfileMaxAggregateInputType = {
@@ -14009,6 +14815,9 @@ export namespace Prisma {
     verificationStatus?: true
     createdAt?: true
     updatedAt?: true
+    consentProfileShareAt?: true
+    consentWordingVersion?: true
+    zohoLeadId?: true
   }
 
   export type WorkerProfileCountAggregateInputType = {
@@ -14044,6 +14853,9 @@ export namespace Prisma {
     verificationStatus?: true
     createdAt?: true
     updatedAt?: true
+    consentProfileShareAt?: true
+    consentWordingVersion?: true
+    zohoLeadId?: true
     _all?: true
   }
 
@@ -14166,6 +14978,9 @@ export namespace Prisma {
     verificationStatus: string
     createdAt: Date
     updatedAt: Date
+    consentProfileShareAt: Date | null
+    consentWordingVersion: string | null
+    zohoLeadId: string | null
     _count: WorkerProfileCountAggregateOutputType | null
     _avg: WorkerProfileAvgAggregateOutputType | null
     _sum: WorkerProfileSumAggregateOutputType | null
@@ -14220,6 +15035,9 @@ export namespace Prisma {
     verificationStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    consentProfileShareAt?: boolean
+    consentWordingVersion?: boolean
+    zohoLeadId?: boolean
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -14228,6 +15046,10 @@ export namespace Prisma {
     jobHistoryEntries?: boolean | WorkerProfile$jobHistoryEntriesArgs<ExtArgs>
     educationEntries?: boolean | WorkerProfile$educationEntriesArgs<ExtArgs>
     careExperience?: boolean | WorkerProfile$careExperienceArgs<ExtArgs>
+    locations?: boolean | WorkerProfile$locationsArgs<ExtArgs>
+    onboarding?: boolean | WorkerProfile$onboardingArgs<ExtArgs>
+    onboardingTransitions?: boolean | WorkerProfile$onboardingTransitionsArgs<ExtArgs>
+    registrationPhotos?: boolean | WorkerProfile$registrationPhotosArgs<ExtArgs>
     _count?: boolean | WorkerProfileCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerProfile"]>
 
@@ -14264,6 +15086,9 @@ export namespace Prisma {
     verificationStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    consentProfileShareAt?: boolean
+    consentWordingVersion?: boolean
+    zohoLeadId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerProfile"]>
 
@@ -14300,6 +15125,9 @@ export namespace Prisma {
     verificationStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    consentProfileShareAt?: boolean
+    consentWordingVersion?: boolean
+    zohoLeadId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workerProfile"]>
 
@@ -14336,9 +15164,12 @@ export namespace Prisma {
     verificationStatus?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    consentProfileShareAt?: boolean
+    consentWordingVersion?: boolean
+    zohoLeadId?: boolean
   }
 
-  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt", ExtArgs["result"]["workerProfile"]>
+  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt" | "consentProfileShareAt" | "consentWordingVersion" | "zohoLeadId", ExtArgs["result"]["workerProfile"]>
   export type WorkerProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
@@ -14348,6 +15179,10 @@ export namespace Prisma {
     jobHistoryEntries?: boolean | WorkerProfile$jobHistoryEntriesArgs<ExtArgs>
     educationEntries?: boolean | WorkerProfile$educationEntriesArgs<ExtArgs>
     careExperience?: boolean | WorkerProfile$careExperienceArgs<ExtArgs>
+    locations?: boolean | WorkerProfile$locationsArgs<ExtArgs>
+    onboarding?: boolean | WorkerProfile$onboardingArgs<ExtArgs>
+    onboardingTransitions?: boolean | WorkerProfile$onboardingTransitionsArgs<ExtArgs>
+    registrationPhotos?: boolean | WorkerProfile$registrationPhotosArgs<ExtArgs>
     _count?: boolean | WorkerProfileCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkerProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14368,6 +15203,10 @@ export namespace Prisma {
       jobHistoryEntries: Prisma.$WorkerJobHistoryPayload<ExtArgs>[]
       educationEntries: Prisma.$WorkerEducationPayload<ExtArgs>[]
       careExperience: Prisma.$WorkerExperiencePayload<ExtArgs>[]
+      locations: Prisma.$WorkerLocationPayload<ExtArgs>[]
+      onboarding: Prisma.$WorkerOnboardingPayload<ExtArgs> | null
+      onboardingTransitions: Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>[]
+      registrationPhotos: Prisma.$RegistrationPhotoUploadPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -14402,6 +15241,9 @@ export namespace Prisma {
       verificationStatus: string
       createdAt: Date
       updatedAt: Date
+      consentProfileShareAt: Date | null
+      consentWordingVersion: string | null
+      zohoLeadId: string | null
     }, ExtArgs["result"]["workerProfile"]>
     composites: {}
   }
@@ -14804,6 +15646,10 @@ export namespace Prisma {
     jobHistoryEntries<T extends WorkerProfile$jobHistoryEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$jobHistoryEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerJobHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     educationEntries<T extends WorkerProfile$educationEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$educationEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerEducationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     careExperience<T extends WorkerProfile$careExperienceArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$careExperienceArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerExperiencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    locations<T extends WorkerProfile$locationsArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$locationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    onboarding<T extends WorkerProfile$onboardingArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$onboardingArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    onboardingTransitions<T extends WorkerProfile$onboardingTransitionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$onboardingTransitionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    registrationPhotos<T extends WorkerProfile$registrationPhotosArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$registrationPhotosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14865,6 +15711,9 @@ export namespace Prisma {
     readonly verificationStatus: FieldRef<"WorkerProfile", 'String'>
     readonly createdAt: FieldRef<"WorkerProfile", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkerProfile", 'DateTime'>
+    readonly consentProfileShareAt: FieldRef<"WorkerProfile", 'DateTime'>
+    readonly consentWordingVersion: FieldRef<"WorkerProfile", 'String'>
+    readonly zohoLeadId: FieldRef<"WorkerProfile", 'String'>
   }
     
 
@@ -15421,6 +16270,97 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkerExperienceScalarFieldEnum | WorkerExperienceScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.locations
+   */
+  export type WorkerProfile$locationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    where?: WorkerLocationWhereInput
+    orderBy?: WorkerLocationOrderByWithRelationInput | WorkerLocationOrderByWithRelationInput[]
+    cursor?: WorkerLocationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerLocationScalarFieldEnum | WorkerLocationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.onboarding
+   */
+  export type WorkerProfile$onboardingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    where?: WorkerOnboardingWhereInput
+  }
+
+  /**
+   * WorkerProfile.onboardingTransitions
+   */
+  export type WorkerProfile$onboardingTransitionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    where?: WorkerOnboardingTransitionWhereInput
+    orderBy?: WorkerOnboardingTransitionOrderByWithRelationInput | WorkerOnboardingTransitionOrderByWithRelationInput[]
+    cursor?: WorkerOnboardingTransitionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerOnboardingTransitionScalarFieldEnum | WorkerOnboardingTransitionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.registrationPhotos
+   */
+  export type WorkerProfile$registrationPhotosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    where?: RegistrationPhotoUploadWhereInput
+    orderBy?: RegistrationPhotoUploadOrderByWithRelationInput | RegistrationPhotoUploadOrderByWithRelationInput[]
+    cursor?: RegistrationPhotoUploadWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationPhotoUploadScalarFieldEnum | RegistrationPhotoUploadScalarFieldEnum[]
   }
 
   /**
@@ -31235,6 +32175,8141 @@ export namespace Prisma {
 
 
   /**
+   * Model AuLocality
+   */
+
+  export type AggregateAuLocality = {
+    _count: AuLocalityCountAggregateOutputType | null
+    _avg: AuLocalityAvgAggregateOutputType | null
+    _sum: AuLocalitySumAggregateOutputType | null
+    _min: AuLocalityMinAggregateOutputType | null
+    _max: AuLocalityMaxAggregateOutputType | null
+  }
+
+  export type AuLocalityAvgAggregateOutputType = {
+    id: number | null
+    latitude: number | null
+    longitude: number | null
+    supersededById: number | null
+  }
+
+  export type AuLocalitySumAggregateOutputType = {
+    id: number | null
+    latitude: number | null
+    longitude: number | null
+    supersededById: number | null
+  }
+
+  export type AuLocalityMinAggregateOutputType = {
+    id: number | null
+    gnafLocalityPid: string | null
+    suburb: string | null
+    searchName: string | null
+    state: string | null
+    postcode: string | null
+    latitude: number | null
+    longitude: number | null
+    sourceVersion: string | null
+    retiredAt: Date | null
+    supersededById: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AuLocalityMaxAggregateOutputType = {
+    id: number | null
+    gnafLocalityPid: string | null
+    suburb: string | null
+    searchName: string | null
+    state: string | null
+    postcode: string | null
+    latitude: number | null
+    longitude: number | null
+    sourceVersion: string | null
+    retiredAt: Date | null
+    supersededById: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AuLocalityCountAggregateOutputType = {
+    id: number
+    gnafLocalityPid: number
+    suburb: number
+    searchName: number
+    state: number
+    postcode: number
+    latitude: number
+    longitude: number
+    sourceVersion: number
+    retiredAt: number
+    supersededById: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AuLocalityAvgAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    supersededById?: true
+  }
+
+  export type AuLocalitySumAggregateInputType = {
+    id?: true
+    latitude?: true
+    longitude?: true
+    supersededById?: true
+  }
+
+  export type AuLocalityMinAggregateInputType = {
+    id?: true
+    gnafLocalityPid?: true
+    suburb?: true
+    searchName?: true
+    state?: true
+    postcode?: true
+    latitude?: true
+    longitude?: true
+    sourceVersion?: true
+    retiredAt?: true
+    supersededById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AuLocalityMaxAggregateInputType = {
+    id?: true
+    gnafLocalityPid?: true
+    suburb?: true
+    searchName?: true
+    state?: true
+    postcode?: true
+    latitude?: true
+    longitude?: true
+    sourceVersion?: true
+    retiredAt?: true
+    supersededById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AuLocalityCountAggregateInputType = {
+    id?: true
+    gnafLocalityPid?: true
+    suburb?: true
+    searchName?: true
+    state?: true
+    postcode?: true
+    latitude?: true
+    longitude?: true
+    sourceVersion?: true
+    retiredAt?: true
+    supersededById?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AuLocalityAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuLocality to aggregate.
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuLocalities to fetch.
+     */
+    orderBy?: AuLocalityOrderByWithRelationInput | AuLocalityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AuLocalityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuLocalities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuLocalities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AuLocalities
+    **/
+    _count?: true | AuLocalityCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AuLocalityAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AuLocalitySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AuLocalityMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AuLocalityMaxAggregateInputType
+  }
+
+  export type GetAuLocalityAggregateType<T extends AuLocalityAggregateArgs> = {
+        [P in keyof T & keyof AggregateAuLocality]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAuLocality[P]>
+      : GetScalarType<T[P], AggregateAuLocality[P]>
+  }
+
+
+
+
+  export type AuLocalityGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuLocalityWhereInput
+    orderBy?: AuLocalityOrderByWithAggregationInput | AuLocalityOrderByWithAggregationInput[]
+    by: AuLocalityScalarFieldEnum[] | AuLocalityScalarFieldEnum
+    having?: AuLocalityScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AuLocalityCountAggregateInputType | true
+    _avg?: AuLocalityAvgAggregateInputType
+    _sum?: AuLocalitySumAggregateInputType
+    _min?: AuLocalityMinAggregateInputType
+    _max?: AuLocalityMaxAggregateInputType
+  }
+
+  export type AuLocalityGroupByOutputType = {
+    id: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt: Date | null
+    supersededById: number | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AuLocalityCountAggregateOutputType | null
+    _avg: AuLocalityAvgAggregateOutputType | null
+    _sum: AuLocalitySumAggregateOutputType | null
+    _min: AuLocalityMinAggregateOutputType | null
+    _max: AuLocalityMaxAggregateOutputType | null
+  }
+
+  type GetAuLocalityGroupByPayload<T extends AuLocalityGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AuLocalityGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AuLocalityGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AuLocalityGroupByOutputType[P]>
+            : GetScalarType<T[P], AuLocalityGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AuLocalitySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    gnafLocalityPid?: boolean
+    suburb?: boolean
+    searchName?: boolean
+    state?: boolean
+    postcode?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    sourceVersion?: boolean
+    retiredAt?: boolean
+    supersededById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    supersededBy?: boolean | AuLocality$supersededByArgs<ExtArgs>
+    supersedes?: boolean | AuLocality$supersedesArgs<ExtArgs>
+    workerLocations?: boolean | AuLocality$workerLocationsArgs<ExtArgs>
+    _count?: boolean | AuLocalityCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["auLocality"]>
+
+  export type AuLocalitySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    gnafLocalityPid?: boolean
+    suburb?: boolean
+    searchName?: boolean
+    state?: boolean
+    postcode?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    sourceVersion?: boolean
+    retiredAt?: boolean
+    supersededById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    supersededBy?: boolean | AuLocality$supersededByArgs<ExtArgs>
+  }, ExtArgs["result"]["auLocality"]>
+
+  export type AuLocalitySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    gnafLocalityPid?: boolean
+    suburb?: boolean
+    searchName?: boolean
+    state?: boolean
+    postcode?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    sourceVersion?: boolean
+    retiredAt?: boolean
+    supersededById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    supersededBy?: boolean | AuLocality$supersededByArgs<ExtArgs>
+  }, ExtArgs["result"]["auLocality"]>
+
+  export type AuLocalitySelectScalar = {
+    id?: boolean
+    gnafLocalityPid?: boolean
+    suburb?: boolean
+    searchName?: boolean
+    state?: boolean
+    postcode?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    sourceVersion?: boolean
+    retiredAt?: boolean
+    supersededById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AuLocalityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "gnafLocalityPid" | "suburb" | "searchName" | "state" | "postcode" | "latitude" | "longitude" | "sourceVersion" | "retiredAt" | "supersededById" | "createdAt" | "updatedAt", ExtArgs["result"]["auLocality"]>
+  export type AuLocalityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    supersededBy?: boolean | AuLocality$supersededByArgs<ExtArgs>
+    supersedes?: boolean | AuLocality$supersedesArgs<ExtArgs>
+    workerLocations?: boolean | AuLocality$workerLocationsArgs<ExtArgs>
+    _count?: boolean | AuLocalityCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type AuLocalityIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    supersededBy?: boolean | AuLocality$supersededByArgs<ExtArgs>
+  }
+  export type AuLocalityIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    supersededBy?: boolean | AuLocality$supersededByArgs<ExtArgs>
+  }
+
+  export type $AuLocalityPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AuLocality"
+    objects: {
+      supersededBy: Prisma.$AuLocalityPayload<ExtArgs> | null
+      supersedes: Prisma.$AuLocalityPayload<ExtArgs>[]
+      workerLocations: Prisma.$WorkerLocationPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      gnafLocalityPid: string
+      suburb: string
+      /**
+       * Lower-case, single-spaced suburb name; what the search box matches on.
+       */
+      searchName: string
+      state: string
+      postcode: string
+      latitude: number
+      longitude: number
+      sourceVersion: string
+      retiredAt: Date | null
+      supersededById: number | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["auLocality"]>
+    composites: {}
+  }
+
+  type AuLocalityGetPayload<S extends boolean | null | undefined | AuLocalityDefaultArgs> = $Result.GetResult<Prisma.$AuLocalityPayload, S>
+
+  type AuLocalityCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AuLocalityFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AuLocalityCountAggregateInputType | true
+    }
+
+  export interface AuLocalityDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuLocality'], meta: { name: 'AuLocality' } }
+    /**
+     * Find zero or one AuLocality that matches the filter.
+     * @param {AuLocalityFindUniqueArgs} args - Arguments to find a AuLocality
+     * @example
+     * // Get one AuLocality
+     * const auLocality = await prisma.auLocality.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AuLocalityFindUniqueArgs>(args: SelectSubset<T, AuLocalityFindUniqueArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AuLocality that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AuLocalityFindUniqueOrThrowArgs} args - Arguments to find a AuLocality
+     * @example
+     * // Get one AuLocality
+     * const auLocality = await prisma.auLocality.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AuLocalityFindUniqueOrThrowArgs>(args: SelectSubset<T, AuLocalityFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuLocality that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityFindFirstArgs} args - Arguments to find a AuLocality
+     * @example
+     * // Get one AuLocality
+     * const auLocality = await prisma.auLocality.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AuLocalityFindFirstArgs>(args?: SelectSubset<T, AuLocalityFindFirstArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuLocality that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityFindFirstOrThrowArgs} args - Arguments to find a AuLocality
+     * @example
+     * // Get one AuLocality
+     * const auLocality = await prisma.auLocality.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AuLocalityFindFirstOrThrowArgs>(args?: SelectSubset<T, AuLocalityFindFirstOrThrowArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AuLocalities that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AuLocalities
+     * const auLocalities = await prisma.auLocality.findMany()
+     * 
+     * // Get first 10 AuLocalities
+     * const auLocalities = await prisma.auLocality.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const auLocalityWithIdOnly = await prisma.auLocality.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AuLocalityFindManyArgs>(args?: SelectSubset<T, AuLocalityFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AuLocality.
+     * @param {AuLocalityCreateArgs} args - Arguments to create a AuLocality.
+     * @example
+     * // Create one AuLocality
+     * const AuLocality = await prisma.auLocality.create({
+     *   data: {
+     *     // ... data to create a AuLocality
+     *   }
+     * })
+     * 
+     */
+    create<T extends AuLocalityCreateArgs>(args: SelectSubset<T, AuLocalityCreateArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AuLocalities.
+     * @param {AuLocalityCreateManyArgs} args - Arguments to create many AuLocalities.
+     * @example
+     * // Create many AuLocalities
+     * const auLocality = await prisma.auLocality.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AuLocalityCreateManyArgs>(args?: SelectSubset<T, AuLocalityCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AuLocalities and returns the data saved in the database.
+     * @param {AuLocalityCreateManyAndReturnArgs} args - Arguments to create many AuLocalities.
+     * @example
+     * // Create many AuLocalities
+     * const auLocality = await prisma.auLocality.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AuLocalities and only return the `id`
+     * const auLocalityWithIdOnly = await prisma.auLocality.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AuLocalityCreateManyAndReturnArgs>(args?: SelectSubset<T, AuLocalityCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AuLocality.
+     * @param {AuLocalityDeleteArgs} args - Arguments to delete one AuLocality.
+     * @example
+     * // Delete one AuLocality
+     * const AuLocality = await prisma.auLocality.delete({
+     *   where: {
+     *     // ... filter to delete one AuLocality
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AuLocalityDeleteArgs>(args: SelectSubset<T, AuLocalityDeleteArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AuLocality.
+     * @param {AuLocalityUpdateArgs} args - Arguments to update one AuLocality.
+     * @example
+     * // Update one AuLocality
+     * const auLocality = await prisma.auLocality.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AuLocalityUpdateArgs>(args: SelectSubset<T, AuLocalityUpdateArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AuLocalities.
+     * @param {AuLocalityDeleteManyArgs} args - Arguments to filter AuLocalities to delete.
+     * @example
+     * // Delete a few AuLocalities
+     * const { count } = await prisma.auLocality.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AuLocalityDeleteManyArgs>(args?: SelectSubset<T, AuLocalityDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuLocalities.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AuLocalities
+     * const auLocality = await prisma.auLocality.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AuLocalityUpdateManyArgs>(args: SelectSubset<T, AuLocalityUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuLocalities and returns the data updated in the database.
+     * @param {AuLocalityUpdateManyAndReturnArgs} args - Arguments to update many AuLocalities.
+     * @example
+     * // Update many AuLocalities
+     * const auLocality = await prisma.auLocality.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AuLocalities and only return the `id`
+     * const auLocalityWithIdOnly = await prisma.auLocality.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AuLocalityUpdateManyAndReturnArgs>(args: SelectSubset<T, AuLocalityUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AuLocality.
+     * @param {AuLocalityUpsertArgs} args - Arguments to update or create a AuLocality.
+     * @example
+     * // Update or create a AuLocality
+     * const auLocality = await prisma.auLocality.upsert({
+     *   create: {
+     *     // ... data to create a AuLocality
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AuLocality we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AuLocalityUpsertArgs>(args: SelectSubset<T, AuLocalityUpsertArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AuLocalities.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityCountArgs} args - Arguments to filter AuLocalities to count.
+     * @example
+     * // Count the number of AuLocalities
+     * const count = await prisma.auLocality.count({
+     *   where: {
+     *     // ... the filter for the AuLocalities we want to count
+     *   }
+     * })
+    **/
+    count<T extends AuLocalityCountArgs>(
+      args?: Subset<T, AuLocalityCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AuLocalityCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AuLocality.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AuLocalityAggregateArgs>(args: Subset<T, AuLocalityAggregateArgs>): Prisma.PrismaPromise<GetAuLocalityAggregateType<T>>
+
+    /**
+     * Group by AuLocality.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuLocalityGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AuLocalityGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AuLocalityGroupByArgs['orderBy'] }
+        : { orderBy?: AuLocalityGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AuLocalityGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuLocalityGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AuLocality model
+   */
+  readonly fields: AuLocalityFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AuLocality.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AuLocalityClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    supersededBy<T extends AuLocality$supersededByArgs<ExtArgs> = {}>(args?: Subset<T, AuLocality$supersededByArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    supersedes<T extends AuLocality$supersedesArgs<ExtArgs> = {}>(args?: Subset<T, AuLocality$supersedesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    workerLocations<T extends AuLocality$workerLocationsArgs<ExtArgs> = {}>(args?: Subset<T, AuLocality$workerLocationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AuLocality model
+   */
+  interface AuLocalityFieldRefs {
+    readonly id: FieldRef<"AuLocality", 'Int'>
+    readonly gnafLocalityPid: FieldRef<"AuLocality", 'String'>
+    readonly suburb: FieldRef<"AuLocality", 'String'>
+    readonly searchName: FieldRef<"AuLocality", 'String'>
+    readonly state: FieldRef<"AuLocality", 'String'>
+    readonly postcode: FieldRef<"AuLocality", 'String'>
+    readonly latitude: FieldRef<"AuLocality", 'Float'>
+    readonly longitude: FieldRef<"AuLocality", 'Float'>
+    readonly sourceVersion: FieldRef<"AuLocality", 'String'>
+    readonly retiredAt: FieldRef<"AuLocality", 'DateTime'>
+    readonly supersededById: FieldRef<"AuLocality", 'Int'>
+    readonly createdAt: FieldRef<"AuLocality", 'DateTime'>
+    readonly updatedAt: FieldRef<"AuLocality", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AuLocality findUnique
+   */
+  export type AuLocalityFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * Filter, which AuLocality to fetch.
+     */
+    where: AuLocalityWhereUniqueInput
+  }
+
+  /**
+   * AuLocality findUniqueOrThrow
+   */
+  export type AuLocalityFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * Filter, which AuLocality to fetch.
+     */
+    where: AuLocalityWhereUniqueInput
+  }
+
+  /**
+   * AuLocality findFirst
+   */
+  export type AuLocalityFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * Filter, which AuLocality to fetch.
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuLocalities to fetch.
+     */
+    orderBy?: AuLocalityOrderByWithRelationInput | AuLocalityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuLocalities.
+     */
+    cursor?: AuLocalityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuLocalities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuLocalities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuLocalities.
+     */
+    distinct?: AuLocalityScalarFieldEnum | AuLocalityScalarFieldEnum[]
+  }
+
+  /**
+   * AuLocality findFirstOrThrow
+   */
+  export type AuLocalityFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * Filter, which AuLocality to fetch.
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuLocalities to fetch.
+     */
+    orderBy?: AuLocalityOrderByWithRelationInput | AuLocalityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuLocalities.
+     */
+    cursor?: AuLocalityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuLocalities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuLocalities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuLocalities.
+     */
+    distinct?: AuLocalityScalarFieldEnum | AuLocalityScalarFieldEnum[]
+  }
+
+  /**
+   * AuLocality findMany
+   */
+  export type AuLocalityFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * Filter, which AuLocalities to fetch.
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuLocalities to fetch.
+     */
+    orderBy?: AuLocalityOrderByWithRelationInput | AuLocalityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AuLocalities.
+     */
+    cursor?: AuLocalityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuLocalities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuLocalities.
+     */
+    skip?: number
+    distinct?: AuLocalityScalarFieldEnum | AuLocalityScalarFieldEnum[]
+  }
+
+  /**
+   * AuLocality create
+   */
+  export type AuLocalityCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AuLocality.
+     */
+    data: XOR<AuLocalityCreateInput, AuLocalityUncheckedCreateInput>
+  }
+
+  /**
+   * AuLocality createMany
+   */
+  export type AuLocalityCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AuLocalities.
+     */
+    data: AuLocalityCreateManyInput | AuLocalityCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AuLocality createManyAndReturn
+   */
+  export type AuLocalityCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * The data used to create many AuLocalities.
+     */
+    data: AuLocalityCreateManyInput | AuLocalityCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuLocality update
+   */
+  export type AuLocalityUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AuLocality.
+     */
+    data: XOR<AuLocalityUpdateInput, AuLocalityUncheckedUpdateInput>
+    /**
+     * Choose, which AuLocality to update.
+     */
+    where: AuLocalityWhereUniqueInput
+  }
+
+  /**
+   * AuLocality updateMany
+   */
+  export type AuLocalityUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AuLocalities.
+     */
+    data: XOR<AuLocalityUpdateManyMutationInput, AuLocalityUncheckedUpdateManyInput>
+    /**
+     * Filter which AuLocalities to update
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * Limit how many AuLocalities to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuLocality updateManyAndReturn
+   */
+  export type AuLocalityUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * The data used to update AuLocalities.
+     */
+    data: XOR<AuLocalityUpdateManyMutationInput, AuLocalityUncheckedUpdateManyInput>
+    /**
+     * Filter which AuLocalities to update
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * Limit how many AuLocalities to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuLocality upsert
+   */
+  export type AuLocalityUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AuLocality to update in case it exists.
+     */
+    where: AuLocalityWhereUniqueInput
+    /**
+     * In case the AuLocality found by the `where` argument doesn't exist, create a new AuLocality with this data.
+     */
+    create: XOR<AuLocalityCreateInput, AuLocalityUncheckedCreateInput>
+    /**
+     * In case the AuLocality was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AuLocalityUpdateInput, AuLocalityUncheckedUpdateInput>
+  }
+
+  /**
+   * AuLocality delete
+   */
+  export type AuLocalityDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    /**
+     * Filter which AuLocality to delete.
+     */
+    where: AuLocalityWhereUniqueInput
+  }
+
+  /**
+   * AuLocality deleteMany
+   */
+  export type AuLocalityDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuLocalities to delete
+     */
+    where?: AuLocalityWhereInput
+    /**
+     * Limit how many AuLocalities to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuLocality.supersededBy
+   */
+  export type AuLocality$supersededByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    where?: AuLocalityWhereInput
+  }
+
+  /**
+   * AuLocality.supersedes
+   */
+  export type AuLocality$supersedesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+    where?: AuLocalityWhereInput
+    orderBy?: AuLocalityOrderByWithRelationInput | AuLocalityOrderByWithRelationInput[]
+    cursor?: AuLocalityWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AuLocalityScalarFieldEnum | AuLocalityScalarFieldEnum[]
+  }
+
+  /**
+   * AuLocality.workerLocations
+   */
+  export type AuLocality$workerLocationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    where?: WorkerLocationWhereInput
+    orderBy?: WorkerLocationOrderByWithRelationInput | WorkerLocationOrderByWithRelationInput[]
+    cursor?: WorkerLocationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkerLocationScalarFieldEnum | WorkerLocationScalarFieldEnum[]
+  }
+
+  /**
+   * AuLocality without action
+   */
+  export type AuLocalityDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuLocality
+     */
+    select?: AuLocalitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuLocality
+     */
+    omit?: AuLocalityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuLocalityInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkerLocation
+   */
+
+  export type AggregateWorkerLocation = {
+    _count: WorkerLocationCountAggregateOutputType | null
+    _avg: WorkerLocationAvgAggregateOutputType | null
+    _sum: WorkerLocationSumAggregateOutputType | null
+    _min: WorkerLocationMinAggregateOutputType | null
+    _max: WorkerLocationMaxAggregateOutputType | null
+  }
+
+  export type WorkerLocationAvgAggregateOutputType = {
+    localityId: number | null
+    latitude: number | null
+    longitude: number | null
+    travelRadiusKm: number | null
+  }
+
+  export type WorkerLocationSumAggregateOutputType = {
+    localityId: number | null
+    latitude: number | null
+    longitude: number | null
+    travelRadiusKm: number | null
+  }
+
+  export type WorkerLocationMinAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    kind: $Enums.LocationKind | null
+    localityId: number | null
+    latitude: number | null
+    longitude: number | null
+    travelRadiusKm: number | null
+    precision: $Enums.LocationPrecision | null
+    source: $Enums.LocationSource | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerLocationMaxAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    kind: $Enums.LocationKind | null
+    localityId: number | null
+    latitude: number | null
+    longitude: number | null
+    travelRadiusKm: number | null
+    precision: $Enums.LocationPrecision | null
+    source: $Enums.LocationSource | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerLocationCountAggregateOutputType = {
+    id: number
+    workerProfileId: number
+    kind: number
+    localityId: number
+    latitude: number
+    longitude: number
+    travelRadiusKm: number
+    precision: number
+    source: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkerLocationAvgAggregateInputType = {
+    localityId?: true
+    latitude?: true
+    longitude?: true
+    travelRadiusKm?: true
+  }
+
+  export type WorkerLocationSumAggregateInputType = {
+    localityId?: true
+    latitude?: true
+    longitude?: true
+    travelRadiusKm?: true
+  }
+
+  export type WorkerLocationMinAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    kind?: true
+    localityId?: true
+    latitude?: true
+    longitude?: true
+    travelRadiusKm?: true
+    precision?: true
+    source?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerLocationMaxAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    kind?: true
+    localityId?: true
+    latitude?: true
+    longitude?: true
+    travelRadiusKm?: true
+    precision?: true
+    source?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerLocationCountAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    kind?: true
+    localityId?: true
+    latitude?: true
+    longitude?: true
+    travelRadiusKm?: true
+    precision?: true
+    source?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkerLocationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerLocation to aggregate.
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerLocations to fetch.
+     */
+    orderBy?: WorkerLocationOrderByWithRelationInput | WorkerLocationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerLocationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerLocations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerLocations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerLocations
+    **/
+    _count?: true | WorkerLocationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkerLocationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkerLocationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerLocationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerLocationMaxAggregateInputType
+  }
+
+  export type GetWorkerLocationAggregateType<T extends WorkerLocationAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerLocation]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerLocation[P]>
+      : GetScalarType<T[P], AggregateWorkerLocation[P]>
+  }
+
+
+
+
+  export type WorkerLocationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerLocationWhereInput
+    orderBy?: WorkerLocationOrderByWithAggregationInput | WorkerLocationOrderByWithAggregationInput[]
+    by: WorkerLocationScalarFieldEnum[] | WorkerLocationScalarFieldEnum
+    having?: WorkerLocationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerLocationCountAggregateInputType | true
+    _avg?: WorkerLocationAvgAggregateInputType
+    _sum?: WorkerLocationSumAggregateInputType
+    _min?: WorkerLocationMinAggregateInputType
+    _max?: WorkerLocationMaxAggregateInputType
+  }
+
+  export type WorkerLocationGroupByOutputType = {
+    id: string
+    workerProfileId: string
+    kind: $Enums.LocationKind
+    localityId: number
+    latitude: number
+    longitude: number
+    travelRadiusKm: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkerLocationCountAggregateOutputType | null
+    _avg: WorkerLocationAvgAggregateOutputType | null
+    _sum: WorkerLocationSumAggregateOutputType | null
+    _min: WorkerLocationMinAggregateOutputType | null
+    _max: WorkerLocationMaxAggregateOutputType | null
+  }
+
+  type GetWorkerLocationGroupByPayload<T extends WorkerLocationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerLocationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerLocationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerLocationGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerLocationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerLocationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    kind?: boolean
+    localityId?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    travelRadiusKm?: boolean
+    precision?: boolean
+    source?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    locality?: boolean | AuLocalityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerLocation"]>
+
+  export type WorkerLocationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    kind?: boolean
+    localityId?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    travelRadiusKm?: boolean
+    precision?: boolean
+    source?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    locality?: boolean | AuLocalityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerLocation"]>
+
+  export type WorkerLocationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    kind?: boolean
+    localityId?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    travelRadiusKm?: boolean
+    precision?: boolean
+    source?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    locality?: boolean | AuLocalityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerLocation"]>
+
+  export type WorkerLocationSelectScalar = {
+    id?: boolean
+    workerProfileId?: boolean
+    kind?: boolean
+    localityId?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    travelRadiusKm?: boolean
+    precision?: boolean
+    source?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkerLocationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "kind" | "localityId" | "latitude" | "longitude" | "travelRadiusKm" | "precision" | "source" | "createdAt" | "updatedAt", ExtArgs["result"]["workerLocation"]>
+  export type WorkerLocationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    locality?: boolean | AuLocalityDefaultArgs<ExtArgs>
+  }
+  export type WorkerLocationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    locality?: boolean | AuLocalityDefaultArgs<ExtArgs>
+  }
+  export type WorkerLocationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+    locality?: boolean | AuLocalityDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerLocationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerLocation"
+    objects: {
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+      locality: Prisma.$AuLocalityPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workerProfileId: string
+      kind: $Enums.LocationKind
+      localityId: number
+      latitude: number
+      longitude: number
+      travelRadiusKm: number | null
+      precision: $Enums.LocationPrecision
+      source: $Enums.LocationSource
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workerLocation"]>
+    composites: {}
+  }
+
+  type WorkerLocationGetPayload<S extends boolean | null | undefined | WorkerLocationDefaultArgs> = $Result.GetResult<Prisma.$WorkerLocationPayload, S>
+
+  type WorkerLocationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerLocationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerLocationCountAggregateInputType | true
+    }
+
+  export interface WorkerLocationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerLocation'], meta: { name: 'WorkerLocation' } }
+    /**
+     * Find zero or one WorkerLocation that matches the filter.
+     * @param {WorkerLocationFindUniqueArgs} args - Arguments to find a WorkerLocation
+     * @example
+     * // Get one WorkerLocation
+     * const workerLocation = await prisma.workerLocation.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerLocationFindUniqueArgs>(args: SelectSubset<T, WorkerLocationFindUniqueArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerLocation that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerLocationFindUniqueOrThrowArgs} args - Arguments to find a WorkerLocation
+     * @example
+     * // Get one WorkerLocation
+     * const workerLocation = await prisma.workerLocation.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerLocationFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerLocationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerLocation that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationFindFirstArgs} args - Arguments to find a WorkerLocation
+     * @example
+     * // Get one WorkerLocation
+     * const workerLocation = await prisma.workerLocation.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerLocationFindFirstArgs>(args?: SelectSubset<T, WorkerLocationFindFirstArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerLocation that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationFindFirstOrThrowArgs} args - Arguments to find a WorkerLocation
+     * @example
+     * // Get one WorkerLocation
+     * const workerLocation = await prisma.workerLocation.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerLocationFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerLocationFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerLocations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerLocations
+     * const workerLocations = await prisma.workerLocation.findMany()
+     * 
+     * // Get first 10 WorkerLocations
+     * const workerLocations = await prisma.workerLocation.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workerLocationWithIdOnly = await prisma.workerLocation.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkerLocationFindManyArgs>(args?: SelectSubset<T, WorkerLocationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerLocation.
+     * @param {WorkerLocationCreateArgs} args - Arguments to create a WorkerLocation.
+     * @example
+     * // Create one WorkerLocation
+     * const WorkerLocation = await prisma.workerLocation.create({
+     *   data: {
+     *     // ... data to create a WorkerLocation
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerLocationCreateArgs>(args: SelectSubset<T, WorkerLocationCreateArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerLocations.
+     * @param {WorkerLocationCreateManyArgs} args - Arguments to create many WorkerLocations.
+     * @example
+     * // Create many WorkerLocations
+     * const workerLocation = await prisma.workerLocation.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerLocationCreateManyArgs>(args?: SelectSubset<T, WorkerLocationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerLocations and returns the data saved in the database.
+     * @param {WorkerLocationCreateManyAndReturnArgs} args - Arguments to create many WorkerLocations.
+     * @example
+     * // Create many WorkerLocations
+     * const workerLocation = await prisma.workerLocation.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerLocations and only return the `id`
+     * const workerLocationWithIdOnly = await prisma.workerLocation.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerLocationCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerLocationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerLocation.
+     * @param {WorkerLocationDeleteArgs} args - Arguments to delete one WorkerLocation.
+     * @example
+     * // Delete one WorkerLocation
+     * const WorkerLocation = await prisma.workerLocation.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerLocation
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerLocationDeleteArgs>(args: SelectSubset<T, WorkerLocationDeleteArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerLocation.
+     * @param {WorkerLocationUpdateArgs} args - Arguments to update one WorkerLocation.
+     * @example
+     * // Update one WorkerLocation
+     * const workerLocation = await prisma.workerLocation.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerLocationUpdateArgs>(args: SelectSubset<T, WorkerLocationUpdateArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerLocations.
+     * @param {WorkerLocationDeleteManyArgs} args - Arguments to filter WorkerLocations to delete.
+     * @example
+     * // Delete a few WorkerLocations
+     * const { count } = await prisma.workerLocation.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerLocationDeleteManyArgs>(args?: SelectSubset<T, WorkerLocationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerLocations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerLocations
+     * const workerLocation = await prisma.workerLocation.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerLocationUpdateManyArgs>(args: SelectSubset<T, WorkerLocationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerLocations and returns the data updated in the database.
+     * @param {WorkerLocationUpdateManyAndReturnArgs} args - Arguments to update many WorkerLocations.
+     * @example
+     * // Update many WorkerLocations
+     * const workerLocation = await prisma.workerLocation.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerLocations and only return the `id`
+     * const workerLocationWithIdOnly = await prisma.workerLocation.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerLocationUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerLocationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerLocation.
+     * @param {WorkerLocationUpsertArgs} args - Arguments to update or create a WorkerLocation.
+     * @example
+     * // Update or create a WorkerLocation
+     * const workerLocation = await prisma.workerLocation.upsert({
+     *   create: {
+     *     // ... data to create a WorkerLocation
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerLocation we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerLocationUpsertArgs>(args: SelectSubset<T, WorkerLocationUpsertArgs<ExtArgs>>): Prisma__WorkerLocationClient<$Result.GetResult<Prisma.$WorkerLocationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerLocations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationCountArgs} args - Arguments to filter WorkerLocations to count.
+     * @example
+     * // Count the number of WorkerLocations
+     * const count = await prisma.workerLocation.count({
+     *   where: {
+     *     // ... the filter for the WorkerLocations we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerLocationCountArgs>(
+      args?: Subset<T, WorkerLocationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerLocationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerLocation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerLocationAggregateArgs>(args: Subset<T, WorkerLocationAggregateArgs>): Prisma.PrismaPromise<GetWorkerLocationAggregateType<T>>
+
+    /**
+     * Group by WorkerLocation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerLocationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerLocationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerLocationGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerLocationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerLocationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerLocationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerLocation model
+   */
+  readonly fields: WorkerLocationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerLocation.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerLocationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    locality<T extends AuLocalityDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AuLocalityDefaultArgs<ExtArgs>>): Prisma__AuLocalityClient<$Result.GetResult<Prisma.$AuLocalityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerLocation model
+   */
+  interface WorkerLocationFieldRefs {
+    readonly id: FieldRef<"WorkerLocation", 'String'>
+    readonly workerProfileId: FieldRef<"WorkerLocation", 'String'>
+    readonly kind: FieldRef<"WorkerLocation", 'LocationKind'>
+    readonly localityId: FieldRef<"WorkerLocation", 'Int'>
+    readonly latitude: FieldRef<"WorkerLocation", 'Float'>
+    readonly longitude: FieldRef<"WorkerLocation", 'Float'>
+    readonly travelRadiusKm: FieldRef<"WorkerLocation", 'Int'>
+    readonly precision: FieldRef<"WorkerLocation", 'LocationPrecision'>
+    readonly source: FieldRef<"WorkerLocation", 'LocationSource'>
+    readonly createdAt: FieldRef<"WorkerLocation", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkerLocation", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerLocation findUnique
+   */
+  export type WorkerLocationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerLocation to fetch.
+     */
+    where: WorkerLocationWhereUniqueInput
+  }
+
+  /**
+   * WorkerLocation findUniqueOrThrow
+   */
+  export type WorkerLocationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerLocation to fetch.
+     */
+    where: WorkerLocationWhereUniqueInput
+  }
+
+  /**
+   * WorkerLocation findFirst
+   */
+  export type WorkerLocationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerLocation to fetch.
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerLocations to fetch.
+     */
+    orderBy?: WorkerLocationOrderByWithRelationInput | WorkerLocationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerLocations.
+     */
+    cursor?: WorkerLocationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerLocations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerLocations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerLocations.
+     */
+    distinct?: WorkerLocationScalarFieldEnum | WorkerLocationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerLocation findFirstOrThrow
+   */
+  export type WorkerLocationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerLocation to fetch.
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerLocations to fetch.
+     */
+    orderBy?: WorkerLocationOrderByWithRelationInput | WorkerLocationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerLocations.
+     */
+    cursor?: WorkerLocationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerLocations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerLocations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerLocations.
+     */
+    distinct?: WorkerLocationScalarFieldEnum | WorkerLocationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerLocation findMany
+   */
+  export type WorkerLocationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerLocations to fetch.
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerLocations to fetch.
+     */
+    orderBy?: WorkerLocationOrderByWithRelationInput | WorkerLocationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerLocations.
+     */
+    cursor?: WorkerLocationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerLocations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerLocations.
+     */
+    skip?: number
+    distinct?: WorkerLocationScalarFieldEnum | WorkerLocationScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerLocation create
+   */
+  export type WorkerLocationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerLocation.
+     */
+    data: XOR<WorkerLocationCreateInput, WorkerLocationUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerLocation createMany
+   */
+  export type WorkerLocationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerLocations.
+     */
+    data: WorkerLocationCreateManyInput | WorkerLocationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerLocation createManyAndReturn
+   */
+  export type WorkerLocationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerLocations.
+     */
+    data: WorkerLocationCreateManyInput | WorkerLocationCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerLocation update
+   */
+  export type WorkerLocationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerLocation.
+     */
+    data: XOR<WorkerLocationUpdateInput, WorkerLocationUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerLocation to update.
+     */
+    where: WorkerLocationWhereUniqueInput
+  }
+
+  /**
+   * WorkerLocation updateMany
+   */
+  export type WorkerLocationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerLocations.
+     */
+    data: XOR<WorkerLocationUpdateManyMutationInput, WorkerLocationUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerLocations to update
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * Limit how many WorkerLocations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerLocation updateManyAndReturn
+   */
+  export type WorkerLocationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerLocations.
+     */
+    data: XOR<WorkerLocationUpdateManyMutationInput, WorkerLocationUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerLocations to update
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * Limit how many WorkerLocations to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerLocation upsert
+   */
+  export type WorkerLocationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerLocation to update in case it exists.
+     */
+    where: WorkerLocationWhereUniqueInput
+    /**
+     * In case the WorkerLocation found by the `where` argument doesn't exist, create a new WorkerLocation with this data.
+     */
+    create: XOR<WorkerLocationCreateInput, WorkerLocationUncheckedCreateInput>
+    /**
+     * In case the WorkerLocation was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerLocationUpdateInput, WorkerLocationUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerLocation delete
+   */
+  export type WorkerLocationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerLocation to delete.
+     */
+    where: WorkerLocationWhereUniqueInput
+  }
+
+  /**
+   * WorkerLocation deleteMany
+   */
+  export type WorkerLocationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerLocations to delete
+     */
+    where?: WorkerLocationWhereInput
+    /**
+     * Limit how many WorkerLocations to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerLocation without action
+   */
+  export type WorkerLocationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerLocation
+     */
+    select?: WorkerLocationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerLocation
+     */
+    omit?: WorkerLocationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerLocationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkerOnboarding
+   */
+
+  export type AggregateWorkerOnboarding = {
+    _count: WorkerOnboardingCountAggregateOutputType | null
+    _avg: WorkerOnboardingAvgAggregateOutputType | null
+    _sum: WorkerOnboardingSumAggregateOutputType | null
+    _min: WorkerOnboardingMinAggregateOutputType | null
+    _max: WorkerOnboardingMaxAggregateOutputType | null
+  }
+
+  export type WorkerOnboardingAvgAggregateOutputType = {
+    mandatoryTotal: number | null
+    mandatoryUploaded: number | null
+    mandatoryApproved: number | null
+    catalogueVersion: number | null
+    version: number | null
+  }
+
+  export type WorkerOnboardingSumAggregateOutputType = {
+    mandatoryTotal: number | null
+    mandatoryUploaded: number | null
+    mandatoryApproved: number | null
+    catalogueVersion: number | null
+    version: number | null
+  }
+
+  export type WorkerOnboardingMinAggregateOutputType = {
+    workerProfileId: string | null
+    stage: $Enums.OnboardingStage | null
+    stageEnteredAt: Date | null
+    signedUpAt: Date | null
+    firstSignInAt: Date | null
+    firstDocumentAt: Date | null
+    documentsSubmittedAt: Date | null
+    verifiedAt: Date | null
+    publishedAt: Date | null
+    lastActivityAt: Date | null
+    mandatoryTotal: number | null
+    mandatoryUploaded: number | null
+    mandatoryApproved: number | null
+    catalogueVersion: number | null
+    version: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerOnboardingMaxAggregateOutputType = {
+    workerProfileId: string | null
+    stage: $Enums.OnboardingStage | null
+    stageEnteredAt: Date | null
+    signedUpAt: Date | null
+    firstSignInAt: Date | null
+    firstDocumentAt: Date | null
+    documentsSubmittedAt: Date | null
+    verifiedAt: Date | null
+    publishedAt: Date | null
+    lastActivityAt: Date | null
+    mandatoryTotal: number | null
+    mandatoryUploaded: number | null
+    mandatoryApproved: number | null
+    catalogueVersion: number | null
+    version: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkerOnboardingCountAggregateOutputType = {
+    workerProfileId: number
+    stage: number
+    stageEnteredAt: number
+    signedUpAt: number
+    firstSignInAt: number
+    firstDocumentAt: number
+    documentsSubmittedAt: number
+    verifiedAt: number
+    publishedAt: number
+    lastActivityAt: number
+    mandatoryTotal: number
+    mandatoryUploaded: number
+    mandatoryApproved: number
+    catalogueVersion: number
+    version: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkerOnboardingAvgAggregateInputType = {
+    mandatoryTotal?: true
+    mandatoryUploaded?: true
+    mandatoryApproved?: true
+    catalogueVersion?: true
+    version?: true
+  }
+
+  export type WorkerOnboardingSumAggregateInputType = {
+    mandatoryTotal?: true
+    mandatoryUploaded?: true
+    mandatoryApproved?: true
+    catalogueVersion?: true
+    version?: true
+  }
+
+  export type WorkerOnboardingMinAggregateInputType = {
+    workerProfileId?: true
+    stage?: true
+    stageEnteredAt?: true
+    signedUpAt?: true
+    firstSignInAt?: true
+    firstDocumentAt?: true
+    documentsSubmittedAt?: true
+    verifiedAt?: true
+    publishedAt?: true
+    lastActivityAt?: true
+    mandatoryTotal?: true
+    mandatoryUploaded?: true
+    mandatoryApproved?: true
+    catalogueVersion?: true
+    version?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerOnboardingMaxAggregateInputType = {
+    workerProfileId?: true
+    stage?: true
+    stageEnteredAt?: true
+    signedUpAt?: true
+    firstSignInAt?: true
+    firstDocumentAt?: true
+    documentsSubmittedAt?: true
+    verifiedAt?: true
+    publishedAt?: true
+    lastActivityAt?: true
+    mandatoryTotal?: true
+    mandatoryUploaded?: true
+    mandatoryApproved?: true
+    catalogueVersion?: true
+    version?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkerOnboardingCountAggregateInputType = {
+    workerProfileId?: true
+    stage?: true
+    stageEnteredAt?: true
+    signedUpAt?: true
+    firstSignInAt?: true
+    firstDocumentAt?: true
+    documentsSubmittedAt?: true
+    verifiedAt?: true
+    publishedAt?: true
+    lastActivityAt?: true
+    mandatoryTotal?: true
+    mandatoryUploaded?: true
+    mandatoryApproved?: true
+    catalogueVersion?: true
+    version?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkerOnboardingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerOnboarding to aggregate.
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardings to fetch.
+     */
+    orderBy?: WorkerOnboardingOrderByWithRelationInput | WorkerOnboardingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerOnboardingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerOnboardings
+    **/
+    _count?: true | WorkerOnboardingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkerOnboardingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkerOnboardingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerOnboardingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerOnboardingMaxAggregateInputType
+  }
+
+  export type GetWorkerOnboardingAggregateType<T extends WorkerOnboardingAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerOnboarding]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerOnboarding[P]>
+      : GetScalarType<T[P], AggregateWorkerOnboarding[P]>
+  }
+
+
+
+
+  export type WorkerOnboardingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerOnboardingWhereInput
+    orderBy?: WorkerOnboardingOrderByWithAggregationInput | WorkerOnboardingOrderByWithAggregationInput[]
+    by: WorkerOnboardingScalarFieldEnum[] | WorkerOnboardingScalarFieldEnum
+    having?: WorkerOnboardingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerOnboardingCountAggregateInputType | true
+    _avg?: WorkerOnboardingAvgAggregateInputType
+    _sum?: WorkerOnboardingSumAggregateInputType
+    _min?: WorkerOnboardingMinAggregateInputType
+    _max?: WorkerOnboardingMaxAggregateInputType
+  }
+
+  export type WorkerOnboardingGroupByOutputType = {
+    workerProfileId: string
+    stage: $Enums.OnboardingStage
+    stageEnteredAt: Date
+    signedUpAt: Date
+    firstSignInAt: Date | null
+    firstDocumentAt: Date | null
+    documentsSubmittedAt: Date | null
+    verifiedAt: Date | null
+    publishedAt: Date | null
+    lastActivityAt: Date
+    mandatoryTotal: number
+    mandatoryUploaded: number
+    mandatoryApproved: number
+    catalogueVersion: number
+    version: number
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkerOnboardingCountAggregateOutputType | null
+    _avg: WorkerOnboardingAvgAggregateOutputType | null
+    _sum: WorkerOnboardingSumAggregateOutputType | null
+    _min: WorkerOnboardingMinAggregateOutputType | null
+    _max: WorkerOnboardingMaxAggregateOutputType | null
+  }
+
+  type GetWorkerOnboardingGroupByPayload<T extends WorkerOnboardingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerOnboardingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerOnboardingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerOnboardingGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerOnboardingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerOnboardingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    workerProfileId?: boolean
+    stage?: boolean
+    stageEnteredAt?: boolean
+    signedUpAt?: boolean
+    firstSignInAt?: boolean
+    firstDocumentAt?: boolean
+    documentsSubmittedAt?: boolean
+    verifiedAt?: boolean
+    publishedAt?: boolean
+    lastActivityAt?: boolean
+    mandatoryTotal?: boolean
+    mandatoryUploaded?: boolean
+    mandatoryApproved?: boolean
+    catalogueVersion?: boolean
+    version?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerOnboarding"]>
+
+  export type WorkerOnboardingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    workerProfileId?: boolean
+    stage?: boolean
+    stageEnteredAt?: boolean
+    signedUpAt?: boolean
+    firstSignInAt?: boolean
+    firstDocumentAt?: boolean
+    documentsSubmittedAt?: boolean
+    verifiedAt?: boolean
+    publishedAt?: boolean
+    lastActivityAt?: boolean
+    mandatoryTotal?: boolean
+    mandatoryUploaded?: boolean
+    mandatoryApproved?: boolean
+    catalogueVersion?: boolean
+    version?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerOnboarding"]>
+
+  export type WorkerOnboardingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    workerProfileId?: boolean
+    stage?: boolean
+    stageEnteredAt?: boolean
+    signedUpAt?: boolean
+    firstSignInAt?: boolean
+    firstDocumentAt?: boolean
+    documentsSubmittedAt?: boolean
+    verifiedAt?: boolean
+    publishedAt?: boolean
+    lastActivityAt?: boolean
+    mandatoryTotal?: boolean
+    mandatoryUploaded?: boolean
+    mandatoryApproved?: boolean
+    catalogueVersion?: boolean
+    version?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerOnboarding"]>
+
+  export type WorkerOnboardingSelectScalar = {
+    workerProfileId?: boolean
+    stage?: boolean
+    stageEnteredAt?: boolean
+    signedUpAt?: boolean
+    firstSignInAt?: boolean
+    firstDocumentAt?: boolean
+    documentsSubmittedAt?: boolean
+    verifiedAt?: boolean
+    publishedAt?: boolean
+    lastActivityAt?: boolean
+    mandatoryTotal?: boolean
+    mandatoryUploaded?: boolean
+    mandatoryApproved?: boolean
+    catalogueVersion?: boolean
+    version?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkerOnboardingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"workerProfileId" | "stage" | "stageEnteredAt" | "signedUpAt" | "firstSignInAt" | "firstDocumentAt" | "documentsSubmittedAt" | "verifiedAt" | "publishedAt" | "lastActivityAt" | "mandatoryTotal" | "mandatoryUploaded" | "mandatoryApproved" | "catalogueVersion" | "version" | "createdAt" | "updatedAt", ExtArgs["result"]["workerOnboarding"]>
+  export type WorkerOnboardingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerOnboardingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerOnboardingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerOnboardingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerOnboarding"
+    objects: {
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      workerProfileId: string
+      stage: $Enums.OnboardingStage
+      stageEnteredAt: Date
+      signedUpAt: Date
+      firstSignInAt: Date | null
+      firstDocumentAt: Date | null
+      documentsSubmittedAt: Date | null
+      verifiedAt: Date | null
+      publishedAt: Date | null
+      lastActivityAt: Date
+      mandatoryTotal: number
+      mandatoryUploaded: number
+      mandatoryApproved: number
+      catalogueVersion: number
+      /**
+       * Optimistic lock.
+       */
+      version: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workerOnboarding"]>
+    composites: {}
+  }
+
+  type WorkerOnboardingGetPayload<S extends boolean | null | undefined | WorkerOnboardingDefaultArgs> = $Result.GetResult<Prisma.$WorkerOnboardingPayload, S>
+
+  type WorkerOnboardingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerOnboardingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerOnboardingCountAggregateInputType | true
+    }
+
+  export interface WorkerOnboardingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerOnboarding'], meta: { name: 'WorkerOnboarding' } }
+    /**
+     * Find zero or one WorkerOnboarding that matches the filter.
+     * @param {WorkerOnboardingFindUniqueArgs} args - Arguments to find a WorkerOnboarding
+     * @example
+     * // Get one WorkerOnboarding
+     * const workerOnboarding = await prisma.workerOnboarding.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerOnboardingFindUniqueArgs>(args: SelectSubset<T, WorkerOnboardingFindUniqueArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerOnboarding that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerOnboardingFindUniqueOrThrowArgs} args - Arguments to find a WorkerOnboarding
+     * @example
+     * // Get one WorkerOnboarding
+     * const workerOnboarding = await prisma.workerOnboarding.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerOnboardingFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerOnboardingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerOnboarding that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingFindFirstArgs} args - Arguments to find a WorkerOnboarding
+     * @example
+     * // Get one WorkerOnboarding
+     * const workerOnboarding = await prisma.workerOnboarding.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerOnboardingFindFirstArgs>(args?: SelectSubset<T, WorkerOnboardingFindFirstArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerOnboarding that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingFindFirstOrThrowArgs} args - Arguments to find a WorkerOnboarding
+     * @example
+     * // Get one WorkerOnboarding
+     * const workerOnboarding = await prisma.workerOnboarding.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerOnboardingFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerOnboardingFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerOnboardings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerOnboardings
+     * const workerOnboardings = await prisma.workerOnboarding.findMany()
+     * 
+     * // Get first 10 WorkerOnboardings
+     * const workerOnboardings = await prisma.workerOnboarding.findMany({ take: 10 })
+     * 
+     * // Only select the `workerProfileId`
+     * const workerOnboardingWithWorkerProfileIdOnly = await prisma.workerOnboarding.findMany({ select: { workerProfileId: true } })
+     * 
+     */
+    findMany<T extends WorkerOnboardingFindManyArgs>(args?: SelectSubset<T, WorkerOnboardingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerOnboarding.
+     * @param {WorkerOnboardingCreateArgs} args - Arguments to create a WorkerOnboarding.
+     * @example
+     * // Create one WorkerOnboarding
+     * const WorkerOnboarding = await prisma.workerOnboarding.create({
+     *   data: {
+     *     // ... data to create a WorkerOnboarding
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerOnboardingCreateArgs>(args: SelectSubset<T, WorkerOnboardingCreateArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerOnboardings.
+     * @param {WorkerOnboardingCreateManyArgs} args - Arguments to create many WorkerOnboardings.
+     * @example
+     * // Create many WorkerOnboardings
+     * const workerOnboarding = await prisma.workerOnboarding.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerOnboardingCreateManyArgs>(args?: SelectSubset<T, WorkerOnboardingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerOnboardings and returns the data saved in the database.
+     * @param {WorkerOnboardingCreateManyAndReturnArgs} args - Arguments to create many WorkerOnboardings.
+     * @example
+     * // Create many WorkerOnboardings
+     * const workerOnboarding = await prisma.workerOnboarding.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerOnboardings and only return the `workerProfileId`
+     * const workerOnboardingWithWorkerProfileIdOnly = await prisma.workerOnboarding.createManyAndReturn({
+     *   select: { workerProfileId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerOnboardingCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerOnboardingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerOnboarding.
+     * @param {WorkerOnboardingDeleteArgs} args - Arguments to delete one WorkerOnboarding.
+     * @example
+     * // Delete one WorkerOnboarding
+     * const WorkerOnboarding = await prisma.workerOnboarding.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerOnboarding
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerOnboardingDeleteArgs>(args: SelectSubset<T, WorkerOnboardingDeleteArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerOnboarding.
+     * @param {WorkerOnboardingUpdateArgs} args - Arguments to update one WorkerOnboarding.
+     * @example
+     * // Update one WorkerOnboarding
+     * const workerOnboarding = await prisma.workerOnboarding.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerOnboardingUpdateArgs>(args: SelectSubset<T, WorkerOnboardingUpdateArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerOnboardings.
+     * @param {WorkerOnboardingDeleteManyArgs} args - Arguments to filter WorkerOnboardings to delete.
+     * @example
+     * // Delete a few WorkerOnboardings
+     * const { count } = await prisma.workerOnboarding.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerOnboardingDeleteManyArgs>(args?: SelectSubset<T, WorkerOnboardingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerOnboardings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerOnboardings
+     * const workerOnboarding = await prisma.workerOnboarding.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerOnboardingUpdateManyArgs>(args: SelectSubset<T, WorkerOnboardingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerOnboardings and returns the data updated in the database.
+     * @param {WorkerOnboardingUpdateManyAndReturnArgs} args - Arguments to update many WorkerOnboardings.
+     * @example
+     * // Update many WorkerOnboardings
+     * const workerOnboarding = await prisma.workerOnboarding.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerOnboardings and only return the `workerProfileId`
+     * const workerOnboardingWithWorkerProfileIdOnly = await prisma.workerOnboarding.updateManyAndReturn({
+     *   select: { workerProfileId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerOnboardingUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerOnboardingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerOnboarding.
+     * @param {WorkerOnboardingUpsertArgs} args - Arguments to update or create a WorkerOnboarding.
+     * @example
+     * // Update or create a WorkerOnboarding
+     * const workerOnboarding = await prisma.workerOnboarding.upsert({
+     *   create: {
+     *     // ... data to create a WorkerOnboarding
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerOnboarding we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerOnboardingUpsertArgs>(args: SelectSubset<T, WorkerOnboardingUpsertArgs<ExtArgs>>): Prisma__WorkerOnboardingClient<$Result.GetResult<Prisma.$WorkerOnboardingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerOnboardings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingCountArgs} args - Arguments to filter WorkerOnboardings to count.
+     * @example
+     * // Count the number of WorkerOnboardings
+     * const count = await prisma.workerOnboarding.count({
+     *   where: {
+     *     // ... the filter for the WorkerOnboardings we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerOnboardingCountArgs>(
+      args?: Subset<T, WorkerOnboardingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerOnboardingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerOnboarding.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerOnboardingAggregateArgs>(args: Subset<T, WorkerOnboardingAggregateArgs>): Prisma.PrismaPromise<GetWorkerOnboardingAggregateType<T>>
+
+    /**
+     * Group by WorkerOnboarding.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerOnboardingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerOnboardingGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerOnboardingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerOnboardingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerOnboardingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerOnboarding model
+   */
+  readonly fields: WorkerOnboardingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerOnboarding.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerOnboardingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerOnboarding model
+   */
+  interface WorkerOnboardingFieldRefs {
+    readonly workerProfileId: FieldRef<"WorkerOnboarding", 'String'>
+    readonly stage: FieldRef<"WorkerOnboarding", 'OnboardingStage'>
+    readonly stageEnteredAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly signedUpAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly firstSignInAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly firstDocumentAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly documentsSubmittedAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly verifiedAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly publishedAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly lastActivityAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly mandatoryTotal: FieldRef<"WorkerOnboarding", 'Int'>
+    readonly mandatoryUploaded: FieldRef<"WorkerOnboarding", 'Int'>
+    readonly mandatoryApproved: FieldRef<"WorkerOnboarding", 'Int'>
+    readonly catalogueVersion: FieldRef<"WorkerOnboarding", 'Int'>
+    readonly version: FieldRef<"WorkerOnboarding", 'Int'>
+    readonly createdAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkerOnboarding", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerOnboarding findUnique
+   */
+  export type WorkerOnboardingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboarding to fetch.
+     */
+    where: WorkerOnboardingWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboarding findUniqueOrThrow
+   */
+  export type WorkerOnboardingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboarding to fetch.
+     */
+    where: WorkerOnboardingWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboarding findFirst
+   */
+  export type WorkerOnboardingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboarding to fetch.
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardings to fetch.
+     */
+    orderBy?: WorkerOnboardingOrderByWithRelationInput | WorkerOnboardingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerOnboardings.
+     */
+    cursor?: WorkerOnboardingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerOnboardings.
+     */
+    distinct?: WorkerOnboardingScalarFieldEnum | WorkerOnboardingScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerOnboarding findFirstOrThrow
+   */
+  export type WorkerOnboardingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboarding to fetch.
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardings to fetch.
+     */
+    orderBy?: WorkerOnboardingOrderByWithRelationInput | WorkerOnboardingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerOnboardings.
+     */
+    cursor?: WorkerOnboardingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerOnboardings.
+     */
+    distinct?: WorkerOnboardingScalarFieldEnum | WorkerOnboardingScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerOnboarding findMany
+   */
+  export type WorkerOnboardingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboardings to fetch.
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardings to fetch.
+     */
+    orderBy?: WorkerOnboardingOrderByWithRelationInput | WorkerOnboardingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerOnboardings.
+     */
+    cursor?: WorkerOnboardingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardings.
+     */
+    skip?: number
+    distinct?: WorkerOnboardingScalarFieldEnum | WorkerOnboardingScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerOnboarding create
+   */
+  export type WorkerOnboardingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerOnboarding.
+     */
+    data: XOR<WorkerOnboardingCreateInput, WorkerOnboardingUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerOnboarding createMany
+   */
+  export type WorkerOnboardingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerOnboardings.
+     */
+    data: WorkerOnboardingCreateManyInput | WorkerOnboardingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerOnboarding createManyAndReturn
+   */
+  export type WorkerOnboardingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerOnboardings.
+     */
+    data: WorkerOnboardingCreateManyInput | WorkerOnboardingCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerOnboarding update
+   */
+  export type WorkerOnboardingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerOnboarding.
+     */
+    data: XOR<WorkerOnboardingUpdateInput, WorkerOnboardingUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerOnboarding to update.
+     */
+    where: WorkerOnboardingWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboarding updateMany
+   */
+  export type WorkerOnboardingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerOnboardings.
+     */
+    data: XOR<WorkerOnboardingUpdateManyMutationInput, WorkerOnboardingUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerOnboardings to update
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * Limit how many WorkerOnboardings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerOnboarding updateManyAndReturn
+   */
+  export type WorkerOnboardingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerOnboardings.
+     */
+    data: XOR<WorkerOnboardingUpdateManyMutationInput, WorkerOnboardingUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerOnboardings to update
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * Limit how many WorkerOnboardings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerOnboarding upsert
+   */
+  export type WorkerOnboardingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerOnboarding to update in case it exists.
+     */
+    where: WorkerOnboardingWhereUniqueInput
+    /**
+     * In case the WorkerOnboarding found by the `where` argument doesn't exist, create a new WorkerOnboarding with this data.
+     */
+    create: XOR<WorkerOnboardingCreateInput, WorkerOnboardingUncheckedCreateInput>
+    /**
+     * In case the WorkerOnboarding was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerOnboardingUpdateInput, WorkerOnboardingUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerOnboarding delete
+   */
+  export type WorkerOnboardingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerOnboarding to delete.
+     */
+    where: WorkerOnboardingWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboarding deleteMany
+   */
+  export type WorkerOnboardingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerOnboardings to delete
+     */
+    where?: WorkerOnboardingWhereInput
+    /**
+     * Limit how many WorkerOnboardings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerOnboarding without action
+   */
+  export type WorkerOnboardingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboarding
+     */
+    select?: WorkerOnboardingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboarding
+     */
+    omit?: WorkerOnboardingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkerOnboardingTransition
+   */
+
+  export type AggregateWorkerOnboardingTransition = {
+    _count: WorkerOnboardingTransitionCountAggregateOutputType | null
+    _avg: WorkerOnboardingTransitionAvgAggregateOutputType | null
+    _sum: WorkerOnboardingTransitionSumAggregateOutputType | null
+    _min: WorkerOnboardingTransitionMinAggregateOutputType | null
+    _max: WorkerOnboardingTransitionMaxAggregateOutputType | null
+  }
+
+  export type WorkerOnboardingTransitionAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type WorkerOnboardingTransitionSumAggregateOutputType = {
+    id: bigint | null
+  }
+
+  export type WorkerOnboardingTransitionMinAggregateOutputType = {
+    id: bigint | null
+    workerProfileId: string | null
+    fromStage: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage | null
+    at: Date | null
+    cause: string | null
+    actorId: string | null
+    source: $Enums.OnboardingTransitionSource | null
+  }
+
+  export type WorkerOnboardingTransitionMaxAggregateOutputType = {
+    id: bigint | null
+    workerProfileId: string | null
+    fromStage: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage | null
+    at: Date | null
+    cause: string | null
+    actorId: string | null
+    source: $Enums.OnboardingTransitionSource | null
+  }
+
+  export type WorkerOnboardingTransitionCountAggregateOutputType = {
+    id: number
+    workerProfileId: number
+    fromStage: number
+    toStage: number
+    at: number
+    cause: number
+    actorId: number
+    source: number
+    _all: number
+  }
+
+
+  export type WorkerOnboardingTransitionAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type WorkerOnboardingTransitionSumAggregateInputType = {
+    id?: true
+  }
+
+  export type WorkerOnboardingTransitionMinAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    fromStage?: true
+    toStage?: true
+    at?: true
+    cause?: true
+    actorId?: true
+    source?: true
+  }
+
+  export type WorkerOnboardingTransitionMaxAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    fromStage?: true
+    toStage?: true
+    at?: true
+    cause?: true
+    actorId?: true
+    source?: true
+  }
+
+  export type WorkerOnboardingTransitionCountAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    fromStage?: true
+    toStage?: true
+    at?: true
+    cause?: true
+    actorId?: true
+    source?: true
+    _all?: true
+  }
+
+  export type WorkerOnboardingTransitionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerOnboardingTransition to aggregate.
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardingTransitions to fetch.
+     */
+    orderBy?: WorkerOnboardingTransitionOrderByWithRelationInput | WorkerOnboardingTransitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkerOnboardingTransitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardingTransitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardingTransitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkerOnboardingTransitions
+    **/
+    _count?: true | WorkerOnboardingTransitionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkerOnboardingTransitionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkerOnboardingTransitionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkerOnboardingTransitionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkerOnboardingTransitionMaxAggregateInputType
+  }
+
+  export type GetWorkerOnboardingTransitionAggregateType<T extends WorkerOnboardingTransitionAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkerOnboardingTransition]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkerOnboardingTransition[P]>
+      : GetScalarType<T[P], AggregateWorkerOnboardingTransition[P]>
+  }
+
+
+
+
+  export type WorkerOnboardingTransitionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkerOnboardingTransitionWhereInput
+    orderBy?: WorkerOnboardingTransitionOrderByWithAggregationInput | WorkerOnboardingTransitionOrderByWithAggregationInput[]
+    by: WorkerOnboardingTransitionScalarFieldEnum[] | WorkerOnboardingTransitionScalarFieldEnum
+    having?: WorkerOnboardingTransitionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkerOnboardingTransitionCountAggregateInputType | true
+    _avg?: WorkerOnboardingTransitionAvgAggregateInputType
+    _sum?: WorkerOnboardingTransitionSumAggregateInputType
+    _min?: WorkerOnboardingTransitionMinAggregateInputType
+    _max?: WorkerOnboardingTransitionMaxAggregateInputType
+  }
+
+  export type WorkerOnboardingTransitionGroupByOutputType = {
+    id: bigint
+    workerProfileId: string
+    fromStage: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at: Date
+    cause: string
+    actorId: string | null
+    source: $Enums.OnboardingTransitionSource
+    _count: WorkerOnboardingTransitionCountAggregateOutputType | null
+    _avg: WorkerOnboardingTransitionAvgAggregateOutputType | null
+    _sum: WorkerOnboardingTransitionSumAggregateOutputType | null
+    _min: WorkerOnboardingTransitionMinAggregateOutputType | null
+    _max: WorkerOnboardingTransitionMaxAggregateOutputType | null
+  }
+
+  type GetWorkerOnboardingTransitionGroupByPayload<T extends WorkerOnboardingTransitionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkerOnboardingTransitionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkerOnboardingTransitionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkerOnboardingTransitionGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkerOnboardingTransitionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkerOnboardingTransitionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    fromStage?: boolean
+    toStage?: boolean
+    at?: boolean
+    cause?: boolean
+    actorId?: boolean
+    source?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerOnboardingTransition"]>
+
+  export type WorkerOnboardingTransitionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    fromStage?: boolean
+    toStage?: boolean
+    at?: boolean
+    cause?: boolean
+    actorId?: boolean
+    source?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerOnboardingTransition"]>
+
+  export type WorkerOnboardingTransitionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    fromStage?: boolean
+    toStage?: boolean
+    at?: boolean
+    cause?: boolean
+    actorId?: boolean
+    source?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workerOnboardingTransition"]>
+
+  export type WorkerOnboardingTransitionSelectScalar = {
+    id?: boolean
+    workerProfileId?: boolean
+    fromStage?: boolean
+    toStage?: boolean
+    at?: boolean
+    cause?: boolean
+    actorId?: boolean
+    source?: boolean
+  }
+
+  export type WorkerOnboardingTransitionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "fromStage" | "toStage" | "at" | "cause" | "actorId" | "source", ExtArgs["result"]["workerOnboardingTransition"]>
+  export type WorkerOnboardingTransitionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerOnboardingTransitionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type WorkerOnboardingTransitionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkerOnboardingTransitionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkerOnboardingTransition"
+    objects: {
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: bigint
+      workerProfileId: string
+      fromStage: $Enums.OnboardingStage | null
+      toStage: $Enums.OnboardingStage
+      at: Date
+      cause: string
+      actorId: string | null
+      source: $Enums.OnboardingTransitionSource
+    }, ExtArgs["result"]["workerOnboardingTransition"]>
+    composites: {}
+  }
+
+  type WorkerOnboardingTransitionGetPayload<S extends boolean | null | undefined | WorkerOnboardingTransitionDefaultArgs> = $Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload, S>
+
+  type WorkerOnboardingTransitionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkerOnboardingTransitionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkerOnboardingTransitionCountAggregateInputType | true
+    }
+
+  export interface WorkerOnboardingTransitionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkerOnboardingTransition'], meta: { name: 'WorkerOnboardingTransition' } }
+    /**
+     * Find zero or one WorkerOnboardingTransition that matches the filter.
+     * @param {WorkerOnboardingTransitionFindUniqueArgs} args - Arguments to find a WorkerOnboardingTransition
+     * @example
+     * // Get one WorkerOnboardingTransition
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkerOnboardingTransitionFindUniqueArgs>(args: SelectSubset<T, WorkerOnboardingTransitionFindUniqueArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkerOnboardingTransition that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkerOnboardingTransitionFindUniqueOrThrowArgs} args - Arguments to find a WorkerOnboardingTransition
+     * @example
+     * // Get one WorkerOnboardingTransition
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkerOnboardingTransitionFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkerOnboardingTransitionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerOnboardingTransition that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionFindFirstArgs} args - Arguments to find a WorkerOnboardingTransition
+     * @example
+     * // Get one WorkerOnboardingTransition
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkerOnboardingTransitionFindFirstArgs>(args?: SelectSubset<T, WorkerOnboardingTransitionFindFirstArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkerOnboardingTransition that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionFindFirstOrThrowArgs} args - Arguments to find a WorkerOnboardingTransition
+     * @example
+     * // Get one WorkerOnboardingTransition
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkerOnboardingTransitionFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkerOnboardingTransitionFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkerOnboardingTransitions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkerOnboardingTransitions
+     * const workerOnboardingTransitions = await prisma.workerOnboardingTransition.findMany()
+     * 
+     * // Get first 10 WorkerOnboardingTransitions
+     * const workerOnboardingTransitions = await prisma.workerOnboardingTransition.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workerOnboardingTransitionWithIdOnly = await prisma.workerOnboardingTransition.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkerOnboardingTransitionFindManyArgs>(args?: SelectSubset<T, WorkerOnboardingTransitionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkerOnboardingTransition.
+     * @param {WorkerOnboardingTransitionCreateArgs} args - Arguments to create a WorkerOnboardingTransition.
+     * @example
+     * // Create one WorkerOnboardingTransition
+     * const WorkerOnboardingTransition = await prisma.workerOnboardingTransition.create({
+     *   data: {
+     *     // ... data to create a WorkerOnboardingTransition
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkerOnboardingTransitionCreateArgs>(args: SelectSubset<T, WorkerOnboardingTransitionCreateArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkerOnboardingTransitions.
+     * @param {WorkerOnboardingTransitionCreateManyArgs} args - Arguments to create many WorkerOnboardingTransitions.
+     * @example
+     * // Create many WorkerOnboardingTransitions
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkerOnboardingTransitionCreateManyArgs>(args?: SelectSubset<T, WorkerOnboardingTransitionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkerOnboardingTransitions and returns the data saved in the database.
+     * @param {WorkerOnboardingTransitionCreateManyAndReturnArgs} args - Arguments to create many WorkerOnboardingTransitions.
+     * @example
+     * // Create many WorkerOnboardingTransitions
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkerOnboardingTransitions and only return the `id`
+     * const workerOnboardingTransitionWithIdOnly = await prisma.workerOnboardingTransition.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkerOnboardingTransitionCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkerOnboardingTransitionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkerOnboardingTransition.
+     * @param {WorkerOnboardingTransitionDeleteArgs} args - Arguments to delete one WorkerOnboardingTransition.
+     * @example
+     * // Delete one WorkerOnboardingTransition
+     * const WorkerOnboardingTransition = await prisma.workerOnboardingTransition.delete({
+     *   where: {
+     *     // ... filter to delete one WorkerOnboardingTransition
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkerOnboardingTransitionDeleteArgs>(args: SelectSubset<T, WorkerOnboardingTransitionDeleteArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkerOnboardingTransition.
+     * @param {WorkerOnboardingTransitionUpdateArgs} args - Arguments to update one WorkerOnboardingTransition.
+     * @example
+     * // Update one WorkerOnboardingTransition
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkerOnboardingTransitionUpdateArgs>(args: SelectSubset<T, WorkerOnboardingTransitionUpdateArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkerOnboardingTransitions.
+     * @param {WorkerOnboardingTransitionDeleteManyArgs} args - Arguments to filter WorkerOnboardingTransitions to delete.
+     * @example
+     * // Delete a few WorkerOnboardingTransitions
+     * const { count } = await prisma.workerOnboardingTransition.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkerOnboardingTransitionDeleteManyArgs>(args?: SelectSubset<T, WorkerOnboardingTransitionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerOnboardingTransitions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkerOnboardingTransitions
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkerOnboardingTransitionUpdateManyArgs>(args: SelectSubset<T, WorkerOnboardingTransitionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkerOnboardingTransitions and returns the data updated in the database.
+     * @param {WorkerOnboardingTransitionUpdateManyAndReturnArgs} args - Arguments to update many WorkerOnboardingTransitions.
+     * @example
+     * // Update many WorkerOnboardingTransitions
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkerOnboardingTransitions and only return the `id`
+     * const workerOnboardingTransitionWithIdOnly = await prisma.workerOnboardingTransition.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkerOnboardingTransitionUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkerOnboardingTransitionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkerOnboardingTransition.
+     * @param {WorkerOnboardingTransitionUpsertArgs} args - Arguments to update or create a WorkerOnboardingTransition.
+     * @example
+     * // Update or create a WorkerOnboardingTransition
+     * const workerOnboardingTransition = await prisma.workerOnboardingTransition.upsert({
+     *   create: {
+     *     // ... data to create a WorkerOnboardingTransition
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkerOnboardingTransition we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkerOnboardingTransitionUpsertArgs>(args: SelectSubset<T, WorkerOnboardingTransitionUpsertArgs<ExtArgs>>): Prisma__WorkerOnboardingTransitionClient<$Result.GetResult<Prisma.$WorkerOnboardingTransitionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkerOnboardingTransitions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionCountArgs} args - Arguments to filter WorkerOnboardingTransitions to count.
+     * @example
+     * // Count the number of WorkerOnboardingTransitions
+     * const count = await prisma.workerOnboardingTransition.count({
+     *   where: {
+     *     // ... the filter for the WorkerOnboardingTransitions we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkerOnboardingTransitionCountArgs>(
+      args?: Subset<T, WorkerOnboardingTransitionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkerOnboardingTransitionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkerOnboardingTransition.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkerOnboardingTransitionAggregateArgs>(args: Subset<T, WorkerOnboardingTransitionAggregateArgs>): Prisma.PrismaPromise<GetWorkerOnboardingTransitionAggregateType<T>>
+
+    /**
+     * Group by WorkerOnboardingTransition.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkerOnboardingTransitionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkerOnboardingTransitionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkerOnboardingTransitionGroupByArgs['orderBy'] }
+        : { orderBy?: WorkerOnboardingTransitionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkerOnboardingTransitionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkerOnboardingTransitionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkerOnboardingTransition model
+   */
+  readonly fields: WorkerOnboardingTransitionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkerOnboardingTransition.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkerOnboardingTransitionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkerOnboardingTransition model
+   */
+  interface WorkerOnboardingTransitionFieldRefs {
+    readonly id: FieldRef<"WorkerOnboardingTransition", 'BigInt'>
+    readonly workerProfileId: FieldRef<"WorkerOnboardingTransition", 'String'>
+    readonly fromStage: FieldRef<"WorkerOnboardingTransition", 'OnboardingStage'>
+    readonly toStage: FieldRef<"WorkerOnboardingTransition", 'OnboardingStage'>
+    readonly at: FieldRef<"WorkerOnboardingTransition", 'DateTime'>
+    readonly cause: FieldRef<"WorkerOnboardingTransition", 'String'>
+    readonly actorId: FieldRef<"WorkerOnboardingTransition", 'String'>
+    readonly source: FieldRef<"WorkerOnboardingTransition", 'OnboardingTransitionSource'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkerOnboardingTransition findUnique
+   */
+  export type WorkerOnboardingTransitionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboardingTransition to fetch.
+     */
+    where: WorkerOnboardingTransitionWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboardingTransition findUniqueOrThrow
+   */
+  export type WorkerOnboardingTransitionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboardingTransition to fetch.
+     */
+    where: WorkerOnboardingTransitionWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboardingTransition findFirst
+   */
+  export type WorkerOnboardingTransitionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboardingTransition to fetch.
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardingTransitions to fetch.
+     */
+    orderBy?: WorkerOnboardingTransitionOrderByWithRelationInput | WorkerOnboardingTransitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerOnboardingTransitions.
+     */
+    cursor?: WorkerOnboardingTransitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardingTransitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardingTransitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerOnboardingTransitions.
+     */
+    distinct?: WorkerOnboardingTransitionScalarFieldEnum | WorkerOnboardingTransitionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerOnboardingTransition findFirstOrThrow
+   */
+  export type WorkerOnboardingTransitionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboardingTransition to fetch.
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardingTransitions to fetch.
+     */
+    orderBy?: WorkerOnboardingTransitionOrderByWithRelationInput | WorkerOnboardingTransitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkerOnboardingTransitions.
+     */
+    cursor?: WorkerOnboardingTransitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardingTransitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardingTransitions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkerOnboardingTransitions.
+     */
+    distinct?: WorkerOnboardingTransitionScalarFieldEnum | WorkerOnboardingTransitionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerOnboardingTransition findMany
+   */
+  export type WorkerOnboardingTransitionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkerOnboardingTransitions to fetch.
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkerOnboardingTransitions to fetch.
+     */
+    orderBy?: WorkerOnboardingTransitionOrderByWithRelationInput | WorkerOnboardingTransitionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkerOnboardingTransitions.
+     */
+    cursor?: WorkerOnboardingTransitionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkerOnboardingTransitions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkerOnboardingTransitions.
+     */
+    skip?: number
+    distinct?: WorkerOnboardingTransitionScalarFieldEnum | WorkerOnboardingTransitionScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerOnboardingTransition create
+   */
+  export type WorkerOnboardingTransitionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkerOnboardingTransition.
+     */
+    data: XOR<WorkerOnboardingTransitionCreateInput, WorkerOnboardingTransitionUncheckedCreateInput>
+  }
+
+  /**
+   * WorkerOnboardingTransition createMany
+   */
+  export type WorkerOnboardingTransitionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkerOnboardingTransitions.
+     */
+    data: WorkerOnboardingTransitionCreateManyInput | WorkerOnboardingTransitionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkerOnboardingTransition createManyAndReturn
+   */
+  export type WorkerOnboardingTransitionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkerOnboardingTransitions.
+     */
+    data: WorkerOnboardingTransitionCreateManyInput | WorkerOnboardingTransitionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerOnboardingTransition update
+   */
+  export type WorkerOnboardingTransitionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkerOnboardingTransition.
+     */
+    data: XOR<WorkerOnboardingTransitionUpdateInput, WorkerOnboardingTransitionUncheckedUpdateInput>
+    /**
+     * Choose, which WorkerOnboardingTransition to update.
+     */
+    where: WorkerOnboardingTransitionWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboardingTransition updateMany
+   */
+  export type WorkerOnboardingTransitionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkerOnboardingTransitions.
+     */
+    data: XOR<WorkerOnboardingTransitionUpdateManyMutationInput, WorkerOnboardingTransitionUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerOnboardingTransitions to update
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * Limit how many WorkerOnboardingTransitions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerOnboardingTransition updateManyAndReturn
+   */
+  export type WorkerOnboardingTransitionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkerOnboardingTransitions.
+     */
+    data: XOR<WorkerOnboardingTransitionUpdateManyMutationInput, WorkerOnboardingTransitionUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkerOnboardingTransitions to update
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * Limit how many WorkerOnboardingTransitions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkerOnboardingTransition upsert
+   */
+  export type WorkerOnboardingTransitionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkerOnboardingTransition to update in case it exists.
+     */
+    where: WorkerOnboardingTransitionWhereUniqueInput
+    /**
+     * In case the WorkerOnboardingTransition found by the `where` argument doesn't exist, create a new WorkerOnboardingTransition with this data.
+     */
+    create: XOR<WorkerOnboardingTransitionCreateInput, WorkerOnboardingTransitionUncheckedCreateInput>
+    /**
+     * In case the WorkerOnboardingTransition was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkerOnboardingTransitionUpdateInput, WorkerOnboardingTransitionUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkerOnboardingTransition delete
+   */
+  export type WorkerOnboardingTransitionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+    /**
+     * Filter which WorkerOnboardingTransition to delete.
+     */
+    where: WorkerOnboardingTransitionWhereUniqueInput
+  }
+
+  /**
+   * WorkerOnboardingTransition deleteMany
+   */
+  export type WorkerOnboardingTransitionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkerOnboardingTransitions to delete
+     */
+    where?: WorkerOnboardingTransitionWhereInput
+    /**
+     * Limit how many WorkerOnboardingTransitions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkerOnboardingTransition without action
+   */
+  export type WorkerOnboardingTransitionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerOnboardingTransition
+     */
+    select?: WorkerOnboardingTransitionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerOnboardingTransition
+     */
+    omit?: WorkerOnboardingTransitionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerOnboardingTransitionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OutboxEvent
+   */
+
+  export type AggregateOutboxEvent = {
+    _count: OutboxEventCountAggregateOutputType | null
+    _avg: OutboxEventAvgAggregateOutputType | null
+    _sum: OutboxEventSumAggregateOutputType | null
+    _min: OutboxEventMinAggregateOutputType | null
+    _max: OutboxEventMaxAggregateOutputType | null
+  }
+
+  export type OutboxEventAvgAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type OutboxEventSumAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type OutboxEventMinAggregateOutputType = {
+    id: string | null
+    type: string | null
+    status: $Enums.OutboxStatus | null
+    attempts: number | null
+    nextAttemptAt: Date | null
+    lockedUntil: Date | null
+    lastError: string | null
+    createdAt: Date | null
+    processedAt: Date | null
+  }
+
+  export type OutboxEventMaxAggregateOutputType = {
+    id: string | null
+    type: string | null
+    status: $Enums.OutboxStatus | null
+    attempts: number | null
+    nextAttemptAt: Date | null
+    lockedUntil: Date | null
+    lastError: string | null
+    createdAt: Date | null
+    processedAt: Date | null
+  }
+
+  export type OutboxEventCountAggregateOutputType = {
+    id: number
+    type: number
+    payload: number
+    status: number
+    attempts: number
+    nextAttemptAt: number
+    lockedUntil: number
+    lastError: number
+    createdAt: number
+    processedAt: number
+    _all: number
+  }
+
+
+  export type OutboxEventAvgAggregateInputType = {
+    attempts?: true
+  }
+
+  export type OutboxEventSumAggregateInputType = {
+    attempts?: true
+  }
+
+  export type OutboxEventMinAggregateInputType = {
+    id?: true
+    type?: true
+    status?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lockedUntil?: true
+    lastError?: true
+    createdAt?: true
+    processedAt?: true
+  }
+
+  export type OutboxEventMaxAggregateInputType = {
+    id?: true
+    type?: true
+    status?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lockedUntil?: true
+    lastError?: true
+    createdAt?: true
+    processedAt?: true
+  }
+
+  export type OutboxEventCountAggregateInputType = {
+    id?: true
+    type?: true
+    payload?: true
+    status?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lockedUntil?: true
+    lastError?: true
+    createdAt?: true
+    processedAt?: true
+    _all?: true
+  }
+
+  export type OutboxEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OutboxEvent to aggregate.
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEvents to fetch.
+     */
+    orderBy?: OutboxEventOrderByWithRelationInput | OutboxEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OutboxEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OutboxEvents
+    **/
+    _count?: true | OutboxEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OutboxEventAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OutboxEventSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OutboxEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OutboxEventMaxAggregateInputType
+  }
+
+  export type GetOutboxEventAggregateType<T extends OutboxEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateOutboxEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOutboxEvent[P]>
+      : GetScalarType<T[P], AggregateOutboxEvent[P]>
+  }
+
+
+
+
+  export type OutboxEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OutboxEventWhereInput
+    orderBy?: OutboxEventOrderByWithAggregationInput | OutboxEventOrderByWithAggregationInput[]
+    by: OutboxEventScalarFieldEnum[] | OutboxEventScalarFieldEnum
+    having?: OutboxEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OutboxEventCountAggregateInputType | true
+    _avg?: OutboxEventAvgAggregateInputType
+    _sum?: OutboxEventSumAggregateInputType
+    _min?: OutboxEventMinAggregateInputType
+    _max?: OutboxEventMaxAggregateInputType
+  }
+
+  export type OutboxEventGroupByOutputType = {
+    id: string
+    type: string
+    payload: JsonValue
+    status: $Enums.OutboxStatus
+    attempts: number
+    nextAttemptAt: Date
+    lockedUntil: Date | null
+    lastError: string | null
+    createdAt: Date
+    processedAt: Date | null
+    _count: OutboxEventCountAggregateOutputType | null
+    _avg: OutboxEventAvgAggregateOutputType | null
+    _sum: OutboxEventSumAggregateOutputType | null
+    _min: OutboxEventMinAggregateOutputType | null
+    _max: OutboxEventMaxAggregateOutputType | null
+  }
+
+  type GetOutboxEventGroupByPayload<T extends OutboxEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OutboxEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OutboxEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OutboxEventGroupByOutputType[P]>
+            : GetScalarType<T[P], OutboxEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OutboxEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    payload?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lockedUntil?: boolean
+    lastError?: boolean
+    createdAt?: boolean
+    processedAt?: boolean
+  }, ExtArgs["result"]["outboxEvent"]>
+
+  export type OutboxEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    payload?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lockedUntil?: boolean
+    lastError?: boolean
+    createdAt?: boolean
+    processedAt?: boolean
+  }, ExtArgs["result"]["outboxEvent"]>
+
+  export type OutboxEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    type?: boolean
+    payload?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lockedUntil?: boolean
+    lastError?: boolean
+    createdAt?: boolean
+    processedAt?: boolean
+  }, ExtArgs["result"]["outboxEvent"]>
+
+  export type OutboxEventSelectScalar = {
+    id?: boolean
+    type?: boolean
+    payload?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lockedUntil?: boolean
+    lastError?: boolean
+    createdAt?: boolean
+    processedAt?: boolean
+  }
+
+  export type OutboxEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "type" | "payload" | "status" | "attempts" | "nextAttemptAt" | "lockedUntil" | "lastError" | "createdAt" | "processedAt", ExtArgs["result"]["outboxEvent"]>
+
+  export type $OutboxEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OutboxEvent"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      type: string
+      payload: Prisma.JsonValue
+      status: $Enums.OutboxStatus
+      attempts: number
+      nextAttemptAt: Date
+      /**
+       * Claim lease: a crashed dispatcher's claim expires and the event is retried.
+       */
+      lockedUntil: Date | null
+      lastError: string | null
+      createdAt: Date
+      processedAt: Date | null
+    }, ExtArgs["result"]["outboxEvent"]>
+    composites: {}
+  }
+
+  type OutboxEventGetPayload<S extends boolean | null | undefined | OutboxEventDefaultArgs> = $Result.GetResult<Prisma.$OutboxEventPayload, S>
+
+  type OutboxEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OutboxEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OutboxEventCountAggregateInputType | true
+    }
+
+  export interface OutboxEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OutboxEvent'], meta: { name: 'OutboxEvent' } }
+    /**
+     * Find zero or one OutboxEvent that matches the filter.
+     * @param {OutboxEventFindUniqueArgs} args - Arguments to find a OutboxEvent
+     * @example
+     * // Get one OutboxEvent
+     * const outboxEvent = await prisma.outboxEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OutboxEventFindUniqueArgs>(args: SelectSubset<T, OutboxEventFindUniqueArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OutboxEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OutboxEventFindUniqueOrThrowArgs} args - Arguments to find a OutboxEvent
+     * @example
+     * // Get one OutboxEvent
+     * const outboxEvent = await prisma.outboxEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OutboxEventFindUniqueOrThrowArgs>(args: SelectSubset<T, OutboxEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OutboxEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventFindFirstArgs} args - Arguments to find a OutboxEvent
+     * @example
+     * // Get one OutboxEvent
+     * const outboxEvent = await prisma.outboxEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OutboxEventFindFirstArgs>(args?: SelectSubset<T, OutboxEventFindFirstArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OutboxEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventFindFirstOrThrowArgs} args - Arguments to find a OutboxEvent
+     * @example
+     * // Get one OutboxEvent
+     * const outboxEvent = await prisma.outboxEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OutboxEventFindFirstOrThrowArgs>(args?: SelectSubset<T, OutboxEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OutboxEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OutboxEvents
+     * const outboxEvents = await prisma.outboxEvent.findMany()
+     * 
+     * // Get first 10 OutboxEvents
+     * const outboxEvents = await prisma.outboxEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const outboxEventWithIdOnly = await prisma.outboxEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OutboxEventFindManyArgs>(args?: SelectSubset<T, OutboxEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OutboxEvent.
+     * @param {OutboxEventCreateArgs} args - Arguments to create a OutboxEvent.
+     * @example
+     * // Create one OutboxEvent
+     * const OutboxEvent = await prisma.outboxEvent.create({
+     *   data: {
+     *     // ... data to create a OutboxEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends OutboxEventCreateArgs>(args: SelectSubset<T, OutboxEventCreateArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OutboxEvents.
+     * @param {OutboxEventCreateManyArgs} args - Arguments to create many OutboxEvents.
+     * @example
+     * // Create many OutboxEvents
+     * const outboxEvent = await prisma.outboxEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OutboxEventCreateManyArgs>(args?: SelectSubset<T, OutboxEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OutboxEvents and returns the data saved in the database.
+     * @param {OutboxEventCreateManyAndReturnArgs} args - Arguments to create many OutboxEvents.
+     * @example
+     * // Create many OutboxEvents
+     * const outboxEvent = await prisma.outboxEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OutboxEvents and only return the `id`
+     * const outboxEventWithIdOnly = await prisma.outboxEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OutboxEventCreateManyAndReturnArgs>(args?: SelectSubset<T, OutboxEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OutboxEvent.
+     * @param {OutboxEventDeleteArgs} args - Arguments to delete one OutboxEvent.
+     * @example
+     * // Delete one OutboxEvent
+     * const OutboxEvent = await prisma.outboxEvent.delete({
+     *   where: {
+     *     // ... filter to delete one OutboxEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OutboxEventDeleteArgs>(args: SelectSubset<T, OutboxEventDeleteArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OutboxEvent.
+     * @param {OutboxEventUpdateArgs} args - Arguments to update one OutboxEvent.
+     * @example
+     * // Update one OutboxEvent
+     * const outboxEvent = await prisma.outboxEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OutboxEventUpdateArgs>(args: SelectSubset<T, OutboxEventUpdateArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OutboxEvents.
+     * @param {OutboxEventDeleteManyArgs} args - Arguments to filter OutboxEvents to delete.
+     * @example
+     * // Delete a few OutboxEvents
+     * const { count } = await prisma.outboxEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OutboxEventDeleteManyArgs>(args?: SelectSubset<T, OutboxEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OutboxEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OutboxEvents
+     * const outboxEvent = await prisma.outboxEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OutboxEventUpdateManyArgs>(args: SelectSubset<T, OutboxEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OutboxEvents and returns the data updated in the database.
+     * @param {OutboxEventUpdateManyAndReturnArgs} args - Arguments to update many OutboxEvents.
+     * @example
+     * // Update many OutboxEvents
+     * const outboxEvent = await prisma.outboxEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OutboxEvents and only return the `id`
+     * const outboxEventWithIdOnly = await prisma.outboxEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OutboxEventUpdateManyAndReturnArgs>(args: SelectSubset<T, OutboxEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OutboxEvent.
+     * @param {OutboxEventUpsertArgs} args - Arguments to update or create a OutboxEvent.
+     * @example
+     * // Update or create a OutboxEvent
+     * const outboxEvent = await prisma.outboxEvent.upsert({
+     *   create: {
+     *     // ... data to create a OutboxEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OutboxEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OutboxEventUpsertArgs>(args: SelectSubset<T, OutboxEventUpsertArgs<ExtArgs>>): Prisma__OutboxEventClient<$Result.GetResult<Prisma.$OutboxEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OutboxEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventCountArgs} args - Arguments to filter OutboxEvents to count.
+     * @example
+     * // Count the number of OutboxEvents
+     * const count = await prisma.outboxEvent.count({
+     *   where: {
+     *     // ... the filter for the OutboxEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends OutboxEventCountArgs>(
+      args?: Subset<T, OutboxEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OutboxEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OutboxEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OutboxEventAggregateArgs>(args: Subset<T, OutboxEventAggregateArgs>): Prisma.PrismaPromise<GetOutboxEventAggregateType<T>>
+
+    /**
+     * Group by OutboxEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OutboxEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OutboxEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OutboxEventGroupByArgs['orderBy'] }
+        : { orderBy?: OutboxEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OutboxEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOutboxEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OutboxEvent model
+   */
+  readonly fields: OutboxEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OutboxEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OutboxEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OutboxEvent model
+   */
+  interface OutboxEventFieldRefs {
+    readonly id: FieldRef<"OutboxEvent", 'String'>
+    readonly type: FieldRef<"OutboxEvent", 'String'>
+    readonly payload: FieldRef<"OutboxEvent", 'Json'>
+    readonly status: FieldRef<"OutboxEvent", 'OutboxStatus'>
+    readonly attempts: FieldRef<"OutboxEvent", 'Int'>
+    readonly nextAttemptAt: FieldRef<"OutboxEvent", 'DateTime'>
+    readonly lockedUntil: FieldRef<"OutboxEvent", 'DateTime'>
+    readonly lastError: FieldRef<"OutboxEvent", 'String'>
+    readonly createdAt: FieldRef<"OutboxEvent", 'DateTime'>
+    readonly processedAt: FieldRef<"OutboxEvent", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OutboxEvent findUnique
+   */
+  export type OutboxEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvent to fetch.
+     */
+    where: OutboxEventWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvent findUniqueOrThrow
+   */
+  export type OutboxEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvent to fetch.
+     */
+    where: OutboxEventWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvent findFirst
+   */
+  export type OutboxEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvent to fetch.
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEvents to fetch.
+     */
+    orderBy?: OutboxEventOrderByWithRelationInput | OutboxEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OutboxEvents.
+     */
+    cursor?: OutboxEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OutboxEvents.
+     */
+    distinct?: OutboxEventScalarFieldEnum | OutboxEventScalarFieldEnum[]
+  }
+
+  /**
+   * OutboxEvent findFirstOrThrow
+   */
+  export type OutboxEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvent to fetch.
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEvents to fetch.
+     */
+    orderBy?: OutboxEventOrderByWithRelationInput | OutboxEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OutboxEvents.
+     */
+    cursor?: OutboxEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OutboxEvents.
+     */
+    distinct?: OutboxEventScalarFieldEnum | OutboxEventScalarFieldEnum[]
+  }
+
+  /**
+   * OutboxEvent findMany
+   */
+  export type OutboxEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * Filter, which OutboxEvents to fetch.
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OutboxEvents to fetch.
+     */
+    orderBy?: OutboxEventOrderByWithRelationInput | OutboxEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OutboxEvents.
+     */
+    cursor?: OutboxEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OutboxEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OutboxEvents.
+     */
+    skip?: number
+    distinct?: OutboxEventScalarFieldEnum | OutboxEventScalarFieldEnum[]
+  }
+
+  /**
+   * OutboxEvent create
+   */
+  export type OutboxEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * The data needed to create a OutboxEvent.
+     */
+    data: XOR<OutboxEventCreateInput, OutboxEventUncheckedCreateInput>
+  }
+
+  /**
+   * OutboxEvent createMany
+   */
+  export type OutboxEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OutboxEvents.
+     */
+    data: OutboxEventCreateManyInput | OutboxEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OutboxEvent createManyAndReturn
+   */
+  export type OutboxEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many OutboxEvents.
+     */
+    data: OutboxEventCreateManyInput | OutboxEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OutboxEvent update
+   */
+  export type OutboxEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * The data needed to update a OutboxEvent.
+     */
+    data: XOR<OutboxEventUpdateInput, OutboxEventUncheckedUpdateInput>
+    /**
+     * Choose, which OutboxEvent to update.
+     */
+    where: OutboxEventWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvent updateMany
+   */
+  export type OutboxEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OutboxEvents.
+     */
+    data: XOR<OutboxEventUpdateManyMutationInput, OutboxEventUncheckedUpdateManyInput>
+    /**
+     * Filter which OutboxEvents to update
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * Limit how many OutboxEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OutboxEvent updateManyAndReturn
+   */
+  export type OutboxEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * The data used to update OutboxEvents.
+     */
+    data: XOR<OutboxEventUpdateManyMutationInput, OutboxEventUncheckedUpdateManyInput>
+    /**
+     * Filter which OutboxEvents to update
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * Limit how many OutboxEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OutboxEvent upsert
+   */
+  export type OutboxEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * The filter to search for the OutboxEvent to update in case it exists.
+     */
+    where: OutboxEventWhereUniqueInput
+    /**
+     * In case the OutboxEvent found by the `where` argument doesn't exist, create a new OutboxEvent with this data.
+     */
+    create: XOR<OutboxEventCreateInput, OutboxEventUncheckedCreateInput>
+    /**
+     * In case the OutboxEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OutboxEventUpdateInput, OutboxEventUncheckedUpdateInput>
+  }
+
+  /**
+   * OutboxEvent delete
+   */
+  export type OutboxEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+    /**
+     * Filter which OutboxEvent to delete.
+     */
+    where: OutboxEventWhereUniqueInput
+  }
+
+  /**
+   * OutboxEvent deleteMany
+   */
+  export type OutboxEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OutboxEvents to delete
+     */
+    where?: OutboxEventWhereInput
+    /**
+     * Limit how many OutboxEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OutboxEvent without action
+   */
+  export type OutboxEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OutboxEvent
+     */
+    select?: OutboxEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OutboxEvent
+     */
+    omit?: OutboxEventOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RegistrationPhotoUpload
+   */
+
+  export type AggregateRegistrationPhotoUpload = {
+    _count: RegistrationPhotoUploadCountAggregateOutputType | null
+    _avg: RegistrationPhotoUploadAvgAggregateOutputType | null
+    _sum: RegistrationPhotoUploadSumAggregateOutputType | null
+    _min: RegistrationPhotoUploadMinAggregateOutputType | null
+    _max: RegistrationPhotoUploadMaxAggregateOutputType | null
+  }
+
+  export type RegistrationPhotoUploadAvgAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type RegistrationPhotoUploadSumAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type RegistrationPhotoUploadMinAggregateOutputType = {
+    id: string | null
+    blobKey: string | null
+    contentType: string | null
+    sizeBytes: number | null
+    ipHash: string | null
+    createdAt: Date | null
+    claimedAt: Date | null
+    claimedByWorkerProfileId: string | null
+  }
+
+  export type RegistrationPhotoUploadMaxAggregateOutputType = {
+    id: string | null
+    blobKey: string | null
+    contentType: string | null
+    sizeBytes: number | null
+    ipHash: string | null
+    createdAt: Date | null
+    claimedAt: Date | null
+    claimedByWorkerProfileId: string | null
+  }
+
+  export type RegistrationPhotoUploadCountAggregateOutputType = {
+    id: number
+    blobKey: number
+    contentType: number
+    sizeBytes: number
+    ipHash: number
+    createdAt: number
+    claimedAt: number
+    claimedByWorkerProfileId: number
+    _all: number
+  }
+
+
+  export type RegistrationPhotoUploadAvgAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type RegistrationPhotoUploadSumAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type RegistrationPhotoUploadMinAggregateInputType = {
+    id?: true
+    blobKey?: true
+    contentType?: true
+    sizeBytes?: true
+    ipHash?: true
+    createdAt?: true
+    claimedAt?: true
+    claimedByWorkerProfileId?: true
+  }
+
+  export type RegistrationPhotoUploadMaxAggregateInputType = {
+    id?: true
+    blobKey?: true
+    contentType?: true
+    sizeBytes?: true
+    ipHash?: true
+    createdAt?: true
+    claimedAt?: true
+    claimedByWorkerProfileId?: true
+  }
+
+  export type RegistrationPhotoUploadCountAggregateInputType = {
+    id?: true
+    blobKey?: true
+    contentType?: true
+    sizeBytes?: true
+    ipHash?: true
+    createdAt?: true
+    claimedAt?: true
+    claimedByWorkerProfileId?: true
+    _all?: true
+  }
+
+  export type RegistrationPhotoUploadAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RegistrationPhotoUpload to aggregate.
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistrationPhotoUploads to fetch.
+     */
+    orderBy?: RegistrationPhotoUploadOrderByWithRelationInput | RegistrationPhotoUploadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RegistrationPhotoUploadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistrationPhotoUploads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistrationPhotoUploads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RegistrationPhotoUploads
+    **/
+    _count?: true | RegistrationPhotoUploadCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RegistrationPhotoUploadAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RegistrationPhotoUploadSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RegistrationPhotoUploadMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RegistrationPhotoUploadMaxAggregateInputType
+  }
+
+  export type GetRegistrationPhotoUploadAggregateType<T extends RegistrationPhotoUploadAggregateArgs> = {
+        [P in keyof T & keyof AggregateRegistrationPhotoUpload]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRegistrationPhotoUpload[P]>
+      : GetScalarType<T[P], AggregateRegistrationPhotoUpload[P]>
+  }
+
+
+
+
+  export type RegistrationPhotoUploadGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationPhotoUploadWhereInput
+    orderBy?: RegistrationPhotoUploadOrderByWithAggregationInput | RegistrationPhotoUploadOrderByWithAggregationInput[]
+    by: RegistrationPhotoUploadScalarFieldEnum[] | RegistrationPhotoUploadScalarFieldEnum
+    having?: RegistrationPhotoUploadScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RegistrationPhotoUploadCountAggregateInputType | true
+    _avg?: RegistrationPhotoUploadAvgAggregateInputType
+    _sum?: RegistrationPhotoUploadSumAggregateInputType
+    _min?: RegistrationPhotoUploadMinAggregateInputType
+    _max?: RegistrationPhotoUploadMaxAggregateInputType
+  }
+
+  export type RegistrationPhotoUploadGroupByOutputType = {
+    id: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt: Date
+    claimedAt: Date | null
+    claimedByWorkerProfileId: string | null
+    _count: RegistrationPhotoUploadCountAggregateOutputType | null
+    _avg: RegistrationPhotoUploadAvgAggregateOutputType | null
+    _sum: RegistrationPhotoUploadSumAggregateOutputType | null
+    _min: RegistrationPhotoUploadMinAggregateOutputType | null
+    _max: RegistrationPhotoUploadMaxAggregateOutputType | null
+  }
+
+  type GetRegistrationPhotoUploadGroupByPayload<T extends RegistrationPhotoUploadGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RegistrationPhotoUploadGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RegistrationPhotoUploadGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RegistrationPhotoUploadGroupByOutputType[P]>
+            : GetScalarType<T[P], RegistrationPhotoUploadGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RegistrationPhotoUploadSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    blobKey?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    ipHash?: boolean
+    createdAt?: boolean
+    claimedAt?: boolean
+    claimedByWorkerProfileId?: boolean
+    claimedBy?: boolean | RegistrationPhotoUpload$claimedByArgs<ExtArgs>
+  }, ExtArgs["result"]["registrationPhotoUpload"]>
+
+  export type RegistrationPhotoUploadSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    blobKey?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    ipHash?: boolean
+    createdAt?: boolean
+    claimedAt?: boolean
+    claimedByWorkerProfileId?: boolean
+    claimedBy?: boolean | RegistrationPhotoUpload$claimedByArgs<ExtArgs>
+  }, ExtArgs["result"]["registrationPhotoUpload"]>
+
+  export type RegistrationPhotoUploadSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    blobKey?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    ipHash?: boolean
+    createdAt?: boolean
+    claimedAt?: boolean
+    claimedByWorkerProfileId?: boolean
+    claimedBy?: boolean | RegistrationPhotoUpload$claimedByArgs<ExtArgs>
+  }, ExtArgs["result"]["registrationPhotoUpload"]>
+
+  export type RegistrationPhotoUploadSelectScalar = {
+    id?: boolean
+    blobKey?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    ipHash?: boolean
+    createdAt?: boolean
+    claimedAt?: boolean
+    claimedByWorkerProfileId?: boolean
+  }
+
+  export type RegistrationPhotoUploadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "blobKey" | "contentType" | "sizeBytes" | "ipHash" | "createdAt" | "claimedAt" | "claimedByWorkerProfileId", ExtArgs["result"]["registrationPhotoUpload"]>
+  export type RegistrationPhotoUploadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    claimedBy?: boolean | RegistrationPhotoUpload$claimedByArgs<ExtArgs>
+  }
+  export type RegistrationPhotoUploadIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    claimedBy?: boolean | RegistrationPhotoUpload$claimedByArgs<ExtArgs>
+  }
+  export type RegistrationPhotoUploadIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    claimedBy?: boolean | RegistrationPhotoUpload$claimedByArgs<ExtArgs>
+  }
+
+  export type $RegistrationPhotoUploadPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RegistrationPhotoUpload"
+    objects: {
+      claimedBy: Prisma.$WorkerProfilePayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      blobKey: string
+      contentType: string
+      sizeBytes: number
+      ipHash: string
+      createdAt: Date
+      claimedAt: Date | null
+      claimedByWorkerProfileId: string | null
+    }, ExtArgs["result"]["registrationPhotoUpload"]>
+    composites: {}
+  }
+
+  type RegistrationPhotoUploadGetPayload<S extends boolean | null | undefined | RegistrationPhotoUploadDefaultArgs> = $Result.GetResult<Prisma.$RegistrationPhotoUploadPayload, S>
+
+  type RegistrationPhotoUploadCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RegistrationPhotoUploadFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RegistrationPhotoUploadCountAggregateInputType | true
+    }
+
+  export interface RegistrationPhotoUploadDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RegistrationPhotoUpload'], meta: { name: 'RegistrationPhotoUpload' } }
+    /**
+     * Find zero or one RegistrationPhotoUpload that matches the filter.
+     * @param {RegistrationPhotoUploadFindUniqueArgs} args - Arguments to find a RegistrationPhotoUpload
+     * @example
+     * // Get one RegistrationPhotoUpload
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RegistrationPhotoUploadFindUniqueArgs>(args: SelectSubset<T, RegistrationPhotoUploadFindUniqueArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RegistrationPhotoUpload that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RegistrationPhotoUploadFindUniqueOrThrowArgs} args - Arguments to find a RegistrationPhotoUpload
+     * @example
+     * // Get one RegistrationPhotoUpload
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RegistrationPhotoUploadFindUniqueOrThrowArgs>(args: SelectSubset<T, RegistrationPhotoUploadFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RegistrationPhotoUpload that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadFindFirstArgs} args - Arguments to find a RegistrationPhotoUpload
+     * @example
+     * // Get one RegistrationPhotoUpload
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RegistrationPhotoUploadFindFirstArgs>(args?: SelectSubset<T, RegistrationPhotoUploadFindFirstArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RegistrationPhotoUpload that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadFindFirstOrThrowArgs} args - Arguments to find a RegistrationPhotoUpload
+     * @example
+     * // Get one RegistrationPhotoUpload
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RegistrationPhotoUploadFindFirstOrThrowArgs>(args?: SelectSubset<T, RegistrationPhotoUploadFindFirstOrThrowArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RegistrationPhotoUploads that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RegistrationPhotoUploads
+     * const registrationPhotoUploads = await prisma.registrationPhotoUpload.findMany()
+     * 
+     * // Get first 10 RegistrationPhotoUploads
+     * const registrationPhotoUploads = await prisma.registrationPhotoUpload.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const registrationPhotoUploadWithIdOnly = await prisma.registrationPhotoUpload.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RegistrationPhotoUploadFindManyArgs>(args?: SelectSubset<T, RegistrationPhotoUploadFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RegistrationPhotoUpload.
+     * @param {RegistrationPhotoUploadCreateArgs} args - Arguments to create a RegistrationPhotoUpload.
+     * @example
+     * // Create one RegistrationPhotoUpload
+     * const RegistrationPhotoUpload = await prisma.registrationPhotoUpload.create({
+     *   data: {
+     *     // ... data to create a RegistrationPhotoUpload
+     *   }
+     * })
+     * 
+     */
+    create<T extends RegistrationPhotoUploadCreateArgs>(args: SelectSubset<T, RegistrationPhotoUploadCreateArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RegistrationPhotoUploads.
+     * @param {RegistrationPhotoUploadCreateManyArgs} args - Arguments to create many RegistrationPhotoUploads.
+     * @example
+     * // Create many RegistrationPhotoUploads
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RegistrationPhotoUploadCreateManyArgs>(args?: SelectSubset<T, RegistrationPhotoUploadCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RegistrationPhotoUploads and returns the data saved in the database.
+     * @param {RegistrationPhotoUploadCreateManyAndReturnArgs} args - Arguments to create many RegistrationPhotoUploads.
+     * @example
+     * // Create many RegistrationPhotoUploads
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RegistrationPhotoUploads and only return the `id`
+     * const registrationPhotoUploadWithIdOnly = await prisma.registrationPhotoUpload.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RegistrationPhotoUploadCreateManyAndReturnArgs>(args?: SelectSubset<T, RegistrationPhotoUploadCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RegistrationPhotoUpload.
+     * @param {RegistrationPhotoUploadDeleteArgs} args - Arguments to delete one RegistrationPhotoUpload.
+     * @example
+     * // Delete one RegistrationPhotoUpload
+     * const RegistrationPhotoUpload = await prisma.registrationPhotoUpload.delete({
+     *   where: {
+     *     // ... filter to delete one RegistrationPhotoUpload
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RegistrationPhotoUploadDeleteArgs>(args: SelectSubset<T, RegistrationPhotoUploadDeleteArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RegistrationPhotoUpload.
+     * @param {RegistrationPhotoUploadUpdateArgs} args - Arguments to update one RegistrationPhotoUpload.
+     * @example
+     * // Update one RegistrationPhotoUpload
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RegistrationPhotoUploadUpdateArgs>(args: SelectSubset<T, RegistrationPhotoUploadUpdateArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RegistrationPhotoUploads.
+     * @param {RegistrationPhotoUploadDeleteManyArgs} args - Arguments to filter RegistrationPhotoUploads to delete.
+     * @example
+     * // Delete a few RegistrationPhotoUploads
+     * const { count } = await prisma.registrationPhotoUpload.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RegistrationPhotoUploadDeleteManyArgs>(args?: SelectSubset<T, RegistrationPhotoUploadDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RegistrationPhotoUploads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RegistrationPhotoUploads
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RegistrationPhotoUploadUpdateManyArgs>(args: SelectSubset<T, RegistrationPhotoUploadUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RegistrationPhotoUploads and returns the data updated in the database.
+     * @param {RegistrationPhotoUploadUpdateManyAndReturnArgs} args - Arguments to update many RegistrationPhotoUploads.
+     * @example
+     * // Update many RegistrationPhotoUploads
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RegistrationPhotoUploads and only return the `id`
+     * const registrationPhotoUploadWithIdOnly = await prisma.registrationPhotoUpload.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RegistrationPhotoUploadUpdateManyAndReturnArgs>(args: SelectSubset<T, RegistrationPhotoUploadUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RegistrationPhotoUpload.
+     * @param {RegistrationPhotoUploadUpsertArgs} args - Arguments to update or create a RegistrationPhotoUpload.
+     * @example
+     * // Update or create a RegistrationPhotoUpload
+     * const registrationPhotoUpload = await prisma.registrationPhotoUpload.upsert({
+     *   create: {
+     *     // ... data to create a RegistrationPhotoUpload
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RegistrationPhotoUpload we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RegistrationPhotoUploadUpsertArgs>(args: SelectSubset<T, RegistrationPhotoUploadUpsertArgs<ExtArgs>>): Prisma__RegistrationPhotoUploadClient<$Result.GetResult<Prisma.$RegistrationPhotoUploadPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RegistrationPhotoUploads.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadCountArgs} args - Arguments to filter RegistrationPhotoUploads to count.
+     * @example
+     * // Count the number of RegistrationPhotoUploads
+     * const count = await prisma.registrationPhotoUpload.count({
+     *   where: {
+     *     // ... the filter for the RegistrationPhotoUploads we want to count
+     *   }
+     * })
+    **/
+    count<T extends RegistrationPhotoUploadCountArgs>(
+      args?: Subset<T, RegistrationPhotoUploadCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RegistrationPhotoUploadCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RegistrationPhotoUpload.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RegistrationPhotoUploadAggregateArgs>(args: Subset<T, RegistrationPhotoUploadAggregateArgs>): Prisma.PrismaPromise<GetRegistrationPhotoUploadAggregateType<T>>
+
+    /**
+     * Group by RegistrationPhotoUpload.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RegistrationPhotoUploadGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RegistrationPhotoUploadGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RegistrationPhotoUploadGroupByArgs['orderBy'] }
+        : { orderBy?: RegistrationPhotoUploadGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RegistrationPhotoUploadGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRegistrationPhotoUploadGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RegistrationPhotoUpload model
+   */
+  readonly fields: RegistrationPhotoUploadFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RegistrationPhotoUpload.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RegistrationPhotoUploadClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    claimedBy<T extends RegistrationPhotoUpload$claimedByArgs<ExtArgs> = {}>(args?: Subset<T, RegistrationPhotoUpload$claimedByArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RegistrationPhotoUpload model
+   */
+  interface RegistrationPhotoUploadFieldRefs {
+    readonly id: FieldRef<"RegistrationPhotoUpload", 'String'>
+    readonly blobKey: FieldRef<"RegistrationPhotoUpload", 'String'>
+    readonly contentType: FieldRef<"RegistrationPhotoUpload", 'String'>
+    readonly sizeBytes: FieldRef<"RegistrationPhotoUpload", 'Int'>
+    readonly ipHash: FieldRef<"RegistrationPhotoUpload", 'String'>
+    readonly createdAt: FieldRef<"RegistrationPhotoUpload", 'DateTime'>
+    readonly claimedAt: FieldRef<"RegistrationPhotoUpload", 'DateTime'>
+    readonly claimedByWorkerProfileId: FieldRef<"RegistrationPhotoUpload", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RegistrationPhotoUpload findUnique
+   */
+  export type RegistrationPhotoUploadFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * Filter, which RegistrationPhotoUpload to fetch.
+     */
+    where: RegistrationPhotoUploadWhereUniqueInput
+  }
+
+  /**
+   * RegistrationPhotoUpload findUniqueOrThrow
+   */
+  export type RegistrationPhotoUploadFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * Filter, which RegistrationPhotoUpload to fetch.
+     */
+    where: RegistrationPhotoUploadWhereUniqueInput
+  }
+
+  /**
+   * RegistrationPhotoUpload findFirst
+   */
+  export type RegistrationPhotoUploadFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * Filter, which RegistrationPhotoUpload to fetch.
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistrationPhotoUploads to fetch.
+     */
+    orderBy?: RegistrationPhotoUploadOrderByWithRelationInput | RegistrationPhotoUploadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RegistrationPhotoUploads.
+     */
+    cursor?: RegistrationPhotoUploadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistrationPhotoUploads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistrationPhotoUploads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RegistrationPhotoUploads.
+     */
+    distinct?: RegistrationPhotoUploadScalarFieldEnum | RegistrationPhotoUploadScalarFieldEnum[]
+  }
+
+  /**
+   * RegistrationPhotoUpload findFirstOrThrow
+   */
+  export type RegistrationPhotoUploadFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * Filter, which RegistrationPhotoUpload to fetch.
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistrationPhotoUploads to fetch.
+     */
+    orderBy?: RegistrationPhotoUploadOrderByWithRelationInput | RegistrationPhotoUploadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RegistrationPhotoUploads.
+     */
+    cursor?: RegistrationPhotoUploadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistrationPhotoUploads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistrationPhotoUploads.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RegistrationPhotoUploads.
+     */
+    distinct?: RegistrationPhotoUploadScalarFieldEnum | RegistrationPhotoUploadScalarFieldEnum[]
+  }
+
+  /**
+   * RegistrationPhotoUpload findMany
+   */
+  export type RegistrationPhotoUploadFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * Filter, which RegistrationPhotoUploads to fetch.
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RegistrationPhotoUploads to fetch.
+     */
+    orderBy?: RegistrationPhotoUploadOrderByWithRelationInput | RegistrationPhotoUploadOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RegistrationPhotoUploads.
+     */
+    cursor?: RegistrationPhotoUploadWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RegistrationPhotoUploads from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RegistrationPhotoUploads.
+     */
+    skip?: number
+    distinct?: RegistrationPhotoUploadScalarFieldEnum | RegistrationPhotoUploadScalarFieldEnum[]
+  }
+
+  /**
+   * RegistrationPhotoUpload create
+   */
+  export type RegistrationPhotoUploadCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RegistrationPhotoUpload.
+     */
+    data: XOR<RegistrationPhotoUploadCreateInput, RegistrationPhotoUploadUncheckedCreateInput>
+  }
+
+  /**
+   * RegistrationPhotoUpload createMany
+   */
+  export type RegistrationPhotoUploadCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RegistrationPhotoUploads.
+     */
+    data: RegistrationPhotoUploadCreateManyInput | RegistrationPhotoUploadCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RegistrationPhotoUpload createManyAndReturn
+   */
+  export type RegistrationPhotoUploadCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * The data used to create many RegistrationPhotoUploads.
+     */
+    data: RegistrationPhotoUploadCreateManyInput | RegistrationPhotoUploadCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RegistrationPhotoUpload update
+   */
+  export type RegistrationPhotoUploadUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RegistrationPhotoUpload.
+     */
+    data: XOR<RegistrationPhotoUploadUpdateInput, RegistrationPhotoUploadUncheckedUpdateInput>
+    /**
+     * Choose, which RegistrationPhotoUpload to update.
+     */
+    where: RegistrationPhotoUploadWhereUniqueInput
+  }
+
+  /**
+   * RegistrationPhotoUpload updateMany
+   */
+  export type RegistrationPhotoUploadUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RegistrationPhotoUploads.
+     */
+    data: XOR<RegistrationPhotoUploadUpdateManyMutationInput, RegistrationPhotoUploadUncheckedUpdateManyInput>
+    /**
+     * Filter which RegistrationPhotoUploads to update
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * Limit how many RegistrationPhotoUploads to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RegistrationPhotoUpload updateManyAndReturn
+   */
+  export type RegistrationPhotoUploadUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * The data used to update RegistrationPhotoUploads.
+     */
+    data: XOR<RegistrationPhotoUploadUpdateManyMutationInput, RegistrationPhotoUploadUncheckedUpdateManyInput>
+    /**
+     * Filter which RegistrationPhotoUploads to update
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * Limit how many RegistrationPhotoUploads to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RegistrationPhotoUpload upsert
+   */
+  export type RegistrationPhotoUploadUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RegistrationPhotoUpload to update in case it exists.
+     */
+    where: RegistrationPhotoUploadWhereUniqueInput
+    /**
+     * In case the RegistrationPhotoUpload found by the `where` argument doesn't exist, create a new RegistrationPhotoUpload with this data.
+     */
+    create: XOR<RegistrationPhotoUploadCreateInput, RegistrationPhotoUploadUncheckedCreateInput>
+    /**
+     * In case the RegistrationPhotoUpload was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RegistrationPhotoUploadUpdateInput, RegistrationPhotoUploadUncheckedUpdateInput>
+  }
+
+  /**
+   * RegistrationPhotoUpload delete
+   */
+  export type RegistrationPhotoUploadDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+    /**
+     * Filter which RegistrationPhotoUpload to delete.
+     */
+    where: RegistrationPhotoUploadWhereUniqueInput
+  }
+
+  /**
+   * RegistrationPhotoUpload deleteMany
+   */
+  export type RegistrationPhotoUploadDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RegistrationPhotoUploads to delete
+     */
+    where?: RegistrationPhotoUploadWhereInput
+    /**
+     * Limit how many RegistrationPhotoUploads to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RegistrationPhotoUpload.claimedBy
+   */
+  export type RegistrationPhotoUpload$claimedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkerProfile
+     */
+    select?: WorkerProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkerProfile
+     */
+    omit?: WorkerProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkerProfileInclude<ExtArgs> | null
+    where?: WorkerProfileWhereInput
+  }
+
+  /**
+   * RegistrationPhotoUpload without action
+   */
+  export type RegistrationPhotoUploadDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RegistrationPhotoUpload
+     */
+    select?: RegistrationPhotoUploadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RegistrationPhotoUpload
+     */
+    omit?: RegistrationPhotoUploadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationPhotoUploadInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RateLimitBucket
+   */
+
+  export type AggregateRateLimitBucket = {
+    _count: RateLimitBucketCountAggregateOutputType | null
+    _avg: RateLimitBucketAvgAggregateOutputType | null
+    _sum: RateLimitBucketSumAggregateOutputType | null
+    _min: RateLimitBucketMinAggregateOutputType | null
+    _max: RateLimitBucketMaxAggregateOutputType | null
+  }
+
+  export type RateLimitBucketAvgAggregateOutputType = {
+    count: number | null
+  }
+
+  export type RateLimitBucketSumAggregateOutputType = {
+    count: number | null
+  }
+
+  export type RateLimitBucketMinAggregateOutputType = {
+    key: string | null
+    windowStart: Date | null
+    count: number | null
+    expiresAt: Date | null
+  }
+
+  export type RateLimitBucketMaxAggregateOutputType = {
+    key: string | null
+    windowStart: Date | null
+    count: number | null
+    expiresAt: Date | null
+  }
+
+  export type RateLimitBucketCountAggregateOutputType = {
+    key: number
+    windowStart: number
+    count: number
+    expiresAt: number
+    _all: number
+  }
+
+
+  export type RateLimitBucketAvgAggregateInputType = {
+    count?: true
+  }
+
+  export type RateLimitBucketSumAggregateInputType = {
+    count?: true
+  }
+
+  export type RateLimitBucketMinAggregateInputType = {
+    key?: true
+    windowStart?: true
+    count?: true
+    expiresAt?: true
+  }
+
+  export type RateLimitBucketMaxAggregateInputType = {
+    key?: true
+    windowStart?: true
+    count?: true
+    expiresAt?: true
+  }
+
+  export type RateLimitBucketCountAggregateInputType = {
+    key?: true
+    windowStart?: true
+    count?: true
+    expiresAt?: true
+    _all?: true
+  }
+
+  export type RateLimitBucketAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RateLimitBucket to aggregate.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RateLimitBuckets
+    **/
+    _count?: true | RateLimitBucketCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RateLimitBucketAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RateLimitBucketSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RateLimitBucketMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RateLimitBucketMaxAggregateInputType
+  }
+
+  export type GetRateLimitBucketAggregateType<T extends RateLimitBucketAggregateArgs> = {
+        [P in keyof T & keyof AggregateRateLimitBucket]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRateLimitBucket[P]>
+      : GetScalarType<T[P], AggregateRateLimitBucket[P]>
+  }
+
+
+
+
+  export type RateLimitBucketGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RateLimitBucketWhereInput
+    orderBy?: RateLimitBucketOrderByWithAggregationInput | RateLimitBucketOrderByWithAggregationInput[]
+    by: RateLimitBucketScalarFieldEnum[] | RateLimitBucketScalarFieldEnum
+    having?: RateLimitBucketScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RateLimitBucketCountAggregateInputType | true
+    _avg?: RateLimitBucketAvgAggregateInputType
+    _sum?: RateLimitBucketSumAggregateInputType
+    _min?: RateLimitBucketMinAggregateInputType
+    _max?: RateLimitBucketMaxAggregateInputType
+  }
+
+  export type RateLimitBucketGroupByOutputType = {
+    key: string
+    windowStart: Date
+    count: number
+    expiresAt: Date
+    _count: RateLimitBucketCountAggregateOutputType | null
+    _avg: RateLimitBucketAvgAggregateOutputType | null
+    _sum: RateLimitBucketSumAggregateOutputType | null
+    _min: RateLimitBucketMinAggregateOutputType | null
+    _max: RateLimitBucketMaxAggregateOutputType | null
+  }
+
+  type GetRateLimitBucketGroupByPayload<T extends RateLimitBucketGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RateLimitBucketGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RateLimitBucketGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RateLimitBucketGroupByOutputType[P]>
+            : GetScalarType<T[P], RateLimitBucketGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RateLimitBucketSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    windowStart?: boolean
+    count?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["rateLimitBucket"]>
+
+  export type RateLimitBucketSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    windowStart?: boolean
+    count?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["rateLimitBucket"]>
+
+  export type RateLimitBucketSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    windowStart?: boolean
+    count?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["rateLimitBucket"]>
+
+  export type RateLimitBucketSelectScalar = {
+    key?: boolean
+    windowStart?: boolean
+    count?: boolean
+    expiresAt?: boolean
+  }
+
+  export type RateLimitBucketOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "windowStart" | "count" | "expiresAt", ExtArgs["result"]["rateLimitBucket"]>
+
+  export type $RateLimitBucketPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RateLimitBucket"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      key: string
+      windowStart: Date
+      count: number
+      expiresAt: Date
+    }, ExtArgs["result"]["rateLimitBucket"]>
+    composites: {}
+  }
+
+  type RateLimitBucketGetPayload<S extends boolean | null | undefined | RateLimitBucketDefaultArgs> = $Result.GetResult<Prisma.$RateLimitBucketPayload, S>
+
+  type RateLimitBucketCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RateLimitBucketFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RateLimitBucketCountAggregateInputType | true
+    }
+
+  export interface RateLimitBucketDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RateLimitBucket'], meta: { name: 'RateLimitBucket' } }
+    /**
+     * Find zero or one RateLimitBucket that matches the filter.
+     * @param {RateLimitBucketFindUniqueArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RateLimitBucketFindUniqueArgs>(args: SelectSubset<T, RateLimitBucketFindUniqueArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RateLimitBucket that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RateLimitBucketFindUniqueOrThrowArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RateLimitBucketFindUniqueOrThrowArgs>(args: SelectSubset<T, RateLimitBucketFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RateLimitBucket that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketFindFirstArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RateLimitBucketFindFirstArgs>(args?: SelectSubset<T, RateLimitBucketFindFirstArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RateLimitBucket that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketFindFirstOrThrowArgs} args - Arguments to find a RateLimitBucket
+     * @example
+     * // Get one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RateLimitBucketFindFirstOrThrowArgs>(args?: SelectSubset<T, RateLimitBucketFindFirstOrThrowArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RateLimitBuckets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RateLimitBuckets
+     * const rateLimitBuckets = await prisma.rateLimitBucket.findMany()
+     * 
+     * // Get first 10 RateLimitBuckets
+     * const rateLimitBuckets = await prisma.rateLimitBucket.findMany({ take: 10 })
+     * 
+     * // Only select the `key`
+     * const rateLimitBucketWithKeyOnly = await prisma.rateLimitBucket.findMany({ select: { key: true } })
+     * 
+     */
+    findMany<T extends RateLimitBucketFindManyArgs>(args?: SelectSubset<T, RateLimitBucketFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RateLimitBucket.
+     * @param {RateLimitBucketCreateArgs} args - Arguments to create a RateLimitBucket.
+     * @example
+     * // Create one RateLimitBucket
+     * const RateLimitBucket = await prisma.rateLimitBucket.create({
+     *   data: {
+     *     // ... data to create a RateLimitBucket
+     *   }
+     * })
+     * 
+     */
+    create<T extends RateLimitBucketCreateArgs>(args: SelectSubset<T, RateLimitBucketCreateArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RateLimitBuckets.
+     * @param {RateLimitBucketCreateManyArgs} args - Arguments to create many RateLimitBuckets.
+     * @example
+     * // Create many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RateLimitBucketCreateManyArgs>(args?: SelectSubset<T, RateLimitBucketCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RateLimitBuckets and returns the data saved in the database.
+     * @param {RateLimitBucketCreateManyAndReturnArgs} args - Arguments to create many RateLimitBuckets.
+     * @example
+     * // Create many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RateLimitBuckets and only return the `key`
+     * const rateLimitBucketWithKeyOnly = await prisma.rateLimitBucket.createManyAndReturn({
+     *   select: { key: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RateLimitBucketCreateManyAndReturnArgs>(args?: SelectSubset<T, RateLimitBucketCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RateLimitBucket.
+     * @param {RateLimitBucketDeleteArgs} args - Arguments to delete one RateLimitBucket.
+     * @example
+     * // Delete one RateLimitBucket
+     * const RateLimitBucket = await prisma.rateLimitBucket.delete({
+     *   where: {
+     *     // ... filter to delete one RateLimitBucket
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RateLimitBucketDeleteArgs>(args: SelectSubset<T, RateLimitBucketDeleteArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RateLimitBucket.
+     * @param {RateLimitBucketUpdateArgs} args - Arguments to update one RateLimitBucket.
+     * @example
+     * // Update one RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RateLimitBucketUpdateArgs>(args: SelectSubset<T, RateLimitBucketUpdateArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RateLimitBuckets.
+     * @param {RateLimitBucketDeleteManyArgs} args - Arguments to filter RateLimitBuckets to delete.
+     * @example
+     * // Delete a few RateLimitBuckets
+     * const { count } = await prisma.rateLimitBucket.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RateLimitBucketDeleteManyArgs>(args?: SelectSubset<T, RateLimitBucketDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RateLimitBuckets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RateLimitBucketUpdateManyArgs>(args: SelectSubset<T, RateLimitBucketUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RateLimitBuckets and returns the data updated in the database.
+     * @param {RateLimitBucketUpdateManyAndReturnArgs} args - Arguments to update many RateLimitBuckets.
+     * @example
+     * // Update many RateLimitBuckets
+     * const rateLimitBucket = await prisma.rateLimitBucket.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RateLimitBuckets and only return the `key`
+     * const rateLimitBucketWithKeyOnly = await prisma.rateLimitBucket.updateManyAndReturn({
+     *   select: { key: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RateLimitBucketUpdateManyAndReturnArgs>(args: SelectSubset<T, RateLimitBucketUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RateLimitBucket.
+     * @param {RateLimitBucketUpsertArgs} args - Arguments to update or create a RateLimitBucket.
+     * @example
+     * // Update or create a RateLimitBucket
+     * const rateLimitBucket = await prisma.rateLimitBucket.upsert({
+     *   create: {
+     *     // ... data to create a RateLimitBucket
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RateLimitBucket we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RateLimitBucketUpsertArgs>(args: SelectSubset<T, RateLimitBucketUpsertArgs<ExtArgs>>): Prisma__RateLimitBucketClient<$Result.GetResult<Prisma.$RateLimitBucketPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RateLimitBuckets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketCountArgs} args - Arguments to filter RateLimitBuckets to count.
+     * @example
+     * // Count the number of RateLimitBuckets
+     * const count = await prisma.rateLimitBucket.count({
+     *   where: {
+     *     // ... the filter for the RateLimitBuckets we want to count
+     *   }
+     * })
+    **/
+    count<T extends RateLimitBucketCountArgs>(
+      args?: Subset<T, RateLimitBucketCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RateLimitBucketCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RateLimitBucket.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RateLimitBucketAggregateArgs>(args: Subset<T, RateLimitBucketAggregateArgs>): Prisma.PrismaPromise<GetRateLimitBucketAggregateType<T>>
+
+    /**
+     * Group by RateLimitBucket.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RateLimitBucketGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RateLimitBucketGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RateLimitBucketGroupByArgs['orderBy'] }
+        : { orderBy?: RateLimitBucketGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RateLimitBucketGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRateLimitBucketGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RateLimitBucket model
+   */
+  readonly fields: RateLimitBucketFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RateLimitBucket.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RateLimitBucketClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RateLimitBucket model
+   */
+  interface RateLimitBucketFieldRefs {
+    readonly key: FieldRef<"RateLimitBucket", 'String'>
+    readonly windowStart: FieldRef<"RateLimitBucket", 'DateTime'>
+    readonly count: FieldRef<"RateLimitBucket", 'Int'>
+    readonly expiresAt: FieldRef<"RateLimitBucket", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RateLimitBucket findUnique
+   */
+  export type RateLimitBucketFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket findUniqueOrThrow
+   */
+  export type RateLimitBucketFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket findFirst
+   */
+  export type RateLimitBucketFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RateLimitBuckets.
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RateLimitBuckets.
+     */
+    distinct?: RateLimitBucketScalarFieldEnum | RateLimitBucketScalarFieldEnum[]
+  }
+
+  /**
+   * RateLimitBucket findFirstOrThrow
+   */
+  export type RateLimitBucketFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBucket to fetch.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RateLimitBuckets.
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RateLimitBuckets.
+     */
+    distinct?: RateLimitBucketScalarFieldEnum | RateLimitBucketScalarFieldEnum[]
+  }
+
+  /**
+   * RateLimitBucket findMany
+   */
+  export type RateLimitBucketFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter, which RateLimitBuckets to fetch.
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RateLimitBuckets to fetch.
+     */
+    orderBy?: RateLimitBucketOrderByWithRelationInput | RateLimitBucketOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RateLimitBuckets.
+     */
+    cursor?: RateLimitBucketWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RateLimitBuckets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RateLimitBuckets.
+     */
+    skip?: number
+    distinct?: RateLimitBucketScalarFieldEnum | RateLimitBucketScalarFieldEnum[]
+  }
+
+  /**
+   * RateLimitBucket create
+   */
+  export type RateLimitBucketCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data needed to create a RateLimitBucket.
+     */
+    data: XOR<RateLimitBucketCreateInput, RateLimitBucketUncheckedCreateInput>
+  }
+
+  /**
+   * RateLimitBucket createMany
+   */
+  export type RateLimitBucketCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RateLimitBuckets.
+     */
+    data: RateLimitBucketCreateManyInput | RateLimitBucketCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RateLimitBucket createManyAndReturn
+   */
+  export type RateLimitBucketCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data used to create many RateLimitBuckets.
+     */
+    data: RateLimitBucketCreateManyInput | RateLimitBucketCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RateLimitBucket update
+   */
+  export type RateLimitBucketUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data needed to update a RateLimitBucket.
+     */
+    data: XOR<RateLimitBucketUpdateInput, RateLimitBucketUncheckedUpdateInput>
+    /**
+     * Choose, which RateLimitBucket to update.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket updateMany
+   */
+  export type RateLimitBucketUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RateLimitBuckets.
+     */
+    data: XOR<RateLimitBucketUpdateManyMutationInput, RateLimitBucketUncheckedUpdateManyInput>
+    /**
+     * Filter which RateLimitBuckets to update
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * Limit how many RateLimitBuckets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RateLimitBucket updateManyAndReturn
+   */
+  export type RateLimitBucketUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The data used to update RateLimitBuckets.
+     */
+    data: XOR<RateLimitBucketUpdateManyMutationInput, RateLimitBucketUncheckedUpdateManyInput>
+    /**
+     * Filter which RateLimitBuckets to update
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * Limit how many RateLimitBuckets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RateLimitBucket upsert
+   */
+  export type RateLimitBucketUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * The filter to search for the RateLimitBucket to update in case it exists.
+     */
+    where: RateLimitBucketWhereUniqueInput
+    /**
+     * In case the RateLimitBucket found by the `where` argument doesn't exist, create a new RateLimitBucket with this data.
+     */
+    create: XOR<RateLimitBucketCreateInput, RateLimitBucketUncheckedCreateInput>
+    /**
+     * In case the RateLimitBucket was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RateLimitBucketUpdateInput, RateLimitBucketUncheckedUpdateInput>
+  }
+
+  /**
+   * RateLimitBucket delete
+   */
+  export type RateLimitBucketDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+    /**
+     * Filter which RateLimitBucket to delete.
+     */
+    where: RateLimitBucketWhereUniqueInput
+  }
+
+  /**
+   * RateLimitBucket deleteMany
+   */
+  export type RateLimitBucketDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RateLimitBuckets to delete
+     */
+    where?: RateLimitBucketWhereInput
+    /**
+     * Limit how many RateLimitBuckets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RateLimitBucket without action
+   */
+  export type RateLimitBucketDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RateLimitBucket
+     */
+    select?: RateLimitBucketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RateLimitBucket
+     */
+    omit?: RateLimitBucketOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -31426,7 +40501,10 @@ export namespace Prisma {
     isPublished: 'isPublished',
     verificationStatus: 'verificationStatus',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    consentProfileShareAt: 'consentProfileShareAt',
+    consentWordingVersion: 'consentWordingVersion',
+    zohoLeadId: 'zohoLeadId'
   };
 
   export type WorkerProfileScalarFieldEnum = (typeof WorkerProfileScalarFieldEnum)[keyof typeof WorkerProfileScalarFieldEnum]
@@ -31644,6 +40722,119 @@ export namespace Prisma {
   };
 
   export type WorkerExperienceScalarFieldEnum = (typeof WorkerExperienceScalarFieldEnum)[keyof typeof WorkerExperienceScalarFieldEnum]
+
+
+  export const AuLocalityScalarFieldEnum: {
+    id: 'id',
+    gnafLocalityPid: 'gnafLocalityPid',
+    suburb: 'suburb',
+    searchName: 'searchName',
+    state: 'state',
+    postcode: 'postcode',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    sourceVersion: 'sourceVersion',
+    retiredAt: 'retiredAt',
+    supersededById: 'supersededById',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AuLocalityScalarFieldEnum = (typeof AuLocalityScalarFieldEnum)[keyof typeof AuLocalityScalarFieldEnum]
+
+
+  export const WorkerLocationScalarFieldEnum: {
+    id: 'id',
+    workerProfileId: 'workerProfileId',
+    kind: 'kind',
+    localityId: 'localityId',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    travelRadiusKm: 'travelRadiusKm',
+    precision: 'precision',
+    source: 'source',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkerLocationScalarFieldEnum = (typeof WorkerLocationScalarFieldEnum)[keyof typeof WorkerLocationScalarFieldEnum]
+
+
+  export const WorkerOnboardingScalarFieldEnum: {
+    workerProfileId: 'workerProfileId',
+    stage: 'stage',
+    stageEnteredAt: 'stageEnteredAt',
+    signedUpAt: 'signedUpAt',
+    firstSignInAt: 'firstSignInAt',
+    firstDocumentAt: 'firstDocumentAt',
+    documentsSubmittedAt: 'documentsSubmittedAt',
+    verifiedAt: 'verifiedAt',
+    publishedAt: 'publishedAt',
+    lastActivityAt: 'lastActivityAt',
+    mandatoryTotal: 'mandatoryTotal',
+    mandatoryUploaded: 'mandatoryUploaded',
+    mandatoryApproved: 'mandatoryApproved',
+    catalogueVersion: 'catalogueVersion',
+    version: 'version',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkerOnboardingScalarFieldEnum = (typeof WorkerOnboardingScalarFieldEnum)[keyof typeof WorkerOnboardingScalarFieldEnum]
+
+
+  export const WorkerOnboardingTransitionScalarFieldEnum: {
+    id: 'id',
+    workerProfileId: 'workerProfileId',
+    fromStage: 'fromStage',
+    toStage: 'toStage',
+    at: 'at',
+    cause: 'cause',
+    actorId: 'actorId',
+    source: 'source'
+  };
+
+  export type WorkerOnboardingTransitionScalarFieldEnum = (typeof WorkerOnboardingTransitionScalarFieldEnum)[keyof typeof WorkerOnboardingTransitionScalarFieldEnum]
+
+
+  export const OutboxEventScalarFieldEnum: {
+    id: 'id',
+    type: 'type',
+    payload: 'payload',
+    status: 'status',
+    attempts: 'attempts',
+    nextAttemptAt: 'nextAttemptAt',
+    lockedUntil: 'lockedUntil',
+    lastError: 'lastError',
+    createdAt: 'createdAt',
+    processedAt: 'processedAt'
+  };
+
+  export type OutboxEventScalarFieldEnum = (typeof OutboxEventScalarFieldEnum)[keyof typeof OutboxEventScalarFieldEnum]
+
+
+  export const RegistrationPhotoUploadScalarFieldEnum: {
+    id: 'id',
+    blobKey: 'blobKey',
+    contentType: 'contentType',
+    sizeBytes: 'sizeBytes',
+    ipHash: 'ipHash',
+    createdAt: 'createdAt',
+    claimedAt: 'claimedAt',
+    claimedByWorkerProfileId: 'claimedByWorkerProfileId'
+  };
+
+  export type RegistrationPhotoUploadScalarFieldEnum = (typeof RegistrationPhotoUploadScalarFieldEnum)[keyof typeof RegistrationPhotoUploadScalarFieldEnum]
+
+
+  export const RateLimitBucketScalarFieldEnum: {
+    key: 'key',
+    windowStart: 'windowStart',
+    count: 'count',
+    expiresAt: 'expiresAt'
+  };
+
+  export type RateLimitBucketScalarFieldEnum = (typeof RateLimitBucketScalarFieldEnum)[keyof typeof RateLimitBucketScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -31913,6 +41104,104 @@ export namespace Prisma {
    * Reference to a field of type 'CareDomain[]'
    */
   export type ListEnumCareDomainFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CareDomain[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocationKind'
+   */
+  export type EnumLocationKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocationKind[]'
+   */
+  export type ListEnumLocationKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationKind[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocationPrecision'
+   */
+  export type EnumLocationPrecisionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationPrecision'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocationPrecision[]'
+   */
+  export type ListEnumLocationPrecisionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationPrecision[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocationSource'
+   */
+  export type EnumLocationSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocationSource[]'
+   */
+  export type ListEnumLocationSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocationSource[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OnboardingStage'
+   */
+  export type EnumOnboardingStageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OnboardingStage'>
+    
+
+
+  /**
+   * Reference to a field of type 'OnboardingStage[]'
+   */
+  export type ListEnumOnboardingStageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OnboardingStage[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt'
+   */
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt[]'
+   */
+  export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OnboardingTransitionSource'
+   */
+  export type EnumOnboardingTransitionSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OnboardingTransitionSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'OnboardingTransitionSource[]'
+   */
+  export type ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OnboardingTransitionSource[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OutboxStatus'
+   */
+  export type EnumOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OutboxStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'OutboxStatus[]'
+   */
+  export type ListEnumOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OutboxStatus[]'>
     
   /**
    * Deep Input Types
@@ -32709,6 +41998,9 @@ export namespace Prisma {
     verificationStatus?: StringFilter<"WorkerProfile"> | string
     createdAt?: DateTimeFilter<"WorkerProfile"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerProfile"> | Date | string
+    consentProfileShareAt?: DateTimeNullableFilter<"WorkerProfile"> | Date | string | null
+    consentWordingVersion?: StringNullableFilter<"WorkerProfile"> | string | null
+    zohoLeadId?: StringNullableFilter<"WorkerProfile"> | string | null
     verificationRequirements?: VerificationRequirementListRelationFilter
     workerAdditionalInfo?: XOR<WorkerAdditionalInfoNullableScalarRelationFilter, WorkerAdditionalInfoWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -32717,6 +42009,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryListRelationFilter
     educationEntries?: WorkerEducationListRelationFilter
     careExperience?: WorkerExperienceListRelationFilter
+    locations?: WorkerLocationListRelationFilter
+    onboarding?: XOR<WorkerOnboardingNullableScalarRelationFilter, WorkerOnboardingWhereInput> | null
+    onboardingTransitions?: WorkerOnboardingTransitionListRelationFilter
+    registrationPhotos?: RegistrationPhotoUploadListRelationFilter
   }
 
   export type WorkerProfileOrderByWithRelationInput = {
@@ -32752,6 +42048,9 @@ export namespace Prisma {
     verificationStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    consentProfileShareAt?: SortOrderInput | SortOrder
+    consentWordingVersion?: SortOrderInput | SortOrder
+    zohoLeadId?: SortOrderInput | SortOrder
     verificationRequirements?: VerificationRequirementOrderByRelationAggregateInput
     workerAdditionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
@@ -32760,6 +42059,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryOrderByRelationAggregateInput
     educationEntries?: WorkerEducationOrderByRelationAggregateInput
     careExperience?: WorkerExperienceOrderByRelationAggregateInput
+    locations?: WorkerLocationOrderByRelationAggregateInput
+    onboarding?: WorkerOnboardingOrderByWithRelationInput
+    onboardingTransitions?: WorkerOnboardingTransitionOrderByRelationAggregateInput
+    registrationPhotos?: RegistrationPhotoUploadOrderByRelationAggregateInput
   }
 
   export type WorkerProfileWhereUniqueInput = Prisma.AtLeast<{
@@ -32798,6 +42101,9 @@ export namespace Prisma {
     verificationStatus?: StringFilter<"WorkerProfile"> | string
     createdAt?: DateTimeFilter<"WorkerProfile"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerProfile"> | Date | string
+    consentProfileShareAt?: DateTimeNullableFilter<"WorkerProfile"> | Date | string | null
+    consentWordingVersion?: StringNullableFilter<"WorkerProfile"> | string | null
+    zohoLeadId?: StringNullableFilter<"WorkerProfile"> | string | null
     verificationRequirements?: VerificationRequirementListRelationFilter
     workerAdditionalInfo?: XOR<WorkerAdditionalInfoNullableScalarRelationFilter, WorkerAdditionalInfoWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -32806,6 +42112,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryListRelationFilter
     educationEntries?: WorkerEducationListRelationFilter
     careExperience?: WorkerExperienceListRelationFilter
+    locations?: WorkerLocationListRelationFilter
+    onboarding?: XOR<WorkerOnboardingNullableScalarRelationFilter, WorkerOnboardingWhereInput> | null
+    onboardingTransitions?: WorkerOnboardingTransitionListRelationFilter
+    registrationPhotos?: RegistrationPhotoUploadListRelationFilter
   }, "id" | "userId">
 
   export type WorkerProfileOrderByWithAggregationInput = {
@@ -32841,6 +42151,9 @@ export namespace Prisma {
     verificationStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    consentProfileShareAt?: SortOrderInput | SortOrder
+    consentWordingVersion?: SortOrderInput | SortOrder
+    zohoLeadId?: SortOrderInput | SortOrder
     _count?: WorkerProfileCountOrderByAggregateInput
     _avg?: WorkerProfileAvgOrderByAggregateInput
     _max?: WorkerProfileMaxOrderByAggregateInput
@@ -32884,6 +42197,9 @@ export namespace Prisma {
     verificationStatus?: StringWithAggregatesFilter<"WorkerProfile"> | string
     createdAt?: DateTimeWithAggregatesFilter<"WorkerProfile"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkerProfile"> | Date | string
+    consentProfileShareAt?: DateTimeNullableWithAggregatesFilter<"WorkerProfile"> | Date | string | null
+    consentWordingVersion?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
+    zohoLeadId?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
   }
 
   export type DocumentWhereInput = {
@@ -33983,6 +43299,590 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"WorkerExperience"> | Date | string
   }
 
+  export type AuLocalityWhereInput = {
+    AND?: AuLocalityWhereInput | AuLocalityWhereInput[]
+    OR?: AuLocalityWhereInput[]
+    NOT?: AuLocalityWhereInput | AuLocalityWhereInput[]
+    id?: IntFilter<"AuLocality"> | number
+    gnafLocalityPid?: StringFilter<"AuLocality"> | string
+    suburb?: StringFilter<"AuLocality"> | string
+    searchName?: StringFilter<"AuLocality"> | string
+    state?: StringFilter<"AuLocality"> | string
+    postcode?: StringFilter<"AuLocality"> | string
+    latitude?: FloatFilter<"AuLocality"> | number
+    longitude?: FloatFilter<"AuLocality"> | number
+    sourceVersion?: StringFilter<"AuLocality"> | string
+    retiredAt?: DateTimeNullableFilter<"AuLocality"> | Date | string | null
+    supersededById?: IntNullableFilter<"AuLocality"> | number | null
+    createdAt?: DateTimeFilter<"AuLocality"> | Date | string
+    updatedAt?: DateTimeFilter<"AuLocality"> | Date | string
+    supersededBy?: XOR<AuLocalityNullableScalarRelationFilter, AuLocalityWhereInput> | null
+    supersedes?: AuLocalityListRelationFilter
+    workerLocations?: WorkerLocationListRelationFilter
+  }
+
+  export type AuLocalityOrderByWithRelationInput = {
+    id?: SortOrder
+    gnafLocalityPid?: SortOrder
+    suburb?: SortOrder
+    searchName?: SortOrder
+    state?: SortOrder
+    postcode?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    sourceVersion?: SortOrder
+    retiredAt?: SortOrderInput | SortOrder
+    supersededById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    supersededBy?: AuLocalityOrderByWithRelationInput
+    supersedes?: AuLocalityOrderByRelationAggregateInput
+    workerLocations?: WorkerLocationOrderByRelationAggregateInput
+  }
+
+  export type AuLocalityWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    gnafLocalityPid_postcode?: AuLocalityGnafLocalityPidPostcodeCompoundUniqueInput
+    AND?: AuLocalityWhereInput | AuLocalityWhereInput[]
+    OR?: AuLocalityWhereInput[]
+    NOT?: AuLocalityWhereInput | AuLocalityWhereInput[]
+    gnafLocalityPid?: StringFilter<"AuLocality"> | string
+    suburb?: StringFilter<"AuLocality"> | string
+    searchName?: StringFilter<"AuLocality"> | string
+    state?: StringFilter<"AuLocality"> | string
+    postcode?: StringFilter<"AuLocality"> | string
+    latitude?: FloatFilter<"AuLocality"> | number
+    longitude?: FloatFilter<"AuLocality"> | number
+    sourceVersion?: StringFilter<"AuLocality"> | string
+    retiredAt?: DateTimeNullableFilter<"AuLocality"> | Date | string | null
+    supersededById?: IntNullableFilter<"AuLocality"> | number | null
+    createdAt?: DateTimeFilter<"AuLocality"> | Date | string
+    updatedAt?: DateTimeFilter<"AuLocality"> | Date | string
+    supersededBy?: XOR<AuLocalityNullableScalarRelationFilter, AuLocalityWhereInput> | null
+    supersedes?: AuLocalityListRelationFilter
+    workerLocations?: WorkerLocationListRelationFilter
+  }, "id" | "gnafLocalityPid_postcode">
+
+  export type AuLocalityOrderByWithAggregationInput = {
+    id?: SortOrder
+    gnafLocalityPid?: SortOrder
+    suburb?: SortOrder
+    searchName?: SortOrder
+    state?: SortOrder
+    postcode?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    sourceVersion?: SortOrder
+    retiredAt?: SortOrderInput | SortOrder
+    supersededById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AuLocalityCountOrderByAggregateInput
+    _avg?: AuLocalityAvgOrderByAggregateInput
+    _max?: AuLocalityMaxOrderByAggregateInput
+    _min?: AuLocalityMinOrderByAggregateInput
+    _sum?: AuLocalitySumOrderByAggregateInput
+  }
+
+  export type AuLocalityScalarWhereWithAggregatesInput = {
+    AND?: AuLocalityScalarWhereWithAggregatesInput | AuLocalityScalarWhereWithAggregatesInput[]
+    OR?: AuLocalityScalarWhereWithAggregatesInput[]
+    NOT?: AuLocalityScalarWhereWithAggregatesInput | AuLocalityScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"AuLocality"> | number
+    gnafLocalityPid?: StringWithAggregatesFilter<"AuLocality"> | string
+    suburb?: StringWithAggregatesFilter<"AuLocality"> | string
+    searchName?: StringWithAggregatesFilter<"AuLocality"> | string
+    state?: StringWithAggregatesFilter<"AuLocality"> | string
+    postcode?: StringWithAggregatesFilter<"AuLocality"> | string
+    latitude?: FloatWithAggregatesFilter<"AuLocality"> | number
+    longitude?: FloatWithAggregatesFilter<"AuLocality"> | number
+    sourceVersion?: StringWithAggregatesFilter<"AuLocality"> | string
+    retiredAt?: DateTimeNullableWithAggregatesFilter<"AuLocality"> | Date | string | null
+    supersededById?: IntNullableWithAggregatesFilter<"AuLocality"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"AuLocality"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AuLocality"> | Date | string
+  }
+
+  export type WorkerLocationWhereInput = {
+    AND?: WorkerLocationWhereInput | WorkerLocationWhereInput[]
+    OR?: WorkerLocationWhereInput[]
+    NOT?: WorkerLocationWhereInput | WorkerLocationWhereInput[]
+    id?: StringFilter<"WorkerLocation"> | string
+    workerProfileId?: StringFilter<"WorkerLocation"> | string
+    kind?: EnumLocationKindFilter<"WorkerLocation"> | $Enums.LocationKind
+    localityId?: IntFilter<"WorkerLocation"> | number
+    latitude?: FloatFilter<"WorkerLocation"> | number
+    longitude?: FloatFilter<"WorkerLocation"> | number
+    travelRadiusKm?: IntNullableFilter<"WorkerLocation"> | number | null
+    precision?: EnumLocationPrecisionFilter<"WorkerLocation"> | $Enums.LocationPrecision
+    source?: EnumLocationSourceFilter<"WorkerLocation"> | $Enums.LocationSource
+    createdAt?: DateTimeFilter<"WorkerLocation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerLocation"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+    locality?: XOR<AuLocalityScalarRelationFilter, AuLocalityWhereInput>
+  }
+
+  export type WorkerLocationOrderByWithRelationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    kind?: SortOrder
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrderInput | SortOrder
+    precision?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workerProfile?: WorkerProfileOrderByWithRelationInput
+    locality?: AuLocalityOrderByWithRelationInput
+  }
+
+  export type WorkerLocationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WorkerLocationWhereInput | WorkerLocationWhereInput[]
+    OR?: WorkerLocationWhereInput[]
+    NOT?: WorkerLocationWhereInput | WorkerLocationWhereInput[]
+    workerProfileId?: StringFilter<"WorkerLocation"> | string
+    kind?: EnumLocationKindFilter<"WorkerLocation"> | $Enums.LocationKind
+    localityId?: IntFilter<"WorkerLocation"> | number
+    latitude?: FloatFilter<"WorkerLocation"> | number
+    longitude?: FloatFilter<"WorkerLocation"> | number
+    travelRadiusKm?: IntNullableFilter<"WorkerLocation"> | number | null
+    precision?: EnumLocationPrecisionFilter<"WorkerLocation"> | $Enums.LocationPrecision
+    source?: EnumLocationSourceFilter<"WorkerLocation"> | $Enums.LocationSource
+    createdAt?: DateTimeFilter<"WorkerLocation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerLocation"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+    locality?: XOR<AuLocalityScalarRelationFilter, AuLocalityWhereInput>
+  }, "id">
+
+  export type WorkerLocationOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    kind?: SortOrder
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrderInput | SortOrder
+    precision?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkerLocationCountOrderByAggregateInput
+    _avg?: WorkerLocationAvgOrderByAggregateInput
+    _max?: WorkerLocationMaxOrderByAggregateInput
+    _min?: WorkerLocationMinOrderByAggregateInput
+    _sum?: WorkerLocationSumOrderByAggregateInput
+  }
+
+  export type WorkerLocationScalarWhereWithAggregatesInput = {
+    AND?: WorkerLocationScalarWhereWithAggregatesInput | WorkerLocationScalarWhereWithAggregatesInput[]
+    OR?: WorkerLocationScalarWhereWithAggregatesInput[]
+    NOT?: WorkerLocationScalarWhereWithAggregatesInput | WorkerLocationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WorkerLocation"> | string
+    workerProfileId?: StringWithAggregatesFilter<"WorkerLocation"> | string
+    kind?: EnumLocationKindWithAggregatesFilter<"WorkerLocation"> | $Enums.LocationKind
+    localityId?: IntWithAggregatesFilter<"WorkerLocation"> | number
+    latitude?: FloatWithAggregatesFilter<"WorkerLocation"> | number
+    longitude?: FloatWithAggregatesFilter<"WorkerLocation"> | number
+    travelRadiusKm?: IntNullableWithAggregatesFilter<"WorkerLocation"> | number | null
+    precision?: EnumLocationPrecisionWithAggregatesFilter<"WorkerLocation"> | $Enums.LocationPrecision
+    source?: EnumLocationSourceWithAggregatesFilter<"WorkerLocation"> | $Enums.LocationSource
+    createdAt?: DateTimeWithAggregatesFilter<"WorkerLocation"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkerLocation"> | Date | string
+  }
+
+  export type WorkerOnboardingWhereInput = {
+    AND?: WorkerOnboardingWhereInput | WorkerOnboardingWhereInput[]
+    OR?: WorkerOnboardingWhereInput[]
+    NOT?: WorkerOnboardingWhereInput | WorkerOnboardingWhereInput[]
+    workerProfileId?: StringFilter<"WorkerOnboarding"> | string
+    stage?: EnumOnboardingStageFilter<"WorkerOnboarding"> | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    signedUpAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    firstSignInAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    firstDocumentAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    documentsSubmittedAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    verifiedAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    publishedAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    lastActivityAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    mandatoryTotal?: IntFilter<"WorkerOnboarding"> | number
+    mandatoryUploaded?: IntFilter<"WorkerOnboarding"> | number
+    mandatoryApproved?: IntFilter<"WorkerOnboarding"> | number
+    catalogueVersion?: IntFilter<"WorkerOnboarding"> | number
+    version?: IntFilter<"WorkerOnboarding"> | number
+    createdAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }
+
+  export type WorkerOnboardingOrderByWithRelationInput = {
+    workerProfileId?: SortOrder
+    stage?: SortOrder
+    stageEnteredAt?: SortOrder
+    signedUpAt?: SortOrder
+    firstSignInAt?: SortOrderInput | SortOrder
+    firstDocumentAt?: SortOrderInput | SortOrder
+    documentsSubmittedAt?: SortOrderInput | SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    publishedAt?: SortOrderInput | SortOrder
+    lastActivityAt?: SortOrder
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workerProfile?: WorkerProfileOrderByWithRelationInput
+  }
+
+  export type WorkerOnboardingWhereUniqueInput = Prisma.AtLeast<{
+    workerProfileId?: string
+    AND?: WorkerOnboardingWhereInput | WorkerOnboardingWhereInput[]
+    OR?: WorkerOnboardingWhereInput[]
+    NOT?: WorkerOnboardingWhereInput | WorkerOnboardingWhereInput[]
+    stage?: EnumOnboardingStageFilter<"WorkerOnboarding"> | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    signedUpAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    firstSignInAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    firstDocumentAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    documentsSubmittedAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    verifiedAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    publishedAt?: DateTimeNullableFilter<"WorkerOnboarding"> | Date | string | null
+    lastActivityAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    mandatoryTotal?: IntFilter<"WorkerOnboarding"> | number
+    mandatoryUploaded?: IntFilter<"WorkerOnboarding"> | number
+    mandatoryApproved?: IntFilter<"WorkerOnboarding"> | number
+    catalogueVersion?: IntFilter<"WorkerOnboarding"> | number
+    version?: IntFilter<"WorkerOnboarding"> | number
+    createdAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerOnboarding"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }, "workerProfileId">
+
+  export type WorkerOnboardingOrderByWithAggregationInput = {
+    workerProfileId?: SortOrder
+    stage?: SortOrder
+    stageEnteredAt?: SortOrder
+    signedUpAt?: SortOrder
+    firstSignInAt?: SortOrderInput | SortOrder
+    firstDocumentAt?: SortOrderInput | SortOrder
+    documentsSubmittedAt?: SortOrderInput | SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    publishedAt?: SortOrderInput | SortOrder
+    lastActivityAt?: SortOrder
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkerOnboardingCountOrderByAggregateInput
+    _avg?: WorkerOnboardingAvgOrderByAggregateInput
+    _max?: WorkerOnboardingMaxOrderByAggregateInput
+    _min?: WorkerOnboardingMinOrderByAggregateInput
+    _sum?: WorkerOnboardingSumOrderByAggregateInput
+  }
+
+  export type WorkerOnboardingScalarWhereWithAggregatesInput = {
+    AND?: WorkerOnboardingScalarWhereWithAggregatesInput | WorkerOnboardingScalarWhereWithAggregatesInput[]
+    OR?: WorkerOnboardingScalarWhereWithAggregatesInput[]
+    NOT?: WorkerOnboardingScalarWhereWithAggregatesInput | WorkerOnboardingScalarWhereWithAggregatesInput[]
+    workerProfileId?: StringWithAggregatesFilter<"WorkerOnboarding"> | string
+    stage?: EnumOnboardingStageWithAggregatesFilter<"WorkerOnboarding"> | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeWithAggregatesFilter<"WorkerOnboarding"> | Date | string
+    signedUpAt?: DateTimeWithAggregatesFilter<"WorkerOnboarding"> | Date | string
+    firstSignInAt?: DateTimeNullableWithAggregatesFilter<"WorkerOnboarding"> | Date | string | null
+    firstDocumentAt?: DateTimeNullableWithAggregatesFilter<"WorkerOnboarding"> | Date | string | null
+    documentsSubmittedAt?: DateTimeNullableWithAggregatesFilter<"WorkerOnboarding"> | Date | string | null
+    verifiedAt?: DateTimeNullableWithAggregatesFilter<"WorkerOnboarding"> | Date | string | null
+    publishedAt?: DateTimeNullableWithAggregatesFilter<"WorkerOnboarding"> | Date | string | null
+    lastActivityAt?: DateTimeWithAggregatesFilter<"WorkerOnboarding"> | Date | string
+    mandatoryTotal?: IntWithAggregatesFilter<"WorkerOnboarding"> | number
+    mandatoryUploaded?: IntWithAggregatesFilter<"WorkerOnboarding"> | number
+    mandatoryApproved?: IntWithAggregatesFilter<"WorkerOnboarding"> | number
+    catalogueVersion?: IntWithAggregatesFilter<"WorkerOnboarding"> | number
+    version?: IntWithAggregatesFilter<"WorkerOnboarding"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WorkerOnboarding"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkerOnboarding"> | Date | string
+  }
+
+  export type WorkerOnboardingTransitionWhereInput = {
+    AND?: WorkerOnboardingTransitionWhereInput | WorkerOnboardingTransitionWhereInput[]
+    OR?: WorkerOnboardingTransitionWhereInput[]
+    NOT?: WorkerOnboardingTransitionWhereInput | WorkerOnboardingTransitionWhereInput[]
+    id?: BigIntFilter<"WorkerOnboardingTransition"> | bigint | number
+    workerProfileId?: StringFilter<"WorkerOnboardingTransition"> | string
+    fromStage?: EnumOnboardingStageNullableFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage
+    at?: DateTimeFilter<"WorkerOnboardingTransition"> | Date | string
+    cause?: StringFilter<"WorkerOnboardingTransition"> | string
+    actorId?: StringNullableFilter<"WorkerOnboardingTransition"> | string | null
+    source?: EnumOnboardingTransitionSourceFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingTransitionSource
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }
+
+  export type WorkerOnboardingTransitionOrderByWithRelationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    fromStage?: SortOrderInput | SortOrder
+    toStage?: SortOrder
+    at?: SortOrder
+    cause?: SortOrder
+    actorId?: SortOrderInput | SortOrder
+    source?: SortOrder
+    workerProfile?: WorkerProfileOrderByWithRelationInput
+  }
+
+  export type WorkerOnboardingTransitionWhereUniqueInput = Prisma.AtLeast<{
+    id?: bigint | number
+    AND?: WorkerOnboardingTransitionWhereInput | WorkerOnboardingTransitionWhereInput[]
+    OR?: WorkerOnboardingTransitionWhereInput[]
+    NOT?: WorkerOnboardingTransitionWhereInput | WorkerOnboardingTransitionWhereInput[]
+    workerProfileId?: StringFilter<"WorkerOnboardingTransition"> | string
+    fromStage?: EnumOnboardingStageNullableFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage
+    at?: DateTimeFilter<"WorkerOnboardingTransition"> | Date | string
+    cause?: StringFilter<"WorkerOnboardingTransition"> | string
+    actorId?: StringNullableFilter<"WorkerOnboardingTransition"> | string | null
+    source?: EnumOnboardingTransitionSourceFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingTransitionSource
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }, "id">
+
+  export type WorkerOnboardingTransitionOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    fromStage?: SortOrderInput | SortOrder
+    toStage?: SortOrder
+    at?: SortOrder
+    cause?: SortOrder
+    actorId?: SortOrderInput | SortOrder
+    source?: SortOrder
+    _count?: WorkerOnboardingTransitionCountOrderByAggregateInput
+    _avg?: WorkerOnboardingTransitionAvgOrderByAggregateInput
+    _max?: WorkerOnboardingTransitionMaxOrderByAggregateInput
+    _min?: WorkerOnboardingTransitionMinOrderByAggregateInput
+    _sum?: WorkerOnboardingTransitionSumOrderByAggregateInput
+  }
+
+  export type WorkerOnboardingTransitionScalarWhereWithAggregatesInput = {
+    AND?: WorkerOnboardingTransitionScalarWhereWithAggregatesInput | WorkerOnboardingTransitionScalarWhereWithAggregatesInput[]
+    OR?: WorkerOnboardingTransitionScalarWhereWithAggregatesInput[]
+    NOT?: WorkerOnboardingTransitionScalarWhereWithAggregatesInput | WorkerOnboardingTransitionScalarWhereWithAggregatesInput[]
+    id?: BigIntWithAggregatesFilter<"WorkerOnboardingTransition"> | bigint | number
+    workerProfileId?: StringWithAggregatesFilter<"WorkerOnboardingTransition"> | string
+    fromStage?: EnumOnboardingStageNullableWithAggregatesFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageWithAggregatesFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage
+    at?: DateTimeWithAggregatesFilter<"WorkerOnboardingTransition"> | Date | string
+    cause?: StringWithAggregatesFilter<"WorkerOnboardingTransition"> | string
+    actorId?: StringNullableWithAggregatesFilter<"WorkerOnboardingTransition"> | string | null
+    source?: EnumOnboardingTransitionSourceWithAggregatesFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingTransitionSource
+  }
+
+  export type OutboxEventWhereInput = {
+    AND?: OutboxEventWhereInput | OutboxEventWhereInput[]
+    OR?: OutboxEventWhereInput[]
+    NOT?: OutboxEventWhereInput | OutboxEventWhereInput[]
+    id?: UuidFilter<"OutboxEvent"> | string
+    type?: StringFilter<"OutboxEvent"> | string
+    payload?: JsonFilter<"OutboxEvent">
+    status?: EnumOutboxStatusFilter<"OutboxEvent"> | $Enums.OutboxStatus
+    attempts?: IntFilter<"OutboxEvent"> | number
+    nextAttemptAt?: DateTimeFilter<"OutboxEvent"> | Date | string
+    lockedUntil?: DateTimeNullableFilter<"OutboxEvent"> | Date | string | null
+    lastError?: StringNullableFilter<"OutboxEvent"> | string | null
+    createdAt?: DateTimeFilter<"OutboxEvent"> | Date | string
+    processedAt?: DateTimeNullableFilter<"OutboxEvent"> | Date | string | null
+  }
+
+  export type OutboxEventOrderByWithRelationInput = {
+    id?: SortOrder
+    type?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lockedUntil?: SortOrderInput | SortOrder
+    lastError?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    processedAt?: SortOrderInput | SortOrder
+  }
+
+  export type OutboxEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OutboxEventWhereInput | OutboxEventWhereInput[]
+    OR?: OutboxEventWhereInput[]
+    NOT?: OutboxEventWhereInput | OutboxEventWhereInput[]
+    type?: StringFilter<"OutboxEvent"> | string
+    payload?: JsonFilter<"OutboxEvent">
+    status?: EnumOutboxStatusFilter<"OutboxEvent"> | $Enums.OutboxStatus
+    attempts?: IntFilter<"OutboxEvent"> | number
+    nextAttemptAt?: DateTimeFilter<"OutboxEvent"> | Date | string
+    lockedUntil?: DateTimeNullableFilter<"OutboxEvent"> | Date | string | null
+    lastError?: StringNullableFilter<"OutboxEvent"> | string | null
+    createdAt?: DateTimeFilter<"OutboxEvent"> | Date | string
+    processedAt?: DateTimeNullableFilter<"OutboxEvent"> | Date | string | null
+  }, "id">
+
+  export type OutboxEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    type?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lockedUntil?: SortOrderInput | SortOrder
+    lastError?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    processedAt?: SortOrderInput | SortOrder
+    _count?: OutboxEventCountOrderByAggregateInput
+    _avg?: OutboxEventAvgOrderByAggregateInput
+    _max?: OutboxEventMaxOrderByAggregateInput
+    _min?: OutboxEventMinOrderByAggregateInput
+    _sum?: OutboxEventSumOrderByAggregateInput
+  }
+
+  export type OutboxEventScalarWhereWithAggregatesInput = {
+    AND?: OutboxEventScalarWhereWithAggregatesInput | OutboxEventScalarWhereWithAggregatesInput[]
+    OR?: OutboxEventScalarWhereWithAggregatesInput[]
+    NOT?: OutboxEventScalarWhereWithAggregatesInput | OutboxEventScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"OutboxEvent"> | string
+    type?: StringWithAggregatesFilter<"OutboxEvent"> | string
+    payload?: JsonWithAggregatesFilter<"OutboxEvent">
+    status?: EnumOutboxStatusWithAggregatesFilter<"OutboxEvent"> | $Enums.OutboxStatus
+    attempts?: IntWithAggregatesFilter<"OutboxEvent"> | number
+    nextAttemptAt?: DateTimeWithAggregatesFilter<"OutboxEvent"> | Date | string
+    lockedUntil?: DateTimeNullableWithAggregatesFilter<"OutboxEvent"> | Date | string | null
+    lastError?: StringNullableWithAggregatesFilter<"OutboxEvent"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"OutboxEvent"> | Date | string
+    processedAt?: DateTimeNullableWithAggregatesFilter<"OutboxEvent"> | Date | string | null
+  }
+
+  export type RegistrationPhotoUploadWhereInput = {
+    AND?: RegistrationPhotoUploadWhereInput | RegistrationPhotoUploadWhereInput[]
+    OR?: RegistrationPhotoUploadWhereInput[]
+    NOT?: RegistrationPhotoUploadWhereInput | RegistrationPhotoUploadWhereInput[]
+    id?: UuidFilter<"RegistrationPhotoUpload"> | string
+    blobKey?: StringFilter<"RegistrationPhotoUpload"> | string
+    contentType?: StringFilter<"RegistrationPhotoUpload"> | string
+    sizeBytes?: IntFilter<"RegistrationPhotoUpload"> | number
+    ipHash?: StringFilter<"RegistrationPhotoUpload"> | string
+    createdAt?: DateTimeFilter<"RegistrationPhotoUpload"> | Date | string
+    claimedAt?: DateTimeNullableFilter<"RegistrationPhotoUpload"> | Date | string | null
+    claimedByWorkerProfileId?: StringNullableFilter<"RegistrationPhotoUpload"> | string | null
+    claimedBy?: XOR<WorkerProfileNullableScalarRelationFilter, WorkerProfileWhereInput> | null
+  }
+
+  export type RegistrationPhotoUploadOrderByWithRelationInput = {
+    id?: SortOrder
+    blobKey?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    ipHash?: SortOrder
+    createdAt?: SortOrder
+    claimedAt?: SortOrderInput | SortOrder
+    claimedByWorkerProfileId?: SortOrderInput | SortOrder
+    claimedBy?: WorkerProfileOrderByWithRelationInput
+  }
+
+  export type RegistrationPhotoUploadWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    blobKey?: string
+    AND?: RegistrationPhotoUploadWhereInput | RegistrationPhotoUploadWhereInput[]
+    OR?: RegistrationPhotoUploadWhereInput[]
+    NOT?: RegistrationPhotoUploadWhereInput | RegistrationPhotoUploadWhereInput[]
+    contentType?: StringFilter<"RegistrationPhotoUpload"> | string
+    sizeBytes?: IntFilter<"RegistrationPhotoUpload"> | number
+    ipHash?: StringFilter<"RegistrationPhotoUpload"> | string
+    createdAt?: DateTimeFilter<"RegistrationPhotoUpload"> | Date | string
+    claimedAt?: DateTimeNullableFilter<"RegistrationPhotoUpload"> | Date | string | null
+    claimedByWorkerProfileId?: StringNullableFilter<"RegistrationPhotoUpload"> | string | null
+    claimedBy?: XOR<WorkerProfileNullableScalarRelationFilter, WorkerProfileWhereInput> | null
+  }, "id" | "blobKey">
+
+  export type RegistrationPhotoUploadOrderByWithAggregationInput = {
+    id?: SortOrder
+    blobKey?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    ipHash?: SortOrder
+    createdAt?: SortOrder
+    claimedAt?: SortOrderInput | SortOrder
+    claimedByWorkerProfileId?: SortOrderInput | SortOrder
+    _count?: RegistrationPhotoUploadCountOrderByAggregateInput
+    _avg?: RegistrationPhotoUploadAvgOrderByAggregateInput
+    _max?: RegistrationPhotoUploadMaxOrderByAggregateInput
+    _min?: RegistrationPhotoUploadMinOrderByAggregateInput
+    _sum?: RegistrationPhotoUploadSumOrderByAggregateInput
+  }
+
+  export type RegistrationPhotoUploadScalarWhereWithAggregatesInput = {
+    AND?: RegistrationPhotoUploadScalarWhereWithAggregatesInput | RegistrationPhotoUploadScalarWhereWithAggregatesInput[]
+    OR?: RegistrationPhotoUploadScalarWhereWithAggregatesInput[]
+    NOT?: RegistrationPhotoUploadScalarWhereWithAggregatesInput | RegistrationPhotoUploadScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"RegistrationPhotoUpload"> | string
+    blobKey?: StringWithAggregatesFilter<"RegistrationPhotoUpload"> | string
+    contentType?: StringWithAggregatesFilter<"RegistrationPhotoUpload"> | string
+    sizeBytes?: IntWithAggregatesFilter<"RegistrationPhotoUpload"> | number
+    ipHash?: StringWithAggregatesFilter<"RegistrationPhotoUpload"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"RegistrationPhotoUpload"> | Date | string
+    claimedAt?: DateTimeNullableWithAggregatesFilter<"RegistrationPhotoUpload"> | Date | string | null
+    claimedByWorkerProfileId?: StringNullableWithAggregatesFilter<"RegistrationPhotoUpload"> | string | null
+  }
+
+  export type RateLimitBucketWhereInput = {
+    AND?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    OR?: RateLimitBucketWhereInput[]
+    NOT?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    key?: StringFilter<"RateLimitBucket"> | string
+    windowStart?: DateTimeFilter<"RateLimitBucket"> | Date | string
+    count?: IntFilter<"RateLimitBucket"> | number
+    expiresAt?: DateTimeFilter<"RateLimitBucket"> | Date | string
+  }
+
+  export type RateLimitBucketOrderByWithRelationInput = {
+    key?: SortOrder
+    windowStart?: SortOrder
+    count?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type RateLimitBucketWhereUniqueInput = Prisma.AtLeast<{
+    key_windowStart?: RateLimitBucketKeyWindowStartCompoundUniqueInput
+    AND?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    OR?: RateLimitBucketWhereInput[]
+    NOT?: RateLimitBucketWhereInput | RateLimitBucketWhereInput[]
+    key?: StringFilter<"RateLimitBucket"> | string
+    windowStart?: DateTimeFilter<"RateLimitBucket"> | Date | string
+    count?: IntFilter<"RateLimitBucket"> | number
+    expiresAt?: DateTimeFilter<"RateLimitBucket"> | Date | string
+  }, "key_windowStart">
+
+  export type RateLimitBucketOrderByWithAggregationInput = {
+    key?: SortOrder
+    windowStart?: SortOrder
+    count?: SortOrder
+    expiresAt?: SortOrder
+    _count?: RateLimitBucketCountOrderByAggregateInput
+    _avg?: RateLimitBucketAvgOrderByAggregateInput
+    _max?: RateLimitBucketMaxOrderByAggregateInput
+    _min?: RateLimitBucketMinOrderByAggregateInput
+    _sum?: RateLimitBucketSumOrderByAggregateInput
+  }
+
+  export type RateLimitBucketScalarWhereWithAggregatesInput = {
+    AND?: RateLimitBucketScalarWhereWithAggregatesInput | RateLimitBucketScalarWhereWithAggregatesInput[]
+    OR?: RateLimitBucketScalarWhereWithAggregatesInput[]
+    NOT?: RateLimitBucketScalarWhereWithAggregatesInput | RateLimitBucketScalarWhereWithAggregatesInput[]
+    key?: StringWithAggregatesFilter<"RateLimitBucket"> | string
+    windowStart?: DateTimeWithAggregatesFilter<"RateLimitBucket"> | Date | string
+    count?: IntWithAggregatesFilter<"RateLimitBucket"> | number
+    expiresAt?: DateTimeWithAggregatesFilter<"RateLimitBucket"> | Date | string
+  }
+
   export type AccountCreateInput = {
     id?: string
     type: string
@@ -34873,6 +44773,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -34881,6 +44784,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateInput = {
@@ -34916,6 +44823,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -34923,6 +44833,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUpdateInput = {
@@ -34957,6 +44871,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -34965,6 +44882,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateInput = {
@@ -35000,6 +44921,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -35007,6 +44931,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileCreateManyInput = {
@@ -35042,6 +44970,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
   }
 
   export type WorkerProfileUpdateManyMutationInput = {
@@ -35076,6 +45007,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type WorkerProfileUncheckedUpdateManyInput = {
@@ -35111,6 +45045,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DocumentCreateInput = {
@@ -36328,6 +46265,649 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type AuLocalityCreateInput = {
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersededBy?: AuLocalityCreateNestedOneWithoutSupersedesInput
+    supersedes?: AuLocalityCreateNestedManyWithoutSupersededByInput
+    workerLocations?: WorkerLocationCreateNestedManyWithoutLocalityInput
+  }
+
+  export type AuLocalityUncheckedCreateInput = {
+    id?: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    supersededById?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersedes?: AuLocalityUncheckedCreateNestedManyWithoutSupersededByInput
+    workerLocations?: WorkerLocationUncheckedCreateNestedManyWithoutLocalityInput
+  }
+
+  export type AuLocalityUpdateInput = {
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersededBy?: AuLocalityUpdateOneWithoutSupersedesNestedInput
+    supersedes?: AuLocalityUpdateManyWithoutSupersededByNestedInput
+    workerLocations?: WorkerLocationUpdateManyWithoutLocalityNestedInput
+  }
+
+  export type AuLocalityUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    supersededById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersedes?: AuLocalityUncheckedUpdateManyWithoutSupersededByNestedInput
+    workerLocations?: WorkerLocationUncheckedUpdateManyWithoutLocalityNestedInput
+  }
+
+  export type AuLocalityCreateManyInput = {
+    id?: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    supersededById?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuLocalityUpdateManyMutationInput = {
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuLocalityUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    supersededById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerLocationCreateInput = {
+    id?: string
+    kind: $Enums.LocationKind
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutLocationsInput
+    locality: AuLocalityCreateNestedOneWithoutWorkerLocationsInput
+  }
+
+  export type WorkerLocationUncheckedCreateInput = {
+    id?: string
+    workerProfileId: string
+    kind: $Enums.LocationKind
+    localityId: number
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerLocationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutLocationsNestedInput
+    locality?: AuLocalityUpdateOneRequiredWithoutWorkerLocationsNestedInput
+  }
+
+  export type WorkerLocationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    localityId?: IntFieldUpdateOperationsInput | number
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerLocationCreateManyInput = {
+    id?: string
+    workerProfileId: string
+    kind: $Enums.LocationKind
+    localityId: number
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerLocationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerLocationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    localityId?: IntFieldUpdateOperationsInput | number
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingCreateInput = {
+    stage: $Enums.OnboardingStage
+    stageEnteredAt: Date | string
+    signedUpAt: Date | string
+    firstSignInAt?: Date | string | null
+    firstDocumentAt?: Date | string | null
+    documentsSubmittedAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    publishedAt?: Date | string | null
+    lastActivityAt: Date | string
+    mandatoryTotal?: number
+    mandatoryUploaded?: number
+    mandatoryApproved?: number
+    catalogueVersion?: number
+    version?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutOnboardingInput
+  }
+
+  export type WorkerOnboardingUncheckedCreateInput = {
+    workerProfileId: string
+    stage: $Enums.OnboardingStage
+    stageEnteredAt: Date | string
+    signedUpAt: Date | string
+    firstSignInAt?: Date | string | null
+    firstDocumentAt?: Date | string | null
+    documentsSubmittedAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    publishedAt?: Date | string | null
+    lastActivityAt: Date | string
+    mandatoryTotal?: number
+    mandatoryUploaded?: number
+    mandatoryApproved?: number
+    catalogueVersion?: number
+    version?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerOnboardingUpdateInput = {
+    stage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signedUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firstSignInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstDocumentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentsSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastActivityAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mandatoryTotal?: IntFieldUpdateOperationsInput | number
+    mandatoryUploaded?: IntFieldUpdateOperationsInput | number
+    mandatoryApproved?: IntFieldUpdateOperationsInput | number
+    catalogueVersion?: IntFieldUpdateOperationsInput | number
+    version?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutOnboardingNestedInput
+  }
+
+  export type WorkerOnboardingUncheckedUpdateInput = {
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    stage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signedUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firstSignInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstDocumentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentsSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastActivityAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mandatoryTotal?: IntFieldUpdateOperationsInput | number
+    mandatoryUploaded?: IntFieldUpdateOperationsInput | number
+    mandatoryApproved?: IntFieldUpdateOperationsInput | number
+    catalogueVersion?: IntFieldUpdateOperationsInput | number
+    version?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingCreateManyInput = {
+    workerProfileId: string
+    stage: $Enums.OnboardingStage
+    stageEnteredAt: Date | string
+    signedUpAt: Date | string
+    firstSignInAt?: Date | string | null
+    firstDocumentAt?: Date | string | null
+    documentsSubmittedAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    publishedAt?: Date | string | null
+    lastActivityAt: Date | string
+    mandatoryTotal?: number
+    mandatoryUploaded?: number
+    mandatoryApproved?: number
+    catalogueVersion?: number
+    version?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerOnboardingUpdateManyMutationInput = {
+    stage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signedUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firstSignInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstDocumentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentsSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastActivityAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mandatoryTotal?: IntFieldUpdateOperationsInput | number
+    mandatoryUploaded?: IntFieldUpdateOperationsInput | number
+    mandatoryApproved?: IntFieldUpdateOperationsInput | number
+    catalogueVersion?: IntFieldUpdateOperationsInput | number
+    version?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingUncheckedUpdateManyInput = {
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    stage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signedUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firstSignInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstDocumentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentsSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastActivityAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mandatoryTotal?: IntFieldUpdateOperationsInput | number
+    mandatoryUploaded?: IntFieldUpdateOperationsInput | number
+    mandatoryApproved?: IntFieldUpdateOperationsInput | number
+    catalogueVersion?: IntFieldUpdateOperationsInput | number
+    version?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingTransitionCreateInput = {
+    id?: bigint | number
+    fromStage?: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at?: Date | string
+    cause: string
+    actorId?: string | null
+    source: $Enums.OnboardingTransitionSource
+    workerProfile: WorkerProfileCreateNestedOneWithoutOnboardingTransitionsInput
+  }
+
+  export type WorkerOnboardingTransitionUncheckedCreateInput = {
+    id?: bigint | number
+    workerProfileId: string
+    fromStage?: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at?: Date | string
+    cause: string
+    actorId?: string | null
+    source: $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutOnboardingTransitionsNestedInput
+  }
+
+  export type WorkerOnboardingTransitionUncheckedUpdateInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionCreateManyInput = {
+    id?: bigint | number
+    workerProfileId: string
+    fromStage?: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at?: Date | string
+    cause: string
+    actorId?: string | null
+    source: $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionUpdateManyMutationInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionUncheckedUpdateManyInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+  }
+
+  export type OutboxEventCreateInput = {
+    id?: string
+    type: string
+    payload: JsonNullValueInput | InputJsonValue
+    status?: $Enums.OutboxStatus
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lockedUntil?: Date | string | null
+    lastError?: string | null
+    createdAt?: Date | string
+    processedAt?: Date | string | null
+  }
+
+  export type OutboxEventUncheckedCreateInput = {
+    id?: string
+    type: string
+    payload: JsonNullValueInput | InputJsonValue
+    status?: $Enums.OutboxStatus
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lockedUntil?: Date | string | null
+    lastError?: string | null
+    createdAt?: Date | string
+    processedAt?: Date | string | null
+  }
+
+  export type OutboxEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumOutboxStatusFieldUpdateOperationsInput | $Enums.OutboxStatus
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OutboxEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumOutboxStatusFieldUpdateOperationsInput | $Enums.OutboxStatus
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OutboxEventCreateManyInput = {
+    id?: string
+    type: string
+    payload: JsonNullValueInput | InputJsonValue
+    status?: $Enums.OutboxStatus
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lockedUntil?: Date | string | null
+    lastError?: string | null
+    createdAt?: Date | string
+    processedAt?: Date | string | null
+  }
+
+  export type OutboxEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumOutboxStatusFieldUpdateOperationsInput | $Enums.OutboxStatus
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OutboxEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumOutboxStatusFieldUpdateOperationsInput | $Enums.OutboxStatus
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    processedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RegistrationPhotoUploadCreateInput = {
+    id?: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt?: Date | string
+    claimedAt?: Date | string | null
+    claimedBy?: WorkerProfileCreateNestedOneWithoutRegistrationPhotosInput
+  }
+
+  export type RegistrationPhotoUploadUncheckedCreateInput = {
+    id?: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt?: Date | string
+    claimedAt?: Date | string | null
+    claimedByWorkerProfileId?: string | null
+  }
+
+  export type RegistrationPhotoUploadUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    claimedBy?: WorkerProfileUpdateOneWithoutRegistrationPhotosNestedInput
+  }
+
+  export type RegistrationPhotoUploadUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    claimedByWorkerProfileId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RegistrationPhotoUploadCreateManyInput = {
+    id?: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt?: Date | string
+    claimedAt?: Date | string | null
+    claimedByWorkerProfileId?: string | null
+  }
+
+  export type RegistrationPhotoUploadUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RegistrationPhotoUploadUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    claimedByWorkerProfileId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RateLimitBucketCreateInput = {
+    key: string
+    windowStart: Date | string
+    count?: number
+    expiresAt: Date | string
+  }
+
+  export type RateLimitBucketUncheckedCreateInput = {
+    key: string
+    windowStart: Date | string
+    count?: number
+    expiresAt: Date | string
+  }
+
+  export type RateLimitBucketUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    windowStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    count?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RateLimitBucketUncheckedUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    windowStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    count?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RateLimitBucketCreateManyInput = {
+    key: string
+    windowStart: Date | string
+    count?: number
+    expiresAt: Date | string
+  }
+
+  export type RateLimitBucketUpdateManyMutationInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    windowStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    count?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RateLimitBucketUncheckedUpdateManyInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    windowStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    count?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -37180,6 +47760,29 @@ export namespace Prisma {
     none?: WorkerExperienceWhereInput
   }
 
+  export type WorkerLocationListRelationFilter = {
+    every?: WorkerLocationWhereInput
+    some?: WorkerLocationWhereInput
+    none?: WorkerLocationWhereInput
+  }
+
+  export type WorkerOnboardingNullableScalarRelationFilter = {
+    is?: WorkerOnboardingWhereInput | null
+    isNot?: WorkerOnboardingWhereInput | null
+  }
+
+  export type WorkerOnboardingTransitionListRelationFilter = {
+    every?: WorkerOnboardingTransitionWhereInput
+    some?: WorkerOnboardingTransitionWhereInput
+    none?: WorkerOnboardingTransitionWhereInput
+  }
+
+  export type RegistrationPhotoUploadListRelationFilter = {
+    every?: RegistrationPhotoUploadWhereInput
+    some?: RegistrationPhotoUploadWhereInput
+    none?: RegistrationPhotoUploadWhereInput
+  }
+
   export type VerificationRequirementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -37201,6 +47804,18 @@ export namespace Prisma {
   }
 
   export type WorkerExperienceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerLocationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkerOnboardingTransitionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RegistrationPhotoUploadOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -37237,6 +47852,9 @@ export namespace Prisma {
     verificationStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    consentProfileShareAt?: SortOrder
+    consentWordingVersion?: SortOrder
+    zohoLeadId?: SortOrder
   }
 
   export type WorkerProfileAvgOrderByAggregateInput = {
@@ -37275,6 +47893,9 @@ export namespace Prisma {
     verificationStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    consentProfileShareAt?: SortOrder
+    consentWordingVersion?: SortOrder
+    zohoLeadId?: SortOrder
   }
 
   export type WorkerProfileMinOrderByAggregateInput = {
@@ -37307,6 +47928,9 @@ export namespace Prisma {
     verificationStatus?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    consentProfileShareAt?: SortOrder
+    consentWordingVersion?: SortOrder
+    zohoLeadId?: SortOrder
   }
 
   export type WorkerProfileSumOrderByAggregateInput = {
@@ -38080,6 +48704,586 @@ export namespace Prisma {
     _max?: NestedEnumCareDomainFilter<$PrismaModel>
   }
 
+  export type FloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type AuLocalityNullableScalarRelationFilter = {
+    is?: AuLocalityWhereInput | null
+    isNot?: AuLocalityWhereInput | null
+  }
+
+  export type AuLocalityListRelationFilter = {
+    every?: AuLocalityWhereInput
+    some?: AuLocalityWhereInput
+    none?: AuLocalityWhereInput
+  }
+
+  export type AuLocalityOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AuLocalityGnafLocalityPidPostcodeCompoundUniqueInput = {
+    gnafLocalityPid: string
+    postcode: string
+  }
+
+  export type AuLocalityCountOrderByAggregateInput = {
+    id?: SortOrder
+    gnafLocalityPid?: SortOrder
+    suburb?: SortOrder
+    searchName?: SortOrder
+    state?: SortOrder
+    postcode?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    sourceVersion?: SortOrder
+    retiredAt?: SortOrder
+    supersededById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AuLocalityAvgOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    supersededById?: SortOrder
+  }
+
+  export type AuLocalityMaxOrderByAggregateInput = {
+    id?: SortOrder
+    gnafLocalityPid?: SortOrder
+    suburb?: SortOrder
+    searchName?: SortOrder
+    state?: SortOrder
+    postcode?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    sourceVersion?: SortOrder
+    retiredAt?: SortOrder
+    supersededById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AuLocalityMinOrderByAggregateInput = {
+    id?: SortOrder
+    gnafLocalityPid?: SortOrder
+    suburb?: SortOrder
+    searchName?: SortOrder
+    state?: SortOrder
+    postcode?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    sourceVersion?: SortOrder
+    retiredAt?: SortOrder
+    supersededById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AuLocalitySumOrderByAggregateInput = {
+    id?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    supersededById?: SortOrder
+  }
+
+  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type EnumLocationKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationKind | EnumLocationKindFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationKindFilter<$PrismaModel> | $Enums.LocationKind
+  }
+
+  export type EnumLocationPrecisionFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationPrecision | EnumLocationPrecisionFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationPrecisionFilter<$PrismaModel> | $Enums.LocationPrecision
+  }
+
+  export type EnumLocationSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationSource | EnumLocationSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationSourceFilter<$PrismaModel> | $Enums.LocationSource
+  }
+
+  export type AuLocalityScalarRelationFilter = {
+    is?: AuLocalityWhereInput
+    isNot?: AuLocalityWhereInput
+  }
+
+  export type WorkerLocationCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    kind?: SortOrder
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrder
+    precision?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerLocationAvgOrderByAggregateInput = {
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrder
+  }
+
+  export type WorkerLocationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    kind?: SortOrder
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrder
+    precision?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerLocationMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    kind?: SortOrder
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrder
+    precision?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerLocationSumOrderByAggregateInput = {
+    localityId?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    travelRadiusKm?: SortOrder
+  }
+
+  export type EnumLocationKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationKind | EnumLocationKindFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationKindWithAggregatesFilter<$PrismaModel> | $Enums.LocationKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocationKindFilter<$PrismaModel>
+    _max?: NestedEnumLocationKindFilter<$PrismaModel>
+  }
+
+  export type EnumLocationPrecisionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationPrecision | EnumLocationPrecisionFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationPrecisionWithAggregatesFilter<$PrismaModel> | $Enums.LocationPrecision
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocationPrecisionFilter<$PrismaModel>
+    _max?: NestedEnumLocationPrecisionFilter<$PrismaModel>
+  }
+
+  export type EnumLocationSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationSource | EnumLocationSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationSourceWithAggregatesFilter<$PrismaModel> | $Enums.LocationSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocationSourceFilter<$PrismaModel>
+    _max?: NestedEnumLocationSourceFilter<$PrismaModel>
+  }
+
+  export type EnumOnboardingStageFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingStageFilter<$PrismaModel> | $Enums.OnboardingStage
+  }
+
+  export type WorkerOnboardingCountOrderByAggregateInput = {
+    workerProfileId?: SortOrder
+    stage?: SortOrder
+    stageEnteredAt?: SortOrder
+    signedUpAt?: SortOrder
+    firstSignInAt?: SortOrder
+    firstDocumentAt?: SortOrder
+    documentsSubmittedAt?: SortOrder
+    verifiedAt?: SortOrder
+    publishedAt?: SortOrder
+    lastActivityAt?: SortOrder
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerOnboardingAvgOrderByAggregateInput = {
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+  }
+
+  export type WorkerOnboardingMaxOrderByAggregateInput = {
+    workerProfileId?: SortOrder
+    stage?: SortOrder
+    stageEnteredAt?: SortOrder
+    signedUpAt?: SortOrder
+    firstSignInAt?: SortOrder
+    firstDocumentAt?: SortOrder
+    documentsSubmittedAt?: SortOrder
+    verifiedAt?: SortOrder
+    publishedAt?: SortOrder
+    lastActivityAt?: SortOrder
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerOnboardingMinOrderByAggregateInput = {
+    workerProfileId?: SortOrder
+    stage?: SortOrder
+    stageEnteredAt?: SortOrder
+    signedUpAt?: SortOrder
+    firstSignInAt?: SortOrder
+    firstDocumentAt?: SortOrder
+    documentsSubmittedAt?: SortOrder
+    verifiedAt?: SortOrder
+    publishedAt?: SortOrder
+    lastActivityAt?: SortOrder
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkerOnboardingSumOrderByAggregateInput = {
+    mandatoryTotal?: SortOrder
+    mandatoryUploaded?: SortOrder
+    mandatoryApproved?: SortOrder
+    catalogueVersion?: SortOrder
+    version?: SortOrder
+  }
+
+  export type EnumOnboardingStageWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingStageWithAggregatesFilter<$PrismaModel> | $Enums.OnboardingStage
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOnboardingStageFilter<$PrismaModel>
+    _max?: NestedEnumOnboardingStageFilter<$PrismaModel>
+  }
+
+  export type BigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type EnumOnboardingStageNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumOnboardingStageNullableFilter<$PrismaModel> | $Enums.OnboardingStage | null
+  }
+
+  export type EnumOnboardingTransitionSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingTransitionSource | EnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingTransitionSourceFilter<$PrismaModel> | $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    fromStage?: SortOrder
+    toStage?: SortOrder
+    at?: SortOrder
+    cause?: SortOrder
+    actorId?: SortOrder
+    source?: SortOrder
+  }
+
+  export type WorkerOnboardingTransitionAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type WorkerOnboardingTransitionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    fromStage?: SortOrder
+    toStage?: SortOrder
+    at?: SortOrder
+    cause?: SortOrder
+    actorId?: SortOrder
+    source?: SortOrder
+  }
+
+  export type WorkerOnboardingTransitionMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    fromStage?: SortOrder
+    toStage?: SortOrder
+    at?: SortOrder
+    cause?: SortOrder
+    actorId?: SortOrder
+    source?: SortOrder
+  }
+
+  export type WorkerOnboardingTransitionSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type EnumOnboardingStageNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumOnboardingStageNullableWithAggregatesFilter<$PrismaModel> | $Enums.OnboardingStage | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumOnboardingStageNullableFilter<$PrismaModel>
+    _max?: NestedEnumOnboardingStageNullableFilter<$PrismaModel>
+  }
+
+  export type EnumOnboardingTransitionSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingTransitionSource | EnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingTransitionSourceWithAggregatesFilter<$PrismaModel> | $Enums.OnboardingTransitionSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOnboardingTransitionSourceFilter<$PrismaModel>
+    _max?: NestedEnumOnboardingTransitionSourceFilter<$PrismaModel>
+  }
+
+  export type UuidFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidFilter<$PrismaModel> | string
+  }
+
+  export type EnumOutboxStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OutboxStatus | EnumOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOutboxStatusFilter<$PrismaModel> | $Enums.OutboxStatus
+  }
+
+  export type OutboxEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lockedUntil?: SortOrder
+    lastError?: SortOrder
+    createdAt?: SortOrder
+    processedAt?: SortOrder
+  }
+
+  export type OutboxEventAvgOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type OutboxEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lockedUntil?: SortOrder
+    lastError?: SortOrder
+    createdAt?: SortOrder
+    processedAt?: SortOrder
+  }
+
+  export type OutboxEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lockedUntil?: SortOrder
+    lastError?: SortOrder
+    createdAt?: SortOrder
+    processedAt?: SortOrder
+  }
+
+  export type OutboxEventSumOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type UuidWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type EnumOutboxStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OutboxStatus | EnumOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOutboxStatusWithAggregatesFilter<$PrismaModel> | $Enums.OutboxStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOutboxStatusFilter<$PrismaModel>
+    _max?: NestedEnumOutboxStatusFilter<$PrismaModel>
+  }
+
+  export type RegistrationPhotoUploadCountOrderByAggregateInput = {
+    id?: SortOrder
+    blobKey?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    ipHash?: SortOrder
+    createdAt?: SortOrder
+    claimedAt?: SortOrder
+    claimedByWorkerProfileId?: SortOrder
+  }
+
+  export type RegistrationPhotoUploadAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type RegistrationPhotoUploadMaxOrderByAggregateInput = {
+    id?: SortOrder
+    blobKey?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    ipHash?: SortOrder
+    createdAt?: SortOrder
+    claimedAt?: SortOrder
+    claimedByWorkerProfileId?: SortOrder
+  }
+
+  export type RegistrationPhotoUploadMinOrderByAggregateInput = {
+    id?: SortOrder
+    blobKey?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    ipHash?: SortOrder
+    createdAt?: SortOrder
+    claimedAt?: SortOrder
+    claimedByWorkerProfileId?: SortOrder
+  }
+
+  export type RegistrationPhotoUploadSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type RateLimitBucketKeyWindowStartCompoundUniqueInput = {
+    key: string
+    windowStart: Date | string
+  }
+
+  export type RateLimitBucketCountOrderByAggregateInput = {
+    key?: SortOrder
+    windowStart?: SortOrder
+    count?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type RateLimitBucketAvgOrderByAggregateInput = {
+    count?: SortOrder
+  }
+
+  export type RateLimitBucketMaxOrderByAggregateInput = {
+    key?: SortOrder
+    windowStart?: SortOrder
+    count?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type RateLimitBucketMinOrderByAggregateInput = {
+    key?: SortOrder
+    windowStart?: SortOrder
+    count?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type RateLimitBucketSumOrderByAggregateInput = {
+    count?: SortOrder
+  }
+
   export type UserCreateNestedOneWithoutAccountsInput = {
     create?: XOR<UserCreateWithoutAccountsInput, UserUncheckedCreateWithoutAccountsInput>
     connectOrCreate?: UserCreateOrConnectWithoutAccountsInput
@@ -38624,6 +49828,33 @@ export namespace Prisma {
     connect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
   }
 
+  export type WorkerLocationCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerLocationCreateWithoutWorkerProfileInput, WorkerLocationUncheckedCreateWithoutWorkerProfileInput> | WorkerLocationCreateWithoutWorkerProfileInput[] | WorkerLocationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutWorkerProfileInput | WorkerLocationCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerLocationCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+  }
+
+  export type WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput = {
+    create?: XOR<WorkerOnboardingCreateWithoutWorkerProfileInput, WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput>
+    connectOrCreate?: WorkerOnboardingCreateOrConnectWithoutWorkerProfileInput
+    connect?: WorkerOnboardingWhereUniqueInput
+  }
+
+  export type WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerOnboardingTransitionCreateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput> | WorkerOnboardingTransitionCreateWithoutWorkerProfileInput[] | WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput | WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerOnboardingTransitionCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+  }
+
+  export type RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput = {
+    create?: XOR<RegistrationPhotoUploadCreateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput> | RegistrationPhotoUploadCreateWithoutClaimedByInput[] | RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput[]
+    connectOrCreate?: RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput | RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput[]
+    createMany?: RegistrationPhotoUploadCreateManyClaimedByInputEnvelope
+    connect?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+  }
+
   export type VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput = {
     create?: XOR<VerificationRequirementCreateWithoutWorkerProfileInput, VerificationRequirementUncheckedCreateWithoutWorkerProfileInput> | VerificationRequirementCreateWithoutWorkerProfileInput[] | VerificationRequirementUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: VerificationRequirementCreateOrConnectWithoutWorkerProfileInput | VerificationRequirementCreateOrConnectWithoutWorkerProfileInput[]
@@ -38670,6 +49901,33 @@ export namespace Prisma {
     connectOrCreate?: WorkerExperienceCreateOrConnectWithoutWorkerProfileInput | WorkerExperienceCreateOrConnectWithoutWorkerProfileInput[]
     createMany?: WorkerExperienceCreateManyWorkerProfileInputEnvelope
     connect?: WorkerExperienceWhereUniqueInput | WorkerExperienceWhereUniqueInput[]
+  }
+
+  export type WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerLocationCreateWithoutWorkerProfileInput, WorkerLocationUncheckedCreateWithoutWorkerProfileInput> | WorkerLocationCreateWithoutWorkerProfileInput[] | WorkerLocationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutWorkerProfileInput | WorkerLocationCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerLocationCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+  }
+
+  export type WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput = {
+    create?: XOR<WorkerOnboardingCreateWithoutWorkerProfileInput, WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput>
+    connectOrCreate?: WorkerOnboardingCreateOrConnectWithoutWorkerProfileInput
+    connect?: WorkerOnboardingWhereUniqueInput
+  }
+
+  export type WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<WorkerOnboardingTransitionCreateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput> | WorkerOnboardingTransitionCreateWithoutWorkerProfileInput[] | WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput | WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: WorkerOnboardingTransitionCreateManyWorkerProfileInputEnvelope
+    connect?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+  }
+
+  export type RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput = {
+    create?: XOR<RegistrationPhotoUploadCreateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput> | RegistrationPhotoUploadCreateWithoutClaimedByInput[] | RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput[]
+    connectOrCreate?: RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput | RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput[]
+    createMany?: RegistrationPhotoUploadCreateManyClaimedByInputEnvelope
+    connect?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
   }
 
   export type WorkerProfileUpdatelanguagesInput = {
@@ -38787,6 +50045,58 @@ export namespace Prisma {
     deleteMany?: WorkerExperienceScalarWhereInput | WorkerExperienceScalarWhereInput[]
   }
 
+  export type WorkerLocationUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerLocationCreateWithoutWorkerProfileInput, WorkerLocationUncheckedCreateWithoutWorkerProfileInput> | WorkerLocationCreateWithoutWorkerProfileInput[] | WorkerLocationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutWorkerProfileInput | WorkerLocationCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerLocationUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerLocationUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerLocationCreateManyWorkerProfileInputEnvelope
+    set?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    disconnect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    delete?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    update?: WorkerLocationUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerLocationUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerLocationUpdateManyWithWhereWithoutWorkerProfileInput | WorkerLocationUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerLocationScalarWhereInput | WorkerLocationScalarWhereInput[]
+  }
+
+  export type WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerOnboardingCreateWithoutWorkerProfileInput, WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput>
+    connectOrCreate?: WorkerOnboardingCreateOrConnectWithoutWorkerProfileInput
+    upsert?: WorkerOnboardingUpsertWithoutWorkerProfileInput
+    disconnect?: WorkerOnboardingWhereInput | boolean
+    delete?: WorkerOnboardingWhereInput | boolean
+    connect?: WorkerOnboardingWhereUniqueInput
+    update?: XOR<XOR<WorkerOnboardingUpdateToOneWithWhereWithoutWorkerProfileInput, WorkerOnboardingUpdateWithoutWorkerProfileInput>, WorkerOnboardingUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerOnboardingTransitionCreateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput> | WorkerOnboardingTransitionCreateWithoutWorkerProfileInput[] | WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput | WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerOnboardingTransitionUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerOnboardingTransitionUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerOnboardingTransitionCreateManyWorkerProfileInputEnvelope
+    set?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    disconnect?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    delete?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    connect?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    update?: WorkerOnboardingTransitionUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerOnboardingTransitionUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerOnboardingTransitionUpdateManyWithWhereWithoutWorkerProfileInput | WorkerOnboardingTransitionUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerOnboardingTransitionScalarWhereInput | WorkerOnboardingTransitionScalarWhereInput[]
+  }
+
+  export type RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput = {
+    create?: XOR<RegistrationPhotoUploadCreateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput> | RegistrationPhotoUploadCreateWithoutClaimedByInput[] | RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput[]
+    connectOrCreate?: RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput | RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput[]
+    upsert?: RegistrationPhotoUploadUpsertWithWhereUniqueWithoutClaimedByInput | RegistrationPhotoUploadUpsertWithWhereUniqueWithoutClaimedByInput[]
+    createMany?: RegistrationPhotoUploadCreateManyClaimedByInputEnvelope
+    set?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    disconnect?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    delete?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    connect?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    update?: RegistrationPhotoUploadUpdateWithWhereUniqueWithoutClaimedByInput | RegistrationPhotoUploadUpdateWithWhereUniqueWithoutClaimedByInput[]
+    updateMany?: RegistrationPhotoUploadUpdateManyWithWhereWithoutClaimedByInput | RegistrationPhotoUploadUpdateManyWithWhereWithoutClaimedByInput[]
+    deleteMany?: RegistrationPhotoUploadScalarWhereInput | RegistrationPhotoUploadScalarWhereInput[]
+  }
+
   export type VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
     create?: XOR<VerificationRequirementCreateWithoutWorkerProfileInput, VerificationRequirementUncheckedCreateWithoutWorkerProfileInput> | VerificationRequirementCreateWithoutWorkerProfileInput[] | VerificationRequirementUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: VerificationRequirementCreateOrConnectWithoutWorkerProfileInput | VerificationRequirementCreateOrConnectWithoutWorkerProfileInput[]
@@ -38879,6 +50189,58 @@ export namespace Prisma {
     update?: WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerExperienceUpdateWithWhereUniqueWithoutWorkerProfileInput[]
     updateMany?: WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput | WorkerExperienceUpdateManyWithWhereWithoutWorkerProfileInput[]
     deleteMany?: WorkerExperienceScalarWhereInput | WorkerExperienceScalarWhereInput[]
+  }
+
+  export type WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerLocationCreateWithoutWorkerProfileInput, WorkerLocationUncheckedCreateWithoutWorkerProfileInput> | WorkerLocationCreateWithoutWorkerProfileInput[] | WorkerLocationUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutWorkerProfileInput | WorkerLocationCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerLocationUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerLocationUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerLocationCreateManyWorkerProfileInputEnvelope
+    set?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    disconnect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    delete?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    update?: WorkerLocationUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerLocationUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerLocationUpdateManyWithWhereWithoutWorkerProfileInput | WorkerLocationUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerLocationScalarWhereInput | WorkerLocationScalarWhereInput[]
+  }
+
+  export type WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerOnboardingCreateWithoutWorkerProfileInput, WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput>
+    connectOrCreate?: WorkerOnboardingCreateOrConnectWithoutWorkerProfileInput
+    upsert?: WorkerOnboardingUpsertWithoutWorkerProfileInput
+    disconnect?: WorkerOnboardingWhereInput | boolean
+    delete?: WorkerOnboardingWhereInput | boolean
+    connect?: WorkerOnboardingWhereUniqueInput
+    update?: XOR<XOR<WorkerOnboardingUpdateToOneWithWhereWithoutWorkerProfileInput, WorkerOnboardingUpdateWithoutWorkerProfileInput>, WorkerOnboardingUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<WorkerOnboardingTransitionCreateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput> | WorkerOnboardingTransitionCreateWithoutWorkerProfileInput[] | WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput | WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: WorkerOnboardingTransitionUpsertWithWhereUniqueWithoutWorkerProfileInput | WorkerOnboardingTransitionUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: WorkerOnboardingTransitionCreateManyWorkerProfileInputEnvelope
+    set?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    disconnect?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    delete?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    connect?: WorkerOnboardingTransitionWhereUniqueInput | WorkerOnboardingTransitionWhereUniqueInput[]
+    update?: WorkerOnboardingTransitionUpdateWithWhereUniqueWithoutWorkerProfileInput | WorkerOnboardingTransitionUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: WorkerOnboardingTransitionUpdateManyWithWhereWithoutWorkerProfileInput | WorkerOnboardingTransitionUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: WorkerOnboardingTransitionScalarWhereInput | WorkerOnboardingTransitionScalarWhereInput[]
+  }
+
+  export type RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput = {
+    create?: XOR<RegistrationPhotoUploadCreateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput> | RegistrationPhotoUploadCreateWithoutClaimedByInput[] | RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput[]
+    connectOrCreate?: RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput | RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput[]
+    upsert?: RegistrationPhotoUploadUpsertWithWhereUniqueWithoutClaimedByInput | RegistrationPhotoUploadUpsertWithWhereUniqueWithoutClaimedByInput[]
+    createMany?: RegistrationPhotoUploadCreateManyClaimedByInputEnvelope
+    set?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    disconnect?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    delete?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    connect?: RegistrationPhotoUploadWhereUniqueInput | RegistrationPhotoUploadWhereUniqueInput[]
+    update?: RegistrationPhotoUploadUpdateWithWhereUniqueWithoutClaimedByInput | RegistrationPhotoUploadUpdateWithWhereUniqueWithoutClaimedByInput[]
+    updateMany?: RegistrationPhotoUploadUpdateManyWithWhereWithoutClaimedByInput | RegistrationPhotoUploadUpdateManyWithWhereWithoutClaimedByInput[]
+    deleteMany?: RegistrationPhotoUploadScalarWhereInput | RegistrationPhotoUploadScalarWhereInput[]
   }
 
   export type CategoryDocumentCreateNestedManyWithoutDocumentInput = {
@@ -39434,6 +50796,222 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutCareExperienceInput, WorkerProfileUpdateWithoutCareExperienceInput>, WorkerProfileUncheckedUpdateWithoutCareExperienceInput>
   }
 
+  export type AuLocalityCreateNestedOneWithoutSupersedesInput = {
+    create?: XOR<AuLocalityCreateWithoutSupersedesInput, AuLocalityUncheckedCreateWithoutSupersedesInput>
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutSupersedesInput
+    connect?: AuLocalityWhereUniqueInput
+  }
+
+  export type AuLocalityCreateNestedManyWithoutSupersededByInput = {
+    create?: XOR<AuLocalityCreateWithoutSupersededByInput, AuLocalityUncheckedCreateWithoutSupersededByInput> | AuLocalityCreateWithoutSupersededByInput[] | AuLocalityUncheckedCreateWithoutSupersededByInput[]
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutSupersededByInput | AuLocalityCreateOrConnectWithoutSupersededByInput[]
+    createMany?: AuLocalityCreateManySupersededByInputEnvelope
+    connect?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+  }
+
+  export type WorkerLocationCreateNestedManyWithoutLocalityInput = {
+    create?: XOR<WorkerLocationCreateWithoutLocalityInput, WorkerLocationUncheckedCreateWithoutLocalityInput> | WorkerLocationCreateWithoutLocalityInput[] | WorkerLocationUncheckedCreateWithoutLocalityInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutLocalityInput | WorkerLocationCreateOrConnectWithoutLocalityInput[]
+    createMany?: WorkerLocationCreateManyLocalityInputEnvelope
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+  }
+
+  export type AuLocalityUncheckedCreateNestedManyWithoutSupersededByInput = {
+    create?: XOR<AuLocalityCreateWithoutSupersededByInput, AuLocalityUncheckedCreateWithoutSupersededByInput> | AuLocalityCreateWithoutSupersededByInput[] | AuLocalityUncheckedCreateWithoutSupersededByInput[]
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutSupersededByInput | AuLocalityCreateOrConnectWithoutSupersededByInput[]
+    createMany?: AuLocalityCreateManySupersededByInputEnvelope
+    connect?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+  }
+
+  export type WorkerLocationUncheckedCreateNestedManyWithoutLocalityInput = {
+    create?: XOR<WorkerLocationCreateWithoutLocalityInput, WorkerLocationUncheckedCreateWithoutLocalityInput> | WorkerLocationCreateWithoutLocalityInput[] | WorkerLocationUncheckedCreateWithoutLocalityInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutLocalityInput | WorkerLocationCreateOrConnectWithoutLocalityInput[]
+    createMany?: WorkerLocationCreateManyLocalityInputEnvelope
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+  }
+
+  export type FloatFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type AuLocalityUpdateOneWithoutSupersedesNestedInput = {
+    create?: XOR<AuLocalityCreateWithoutSupersedesInput, AuLocalityUncheckedCreateWithoutSupersedesInput>
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutSupersedesInput
+    upsert?: AuLocalityUpsertWithoutSupersedesInput
+    disconnect?: AuLocalityWhereInput | boolean
+    delete?: AuLocalityWhereInput | boolean
+    connect?: AuLocalityWhereUniqueInput
+    update?: XOR<XOR<AuLocalityUpdateToOneWithWhereWithoutSupersedesInput, AuLocalityUpdateWithoutSupersedesInput>, AuLocalityUncheckedUpdateWithoutSupersedesInput>
+  }
+
+  export type AuLocalityUpdateManyWithoutSupersededByNestedInput = {
+    create?: XOR<AuLocalityCreateWithoutSupersededByInput, AuLocalityUncheckedCreateWithoutSupersededByInput> | AuLocalityCreateWithoutSupersededByInput[] | AuLocalityUncheckedCreateWithoutSupersededByInput[]
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutSupersededByInput | AuLocalityCreateOrConnectWithoutSupersededByInput[]
+    upsert?: AuLocalityUpsertWithWhereUniqueWithoutSupersededByInput | AuLocalityUpsertWithWhereUniqueWithoutSupersededByInput[]
+    createMany?: AuLocalityCreateManySupersededByInputEnvelope
+    set?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    disconnect?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    delete?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    connect?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    update?: AuLocalityUpdateWithWhereUniqueWithoutSupersededByInput | AuLocalityUpdateWithWhereUniqueWithoutSupersededByInput[]
+    updateMany?: AuLocalityUpdateManyWithWhereWithoutSupersededByInput | AuLocalityUpdateManyWithWhereWithoutSupersededByInput[]
+    deleteMany?: AuLocalityScalarWhereInput | AuLocalityScalarWhereInput[]
+  }
+
+  export type WorkerLocationUpdateManyWithoutLocalityNestedInput = {
+    create?: XOR<WorkerLocationCreateWithoutLocalityInput, WorkerLocationUncheckedCreateWithoutLocalityInput> | WorkerLocationCreateWithoutLocalityInput[] | WorkerLocationUncheckedCreateWithoutLocalityInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutLocalityInput | WorkerLocationCreateOrConnectWithoutLocalityInput[]
+    upsert?: WorkerLocationUpsertWithWhereUniqueWithoutLocalityInput | WorkerLocationUpsertWithWhereUniqueWithoutLocalityInput[]
+    createMany?: WorkerLocationCreateManyLocalityInputEnvelope
+    set?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    disconnect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    delete?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    update?: WorkerLocationUpdateWithWhereUniqueWithoutLocalityInput | WorkerLocationUpdateWithWhereUniqueWithoutLocalityInput[]
+    updateMany?: WorkerLocationUpdateManyWithWhereWithoutLocalityInput | WorkerLocationUpdateManyWithWhereWithoutLocalityInput[]
+    deleteMany?: WorkerLocationScalarWhereInput | WorkerLocationScalarWhereInput[]
+  }
+
+  export type AuLocalityUncheckedUpdateManyWithoutSupersededByNestedInput = {
+    create?: XOR<AuLocalityCreateWithoutSupersededByInput, AuLocalityUncheckedCreateWithoutSupersededByInput> | AuLocalityCreateWithoutSupersededByInput[] | AuLocalityUncheckedCreateWithoutSupersededByInput[]
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutSupersededByInput | AuLocalityCreateOrConnectWithoutSupersededByInput[]
+    upsert?: AuLocalityUpsertWithWhereUniqueWithoutSupersededByInput | AuLocalityUpsertWithWhereUniqueWithoutSupersededByInput[]
+    createMany?: AuLocalityCreateManySupersededByInputEnvelope
+    set?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    disconnect?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    delete?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    connect?: AuLocalityWhereUniqueInput | AuLocalityWhereUniqueInput[]
+    update?: AuLocalityUpdateWithWhereUniqueWithoutSupersededByInput | AuLocalityUpdateWithWhereUniqueWithoutSupersededByInput[]
+    updateMany?: AuLocalityUpdateManyWithWhereWithoutSupersededByInput | AuLocalityUpdateManyWithWhereWithoutSupersededByInput[]
+    deleteMany?: AuLocalityScalarWhereInput | AuLocalityScalarWhereInput[]
+  }
+
+  export type WorkerLocationUncheckedUpdateManyWithoutLocalityNestedInput = {
+    create?: XOR<WorkerLocationCreateWithoutLocalityInput, WorkerLocationUncheckedCreateWithoutLocalityInput> | WorkerLocationCreateWithoutLocalityInput[] | WorkerLocationUncheckedCreateWithoutLocalityInput[]
+    connectOrCreate?: WorkerLocationCreateOrConnectWithoutLocalityInput | WorkerLocationCreateOrConnectWithoutLocalityInput[]
+    upsert?: WorkerLocationUpsertWithWhereUniqueWithoutLocalityInput | WorkerLocationUpsertWithWhereUniqueWithoutLocalityInput[]
+    createMany?: WorkerLocationCreateManyLocalityInputEnvelope
+    set?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    disconnect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    delete?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    connect?: WorkerLocationWhereUniqueInput | WorkerLocationWhereUniqueInput[]
+    update?: WorkerLocationUpdateWithWhereUniqueWithoutLocalityInput | WorkerLocationUpdateWithWhereUniqueWithoutLocalityInput[]
+    updateMany?: WorkerLocationUpdateManyWithWhereWithoutLocalityInput | WorkerLocationUpdateManyWithWhereWithoutLocalityInput[]
+    deleteMany?: WorkerLocationScalarWhereInput | WorkerLocationScalarWhereInput[]
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutLocationsInput = {
+    create?: XOR<WorkerProfileCreateWithoutLocationsInput, WorkerProfileUncheckedCreateWithoutLocationsInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutLocationsInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type AuLocalityCreateNestedOneWithoutWorkerLocationsInput = {
+    create?: XOR<AuLocalityCreateWithoutWorkerLocationsInput, AuLocalityUncheckedCreateWithoutWorkerLocationsInput>
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutWorkerLocationsInput
+    connect?: AuLocalityWhereUniqueInput
+  }
+
+  export type EnumLocationKindFieldUpdateOperationsInput = {
+    set?: $Enums.LocationKind
+  }
+
+  export type EnumLocationPrecisionFieldUpdateOperationsInput = {
+    set?: $Enums.LocationPrecision
+  }
+
+  export type EnumLocationSourceFieldUpdateOperationsInput = {
+    set?: $Enums.LocationSource
+  }
+
+  export type WorkerProfileUpdateOneRequiredWithoutLocationsNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutLocationsInput, WorkerProfileUncheckedCreateWithoutLocationsInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutLocationsInput
+    upsert?: WorkerProfileUpsertWithoutLocationsInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutLocationsInput, WorkerProfileUpdateWithoutLocationsInput>, WorkerProfileUncheckedUpdateWithoutLocationsInput>
+  }
+
+  export type AuLocalityUpdateOneRequiredWithoutWorkerLocationsNestedInput = {
+    create?: XOR<AuLocalityCreateWithoutWorkerLocationsInput, AuLocalityUncheckedCreateWithoutWorkerLocationsInput>
+    connectOrCreate?: AuLocalityCreateOrConnectWithoutWorkerLocationsInput
+    upsert?: AuLocalityUpsertWithoutWorkerLocationsInput
+    connect?: AuLocalityWhereUniqueInput
+    update?: XOR<XOR<AuLocalityUpdateToOneWithWhereWithoutWorkerLocationsInput, AuLocalityUpdateWithoutWorkerLocationsInput>, AuLocalityUncheckedUpdateWithoutWorkerLocationsInput>
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutOnboardingInput = {
+    create?: XOR<WorkerProfileCreateWithoutOnboardingInput, WorkerProfileUncheckedCreateWithoutOnboardingInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutOnboardingInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type EnumOnboardingStageFieldUpdateOperationsInput = {
+    set?: $Enums.OnboardingStage
+  }
+
+  export type WorkerProfileUpdateOneRequiredWithoutOnboardingNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutOnboardingInput, WorkerProfileUncheckedCreateWithoutOnboardingInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutOnboardingInput
+    upsert?: WorkerProfileUpsertWithoutOnboardingInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutOnboardingInput, WorkerProfileUpdateWithoutOnboardingInput>, WorkerProfileUncheckedUpdateWithoutOnboardingInput>
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutOnboardingTransitionsInput = {
+    create?: XOR<WorkerProfileCreateWithoutOnboardingTransitionsInput, WorkerProfileUncheckedCreateWithoutOnboardingTransitionsInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutOnboardingTransitionsInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type BigIntFieldUpdateOperationsInput = {
+    set?: bigint | number
+    increment?: bigint | number
+    decrement?: bigint | number
+    multiply?: bigint | number
+    divide?: bigint | number
+  }
+
+  export type NullableEnumOnboardingStageFieldUpdateOperationsInput = {
+    set?: $Enums.OnboardingStage | null
+  }
+
+  export type EnumOnboardingTransitionSourceFieldUpdateOperationsInput = {
+    set?: $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerProfileUpdateOneRequiredWithoutOnboardingTransitionsNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutOnboardingTransitionsInput, WorkerProfileUncheckedCreateWithoutOnboardingTransitionsInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutOnboardingTransitionsInput
+    upsert?: WorkerProfileUpsertWithoutOnboardingTransitionsInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutOnboardingTransitionsInput, WorkerProfileUpdateWithoutOnboardingTransitionsInput>, WorkerProfileUncheckedUpdateWithoutOnboardingTransitionsInput>
+  }
+
+  export type EnumOutboxStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OutboxStatus
+  }
+
+  export type WorkerProfileCreateNestedOneWithoutRegistrationPhotosInput = {
+    create?: XOR<WorkerProfileCreateWithoutRegistrationPhotosInput, WorkerProfileUncheckedCreateWithoutRegistrationPhotosInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutRegistrationPhotosInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type WorkerProfileUpdateOneWithoutRegistrationPhotosNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutRegistrationPhotosInput, WorkerProfileUncheckedCreateWithoutRegistrationPhotosInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutRegistrationPhotosInput
+    upsert?: WorkerProfileUpsertWithoutRegistrationPhotosInput
+    disconnect?: WorkerProfileWhereInput | boolean
+    delete?: WorkerProfileWhereInput | boolean
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutRegistrationPhotosInput, WorkerProfileUpdateWithoutRegistrationPhotosInput>, WorkerProfileUncheckedUpdateWithoutRegistrationPhotosInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -39878,6 +51456,193 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCareDomainFilter<$PrismaModel>
     _max?: NestedEnumCareDomainFilter<$PrismaModel>
+  }
+
+  export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLocationKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationKind | EnumLocationKindFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationKindFilter<$PrismaModel> | $Enums.LocationKind
+  }
+
+  export type NestedEnumLocationPrecisionFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationPrecision | EnumLocationPrecisionFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationPrecisionFilter<$PrismaModel> | $Enums.LocationPrecision
+  }
+
+  export type NestedEnumLocationSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationSource | EnumLocationSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationSourceFilter<$PrismaModel> | $Enums.LocationSource
+  }
+
+  export type NestedEnumLocationKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationKind | EnumLocationKindFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationKind[] | ListEnumLocationKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationKindWithAggregatesFilter<$PrismaModel> | $Enums.LocationKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocationKindFilter<$PrismaModel>
+    _max?: NestedEnumLocationKindFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLocationPrecisionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationPrecision | EnumLocationPrecisionFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationPrecision[] | ListEnumLocationPrecisionFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationPrecisionWithAggregatesFilter<$PrismaModel> | $Enums.LocationPrecision
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocationPrecisionFilter<$PrismaModel>
+    _max?: NestedEnumLocationPrecisionFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLocationSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocationSource | EnumLocationSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocationSource[] | ListEnumLocationSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocationSourceWithAggregatesFilter<$PrismaModel> | $Enums.LocationSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocationSourceFilter<$PrismaModel>
+    _max?: NestedEnumLocationSourceFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOnboardingStageFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingStageFilter<$PrismaModel> | $Enums.OnboardingStage
+  }
+
+  export type NestedEnumOnboardingStageWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingStageWithAggregatesFilter<$PrismaModel> | $Enums.OnboardingStage
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOnboardingStageFilter<$PrismaModel>
+    _max?: NestedEnumOnboardingStageFilter<$PrismaModel>
+  }
+
+  export type NestedBigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type NestedEnumOnboardingStageNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumOnboardingStageNullableFilter<$PrismaModel> | $Enums.OnboardingStage | null
+  }
+
+  export type NestedEnumOnboardingTransitionSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingTransitionSource | EnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingTransitionSourceFilter<$PrismaModel> | $Enums.OnboardingTransitionSource
+  }
+
+  export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOnboardingStageNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingStage | EnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.OnboardingStage[] | ListEnumOnboardingStageFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumOnboardingStageNullableWithAggregatesFilter<$PrismaModel> | $Enums.OnboardingStage | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumOnboardingStageNullableFilter<$PrismaModel>
+    _max?: NestedEnumOnboardingStageNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOnboardingTransitionSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OnboardingTransitionSource | EnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OnboardingTransitionSource[] | ListEnumOnboardingTransitionSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumOnboardingTransitionSourceWithAggregatesFilter<$PrismaModel> | $Enums.OnboardingTransitionSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOnboardingTransitionSourceFilter<$PrismaModel>
+    _max?: NestedEnumOnboardingTransitionSourceFilter<$PrismaModel>
+  }
+
+  export type NestedUuidFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidFilter<$PrismaModel> | string
+  }
+
+  export type NestedEnumOutboxStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OutboxStatus | EnumOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOutboxStatusFilter<$PrismaModel> | $Enums.OutboxStatus
+  }
+
+  export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOutboxStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OutboxStatus | EnumOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OutboxStatus[] | ListEnumOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOutboxStatusWithAggregatesFilter<$PrismaModel> | $Enums.OutboxStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOutboxStatusFilter<$PrismaModel>
+    _max?: NestedEnumOutboxStatusFilter<$PrismaModel>
   }
 
   export type UserCreateWithoutAccountsInput = {
@@ -40698,6 +52463,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -40705,6 +52473,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutUserInput = {
@@ -40739,6 +52511,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -40746,6 +52521,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutUserInput = {
@@ -40984,6 +52763,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -40991,6 +52773,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutUserInput = {
@@ -41025,6 +52811,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -41032,6 +52821,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type ClientProfileUpsertWithoutUserInput = {
@@ -41167,6 +52960,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -41174,6 +52970,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutVerificationRequirementsInput = {
@@ -41209,12 +53009,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutVerificationRequirementsInput = {
@@ -41265,6 +53072,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -41272,6 +53082,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutVerificationRequirementsInput = {
@@ -41307,12 +53121,19 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type VerificationRequirementCreateWithoutWorkerProfileInput = {
@@ -41631,6 +53452,145 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkerLocationCreateWithoutWorkerProfileInput = {
+    id?: string
+    kind: $Enums.LocationKind
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    locality: AuLocalityCreateNestedOneWithoutWorkerLocationsInput
+  }
+
+  export type WorkerLocationUncheckedCreateWithoutWorkerProfileInput = {
+    id?: string
+    kind: $Enums.LocationKind
+    localityId: number
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerLocationCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerLocationWhereUniqueInput
+    create: XOR<WorkerLocationCreateWithoutWorkerProfileInput, WorkerLocationUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerLocationCreateManyWorkerProfileInputEnvelope = {
+    data: WorkerLocationCreateManyWorkerProfileInput | WorkerLocationCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkerOnboardingCreateWithoutWorkerProfileInput = {
+    stage: $Enums.OnboardingStage
+    stageEnteredAt: Date | string
+    signedUpAt: Date | string
+    firstSignInAt?: Date | string | null
+    firstDocumentAt?: Date | string | null
+    documentsSubmittedAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    publishedAt?: Date | string | null
+    lastActivityAt: Date | string
+    mandatoryTotal?: number
+    mandatoryUploaded?: number
+    mandatoryApproved?: number
+    catalogueVersion?: number
+    version?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput = {
+    stage: $Enums.OnboardingStage
+    stageEnteredAt: Date | string
+    signedUpAt: Date | string
+    firstSignInAt?: Date | string | null
+    firstDocumentAt?: Date | string | null
+    documentsSubmittedAt?: Date | string | null
+    verifiedAt?: Date | string | null
+    publishedAt?: Date | string | null
+    lastActivityAt: Date | string
+    mandatoryTotal?: number
+    mandatoryUploaded?: number
+    mandatoryApproved?: number
+    catalogueVersion?: number
+    version?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerOnboardingCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerOnboardingWhereUniqueInput
+    create: XOR<WorkerOnboardingCreateWithoutWorkerProfileInput, WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionCreateWithoutWorkerProfileInput = {
+    id?: bigint | number
+    fromStage?: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at?: Date | string
+    cause: string
+    actorId?: string | null
+    source: $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput = {
+    id?: bigint | number
+    fromStage?: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at?: Date | string
+    cause: string
+    actorId?: string | null
+    source: $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionCreateOrConnectWithoutWorkerProfileInput = {
+    where: WorkerOnboardingTransitionWhereUniqueInput
+    create: XOR<WorkerOnboardingTransitionCreateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionCreateManyWorkerProfileInputEnvelope = {
+    data: WorkerOnboardingTransitionCreateManyWorkerProfileInput | WorkerOnboardingTransitionCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RegistrationPhotoUploadCreateWithoutClaimedByInput = {
+    id?: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt?: Date | string
+    claimedAt?: Date | string | null
+  }
+
+  export type RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput = {
+    id?: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt?: Date | string
+    claimedAt?: Date | string | null
+  }
+
+  export type RegistrationPhotoUploadCreateOrConnectWithoutClaimedByInput = {
+    where: RegistrationPhotoUploadWhereUniqueInput
+    create: XOR<RegistrationPhotoUploadCreateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput>
+  }
+
+  export type RegistrationPhotoUploadCreateManyClaimedByInputEnvelope = {
+    data: RegistrationPhotoUploadCreateManyClaimedByInput | RegistrationPhotoUploadCreateManyClaimedByInput[]
+    skipDuplicates?: boolean
+  }
+
   export type VerificationRequirementUpsertWithWhereUniqueWithoutWorkerProfileInput = {
     where: VerificationRequirementWhereUniqueInput
     update: XOR<VerificationRequirementUpdateWithoutWorkerProfileInput, VerificationRequirementUncheckedUpdateWithoutWorkerProfileInput>
@@ -41934,6 +53894,148 @@ export namespace Prisma {
     description?: StringNullableFilter<"WorkerExperience"> | string | null
     createdAt?: DateTimeFilter<"WorkerExperience"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerExperience"> | Date | string
+  }
+
+  export type WorkerLocationUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerLocationWhereUniqueInput
+    update: XOR<WorkerLocationUpdateWithoutWorkerProfileInput, WorkerLocationUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerLocationCreateWithoutWorkerProfileInput, WorkerLocationUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerLocationUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerLocationWhereUniqueInput
+    data: XOR<WorkerLocationUpdateWithoutWorkerProfileInput, WorkerLocationUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerLocationUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: WorkerLocationScalarWhereInput
+    data: XOR<WorkerLocationUpdateManyMutationInput, WorkerLocationUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type WorkerLocationScalarWhereInput = {
+    AND?: WorkerLocationScalarWhereInput | WorkerLocationScalarWhereInput[]
+    OR?: WorkerLocationScalarWhereInput[]
+    NOT?: WorkerLocationScalarWhereInput | WorkerLocationScalarWhereInput[]
+    id?: StringFilter<"WorkerLocation"> | string
+    workerProfileId?: StringFilter<"WorkerLocation"> | string
+    kind?: EnumLocationKindFilter<"WorkerLocation"> | $Enums.LocationKind
+    localityId?: IntFilter<"WorkerLocation"> | number
+    latitude?: FloatFilter<"WorkerLocation"> | number
+    longitude?: FloatFilter<"WorkerLocation"> | number
+    travelRadiusKm?: IntNullableFilter<"WorkerLocation"> | number | null
+    precision?: EnumLocationPrecisionFilter<"WorkerLocation"> | $Enums.LocationPrecision
+    source?: EnumLocationSourceFilter<"WorkerLocation"> | $Enums.LocationSource
+    createdAt?: DateTimeFilter<"WorkerLocation"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkerLocation"> | Date | string
+  }
+
+  export type WorkerOnboardingUpsertWithoutWorkerProfileInput = {
+    update: XOR<WorkerOnboardingUpdateWithoutWorkerProfileInput, WorkerOnboardingUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerOnboardingCreateWithoutWorkerProfileInput, WorkerOnboardingUncheckedCreateWithoutWorkerProfileInput>
+    where?: WorkerOnboardingWhereInput
+  }
+
+  export type WorkerOnboardingUpdateToOneWithWhereWithoutWorkerProfileInput = {
+    where?: WorkerOnboardingWhereInput
+    data: XOR<WorkerOnboardingUpdateWithoutWorkerProfileInput, WorkerOnboardingUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingUpdateWithoutWorkerProfileInput = {
+    stage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signedUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firstSignInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstDocumentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentsSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastActivityAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mandatoryTotal?: IntFieldUpdateOperationsInput | number
+    mandatoryUploaded?: IntFieldUpdateOperationsInput | number
+    mandatoryApproved?: IntFieldUpdateOperationsInput | number
+    catalogueVersion?: IntFieldUpdateOperationsInput | number
+    version?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingUncheckedUpdateWithoutWorkerProfileInput = {
+    stage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    stageEnteredAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    signedUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firstSignInAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    firstDocumentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentsSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastActivityAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mandatoryTotal?: IntFieldUpdateOperationsInput | number
+    mandatoryUploaded?: IntFieldUpdateOperationsInput | number
+    mandatoryApproved?: IntFieldUpdateOperationsInput | number
+    catalogueVersion?: IntFieldUpdateOperationsInput | number
+    version?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingTransitionUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerOnboardingTransitionWhereUniqueInput
+    update: XOR<WorkerOnboardingTransitionUpdateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<WorkerOnboardingTransitionCreateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: WorkerOnboardingTransitionWhereUniqueInput
+    data: XOR<WorkerOnboardingTransitionUpdateWithoutWorkerProfileInput, WorkerOnboardingTransitionUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: WorkerOnboardingTransitionScalarWhereInput
+    data: XOR<WorkerOnboardingTransitionUpdateManyMutationInput, WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type WorkerOnboardingTransitionScalarWhereInput = {
+    AND?: WorkerOnboardingTransitionScalarWhereInput | WorkerOnboardingTransitionScalarWhereInput[]
+    OR?: WorkerOnboardingTransitionScalarWhereInput[]
+    NOT?: WorkerOnboardingTransitionScalarWhereInput | WorkerOnboardingTransitionScalarWhereInput[]
+    id?: BigIntFilter<"WorkerOnboardingTransition"> | bigint | number
+    workerProfileId?: StringFilter<"WorkerOnboardingTransition"> | string
+    fromStage?: EnumOnboardingStageNullableFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingStage
+    at?: DateTimeFilter<"WorkerOnboardingTransition"> | Date | string
+    cause?: StringFilter<"WorkerOnboardingTransition"> | string
+    actorId?: StringNullableFilter<"WorkerOnboardingTransition"> | string | null
+    source?: EnumOnboardingTransitionSourceFilter<"WorkerOnboardingTransition"> | $Enums.OnboardingTransitionSource
+  }
+
+  export type RegistrationPhotoUploadUpsertWithWhereUniqueWithoutClaimedByInput = {
+    where: RegistrationPhotoUploadWhereUniqueInput
+    update: XOR<RegistrationPhotoUploadUpdateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedUpdateWithoutClaimedByInput>
+    create: XOR<RegistrationPhotoUploadCreateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedCreateWithoutClaimedByInput>
+  }
+
+  export type RegistrationPhotoUploadUpdateWithWhereUniqueWithoutClaimedByInput = {
+    where: RegistrationPhotoUploadWhereUniqueInput
+    data: XOR<RegistrationPhotoUploadUpdateWithoutClaimedByInput, RegistrationPhotoUploadUncheckedUpdateWithoutClaimedByInput>
+  }
+
+  export type RegistrationPhotoUploadUpdateManyWithWhereWithoutClaimedByInput = {
+    where: RegistrationPhotoUploadScalarWhereInput
+    data: XOR<RegistrationPhotoUploadUpdateManyMutationInput, RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByInput>
+  }
+
+  export type RegistrationPhotoUploadScalarWhereInput = {
+    AND?: RegistrationPhotoUploadScalarWhereInput | RegistrationPhotoUploadScalarWhereInput[]
+    OR?: RegistrationPhotoUploadScalarWhereInput[]
+    NOT?: RegistrationPhotoUploadScalarWhereInput | RegistrationPhotoUploadScalarWhereInput[]
+    id?: UuidFilter<"RegistrationPhotoUpload"> | string
+    blobKey?: StringFilter<"RegistrationPhotoUpload"> | string
+    contentType?: StringFilter<"RegistrationPhotoUpload"> | string
+    sizeBytes?: IntFilter<"RegistrationPhotoUpload"> | number
+    ipHash?: StringFilter<"RegistrationPhotoUpload"> | string
+    createdAt?: DateTimeFilter<"RegistrationPhotoUpload"> | Date | string
+    claimedAt?: DateTimeNullableFilter<"RegistrationPhotoUpload"> | Date | string | null
+    claimedByWorkerProfileId?: StringNullableFilter<"RegistrationPhotoUpload"> | string | null
   }
 
   export type CategoryDocumentCreateWithoutDocumentInput = {
@@ -42487,6 +54589,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -42494,6 +54599,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutWorkerServicesInput = {
@@ -42529,12 +54638,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutWorkerServicesInput = {
@@ -42585,6 +54701,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -42592,6 +54711,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutWorkerServicesInput = {
@@ -42627,12 +54750,19 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type JobApplicationCreateWithoutJobInput = {
@@ -42813,6 +54943,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -42820,6 +54953,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutWorkerAdditionalInfoInput = {
@@ -42855,12 +54992,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutWorkerAdditionalInfoInput = {
@@ -42911,6 +55055,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -42918,6 +55065,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutWorkerAdditionalInfoInput = {
@@ -42953,12 +55104,19 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type ParticipantCreateWithoutServiceRequestsInput = {
@@ -43081,6 +55239,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -43088,6 +55249,10 @@ export namespace Prisma {
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutJobHistoryEntriesInput = {
@@ -43123,12 +55288,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutJobHistoryEntriesInput = {
@@ -43179,6 +55351,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -43186,6 +55361,10 @@ export namespace Prisma {
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutJobHistoryEntriesInput = {
@@ -43221,12 +55400,19 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileCreateWithoutEducationEntriesInput = {
@@ -43261,6 +55447,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -43268,6 +55457,10 @@ export namespace Prisma {
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutEducationEntriesInput = {
@@ -43303,12 +55496,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutEducationEntriesInput = {
@@ -43359,6 +55559,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -43366,6 +55569,10 @@ export namespace Prisma {
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutEducationEntriesInput = {
@@ -43401,12 +55608,19 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileCreateWithoutAvailabilityInput = {
@@ -43441,6 +55655,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -43448,6 +55665,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutAvailabilityInput = {
@@ -43483,12 +55704,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
     careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutAvailabilityInput = {
@@ -43539,6 +55767,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -43546,6 +55777,10 @@ export namespace Prisma {
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutAvailabilityInput = {
@@ -43581,12 +55816,19 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
     careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileCreateWithoutCareExperienceInput = {
@@ -43621,6 +55863,9 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -43628,6 +55873,10 @@ export namespace Prisma {
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileUncheckedCreateWithoutCareExperienceInput = {
@@ -43663,12 +55912,19 @@ export namespace Prisma {
     verificationStatus?: string
     createdAt?: Date | string
     updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
     educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
   }
 
   export type WorkerProfileCreateOrConnectWithoutCareExperienceInput = {
@@ -43719,6 +55975,9 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -43726,6 +55985,10 @@ export namespace Prisma {
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
   }
 
   export type WorkerProfileUncheckedUpdateWithoutCareExperienceInput = {
@@ -43761,12 +56024,1145 @@ export namespace Prisma {
     verificationStatus?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
     educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type AuLocalityCreateWithoutSupersedesInput = {
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersededBy?: AuLocalityCreateNestedOneWithoutSupersedesInput
+    workerLocations?: WorkerLocationCreateNestedManyWithoutLocalityInput
+  }
+
+  export type AuLocalityUncheckedCreateWithoutSupersedesInput = {
+    id?: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    supersededById?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerLocations?: WorkerLocationUncheckedCreateNestedManyWithoutLocalityInput
+  }
+
+  export type AuLocalityCreateOrConnectWithoutSupersedesInput = {
+    where: AuLocalityWhereUniqueInput
+    create: XOR<AuLocalityCreateWithoutSupersedesInput, AuLocalityUncheckedCreateWithoutSupersedesInput>
+  }
+
+  export type AuLocalityCreateWithoutSupersededByInput = {
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersedes?: AuLocalityCreateNestedManyWithoutSupersededByInput
+    workerLocations?: WorkerLocationCreateNestedManyWithoutLocalityInput
+  }
+
+  export type AuLocalityUncheckedCreateWithoutSupersededByInput = {
+    id?: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersedes?: AuLocalityUncheckedCreateNestedManyWithoutSupersededByInput
+    workerLocations?: WorkerLocationUncheckedCreateNestedManyWithoutLocalityInput
+  }
+
+  export type AuLocalityCreateOrConnectWithoutSupersededByInput = {
+    where: AuLocalityWhereUniqueInput
+    create: XOR<AuLocalityCreateWithoutSupersededByInput, AuLocalityUncheckedCreateWithoutSupersededByInput>
+  }
+
+  export type AuLocalityCreateManySupersededByInputEnvelope = {
+    data: AuLocalityCreateManySupersededByInput | AuLocalityCreateManySupersededByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkerLocationCreateWithoutLocalityInput = {
+    id?: string
+    kind: $Enums.LocationKind
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutLocationsInput
+  }
+
+  export type WorkerLocationUncheckedCreateWithoutLocalityInput = {
+    id?: string
+    workerProfileId: string
+    kind: $Enums.LocationKind
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerLocationCreateOrConnectWithoutLocalityInput = {
+    where: WorkerLocationWhereUniqueInput
+    create: XOR<WorkerLocationCreateWithoutLocalityInput, WorkerLocationUncheckedCreateWithoutLocalityInput>
+  }
+
+  export type WorkerLocationCreateManyLocalityInputEnvelope = {
+    data: WorkerLocationCreateManyLocalityInput | WorkerLocationCreateManyLocalityInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AuLocalityUpsertWithoutSupersedesInput = {
+    update: XOR<AuLocalityUpdateWithoutSupersedesInput, AuLocalityUncheckedUpdateWithoutSupersedesInput>
+    create: XOR<AuLocalityCreateWithoutSupersedesInput, AuLocalityUncheckedCreateWithoutSupersedesInput>
+    where?: AuLocalityWhereInput
+  }
+
+  export type AuLocalityUpdateToOneWithWhereWithoutSupersedesInput = {
+    where?: AuLocalityWhereInput
+    data: XOR<AuLocalityUpdateWithoutSupersedesInput, AuLocalityUncheckedUpdateWithoutSupersedesInput>
+  }
+
+  export type AuLocalityUpdateWithoutSupersedesInput = {
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersededBy?: AuLocalityUpdateOneWithoutSupersedesNestedInput
+    workerLocations?: WorkerLocationUpdateManyWithoutLocalityNestedInput
+  }
+
+  export type AuLocalityUncheckedUpdateWithoutSupersedesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    supersededById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerLocations?: WorkerLocationUncheckedUpdateManyWithoutLocalityNestedInput
+  }
+
+  export type AuLocalityUpsertWithWhereUniqueWithoutSupersededByInput = {
+    where: AuLocalityWhereUniqueInput
+    update: XOR<AuLocalityUpdateWithoutSupersededByInput, AuLocalityUncheckedUpdateWithoutSupersededByInput>
+    create: XOR<AuLocalityCreateWithoutSupersededByInput, AuLocalityUncheckedCreateWithoutSupersededByInput>
+  }
+
+  export type AuLocalityUpdateWithWhereUniqueWithoutSupersededByInput = {
+    where: AuLocalityWhereUniqueInput
+    data: XOR<AuLocalityUpdateWithoutSupersededByInput, AuLocalityUncheckedUpdateWithoutSupersededByInput>
+  }
+
+  export type AuLocalityUpdateManyWithWhereWithoutSupersededByInput = {
+    where: AuLocalityScalarWhereInput
+    data: XOR<AuLocalityUpdateManyMutationInput, AuLocalityUncheckedUpdateManyWithoutSupersededByInput>
+  }
+
+  export type AuLocalityScalarWhereInput = {
+    AND?: AuLocalityScalarWhereInput | AuLocalityScalarWhereInput[]
+    OR?: AuLocalityScalarWhereInput[]
+    NOT?: AuLocalityScalarWhereInput | AuLocalityScalarWhereInput[]
+    id?: IntFilter<"AuLocality"> | number
+    gnafLocalityPid?: StringFilter<"AuLocality"> | string
+    suburb?: StringFilter<"AuLocality"> | string
+    searchName?: StringFilter<"AuLocality"> | string
+    state?: StringFilter<"AuLocality"> | string
+    postcode?: StringFilter<"AuLocality"> | string
+    latitude?: FloatFilter<"AuLocality"> | number
+    longitude?: FloatFilter<"AuLocality"> | number
+    sourceVersion?: StringFilter<"AuLocality"> | string
+    retiredAt?: DateTimeNullableFilter<"AuLocality"> | Date | string | null
+    supersededById?: IntNullableFilter<"AuLocality"> | number | null
+    createdAt?: DateTimeFilter<"AuLocality"> | Date | string
+    updatedAt?: DateTimeFilter<"AuLocality"> | Date | string
+  }
+
+  export type WorkerLocationUpsertWithWhereUniqueWithoutLocalityInput = {
+    where: WorkerLocationWhereUniqueInput
+    update: XOR<WorkerLocationUpdateWithoutLocalityInput, WorkerLocationUncheckedUpdateWithoutLocalityInput>
+    create: XOR<WorkerLocationCreateWithoutLocalityInput, WorkerLocationUncheckedCreateWithoutLocalityInput>
+  }
+
+  export type WorkerLocationUpdateWithWhereUniqueWithoutLocalityInput = {
+    where: WorkerLocationWhereUniqueInput
+    data: XOR<WorkerLocationUpdateWithoutLocalityInput, WorkerLocationUncheckedUpdateWithoutLocalityInput>
+  }
+
+  export type WorkerLocationUpdateManyWithWhereWithoutLocalityInput = {
+    where: WorkerLocationScalarWhereInput
+    data: XOR<WorkerLocationUpdateManyMutationInput, WorkerLocationUncheckedUpdateManyWithoutLocalityInput>
+  }
+
+  export type WorkerProfileCreateWithoutLocationsInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutLocationsInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutLocationsInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutLocationsInput, WorkerProfileUncheckedCreateWithoutLocationsInput>
+  }
+
+  export type AuLocalityCreateWithoutWorkerLocationsInput = {
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersededBy?: AuLocalityCreateNestedOneWithoutSupersedesInput
+    supersedes?: AuLocalityCreateNestedManyWithoutSupersededByInput
+  }
+
+  export type AuLocalityUncheckedCreateWithoutWorkerLocationsInput = {
+    id?: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    supersededById?: number | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supersedes?: AuLocalityUncheckedCreateNestedManyWithoutSupersededByInput
+  }
+
+  export type AuLocalityCreateOrConnectWithoutWorkerLocationsInput = {
+    where: AuLocalityWhereUniqueInput
+    create: XOR<AuLocalityCreateWithoutWorkerLocationsInput, AuLocalityUncheckedCreateWithoutWorkerLocationsInput>
+  }
+
+  export type WorkerProfileUpsertWithoutLocationsInput = {
+    update: XOR<WorkerProfileUpdateWithoutLocationsInput, WorkerProfileUncheckedUpdateWithoutLocationsInput>
+    create: XOR<WorkerProfileCreateWithoutLocationsInput, WorkerProfileUncheckedCreateWithoutLocationsInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutLocationsInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutLocationsInput, WorkerProfileUncheckedUpdateWithoutLocationsInput>
+  }
+
+  export type WorkerProfileUpdateWithoutLocationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutLocationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type AuLocalityUpsertWithoutWorkerLocationsInput = {
+    update: XOR<AuLocalityUpdateWithoutWorkerLocationsInput, AuLocalityUncheckedUpdateWithoutWorkerLocationsInput>
+    create: XOR<AuLocalityCreateWithoutWorkerLocationsInput, AuLocalityUncheckedCreateWithoutWorkerLocationsInput>
+    where?: AuLocalityWhereInput
+  }
+
+  export type AuLocalityUpdateToOneWithWhereWithoutWorkerLocationsInput = {
+    where?: AuLocalityWhereInput
+    data: XOR<AuLocalityUpdateWithoutWorkerLocationsInput, AuLocalityUncheckedUpdateWithoutWorkerLocationsInput>
+  }
+
+  export type AuLocalityUpdateWithoutWorkerLocationsInput = {
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersededBy?: AuLocalityUpdateOneWithoutSupersedesNestedInput
+    supersedes?: AuLocalityUpdateManyWithoutSupersededByNestedInput
+  }
+
+  export type AuLocalityUncheckedUpdateWithoutWorkerLocationsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    supersededById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersedes?: AuLocalityUncheckedUpdateManyWithoutSupersededByNestedInput
+  }
+
+  export type WorkerProfileCreateWithoutOnboardingInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutOnboardingInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutOnboardingInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutOnboardingInput, WorkerProfileUncheckedCreateWithoutOnboardingInput>
+  }
+
+  export type WorkerProfileUpsertWithoutOnboardingInput = {
+    update: XOR<WorkerProfileUpdateWithoutOnboardingInput, WorkerProfileUncheckedUpdateWithoutOnboardingInput>
+    create: XOR<WorkerProfileCreateWithoutOnboardingInput, WorkerProfileUncheckedCreateWithoutOnboardingInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutOnboardingInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutOnboardingInput, WorkerProfileUncheckedUpdateWithoutOnboardingInput>
+  }
+
+  export type WorkerProfileUpdateWithoutOnboardingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutOnboardingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileCreateWithoutOnboardingTransitionsInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutOnboardingTransitionsInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutOnboardingTransitionsInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutOnboardingTransitionsInput, WorkerProfileUncheckedCreateWithoutOnboardingTransitionsInput>
+  }
+
+  export type WorkerProfileUpsertWithoutOnboardingTransitionsInput = {
+    update: XOR<WorkerProfileUpdateWithoutOnboardingTransitionsInput, WorkerProfileUncheckedUpdateWithoutOnboardingTransitionsInput>
+    create: XOR<WorkerProfileCreateWithoutOnboardingTransitionsInput, WorkerProfileUncheckedCreateWithoutOnboardingTransitionsInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutOnboardingTransitionsInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutOnboardingTransitionsInput, WorkerProfileUncheckedUpdateWithoutOnboardingTransitionsInput>
+  }
+
+  export type WorkerProfileUpdateWithoutOnboardingTransitionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutOnboardingTransitionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileCreateWithoutRegistrationPhotosInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutRegistrationPhotosInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    location?: string | null
+    city?: string | null
+    state?: string | null
+    postalCode?: string | null
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    latitude?: number | null
+    longitude?: number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutRegistrationPhotosInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutRegistrationPhotosInput, WorkerProfileUncheckedCreateWithoutRegistrationPhotosInput>
+  }
+
+  export type WorkerProfileUpsertWithoutRegistrationPhotosInput = {
+    update: XOR<WorkerProfileUpdateWithoutRegistrationPhotosInput, WorkerProfileUncheckedUpdateWithoutRegistrationPhotosInput>
+    create: XOR<WorkerProfileCreateWithoutRegistrationPhotosInput, WorkerProfileUncheckedCreateWithoutRegistrationPhotosInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutRegistrationPhotosInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutRegistrationPhotosInput, WorkerProfileUncheckedUpdateWithoutRegistrationPhotosInput>
+  }
+
+  export type WorkerProfileUpdateWithoutRegistrationPhotosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutRegistrationPhotosInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    city?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
   }
 
   export type ServiceRequestCreateManyParticipantInput = {
@@ -44098,6 +57494,39 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkerLocationCreateManyWorkerProfileInput = {
+    id?: string
+    kind: $Enums.LocationKind
+    localityId: number
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerOnboardingTransitionCreateManyWorkerProfileInput = {
+    id?: bigint | number
+    fromStage?: $Enums.OnboardingStage | null
+    toStage: $Enums.OnboardingStage
+    at?: Date | string
+    cause: string
+    actorId?: string | null
+    source: $Enums.OnboardingTransitionSource
+  }
+
+  export type RegistrationPhotoUploadCreateManyClaimedByInput = {
+    id?: string
+    blobKey: string
+    contentType: string
+    sizeBytes: number
+    ipHash: string
+    createdAt?: Date | string
+    claimedAt?: Date | string | null
+  }
+
   export type VerificationRequirementUpdateWithoutWorkerProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
     requirementType?: StringFieldUpdateOperationsInput | string
@@ -44347,6 +57776,105 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkerLocationUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    locality?: AuLocalityUpdateOneRequiredWithoutWorkerLocationsNestedInput
+  }
+
+  export type WorkerLocationUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    localityId?: IntFieldUpdateOperationsInput | number
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerLocationUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    localityId?: IntFieldUpdateOperationsInput | number
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerOnboardingTransitionUpdateWithoutWorkerProfileInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+  }
+
+  export type WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: BigIntFieldUpdateOperationsInput | bigint | number
+    fromStage?: NullableEnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage | null
+    toStage?: EnumOnboardingStageFieldUpdateOperationsInput | $Enums.OnboardingStage
+    at?: DateTimeFieldUpdateOperationsInput | Date | string
+    cause?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumOnboardingTransitionSourceFieldUpdateOperationsInput | $Enums.OnboardingTransitionSource
+  }
+
+  export type RegistrationPhotoUploadUpdateWithoutClaimedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RegistrationPhotoUploadUncheckedUpdateWithoutClaimedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    blobKey?: StringFieldUpdateOperationsInput | string
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    ipHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    claimedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type CategoryDocumentCreateManyDocumentInput = {
     id?: string
     categoryId: string
@@ -44530,6 +58058,121 @@ export namespace Prisma {
     workerId?: StringFieldUpdateOperationsInput | string
     status?: EnumJobApplicationStatusFieldUpdateOperationsInput | $Enums.JobApplicationStatus
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuLocalityCreateManySupersededByInput = {
+    id?: number
+    gnafLocalityPid: string
+    suburb: string
+    searchName: string
+    state: string
+    postcode: string
+    latitude: number
+    longitude: number
+    sourceVersion: string
+    retiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkerLocationCreateManyLocalityInput = {
+    id?: string
+    workerProfileId: string
+    kind: $Enums.LocationKind
+    latitude: number
+    longitude: number
+    travelRadiusKm?: number | null
+    precision: $Enums.LocationPrecision
+    source: $Enums.LocationSource
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuLocalityUpdateWithoutSupersededByInput = {
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersedes?: AuLocalityUpdateManyWithoutSupersededByNestedInput
+    workerLocations?: WorkerLocationUpdateManyWithoutLocalityNestedInput
+  }
+
+  export type AuLocalityUncheckedUpdateWithoutSupersededByInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supersedes?: AuLocalityUncheckedUpdateManyWithoutSupersededByNestedInput
+    workerLocations?: WorkerLocationUncheckedUpdateManyWithoutLocalityNestedInput
+  }
+
+  export type AuLocalityUncheckedUpdateManyWithoutSupersededByInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    gnafLocalityPid?: StringFieldUpdateOperationsInput | string
+    suburb?: StringFieldUpdateOperationsInput | string
+    searchName?: StringFieldUpdateOperationsInput | string
+    state?: StringFieldUpdateOperationsInput | string
+    postcode?: StringFieldUpdateOperationsInput | string
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    sourceVersion?: StringFieldUpdateOperationsInput | string
+    retiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerLocationUpdateWithoutLocalityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutLocationsNestedInput
+  }
+
+  export type WorkerLocationUncheckedUpdateWithoutLocalityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkerLocationUncheckedUpdateManyWithoutLocalityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumLocationKindFieldUpdateOperationsInput | $Enums.LocationKind
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    travelRadiusKm?: NullableIntFieldUpdateOperationsInput | number | null
+    precision?: EnumLocationPrecisionFieldUpdateOperationsInput | $Enums.LocationPrecision
+    source?: EnumLocationSourceFieldUpdateOperationsInput | $Enums.LocationSource
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

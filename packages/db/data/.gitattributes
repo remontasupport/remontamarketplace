@@ -1,0 +1,3 @@
+# The suburb list is checksummed (au_localities.meta.json) and must rebuild
+# byte-identical, so line endings are fixed regardless of core.autocrlf.
+* text eol=lf

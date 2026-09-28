@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma } from '@/lib/auth-prisma'
+import { userIdByEmail } from '@/lib/user-lookup'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 import { getToken } from 'next-auth/jwt'
@@ -39,9 +40,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find the target user (case-insensitive to match search behavior)
-    const targetUser = await authPrisma.user.findFirst({
-      where: { email: { equals: userEmail, mode: 'insensitive' } },
+    // Find the target user, ignoring case -- an exact match (lib/user-lookup), so
+    // `_` and `%` in the input are not wildcards as they were with mode: insensitive.
+    const targetId = await userIdByEmail(userEmail)
+    const targetUser = targetId && await authPrisma.user.findUnique({
+      where: { id: targetId },
       select: {
         id: true,
         email: true,

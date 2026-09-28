@@ -23,6 +23,12 @@ interface PhotoUploadProps {
   maxSizeMB?: number;
   error?: string;
   inputId?: string; // Unique id for the file input — required when multiple instances on same page
+  /**
+   * Optional uploader (worker sign-up, api mode): receives the cropped file and
+   * returns the value to pass to onPhotoChange (a staged photoUploadId). The
+   * cropped image stays as the preview. Without it: /api/upload/worker-photo as before.
+   */
+  upload?: (file: File) => Promise<string>;
 }
 
 export default function PhotoUpload({
@@ -34,6 +40,7 @@ export default function PhotoUpload({
   maxSizeMB = 50,
   error,
   inputId = "photo-upload-input",
+  upload,
 }: PhotoUploadProps) {
   const { data: session } = useSession();
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhoto || null);
@@ -108,6 +115,11 @@ export default function PhotoUpload({
 
       // Show preview of cropped image
       setPreviewUrl(croppedImageUrl);
+
+      if (upload) {
+        onPhotoChange(await upload(croppedFile));
+        return;
+      }
 
       // Upload the cropped file to blob storage
       const formData = new FormData();

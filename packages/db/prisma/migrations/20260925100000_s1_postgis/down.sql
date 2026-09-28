@@ -1,0 +1,11 @@
+-- Removes PostGIS. Run only after s1_localities and s1_worker_locations are
+-- reversed: their geography columns depend on it and the DROP fails otherwise
+-- (no CASCADE, deliberately -- it must never take a table with it).
+--
+-- ONLY IF THIS MIGRATION INSTALLED IT. The forward step is CREATE EXTENSION
+-- IF NOT EXISTS, so if PostGIS was already enabled on the database before S1,
+-- this file would remove something S1 did not add. Check before the forward run
+-- (SELECT extversion FROM pg_extension WHERE extname = 'postgis';) and record
+-- the answer in the S1 production checklist; if it was already there, skip this
+-- file.
+DROP EXTENSION IF EXISTS postgis;

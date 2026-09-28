@@ -2,8 +2,9 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authPrisma, withRetry } from "./auth-prisma";
+import { userIdByEmail } from "./user-lookup";
 import { UserRole } from "@/types/auth";
-import { getOrFetch, getCached, setCached, CACHE_KEYS, CACHE_TTL, invalidateCache } from "./redis";
+import { getCached, setCached, CACHE_KEYS, invalidateCache } from "./redis";
 
 // ============================================================================
 // SHARED HELPERS
@@ -40,8 +41,10 @@ async function handleImpersonation(email: string, token: string) {
     throw new Error("Impersonation token expired")
   }
 
-  const user = await authPrisma.user.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
+  // Exact lower-case match (lib/user-lookup): no ILIKE wildcards, indexed.
+  const userId = await userIdByEmail(email)
+  const user = userId && await authPrisma.user.findUnique({
+    where: { id: userId },
     select: {
       id: true, email: true, role: true, status: true,
       workerProfile: { select: { firstName: true, lastName: true } },
@@ -75,20 +78,26 @@ async function handleImpersonation(email: string, token: string) {
 async function handleNormalLogin(email: string, password: string, rememberMe: boolean) {
   const normalizedEmail = email.toLowerCase()
 
-  const user = await getOrFetch(
-    CACHE_KEYS.user(normalizedEmail),
-    () => withRetry(() => authPrisma.user.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
-      select: {
-        id: true, email: true, passwordHash: true, role: true,
-        status: true, failedLoginAttempts: true, accountLockedUntil: true,
-        workerProfile: { select: { firstName: true, lastName: true } },
-        clientProfile: { select: { firstName: true, lastName: true } },
-        coordinatorProfile: { select: { firstName: true, lastName: true } },
-      },
-    })),
-    CACHE_TTL.USER_DATA
-  )
+  // Read from the database on every sign-in -- never from a cache. This record
+  // holds the password hash, the account status and the lock-out state; a cached
+  // copy (it was kept in Redis for 1 h) let an old password work after a reset
+  // and a suspended account sign in, because nothing invalidated it. Exact
+  // lower-case email match (lib/user-lookup): no ILIKE wildcards.
+  const user = await withRetry(async () => {
+    const userId = await userIdByEmail(email)
+    return userId
+      ? authPrisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true, email: true, passwordHash: true, role: true,
+            status: true, failedLoginAttempts: true, accountLockedUntil: true,
+            workerProfile: { select: { firstName: true, lastName: true } },
+            clientProfile: { select: { firstName: true, lastName: true } },
+            coordinatorProfile: { select: { firstName: true, lastName: true } },
+          },
+        })
+      : null
+  })
 
   if (!user?.passwordHash) throw new Error("Invalid credentials")
 
@@ -145,7 +154,8 @@ async function handleNormalLogin(email: string, password: string, rememberMe: bo
     data: { failedLoginAttempts: 0, accountLockedUntil: null, lastLoginAt: new Date() },
   }).catch(() => {})
   authPrisma.auditLog.create({ data: { userId: user.id, action: "LOGIN_SUCCESS" } }).catch(() => {})
-  // Only clear the attempts counter — keep the user cache warm for the next signin
+  // Clear the failed-attempts counter. (The user record is no longer cached at all;
+  // the CACHE_KEYS.user invalidations above only clear copies cached before that.)
   invalidateCache(`login_attempts:${user.id}`).catch(() => {})
 
   return {

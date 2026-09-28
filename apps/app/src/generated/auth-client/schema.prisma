@@ -268,6 +268,18 @@ model WorkerProfile {
   educationEntries WorkerEducation[]
   careExperience   WorkerExperience[]
 
+  // S1 — registration consent and lead attribution (FR-REG-04, FR-REG-05).
+  // Nullable: legacy registrations leave them empty and nothing is backfilled.
+  consentProfileShareAt DateTime?
+  consentWordingVersion String?
+  zohoLeadId            String?
+
+  // S1 — location and onboarding marker (S1-data-model.md)
+  locations             WorkerLocation[]
+  onboarding            WorkerOnboarding?
+  onboardingTransitions WorkerOnboardingTransition[]
+  registrationPhotos    RegistrationPhotoUpload[]
+
   @@index([city])
   @@index([isPublished])
   @@index([latitude, longitude])
@@ -486,6 +498,7 @@ enum AuditAction {
   ROLE_CHANGE
   IMPERSONATION_START
   IMPERSONATION_END
+  ACCOUNT_REGISTERED
 }
 
 enum DocumentCategory {
@@ -692,4 +705,211 @@ model WorkerExperience {
   @@unique([workerProfileId, domain])
   @@index([domain])
   @@map("worker_experience")
+}
+
+// ---------------------------------------------------------------------------
+// S1 — Worker registration slice. Design: aidlc-docs/construction/S1-registration/
+//
+// Written by hand in the migrations, because Prisma cannot express them — do not
+// let a generated migration drop them:
+//   * `point` columns are GENERATED ALWAYS from latitude/longitude (PostGIS).
+//     Never write them; Prisma cannot, because they are Unsupported.
+//   * worker_locations_one_home_per_worker — partial unique index (one HOME row).
+//   * CHECK constraints on worker_locations and au_localities.
+// ---------------------------------------------------------------------------
+
+/// One row per Australian suburb–postcode pair, from Geoscape G-NAF
+/// (packages/db/data/au_localities.csv). Rows are never deleted: a locality
+/// dropped by a release is retired, so worker locations that point at it stay valid.
+model AuLocality {
+  id              Int                                    @id @default(autoincrement())
+  gnafLocalityPid String
+  suburb          String
+  /// Lower-case, single-spaced suburb name; what the search box matches on.
+  searchName      String
+  state           String
+  postcode        String
+  latitude        Float
+  longitude       Float
+  point           Unsupported("geography(Point, 4326)")?
+  sourceVersion   String
+  retiredAt       DateTime?
+  supersededById  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  supersededBy    AuLocality?      @relation("LocalitySuccession", fields: [supersededById], references: [id])
+  supersedes      AuLocality[]     @relation("LocalitySuccession")
+  workerLocations WorkerLocation[]
+
+  @@unique([gnafLocalityPid, postcode])
+  @@index([searchName])
+  @@index([postcode])
+  @@index([point], type: Gist)
+  @@map("au_localities")
+}
+
+/// Where a worker is. Exactly one HOME row per worker (partial unique index,
+/// hand-written), carrying the travel radius. SERVICE_AREA is reserved: option A
+/// (radius only) was chosen on 2026-09-25, so nothing writes it yet.
+model WorkerLocation {
+  id              String                                 @id @default(cuid())
+  workerProfileId String
+  kind            LocationKind
+  localityId      Int
+  latitude        Float
+  longitude       Float
+  point           Unsupported("geography(Point, 4326)")?
+  travelRadiusKm  Int?
+  precision       LocationPrecision
+  source          LocationSource
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+  locality      AuLocality    @relation(fields: [localityId], references: [id], onDelete: Restrict)
+
+  @@index([workerProfileId])
+  @@index([localityId])
+  @@index([point], type: Gist)
+  @@map("worker_locations")
+}
+
+/// The onboarding marker: one row per worker. `stage` is derived by deriveStage()
+/// in apps/api and is never set by a client.
+model WorkerOnboarding {
+  workerProfileId      String          @id
+  stage                OnboardingStage
+  stageEnteredAt       DateTime
+  signedUpAt           DateTime
+  firstSignInAt        DateTime?
+  firstDocumentAt      DateTime?
+  documentsSubmittedAt DateTime?
+  verifiedAt           DateTime?
+  publishedAt          DateTime?
+  lastActivityAt       DateTime
+  mandatoryTotal       Int             @default(0)
+  mandatoryUploaded    Int             @default(0)
+  mandatoryApproved    Int             @default(0)
+  catalogueVersion     Int             @default(0)
+  /// Optimistic lock.
+  version              Int             @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([stage, stageEnteredAt])
+  @@index([stage, lastActivityAt])
+  @@map("worker_onboarding")
+}
+
+/// Append-only history of stage changes. Rows are never updated or deleted.
+model WorkerOnboardingTransition {
+  id              BigInt                     @id @default(autoincrement())
+  workerProfileId String
+  fromStage       OnboardingStage?
+  toStage         OnboardingStage
+  at              DateTime                   @default(now())
+  cause           String
+  actorId         String?
+  source          OnboardingTransitionSource
+
+  workerProfile WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId, at])
+  @@index([toStage, at])
+  @@map("worker_onboarding_transitions")
+}
+
+/// Transactional outbox: written in the same transaction as the business change,
+/// delivered by the apps/api dispatcher. Handlers are idempotent on `id`.
+model OutboxEvent {
+  id            String       @id @default(uuid()) @db.Uuid
+  type          String
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  attempts      Int          @default(0)
+  nextAttemptAt DateTime     @default(now())
+  /// Claim lease: a crashed dispatcher's claim expires and the event is retried.
+  lockedUntil   DateTime?
+  lastError     String?
+  createdAt     DateTime     @default(now())
+  processedAt   DateTime?
+
+  @@index([status, nextAttemptAt])
+  @@map("outbox_events")
+}
+
+/// A photo uploaded during sign-up, before the account exists. The registration
+/// request references it by id and claims it once; unclaimed rows are purged after 24 h.
+model RegistrationPhotoUpload {
+  id                       String    @id @default(uuid()) @db.Uuid
+  blobKey                  String    @unique
+  contentType              String
+  sizeBytes                Int
+  ipHash                   String
+  createdAt                DateTime  @default(now())
+  claimedAt                DateTime?
+  claimedByWorkerProfileId String?
+
+  claimedBy WorkerProfile? @relation(fields: [claimedByWorkerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([claimedAt, createdAt])
+  @@map("registration_photo_uploads")
+}
+
+/// Fixed-window rate-limit counters for apps/api, until a Redis decision (OI-08).
+model RateLimitBucket {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+  expiresAt   DateTime
+
+  @@id([key, windowStart])
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
+}
+
+enum OnboardingStage {
+  SIGNED_UP
+  DOCUMENTS_IN_PROGRESS
+  DOCUMENTS_SUBMITTED
+  ACTION_REQUIRED
+  VERIFIED
+  PUBLISHED
+}
+
+enum OnboardingTransitionSource {
+  API
+  RECONCILER
+  BACKFILL
+}
+
+enum LocationKind {
+  HOME
+  SERVICE_AREA
+}
+
+enum LocationPrecision {
+  LOCALITY
+  ADDRESS
+}
+
+enum LocationSource {
+  REGISTRATION
+  ONBOARDING
+  ADMIN
+  RECONCILER
+  BACKFILL
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  DONE
+  DEAD
 }
