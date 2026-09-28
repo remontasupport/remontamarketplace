@@ -1394,3 +1394,13 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Restarted the app dev server (same env overrides). A read of the production catalogue to copy it locally was refused by the tool's policy and was not pursued. Instead `packages/db/scripts/local/seed-catalogue.sql` seeds the local test database from apps/app's SERVICE_OPTIONS (7 categories, 8 sub-categories; idempotent; refuses non-local servers). Applied; `/api/categories` on the dev server now returns the list. Ids may differ from production's -- local testing only.
 
 ---
+
+**User input (verbatim):**
+> Ther Services is not the same with the production, I also noticed Fitness and Rehabilitation and Home Modifications
+
+**AI action:** SERVICE_OPTIONS is stale. Reconstructing the real catalogue from the code's other references (the route's CATEGORY_ORDER, category-id literals, the therapeutic-supports route) before reseeding; production itself cannot be read in this session.
+
+---
+**AI action (cont.):** The seed had come from apps/app's SERVICE_OPTIONS, which is stale (its own slug mapping says "Home Modifications" and "Fitness and Rehabilitation" are not in the database). The catalogue the database was loaded from, `categories.json`, is in git history (428d725; later removed from the tree). Regenerated the seed from it: 7 categories (incl. Personal Trainer), 22 sub-categories with the real ids; replaced the local rows; `/api/categories` now returns the production list. Follow-up (not S1): SERVICE_OPTIONS drift from the catalogue.
+
+---
