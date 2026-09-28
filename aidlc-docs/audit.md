@@ -1284,3 +1284,18 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Log showed the CAPTCHA passing and Resend answering HTTP 403 (the test sender delivers only to the account owner's address). Defect on my side: a provider refusal (PermanentFailure) was mapped to 503 + Retry-After 30, so the form retried five times at 30 s -- the "Sending..." the user saw. Fixed: a refusal is a 500 the form does not retry; an outage stays 503 + Retry-After. The send call now has its own retry budget (3 attempts, Retry-After capped at 5 s) and a plain message ("We couldn't send the code right now"). Tests extended (api 51 registration tests, form-engine 47); api rebuilt and restarted. The email itself still needs the Resend account owner's address, or a verified sender domain.
 
 ---
+
+**User input (verbatim):**
+> The email went straight to the spam instead
+
+**AI action:** Explained: the test sender (onboarding@resend.dev, a shared domain with no authentication for Remonta) is why; the fix is verifying a Remonta domain in Resend (SPF/DKIM) and setting EMAIL_FROM. No code change.
+
+**User input (verbatim):**
+> the error We couldn't reach Remonta. Please check your connection and try again. appear again
+
+**AI action:** Checking whether the api is still listening and what the last requests in its log were.
+
+---
+**AI action (cont.):** Cause: the send-code rate limit (10/h per IP). The earlier retry loop had made 19 requests from 127.0.0.1, so every click got 429; the engine retried the 429 and, out of attempts, showed the "couldn't reach" text. Cleared `rate_limit_buckets` on the local database (2 rows). Engine fix: when retries run out, the last answer decides the message -- 429 → "Too many requests from this connection...", 5xx on the send → "couldn't send the code", else "couldn't reach". Test added. No api change (no restart needed; the dev server recompiles the engine).
+
+---

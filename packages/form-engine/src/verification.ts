@@ -5,7 +5,7 @@
 // success is the PROOF the sign-up body carries: the ticket plus the code.
 import type { EntryDef } from "@remonta/api-contract";
 import { ATTEMPT_TIMEOUT_MS, contractCall, messageFor, outcomeOf, type ApiBackend } from "./submit";
-import { withRetry, type RetryOptions } from "./retry";
+import { RetriesExhausted, withRetry, type RetryOptions } from "./retry";
 import type { FieldDef, FormDefinition } from "./types";
 
 export type EmailCodeField = Extract<FieldDef, { kind: "emailCode" }>;
@@ -24,6 +24,16 @@ export type ConfirmCodeResult = { ok: true; proof: EmailCodeProof } | { ok: fals
 
 export const UNREACHABLE = "We couldn't reach Remonta. Please check your connection and try again.";
 export const NOT_SENT = "We couldn't send the code right now. Please try again in a moment.";
+export const TOO_MANY = "Too many requests from this connection. Please wait a while before trying again.";
+
+/** When the retries ran out: what the LAST answer was decides the message. */
+function afterRetries(err: unknown, sending: boolean): string {
+  if (err instanceof RetriesExhausted) {
+    if (err.lastReason === "HTTP 429") return TOO_MANY;
+    if (/^HTTP 5/.test(err.lastReason)) return sending ? NOT_SENT : UNREACHABLE;
+  }
+  return UNREACHABLE;
+}
 
 /** The reCAPTCHA action an entry demands, or undefined when it has none. */
 export function captchaActionOf(entry: EntryDef | undefined): string | undefined {
@@ -49,8 +59,8 @@ export async function requestEmailCode(
     const fields = (r.body as { error?: { fields?: Record<string, string[]> } } | null)?.error?.fields;
     if (r.status === 500 || r.status === 503) return { ok: false, message: NOT_SENT };
     return { ok: false, message: fields?.email?.[0] ?? messageFor(r.status) };
-  } catch {
-    return { ok: false, message: UNREACHABLE };
+  } catch (err) {
+    return { ok: false, message: afterRetries(err, true) };
   }
 }
 
@@ -70,7 +80,7 @@ export async function confirmEmailCode(
     if (r.ok) return { ok: true, proof: { ...args.ticket, code: args.code } };
     const fields = (r.body as { error?: { fields?: Record<string, string[]> } } | null)?.error?.fields;
     return { ok: false, message: fields?.code?.[0] ?? fields?.token?.[0] ?? messageFor(r.status) };
-  } catch {
-    return { ok: false, message: UNREACHABLE };
+  } catch (err) {
+    return { ok: false, message: afterRetries(err, false) };
   }
 }

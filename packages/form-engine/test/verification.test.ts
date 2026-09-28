@@ -3,7 +3,7 @@
 import { registrationContract } from "@remonta/api-contract";
 import { CONSENT_WORDING_VERSION } from "@remonta/schemas/schema/workerRegistrationSchema";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { confirmEmailCode, defaultsOf, defineForm, formSchemaFor, NOT_SENT, requestEmailCode, resetsOf, UNREACHABLE, type EmailCodeField, type FormDefinition } from "../src/index";
+import { confirmEmailCode, defaultsOf, defineForm, formSchemaFor, NOT_SENT, requestEmailCode, resetsOf, TOO_MANY, UNREACHABLE, type EmailCodeField, type FormDefinition } from "../src/index";
 
 const base = {
   id: "test-verify",
@@ -102,6 +102,11 @@ describe("requestEmailCode / confirmEmailCode", () => {
     vi.stubGlobal("fetch", async () => (hits++, new Response(JSON.stringify({ error: { code: "INTERNAL", message: "x", requestId: "r" } }), { status: 500 })));
     expect(await requestEmailCode(form, backend, field, "a@b.test", { getCaptchaToken: async () => "t", retry: { maxAttempts: 3, sleep: async () => {} } })).toEqual({ ok: false, message: NOT_SENT });
     expect(hits).toBe(1);
+    // Rate limited (429, retried until the budget runs out): said as such, not as "unreachable".
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ error: { code: "RATE_LIMITED", message: "x", requestId: "r" } }), { status: 429, headers: { "retry-after": "3600" } }));
+    const limited = { maxAttempts: 2, maxRetryAfterMs: 1, sleep: async () => {} };
+    expect(await requestEmailCode(form, backend, field, "a@b.test", { getCaptchaToken: async () => "t", retry: limited })).toEqual({ ok: false, message: TOO_MANY });
+    expect(await confirmEmailCode(form, backend, field, { email: "a@b.test", code: "123456", ticket }, { retry: limited })).toEqual({ ok: false, message: TOO_MANY });
   });
 
   it("confirms a code and hands back the proof the sign-up sends; a wrong code returns the server's message", async () => {
