@@ -1451,3 +1451,10 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Cause: the api refused `home-modifications`, a service from the first (wrong) seed that the on-device draft still carried; the current list no longer shows it, so the selection was invisible. Fix: the services slot drops selected ids the loaded catalogue does not have (services and sub-categories), so a stale draft cannot send what the server refuses. Forms lint/tests/tsc clean; committed.
 
 ---
+
+**User input (verbatim):**
+> It works! Now what task did we left off again?
+
+**AI action:** Full local sign-up confirmed working by the user (email verification, availability check, services, submit). Reported the position from the state file: step 10 done; step 13 built and browser-verified; next is step 11, then step 12; the pending user decisions.
+
+---

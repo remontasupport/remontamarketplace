@@ -29,7 +29,7 @@
 
 ### 2b. Step 13 -- email verification before the password: BUILT 2026-09-28 (scope change)
 - Stateless like the client sign-up (user decision: no table): a signed ticket, 10-minute expiry, checked again at sign-up (R6). Two contract entries, an `emailCode` field kind, the password disabled until verified. Details in the plan (step 13).
-- **Not yet tried in a browser.** To test: restart both local servers (below), sign up with the Resend account owner's address (the test sender delivers only there), and allow `localhost` on the reCAPTCHA site key.
+- **Verified in the browser by the user, 2026-09-28:** send code → verify → password appears → availability check on blur → services → complete sign-up, all against the local database. Plus the availability check, the hostile-input suite, and the local catalogue seed (see the plan, step 13).
 - Open: a verified Remonta sender domain in Resend, so real addresses receive the code.
 
 ### 3. Remaining S1 steps
