@@ -1316,3 +1316,13 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Resend answered 403 again, and the http client discarded the body, so the reason was invisible. Change: `SafeHttpClient` keeps the first 512 bytes of an error body as `detail` (log only, never returned); the mailer puts it in its message. Test added (units.test: the provider's reason appears). Api rebuilt and restarted; asked the user to click once more so the log shows Resend's exact reason.
 
 ---
+
+**User input (verbatim):**
+> It works now. Now for the UI. Instead of the password is visible always. I want it to be visible only if the code is correct
+
+**AI action:** The end-to-end flow confirmed working by the user. Adding `visibleWhen` (a field hidden until another key holds a value) beside `enabledWhen`; the password uses it.
+
+---
+**AI action (cont.):** \`visibleWhen\` added (engine type + defineForm check + wizard); the password uses it. form-engine 47 tests; app forms lint/tests/typecheck clean (the full app gate was stopped: the machine had ~600 MB free with both servers up; it passed in full after the previous commit and this change is four lines). Committed.
+
+---

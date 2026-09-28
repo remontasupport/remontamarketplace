@@ -45,9 +45,12 @@ type Wizard = ReturnType<typeof useFormWizard>;
 
 function FieldSlot({ field, control, errors, backend, uploader, wizard, definition }: { field: FieldDef; control: Control<Values>; errors: FieldErrors<Values>; backend: Backend; uploader?: (file: File) => Promise<string>; wizard: Wizard; definition: FormDefinition }) {
   const error = errorOf(errors, field.name);
-  // enabledWhen: the field is disabled until that key holds a value (e.g. the password until the email is verified).
+  // enabledWhen / visibleWhen: the field is disabled, or not shown, until that key holds a value
+  // (e.g. the password until the email is verified).
   const gate = useWatch({ control, name: field.enabledWhen ?? "__none__" });
+  const shown = useWatch({ control, name: field.visibleWhen ?? "__none__" });
   const disabled = !!field.enabledWhen && !gate;
+  if (field.visibleWhen && !shown) return null;
   switch (field.kind) {
     case "text":
     case "email":

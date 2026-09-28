@@ -14,8 +14,10 @@ interface FieldBase {
   hint?: string;
   /** Never written to the draft kept on the device (passwords). */
   neverSaved?: boolean;
-  /** Disabled until this form-state key holds a value, e.g. the password until the email is verified. */
+  /** Disabled until this form-state key holds a value. */
   enabledWhen?: string;
+  /** Not shown at all until this form-state key holds a value, e.g. the password until the email is verified. */
+  visibleWhen?: string;
 }
 
 export type FieldDef =

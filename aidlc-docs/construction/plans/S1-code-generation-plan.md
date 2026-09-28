@@ -329,7 +329,7 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
   - No table (user): the client sign-up's stateless scheme, through the contract and the pipeline instead of ad-hoc routes. Attempt limiting is therefore the per-IP rate limit plus the 10-minute expiry, not a counter per code; tracking of sends is Resend's dashboard.
   - The ticket is signed with `IP_HASH_SECRET` (no new configuration). apps/app's client flow signs with `NEXTAUTH_SECRET`; the two are independent.
   - Legacy mode shows no verification step: the legacy route cannot enforce one, and legacy stays a true rollback.
-  - The password field is disabled (with a hint) until the proof exists; the proof is `neverSaved`, so a restored draft verifies again.
+  - The password field is not shown until the proof exists (`visibleWhen`; user, 2026-09-28: "visible only if the code is correct"; `enabledWhen` exists too, for a disabled-but-shown field); the proof is `neverSaved`, so a restored draft verifies again.
 - **To test in a browser:** the code email goes through Resend's test sender, which delivers only to the Resend account owner's address -- sign up with that address, or verify a Remonta domain in Resend first. The send step is behind reCAPTCHA, so `localhost` must be allowed on the site key.
 
 ### Step 11 — CI and docs

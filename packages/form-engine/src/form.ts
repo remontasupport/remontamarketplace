@@ -35,6 +35,7 @@ export function defineForm<C extends ContractDef>(def: FormDefinition<C>): FormD
         if (!target || target.kind !== "email") problems.push(`emailCode ${f.name}: ${f.for} is not an email field on this or an earlier step`);
       }
       if (f.enabledWhen && !keys.includes(f.enabledWhen)) problems.push(`${f.name}: enabledWhen ${f.enabledWhen} is not a field`);
+      if (f.visibleWhen && !keys.includes(f.visibleWhen)) problems.push(`${f.name}: visibleWhen ${f.visibleWhen} is not a field`);
     }
   });
   if (problems.length) throw new Error(`form ${def.id}: ${problems.join("; ")}`);

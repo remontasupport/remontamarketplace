@@ -55,6 +55,8 @@ describe("defineForm with an emailCode field", () => {
     expect(() => defineForm({ ...base, steps: later } as never)).toThrow("email is not an email field on this or an earlier step");
     const gate = steps().map((s) => ({ ...s, fields: s.fields.map((f) => (f.name === "password" ? { ...f, enabledWhen: "ghost" } : f)) }));
     expect(() => defineForm({ ...base, steps: gate } as never)).toThrow("enabledWhen ghost is not a field");
+    const shown = steps().map((s) => ({ ...s, fields: s.fields.map((f) => (f.name === "password" ? { ...f, visibleWhen: "ghost" } : f)) }));
+    expect(() => defineForm({ ...base, steps: shown } as never)).toThrow("visibleWhen ghost is not a field");
   });
 
   it("holds no proof by default, requires one in api mode only, and clears it when the address changes", () => {
