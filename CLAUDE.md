@@ -109,6 +109,11 @@ across ~80 files with no content change. Check with
 engine — usually a running dev server. Stop it, or
 `pnpm install --ignore-scripts` then generate manually.
 
+**`pnpm --filter @remonta/db test` empties `au_localities`.** Its refresh integration test
+TRUNCATEs the table and leaves it empty, so every suburb lookup and every DB test in
+`apps/api` fails afterwards with "no record found". Reload with
+`localities:refresh --apply --expect=<hash>` (the dry run prints the hash).
+
 **Redis caches job listings for 2 hours.** Changing job data directly in the database
 shows nothing until the cache is cleared: `npx tsx scripts/clear-jobs-cache.ts`. There
 is no error — just the old list.

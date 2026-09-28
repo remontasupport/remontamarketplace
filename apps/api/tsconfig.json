@@ -10,6 +10,6 @@
     "emitDecoratorMetadata": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "load/**/*.ts", "tsup.config.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "load/**/*.ts", "scripts/**/*.ts", "tsup.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules", "dist", "generated"]
 }

@@ -1155,3 +1155,37 @@ The Layout section now lists the new packages.
 Committed on `s1/worker-registration`. Nothing pushed.
 
 ---
+
+## 2026-09-28 — Session resumed
+
+**User input (verbatim):**
+> Let's continue the AI DLC. Where are we at? Check the current state
+
+**AI action:** Read `aidlc-state.md` (resume point of 2026-09-25) and checked it against git and the environment:
+- `s1/worker-registration` at `441d05a`, working tree clean apart from regenerated Prisma clients. Not on the remote.
+- `fix/signin-email-lookup` at `0aaa571` in the `../Remonta-hotfix` worktree, 2 commits over `origin/main` (`25eb04e`). Still not pushed (user decision pending).
+- `origin/main` unchanged at `25eb04e`.
+- Docker Desktop is not running, so the `remonta-s1-pg` container (DB tests) is unavailable until it is started.
+Reported the position and the pending decisions; no code changed.
+
+---
+
+**User input (verbatim):**
+> Docker Desktop started, so the DB tests can run.
+
+**AI action:** Verifying the `remonta-s1-pg` container and the `s1test` database, then running the DB tests.
+
+---
+**AI action (cont.):** Environment verified. Container `remonta-s1-pg` up; `s1test` has 10 migrations, 15,467 localities, PostGIS 3.4.3. All DB-backed suites pass: apps/api 214 tests (15 files), apps/app 85 tests (10 files), packages/db 57 tests (6 files). Starting S1 step 10 (backfill scripts).
+
+---
+**AI action (cont.) -- S1 step 10 done (backfill scripts):**
+- New: `apps/api/src/modules/onboarding/domain/initial-marker.ts` (a worker's first marker, dated from apps/app's rows; estimates named), `modules/onboarding/backfill.ts`, `modules/locations/backfill.ts`, `scripts/backfill-cli.ts`, `scripts/backfill-worker-locations.ts`, `scripts/backfill-worker-onboarding.ts`; package scripts `backfill:locations` / `backfill:onboarding`; `scripts/**` typechecked.
+- Changed: the reconciler now creates a first marker through the same `initialMarker` (source RECONCILER) and exposes `createInitialMarker`, `candidatePool`, `localityCandidates` for the backfills. Its update path is unchanged.
+- Tests: `@remonta/api` 233 (was 214): 11 initial-marker (4 properties), 4 + 4 backfill tests on PostGIS. 3 deliberate bugs each caught (dry run writing; wrong HOME source; stageEnteredAt = now). One real bug caught by the tests and fixed: Prisma cursor paging skipped a page under --apply once the writes shrank the filter; now keyset paging on id.
+- CLI run on the local DB with 3 seeded legacy workers (then deleted). Locations dry run: 3 without a HOME -> 1 matched (by location string, "Mount Victoria, NSW 2786" with city "Mount"), 1 ambiguous ("Somewhere nice", 2000: 6 candidates), 1 unmatched ("Atlantis"). Apply wrote 1; apply again wrote 0. Onboarding dry run: SIGNED_UP 1, DOCUMENTS_IN_PROGRESS 1, PUBLISHED 1; estimates: publishedAt from profile updatedAt 1, firstSignInAt from last sign-in 1. Apply wrote 3 (BACKFILL transitions dated from the rows); apply again wrote 0.
+- Gate: `pnpm --filter @remonta/api run quality` passes (lint, typecheck, 233 tests).
+- Environment incident: `au_localities` was found empty mid-session -- `@remonta/db`'s refresh integration test (run at 10:25) TRUNCATEs it by design. Reloaded with `localities:refresh --apply` (15,467 rows). Recorded as a trap in CLAUDE.md and the state file.
+- Not done: the Neon-branch rehearsal (needs the branch from the user); the production run (step 12, separate approval).
+
+---

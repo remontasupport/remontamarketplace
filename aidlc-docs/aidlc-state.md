@@ -4,9 +4,9 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-9 done (plus 5b and 9b). **Paused 2026-09-25; see "Resume here" below.**
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-10 done (plus 5b and 9b). Resumed 2026-09-28; next is step 11. See "Resume here" below.
 
-## Resume here (paused 2026-09-25)
+## Resume here (updated 2026-09-28)
 
 ### 1. First: the sign-in hotfix (ready, NOT pushed -- user decision)
 - **Branch** `fix/signin-email-lookup`, based on `origin/main` 25eb04e: 2 commits, 5 files.
@@ -22,10 +22,10 @@
   4. "Merge pull request" (not squash), then the same checks on production.
 - **Afterwards:** `git worktree remove ../Remonta-hotfix` (it holds a copy of `.env`).
 
-### 2. Then S1 step 10 -- backfill scripts (plan section 5, step 10)
-- `backfill-worker-locations.ts`: legacy postcode + location to `au_localities`, via `apps/api/src/modules/locations/domain/legacy-match.ts`. Match on the `location` string and postcode, **not** `city`: apps/app's parseLocation corrupts 23 suburbs, e.g. "Mount Victoria" becomes "Mount". Report matched, unmatched and ambiguous; never guess.
-- `backfill-worker-onboarding.ts`: `deriveStage` for every worker, `source = BACKFILL`, best timestamps. Reuse the reconciler's `obligationsFrom` / `reconcileWorker` logic.
-- Both idempotent, dry run by default, `--apply` to write. Rehearse on a Neon branch (user creates it).
+### 2. S1 step 10 -- backfill scripts: DONE 2026-09-28 (local verification only)
+- `apps/api/scripts/backfill-worker-locations.ts` and `backfill-worker-onboarding.ts`; package scripts `backfill:locations` / `backfill:onboarding` (they read `apps/api/.env` via `--env-file`, so they target whatever `AUTH_DATABASE_URL` / `DIRECT_DATABASE_URL` point at -- for the local DB run `node --import tsx scripts/<name>.ts` with the URL exported instead).
+- Dry run by default, `--apply` to write, `--report=<file>` for the full JSON. Idempotent. Details and decisions in the plan (step 10).
+- **Still to do on the Neon branch** (step 12): migrations → `localities:refresh` → both dry runs → user reviews the ambiguous/unmatched list and the estimate counts → `--apply`.
 
 ### 3. Remaining S1 steps
 - **Step 11 (CI + docs):**
@@ -63,6 +63,7 @@
   `AUTH_DATABASE_URL=…/s1test DATABASE_URL=…/s1test DIRECT_DATABASE_URL=…/s1test UPSTASH_REDIS_REST_URL= UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev -p 3000`
 - **G-NAF extract:** `C:/data/gnaf` (for future `localities:build`). k6 binary: this session's scratchpad (download again if needed).
 - **Uncommitted in the S1 tree:** only regenerated Prisma clients (`apps/*/src/generated`). Never commit them without checking `git diff --ignore-all-space --numstat`.
+- **Trap (bit on 2026-09-28):** `pnpm --filter @remonta/db test` TRUNCATEs `au_localities` on the database in `TEST_DATABASE_URL` and leaves it empty. Reload: `DIRECT_DATABASE_URL=…/s1test pnpm --filter @remonta/db localities:refresh` (prints the plan hash), then the same with `--apply --expect=<hash>`.
 
 ## Workspace State
 - **Existing Code**: Yes

@@ -293,10 +293,20 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
 - **Production:** the index migrations run with the other S1 migrations in step 12; CONCURRENTLY means no write lock on `users` / `worker_profiles` / `verification_requirements`. Sign-in is correct before the index exists, just not yet fast.
 
 ### Step 10 — Backfill scripts (dry run by default)
-- [ ] `backfill-worker-locations.ts`: postcode + suburb → `au_localities`; the report lists matched, unmatched and ambiguous; unmatched rows are never guessed
-- [ ] `backfill-worker-onboarding.ts`: `deriveStage` for every worker, `source = BACKFILL`, best available timestamps
-- [ ] Both idempotent; `--apply` required to write
-- **Verify:** run on a Neon branch copy; you review both reports before any production run
+- [x] `apps/api/scripts/backfill-worker-locations.ts` (`pnpm --filter @remonta/api backfill:locations`): a HOME row for every worker without one, matched by `legacy-match.ts` on the `location` string and postcode (never the city column alone); matched / ambiguous / unmatched counted, ambiguous and unmatched rows listed for review and never guessed; `--report=<file>` writes the full JSON
+- [x] `apps/api/scripts/backfill-worker-onboarding.ts` (`backfill:onboarding`): a first marker for every worker without one, `source = BACKFILL`, stage from `deriveStage`, timestamps from the rows (`initialMarker`); the report gives the stage distribution and how many timestamps had to be estimated
+- [x] Both idempotent (a worker with a HOME / a marker is never touched; re-checked inside each worker's transaction), dry run by default, `--apply` required to write, keyset paging, a failed worker is listed and the run continues
+- **Verify:** run on a Neon branch copy; you review both reports before any production run — **pending the Neon branch** (section 6)
+- **Verified 2026-09-28 (locally):**
+  - Tests: `@remonta/api` 233 (+19): 11 `initialMarker` tests including 4 properties (stage and counts are exactly deriveStage's; every timestamp is a row date or a declared `now` estimate; a milestone is set exactly when the stage reached it; pure), 4 onboarding-backfill and 4 location-backfill tests on PostGIS (dry run writes nothing; apply; idempotent; the reconciler then agrees: no stage change, HOME unchanged).
+  - 3 deliberate bugs, each caught: the dry run writing; HOME written with the wrong source; `stageEnteredAt = now` for everyone.
+  - Both CLIs run against the local database with 3 seeded legacy workers: dry run → apply → apply again (0 written), report file written. Output recorded in audit.md.
+  - A real bug found by the tests: Prisma cursor paging over a filter the writes shrink (`onboarding: null`) skipped a page under `--apply`; replaced by keyset paging on `id`.
+- **Decisions / deviations:**
+  - `initialMarker` (`modules/onboarding/domain/initial-marker.ts`) is shared: the **reconciler now uses it too** when it meets a worker without a marker, so a legacy sign-up reconciled today is dated from their rows, not from the run, and the two paths cannot disagree (the reconciler's update path is unchanged).
+  - Estimates are explicit: `publishedAt` = profile `updatedAt` (apps/app never records publication), `firstSignInAt` = last sign-in, and `now` only where a row has no date at all — each counted in the report.
+  - The backfill does not correct the legacy `city` column (23 suburbs mis-parsed by apps/app) or fill missing legacy `latitude/longitude`; those columns are apps/app's until the contract step.
+  - Trap found: `@remonta/db`'s refresh integration test TRUNCATEs `au_localities` and leaves it empty (by design, header comment). After running it locally, reload with `localities:refresh --apply`. Recorded in CLAUDE.md.
 
 ### Step 11 — CI and docs
 - [ ] `ci-api.yml`: quality, PostGIS service container, integration tests, `openapi.json` drift check
