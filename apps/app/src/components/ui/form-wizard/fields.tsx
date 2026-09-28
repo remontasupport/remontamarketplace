@@ -4,7 +4,7 @@
 // Props in, callbacks out: no fetching, no validation rules, no form library.
 // The rules live in @remonta/form-engine; the wiring in features/forms.
 import { useState } from "react";
-import { AlertTriangle, Eye, EyeOff, Loader2, Search } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Loader2, Search, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -27,14 +27,17 @@ export interface TextFieldProps {
   onBlur?: () => void;
   error?: string;
   autoComplete?: string;
+  /** e.g. the password until the email is verified. */
+  disabled?: boolean;
+  disabledHint?: string;
 }
 
-export function TextField({ label, hint, type = "text", value, onChange, onBlur, error, autoComplete }: TextFieldProps) {
+export function TextField({ label, hint, type = "text", value, onChange, onBlur, error, autoComplete, disabled }: TextFieldProps) {
   return (
     <div>
       <Label className="text-base font-poppins font-semibold text-gray-900">{label}</Label>
       {hint && <p className="text-sm text-gray-600 font-poppins mt-1">{hint}</p>}
-      <Input type={type} className="text-base font-poppins mt-2" value={value} autoComplete={autoComplete} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={!!error} />
+      <Input type={type} className="text-base font-poppins mt-2" value={value} autoComplete={autoComplete} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={!!error} disabled={disabled} />
       <FieldError message={error} />
     </div>
   );
@@ -54,15 +57,20 @@ export function passwordStrength(pwd: string): number {
   return Math.min(s, 100);
 }
 
-export function PasswordField({ label, hint, value, onChange, onBlur, error, strengthMeter }: Omit<TextFieldProps, "type"> & { strengthMeter?: boolean }) {
+export function PasswordField({ label, hint, value, onChange, onBlur, error, strengthMeter, disabled, disabledHint }: Omit<TextFieldProps, "type"> & { strengthMeter?: boolean }) {
   const [show, setShow] = useState(false);
   const strength = passwordStrength(value);
   return (
     <div>
       <Label className="text-base font-poppins font-semibold text-gray-900">{label}</Label>
       {hint && <p className="text-sm text-gray-600 font-poppins mt-1">{hint}</p>}
+      {disabled && disabledHint && (
+        <p role="status" className="text-sm text-amber-700 font-poppins mt-1">
+          {disabledHint}
+        </p>
+      )}
       <div className="relative mt-2">
-        <Input type={show ? "text" : "password"} autoComplete="new-password" className="text-base font-poppins pr-12" value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={!!error} />
+        <Input type={show ? "text" : "password"} autoComplete="new-password" className="text-base font-poppins pr-12" value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} aria-invalid={!!error} disabled={disabled} />
         <button
           type="button"
           onClick={() => setShow(!show)}
@@ -335,6 +343,70 @@ export function ConsentField({ label, paragraphs = [], statement, checked, onCha
           </Label>
         </div>
       </Card>
+      <FieldError message={error} />
+    </div>
+  );
+}
+
+// ---- email code --------------------------------------------------------------------
+
+export type EmailCodeStatus = { kind: "idle" } | { kind: "sending" } | { kind: "sent"; resendInSeconds: number } | { kind: "verifying" } | { kind: "verified" };
+
+export interface EmailCodeFieldProps {
+  label: string;
+  hint?: string;
+  /** The address the code goes to; the button is disabled while it is empty. */
+  email: string;
+  status: EmailCodeStatus;
+  code: string;
+  onCodeChange: (code: string) => void;
+  onSend: () => void;
+  onVerify: () => void;
+  /** The last outcome to show: a wrong code, a send failure. */
+  message?: string | null;
+  /** The form's own validation message ("Please verify your email address"). */
+  error?: string;
+}
+
+export function EmailCodeField({ label, hint, email, status, code, onCodeChange, onSend, onVerify, message, error }: EmailCodeFieldProps) {
+  const busy = status.kind === "sending" || status.kind === "verifying";
+  const button = "bg-[#0C1628] hover:bg-[#A3DEDE] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed";
+  return (
+    <div>
+      <Label className="text-base font-poppins font-semibold text-gray-900">{label}</Label>
+      {hint && <p className="text-sm text-gray-600 font-poppins mt-1">{hint}</p>}
+      {status.kind === "verified" ? (
+        <p role="status" className="mt-2 flex items-center gap-2 text-sm font-poppins text-green-700">
+          <Check className="w-4 h-4" /> Email verified
+        </p>
+      ) : (
+        <div className="mt-2 space-y-3">
+          {(status.kind === "sent" || status.kind === "verifying") && (
+            <div className="flex gap-2">
+              <Input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="6-digit code"
+                className="text-base font-poppins tracking-widest max-w-[12rem]"
+                value={code}
+                onChange={(e) => onCodeChange(e.target.value.replace(/[^0-9 ]/g, "").slice(0, 7))}
+                aria-invalid={!!message}
+                aria-label="Verification code"
+              />
+              <button type="button" className={button} disabled={busy || code.replace(/\s/g, "").length !== 6} onClick={onVerify}>
+                {status.kind === "verifying" ? "Checking..." : "Verify"}
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <button type="button" className={button} disabled={busy || !email || (status.kind === "sent" && status.resendInSeconds > 0)} onClick={onSend}>
+              {status.kind === "sending" ? "Sending..." : status.kind === "idle" ? "Send code" : status.kind === "sent" && status.resendInSeconds > 0 ? `Resend in ${status.resendInSeconds}s` : "Resend code"}
+            </button>
+            {status.kind === "sent" && <span className="text-sm text-gray-600 font-poppins">We emailed a code to {email}.</span>}
+          </div>
+        </div>
+      )}
+      {message && <p className="text-red-500 text-sm font-poppins mt-1">{message}</p>}
       <FieldError message={error} />
     </div>
   );

@@ -15,6 +15,7 @@ import {
   keysOfStep,
   loadDraft,
   neverSavedKeys,
+  resetsOf,
   saveDraft,
   stepOfKey,
   submitToApi,
@@ -87,6 +88,16 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     }),
     [],
   );
+
+  // ---- values that no longer hold once another changes (an email verification) ------
+  useEffect(() => {
+    const rules = resetsOf(def);
+    if (rules.length === 0) return;
+    const sub = form.watch((values, { name }) => {
+      for (const r of rules) if (name === r.when && values[r.reset] != null) form.setValue(r.reset, null, { shouldValidate: false });
+    });
+    return () => sub.unsubscribe();
+  }, [form, def]);
 
   // ---- photo uploads (api mode) -----------------------------------------------------
   /** The uploader for a photo field: api mode stages it in apps/api; legacy keeps PhotoUpload's own. */
@@ -169,5 +180,5 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     [form, backend, def, apply, query, getCaptchaToken, retry],
   );
 
-  return { form, step, showIntro, start: () => setShowIntro(false), restored, stepMessage, status, online, next, back, submit, uploaderFor, backend };
+  return { form, step, showIntro, start: () => setShowIntro(false), restored, stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry };
 }

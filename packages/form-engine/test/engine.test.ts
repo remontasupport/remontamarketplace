@@ -39,7 +39,8 @@ const form = defineForm({
         { name: "lastName", kind: "text" },
         { name: "mobile", kind: "phone" },
         { name: "email", kind: "email" },
-        { name: "password", kind: "password", neverSaved: true },
+        { name: "emailVerification", kind: "emailCode", for: "email", sendEntry: "requestEmailCode", verifyEntry: "verifyEmailCode", neverSaved: true },
+        { name: "password", kind: "password", neverSaved: true, enabledWhen: "emailVerification" },
       ],
     },
     { title: "Services", fields: [{ name: "services", kind: "services", subcategoriesName: "supportWorkerCategories" }] },
@@ -64,6 +65,7 @@ const filled = {
   lastName: "O'Connor",
   mobile: "0412 345 678",
   email: " Mary@Example.com ",
+  emailVerification: { token: "ab".repeat(32), expiresAt: 1_790_000_000_000, code: "123456" },
   password: "Str0ng!pass",
   services: ["support-worker"],
   supportWorkerCategories: [],
@@ -128,6 +130,7 @@ describe("mapping", () => {
       lastName: "O'Connor",
       mobile: "0412 345 678",
       email: " Mary@Example.com ",
+      emailVerification: filled.emailVerification,
       password: "Str0ng!pass",
       services: ["support-worker"],
       supportWorkerCategories: [],
@@ -142,7 +145,7 @@ describe("mapping", () => {
     expect(stepOfKey(form, "supportWorkerCategories")).toBe(2);
     expect(stepOfKey(form, "email")).toBe(1);
     expect(defaultsOf(form)).toMatchObject({ localityId: null, services: [], supportWorkerCategories: [], consentProfileShare: false, password: "" });
-    expect(neverSavedKeys(form)).toEqual(["password"]);
+    expect(neverSavedKeys(form)).toEqual(["emailVerification", "password"]);
   });
 });
 

@@ -112,4 +112,12 @@ export const KINDS: Record<FieldDef["kind"], KindRules> = {
     schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name) }),
     toBody: (f) => ({ [f.name]: true }),
   },
+
+  emailCode: {
+    defaults: (f) => ({ [f.name]: null }),
+    // Legacy backends have no verification step. In api mode the contract's rule
+    // applies: the proof object, or "Please verify your email address".
+    schemas: (ctx) => ({ [ctx.field.name]: ctx.mode === "legacy" ? z.unknown().optional() : ruleFor(ctx, ctx.field.name) }),
+    toBody: (f, v) => ({ [f.name]: v[f.name] }),
+  },
 };

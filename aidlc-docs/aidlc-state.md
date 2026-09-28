@@ -4,7 +4,7 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-10 done (plus 5b and 9b). Resumed 2026-09-28; next is step 11. See "Resume here" below.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-10 done (plus 5b, 9b, and step 13 = email verification before the password, a scope change of 2026-09-28). Next is step 11. See "Resume here" below.
 
 ## Resume here (updated 2026-09-28)
 
@@ -26,6 +26,11 @@
 - `apps/api/scripts/backfill-worker-locations.ts` and `backfill-worker-onboarding.ts`; package scripts `backfill:locations` / `backfill:onboarding` (they read `apps/api/.env` via `--env-file`, so they target whatever `AUTH_DATABASE_URL` / `DIRECT_DATABASE_URL` point at -- for the local DB run `node --import tsx scripts/<name>.ts` with the URL exported instead).
 - Dry run by default, `--apply` to write, `--report=<file>` for the full JSON. Idempotent. Details and decisions in the plan (step 10).
 - **Still to do on the Neon branch** (step 12): migrations → `localities:refresh` → both dry runs → user reviews the ambiguous/unmatched list and the estimate counts → `--apply`.
+
+### 2b. Step 13 -- email verification before the password: BUILT 2026-09-28 (scope change)
+- Stateless like the client sign-up (user decision: no table): a signed ticket, 10-minute expiry, checked again at sign-up (R6). Two contract entries, an `emailCode` field kind, the password disabled until verified. Details in the plan (step 13).
+- **Not yet tried in a browser.** To test: restart both local servers (below), sign up with the Resend account owner's address (the test sender delivers only there), and allow `localhost` on the reCAPTCHA site key.
+- Open: a verified Remonta sender domain in Resend, so real addresses receive the code.
 
 ### 3. Remaining S1 steps
 - **Step 11 (CI + docs):**

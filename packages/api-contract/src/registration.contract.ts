@@ -3,7 +3,7 @@
 // handler in apps/api's registration module.
 // The subpath, not the package index: the index re-exports older schemas with
 // tracked type errors, which would otherwise enter this package's strict tsc.
-import { workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
+import { emailCodeRequestSchema, emailCodeTicketSchema, emailCodeVerifySchema, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta } from './meta'
@@ -67,6 +67,40 @@ export const registrationContract = defineContract('registration', {
         { per: 'global', limit: 300, window: '1h' },
       ],
       maxBodyKb: 5120,
+    }),
+  },
+
+  requestEmailCode: {
+    method: 'POST',
+    path: '/v1/registrations/worker/email-codes',
+    summary: 'Email a 6-digit code to the address the worker wants to sign up with. Answers a signed ticket; nothing is stored. The same 202 for any address.',
+    body: { kind: 'json', schema: emailCodeRequestSchema },
+    responses: { 202: emailCodeTicketSchema },
+    meta: meta({
+      access: 'public',
+      bot: { captcha: { action: 'worker_email_code' } },
+      rateLimit: [
+        { per: 'ip', limit: 10, window: '1h' },
+        { per: 'global', limit: 1000, window: '1h' },
+      ],
+      maxBodyKb: 4,
+    }),
+  },
+
+  verifyEmailCode: {
+    method: 'POST',
+    path: '/v1/registrations/worker/email-codes/verify',
+    summary: 'Check a code against its ticket. The code expires 10 minutes after it was sent.',
+    body: { kind: 'json', schema: emailCodeVerifySchema },
+    responses: { 200: z.strictObject({ verified: z.literal(true) }) },
+    meta: meta({
+      access: 'public',
+      bot: 'none', // guesses are bounded by this limit and the 10-minute expiry
+      rateLimit: [
+        { per: 'ip', limit: 30, window: '1h' },
+        { per: 'global', limit: 5000, window: '1h' },
+      ],
+      maxBodyKb: 1,
     }),
   },
 

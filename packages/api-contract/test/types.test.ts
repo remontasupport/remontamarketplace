@@ -14,6 +14,7 @@ describe('types derived from the contract', () => {
       firstName: 'A',
       lastName: 'B',
       email: 'a@b.co',
+      emailVerification: { token: 'ab'.repeat(32), expiresAt: 1, code: '123456' },
       mobile: '0412345678',
       password: 'Str0ng!pass',
       services: ['s'],

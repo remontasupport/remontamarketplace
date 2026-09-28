@@ -9,17 +9,19 @@ import type { Backend, FormDefinition, SubmitResult } from "./types";
 
 export const ATTEMPT_TIMEOUT_MS = 20_000;
 
-type Api = Extract<Backend, { mode: "api" }>;
+export type ApiBackend = Extract<Backend, { mode: "api" }>;
+type Api = ApiBackend;
 type AnyCall = (args: { body: unknown }, init?: { signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; body: unknown; retryAfterSeconds?: number }>;
 
-function call(contract: Contract, baseUrl: string, entry: string): AnyCall {
+/** The contract client's method for an entry, untyped: the definition already checked the entry exists. */
+export function contractCall(contract: Contract, baseUrl: string, entry: string): AnyCall {
   const client = createClient(contract, { baseUrl }) as unknown as Record<string, AnyCall>;
   const fn = client[entry];
   if (!fn) throw new Error(`${contract.area}.${entry} is not in the contract`);
   return fn;
 }
 
-function outcomeOf<R extends { ok: boolean; status: number; retryAfterSeconds?: number }>(r: R): AttemptOutcome<R> {
+export function outcomeOf<R extends { ok: boolean; status: number; retryAfterSeconds?: number }>(r: R): AttemptOutcome<R> {
   if (r.ok) return { kind: "done", value: r };
   if (isRetryableStatus(r.status)) return { kind: "retry", reason: `HTTP ${r.status}`, retryAfterSeconds: r.retryAfterSeconds };
   return { kind: "fail", value: r };
@@ -33,7 +35,7 @@ export interface SubmitDeps {
 }
 
 export async function submitToApi(def: FormDefinition, backend: Api, values: Record<string, unknown>, deps: SubmitDeps): Promise<SubmitResult> {
-  const send = call(def.contract, backend.apiBaseUrl, def.submitEntry);
+  const send = contractCall(def.contract, backend.apiBaseUrl, def.submitEntry);
   const body = toRequestBody(def, values, deps.query);
   try {
     const { value: r } = await withRetry(async () => {
@@ -51,7 +53,7 @@ export async function submitToApi(def: FormDefinition, backend: Api, values: Rec
 
 /** Stages a file through an upload entry and returns the field value it answers with. */
 export async function uploadToApi(def: FormDefinition, backend: Api, entry: string, file: Blob & { name?: string }, deps: { retry?: RetryOptions } = {}): Promise<string> {
-  const send = call(def.contract, backend.apiBaseUrl, entry);
+  const send = contractCall(def.contract, backend.apiBaseUrl, entry);
   const { value, ok } = await withRetry(async () => {
     const body = new FormData();
     body.append("photo", file, file.name ?? "photo.jpg");
@@ -69,7 +71,7 @@ function topLevel(f: Record<string, string[]>): Record<string, string[]> {
   return out;
 }
 
-function messageFor(status: number): string {
+export function messageFor(status: number): string {
   if (status === 403) return "We couldn't confirm you're not a robot. Please refresh the page and try again.";
   if (status === 413 || status === 415) return "Your photo could not be accepted. Please upload a JPEG, PNG, WebP or HEIC photo.";
   return "Something went wrong on our side. Your details are saved on this device -- please try again in a moment.";

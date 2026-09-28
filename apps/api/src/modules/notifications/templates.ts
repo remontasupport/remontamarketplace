@@ -72,3 +72,23 @@ Forgotten your password? ${reset}
 If it was not you, you can ignore this email. Your account is safe.`,
   }
 }
+
+/** The sign-up verification code (S1 step 13). The code is digits, but it is escaped like everything else. */
+export function emailVerificationCode(code: string, expiresInMinutes: number): RenderedEmail {
+  return {
+    subject: `${code} is your ${APP_NAME} verification code`,
+    html: layout(
+      `Your ${APP_NAME} verification code`,
+      `<h1 style="font-size:22px">Your verification code</h1>
+<p>Enter this code on the sign-up page to confirm your email address:</p>
+<p style="font-size:32px;letter-spacing:6px;font-weight:600;margin:24px 0">${escapeHtml(code)}</p>
+<p>It expires in ${expiresInMinutes} minutes.</p>
+<p>If you did not start a ${APP_NAME} sign-up, you can ignore this email.</p>`,
+    ),
+    text: `Your ${APP_NAME} verification code is ${code}
+
+Enter it on the sign-up page to confirm your email address. It expires in ${expiresInMinutes} minutes.
+
+If you did not start a ${APP_NAME} sign-up, you can ignore this email.`,
+  }
+}

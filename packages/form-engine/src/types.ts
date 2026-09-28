@@ -14,6 +14,8 @@ interface FieldBase {
   hint?: string;
   /** Never written to the draft kept on the device (passwords). */
   neverSaved?: boolean;
+  /** Disabled until this form-state key holds a value, e.g. the password until the email is verified. */
+  enabledWhen?: string;
 }
 
 export type FieldDef =
@@ -26,8 +28,13 @@ export type FieldDef =
   | (FieldBase & { kind: "services"; subcategoriesName: string; title?: string })
   /** A photo staged through another contract entry (api mode); its id is the value. */
   | (FieldBase & { kind: "photo"; uploadEntry: string })
-  | (FieldBase & { kind: "consent"; statement: string; paragraphs?: string[] });
-
+  | (FieldBase & { kind: "consent"; statement: string; paragraphs?: string[] })
+  /**
+   * A code emailed to the `for` field's address and checked before the step can
+   * continue (api mode; legacy has no such step). The value is the proof the
+   * sign-up sends: the code and its signed ticket. Changing the address resets it.
+   */
+  | (FieldBase & { kind: "emailCode"; for: string; sendEntry: string; verifyEntry: string });
 
 export type FieldKind = FieldDef["kind"];
 
@@ -71,4 +78,3 @@ export interface FormDefinition<C extends ContractDef = ContractDef> {
   successRedirect: string;
   legacy?: LegacyAdapter;
 }
-

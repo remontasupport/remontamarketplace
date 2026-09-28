@@ -7,6 +7,8 @@ import {
   normaliseEmail,
   workerRegistrationFormSchema,
   workerRegistrationSchema,
+  emailCodeRequestSchema,
+  emailCodeVerifySchema,
 } from './workerRegistrationSchema'
 
 const valid = {
@@ -15,6 +17,7 @@ const valid = {
   lastName: "O'Connor",
   email: '  Mary.OConnor@Example.COM ',
   mobile: '0412 345 678',
+  emailVerification: { token: 'ab'.repeat(32), expiresAt: 1_790_000_000_000, code: '123 456' },
   password: 'Str0ng!pass',
   services: ['support-worker'],
   supportWorkerCategories: ['personal-care'],
@@ -31,6 +34,7 @@ describe('workerRegistrationSchema', () => {
       firstName: 'Mary-Jane',
       email: 'mary.oconnor@example.com',
       mobile: '+61412345678',
+      emailVerification: { token: 'ab'.repeat(32), expiresAt: 1_790_000_000_000, code: '123456' },
       zohoLeadId: '5725767000012345678',
     })
   })
@@ -53,6 +57,9 @@ describe('workerRegistrationSchema', () => {
     ['a weak password', { password: 'password1' }],
     ['a 129-character password', { password: 'Aa1!' + 'x'.repeat(125) }],
     ['a locality name instead of an id', { localityId: 'Parramatta' }],
+    ['no email verification', { emailVerification: undefined }],
+    ['an email verification with a 5-digit code', { emailVerification: { token: 'ab'.repeat(32), expiresAt: 1, code: '12345' } }],
+    ['an email verification whose token is not a hash', { emailVerification: { token: 'verified', expiresAt: 1, code: '123456' } }],
     ['a zero locality id', { localityId: 0 }],
   ])('rejects %s', (_label, patch) => {
     expect(workerRegistrationSchema.safeParse({ ...valid, captchaToken: 't', ...patch }).success).toBe(false)
@@ -157,5 +164,26 @@ describe('page/server parity', () => {
         expect(workerRegistrationFormSchema.safeParse({ ...valid, password: p }).success).toBe(isValidPassword(p))
       }),
     )
+  })
+})
+
+describe('the email-code schemas (S1 step 13)', () => {
+  it('the request normalises the email like the sign-up does, and needs the captcha token', () => {
+    expect(emailCodeRequestSchema.parse({ email: '  Mary@Example.COM ', captchaToken: 't' })).toEqual({ email: 'mary@example.com', captchaToken: 't' })
+    expect(emailCodeRequestSchema.safeParse({ email: 'mary@example.com' }).success).toBe(false)
+    expect(emailCodeRequestSchema.safeParse({ email: 'not-an-email', captchaToken: 't' }).success).toBe(false)
+  })
+
+  it('the code is six digits, spaces allowed while typing; the token is a hex hash', () => {
+    const ticket = { token: 'ab'.repeat(32), expiresAt: 1, email: 'a@b.test' }
+    expect(emailCodeVerifySchema.parse({ ...ticket, code: ' 123 456 ' })).toEqual({ ...ticket, code: '123456' })
+    for (const bad of ['12345', '1234567', 'abcdef', '', '12 34 5']) expect(emailCodeVerifySchema.safeParse({ ...ticket, code: bad }).success, bad).toBe(false)
+    expect(emailCodeVerifySchema.safeParse({ ...ticket, token: 'zz'.repeat(32), code: '123456' }).success).toBe(false)
+  })
+
+  it('the sign-up says what is missing when the email was never verified', () => {
+    const r = workerRegistrationFormSchema.safeParse({ ...valid, emailVerification: undefined })
+    expect(r.success).toBe(false)
+    expect(r.error!.issues.map((i) => [i.path.join('.'), i.message])).toContainEqual(['emailVerification', 'Please verify your email address'])
   })
 })

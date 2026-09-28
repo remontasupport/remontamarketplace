@@ -23,7 +23,7 @@ describe("the worker sign-up definition", () => {
     expect(workerRegistrationForm.submitEntry).toBe("submitWorkerRegistration");
     expect(workerRegistrationForm.steps.map((s) => s.fields.map((f) => f.name))).toEqual([
       ["localityId"],
-      ["firstName", "lastName", "mobile", "email", "password"],
+      ["firstName", "lastName", "mobile", "email", "emailVerification", "password"],
       ["services"],
       ["photoUploadId", "consentProfileShare"],
     ]);

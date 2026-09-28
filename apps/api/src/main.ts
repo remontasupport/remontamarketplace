@@ -33,6 +33,7 @@ async function main() {
   const rateLimiter = new PostgresRateLimiter(db)
 
   const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
+  const mailer = new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
   const photoStore = config.PHOTO_STORE === 'vercel-blob' ? new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN!) : new LocalDiskPhotoStore(config.PHOTO_LOCAL_DIR)
   const handlerSets = [
     platformHandlers(db),
@@ -43,10 +44,12 @@ async function main() {
       localities: new LocalityDirectory(db),
       store: photoStore,
       ipHashSecret: config.IP_HASH_SECRET,
+      mailer,
+      // The server's keyed-hash secret also signs the 10-minute email-code tickets.
+      codeSecret: config.IP_HASH_SECRET,
     }),
   ] as unknown as HandlerSet[]
   // Outbox event handlers by type. The CRM notification is deferred (user, 2026-09-25).
-  const mailer = new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
   const outboxHandlers: Map<string, OutboxHandler> = notificationHandlers({ db, mailer, appBaseUrl: config.APP_BASE_URL })
 
   const shedder = new LoadShedder({ maxInFlight: config.MAX_IN_FLIGHT, maxEventLoopDelayMs: config.MAX_EVENT_LOOP_DELAY_MS })

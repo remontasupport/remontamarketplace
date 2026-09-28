@@ -102,6 +102,44 @@ const identifier = z
   .transform((s) => s.trim())
   .pipe(z.string().min(1).max(100))
 
+// ---- Email verification before the password step (S1 step 13) ----------------
+// Stateless, as the client sign-up already is: the send answers with a TICKET --
+// HMAC(email:code:expiresAt) and the expiry -- and keeps nothing. Verifying, and
+// the sign-up itself, recompute the HMAC over what the worker sends back.
+
+const captchaToken = z.string().min(1).max(4096)
+
+/** A code as typed: six digits; spaces are allowed while typing. */
+export const emailCode = z
+  .string()
+  .max(32)
+  .transform((c) => c.replace(/\s+/g, ''))
+  .pipe(z.string().regex(/^[0-9]{6}$/, 'Please enter the 6-digit code from the email'))
+
+/** POST /v1/registrations/worker/email-codes */
+export const emailCodeRequestSchema = z.strictObject({ email, captchaToken })
+
+const ticketFields = {
+  /** HMAC-SHA256 hex, issued by the send. */
+  token: z.string().regex(/^[0-9a-f]{64}$/),
+  /** Epoch milliseconds. */
+  expiresAt: z.number().int().positive(),
+}
+
+/** What the send answers with. */
+export const emailCodeTicketSchema = z.strictObject(ticketFields)
+
+/** POST /v1/registrations/worker/email-codes/verify: the ticket, the address and the code as typed. */
+export const emailCodeVerifySchema = z.strictObject({ ...ticketFields, email, code: emailCode })
+
+/** In the sign-up body: the proof the email was verified; the server checks it again against the body's email. */
+export const emailVerificationSchema = z.strictObject({ ...ticketFields, code: emailCode }, 'Please verify your email address')
+
+export type EmailCodeRequest = z.output<typeof emailCodeRequestSchema>
+export type EmailCodeTicket = z.output<typeof emailCodeTicketSchema>
+export type EmailCodeVerify = z.output<typeof emailCodeVerifySchema>
+export type EmailVerification = z.output<typeof emailVerificationSchema>
+
 /** What the worker fills in on the form. The page validates with this. */
 export const workerRegistrationFormSchema = z.strictObject({
   /** An au_localities id picked from GET /v1/localities; the server checks it is current. */
@@ -109,6 +147,8 @@ export const workerRegistrationFormSchema = z.strictObject({
   firstName: personName('First name'),
   lastName: personName('Last name'),
   email,
+  /** The verified code's ticket (S1 step 13); the server re-checks it for this email. */
+  emailVerification: emailVerificationSchema,
   mobile,
   password,
   /** Category ids; the server checks each exists. */
@@ -143,9 +183,7 @@ export const workerRegistrationFormSchema = z.strictObject({
 })
 
 /** The request the page sends: the form plus the reCAPTCHA v3 token. */
-export const workerRegistrationSchema = workerRegistrationFormSchema.extend({
-  captchaToken: z.string().min(1).max(4096),
-})
+export const workerRegistrationSchema = workerRegistrationFormSchema.extend({ captchaToken })
 
 export type WorkerRegistrationFormInput = z.input<typeof workerRegistrationFormSchema>
 export type WorkerRegistrationRequest = z.input<typeof workerRegistrationSchema>

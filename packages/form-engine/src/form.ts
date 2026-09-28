@@ -25,9 +25,18 @@ export function defineForm<C extends ContractDef>(def: FormDefinition<C>): FormD
   for (const k of [...Object.keys(def.constants ?? {}), ...Object.keys(def.fromQuery ?? {})]) {
     if (entry && !(k in shape)) problems.push(`${k} is not in the ${def.submitEntry} body`);
   }
-  for (const s of def.steps) for (const f of s.fields) {
-    if (f.kind === "photo" && !(f.uploadEntry in def.contract.entries)) problems.push(`photo ${f.name}: ${f.uploadEntry} is not in the contract`);
-  }
+  def.steps.forEach((s, stepIndex) => {
+    for (const f of s.fields) {
+      if (f.kind === "photo" && !(f.uploadEntry in def.contract.entries)) problems.push(`photo ${f.name}: ${f.uploadEntry} is not in the contract`);
+      if (f.kind === "emailCode") {
+        for (const e of [f.sendEntry, f.verifyEntry]) if (!(e in def.contract.entries)) problems.push(`emailCode ${f.name}: ${e} is not in the contract`);
+        // The address must exist by the time the code is requested: this step or an earlier one.
+        const target = def.steps.slice(0, stepIndex + 1).flatMap((x) => x.fields).find((x) => x.name === f.for);
+        if (!target || target.kind !== "email") problems.push(`emailCode ${f.name}: ${f.for} is not an email field on this or an earlier step`);
+      }
+      if (f.enabledWhen && !keys.includes(f.enabledWhen)) problems.push(`${f.name}: enabledWhen ${f.enabledWhen} is not a field`);
+    }
+  });
   if (problems.length) throw new Error(`form ${def.id}: ${problems.join("; ")}`);
   return def as unknown as FormDefinition;
 }
@@ -69,6 +78,14 @@ export function stepOfKey(def: FormDefinition, key: string): number {
 /** Keys never kept in the on-device draft. */
 export function neverSavedKeys(def: FormDefinition): string[] {
   return def.steps.flatMap((s) => s.fields.filter((f) => f.neverSaved).flatMap(ownedKeys));
+}
+
+/**
+ * Values that no longer hold once another changes: an email verification is for
+ * one address, so editing the address clears it (and disables what depended on it).
+ */
+export function resetsOf(def: FormDefinition): { when: string; reset: string }[] {
+  return def.steps.flatMap((s) => s.fields.filter((f) => f.kind === "emailCode").map((f) => ({ when: (f as Extract<FieldDef, { kind: "emailCode" }>).for, reset: f.name })));
 }
 
 /** The api request body: constants, URL values, then each field's contribution. */

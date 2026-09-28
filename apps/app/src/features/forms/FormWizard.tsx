@@ -4,13 +4,14 @@
 // and each field kind maps to one presentational component. Adding a form means
 // a definition file, not new screens.
 import { useMemo, useState } from "react";
-import { Controller, type Control, type FieldErrors } from "react-hook-form";
-import { KINDS, type Backend, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
-import { ConsentField, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
+import { Controller, useWatch, type Control, type FieldErrors } from "react-hook-form";
+import { KINDS, type ApiBackend, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
+import { ConsentField, EmailCodeField, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
 import { transformCategoriesToServiceOptions, useCategories } from "@/hooks/queries/useCategories";
 import { useLocalitySearch } from "./adapters/useLocalitySearch";
+import { useEmailCode } from "./useEmailCode";
 import { useFormWizard } from "./useFormWizard";
 
 type Values = Record<string, unknown>;
@@ -34,14 +35,19 @@ export function FormWizard({ definition, backend }: { definition: FormDefinition
       onSubmit={w.submit}
     >
       {step.fields.map((field) => (
-        <FieldSlot key={field.name} field={field} control={w.form.control} errors={w.form.formState.errors} backend={backend} uploader={field.kind === "photo" ? w.uploaderFor(field) : undefined} />
+        <FieldSlot key={field.name} field={field} control={w.form.control} errors={w.form.formState.errors} backend={backend} uploader={field.kind === "photo" ? w.uploaderFor(field) : undefined} wizard={w} definition={definition} />
       ))}
     </FormWizardView>
   );
 }
 
-function FieldSlot({ field, control, errors, backend, uploader }: { field: FieldDef; control: Control<Values>; errors: FieldErrors<Values>; backend: Backend; uploader?: (file: File) => Promise<string> }) {
+type Wizard = ReturnType<typeof useFormWizard>;
+
+function FieldSlot({ field, control, errors, backend, uploader, wizard, definition }: { field: FieldDef; control: Control<Values>; errors: FieldErrors<Values>; backend: Backend; uploader?: (file: File) => Promise<string>; wizard: Wizard; definition: FormDefinition }) {
   const error = errorOf(errors, field.name);
+  // enabledWhen: the field is disabled until that key holds a value (e.g. the password until the email is verified).
+  const gate = useWatch({ control, name: field.enabledWhen ?? "__none__" });
+  const disabled = !!field.enabledWhen && !gate;
   switch (field.kind) {
     case "text":
     case "email":
@@ -60,17 +66,31 @@ function FieldSlot({ field, control, errors, backend, uploader }: { field: Field
               onChange={(v) => f.onChange(KINDS[field.kind].sanitise?.(v) ?? v)}
               onBlur={f.onBlur}
               error={error}
+              disabled={disabled}
             />
           )}
         />
       );
+    case "emailCode":
+      // Legacy backends have no verification step; the kind validates as nothing in that mode.
+      return backend.mode === "api" ? <EmailCodeSlot field={field} backend={backend} wizard={wizard} definition={definition} error={error} /> : null;
     case "password":
       return (
         <Controller
           name={field.name}
           control={control}
           render={({ field: f }) => (
-            <PasswordField label={field.label ?? "Password"} hint={field.hint} strengthMeter={field.strengthMeter} value={(f.value as string) ?? ""} onChange={f.onChange} onBlur={f.onBlur} error={error} />
+            <PasswordField
+              label={field.label ?? "Password"}
+              hint={field.hint}
+              strengthMeter={field.strengthMeter}
+              value={(f.value as string) ?? ""}
+              onChange={f.onChange}
+              onBlur={f.onBlur}
+              error={error}
+              disabled={disabled}
+              disabledHint={disabled ? "Verify your email address first." : undefined}
+            />
           )}
         />
       );
@@ -182,6 +202,24 @@ function ServicesSlot({ field, control, error }: { field: Extract<FieldDef, { ki
           )}
         />
       )}
+    />
+  );
+}
+
+function EmailCodeSlot({ field, backend, wizard, definition, error }: { field: EmailCodeDef; backend: ApiBackend; wizard: Wizard; definition: FormDefinition; error?: string }) {
+  const v = useEmailCode(definition, backend, field, wizard.form, { getCaptchaToken: wizard.getCaptchaToken, retry: wizard.retry });
+  return (
+    <EmailCodeField
+      label={field.label ?? "Verify your email"}
+      hint={field.hint}
+      email={v.email}
+      status={v.status}
+      code={v.code}
+      onCodeChange={v.setCode}
+      onSend={v.send}
+      onVerify={v.verify}
+      message={v.message}
+      error={error}
     />
   );
 }

@@ -1229,3 +1229,38 @@ Reported the position and the pending decisions; no code changed.
 - Gates: `@remonta/form-engine` quality (38 tests), `@remonta/app` quality (144/496 baselines, 85 tests) pass; the dev server hot-reloaded and still serves `/registration/worker`.
 
 ---
+
+**User input (verbatim):**
+> Ohh, this will be a change to the workflow and tasks. I want to add a feature to add a verification to the email address before proceeding to enter the password. Before you code, waht is a free service to send a code to an email? I want something that can be track
+
+**AI action:** Scope change noted for S1 (email verification step before the password step). Answered the service question from what the codebase already uses; no code changed yet.
+
+---
+
+**User input (verbatim):**
+> can we implement now the email verification feature. The password won't get enable when if the code entered is wrong
+
+**AI action:** Scope change accepted for S1. Reading the form definition, engine, registration contract, handlers and mailer, then recording the design in the plan before coding.
+
+---
+
+**User input (verbatim):**
+> did you just created another table?
+
+**AI action:** Explained the table (one row per code: attempts, single use, provider id for tracking), the alternatives (stateless like the client sign-up; the auth library's verification_tokens) and that nothing had been applied to any database.
+
+**User input (verbatim):**
+> No I don't need the table. I think we can use the same approach on the client signup
+
+**AI action:** Decision recorded: stateless verification like the client sign-up (signed token, no table). Removing the model and migration; redesigning step 13 on that basis.
+
+---
+**AI action (cont.) -- step 13 built (stateless, no table):**
+- Contract: `requestEmailCode` (POST /v1/registrations/worker/email-codes, CAPTCHA `worker_email_code`, 10/h per IP) answers {token, expiresAt}; `verifyEmailCode` (POST .../email-codes/verify, 30/h per IP) checks {email, code, token, expiresAt}. The sign-up body gains `emailVerification` {token, expiresAt, code}; `register-worker` re-checks it before the users lookup (R6). openapi.json and public-endpoints.json updated.
+- apps/api: `domain/email-code.ts` (sign / check, same signed string as apps/app's lib/otp.ts), `application/email-code.ts` (synchronous send through the mailer, idempotency key per ticket, 503 + Retry-After on an outage), the code email template, handlers, wiring (ticket secret = IP_HASH_SECRET).
+- Form engine: `emailCode` kind, `enabledWhen`, `resetsOf`, `requestEmailCode` / `confirmEmailCode`; defineForm checks. apps/app: `EmailCodeField`, `useEmailCode`, the password disabled until verified, the definition updated.
+- Gates: schemas 46, api-contract 33, form-engine 47, api 259, app 85 -- all pass. 2 deliberate bugs each caught (R6 removed; expiry ignored).
+- Earlier in this change: a table (`registration_email_verifications`) was drafted and then removed on the user's decision before any database was touched.
+- Not done: a browser run (servers stopped for memory; restart on request); a verified Resend sender domain (user).
+
+---

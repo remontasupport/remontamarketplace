@@ -8,6 +8,9 @@
 //      together or not at all.
 //   R4 the photo is claimed once: a used or expired upload is refused.
 //   R5 a browser retry after a commit lands in R1.
+//   R6 the email was verified (S1 step 13): the sign-up carries the code's ticket
+//      and the server re-checks it against the body's email, before the lookup,
+//      so a refusal says nothing about whether an account exists.
 import { randomUUID } from 'node:crypto'
 import { REGISTRATION_ACCEPTED_MESSAGE } from '@remonta/api-contract'
 import type { WorkerRegistration } from '@remonta/schemas/schema/workerRegistrationSchema'
@@ -20,6 +23,7 @@ import type { PasswordHasher } from '../../../platform/security/password-hasher'
 import { placeHome } from '../../locations/domain/home'
 import { countsOf, deriveStage } from '../../onboarding/domain/stage'
 import type { BreachCheck, BreachedPasswordChecker } from '../adapters/pwned-passwords'
+import { checkEmailCode } from '../domain/email-code'
 
 export const PHOTO_CLAIM_WINDOW_HOURS = 24
 
@@ -27,8 +31,12 @@ export interface RegisterDeps {
   db: Db
   hasher: PasswordHasher
   breaches: BreachedPasswordChecker
+  /** Signs and checks the email-code tickets (S1 step 13). */
+  codeSecret: string
   now?: () => Date
 }
+
+export const EMAIL_NOT_VERIFIED = 'Please verify your email address again'
 
 export interface RegisterContext {
   audit: AuditRecorder
@@ -49,8 +57,11 @@ export async function registerWorker(input: WorkerRegistration, deps: RegisterDe
     ctx.log.warn('zohoLeadId was malformed and has been dropped; registration continues') // US-REG-04
   }
 
-  // Checked for every email, before the email is looked up, so a refusal here says
-  // nothing about whether an account exists.
+  // R6, then the breach check: both for every email, before the email is looked up,
+  // so a refusal here says nothing about whether an account exists.
+  const verified = checkEmailCode(deps.codeSecret, { ...input.emailVerification, email: input.email }, now())
+  if (verified !== 'ok') throw new ApiError(400, `email verification ${verified}`, { emailVerification: [EMAIL_NOT_VERIFIED] })
+
   const breach = await deps.breaches.check(input.password)
   if (breach.status === 'breached') {
     throw new ApiError(400, 'breached password', { password: ['This password has appeared in a data breach. Please choose a different one.'] })

@@ -10,8 +10,8 @@ describe('the contracts as committed', () => {
     expect(checkContracts(contracts, allow)).toEqual([])
   })
 
-  it('declare the three S1 registration entries', () => {
-    expect(Object.keys(registrationContract.entries).sort()).toEqual(['searchLocalities', 'submitWorkerRegistration', 'uploadRegistrationPhoto'])
+  it('declare the five S1 registration entries', () => {
+    expect(Object.keys(registrationContract.entries).sort()).toEqual(['requestEmailCode', 'searchLocalities', 'submitWorkerRegistration', 'uploadRegistrationPhoto', 'verifyEmailCode'])
   })
 
   it('put a CAPTCHA and an audit action on the sign-up itself', () => {

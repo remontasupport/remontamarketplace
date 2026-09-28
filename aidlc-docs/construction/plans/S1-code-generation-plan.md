@@ -308,6 +308,30 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
   - The backfill does not correct the legacy `city` column (23 suburbs mis-parsed by apps/app) or fill missing legacy `latitude/longitude`; those columns are apps/app's until the contract step.
   - Trap found: `@remonta/db`'s refresh integration test TRUNCATEs `au_localities` and leaves it empty (by design, header comment). After running it locally, reload with `localities:refresh --apply`. Recorded in CLAUDE.md.
 
+### Step 13 — Email verification before the password (scope change, user, 2026-09-28)
+**User input:** "add a verification to the email address before proceeding to enter the password ... The password won't get enable when if the code entered is wrong". Service question answered first: Resend (already used on both sides; free tier 3,000/month; every send tracked in its dashboard and by the id we store).
+
+**Design**
+- **Flow (api mode):** on step 2 the worker types their email, presses *Send code*, receives a 6-digit code, types it, presses *Verify*. The password box is disabled until the email is verified; a wrong code shows an error and leaves it disabled. Changing the email address resets the verification. Legacy mode is unchanged (the legacy route cannot enforce it; legacy stays a true rollback).
+- **Stateless, as the client sign-up (user, 2026-09-28: "I don't need the table ... the same approach on the client signup").** No table. The send answers a TICKET: `token = HMAC-SHA256(secret, email:code:expiresAt)` and `expiresAt` (10 min), the same signed string as apps/app's `lib/otp.ts`. The server keeps nothing; verifying recomputes the HMAC.
+- **Contract (registration area), two entries:** `POST /v1/registrations/worker/email-codes` {email, captchaToken} → 202 {token, expiresAt} (CAPTCHA action `worker_email_code`, 10/h per IP); `POST /v1/registrations/worker/email-codes/verify` {email, code, token, expiresAt} → 200 {verified: true}, or 400 on `code` (wrong / expired). Guessing is bounded by the per-IP limit (30/h) and the 10-minute expiry, as in the client flow. The sign-up body gains `emailVerification` {token, expiresAt, code}.
+- **No enumeration (R1):** the send never looks at `users`; every address gets a code and the same 202. An existing email verifies like a new one and then lands in the existing R1 branch at submit.
+- **Send is synchronous** (not the outbox): the code exists only in memory at send time, so the handler sends through the mailer with idempotency key `email-code/<token>`; a provider failure returns 503 with Retry-After, which the form's retry handles. The ticket signs with `IP_HASH_SECRET`, the server's existing keyed-hash secret (no new configuration); rotating it invalidates codes in flight, 10 minutes at most.
+- **Server enforcement (R6):** the sign-up re-checks the proof against the body's email before the users lookup, so a refusal reveals nothing; otherwise 400 on `emailVerification` ("Please verify your email address again"). Tracking is the provider's (Resend shows every send); nothing is stored on our side, as the user chose.
+- **Resend cooldown:** in the UI only (60 s); the per-IP limit of 10 an hour is the real bound.
+- **Form engine:** a new field kind `emailCode` { for: <email field>, sendEntry, verifyEntry } whose value is the proof (the contract's rule in api mode; nothing in legacy mode); `enabledWhen` on any field disables it until another key holds a value; `resetsOf` clears the proof when the address changes; `requestEmailCode` / `confirmEmailCode` call the contract with retries and a fresh CAPTCHA token per attempt (no React). `defineForm` checks the entries exist, that `for` names an email field on this or an earlier step, and that `enabledWhen` names a field.
+- **UI:** one presentational `EmailCodeField` (send / code input / verify / resend after 60 s / verified state); the wizard's glue hook owns the status and calls the engine.
+- **Status: built 2026-09-28, verified locally by tests; not yet tried in a browser** (the local servers were stopped for memory and are restarted only on request).
+- **Verified 2026-09-28:**
+  - `@remonta/schemas` 46 tests, `@remonta/api-contract` 33 (openapi.json regenerated; 5 registration entries), `@remonta/form-engine` 47 (emailCode kind: defineForm refusals, api/legacy schema, resetsOf, request/confirm through a fake fetch), `@remonta/api` 259 (26 registration tests on PostGIS incl. 6 for the codes: ticket shape and signature, same 202 for an existing address, right/wrong/other-address/expired code, R6 at sign-up for a new and an existing email alike, 503 + Retry-After on a provider outage; 5 property tests on the ticket), `@remonta/app` quality 144/496, 85 tests.
+  - 2 deliberate bugs, each caught: the sign-up no longer checking the proof; the expiry ignored.
+- **Decisions / deviations:**
+  - No table (user): the client sign-up's stateless scheme, through the contract and the pipeline instead of ad-hoc routes. Attempt limiting is therefore the per-IP rate limit plus the 10-minute expiry, not a counter per code; tracking of sends is Resend's dashboard.
+  - The ticket is signed with `IP_HASH_SECRET` (no new configuration). apps/app's client flow signs with `NEXTAUTH_SECRET`; the two are independent.
+  - Legacy mode shows no verification step: the legacy route cannot enforce one, and legacy stays a true rollback.
+  - The password field is disabled (with a hint) until the proof exists; the proof is `neverSaved`, so a restored draft verifies again.
+- **To test in a browser:** the code email goes through Resend's test sender, which delivers only to the Resend account owner's address -- sign up with that address, or verify a Remonta domain in Resend first. The send step is behind reCAPTCHA, so `localhost` must be allowed on the site key.
+
 ### Step 11 — CI and docs
 - [ ] `ci-api.yml`: quality, PostGIS service container, integration tests, `openapi.json` drift check
 - [ ] Turbo tasks; `CLAUDE.md` gets the `apps/api` commands and the localities refresh procedure
