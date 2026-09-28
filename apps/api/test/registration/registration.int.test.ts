@@ -22,6 +22,7 @@ import { EMAIL_NOT_VERIFIED } from '../../src/modules/registration/application/r
 import { EMAIL_CODE_TTL_MS, signEmailCode } from '../../src/modules/registration/domain/email-code'
 import { registrationHandlers } from '../../src/modules/registration/registration.handlers'
 import type { Email } from '../../src/platform/email/mailer'
+import { PermanentFailure } from '../../src/platform/outbox/outbox'
 import type { HandlerSet } from '../../src/platform/contract/handlers'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { WorkerPoolHasher } from '../../src/platform/security/password-hasher'
@@ -46,7 +47,7 @@ describe.skipIf(!local)('registration on PostGIS', () => {
   let retiredId: number
   /** Every email the fake provider was asked to send. */
   const sent: Email[] = []
-  let mailerDown = false
+  let mailerDown: false | 'outage' | 'refused' = false
 
   beforeAll(async () => {
     db = createDb(url!)
@@ -72,7 +73,8 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       ipHashSecret: 'test-secret-'.repeat(4),
       mailer: {
         send: async (e: Email) => {
-          if (mailerDown) throw new Error('resend unavailable: timeout')
+          if (mailerDown === 'outage') throw new Error('resend unavailable: timeout')
+          if (mailerDown === 'refused') throw new PermanentFailure('resend refused the email: HTTP 403')
           sent.push(e)
           return { id: `msg_${sent.length}` }
         },
@@ -250,13 +252,17 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       expect(res.json().error.fields).toEqual({ emailVerification: ['Please verify your email address'] })
     })
 
-    it('a provider outage is a 503 with Retry-After, and no code goes out', async () => {
-      mailerDown = true
+    it('a provider outage is a 503 with Retry-After; a provider refusal is a 500 with none (not worth retrying); no code goes out', async () => {
+      const n = sent.length
+      mailerDown = 'outage'
       try {
-        const n = sent.length
         const res = await requestCode(email())
         expect(res.statusCode).toBe(503)
         expect(res.headers['retry-after']).toBe('30')
+        mailerDown = 'refused'
+        const refused = await requestCode(email())
+        expect(refused.statusCode).toBe(500)
+        expect(refused.headers['retry-after']).toBeUndefined()
         expect(sent.length).toBe(n)
       } finally {
         mailerDown = false

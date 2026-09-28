@@ -1264,3 +1264,23 @@ Reported the position and the pending decisions; no code changed.
 - Not done: a browser run (servers stopped for memory; restart on request); a verified Resend sender domain (user).
 
 ---
+
+**User input (verbatim):**
+> Why it has an error We couldn't reach Remonta. Please check your connection and try again.
+
+**AI action:** Diagnosing: that text is the engine's "no answer from apps/api" message; checking whether ports 3000/4000 are listening and the memory situation.
+
+---
+**AI action (cont.):** Cause: apps/api (port 4000) was not running -- stopped earlier by Claude Code for low memory; the app on 3000 was still up. Restarted the api (2 GB free); `/v1/health` 200; a probe of `POST /v1/registrations/worker/email-codes` with a fake token reaches the real reCAPTCHA (403 `invalid-input-response`), so the route and the pipeline are live. Told the user to retry, with the reCAPTCHA-localhost and Resend-test-sender caveats.
+
+---
+
+**User input (verbatim):**
+> It stucks on the Sending.. state
+
+**AI action:** Reading the api log for the email-code requests and their outcome.
+
+---
+**AI action (cont.):** Log showed the CAPTCHA passing and Resend answering HTTP 403 (the test sender delivers only to the account owner's address). Defect on my side: a provider refusal (PermanentFailure) was mapped to 503 + Retry-After 30, so the form retried five times at 30 s -- the "Sending..." the user saw. Fixed: a refusal is a 500 the form does not retry; an outage stays 503 + Retry-After. The send call now has its own retry budget (3 attempts, Retry-After capped at 5 s) and a plain message ("We couldn't send the code right now"). Tests extended (api 51 registration tests, form-engine 47); api rebuilt and restarted. The email itself still needs the Resend account owner's address, or a verified sender domain.
+
+---

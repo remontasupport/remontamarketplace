@@ -10,6 +10,8 @@ import { confirmEmailCode, requestEmailCode, type ApiBackend, type EmailCodeFiel
 import type { EmailCodeStatus } from "@/components/ui/form-wizard/fields";
 
 export const RESEND_AFTER_SECONDS = 60;
+/** Fewer, shorter retries than the submission: the person is waiting on this button and can press it again. */
+const SEND_RETRY = { maxAttempts: 3, maxRetryAfterMs: 5_000 } as const;
 
 type Values = Record<string, unknown>;
 
@@ -41,7 +43,7 @@ export function useEmailCode(def: FormDefinition, backend: ApiBackend, field: Em
     setMessage(null);
     if (!(await form.trigger(field.for, { shouldFocus: true }))) return;
     setStatus({ kind: "sending" });
-    const r = await requestEmailCode(def, backend, field, email, deps);
+    const r = await requestEmailCode(def, backend, field, email, { ...deps, retry: { ...deps.retry, onRetry: undefined, onOffline: undefined, ...SEND_RETRY } });
     if (!r.ok) {
       setStatus(ticket.current ? { kind: "sent", resendInSeconds: 0 } : { kind: "idle" });
       setMessage(r.message);

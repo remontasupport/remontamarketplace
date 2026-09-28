@@ -23,6 +23,7 @@ export type RequestCodeResult = { ok: true; ticket: EmailCodeTicket } | { ok: fa
 export type ConfirmCodeResult = { ok: true; proof: EmailCodeProof } | { ok: false; message: string };
 
 export const UNREACHABLE = "We couldn't reach Remonta. Please check your connection and try again.";
+export const NOT_SENT = "We couldn't send the code right now. Please try again in a moment.";
 
 /** The reCAPTCHA action an entry demands, or undefined when it has none. */
 export function captchaActionOf(entry: EntryDef | undefined): string | undefined {
@@ -46,6 +47,7 @@ export async function requestEmailCode(
     }, deps.retry);
     if (r.ok) return { ok: true, ticket: r.body as EmailCodeTicket };
     const fields = (r.body as { error?: { fields?: Record<string, string[]> } } | null)?.error?.fields;
+    if (r.status === 500 || r.status === 503) return { ok: false, message: NOT_SENT };
     return { ok: false, message: fields?.email?.[0] ?? messageFor(r.status) };
   } catch {
     return { ok: false, message: UNREACHABLE };

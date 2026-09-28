@@ -4,11 +4,14 @@
 //      and the same 202. An existing email verifies like a new one and meets the
 //      R1 branch at sign-up.
 //   Synchronous send, not the outbox: the code exists only in this call. A
-//      provider failure is a 503 the form retries; nothing is left behind.
+//      provider outage is a 503 the form retries; a provider REFUSAL (a 4xx: an
+//      unverified sender, an address it will not deliver to) is permanent, so it
+//      is a 500 the form does not retry. Nothing is left behind either way.
 import type { EmailCodeRequest, EmailCodeTicket, EmailCodeVerify } from '@remonta/schemas/schema/workerRegistrationSchema'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Mailer } from '../../../platform/email/mailer'
 import { ApiError } from '../../../platform/errors'
+import { PermanentFailure } from '../../../platform/outbox/outbox'
 import { emailVerificationCode } from '../../notifications/templates'
 import { checkEmailCode, EMAIL_CODE_TTL_MINUTES, EMAIL_CODE_TTL_MS, newEmailCode, signEmailCode, type EmailCodeCheck } from '../domain/email-code'
 
@@ -34,6 +37,7 @@ export async function requestEmailCode(input: EmailCodeRequest, deps: EmailCodeD
     await deps.mailer.send({ to: input.email, ...emailVerificationCode(code, EMAIL_CODE_TTL_MINUTES), idempotencyKey: `email-code/${token}` })
   } catch (err) {
     log.error({ err }, 'verification code could not be sent')
+    if (err instanceof PermanentFailure) throw new ApiError(500, `email provider refused the send: ${err.message}`)
     throw new ApiError(503, 'email provider unavailable', undefined, { 'retry-after': '30' })
   }
   return { token, expiresAt }
