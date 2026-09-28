@@ -1381,3 +1381,16 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Cause: the send-code limit (10/h per IP) genuinely reached by an hour of testing (10 sends since 08:00), then each refused click retried 3 times (counter 19). Cleared the local counters. Engine change: a 429 is final for the send, verify and availability calls (no retry; message at once), so a refused click counts once. form-engine 49 tests. Open point for production: whether 10 codes/h per IP is enough behind a shared office address; noted in the plan.
 
 ---
+
+**User input (verbatim):**
+> Perfect. Now when i move to the next stage, the services is not being fetched with this message "Loading service categories..."
+
+**AI action:** Checking the categories hook, its route, and whether the local test database holds any categories.
+
+---
+**AI action (cont.):** Two causes: (1) the app dev server (pid 21908) is wedged -- every route times out; its log shows uncaught EPIPE errors since its output pipe was closed by the earlier memory reap -- restarting it; (2) the local database has 0 rows in Category/Subcategory (catalogue tables), so the services step has nothing to show -- seeding needed.
+
+---
+**AI action (cont.):** Restarted the app dev server (same env overrides). A read of the production catalogue to copy it locally was refused by the tool's policy and was not pursued. Instead `packages/db/scripts/local/seed-catalogue.sql` seeds the local test database from apps/app's SERVICE_OPTIONS (7 categories, 8 sub-categories; idempotent; refuses non-local servers). Applied; `/api/categories` on the dev server now returns the list. Ids may differ from production's -- local testing only.
+
+---

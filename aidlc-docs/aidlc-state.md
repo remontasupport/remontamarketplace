@@ -68,6 +68,7 @@
   `AUTH_DATABASE_URL=…/s1test DATABASE_URL=…/s1test DIRECT_DATABASE_URL=…/s1test UPSTASH_REDIS_REST_URL= UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev -p 3000`
 - **G-NAF extract:** `C:/data/gnaf` (for future `localities:build`). k6 binary: this session's scratchpad (download again if needed).
 - **Uncommitted in the S1 tree:** only regenerated Prisma clients (`apps/*/src/generated`). Never commit them without checking `git diff --ignore-all-space --numstat`.
+- **Local catalogue:** the services step reads Category/Subcategory, empty on a fresh `s1test`. Seed with `docker exec -i remonta-s1-pg psql -U postgres -d s1test < packages/db/scripts/local/seed-catalogue.sql` (from apps/app's SERVICE_OPTIONS; local only).
 - **Trap (bit on 2026-09-28):** `pnpm --filter @remonta/db test` TRUNCATEs `au_localities` on the database in `TEST_DATABASE_URL` and leaves it empty. Reload: `DIRECT_DATABASE_URL=…/s1test pnpm --filter @remonta/db localities:refresh` (prints the plan hash), then the same with `--apply --expect=<hash>`.
 
 ## Workspace State
