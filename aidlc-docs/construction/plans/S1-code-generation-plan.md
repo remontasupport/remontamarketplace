@@ -332,6 +332,7 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
   - The ticket is signed with `IP_HASH_SECRET` (no new configuration). apps/app's client flow signs with `NEXTAUTH_SECRET`; the two are independent.
   - Legacy mode shows no verification step: the legacy route cannot enforce one, and legacy stays a true rollback.
   - The password field is not shown until the proof exists (`visibleWhen`; user, 2026-09-28: "visible only if the code is correct"; `enabledWhen` exists too, for a disabled-but-shown field); the proof is `neverSaved`, so a restored draft verifies again.
+- **Hostile-input suite (user, 2026-09-28: "prevent if the user inputs some code or sql script"):** `apps/api/test/registration/hostile.int.test.ts`, 56 tests through the real api: SQL fragments, script tags, control/unicode tricks, oversized values and bodies, wildcards, extra and prototype-polluting fields, type confusion, wrong content types. Property: refused with a field message, or stored verbatim and rendered inert; every table intact afterwards. The approach is validate-at-the-boundary + parameters + escape-on-output, never "sanitise" (lossy, false confidence). Deliberate bug (name rule loosened) caught.
 - **To test in a browser:** the code email goes through Resend's test sender, which delivers only to the Resend account owner's address -- sign up with that address, or verify a Remonta domain in Resend first. The send step is behind reCAPTCHA, so `localhost` must be allowed on the site key.
 
 ### Step 11 — CI and docs

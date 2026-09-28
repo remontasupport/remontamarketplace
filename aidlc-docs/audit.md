@@ -1404,3 +1404,20 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** The seed had come from apps/app's SERVICE_OPTIONS, which is stale (its own slug mapping says "Home Modifications" and "Fitness and Rehabilitation" are not in the database). The catalogue the database was loaded from, `categories.json`, is in git history (428d725; later removed from the tree). Regenerated the seed from it: 7 categories (incl. Personal Trainer), 22 sub-categories with the real ids; replaced the local rows; `/api/categories` now returns the production list. Follow-up (not S1): SERVICE_OPTIONS drift from the catalogue.
 
 ---
+
+**User input (verbatim):**
+> It works. Now before we move to the next step, I want you to review the code of the input it they were sanitize? I mean I want to prevent if the user inputs some code or sql script that will potentially hack the system. Before you code, what is the best approach of sanitizing the user input?
+
+**AI action:** Reviewed the sign-up input handling against the code (raw SQL usage, schema strictness, output escaping, upload checks) and answered the approach question before any code.
+
+---
+
+**User input (verbatim):**
+> Yes, add the hostile input test suite
+
+**AI action:** Adding `apps/api/test/registration/hostile.int.test.ts` (with a small shared harness): SQL fragments, script tags, control and unicode tricks, oversized values and bodies, wildcards, extra and prototype-polluting fields, type confusion, wrong content types -- each refused with a field message or stored verbatim and rendered inert; tables intact afterwards.
+
+---
+**AI action (cont.):** Hostile-input suite added: 56 tests (`hostile.int.test.ts`, shared `harness.ts`). Findings while writing it, all the api being stricter than assumed: an oversized value on a 1 KB route is 413 before validation; a wrong content type or a non-string CAPTCHA token is refused by the bot check first (403, fails closed); unknown fields are reported under `body`. Deliberate bug (the name rule allowing any character) caught. Registration folder: 109 tests pass. No application code changed.
+
+---
