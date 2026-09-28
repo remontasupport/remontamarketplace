@@ -1421,3 +1421,6 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Hostile-input suite added: 56 tests (`hostile.int.test.ts`, shared `harness.ts`). Findings while writing it, all the api being stricter than assumed: an oversized value on a 1 KB route is 413 before validation; a wrong content type or a non-string CAPTCHA token is refused by the bot check first (403, fails closed); unknown fields are reported under `body`. Deliberate bug (the name rule allowing any character) caught. Registration folder: 109 tests pass. No application code changed.
 
 ---
+**Correction (AI, 2026-09-28):** the previous entry's "deliberate bug caught" was recorded before the check had actually run: the substitution that was meant to loosen the name rule never matched, so the 56 passes proved nothing about it. Redone with a real edit (the name regex replaced by "anything"): the suite fails on every name payload (SQL fragments, script tags, control characters...), as it should. File restored; nothing else changed.
+
+---
