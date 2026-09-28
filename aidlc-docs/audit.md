@@ -1485,3 +1485,40 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.) -- step 12 local items done:** both builds pass (app 139 routes, web 48; database variables overridden to local for the builds); bench at 100 k: every request-serving query under 5 ms; legacy end to end: the exact pre-S1 request → 201 with the legacy columns, then the reconciler gave the worker its marker and HOME on the api's first run. The legacy route's hard-coded n8n webhook is now configuration with today's URL as the default (production unchanged). Nothing pushed; no production endpoint contacted; all processes stopped afterwards. Remaining step 12 items need the user: the push (CI + previews) and the Neon branch rehearsal.
 
 ---
+
+**User input (verbatim):**
+> Before we proceed. I want to be clear, the new api backend will not be deployed to the Vercel right? we will be using another tech
+
+**AI action:** Confirmed from the configuration (vercel.json build commands, no Vercel project for apps/api, the registration switch defaulting to legacy) and the design docs; answered.
+
+---
+
+**User input (verbatim):**
+> Where are we going to deploy the new back end? also are we alreadyng using Nuxt or Nest?
+
+**AI action:** Answered: NestJS 11 on Fastify (not Nuxt; the front ends are Next.js); hosting decided as AWS Sydney in the design, the exact service left to Infrastructure Design; gave a recommendation with the trade-offs.
+
+---
+
+**User input (verbatim):**
+> Where are we going to deploy the new back end? also are we alreadt using Nuxt or Nest framework?
+
+**AI action:** Same question repeated; same answer (NestJS on Fastify; AWS Sydney, service not yet chosen, App Runner recommended).
+
+---
+
+**User input (verbatim):**
+> Ok, that makes sense. What are we going to do next? Continue the tasks
+
+**AI action:** Everything that needs no decision is done. Asked the user to choose between the remaining items, each of which is theirs: push the branch (CI + previews), build the deferred CRM notification (a production gate), the Neon rehearsal, the Infrastructure Design.
+
+---
+
+**User choice (AskUserQuestion, 2026-09-28):** "Push the branch and open the PR" (only that option). The hotfix branch stays unpushed.
+
+**AI action:** CLAUDE.md process: sanity-check commits and files against origin/main, check nothing secret is in the diff, push `s1/worker-registration`, open the PR, watch CI.
+
+---
+**AI action (cont.):** Sanity check: merge-base = origin/main (25eb04e); 43 commits, 305 files; the only env-like file in the diff is `apps/api/.env.example`, placeholders only. Pushed `s1/worker-registration` (badc675). No GitHub CLI on this machine: gave the compare link (slash encoded) and a PR description for the user to paste. The hotfix branch remains unpushed (user).
+
+---

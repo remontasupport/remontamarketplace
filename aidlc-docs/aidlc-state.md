@@ -35,7 +35,8 @@
 ### 3. Remaining S1 steps
 - **Step 11 (CI + docs): DONE 2026-09-28** (`ci-api.yml`, CLAUDE.md). CI itself runs only once the branch is pushed; rehearsed locally on a fresh database (all 323 api tests).
 - **Step 12 (Build and Test): local items DONE 2026-09-28** (all gates, both builds, both switch modes end to end, the bench, the generated-client decision = do not commit). See the plan for the numbers.
-  - **Remaining, each needs the user:** push the branch (turns on `API Quality` and the Vercel previews) → preview checks (sign in, a dashboard, the legacy sign-up, the suburb list); a Neon branch → migrations, `localities:refresh`, both backfill dry runs, review, `--apply`.
+  - **Pushed 2026-09-28** (`s1/worker-registration` at badc675, 43 commits, 305 files over origin/main). The PR must be opened by the user (no GitHub CLI here): compare link + description given; CI runs once the PR exists.
+  - **Remaining:** the PR → `API Quality` and the previews green → preview checks (sign in, a dashboard, the legacy sign-up, the suburb list); a Neon branch → migrations, `localities:refresh`, both backfill dry runs, review, `--apply`.
 - **Before any production switch to `api`:**
   - the deferred CRM notification must exist (the user skipped it for now);
   - production migrations (record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first) → `localities:refresh` → backfill dry runs → user approval → `--apply`.
