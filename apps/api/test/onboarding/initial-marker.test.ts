@@ -166,6 +166,15 @@ describe('initialMarker: properties', () => {
   })
 
   it('every timestamp is a date from the rows, or `now` -- and `now` is always declared as an estimate', () => {
+    // CI found the edge (2026-09-28): a row whose expiry is exactly `now` is a date
+    // FROM THE ROWS, not an estimate, even though it equals `now`. Pinned below.
+    const expiresExactlyNow: LegacyWorkerFacts = {
+      isPublished: false,
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+      lastLoginAt: null,
+      requirements: [req('a', 'EXPIRED', { expiresAt: NOW, createdAt: new Date('2024-01-01T00:00:00.000Z'), updatedAt: new Date('2024-01-01T00:00:00.000Z') })],
+    }
     fc.assert(
       fc.property(anyWorker, (w) => {
         const m = initialMarker(w, NOW)
@@ -174,14 +183,12 @@ describe('initialMarker: properties', () => {
         for (const f of fields) {
           const d = m[f]
           if (!d) continue
-          if (d.getTime() === NOW.getTime()) {
-            expect(m.approximations.some((a) => a.startsWith(`${f} = now`)), `${f} is now but not declared`).toBe(true)
-          } else {
-            expect(known.has(d.getTime()), `${f} ${d.toISOString()} is not a date from the rows`).toBe(true)
-          }
+          if (known.has(d.getTime())) continue // from the rows, whether or not it coincides with now
+          expect(d.getTime(), `${f} ${d.toISOString()} is neither a date from the rows nor now`).toBe(NOW.getTime())
+          expect(m.approximations.some((a) => a.startsWith(`${f} = now`)), `${f} is now but not declared`).toBe(true)
         }
       }),
-      { numRuns: 500 },
+      { numRuns: 500, examples: [[expiresExactlyNow]] },
     )
   })
 
