@@ -1522,3 +1522,36 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Sanity check: merge-base = origin/main (25eb04e); 43 commits, 305 files; the only env-like file in the diff is `apps/api/.env.example`, placeholders only. Pushed `s1/worker-registration` (badc675). No GitHub CLI on this machine: gave the compare link (slash encoded) and a PR description for the user to paste. The hotfix branch remains unpushed (user).
 
 ---
+
+**User input (verbatim):**
+> I dont see the button create request
+
+**AI action:** Gave the likely causes (signed-out or read-only account, the page opened with the wrong branches, the button below the description box) and the alternative route via the Pull requests tab. Cannot see the screen; no GitHub CLI here.
+
+---
+
+**User input (verbatim):**
+> I created the PR, now check the CI
+
+**AI action:** Trying to read the PR's checks through the GitHub API (no CLI here); if the repository is private, the user must paste the check results or install `gh`.
+
+---
+**AI action (cont.):** The repository answers the GitHub API without auth: 4 workflow runs on the PR (api, app, web, supply chain) and 8 check runs on 5aa6cbe -- Vercel Preview Comments already green, the rest in progress (API Quality on Node 20 and 22 included). Polling until they complete.
+
+---
+**AI action (cont.):** PR checks: 7 green (app ×2, web ×2, supply chain, Vercel preview) and **API Quality red on both Node versions** -- every step up to "API quality gate" passed (migrate, db quality, suburb list, api-contract, form-engine); the gate itself failed within ~20 s (before the 70 s test suite could run). Job logs need admin rights. Reproducing the step on Linux in a container and scanning for import-case mismatches.
+
+---
+**AI action (cont.):** Cause from the check annotations (readable without admin): `initial-marker.test.ts` property "every timestamp is a date from the rows, or now" failed on a counterexample the runner's seed found: a requirement whose `expiresAt` equals the test's fixed `now` exactly. The code is right (the stage is dated from that expiry, a row date); the property wrongly treated any value equal to `now` as an undeclared estimate. Fixed the property (a row date passes even when it coincides with `now`) and pinned the counterexample as a permanent example. Also reproduced the full CI sequence on Linux in Docker beforehand: 323/323 -- the failure was seed-dependent, not platform-dependent. Pushed for a CI rerun.
+
+---
+
+**User input (verbatim):**
+> check the CI again
+
+**AI action:** Reading the checks on eee55d8 now (the watcher is still polling).
+
+---
+**AI action (cont.) -- FINDING:** PR #11 (`s1/worker-registration`, head 5aa6cbe) is **merged** into main (main = 282ac0f) while `API Quality` was red; the test-only fix eee55d8 is on the branch but not in main. main deploys production for both products. Checking, read-only: the merge commit type, main's CI runs, and production HTTP endpoints (home, login, the sign-up page, suburb search, categories).
+
+---
