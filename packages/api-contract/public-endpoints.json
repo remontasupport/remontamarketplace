@@ -12,6 +12,10 @@
     "reason": "Sign-up photo, before any account exists. Returns a staged upload id, never a URL; unclaimed uploads are purged after 24 h."
   },
   {
+    "route": "POST /v1/registrations/worker/email-availability",
+    "reason": "Tells the sign-up page whether an address already has an account, before any account exists. Reveals account existence by design (user decision, 2026-09-28; the live form already does this); bounded by a per-IP limit of 60 an hour."
+  },
+  {
     "route": "POST /v1/registrations/worker/email-codes",
     "reason": "Sign-up emails a verification code before any account exists. Same response for every address; reCAPTCHA v3 and a per-IP limit. Stateless: answers a signed ticket."
   },

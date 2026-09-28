@@ -119,6 +119,14 @@ export const emailCode = z
 /** POST /v1/registrations/worker/email-codes */
 export const emailCodeRequestSchema = z.strictObject({ email, captchaToken })
 
+/**
+ * POST /v1/registrations/worker/email-availability (user decision, 2026-09-28):
+ * whether an address already has an account, asked when the email field loses
+ * focus, so the code is only sent for an address that can sign up.
+ */
+export const emailAvailabilitySchema = z.strictObject({ email })
+export type EmailAvailability = z.output<typeof emailAvailabilitySchema>
+
 const ticketFields = {
   /** HMAC-SHA256 hex, issued by the send. */
   token: z.string().regex(/^[0-9a-f]{64}$/),

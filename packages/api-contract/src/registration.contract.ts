@@ -3,7 +3,7 @@
 // handler in apps/api's registration module.
 // The subpath, not the package index: the index re-exports older schemas with
 // tracked type errors, which would otherwise enter this package's strict tsc.
-import { emailCodeRequestSchema, emailCodeTicketSchema, emailCodeVerifySchema, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
+import { emailAvailabilitySchema, emailCodeRequestSchema, emailCodeTicketSchema, emailCodeVerifySchema, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta } from './meta'
@@ -67,6 +67,23 @@ export const registrationContract = defineContract('registration', {
         { per: 'global', limit: 300, window: '1h' },
       ],
       maxBodyKb: 5120,
+    }),
+  },
+
+  checkEmailAvailability: {
+    method: 'POST',
+    path: '/v1/registrations/worker/email-availability',
+    summary: 'Whether an address can sign up (no account yet). Asked when the email field loses focus. One indexed lookup, nothing else.',
+    body: { kind: 'json', schema: emailAvailabilitySchema },
+    responses: { 200: z.strictObject({ available: z.boolean() }) },
+    meta: meta({
+      access: 'public',
+      bot: 'none', // a CAPTCHA token would cost more than the lookup; the limit bounds enumeration
+      rateLimit: [
+        { per: 'ip', limit: 60, window: '1h' },
+        { per: 'global', limit: 6000, window: '1h' },
+      ],
+      maxBodyKb: 1,
     }),
   },
 

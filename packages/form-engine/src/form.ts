@@ -29,7 +29,9 @@ export function defineForm<C extends ContractDef>(def: FormDefinition<C>): FormD
     for (const f of s.fields) {
       if (f.kind === "photo" && !(f.uploadEntry in def.contract.entries)) problems.push(`photo ${f.name}: ${f.uploadEntry} is not in the contract`);
       if (f.kind === "emailCode") {
-        for (const e of [f.sendEntry, f.verifyEntry]) if (!(e in def.contract.entries)) problems.push(`emailCode ${f.name}: ${e} is not in the contract`);
+        for (const e of [f.sendEntry, f.verifyEntry, ...(f.availabilityEntry ? [f.availabilityEntry] : [])]) {
+          if (!(e in def.contract.entries)) problems.push(`emailCode ${f.name}: ${e} is not in the contract`);
+        }
         // The address must exist by the time the code is requested: this step or an earlier one.
         const target = def.steps.slice(0, stepIndex + 1).flatMap((x) => x.fields).find((x) => x.name === f.for);
         if (!target || target.kind !== "email") problems.push(`emailCode ${f.name}: ${f.for} is not an email field on this or an earlier step`);

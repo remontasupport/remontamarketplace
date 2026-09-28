@@ -20,11 +20,31 @@ export interface EmailCodeProof extends EmailCodeTicket {
 }
 
 export type RequestCodeResult = { ok: true; ticket: EmailCodeTicket } | { ok: false; message: string };
+export type AvailabilityResult = { ok: true; available: boolean } | { ok: false; message: string };
 export type ConfirmCodeResult = { ok: true; proof: EmailCodeProof } | { ok: false; message: string };
 
 export const UNREACHABLE = "We couldn't reach Remonta. Please check your connection and try again.";
 export const NOT_SENT = "We couldn't send the code right now. Please try again in a moment.";
 export const TOO_MANY = "Too many requests from this connection. Please wait a while before trying again.";
+export const EMAIL_TAKEN = "An account with this email already exists. Please sign in instead.";
+
+/**
+ * Whether the address can sign up, asked once per address when the field loses
+ * focus. Fast by design (one indexed lookup, no CAPTCHA); a single attempt, no
+ * retries: the person is waiting, and a failed check does not block them (the
+ * sign-up itself still handles an existing address).
+ */
+export async function checkEmailAvailability(def: FormDefinition, backend: ApiBackend, field: EmailCodeField, email: string): Promise<AvailabilityResult> {
+  if (!field.availabilityEntry) return { ok: true, available: true };
+  const ask = contractCall(def.contract, backend.apiBaseUrl, field.availabilityEntry);
+  try {
+    const r = await ask({ body: { email } }, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) });
+    if (r.ok) return { ok: true, available: (r.body as { available: boolean }).available };
+    return { ok: false, message: r.status === 429 ? TOO_MANY : UNREACHABLE };
+  } catch {
+    return { ok: false, message: UNREACHABLE };
+  }
+}
 
 /** When the retries ran out: what the LAST answer was decides the message. */
 function afterRetries(err: unknown, sending: boolean): string {

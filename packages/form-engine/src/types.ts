@@ -36,7 +36,14 @@ export type FieldDef =
    * continue (api mode; legacy has no such step). The value is the proof the
    * sign-up sends: the code and its signed ticket. Changing the address resets it.
    */
-  | (FieldBase & { kind: "emailCode"; for: string; sendEntry: string; verifyEntry: string });
+  | (FieldBase & {
+      kind: "emailCode";
+      for: string;
+      sendEntry: string;
+      verifyEntry: string;
+      /** Asked when the address field loses focus; the code can be sent only for an available address. */
+      availabilityEntry?: string;
+    });
 
 export type FieldKind = FieldDef["kind"];
 

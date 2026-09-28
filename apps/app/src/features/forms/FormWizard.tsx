@@ -67,7 +67,10 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
               autoComplete={field.kind === "email" ? "email" : field.kind === "phone" ? "tel" : undefined}
               value={(f.value as string) ?? ""}
               onChange={(v) => f.onChange(KINDS[field.kind].sanitise?.(v) ?? v)}
-              onBlur={f.onBlur}
+              onBlur={() => {
+                f.onBlur();
+                wizard.fieldBlurred(field.name);
+              }}
               error={error}
               disabled={disabled}
             />
@@ -210,7 +213,7 @@ function ServicesSlot({ field, control, error }: { field: Extract<FieldDef, { ki
 }
 
 function EmailCodeSlot({ field, backend, wizard, definition, error }: { field: EmailCodeDef; backend: ApiBackend; wizard: Wizard; definition: FormDefinition; error?: string }) {
-  const v = useEmailCode(definition, backend, field, wizard.form, { getCaptchaToken: wizard.getCaptchaToken, retry: wizard.retry });
+  const v = useEmailCode(definition, backend, field, wizard.form, { getCaptchaToken: wizard.getCaptchaToken, retry: wizard.retry, onFieldBlur: wizard.onFieldBlur });
   return (
     <EmailCodeField
       label={field.label ?? "Verify your email"}
@@ -223,6 +226,8 @@ function EmailCodeSlot({ field, backend, wizard, definition, error }: { field: E
       onVerify={v.verify}
       message={v.message}
       error={error}
+      availability={v.availability}
+      signInHref="/login"
     />
   );
 }

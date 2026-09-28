@@ -7,7 +7,8 @@
 //      provider outage is a 503 the form retries; a provider REFUSAL (a 4xx: an
 //      unverified sender, an address it will not deliver to) is permanent, so it
 //      is a 500 the form does not retry. Nothing is left behind either way.
-import type { EmailCodeRequest, EmailCodeTicket, EmailCodeVerify } from '@remonta/schemas/schema/workerRegistrationSchema'
+import type { EmailAvailability, EmailCodeRequest, EmailCodeTicket, EmailCodeVerify } from '@remonta/schemas/schema/workerRegistrationSchema'
+import type { Db } from '../../../platform/persistence/db'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Mailer } from '../../../platform/email/mailer'
 import { ApiError } from '../../../platform/errors'
@@ -20,6 +21,16 @@ export interface EmailCodeDeps {
   /** Signs the tickets. Rotating it invalidates codes in flight (10 minutes at most). */
   codeSecret: string
   now?: () => Date
+}
+
+/**
+ * Whether the address can sign up: no account with it, ignoring case (user
+ * decision, 2026-09-28: this entry reveals existence; the send and the sign-up do
+ * not). One lookup on users_lower_email_idx (0.009 ms at 100 k users, step 9b).
+ */
+export async function emailAvailable(db: Db, input: EmailAvailability): Promise<{ available: boolean }> {
+  const rows = await db.$queryRaw<{ one: number }[]>`SELECT 1 AS one FROM users WHERE lower(email) = lower(${input.email}) LIMIT 1`
+  return { available: rows.length === 0 }
 }
 
 export const EMAIL_CODE_MESSAGES: Record<Exclude<EmailCodeCheck, 'ok'>, string> = {

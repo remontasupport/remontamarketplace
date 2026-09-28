@@ -56,6 +56,15 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   const [stepMessage, setStepMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<WizardStatus>({ kind: "idle" });
   const uploads = useRef(new Set<Promise<unknown>>());
+  // Fields that want to know when another field loses focus (the email code's availability check).
+  const blurListeners = useRef(new Map<string, Set<() => void>>());
+  const fieldBlurred = useCallback((name: string) => blurListeners.current.get(name)?.forEach((cb) => cb()), []);
+  const onFieldBlur = useCallback((name: string, cb: () => void) => {
+    const set = blurListeners.current.get(name) ?? new Set();
+    set.add(cb);
+    blurListeners.current.set(name, set);
+    return () => void set.delete(cb);
+  }, []);
 
   // ---- progress kept on the device ------------------------------------------------
   useEffect(() => {
@@ -180,5 +189,5 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     [form, backend, def, apply, query, getCaptchaToken, retry],
   );
 
-  return { form, step, showIntro, start: () => setShowIntro(false), restored, stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry };
+  return { form, step, showIntro, start: () => setShowIntro(false), restored, stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
 }

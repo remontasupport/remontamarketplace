@@ -3,7 +3,7 @@
 import { registrationContract } from "@remonta/api-contract";
 import { CONSENT_WORDING_VERSION } from "@remonta/schemas/schema/workerRegistrationSchema";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { confirmEmailCode, defaultsOf, defineForm, formSchemaFor, NOT_SENT, requestEmailCode, resetsOf, TOO_MANY, UNREACHABLE, type EmailCodeField, type FormDefinition } from "../src/index";
+import { checkEmailAvailability, confirmEmailCode, defaultsOf, defineForm, formSchemaFor, NOT_SENT, requestEmailCode, resetsOf, TOO_MANY, UNREACHABLE, type EmailCodeField, type FormDefinition } from "../src/index";
 
 const base = {
   id: "test-verify",
@@ -13,7 +13,7 @@ const base = {
   constants: { consentWordingVersion: CONSENT_WORDING_VERSION },
   successRedirect: "/done",
 };
-const verification = { name: "emailVerification", kind: "emailCode", for: "email", sendEntry: "requestEmailCode", verifyEntry: "verifyEmailCode" } as const;
+const verification = { name: "emailVerification", kind: "emailCode", for: "email", sendEntry: "requestEmailCode", verifyEntry: "verifyEmailCode", availabilityEntry: "checkEmailAvailability" } as const;
 const steps = (extra: object = {}) => [
   { title: "Where", fields: [{ name: "localityId", kind: "locality" as const }] },
   {
@@ -44,6 +44,7 @@ describe("defineForm with an emailCode field", () => {
   it.each([
     ["an unknown send entry", { sendEntry: "sendMagic" }, "sendMagic is not in the contract"],
     ["an unknown verify entry", { verifyEntry: "checkMagic" }, "checkMagic is not in the contract"],
+    ["an unknown availability entry", { availabilityEntry: "isTaken" }, "isTaken is not in the contract"],
     ["a `for` that is not an email field", { for: "firstName" }, "firstName is not an email field"],
     ["a `for` that does not exist", { for: "ghost" }, "ghost is not an email field"],
   ])("rejects %s", (_label, patch, message) => {
@@ -68,6 +69,24 @@ describe("defineForm with an emailCode field", () => {
     expect(formSchemaFor(form, "api").safeParse({ ...values, emailVerification: { token: "ab".repeat(32), expiresAt: 1, code: "123456" } }).success).toBe(true);
     expect(formSchemaFor(form, "legacy").safeParse(values).success).toBe(true);
     expect(resetsOf(form)).toEqual([{ when: "email", reset: "emailVerification" }]);
+  });
+});
+
+describe("checkEmailAvailability", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("asks once, without CAPTCHA, and fails open when the check cannot be made", async () => {
+    const calls: unknown[] = [];
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => (calls.push({ url, body: JSON.parse(String(init.body)) }), new Response(JSON.stringify({ available: false }), { status: 200 })));
+    expect(await checkEmailAvailability(form, backend, field, "a@b.test")).toEqual({ ok: true, available: false });
+    expect(calls).toEqual([{ url: "https://api.example/v1/registrations/worker/email-availability", body: { email: "a@b.test" } }]);
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ error: { code: "RATE_LIMITED", message: "x", requestId: "r" } }), { status: 429 }));
+    expect(await checkEmailAvailability(form, backend, field, "a@b.test")).toEqual({ ok: false, message: TOO_MANY });
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    expect(await checkEmailAvailability(form, backend, field, "a@b.test")).toEqual({ ok: false, message: UNREACHABLE });
+    // A field without an availability entry: always available, no call.
+    expect(await checkEmailAvailability(form, backend, { ...field, availabilityEntry: undefined }, "a@b.test")).toEqual({ ok: true, available: true });
   });
 });
 

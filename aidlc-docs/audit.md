@@ -1326,3 +1326,20 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** \`visibleWhen\` added (engine type + defineForm check + wizard); the password uses it. form-engine 47 tests; app forms lint/tests/typecheck clean (the full app gate was stopped: the machine had ~600 MB free with both servers up; it passed in full after the previous commit and this change is four lines). Committed.
 
 ---
+
+**User input (verbatim):**
+> I also want to verify the email address if it is being used. and I want it this way "If the user is not focus on the email address field, the api will check if the email address is being used already and that is the time the Send code button will be pressable" before you code, this system should return the response fast.
+
+**AI action:** Design answered before coding (below in the reply): an availability entry on blur, the indexed lower(email) lookup, the enumeration trade-off named, the fail-open assumption stated.
+
+---
+
+**User input (verbatim):**
+> I tested but the email availability still works is it because you did not check from the production database yet?
+
+**AI action:** Clarified: the check was not built yet (design was awaiting the go); and locally the api reads the Docker test database, so production addresses are unknown there. Taking the message as the go; building the availability check (user decision: reveals whether an address has an account; the send-code and sign-up entries keep their identical answers).
+
+---
+**AI action (cont.) -- availability check built:** contract entry `checkEmailAvailability` (POST .../email-availability, no CAPTCHA, 60/h per IP), one indexed lookup; engine `availabilityEntry` + `checkEmailAvailability` (single attempt, fail open); the wizard emits field-blur events; `useEmailCode` asks once per address on blur and gates Send code; `EmailCodeField` shows checking / taken (with a sign-in link). Gates: schemas 46, api-contract 33 (openapi regenerated; 6 entries), form-engine 49, api registration + route-security 113, app forms lint/tests/tsc clean. Api rebuilt and restarted.
+
+---

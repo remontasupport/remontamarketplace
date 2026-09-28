@@ -351,6 +351,8 @@ export function ConsentField({ label, paragraphs = [], statement, checked, onCha
 // ---- email code --------------------------------------------------------------------
 
 export type EmailCodeStatus = { kind: "idle" } | { kind: "sending" } | { kind: "sent"; resendInSeconds: number } | { kind: "verifying" } | { kind: "verified" };
+/** Whether the address can sign up: asked when the field loses focus. "unavailable" = the check itself failed (fail open). */
+export type EmailAvailability = "unknown" | "checking" | "available" | "taken" | "unavailable";
 
 export interface EmailCodeFieldProps {
   label: string;
@@ -366,10 +368,14 @@ export interface EmailCodeFieldProps {
   message?: string | null;
   /** The form's own validation message ("Please verify your email address"). */
   error?: string;
+  availability?: EmailAvailability;
+  /** Where "sign in instead" goes when the address is taken. */
+  signInHref?: string;
 }
 
-export function EmailCodeField({ label, hint, email, status, code, onCodeChange, onSend, onVerify, message, error }: EmailCodeFieldProps) {
+export function EmailCodeField({ label, hint, email, status, code, onCodeChange, onSend, onVerify, message, error, availability = "available", signInHref = "/login" }: EmailCodeFieldProps) {
   const busy = status.kind === "sending" || status.kind === "verifying";
+  const canSend = availability === "available" || availability === "unavailable";
   const button = "bg-[#0C1628] hover:bg-[#A3DEDE] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed";
   return (
     <div>
@@ -399,14 +405,28 @@ export function EmailCodeField({ label, hint, email, status, code, onCodeChange,
             </div>
           )}
           <div className="flex items-center gap-3">
-            <button type="button" className={button} disabled={busy || !email || (status.kind === "sent" && status.resendInSeconds > 0)} onClick={onSend}>
+            <button type="button" className={button} disabled={busy || !email || !canSend || (status.kind === "sent" && status.resendInSeconds > 0)} onClick={onSend}>
               {status.kind === "sending" ? "Sending..." : status.kind === "idle" ? "Send code" : status.kind === "sent" && status.resendInSeconds > 0 ? `Resend in ${status.resendInSeconds}s` : "Resend code"}
             </button>
             {status.kind === "sent" && <span className="text-sm text-gray-600 font-poppins">We emailed a code to {email}.</span>}
+            {status.kind === "idle" && availability === "checking" && <span className="text-sm text-gray-600 font-poppins">Checking this address...</span>}
+            {status.kind === "idle" && availability === "unknown" && email && <span className="text-sm text-gray-600 font-poppins">Leave the email field to check this address.</span>}
           </div>
         </div>
       )}
-      {message && <p className="text-red-500 text-sm font-poppins mt-1">{message}</p>}
+      {message && (
+        <p className="text-red-500 text-sm font-poppins mt-1">
+          {message}
+          {availability === "taken" && (
+            <>
+              {" "}
+              <a href={signInHref} className="underline">
+                Sign in
+              </a>
+            </>
+          )}
+        </p>
+      )}
       <FieldError message={error} />
     </div>
   );

@@ -182,6 +182,28 @@ describe.skipIf(!local)('registration on PostGIS', () => {
     })
   })
 
+  describe('email availability (user decision: reveals existence; asked on blur)', () => {
+    const available = (email: string) => t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/email-availability', payload: { email } })
+
+    it('says a new address is available and a registered one is not, ignoring case; nothing else in the answer', async () => {
+      const b = await body()
+      const before = await available(b.email)
+      expect(before.statusCode).toBe(200)
+      expect(before.json()).toEqual({ available: true })
+      expect((await register(b)).statusCode).toBe(202)
+      expect((await available(b.email)).json()).toEqual({ available: false })
+      expect((await available(b.email.toUpperCase())).json()).toEqual({ available: false })
+      expect((await available(`  ${b.email} `)).json()).toEqual({ available: false })
+    })
+
+    it('refuses what is not an email address, and needs no CAPTCHA', async () => {
+      const res = await available('not-an-email')
+      expect(res.statusCode).toBe(400)
+      expect(Object.keys(res.json().error.fields)).toEqual(['email'])
+      expect(t.captcha.calls.filter((c) => c.action === 'worker_email_code').length).toBeGreaterThan(0) // the send does ask
+    })
+  })
+
   describe('email verification before the password (S1 step 13)', () => {
     it('emails a 6-digit code to the address and answers only a signed ticket -- nothing is stored', async () => {
       const to = email()

@@ -41,6 +41,7 @@ export const workerRegistrationForm = defineForm({
           for: "email",
           sendEntry: "requestEmailCode",
           verifyEntry: "verifyEmailCode",
+          availabilityEntry: "checkEmailAvailability",
           label: "Verify your email",
           hint: "We'll email you a 6-digit code. Enter it here, and you can then choose your password.",
           neverSaved: true,
