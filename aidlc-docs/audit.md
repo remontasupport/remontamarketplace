@@ -1441,3 +1441,13 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Cause: no sign-up request reached the api (the photo uploads did). The submit validates every step; the failing fields (the email verification and the password, dropped on purpose when the draft was restored after the dev-server restart) are on step 2, so the error was invisible on step 4. Fix: on an invalid submit the wizard jumps to the first step with an error and says so; the restore banner now names what the draft could not keep ("verify your email and type your password again"). Forms lint/tests/tsc clean; committed.
 
 ---
+
+**User input (verbatim):**
+> why this error keeps on persisting "Please choose services from the list" even if I choose the service already
+
+**AI action:** The message is the api's (unknown service ids at sign-up). Reading the refused request's cause from the log.
+
+---
+**AI action (cont.):** Cause: the api refused `home-modifications`, a service from the first (wrong) seed that the on-device draft still carried; the current list no longer shows it, so the selection was invisible. Fix: the services slot drops selected ids the loaded catalogue does not have (services and sub-categories), so a stale draft cannot send what the server refuses. Forms lint/tests/tsc clean; committed.
+
+---

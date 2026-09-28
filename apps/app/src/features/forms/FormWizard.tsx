@@ -3,8 +3,8 @@
 // Renders ANY form definition: the hook holds the logic, the view the layout,
 // and each field kind maps to one presentational component. Adding a form means
 // a definition file, not new screens.
-import { useMemo, useState } from "react";
-import { Controller, useWatch, type Control, type FieldErrors } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { KINDS, type ApiBackend, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
 import { ConsentField, EmailCodeField, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
@@ -182,33 +182,39 @@ function ServicesSlot({ field, control, error }: { field: Extract<FieldDef, { ki
       return 0;
     });
   }, [categories]);
+  const services = useController({ name: field.name, control });
+  const subs = useController({ name: field.subcategoriesName, control });
+  const picked = useMemo(() => (services.field.value as string[] | undefined) ?? [], [services.field.value]);
+  const pickedSubs = useMemo(() => (subs.field.value as string[] | undefined) ?? [], [subs.field.value]);
+
+  // A restored draft can hold ids the catalogue no longer has (the list changed
+  // since it was saved). They would be invisible here and refused by the server
+  // ("Please choose services from the list"), so drop them once the list is known.
+  useEffect(() => {
+    if (!categories) return;
+    const known = new Set(categories.map((c) => c.id));
+    const knownSubs = new Set(categories.flatMap((c) => c.subcategories.map((sc) => sc.id)));
+    const keptServices = picked.filter((id) => known.has(id));
+    const keptSubs = pickedSubs.filter((id) => knownSubs.has(id));
+    if (keptServices.length !== picked.length) services.field.onChange(keptServices);
+    if (keptSubs.length !== pickedSubs.length) subs.field.onChange(keptSubs);
+  }, [categories, picked, pickedSubs, services.field, subs.field]);
+
   if (isLoading) return <p className="text-center py-8 text-gray-600 font-poppins">Loading service categories...</p>;
   if (isError) return <p className="text-red-600 text-sm font-poppins">Failed to load service categories. Please refresh the page or try again later.</p>;
   return (
-    <Controller
-      name={field.name}
-      control={control}
-      render={({ field: services }) => (
-        <Controller
-          name={field.subcategoriesName}
-          control={control}
-          render={({ field: subs }) => (
-            <ServicesField
-              title={field.title ?? "Services"}
-              hint={field.hint}
-              options={options}
-              categories={categories}
-              services={(services.value as string[]) ?? []}
-              subcategories={(subs.value as string[]) ?? []}
-              onChange={(s, c) => {
-                services.onChange(s);
-                subs.onChange(c);
-              }}
-              error={error}
-            />
-          )}
-        />
-      )}
+    <ServicesField
+      title={field.title ?? "Services"}
+      hint={field.hint}
+      options={options}
+      categories={categories}
+      services={picked}
+      subcategories={pickedSubs}
+      onChange={(s, c) => {
+        services.field.onChange(s);
+        subs.field.onChange(c);
+      }}
+      error={error}
     />
   );
 }
