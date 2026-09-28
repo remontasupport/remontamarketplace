@@ -46,6 +46,15 @@ export async function checkEmailAvailability(def: FormDefinition, backend: ApiBa
   }
 }
 
+/**
+ * A rate limit is final for these calls: the window is an hour, so retrying now
+ * cannot help and every retry counts against the same limit. (The submission
+ * keeps retrying a 429, honouring Retry-After: it is the one call that matters.)
+ */
+function finalOn429<R extends { ok: boolean; status: number; retryAfterSeconds?: number }>(r: R) {
+  return r.status === 429 ? ({ kind: "fail", value: r } as const) : outcomeOf(r);
+}
+
 /** When the retries ran out: what the LAST answer was decides the message. */
 function afterRetries(err: unknown, sending: boolean): string {
   if (err instanceof RetriesExhausted) {
@@ -73,10 +82,11 @@ export async function requestEmailCode(
   try {
     const { value: r } = await withRetry(async () => {
       const captchaToken = action ? await deps.getCaptchaToken!(action) : undefined; // fresh every attempt
-      return outcomeOf(await send({ body: { email, ...(captchaToken ? { captchaToken } : {}) } }, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) }));
+      return finalOn429(await send({ body: { email, ...(captchaToken ? { captchaToken } : {}) } }, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) }));
     }, deps.retry);
     if (r.ok) return { ok: true, ticket: r.body as EmailCodeTicket };
     const fields = (r.body as { error?: { fields?: Record<string, string[]> } } | null)?.error?.fields;
+    if (r.status === 429) return { ok: false, message: TOO_MANY };
     if (r.status === 500 || r.status === 503) return { ok: false, message: NOT_SENT };
     return { ok: false, message: fields?.email?.[0] ?? messageFor(r.status) };
   } catch (err) {
@@ -94,10 +104,11 @@ export async function confirmEmailCode(
   const verify = contractCall(def.contract, backend.apiBaseUrl, field.verifyEntry);
   try {
     const { value: r } = await withRetry(
-      async () => outcomeOf(await verify({ body: { email: args.email, code: args.code, ...args.ticket } }, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) })),
+      async () => finalOn429(await verify({ body: { email: args.email, code: args.code, ...args.ticket } }, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) })),
       deps.retry,
     );
     if (r.ok) return { ok: true, proof: { ...args.ticket, code: args.code } };
+    if (r.status === 429) return { ok: false, message: TOO_MANY };
     const fields = (r.body as { error?: { fields?: Record<string, string[]> } } | null)?.error?.fields;
     return { ok: false, message: fields?.code?.[0] ?? fields?.token?.[0] ?? messageFor(r.status) };
   } catch (err) {

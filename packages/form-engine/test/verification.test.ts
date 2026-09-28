@@ -123,11 +123,13 @@ describe("requestEmailCode / confirmEmailCode", () => {
     vi.stubGlobal("fetch", async () => (hits++, new Response(JSON.stringify({ error: { code: "INTERNAL", message: "x", requestId: "r" } }), { status: 500 })));
     expect(await requestEmailCode(form, backend, field, "a@b.test", { getCaptchaToken: async () => "t", retry: { maxAttempts: 3, sleep: async () => {} } })).toEqual({ ok: false, message: NOT_SENT });
     expect(hits).toBe(1);
-    // Rate limited (429, retried until the budget runs out): said as such, not as "unreachable".
-    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ error: { code: "RATE_LIMITED", message: "x", requestId: "r" } }), { status: 429, headers: { "retry-after": "3600" } }));
-    const limited = { maxAttempts: 2, maxRetryAfterMs: 1, sleep: async () => {} };
+    // Rate limited (429): said as such at once, and NOT retried -- a retry within the hour only counts against the same limit.
+    let limitedHits = 0;
+    vi.stubGlobal("fetch", async () => (limitedHits++, new Response(JSON.stringify({ error: { code: "RATE_LIMITED", message: "x", requestId: "r" } }), { status: 429, headers: { "retry-after": "3600" } })));
+    const limited = { maxAttempts: 5, maxRetryAfterMs: 1, sleep: async () => {} };
     expect(await requestEmailCode(form, backend, field, "a@b.test", { getCaptchaToken: async () => "t", retry: limited })).toEqual({ ok: false, message: TOO_MANY });
     expect(await confirmEmailCode(form, backend, field, { email: "a@b.test", code: "123456", ticket }, { retry: limited })).toEqual({ ok: false, message: TOO_MANY });
+    expect(limitedHits).toBe(2);
   });
 
   it("confirms a code and hands back the proof the sign-up sends; a wrong code returns the server's message", async () => {
