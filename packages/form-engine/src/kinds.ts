@@ -22,6 +22,28 @@ export interface KindRules {
   schemas(ctx: KindContext): Record<string, z.ZodType>;
   /** What it contributes to the api request body. */
   toBody(field: FieldDef, values: Record<string, unknown>): Record<string, unknown>;
+  /** Applied to each keystroke of a text-like field: what the value MAY contain while typed. */
+  sanitise?(raw: string): string;
+}
+
+/**
+ * What an Australian mobile may contain while it is being typed: a leading "+",
+ * digits and single spaces, and no more digits than a mobile has -- 10 (04xx xxx xxx),
+ * or 11 after the 61 country code (+61 4xx xxx xxx). Anything else typed or pasted
+ * is dropped. Whether the number IS a mobile is still the contract's rule.
+ */
+export function constrainAuMobileInput(raw: string): string {
+  let s = raw.replace(/[^0-9+ ]/g, "").replace(/(?!^)\+/g, "").replace(/ +/g, " ").replace(/^ /, "");
+  const digits = s.replace(/[^0-9]/g, "");
+  const max = s.startsWith("+") || digits.startsWith("61") ? 11 : 10;
+  if (digits.length > max) {
+    // Cut after the max-th digit.
+    let seen = 0;
+    let end = 0;
+    while (seen < max && end < s.length) if (/[0-9]/.test(s[end++]!)) seen++;
+    s = s.slice(0, end);
+  }
+  return s;
 }
 
 /** The rule for `name`: the legacy one in legacy mode if it changed, else the contract's. */
@@ -51,7 +73,7 @@ const CHOOSE_SUBURB = "Please choose your suburb from the list";
 export const KINDS: Record<FieldDef["kind"], KindRules> = {
   text: plain,
   email: plain,
-  phone: plain,
+  phone: { ...plain, sanitise: constrainAuMobileInput },
   password: plain,
 
   locality: {

@@ -1189,3 +1189,43 @@ Reported the position and the pending decisions; no code changed.
 - Not done: the Neon-branch rehearsal (needs the branch from the user); the production run (step 12, separate approval).
 
 ---
+
+**User input (verbatim):**
+> Before we proceed. Can I test the onboarding now even if it is not finished yet? particulary I want to test the suburb dropdown, the other fields like name, email and number and I want to see if it saves
+
+**AI action:** Started the local end-to-end setup (the step 12 "switch on api" run, brought forward for a manual test):
+- `apps/api` built and running on 127.0.0.1:4000 with its `.env` (which points at the local `s1test` database); all four scheduled jobs ran clean at boot.
+- `apps/app` dev on localhost:3000 against `s1test`, Redis unset, `REGISTRATION_BACKEND=api`, `NEXT_PUBLIC_API_URL=http://127.0.0.1:4000`.
+- Checked: `/v1/health` 200; `/v1/localities?q=mount vic` returns Mount Victoria NSW 2786; the app's `/api/suburbs?q=parra` returns Parramatta from `au_localities`; `/registration/worker` renders (200) with no fallback-to-legacy log line.
+- Caveat given: the final submit needs a reCAPTCHA token for hostname `localhost`, which the site key must allow (Google reCAPTCHA admin). The confirmation email goes through Resend's test sender, so it only reaches the Resend account owner.
+
+---
+
+**User input (verbatim):**
+> How can I test that all the suburbs, cities and postcode in AU are being displayed? how can we assure it's 100% accurate and real data
+
+**AI action:** Answered from the pipeline (G-NAF release, selection rules, existing tests) with the gaps and the checks that could be added. No code changed.
+
+---
+
+**User input (verbatim):**
+> No need. If I save the signup, what database would it be save?
+
+**AI action:** Answered: the local Docker PostGIS container (`remonta-s1-pg`, database `s1test` on port 55432); both running servers point at it; production (Neon) is untouched.
+
+---
+
+**User input (verbatim):**
+> I noticed the Mobile Number is accepting more than 11, can you make sure it only accepts AU number? i think it only accepts 10?
+
+**AI action:** Investigating the mobile rule in the contract schema, the form engine and the field component.
+
+---
+**AI action (cont.) -- mobile input constraint:**
+- Finding: the contract rule was already strict (only 04xx xxx xxx / +61 4xx xxx xxx pass; landlines and foreign numbers are rejected on submit and in the step check). The text box itself let anything be typed.
+- Change: the form engine's `KindRules` gains an optional `sanitise(raw)`; the `phone` kind uses `constrainAuMobileInput` (a leading +, digits and single spaces only; at most 10 digits, or 11 after a 61 country code). `FormWizard`'s text/email/phone slot applies the kind's sanitiser to each keystroke, so every form gets it. Validity stays the contract's rule.
+- Tests: 16 in `packages/form-engine/test/input.test.ts` (examples + 4 properties: allowed characters only; digit cap; idempotent and typing = pasting; every real mobile untouched and then accepted by `normaliseAuMobile`).
+- Incident while writing it: two regex backslashes were lost when the function was written through a script (`\+`, `\D`), which made the digit count include spaces and the trim loop run past the string on "0412 345 67" -- a hang that the property test exposed (vitest worker killed at 90 s). Fixed; the loop is now bounded regardless.
+- Gates: `@remonta/form-engine` quality (38 tests), `@remonta/app` quality (144/496 baselines, 85 tests) pass; the dev server hot-reloaded and still serves `/registration/worker`.
+
+---

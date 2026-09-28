@@ -5,7 +5,7 @@
 // a definition file, not new screens.
 import { useMemo, useState } from "react";
 import { Controller, type Control, type FieldErrors } from "react-hook-form";
-import type { Backend, FieldDef, FormDefinition, LocalityValue } from "@remonta/form-engine";
+import { KINDS, type Backend, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
 import { ConsentField, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
@@ -57,7 +57,7 @@ function FieldSlot({ field, control, errors, backend, uploader }: { field: Field
               type={field.kind === "email" ? "email" : field.kind === "phone" ? "tel" : "text"}
               autoComplete={field.kind === "email" ? "email" : field.kind === "phone" ? "tel" : undefined}
               value={(f.value as string) ?? ""}
-              onChange={f.onChange}
+              onChange={(v) => f.onChange(KINDS[field.kind].sanitise?.(v) ?? v)}
               onBlur={f.onBlur}
               error={error}
             />
