@@ -1660,3 +1660,17 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.) -- rehearsal COMPLETE on rehearse-w1:** locations apply (batched) 1,418 written in ~4 min (301 already placed from the stopped run) → total 1,719 HOME rows, all with `point`; second apply wrote 0. Onboarding apply 1,789 markers + 1,789 BACKFILL transitions in ~3 min; second apply wrote 0. Stage distribution identical to the dry run. Wrote the production runbook `aidlc-docs/construction/S1-registration/S1-production-run.md` (sequence, timings, rollback, preconditions) -- awaiting the user's approval to run on production; the matcher/batching commits need a PR to main first.
 
 ---
+
+**User input (verbatim):**
+> check if the backfill finished
+
+**AI action:** Confirmed from the branch: 1,719 HOME rows, 1,789 markers, no backfill process running.
+
+---
+
+**User input (verbatim):**
+> Did you update the ai dlc state?
+
+**AI action:** Confirmed what the state file, the plan and the audit trail record as of now; showed the current resume section.
+
+---
