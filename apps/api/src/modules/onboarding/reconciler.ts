@@ -16,7 +16,7 @@ import type { Job } from '../../platform/jobs/scheduler'
 import type { Db, Tx } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
 import { placeHome, type Locality } from '../locations/domain/home'
-import { matchLegacyLocation, type Candidate } from '../locations/domain/legacy-match'
+import { matchLegacyLocation, normalisePostcode, type Candidate } from '../locations/domain/legacy-match'
 import { initialMarker, maxDate, minDate, obligationsFrom, type LegacyRequirement } from './domain/initial-marker'
 import { countsOf, deriveStage, type Stage } from './domain/stage'
 import { changeOf } from './domain/transitions'
@@ -123,9 +123,10 @@ export async function candidatePool(
   candidatesFor: (postcode: string) => Promise<Candidate[]>,
 ): Promise<(postcode: string) => Candidate[]> {
   const postcodes = new Set<string>()
-  const fromLocation = p.location ? /(\d{4})\s*$/.exec(p.location)?.[1] : undefined
+  const fromLocation = normalisePostcode(p.location ? /(d{3,4})s*$/.exec(p.location)?.[1] : undefined)
   if (fromLocation) postcodes.add(fromLocation)
-  if (p.postalCode && /^\d{4}$/.test(p.postalCode.trim())) postcodes.add(p.postalCode.trim())
+  const fromColumn = normalisePostcode(p.postalCode)
+  if (fromColumn) postcodes.add(fromColumn)
   const pool = new Map<string, Candidate[]>()
   for (const pc of postcodes) pool.set(pc, await candidatesFor(pc))
   return (pc) => pool.get(pc) ?? []

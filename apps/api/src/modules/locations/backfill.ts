@@ -8,7 +8,7 @@ import type { Db } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
 import { candidatePool, localityCandidates } from '../onboarding/reconciler'
 import { placeHome, type Locality } from './domain/home'
-import { matchLegacyLocation, type MatchResult } from './domain/legacy-match'
+import { matchLegacyLocation, type MatchResult, type MatchVia } from './domain/legacy-match'
 
 export interface ReviewRow {
   workerProfileId: string
@@ -27,7 +27,7 @@ export interface LocationBackfillReport {
   alreadyPlaced: number
   /** Workers without a HOME row. */
   examined: number
-  matched: { location: number; columns: number; postcode: number }
+  matched: Record<MatchVia, number>
   written: number
   ambiguous: ReviewRow[]
   unmatched: ReviewRow[]
@@ -53,7 +53,7 @@ export async function backfillWorkerLocations(db: Db, opts: BackfillOptions): Pr
     now,
     alreadyPlaced: await db.workerLocation.count({ where: { kind: 'HOME' } }),
     examined: 0,
-    matched: { location: 0, columns: 0, postcode: 0 },
+    matched: { location: 0, columns: 0, postcode: 0, 'suburb-in-text': 0, 'suburb-and-postcode': 0 },
     written: 0,
     ambiguous: [],
     unmatched: [],
@@ -119,7 +119,8 @@ export function formatLocationReport(r: LocationBackfillReport, limit = 25): str
     `${r.apply ? 'APPLIED' : 'DRY RUN (nothing written)'} at ${r.now.toISOString()}`,
     `  already placed (HOME exists)  ${r.alreadyPlaced}`,
     `  without a HOME                ${r.examined}`,
-    `    matched    ${m.location + m.columns + m.postcode}  (by location string ${m.location}, by columns ${m.columns}, by single-suburb postcode ${m.postcode})${r.apply ? `  written: ${r.written}` : ''}`,
+    `    matched    ${Object.values(m).reduce((a, x) => a + x, 0)}${r.apply ? `  written: ${r.written}` : ''}`,
+    `      by the form's own string ${m.location} · by the columns ${m.columns} · suburb named inside a longer text ${m['suburb-in-text']} · suburb + postcode with a wrong state ${m['suburb-and-postcode']} · single-suburb postcode ${m.postcode}`,
     `    ambiguous  ${r.ambiguous.length}  -- review, never guessed`,
     ...list(r.ambiguous),
     `    unmatched  ${r.unmatched.length}  -- review, never guessed`,

@@ -1586,3 +1586,50 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** PR #12 merged at 09:38:39Z (merge 6452bb3). Its `API Quality` had already passed on Node 20 and 22; only the report-only supply-chain scan was still running. main's push CI re-running on 6452bb3. Local `main` fast-forwarded to 6452bb3; `s1/worker-registration` is entirely in main. Production behaviour unchanged (test + docs only).
 
 ---
+
+**User input (verbatim):**
+> Do not go ahead unless we will finish this first api to deploy and use it
+
+**AI action:** Understood as: no other work until the api is deployed and in use; everything from here is on that path only. Replied with the finishing sequence and what is needed from the user (Neon branch; AWS account; Resend domain) versus what can start now (Infrastructure Design + Dockerfile, the CRM notification, the production config).
+
+---
+
+**User input (verbatim):**
+> I already have a branch in neon named rehearse-w1 , can we use this? & 'c:\Users\toton\Downloads\Screenshot 2026-09-28 174841.png'
+
+**AI action:** Screenshot shows Neon project Remonta, branch rehearse-w1, database workerprofiles, legacy tables only (no S1 tables). Answered: usable, on two conditions -- reset it from the parent so the copy is current, and put its DIRECT connection string in apps/api/.env as REHEARSAL_DATABASE_URL (never read by Claude; host compared against the production host before any command runs).
+
+---
+
+**User input (verbatim):**
+> How about we create another fresh Database?
+
+**AI action:** Advised: a fresh Neon BRANCH of production (a new copy) is ideal and equivalent to resetting rehearse-w1; an EMPTY database is not, because the rehearsal's value is the backfill reports on real workers and the migration chain on the real schema state.
+
+---
+
+**User input (verbatim):**
+> I used the rehearsal-w1 and pasted the connection string to the .env file
+
+**AI action:** Rehearsal step 1 (read-only): guard that the rehearsal host differs from the production host (neither printed), then `migrate status` and data recency on the branch.
+
+---
+
+**User input (verbatim):**
+> Done reset from parent
+
+**AI action:** Re-running the read-only checks on the reset branch: migrate status and data recency.
+
+---
+**AI action (cont.):** After the reset the branch is faithful: 1,865 users / 1,789 profiles / 10,112 requirements, data of 2026-09-28, W1 complete, only the 12 S1 migrations pending, PostGIS absent (so `s1_postgis`'s down applies). Applying the S1 migrations on the rehearsal branch now (step 2 of the rehearsal).
+
+---
+**AI action (cont.) -- rehearsal on rehearse-w1 (production copy of 2026-09-28):** S1 migrations applied (9 tables, PostGIS 3.5.7, 7 indexes, rows intact); all 12 down.sql newest first -> `migrate diff` against the pre-S1 schema EMPTY; re-applied; suburb list loaded (plan 074d18238f0f0465, 15,467 rows). Backfill dry runs: locations 1,789 without HOME -> 1,633 matched, 96 ambiguous, 60 unmatched; onboarding 1,789 -> SIGNED_UP 925, IN_PROGRESS 19, SUBMITTED 729, ACTION_REQUIRED 105, VERIFIED 11, PUBLISHED 0; 1,392 firstSignInAt estimates. Analysing the failure patterns before the user's review.
+
+---
+**AI action (cont.):** Failure analysis of the 156 location rows: 50 three-digit NT postcodes, 57 street addresses / extra words around the suburb, 19 metro name + suburb postcode, 2 "TA", 1 trailing space, 1 full state name, 4 no data, 4 overseas, 44 other (typos, LGA names, Australia Post centre names). Deterministic rules added to `legacy-match.ts` (postcode padding, state aliases/trim, suburb+postcode with a wrong state, a suburb named inside a longer text, "DC/BC/MC" suffixes); `candidatePool` feeds normalised postcodes; the report counts each rule. 21 matcher tests incl. a never-guesses property; affected suites 99 pass. Onboarding check: production has ONE published worker (with a lapsed/rejected document -> ACTION_REQUIRED, so 0 PUBLISHED is right); required requirements: SUBMITTED 3,466 / APPROVED 520 / REJECTED 158 / PENDING 22 -- 729 workers await review. Re-running the dry run.
+
+---
+**AI action (cont.):** Refinements: the exact city-column match runs before the in-text rule; among names found in the text the longest wins only when it contains all the others ("Redbank Plains" also names "Redbank"). Dry run 3 on the branch: **1,719 of 1,789 matched (96%)** -- by the form's string 1,073, by the columns 598, suburb inside a longer text 32, suburb+postcode with a wrong state 1, single-suburb postcode 15; **59 ambiguous** (metro names with a suburb's postcode, misspelt suburbs, council/region names, street-only texts, wrong postcodes) and **11 unmatched** (7 empty/overseas, 4 unusable). Matcher tests 23 (never-guesses property). Awaiting the user's review before applying on the branch.
+
+---
