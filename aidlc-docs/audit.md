@@ -1458,3 +1458,13 @@ Reported the position and the pending decisions; no code changed.
 **AI action:** Full local sign-up confirmed working by the user (email verification, availability check, services, submit). Reported the position from the state file: step 10 done; step 13 built and browser-verified; next is step 11, then step 12; the pending user decisions.
 
 ---
+
+**User input (verbatim):**
+> Ok proceed with step 11
+
+**AI action:** Step 11 started: `ci-api.yml` (quality, PostGIS service container, migrations + localities load, DB tests, the openapi drift test), the db / form-engine / api-contract quality gates in CI, and CLAUDE.md (apps/api commands, localities refresh procedure).
+
+---
+**AI action (cont.) -- step 11 done:** `.github/workflows/ci-api.yml` (API Quality: PostGIS service container, migrate from empty, db quality, suburb list via the plan hash, api-contract, form-engine, api quality with the DB tests). CLAUDE.md: api gates, the CI check name, an "apps/api" section and the localities refresh procedure. Rehearsed the CI sequence locally on a fresh database `ci_sim`: migrate → db 57 tests → 15,467 localities → api lint/tsc/323 tests pass; database dropped afterwards. CI green on the branch is pending the push.
+
+---

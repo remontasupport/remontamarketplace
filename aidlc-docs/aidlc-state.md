@@ -4,7 +4,7 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-10 done (plus 5b, 9b, and step 13 = email verification before the password, a scope change of 2026-09-28). Next is step 11. See "Resume here" below.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-11 done (plus 5b, 9b, and step 13 = email verification before the password, a scope change of 2026-09-28). Next is step 12. See "Resume here" below.
 
 ## Resume here (updated 2026-09-28)
 
@@ -33,10 +33,7 @@
 - Open: a verified Remonta sender domain in Resend, so real addresses receive the code.
 
 ### 3. Remaining S1 steps
-- **Step 11 (CI + docs):**
-  - `ci-api.yml`: quality, PostGIS service container, DB tests via TEST_DATABASE_URL, the openapi.json drift test;
-  - add `@remonta/db`, `@remonta/form-engine` and `@remonta/api-contract` quality to CI;
-  - CLAUDE.md: apps/api commands and the localities refresh procedure.
+- **Step 11 (CI + docs): DONE 2026-09-28** (`ci-api.yml`, CLAUDE.md). CI itself runs only once the branch is pushed; rehearsed locally on a fresh database (all 323 api tests).
 - **Step 12 (Build and Test):**
   - all gates;
   - local end-to-end in both switch modes;

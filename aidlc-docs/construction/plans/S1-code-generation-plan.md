@@ -336,9 +336,9 @@ Measured on a local 100,000-worker benchmark (`packages/db/bench/`, results in i
 - **To test in a browser:** the code email goes through Resend's test sender, which delivers only to the Resend account owner's address -- sign up with that address, or verify a Remonta domain in Resend first. The send step is behind reCAPTCHA, so `localhost` must be allowed on the site key.
 
 ### Step 11 — CI and docs
-- [ ] `ci-api.yml`: quality, PostGIS service container, integration tests, `openapi.json` drift check
-- [ ] Turbo tasks; `CLAUDE.md` gets the `apps/api` commands and the localities refresh procedure
-- **Verify:** CI green on the branch
+- [x] `.github/workflows/ci-api.yml` (check name **API Quality**, Node 20 and 22): a `postgis/postgis:16-3.4` service container → `migrate:deploy` from empty → `@remonta/db` quality (its refresh test truncates au_localities, hence before the load) → the committed suburb list loaded the production way (dry run for the hash, then `--apply --expect`) → `@remonta/api-contract` quality (incl. the openapi.json drift test) → `@remonta/form-engine` quality → `@remonta/api` quality with TEST_DATABASE_URL, so every PostGIS-backed suite runs. Path filters like the other workflows; no secrets.
+- [x] `CLAUDE.md`: the api package gates in "Verify locally"; `API Quality` in "Wait for CI"; a new "apps/api" section (local database, run, tests, env traps, backfills) and the localities refresh procedure. Turbo tasks: none needed (the packages already expose `quality`; turbo's pipeline is unchanged).
+- **Verify:** CI green on the branch — **pending the push** (the branch has never been pushed; user decision). Rehearsed locally instead, 2026-09-28: the exact CI sequence on a fresh database (`ci_sim` from template0): migrate (all migrations) → db quality 57 → suburb list 15,467 rows via the plan hash → api lint, strict tsc and all 323 tests pass. Workflow YAML parsed and its step order checked.
 
 ### Step 12 — Build & Test (its own AI-DLC stage)
 - [ ] All gates (CLAUDE.md §2) + `@remonta/api` quality

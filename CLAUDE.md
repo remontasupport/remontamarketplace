@@ -25,8 +25,14 @@ git checkout -b <type>/<short-name>      # fix/… feat/… u9/…
 pnpm --filter @remonta/app run quality     # 149 type · 518 lint · 54 tests
 pnpm --filter @remonta/web run quality     # 76 lint · strict tsc
 pnpm --filter @remonta/schemas run quality # P-1..P-5 boundaries
+pnpm --filter @remonta/api-contract run quality  # contract checks, openapi.json drift
+pnpm --filter @remonta/form-engine run quality   # form logic, P-7 boundary
+pnpm --filter @remonta/api run quality           # lint · strict tsc · tests (DB tests need TEST_DATABASE_URL, below)
 npx turbo run build                        # both apps
 ```
+
+The api's database tests and `@remonta/db`'s need a local PostGIS (see "apps/api" below). Without
+`TEST_DATABASE_URL` they are skipped, which is a weaker gate, not a passing one.
 
 Baselines tolerate existing debt and reject anything new. A failure here is a real
 regression, not noise.
@@ -49,8 +55,9 @@ you changed. Hundreds of commits means the base is wrong.
 
 ### 4. Wait for CI
 
-`App Quality`, `Web Quality`, `Supply chain`, `Package boundaries`, plus both Vercel
-previews.
+`App Quality`, `Web Quality`, `API Quality` (its own PostGIS service container: migrations, the
+suburb list, the db, api-contract, form-engine and api gates), `Supply chain`, `Package boundaries`,
+plus both Vercel previews.
 
 ### 5. Verify the preview — this is the step that catches real problems
 
@@ -88,6 +95,44 @@ Re-record these before any unit that changes deployment settings. **Promote a
 deployment; do not redeploy a commit** — a rebuild can fail, an existing build cannot.
 
 ---
+
+## apps/api: the backend service (local and CI only until AWS)
+
+```bash
+# A database for the tests: the same image CI uses. Once.
+docker run -d --name remonta-s1-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=s1test -p 55432:5432 postgis/postgis:16-3.4
+export AUTH_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test DIRECT_DATABASE_URL=$AUTH_DATABASE_URL
+pnpm --filter @remonta/db run migrate:deploy          # every migration, PostGIS included
+pnpm --filter @remonta/db localities:refresh          # dry run: prints the plan and its hash
+pnpm --filter @remonta/db localities:refresh --apply --expect=<hash>
+docker exec -i remonta-s1-pg psql -U postgres -d s1test < packages/db/scripts/local/seed-catalogue.sql  # service categories
+
+# Run it (port 4000). apps/api/.env holds the secrets and must point at the LOCAL database.
+cd apps/api && pnpm run build && node --env-file=.env dist/main.js
+
+# The tests that need the database run only when TEST_DATABASE_URL points at localhost.
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test pnpm --filter @remonta/api run quality
+```
+
+- A shell variable named `AUTH_DATABASE_URL` wins over `--env-file`. Unset it before running the service.
+- `pnpm run build` regenerates the Prisma client; it fails with `EPERM` while the service is running
+  (the process holds the query engine). Stop the service first.
+- To run `apps/app` against the same local database, override its variables on the command line -- its
+  `.env` points at production: `AUTH_DATABASE_URL=… DATABASE_URL=… DIRECT_DATABASE_URL=… UPSTASH_REDIS_REST_URL=
+  UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev`.
+- `pnpm --filter @remonta/api backfill:locations` and `backfill:onboarding`: the S1 backfills. Dry run by
+  default, `--apply` to write, `--report=<file>` for the full JSON. They read `apps/api/.env`.
+
+### Refreshing the suburb list (`au_localities`): every six months, or on request
+
+1. Download the latest G-NAF release (GDA2020, PSV) from data.gov.au and unzip it.
+2. `pnpm --filter @remonta/db localities:build --release=YYYYMM --src=<unzipped folder>` rewrites
+   `packages/db/data/au_localities.csv`, its `.meta.json` (with the selection report) and `ATTRIBUTION.md`.
+   Commit all three together and review the report's `primaryPostcodeFallbacks`.
+3. `pnpm --filter @remonta/db localities:refresh`, against the target database, prints the plan: added,
+   changed, restored, retired (with how many workers are placed at each retired suburb) and its hash.
+4. `... localities:refresh --apply --expect=<hash>` applies exactly that plan, under a lock. Retired suburbs
+   are never deleted, and re-running the same CSV plans nothing.
 
 ## Traps that have actually bitten
 
