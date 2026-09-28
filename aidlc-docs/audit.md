@@ -1424,3 +1424,20 @@ Reported the position and the pending decisions; no code changed.
 **Correction (AI, 2026-09-28):** the previous entry's "deliberate bug caught" was recorded before the check had actually run: the substitution that was meant to loosen the name rule never matched, so the 56 passes proved nothing about it. Redone with a real edit (the name regex replaced by "anything"): the suite fails on every name payload (SQL fragments, script tags, control characters...), as it should. File restored; nothing else changed.
 
 ---
+
+**User input (verbatim):**
+> Now when I save the sign up workflow, I want to know exactly where the data will be save? what table name and the schema
+
+**AI action:** Answered from register-worker.ts and the live column lists: the nine tables one sign-up writes, in the `public` schema, one transaction, with the form field → column mapping.
+
+---
+
+**User input (verbatim):**
+> Ok. When I clicked the Complete Signup button it does nothing to the app
+
+**AI action:** Checking whether a sign-up request reached the api; if not, the form refused to submit client-side.
+
+---
+**AI action (cont.):** Cause: no sign-up request reached the api (the photo uploads did). The submit validates every step; the failing fields (the email verification and the password, dropped on purpose when the draft was restored after the dev-server restart) are on step 2, so the error was invisible on step 4. Fix: on an invalid submit the wizard jumps to the first step with an error and says so; the restore banner now names what the draft could not keep ("verify your email and type your password again"). Forms lint/tests/tsc clean; committed.
+
+---

@@ -28,6 +28,7 @@ export function FormWizard({ definition, backend }: { definition: FormDefinition
       stepCount={definition.steps.length}
       offline={!w.online}
       restored={w.restored}
+      restoredMessage={w.restoredMessage}
       stepMessage={w.stepMessage}
       status={w.status}
       onBack={w.back}

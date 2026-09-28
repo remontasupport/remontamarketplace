@@ -129,6 +129,30 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   // ---- navigation ---------------------------------------------------------------------
   const scrollToError = () => setTimeout(() => document.querySelector("[aria-invalid='true'], .text-red-500")?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
 
+  /**
+   * The submit validates every step. An error on a step other than the one shown
+   * would be invisible (the button "does nothing"), so go to the first step that
+   * has one and say why.
+   */
+  const showFirstInvalidStep = useCallback(
+    (errors: Record<string, unknown>) => {
+      const first = Math.min(...Object.keys(errors).map((k) => stepOfKey(def, k)));
+      if (Number.isFinite(first) && first !== step) {
+        setStep(first);
+        setStepMessage("Please complete the highlighted fields on this step, then continue to the last step to finish.");
+      }
+      scrollToError();
+    },
+    [def, step],
+  );
+
+  /** What a restored draft does not carry: the never-saved fields, said in the person's terms. */
+  const restoredMessage = useMemo(() => {
+    const kinds = new Set(def.steps.flatMap((s) => s.fields.filter((f) => f.neverSaved).map((f) => f.kind)));
+    const parts = [...(kinds.has("emailCode") ? ["verify your email"] : []), ...(kinds.has("password") ? ["type your password"] : [])];
+    return parts.length ? `We restored your progress. For your security, please ${parts.join(" and ")} again.` : "We restored your progress.";
+  }, [def]);
+
   const next = useCallback(async () => {
     setStepMessage(null);
     if (!(await form.trigger(keysOfStep(def, step), { shouldFocus: true }))) return scrollToError();
@@ -184,10 +208,10 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
           }
           apply(await submitToApi(def, backend, values, { query, getCaptchaToken, retry }));
         },
-        () => scrollToError(),
+        (errors) => showFirstInvalidStep(errors as Record<string, unknown>),
       )(),
-    [form, backend, def, apply, query, getCaptchaToken, retry],
+    [form, backend, def, apply, query, getCaptchaToken, retry, showFirstInvalidStep],
   );
 
-  return { form, step, showIntro, start: () => setShowIntro(false), restored, stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
+  return { form, step, showIntro, start: () => setShowIntro(false), restored, restoredMessage, stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
 }
