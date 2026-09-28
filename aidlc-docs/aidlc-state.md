@@ -4,67 +4,41 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration, CODE GENERATION on branch `s1/worker-registration`. Steps 1-11 done (plus 5b, 9b, and step 13 = email verification before the password, a scope change of 2026-09-28). Step 12: every local item done 2026-09-28; what remains needs the user (push → CI + Vercel preview; Neon branch rehearsal; production gate). See "Resume here" below.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration. Code generation steps 1-13 done and **merged to main 2026-09-28** (PRs #11, #12); the database side rehearsed on a Neon branch; the production database run, api hosting, config, CRM notification and deploy remain. See "Resume here".
 
-## Resume here (updated 2026-09-28)
+## Resume here (rewritten 2026-09-28, end of day)
 
-### 1. First: the sign-in hotfix (ready, NOT pushed -- user decision)
-- **Branch** `fix/signin-email-lookup`, based on `origin/main` 25eb04e: 2 commits, 5 files.
-- **Where:** a separate git worktree at `C:/Users/toton/Desktop/New folder/Remonta-hotfix`, with its own node_modules and a copy of `apps/app/.env`.
-  - `ca7bb69`: exact `lower(email)` lookup. Fixes the ILIKE wildcard bug, where `a_b@` matched `axb@` and `%@domain` matched another account.
-  - `0aaa571`: sign-in no longer caches the account (password hash, status) in Redis for 1 h. Before, the old password worked after a reset and suspended accounts could sign in.
-- **Verified:** `@remonta/app` quality 149/518, 62 tests; 7 DB tests (3 of 4 fail against the old code); `next build` 99 pages.
-- **Already merged into S1** (`63f0056`), so the two branches cannot conflict back.
-- **To ship it** (CLAUDE.md process):
-  1. `git -C ../Remonta-hotfix push origin fix/signin-email-lookup`
-  2. PR: https://github.com/remontasupport/remontamarketplace/compare/main...fix%2Fsignin-email-lookup?expand=1 -- check it shows **2 commits, 5 files**.
-  3. Preview: sign in; sign in with CAPITALS in the email; on a test account, reset the password and confirm the OLD password is refused at once.
-  4. "Merge pull request" (not squash), then the same checks on production.
-- **Afterwards:** `git worktree remove ../Remonta-hotfix` (it holds a copy of `.env`).
+**Standing instruction (user, 2026-09-28):** no other work until `apps/api` is deployed and in use. Everything below is on that path only.
 
-### 2. S1 step 10 -- backfill scripts: DONE 2026-09-28 (local verification only)
-- `apps/api/scripts/backfill-worker-locations.ts` and `backfill-worker-onboarding.ts`; package scripts `backfill:locations` / `backfill:onboarding` (they read `apps/api/.env` via `--env-file`, so they target whatever `AUTH_DATABASE_URL` / `DIRECT_DATABASE_URL` point at -- for the local DB run `node --import tsx scripts/<name>.ts` with the URL exported instead).
-- Dry run by default, `--apply` to write, `--report=<file>` for the full JSON. Idempotent. Details and decisions in the plan (step 10).
-- **Still to do on the Neon branch** (step 12): migrations → `localities:refresh` → both dry runs → user reviews the ambiguous/unmatched list and the estimate counts → `--apply`.
+### Where things are
+- **S1 is in production's code:** PR #11 (merge 282ac0f) and PR #12 (6452bb3) merged 2026-09-28. Both live apps run S1's code with the sign-up **on the legacy path** (the switch defaults to `legacy`); `apps/api` is not deployed anywhere. Production read checks after the deploy: login, sign-up page, suburb search (Google fallback: production has no S1 tables yet), categories -- all 200.
+- **The production database is unchanged:** no S1 migration has run on it. Vercel runs no migrations.
+- **The database side is rehearsed end to end** on Neon branch `rehearse-w1` (a reset copy of production of 2026-09-28): migrations forward → all 12 `down.sql` → diff against the pre-S1 schema empty → forward again; suburb list (plan `074d18238f0f0465`, 15,467 rows); both backfill dry runs reviewed and approved by the user; applied (1,719 HOME rows of 1,789 profiles, 1,789 markers, ~7 min batched) and re-applied (0 written). Runbook: `aidlc-docs/construction/S1-registration/S1-production-run.md`. `rehearse-w1` can be deleted.
+- **The branch `s1/worker-registration` is 4 commits ahead of main** (the matcher rules from the rehearsal, the batched backfills, docs): 3ace3be, 81f5bf6, 6bff052 (+ the state commit). Production must run with them.
+- **The hotfix branch / worktree are moot:** its commits reached main inside S1. `git worktree remove ../Remonta-hotfix` when convenient (it holds a copy of `.env`).
 
-### 2b. Step 13 -- email verification before the password: BUILT 2026-09-28 (scope change)
-- Stateless like the client sign-up (user decision: no table): a signed ticket, 10-minute expiry, checked again at sign-up (R6). Two contract entries, an `emailCode` field kind, the password disabled until verified. Details in the plan (step 13).
-- **Verified in the browser by the user, 2026-09-28:** send code → verify → password appears → availability check on blur → services → complete sign-up, all against the local database. Plus the availability check, the hostile-input suite, and the local catalogue seed (see the plan, step 13).
-- Open: a verified Remonta sender domain in Resend, so real addresses receive the code.
+### The path to "deployed and in use", in order
+1. **PR to main** for the branch's commits (user opens: compare link with the slash encoded; expect 4 commits, 9 files; wait for the checks this time; "Merge pull request").
+2. **Production database run** on the user's approval, per the runbook: production **direct** string in `apps/api/.env` under a name other than `AUTH_DATABASE_URL` (the runner refuses the rehearsal endpoint); status → migrate → suburb list → dry runs → user reviews the real reports → apply → apply again (0) → verify `/api/suburbs` returns ids. ~10 min. Visible effect: the suburb search stops calling Google.
+3. **Infrastructure Design + Dockerfile** for `apps/api`: AWS Sydney; App Runner recommended (long-running process: pool, hash workers, outbox dispatcher, job leases); secrets in Secrets Manager. Needs nothing from the user to write; an AWS account to provision.
+4. **Production configuration** for the api: `CORS_ORIGINS` (the app's origin), `RECAPTCHA_ALLOWED_HOSTNAMES=app.remontaservices.com.au`, `IP_HASH_SECRET`, `PHOTO_STORE=vercel-blob` + `BLOB_READ_WRITE_TOKEN`, `APP_BASE_URL`, `EMAIL_FROM` on a **verified Resend domain** (user), `N8N_REGISTRATION_WEBHOOK_URL`.
+5. **The deferred CRM notification** for api-mode sign-ups (outbox handler; payload snapshot-tested against the legacy one). A hard gate: without it api-mode sign-ups never reach Zoho.
+6. **Deploy**, verify with the switch off (health, suburb search, a photo upload), then set `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` in Vercel and flip the switch (Upstash key `switch:registration` = `api`) for a canary; flipping back is the rollback.
+7. Afterwards: re-record the Vercel last-known-good deployment ids in CLAUDE.md (they predate 2026-09-28); the open decision on 10 codes/h per IP (20/h behind shared office addresses?).
 
-### 3. Remaining S1 steps
-- **Step 11 (CI + docs): DONE 2026-09-28** (`ci-api.yml`, CLAUDE.md). CI itself runs only once the branch is pushed; rehearsed locally on a fresh database (all 323 api tests).
-- **Step 12 (Build and Test): local items DONE 2026-09-28** (all gates, both builds, both switch modes end to end, the bench, the generated-client decision = do not commit). See the plan for the numbers.
-  - **MERGED TO MAIN 2026-09-28 09:09 UTC** as PR #11 (merge commit 282ac0f, 44 commits, 305 files, "Merge pull request", not squash) -- merged 12 s after the checks started, before they finished. `API Quality` on the PR later went red on a seed-dependent property-test flaw (fixed in eee55d8, test only). main's own CI after the merge: all four workflows green. Production (Vercel) deployed main: login 200, sign-up page 200, suburb search 200 (Google fallback: production has no S1 migrations yet, by design), categories 200. Production database unchanged (Vercel runs no migrations). Sign-up stays on the legacy path (switch default).
-  - **PR #12 merged 09:38 UTC** (merge 6452bb3; its API Quality had passed on both Node versions first). main = 6452bb3; the S1 branch is entirely in main.
-  - **Now:** (1) ~~the follow-up PR~~ done; (2) the CLAUDE.md step 7 production checks the user can do: sign in, load a dashboard; a legacy sign-up only with a throwaway identity (it creates a real account and a CRM lead); (3) re-record the Vercel last-known-good deployment ids in CLAUDE.md (Vercel dashboard); (4) the hotfix branch is in main via S1 -- its separate PR is moot; `git worktree remove ../Remonta-hotfix` when convenient; (5) ~~a Neon branch rehearsal~~ **DONE 2026-09-28 on `rehearse-w1`**: migrations forward/back/forward (exact), suburb list, both backfills applied and proven idempotent (1,719 HOME rows, 1,789 markers). Runbook: `aidlc-docs/construction/S1-registration/S1-production-run.md`. **Next:** PR to main for the matcher + batching commits (branch is ahead of main), then the production run on the user's approval, then the api hosting (Infrastructure Design), config, CRM notification, deploy, canary.
-- **Before any production switch to `api`:**
-  - the deferred CRM notification must exist (the user skipped it for now);
-  - production migrations (record `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` first) → `localities:refresh` → backfill dry runs → user approval → `--apply`.
+### Waiting on the user right now
+- Open the PR (1) and, after it merges, the go for the production run (2) with the production direct connection string placed as described.
+- A verified Remonta sender domain in Resend (needed by 4; until then the test sender delivers only to the account owner).
+- An AWS account/region decision for 3 (App Runner recommended).
 
-### 4. Waiting on the user
-- **Push decision** for the hotfix (above).
-- **A test email send:** `apps/api/.env` has `EMAIL_FROM` set to Resend's test sender (onboarding@resend.dev), which only delivers to the Resend account owner. Set a verified Remonta sender for real inboxes, or approve one test send.
-- **reCAPTCHA:** a full api-mode sign-up needs a real token, which needs the site key to allow `localhost` (Google reCAPTCHA admin), or it is tested on the Vercel preview.
-- **A Neon branch** for rehearsing the migrations and backfills (before step 12).
-- **Open follow-ups, not S1:**
-  - the stale `UserRole` type in packages/schemas;
-  - two duplicate `users.email` indexes to drop (a contract step);
-  - move the other hand-built forms (8 suburb pickers, 11 multi-step pages) onto the form engine one at a time;
-  - admin users search still uses `contains` + insensitive (harmless wildcards, admin only).
+### Local environment to continue
+- **Docker Desktop** running: container `remonta-s1-pg` (postgis/postgis:16-3.4, port 55432), database `s1test` with all migrations, 15,467 localities, the catalogue seed (`packages/db/scripts/local/seed-catalogue.sql`), and today's test rows (incl. user `test-avail-user` = clentbacatan123@gmail.com). If `au_localities` is ever empty: `@remonta/db`'s test truncates it -- reload with `localities:refresh` (dry run → `--apply --expect=<hash>`).
+- **`apps/api/.env`:** the user's secrets plus `REHEARSAL_DATABASE_URL` (the rehearse-w1 pooled string; the scripts derive the direct one). `AUTH_DATABASE_URL` there points at the LOCAL database.
+- **Run locally:** see CLAUDE.md "apps/api" (api on 4000; the app dev server with the env overrides; legacy mode needs `N8N_REGISTRATION_WEBHOOK_URL=http://127.0.0.1:9/` so no test sign-up reaches the live CRM).
+- **Nothing is running now** (api, dev server, Studio all stopped). Uncommitted: only regenerated Prisma clients (`apps/*/src/generated`) -- never commit them (machine paths; `postinstall` regenerates).
 
-### 5. Local environment to continue
-- **Docker Desktop** must be running: container `remonta-s1-pg` (postgis/postgis:16-3.4, port 55432).
-  - Database `s1test`: all S1 migrations applied (patched in place), 15,467 localities loaded; used by every DB test via `TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test`.
-  - If the container is gone: recreate the database from `template0`, run `migrate deploy`, then `localities:refresh --apply` (packages/db README).
-- **`apps/api/.env`:** the user's secrets (never read by Claude) plus non-secret values Claude added (CORS_ORIGINS, RECAPTCHA_ALLOWED_HOSTNAMES, IP_HASH_SECRET, EMAIL_FROM, APP_BASE_URL).
-  - Run: `cd apps/api && pnpm run build && node --env-file=.env dist/main.js` (port 4000). Unset any shell AUTH_DATABASE_URL first: `--env-file` does not override it.
-- **`apps/app` dev against the local DB** (never with its .env as is -- it points at production DB and Redis):
-  `AUTH_DATABASE_URL=…/s1test DATABASE_URL=…/s1test DIRECT_DATABASE_URL=…/s1test UPSTASH_REDIS_REST_URL= UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev -p 3000`
-- **G-NAF extract:** `C:/data/gnaf` (for future `localities:build`). k6 binary: this session's scratchpad (download again if needed).
-- **Uncommitted in the S1 tree:** only regenerated Prisma clients (`apps/*/src/generated`). Never commit them without checking `git diff --ignore-all-space --numstat`.
-- **Local catalogue:** the services step reads Category/Subcategory, empty on a fresh `s1test`. Seed with `docker exec -i remonta-s1-pg psql -U postgres -d s1test < packages/db/scripts/local/seed-catalogue.sql` (from apps/app's SERVICE_OPTIONS; local only).
-- **Trap (bit on 2026-09-28):** `pnpm --filter @remonta/db test` TRUNCATEs `au_localities` on the database in `TEST_DATABASE_URL` and leaves it empty. Reload: `DIRECT_DATABASE_URL=…/s1test pnpm --filter @remonta/db localities:refresh` (prints the plan hash), then the same with `--apply --expect=<hash>`.
+### Open follow-ups, NOT on the path (parked by the standing instruction)
+- SERVICE_OPTIONS in `apps/app/src/constants` is stale vs the catalogue (two services not in the database, none of the real sub-categories); the stale `UserRole` type in packages/schemas; two duplicate `users.email` indexes; the other hand-built forms onto the form engine; admin users search still `contains` + insensitive.
 
 ## Workspace State
 - **Existing Code**: Yes
