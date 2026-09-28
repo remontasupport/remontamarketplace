@@ -9,9 +9,12 @@ export type HttpFailure =
   | { kind: 'blocked'; reason: string } // refused before sending: a bug, not an outage
   | { kind: 'timeout' }
   | { kind: 'network'; message: string }
-  | { kind: 'status'; status: number }
+  /** detail: the start of the error body (bounded), for the log -- a provider's reason. */
+  | { kind: 'status'; status: number; detail?: string }
   | { kind: 'too-large' }
   | { kind: 'invalid-response'; issues: string }
+
+const ERROR_DETAIL_BYTES = 512
 
 export type HttpResult<T> = { ok: true; status: number; data: T } | { ok: false; error: HttpFailure }
 
@@ -80,8 +83,11 @@ export class SafeHttpClient {
 
     const okStatus = req.okStatuses ? req.okStatuses.includes(res.status) : res.status >= 200 && res.status < 300
     if (!okStatus) {
+      // The provider's reason ("domain not verified", "testing emails only to ...")
+      // is worth a log line; keep the start of the body, never more.
+      const detail = (await readBounded(res, ERROR_DETAIL_BYTES).catch(() => null))?.replace(/\s+/g, ' ').trim()
       await res.body?.cancel().catch(() => {})
-      return fail({ kind: 'status', status: res.status })
+      return fail({ kind: 'status', status: res.status, ...(detail ? { detail } : {}) })
     }
 
     const text = await readBounded(res, this.maxBytes)

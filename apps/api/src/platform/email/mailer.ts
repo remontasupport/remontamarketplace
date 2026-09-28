@@ -43,7 +43,8 @@ export class ResendMailer implements Mailer {
     })
     if (res.ok) return res.data
     const e = res.error
-    if (e.kind === 'status' && e.status >= 400 && e.status < 500 && e.status !== 429) throw new PermanentFailure(`resend refused the email: HTTP ${e.status}`)
-    throw new Error(`resend unavailable: ${e.kind}${e.kind === 'status' ? ` ${e.status}` : ''}`)
+    const said = e.kind === 'status' && e.detail ? ` -- ${e.detail}` : ''
+    if (e.kind === 'status' && e.status >= 400 && e.status < 500 && e.status !== 429) throw new PermanentFailure(`resend refused the email: HTTP ${e.status}${said}`)
+    throw new Error(`resend unavailable: ${e.kind}${e.kind === 'status' ? ` ${e.status}${said}` : ''}`)
   }
 }

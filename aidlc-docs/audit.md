@@ -1299,3 +1299,20 @@ Reported the position and the pending decisions; no code changed.
 **AI action (cont.):** Cause: the send-code rate limit (10/h per IP). The earlier retry loop had made 19 requests from 127.0.0.1, so every click got 429; the engine retried the 429 and, out of attempts, showed the "couldn't reach" text. Cleared `rate_limit_buckets` on the local database (2 rows). Engine fix: when retries run out, the last answer decides the message -- 429 → "Too many requests from this connection...", 5xx on the send → "couldn't send the code", else "couldn't reach". Test added. No api change (no restart needed; the dev server recompiles the engine).
 
 ---
+
+**User input (verbatim):**
+> why there is too many request? I only clicked the button once
+
+**AI action:** Checking the api log for the requests behind the latest click and the current counters.
+
+---
+
+**User input (verbatim):**
+> it says We couldn't send the code right now. Please try again in a moment.
+
+**AI action:** Checking the api log for the provider's answer, and whether the mailer records Resend's reason.
+
+---
+**AI action (cont.):** Resend answered 403 again, and the http client discarded the body, so the reason was invisible. Change: `SafeHttpClient` keeps the first 512 bytes of an error body as `detail` (log only, never returned); the mailer puts it in its message. Test added (units.test: the provider's reason appears). Api rebuilt and restarted; asked the user to click once more so the log shows Resend's exact reason.
+
+---

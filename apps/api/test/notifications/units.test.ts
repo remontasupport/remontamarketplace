@@ -48,8 +48,10 @@ describe('ResendMailer', () => {
     expect(JSON.parse(String(calls[0]!.init.body))).toMatchObject({ from: 'Remonta <noreply@example.test>', to: ['a@b.test'] })
   })
 
-  it('a 4xx is permanent (no point retrying); 429 and 5xx are retried', async () => {
+  it('a 4xx is permanent (no point retrying) and carries the provider reason for the log; 429 and 5xx are retried', async () => {
     await expect(mailer(() => new Response('{}', { status: 422 })).m.send(email)).rejects.toBeInstanceOf(PermanentFailure)
+    const refused = mailer(() => new Response(JSON.stringify({ statusCode: 403, message: 'You can only send testing emails to your own email address' }), { status: 403 }))
+    await expect(refused.m.send(email)).rejects.toThrow(/HTTP 403 -- .*testing emails to your own email address/)
     for (const status of [429, 500, 503]) {
       const err = await mailer(() => new Response('{}', { status })).m.send(email).catch((e: unknown) => e)
       expect(err).toBeInstanceOf(Error)
