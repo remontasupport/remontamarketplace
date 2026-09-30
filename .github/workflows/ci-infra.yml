@@ -1,0 +1,56 @@
+# CI for the infrastructure package (infra/): lint, strict tsc, the CDK assertion
+# tests and a `cdk synth` of every stack. None of it needs AWS credentials: the
+# availability zones the VPC pins are seeded in infra/cdk.json, so synthesis is
+# a pure function of the code. `cdk diff` against the live account comes after
+# the bootstrap exists (it needs the lookup role) and is not here yet.
+#
+# Check name: Infra Quality.
+
+name: CI (infra)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ci-infra.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ci-infra.yml"
+
+concurrency:
+  group: ci-infra-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Infra Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # eslint · tsc · vitest (CDK assertions) · cdk synth of all four stacks, no credentials.
+      - name: Infra quality gate
+        run: pnpm --filter @remonta/infra run quality
