@@ -63,7 +63,7 @@
             }
           ],
           "maxBodyKb": 1,
-          "loadShedding": "exempt"
+          "probe": true
         }
       }
     },

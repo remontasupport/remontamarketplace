@@ -60,7 +60,7 @@ describe('load shedding', () => {
     await t.close()
   })
 
-  it('never sheds an entry marked exempt (the health check)', async () => {
+  it('never sheds a probe (the health check)', async () => {
     const shedder = new LoadShedder({ maxInFlight: 1, maxEventLoopDelayMs: 1, delayProbe: () => 10_000 })
     const t = await testApp({
       contracts: [platformContract],

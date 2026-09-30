@@ -41,6 +41,18 @@ describe('loadConfig', () => {
     },
   )
 
+  it('accepts one wildcard label for staging (Vercel previews), and nothing looser', () => {
+    const staging = loadConfig({ ...complete, CORS_ORIGINS: 'https://*.vercel.app', RECAPTCHA_ALLOWED_HOSTNAMES: '*.vercel.app' })
+    expect(staging.CORS_ORIGINS).toEqual(['https://*.vercel.app'])
+    expect(staging.RECAPTCHA_ALLOWED_HOSTNAMES).toEqual(['*.vercel.app'])
+    for (const bad of ['https://*.app', 'https://**.vercel.app', 'https://a.*.vercel.app', 'http://*.vercel.app', 'https://*.vercel.app:443']) {
+      expect(problems({ ...complete, CORS_ORIGINS: bad }), bad).not.toEqual([])
+    }
+    for (const bad of ['*', '*.app', 'a.*.vercel.app', '*.*.vercel.app']) {
+      expect(problems({ ...complete, RECAPTCHA_ALLOWED_HOSTNAMES: bad }), bad).not.toEqual([])
+    }
+  })
+
   it.each([
     ['a wildcard origin', { CORS_ORIGINS: '*' }],
     ['a plain-http public origin', { CORS_ORIGINS: 'http://app.remontaservices.com.au' }],

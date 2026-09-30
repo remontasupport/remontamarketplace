@@ -13,8 +13,8 @@ import type { Handler, HandlerSet } from './handlers'
 
 declare module 'fastify' {
   interface FastifyContextConfig {
-    /** From meta.loadShedding; read by the load-shedding hook in app.ts. */
-    shedExempt?: boolean
+    /** From meta.probe: never load-shed and served over plain HTTP (app.ts onRequest). */
+    probe?: boolean
   }
 }
 
@@ -68,7 +68,7 @@ export function bindContracts(app: FastifyInstance, opts: BindOptions): void {
       // Step 2: over-size JSON is refused before parsing. Multipart streams are
       // bounded per file in the pipeline instead (Fastify's bodyLimit skips them).
       bodyLimit: entry.meta.maxBodyKb * 1024,
-      config: { shedExempt: entry.meta.loadShedding === 'exempt' },
+      config: { probe: entry.meta.probe === true },
       handler: buildRouteHandler(id, entry, handler, opts.deps),
     }
     app.route(route)

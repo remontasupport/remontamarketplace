@@ -34,11 +34,13 @@ export interface Meta {
   /** Cache-Control max-age for a public, non-personal GET. */
   cacheSeconds?: number
   /**
-   * 'exempt': never refused by load shedding. Only for cheap probes (a GET with no
-   * input), so a health check keeps answering during a burst instead of getting the
-   * instance restarted by its load balancer.
+   * An infrastructure probe (a cheap GET with no input and no personal data): never
+   * load-shed, so a health check keeps answering during a burst instead of getting
+   * the task replaced by its load balancer; and served over plain HTTP, because the
+   * load balancer's health checker is not a proxied request and carries no
+   * X-Forwarded-Proto. Only the health entry may declare it (checks.ts).
    */
-  loadShedding?: 'exempt'
+  probe?: true
 }
 
 const metaSchema = z.strictObject({
@@ -59,7 +61,7 @@ const metaSchema = z.strictObject({
   maxBodyKb: z.number().int().positive().max(10240),
   audit: z.string().regex(/^[A-Z][A-Z_]+$/).optional(),
   cacheSeconds: z.number().int().positive().max(86400).optional(),
-  loadShedding: z.literal('exempt').optional(),
+  probe: z.literal(true).optional(),
 })
 
 /** Declares an entry's security metadata; throws at load time if it is malformed. */

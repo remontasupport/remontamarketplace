@@ -146,9 +146,13 @@ export function initialMarker(w: LegacyWorkerFacts, now: Date): InitialMarker {
     }
   })()
 
+  // `entered` may be one of the estimates above (verifiedAt = now, ...): then the
+  // stage's own timestamp is an estimate too and must say so. Identity, not value:
+  // a row whose date happens to equal `now` is a fact (CI edge, 2026-09-28).
+  const enteredIsFact = entered !== null && entered !== now
   return {
     stage,
-    stageEnteredAt: entered ?? approx(now, 'stageEnteredAt = now (no dated fact for the stage)'),
+    stageEnteredAt: enteredIsFact ? entered : approx(now, 'stageEnteredAt = now (no dated fact for the stage)'),
     signedUpAt: w.createdAt,
     firstSignInAt,
     firstDocumentAt,

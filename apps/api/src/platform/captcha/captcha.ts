@@ -3,6 +3,7 @@
 // unreachable provider rejects the request, and the provider's response is
 // schema-validated with the action and hostname checked, not just `success`.
 import * as z from 'zod'
+import { hostAllowed } from '../../config/hosts'
 import type { SafeHttpClient } from '../http/safe-http-client'
 
 export type CaptchaOutcome = { ok: true; score: number } | { ok: false; reason: 'missing' | 'rejected' | 'unavailable'; detail: string }
@@ -38,7 +39,7 @@ export class RecaptchaV3Verifier implements CaptchaVerifier {
     const r = res.data
     if (!r.success) return { ok: false, reason: 'rejected', detail: `not successful: ${(r['error-codes'] ?? []).join(',')}` }
     if (r.action !== expectedAction) return { ok: false, reason: 'rejected', detail: `action ${r.action ?? '(none)'} != ${expectedAction}` }
-    if (!r.hostname || !this.opts.allowedHostnames.includes(r.hostname)) return { ok: false, reason: 'rejected', detail: `hostname ${r.hostname ?? '(none)'}` }
+    if (!r.hostname || !hostAllowed(this.opts.allowedHostnames, r.hostname)) return { ok: false, reason: 'rejected', detail: `hostname ${r.hostname ?? '(none)'}` }
     if (r.score === undefined || r.score < this.opts.minScore) return { ok: false, reason: 'rejected', detail: `score ${r.score ?? '(none)'}` }
     return { ok: true, score: r.score }
   }
