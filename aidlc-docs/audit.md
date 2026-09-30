@@ -1834,3 +1834,9 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-09-30):**
 > Yes, go ahead with the infrastructure code
+
+**User input (verbatim, 2026-09-30):**
+> I think AWS is very complicated for my requirements, is there any recommended stack to deploy a backned nest.js?
+
+**User input (verbatim, 2026-09-30):**
+> I think we should go for Google Cloud Run

@@ -1,6 +1,11 @@
 # S1 — Infrastructure Design: `apps/api` on AWS
 
-**Unit:** S1-registration. **Date:** 2026-09-28. **Status:** for the user's review.
+**Unit:** S1-registration. **Date:** 2026-09-28. **Status:** approved 2026-09-28; **hosting superseded 2026-09-30 by Google
+Cloud Run** (`plans/S1-infrastructure-code-generation-plan.md` §3b, D14–D21): the user judged AWS too complicated for the
+requirements. The requirement that drove this design (an always-on process for the outbox and the scheduler) is met on
+Cloud Run by instance-based billing with a minimum of one instance; the ALB, WAF, VPC, IAM/OIDC and CDK are replaced by
+Cloud Run's managed equivalents, Secret Manager, Workload Identity Federation and a rendered service definition
+(`infra/`). Kept as the reasoning record: the sizing, the probe requirement (§4), secrets (§6), alerts (§7), NFR mapping.
 **Inputs:** the answered plan `aidlc-docs/construction/plans/S1-registration-infrastructure-design-plan.md`,
 `S1-design.md` §2, `requirements.md` §6, the code (`config.ts`, `main.ts`, `app.ts`, the contracts).
 **Companion:** `deployment-architecture.md` (diagram, pipeline, first-deploy runbook, rollback).

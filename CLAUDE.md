@@ -126,37 +126,41 @@ rollback and takes effect on the next request.
 
 ---
 
-## apps/api on AWS (`infra/`, CDK)
+## apps/api on Google Cloud Run (`infra/`)
 
-Two deployments from one construct, `infra/lib/api-stack.ts`, driven by `infra/lib/stages.ts`:
-**staging** (`api-staging.remontaservices.com.au`, the `rehearse-w1` Neon copy, admits Vercel
-previews, 1 task) and **prod** (`api.remontaservices.com.au`, 2 tasks, seven alarms). Plus the
-image repository and the GitHub deploy role, deployed once by hand. Design:
-`aidlc-docs/construction/S1-registration/infrastructure-design/`; package guide: `infra/README.md`.
+Two Cloud Run services in `australia-southeast1`, both described by **one table**, `infra/lib/stages.ts`:
+**staging** (`remonta-api-staging`: one always-on instance on the `rehearse-w1` Neon copy, admits
+Vercel previews) and **prod** (`remonta-api`: 1–4 instances, exact origins, the full alert set).
+`pnpm --filter @remonta/infra run render` turns the table into `infra/cloudrun/service.<stage>.yaml`,
+which is what gets deployed; a drift test fails if the two disagree. `infra/cloudrun/bootstrap.sh`
+prepares a fresh project once. Guide: `infra/README.md`; decisions: the code-generation plan §3b.
 
 ```
-Quality:   pnpm --filter @remonta/infra run quality   (lint · tsc · CDK assertions · synth, no credentials)
+Quality:   pnpm --filter @remonta/infra run quality   (lint · tsc · tests · render:check, no credentials)
 Deploy:    merge to main touching apps/api, packages, infra, lockfile → Actions "deploy-api" → STAGING only
 Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<sha that passed the preview checklist>
-Rollback:  the same dispatch with a previous sha (either stage); the ECS circuit breaker undoes a bad task definition itself
-Health:    https://api[-staging].remontaservices.com.au/v1/health   (a contract `probe`: never shed, plain HTTP allowed)
-Logs:      CloudWatch → /remonta/api/<stage>   (filter: { $.reqId = "<x-request-id>" })
-Secrets:   Secrets Manager remonta/api/<stage>/*   (change a value, then ECS → Update service → Force new deployment)
-Alarms:    SNS remonta-api-<stage>-alerts → support@remontaservices.com.au (confirm the subscription once)
+Rollback:  the same dispatch with a previous sha; or Cloud Run → service → Revisions → route traffic back
+URL:       https://remonta-api[-staging]-<project number>.australia-southeast1.run.app  (no custom hostname yet)
+Health:    <url>/v1/health   (a contract `probe`: never shed, plain HTTP allowed -- Cloud Run's probes hit it)
+Logs:      Cloud Logging → resource.type="cloud_run_revision" AND jsonPayload.reqId="<x-request-id>"
+Secrets:   Secret Manager remonta-api[-staging]-<NAME>   (add a version, then redeploy: instances read secrets at start)
+Alerts:    Cloud Monitoring policies "<service> <name>" → support@remontaservices.com.au
+Pause:     gcloud run services update remonta-api-staging --region australia-southeast1 --min-instances=0 --cpu-throttling
 Switch:    Upstash key switch:registration = api | legacy   (production's only path to the api; no deploy needed)
 ```
 
 Rules that have earned their place:
 
-- **Production is a promotion, never a push.** Nothing deploys `RemontaApiProd` except a
+- **Production is a promotion, never a push.** Nothing deploys `remonta-api` except a
   `workflow_dispatch` naming an image that already runs on staging.
-- **Rollback = redeploy an existing image, never rebuild.** Images stay in ECR (last 20).
-- **`cdk synth` must stay credential-free.** The VPC's availability zones are seeded in
-  `infra/cdk.json`; a construct that needs a lookup breaks CI, so add its answer there too.
+- **Rollback = redeploy an existing image, never rebuild.** Images stay in Artifact Registry (newest 20).
+- **Edit the table, not the YAML.** `service.*.yaml` is generated; the gate rejects a hand edit.
+- **CPU always allocated, minimum one instance.** The outbox dispatcher and the scheduler run between
+  requests; a service that scales to zero silently stops sending emails.
 - **Staging's wildcards are staging's.** `https://*.vercel.app` and `*.vercel.app` (one label,
   `apps/api/src/config/hosts.ts`) exist for previews. Production values are exact.
-- **The first deploy of a stage pauses on the ACM certificate** until its validation CNAME is
-  added in Vercel DNS; then add the `api`/`api-staging` CNAME to the `ApiLoadBalancerDns` output.
+- **The api needs no DNS.** Its `run.app` URL is called only by the app's JavaScript
+  (`NEXT_PUBLIC_API_URL`); CORS and reCAPTCHA concern the app's origin, not the api's.
 
 ---
 

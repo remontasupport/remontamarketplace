@@ -1,6 +1,9 @@
 # S1 — Deployment architecture: `apps/api` on AWS
 
-**Unit:** S1-registration. **Date:** 2026-09-28. **Status:** for the user's review.
+**Unit:** S1-registration. **Date:** 2026-09-28. **Status:** approved 2026-09-28; **hosting superseded 2026-09-30 by
+Google Cloud Run** (plan §3b, D14–D21) at the user's request. The pipeline shape below (build → registry → staging on push →
+promotion to prod → rollback = an existing image) is what was built; the AWS components (ALB, WAF, ECS, CDK) are replaced by
+Cloud Run's equivalents. Current operations: `infra/README.md` and CLAUDE.md "apps/api on Google Cloud Run".
 Read with `infrastructure-design.md` (the components, sizes, IAM, alarms, NFR mapping).
 
 ## 1. Runtime topology
@@ -91,6 +94,13 @@ The image for any previous commit stays in ECR (last 20) — rollback is a redep
 
 ## 5. First-deploy runbook
 
+> **Cloud Run (2026-09-30):** the AWS-specific steps below (account bootstrap, ACM certificate, DNS CNAMEs, Secrets
+> Manager names) are replaced by `infra/README.md` → "Bootstrap" and "Deploying" and by
+> `S1-registration/code/infra-summary.md` → "What the first deploy needs from the user": one `bootstrap.sh` run, three
+> GitHub variables, six secret values per stage, no DNS. **The verification lists in steps 5 and 5b still apply**, with
+> `https://api[-staging].remontaservices.com.au` read as the stage's `run.app` URL, and "ECS → task" read as
+> "Cloud Run → revision". Step 0 and the switch/canary steps 6–7 are unchanged.
+
 Order matters. Steps marked **(user)** need the user's credentials or accounts; the rest is done from the repository.
 
 **0. Before AWS (user)**
@@ -142,17 +152,18 @@ Order matters. Steps marked **(user)** need the user's credentials or accounts; 
 ## 6. Operations reference (goes into CLAUDE.md when approved)
 
 ```
-Logs:      CloudWatch → /remonta/api/<stage>  (filter: { $.reqId = "<x-request-id>" })
-Health:    https://api[-staging].remontaservices.com.au/v1/health
+Logs:      Cloud Logging → resource.type="cloud_run_revision" AND jsonPayload.reqId="<x-request-id>"
+Health:    https://remonta-api[-staging]-<project number>.australia-southeast1.run.app/v1/health
 Deploy:    merge to main (apps/api, packages, infra) → Actions "deploy-api" → STAGING only
 Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<sha verified on staging>
 Rollback:  the same dispatch with a previous sha (either stage)
-           or ECS → remonta-api-<stage> → Update → previous task definition
+           or Cloud Run → service → Revisions → route 100 % to the previous revision
 Switch:    Upstash key switch:registration = api | legacy   (no deploy needed)
-Secrets:   Secrets Manager remonta/api/<stage>/*  (changing one: update value, then
-           ECS → Update service → Force new deployment; tasks read secrets at start)
-Alarms:    SNS remonta-api-<stage>-alerts → support@remontaservices.com.au
+Secrets:   Secret Manager remonta-api[-staging]-<NAME>  (changing one: add a version, then
+           redeploy the same image; instances read secrets at start)
+Alerts:    Cloud Monitoring policies "<service> <name>" → support@remontaservices.com.au
 ```
 
-Amended 2026-09-30 (D9–D13 in `plans/S1-infrastructure-code-generation-plan.md` §3a): a `staging` stack
-deployed first and automatically; production by promotion only; one deploy role for both.
+Amended 2026-09-30 (D9–D13, §3a): a `staging` deployment first and automatically; production by promotion only;
+one deploy identity for both. Pivoted the same day to Cloud Run (D14–D21, §3b); the reference above is the
+Cloud Run one and is what CLAUDE.md carries.
