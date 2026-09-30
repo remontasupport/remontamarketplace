@@ -1742,3 +1742,19 @@ Reported the position and the pending decisions; no code changed.
 > Ok. now fix the reset password link, currently in the production it is serving the localhost:3000
 
 **Action (2026-09-30):** Reset link fix on branch `fix/reset-password-link`: `apps/app/src/lib/app-url.ts` resolves the app origin (NEXT_PUBLIC_APP_URL → NEXTAUTH_URL → canonical domain on production, never localhost on Vercel, no trailing slash); `lib/email.ts` uses it for the reset and dashboard links; dead `resetUrl` removed from the forgot-password route. Cause: production relies on NEXTAUTH_URL, which NextAuth does not need on Vercel and which is unset there, so the email fell back to `http://localhost:3000`.
+
+**User input (verbatim, 2026-09-30):**
+> ADDED THE NEXT_PUBLIC_APP_URL=https://app.remontaservices.com.au TO VERCEL, SHOULD i REDEPLOY?
+
+**User input (verbatim, 2026-09-30):**
+> mERGED
+
+**Action (2026-09-30):** PR #14 merged (e169c3d). Production deployment `dpl_HiesnRpG6W5SmQxiu51GotinSXJX` live at ~02:01Z; `/registration/worker` now S1's server page with `backend.mode = legacy`. Reset requested on production for support@remontaservices.com.au; the email links to `https://app.remontaservices.com.au/reset-password?token=…` -- fix verified live. A worker had reported "link doesnot work" at 01:42Z (thread in the support inbox).
+
+**User input (verbatim, 2026-09-30):**
+> Can we make sure that we don't compromise the production while building the separate backend api? I want the new backend to be fully functional before merging to production and get away from the legacy api
+
+**User input (verbatim, 2026-09-30):**
+> I noticed that when we fixed the reset link, the legacy api on the sign up was switch to the new api, make sure that we use the legacy api for now as well as making sure the reset link will be working
+
+**Action (2026-09-30):** Live check: `/registration/worker` served `mode: legacy` and Upstash `switch:registration` = `legacy` -- the submit target had not changed, but the page itself was S1's form engine (the pre-S1 page and its step components were deleted in f313a9a), which is what the user saw. Branch `fix/legacy-signup-page`: the pre-S1 page and six step components restored verbatim under `apps/app/src/features/forms/legacy/worker/` (import paths only), rendered by the server page when the switch is `legacy`; the engine wizard only in `api` mode. Their pre-existing lint debt (12 findings, same counts as before deletion) carried into the eslint baseline under the new paths. App quality green (144 ts / 508 eslint known, 78 tests); `next build` OK.
