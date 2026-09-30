@@ -3,10 +3,14 @@
 ## The one thing to know first
 
 **`main` is production for BOTH products.** A merge deploys the application
-(`app.remontaservices.com.au` + 3 domains) and the marketing site at the same time.
-There is no staging branch.
+(`app.remontaservices.com.au` + 3 domains) and the marketing site at the same time,
+within about two minutes. Every merge is a production change.
 
 **Never push to `main` directly.** Always branch → PR → verify → merge.
+
+**Anything on the `apps/api` path is proven on a Preview first.** See "Preview before
+production" below. Production users never see new backend code until the same commit has
+passed that checklist against a staging api and a non-production database.
 
 ---
 
@@ -22,7 +26,7 @@ git checkout -b <type>/<short-name>      # fix/… feat/… u9/…
 ### 2. Verify locally, before pushing
 
 ```bash
-pnpm --filter @remonta/app run quality     # 149 type · 518 lint · 54 tests
+pnpm --filter @remonta/app run quality     # 144 type · 508 lint known · 78 tests (2026-09-30)
 pnpm --filter @remonta/web run quality     # 76 lint · strict tsc
 pnpm --filter @remonta/schemas run quality # P-1..P-5 boundaries
 pnpm --filter @remonta/api-contract run quality  # contract checks, openapi.json drift
@@ -79,6 +83,45 @@ destroys per-unit revert granularity.
 
 Same checks as the preview, on the live domain. Production has its own environment
 variables; a working preview does not prove a working production.
+
+---
+
+## Preview before production (the `apps/api` path)
+
+The switch `switch:registration` (Upstash) decides what production's sign-up runs:
+`legacy` is the pre-S1 page itself (`features/forms/legacy/worker/`), `api` is the form
+engine talking to `apps/api`. Production stays on `legacy` until the api has been proven
+somewhere that is not production. The plan and its open questions:
+`aidlc-docs/construction/plans/S1-preview-first-verification-plan.md`.
+
+**The rule.** A merge to `main` may add code, but must not change what a live path does. A
+live-path change sits behind a switch whose "off" is the exact old code, and the flip
+happens only after the checklist below has passed on a Preview for the same commit.
+
+**Where.** The long-lived `staging` branch: its Vercel Preview has branch-pinned variables
+(`REGISTRATION_BACKEND=api`, `NEXT_PUBLIC_API_URL` = the staging api, a staging reCAPTCHA
+key, the Neon `staging` database) and the api deploys there from pushes to `staging`.
+Feature branches PR into `staging`; `staging` PRs into `main` when the slice is verified.
+A production hotfix branches from `main` and `main` is merged back into `staging` right
+after — `staging` always contains `main`. Until the branch and the staging api exist
+(the plan's S1–S3), the api path is not flipped anywhere but locally.
+
+**The checklist, on the `staging` preview, before any production step:** sign in with a
+staging-only user and open a dashboard · api health 200 through the ALB · suburb search
+returns rows with ids · a photo upload · a full sign-up with an internal email (code
+arrives, account created, audit row, outbox `DONE`, admin list, CRM sink payload) ·
+duplicate-email notice · rate limit refuses the 11th code with `Retry-After` · rollback
+drill (`REGISTRATION_BACKEND=legacy` renders the old page) · k6 smoke · and the
+production domain checked at the same time is unchanged. Record each run in
+`aidlc-docs/construction/S1-registration/preview-verification.md`.
+
+**Never on a preview:** production database URLs, production Upstash, the live n8n
+webhook, the production Blob token. Preview-scope variables in Vercel point at staging
+resources or are empty.
+
+**Production flip = the Upstash key only**, set to `api` for a canary after the api is
+deployed and healthy with the switch off; the key back to `legacy` is the rollback and
+takes effect on the next request.
 
 ---
 
