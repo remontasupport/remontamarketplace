@@ -1776,3 +1776,14 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-09-30):**
 > Yes the production has no NEXT_PUBLIC_API_URL or REGISTRATION_BACKEND
+
+**User input (verbatim, 2026-09-30):**
+> I am not sure how to prove this "the only open question is what Vercel's Preview scope points at today"
+
+**User input (2026-09-30):** ran `! npx vercel login` in the session; signed in.
+
+**Action (2026-09-30, Vercel via CLI, project remonta-app):** `vercel env ls`: Preview has its own `AUTH_DATABASE_URL` and `DIRECT_DATABASE_URL` (Sensitive, set ~23 days ago; values not readable, host unknown). Everything else data-touching is shared Preview+Production: Upstash, Blob token, Resend, reCAPTCHA, Zoho tokens, n8n/apply/AI-search webhooks. `NEXT_PUBLIC_APP_URL` was NOT present in remonta-app (the reset link works through the code's canonical fallback); adding it to the Production scope now.
+
+**Action (2026-09-30):** Throwaway branch `chore/preview-db-diag` pushed: a preview-only route returning database hostnames (404 on production), to learn what Vercel previews connect to. Never to be merged; branch deleted after reading.
+
+**Finding (2026-09-30, from the preview diagnostic):** previews use Neon endpoint `ep-wandering-shadow-a7pxwb8o` = the `rehearse-w1` branch (a reset copy of production with S1 applied), NOT production (`ep-delicate-recipe-a7mbt4ef`). But previews SHARE production's Upstash (`rested-sculpin-8693`: the same cache keys and the same `switch:registration`), Blob store, Resend, reCAPTCHA, Zoho tokens and all n8n webhooks (a preview sign-up reaches the live CRM). Diagnostic branch deleted; pulled env files deleted. Detaching the Preview scope from Upstash and the webhooks is left to the user (the session's policy blocks writes to the Vercel variable store); the exact commands are in the plan.

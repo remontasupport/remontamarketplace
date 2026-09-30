@@ -62,9 +62,39 @@ was rehearsed and is an improvement; it is recorded, not gated).
 ## 4. Steps
 
 - [x] **Guard**: `lib/registration-switch.ts` ignores `REGISTRATION_BACKEND` when `VERCEL_ENV === "production"`; test added. (this PR)
-- [ ] **Q1**: the user checks Vercel (a) what the Preview scope's database/Upstash/webhook/Blob variables point at
-      — if production, replace them with staging values or empty **before anything else**; (b) production scope
-      has no `NEXT_PUBLIC_API_URL` / `REGISTRATION_BACKEND`.
+- [x] **Q1 answered (2026-09-30)** by a preview-only diagnostic route on a throwaway branch (deleted after reading):
+      - Database: previews use Neon endpoint `ep-wandering-shadow-a7pxwb8o` = the **`rehearse-w1` branch**, a
+        reset copy of production with the S1 migrations, suburb list and backfills already applied. Production is
+        `ep-delicate-recipe-a7mbt4ef`. **Previews do not touch the production database.** That branch is the
+        staging database; no new Neon branch is needed.
+      - Shared with production (all targets ticked): `UPSTASH_REDIS_REST_URL/TOKEN` (same cache keys and the same
+        `switch:registration`, so a preview cannot be flipped to `api` while it reads production's key),
+        `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, both reCAPTCHA keys, the Zoho credentials, and the n8n webhooks
+        `N8N_WEBHOOK_URL`, `APPLY_WEBHOOK_URL`, `AI_SEARCH_WEBHOOK`, `Client_Registration_Webhook`,
+        `Request_Service_Webhook`, `Cancel_Archive_Webhook`, `Select_Cancelling_Request_Webhook` — a preview
+        sign-up posts to the **live CRM**.
+      - Production scope: no `NEXT_PUBLIC_API_URL` / `REGISTRATION_BACKEND` (user). `NEXT_PUBLIC_APP_URL` was
+        missing and was added to Production on 2026-09-30 (takes effect on the next deploy).
+- [ ] **Detach the Preview scope** (the user; the session cannot write the Vercel variable store). Every webhook
+      is skipped by the code when unset, the rate limiter and the cache run without Redis, so removing the Preview
+      target is enough — no replacement values. In this session, each line runs alone; check the `after` listing
+      still shows `Production` for the name:
+      ```
+      ! npx vercel env rm UPSTASH_REDIS_REST_URL preview --cwd apps/app --yes
+      ! npx vercel env rm UPSTASH_REDIS_REST_TOKEN preview --cwd apps/app --yes
+      ! npx vercel env rm N8N_WEBHOOK_URL preview --cwd apps/app --yes
+      ! npx vercel env rm APPLY_WEBHOOK_URL preview --cwd apps/app --yes
+      ! npx vercel env rm AI_SEARCH_WEBHOOK preview --cwd apps/app --yes
+      ! npx vercel env rm Client_Registration_Webhook preview --cwd apps/app --yes
+      ! npx vercel env rm Request_Service_Webhook preview --cwd apps/app --yes
+      ! npx vercel env rm Cancel_Archive_Webhook preview --cwd apps/app --yes
+      ! npx vercel env rm Select_Cancelling_Request_Webhook preview --cwd apps/app --yes
+      ! npx vercel env ls --cwd apps/app
+      ```
+      Left shared for now, recorded: Blob (preview photos land in the production store: clutter, not data),
+      Resend (preview emails are real emails: use internal addresses), the Zoho credentials (an admin sync run
+      on a preview would write to the live CRM: do not run it there), and a hard-coded n8n URL in
+      `components/dashboard/ApplyModal.tsx` (client side; a preview "apply" reaches live n8n).
 - [ ] **Infrastructure unit**: stage parameter; `RemontaApiStaging` (1 task, 0.25 vCPU) deployed first, against
       the Neon branch; `RemontaApiProd` after §3 passes. (folded into `S1-infrastructure-code-generation-plan.md`)
 - [ ] **Database**: the runbook on the Neon branch (already rehearsed); production **after** §3.
@@ -76,6 +106,7 @@ was rehearsed and is an improvement; it is recorded, not gated).
 
 | # | Question | Default |
 |---|---|---|
-| Q1 | (a) What do Vercel **Preview**-scope variables point at today? ~~(b) Production scope~~ — **(b) answered 2026-09-30: neither variable is present** | Treat (a) as production until checked |
+| Q1 | ~~(a) What do Vercel **Preview**-scope variables point at today? (b) Production scope~~ **Both answered 2026-09-30** — see §4: previews run on the `rehearse-w1` Neon branch; Upstash and the n8n webhooks are shared and must be detached from Preview; production has no api variables. | — |
 
-Everything else: defaults as written in §2. No further answers needed to proceed with the infrastructure unit.
+No open questions. The infrastructure unit can proceed; the "Detach the Preview scope" step is the user's, and it
+gates only the first preview verification, not the infrastructure work.
