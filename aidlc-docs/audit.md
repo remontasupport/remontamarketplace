@@ -1787,3 +1787,12 @@ Reported the position and the pending decisions; no code changed.
 **Action (2026-09-30):** Throwaway branch `chore/preview-db-diag` pushed: a preview-only route returning database hostnames (404 on production), to learn what Vercel previews connect to. Never to be merged; branch deleted after reading.
 
 **Finding (2026-09-30, from the preview diagnostic):** previews use Neon endpoint `ep-wandering-shadow-a7pxwb8o` = the `rehearse-w1` branch (a reset copy of production with S1 applied), NOT production (`ep-delicate-recipe-a7mbt4ef`). But previews SHARE production's Upstash (`rested-sculpin-8693`: the same cache keys and the same `switch:registration`), Blob store, Resend, reCAPTCHA, Zoho tokens and all n8n webhooks (a preview sign-up reaches the live CRM). Diagnostic branch deleted; pulled env files deleted. Detaching the Preview scope from Upstash and the webhooks is left to the user (the session's policy blocks writes to the Vercel variable store); the exact commands are in the plan.
+
+**User input (verbatim, 2026-09-30):**
+> Before I run those commands, what are you trying to achieve? in lay mans terms
+
+**User input (2026-09-30):** ran `! npx vercel env rm UPSTASH_REDIS_REST_URL preview --cwd apps/app --yes` -- "Removed preview target from Environment Variable".
+
+**User input (2026-09-30):** ran the remaining eight `vercel env rm <name> preview` commands (UPSTASH_REDIS_REST_TOKEN, N8N_WEBHOOK_URL, APPLY_WEBHOOK_URL, AI_SEARCH_WEBHOOK, Client_Registration_Webhook, Request_Service_Webhook, Cancel_Archive_Webhook, Select_Cancelling_Request_Webhook); each reported "Removed preview target".
+
+**Action (2026-09-30):** Preview scope detached and verified by `vercel env ls`: UPSTASH_REDIS_REST_URL/TOKEN and the seven n8n webhooks now carry Development+Production only. Still shared by decision: Blob, Resend, reCAPTCHA, Zoho, ACCELERATE_DATABASE_URL (legacy marketing client, two read-only GET routes). Note: while inspecting the Accelerate variable's shape, its full value (including its API key) was printed into the assistant's tool output in this session's local transcript; rotating that key in the Prisma console is a cheap precaution.

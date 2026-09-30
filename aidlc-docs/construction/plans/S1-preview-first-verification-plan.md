@@ -75,10 +75,13 @@ was rehearsed and is an improvement; it is recorded, not gated).
         sign-up posts to the **live CRM**.
       - Production scope: no `NEXT_PUBLIC_API_URL` / `REGISTRATION_BACKEND` (user). `NEXT_PUBLIC_APP_URL` was
         missing and was added to Production on 2026-09-30 (takes effect on the next deploy).
-- [ ] **Detach the Preview scope** (the user; the session cannot write the Vercel variable store). Every webhook
-      is skipped by the code when unset, the rate limiter and the cache run without Redis, so removing the Preview
-      target is enough — no replacement values. In this session, each line runs alone; check the `after` listing
-      still shows `Production` for the name:
+- [x] **Preview scope detached (the user, 2026-09-30, one command per variable; listing verified after):** the nine
+      names below now carry `Development, Production` (or `Production`) only. Every webhook is skipped by the code
+      when unset and the rate limiter and the cache run without Redis, so no replacement values were needed.
+      Still shared, by decision: `BLOB_READ_WRITE_TOKEN`, `RESEND_API_KEY`, both reCAPTCHA keys, the Zoho
+      credentials, and `ACCELERATE_DATABASE_URL` (a Prisma Accelerate URL read only by `lib/prisma.ts`, the
+      legacy marketing-schema client, used by the two read-only `/api/contractors` GET routes; it fronts whatever
+      database was configured in the Prisma console 7 months ago — not the sign-up path). The commands, for the record:
       ```
       ! npx vercel env rm UPSTASH_REDIS_REST_URL preview --cwd apps/app --yes
       ! npx vercel env rm UPSTASH_REDIS_REST_TOKEN preview --cwd apps/app --yes
