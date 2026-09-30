@@ -8,6 +8,7 @@
  */
 
 import { Resend } from 'resend';
+import { appBaseUrl } from '@/lib/app-url';
 
 // Initialize Resend client
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -15,7 +16,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 const APP_NAME = 'Remonta';
-const APP_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+// The app's origin for links: see lib/app-url.ts (production once linked to localhost).
 
 /**
  * Send email verification code
@@ -107,7 +108,7 @@ export async function sendPasswordResetEmail(
   resetToken: string,
   firstName: string
 ) {
-  const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
+  const resetUrl = `${appBaseUrl()}/reset-password?token=${resetToken}`;
 
   try {
     const { data, error } = await resend.emails.send({
@@ -221,7 +222,7 @@ export async function sendWelcomeEmail(email: string, firstName: string) {
                 </ol>
 
                 <div style="text-align: center;">
-                  <a href="${APP_URL}/dashboard/worker" class="button">Go to Dashboard</a>
+                  <a href="${appBaseUrl()}/dashboard/worker" class="button">Go to Dashboard</a>
                 </div>
 
                 <p>We're excited to have you as part of the ${APP_NAME} community!</p>
