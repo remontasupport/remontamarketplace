@@ -1840,3 +1840,35 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-09-30):**
 > I think we should go for Google Cloud Run
+
+**User input (verbatim, 2026-09-30):**
+> Hey Claude. I don't think the management will subscribe to either aws or google cloud. Can we have a pull back and discuss again what really we are trying to solve here
+
+**User input (verbatim, 2026-09-30):**
+> ohh. I think we should go to the aws direction since it has a pay as you go?
+
+**User input (verbatim, 2026-09-30):**
+> I think we should go with google cloud, is this correct? & (screenshot: Google Cloud console, project "My First Project", Cloud Run overview)
+
+**User input (verbatim, 2026-09-30):**
+> I cloned the repo but when I run the bash infra/cloudrun/bootstrap.sh remonta-api, it says "bash: infra/cloudrun/bootstrap.sh: No such file or directory"
+
+**User input (2026-09-30, pasted gcloud output):** running as support@remontaservices.com.au; "does not have permission to access projects instance [remonta-api] (or it may not exist)".
+
+**User input (verbatim, 2026-09-30):**
+> it is already granted (screenshot: IAM for project "remonta-api", support@remontaservices.com.au = Owner)
+
+**User input (2026-09-30, pasted):** `gcloud projects list` -- the api project id is `remonta-api-510206` (number 154148201608); other projects: n8n Project, My First Project, remonta-geocoding.
+
+**User input (2026-09-30, pasted):** bootstrap step 1 failed: "Billing account for project 154148201608 is not found" (UREQ_PROJECT_BILLING_NOT_FOUND).
+
+**User input (verbatim, 2026-09-30):**
+> it says 0 items  (gcloud billing accounts list is empty for support@)
+
+**User input (verbatim, 2026-09-30):**
+> I think our ceo has set up the billing account but on his own account, can I link this project with him?
+
+**User input (verbatim, 2026-09-30):**
+> can you add this pending to the state so I can visit it on the next prompt. I will be closing the terminal now
+
+**Action (2026-09-30, end of session):** state file: "PENDING RIGHT NOW" block added under Resume here (Cloud Run decided; project `remonta-api-510206`; bootstrap blocked on billing, two options for the CEO; the ordered next steps); stage line updated; local environment noted. Committed on `s1/infrastructure`.
