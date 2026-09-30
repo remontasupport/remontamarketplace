@@ -1773,3 +1773,6 @@ Reported the position and the pending decisions; no code changed.
 > Before answering those, do we need those? my only goal is that we don't ship the new api to the production first without securing and testing, can you make sure with that
 
 **Action (2026-09-30):** Plan trimmed to the goal: no staging branch, no staging hostname, no CRM sandbox, no suburb-source switch. Kept: the code guard (production ignores `REGISTRATION_BACKEND`; only the Upstash key selects `api` -- `lib/registration-switch.ts`, test in forms.test.ts), the first api deploy as a staging stack on a Neon copy, Preview scope pointed at staging, the 8-item checklist on a PR preview before any production step. CLAUDE.md section shortened to match. Quality green (144 ts / 508 eslint known, 79 tests). One question left (Q1).
+
+**User input (verbatim, 2026-09-30):**
+> Yes the production has no NEXT_PUBLIC_API_URL or REGISTRATION_BACKEND

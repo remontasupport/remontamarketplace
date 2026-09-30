@@ -17,7 +17,7 @@ As of 2026-09-30:
 | Lock | State | Who can change it |
 |---|---|---|
 | The api is deployed nowhere | holds | the infrastructure unit, deliberately |
-| Production Vercel has no `NEXT_PUBLIC_API_URL` | to confirm (Q1b) | the user, in the dashboard |
+| Production Vercel has no `NEXT_PUBLIC_API_URL` or `REGISTRATION_BACKEND` | **confirmed by the user 2026-09-30** | the user, in the dashboard |
 | Upstash `switch:registration` = `legacy` | holds (set and read back) | one REST call, deliberately |
 | **Guard (this unit):** on a production deployment the env var `REGISTRATION_BACKEND` is ignored; only the Redis key can select `api` | in code, tested | a code change through a PR |
 | `legacy` = the pre-S1 page, byte for byte | holds (PR #15) | a code change through a PR |
@@ -76,6 +76,6 @@ was rehearsed and is an improvement; it is recorded, not gated).
 
 | # | Question | Default |
 |---|---|---|
-| Q1 | (a) What do Vercel **Preview**-scope variables point at today? (b) Does the **Production** scope contain `NEXT_PUBLIC_API_URL` or `REGISTRATION_BACKEND`? | Treat (a) as production until checked; (b) expected absent |
+| Q1 | (a) What do Vercel **Preview**-scope variables point at today? ~~(b) Production scope~~ — **(b) answered 2026-09-30: neither variable is present** | Treat (a) as production until checked |
 
 Everything else: defaults as written in §2. No further answers needed to proceed with the infrastructure unit.
