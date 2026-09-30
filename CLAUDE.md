@@ -178,7 +178,20 @@ deployment; do not redeploy a commit** — a rebuild can fail, an existing build
 
 ---
 
-## apps/api: the backend service (local and CI only until AWS)
+## New machine
+
+```bash
+git clone https://github.com/remontasupport/remontamarketplace.git && cd remontamarketplace
+git checkout <the branch aidlc-docs/aidlc-state.md names>      # s1/infrastructure as of 2026-09-30
+bash scripts/setup-new-machine.sh          # checks tools, the 3 secret files, installs, builds the local database
+bash scripts/setup-new-machine.sh --verify # ... and runs every quality gate
+```
+
+The three secret files (`apps/app/.env`, `apps/app/.env.local`, `apps/api/.env`) are not in git: restore
+them from the backup. Everything else, the AI-DLC record included (`aidlc-docs/`, `.aidlc-rule-details/`,
+`.brd/`), is in the repository. Then open Claude Code here and say "continue the AI-DLC".
+
+## apps/api: the backend service (local and CI only until deployed)
 
 ```bash
 # A database for the tests: the same image CI uses. Once.

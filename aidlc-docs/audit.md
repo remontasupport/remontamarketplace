@@ -1875,3 +1875,8 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-09-30):**
 > can we also push this to github? I am planning to reformat my computer so this will get be deleted
+
+**User input (verbatim, 2026-09-30):**
+> is the ai dlc also in github? can you create a script I could you step by step when I pull it from github
+
+**Action (2026-09-30):** `scripts/setup-new-machine.sh` (tools check, the three secret files, pnpm install, local PostGIS with migrations + suburb list + catalogue, optional --verify gates, resume pointers) verified on this machine; CLAUDE.md "New machine" section. All AI-DLC files (aidlc-docs 80, .aidlc-rule-details 31, .brd 9) are tracked and on GitHub; every local commit is on a remote branch.
