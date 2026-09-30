@@ -1674,3 +1674,71 @@ Reported the position and the pending decisions; no code changed.
 **AI action:** Confirmed what the state file, the plan and the audit trail record as of now; showed the current resume section.
 
 ---
+
+**User input (verbatim):**
+> Hey Claude, in the rehearse-w1 branch. Can you explain to me the usage of the following table and how they relates within the app? These are the tables
+>
+> outbox_events, rate_limit_buckets, spatial_ref_sys, worker_onboarding_transitions
+
+**AI action:** Explained the four tables from the schema, migrations and their apps/api users: the transactional outbox and its dispatcher (two event types, retries, DEAD, 30-day retention); the fixed-window rate-limit store behind pipeline step 3; the append-only onboarding history (three writers: API, RECONCILER, BACKFILL; no reader yet); `spatial_ref_sys` as PostGIS's own catalogue behind the `geography(Point, 4326)` columns.
+
+---
+
+**User input (verbatim):**
+> Do we need the  rate_limit_buckets? what case scenario does it solves?
+
+**AI action:** Yes, until OI-08 swaps the store for Redis: it is the shared, restart-safe counter every contract entry's `rateLimit` needs (account spam, notice bombing, photo-store abuse, lookup floods, global cost ceiling). Recommended keeping it.
+
+---
+
+**User input (verbatim):**
+> Ok. let us continue the ai dlc. Check the last state where we left off
+
+**AI action:** Read `aidlc-state.md` "Resume here" and the audit tail; checked the branch against origin/main (step 1, the PR for the branch's commits, is still pending).
+
+---
+
+**User input (verbatim):**
+> Go ahead and start step 3 while I open the PR
+
+**AI action:** Starting step 3: Infrastructure Design for `apps/api` (AWS Sydney, App Runner) and the Dockerfile. Reading the AI-DLC infrastructure-design guidance, the S1 design/NFR docs and the api's runtime configuration first.
+
+---
+**AI action (cont.) -- step 3 started:** Read the AI-DLC Infrastructure Design rule, the S1 design (§2.1-2.8), the NFRs (§6), OI-07/OI-08, and the api's runtime needs from the code (config.ts, main.ts, app.ts, tsup, load results). Wrote the plan with `[Answer]:` tags: `aidlc-docs/construction/plans/S1-registration-infrastructure-design-plan.md`. Recommendation changed from App Runner (resume note) to ECS Fargate + ALB (requirements C9 A): App Runner throttles CPU on idle instances, which would stall the outbox dispatcher and the scheduled jobs between requests. Wrote `apps/api/Dockerfile` (multi-stage, Node 22 pinned by digest, prod deps only, non-root, no config baked in) and the root `.dockerignore`. First local build exposed a Prisma engine-selection trap (no OpenSSL in the slim build stage -> engine for openssl-1.1.x); fixed by installing openssl in the base stage. Rebuilding and running the image against the local database.
+
+---
+**AI action (cont.) -- Dockerfile verified locally (2026-09-28):** three builds. (1) 2.34 GB: with node-linker=hoisted a filtered install still hoists the whole workspace (next, sanity, mui), and with no OpenSSL in the slim build stage Prisma generated the openssl-1.1.x engine. (2) 720 MB after moving openssl into the base stage and using `pnpm deploy`; the hoisted deploy ignored `--prod` (prisma CLI, typescript, fast-check shipped). (3) **623 MB** with `--config.node-linker=isolated` on the deploy step: node_modules 176 MB, no dev packages, engines debian-openssl-3.0.x + rhel-openssl-3.0.x. Container test against the local database with placeholder secrets (NODE_ENV=production, TRUST_PROXY=1): plain HTTP -> 403 "https required"; with X-Forwarded-Proto: https -> 200 `{"status":"ok"}` with x-request-id and HSTS; unknown route -> 404; the rate-limit-purge job ran (database reachable); SIGTERM -> "shutting down", exit 0. The image HEALTHCHECK first got the 403 (plain HTTP); fixed to send X-Forwarded-Proto; Docker now reports `healthy`. Interim tags and scratch directories removed. Awaiting the user's answers in the infrastructure design plan.
+
+---
+
+**User input (verbatim):**
+> answered, but pr not merged yet
+
+**AI action:** Reading the answers in the infrastructure design plan; step 1's PR stays open (nothing to verify on main yet).
+
+---
+**AI action (cont.) -- Infrastructure Design artifacts (2026-09-28):** Answers read: Q2.1 a, Q2.2 a, Q3.1 a, Q3.3 a, Q3.4 b, Q3.5 a, Q4.2 A, Q4.3 A, Q6.1 A, Q7.1 A, Q7.2 A, Q7.3 A, Q8.2 A, Q8.3 support@remontaservices.com.au; Q3.2 blank -> DNS lookup shows Vercel DNS; Q4.1 blank -> deferred to runbook step 0. Wrote `infrastructure-design/infrastructure-design.md` (component map, network, ALB + health, WAF with the SizeRestrictions_BODY override, secrets and plain env, alarms, IAM, cost ~A$105/month, NFR mapping with the deviations: public subnets/no NAT, staging deferred, OI-07 deferred) and `deployment-architecture.md` (topology and pipeline diagrams, rollback table, repository changes, first-deploy runbook, operations reference). Identified a required code change: the ALB health checker is not a proxied request and carries no X-Forwarded-Proto, so the health entry must be a `probe` exempt from the HTTPS check (else 403 and the circuit breaker rolls back forever). Open point for the review: the application's other origins for CORS_ORIGINS. Awaiting approval.
+
+---
+
+**User input (verbatim):**
+> Continue to Next Stage
+
+**AI action:** Infrastructure Design for S1-registration **approved by the user, 2026-09-28T15:34:29Z**. Marking the stage complete; proceeding to Code Generation for the infrastructure unit (the `infra/` CDK package, the deploy and infra CI workflows, the `probe` contract change, the CLAUDE.md section).
+
+---
+**AI action (2026-09-28T15:36:33Z) -- Code Generation Part 1:** Infrastructure Design marked complete. Wrote the unit's code generation plan `aidlc-docs/construction/plans/S1-infrastructure-code-generation-plan.md` (6 steps: the `probe` contract change; the `infra/` CDK package with three stacks, WAF, observability and assertion tests; `ci-infra.yml`; `deploy-api.yml`; documentation; verification). Decisions D1-D8 recorded in the plan. **Approval prompt logged here; asking the user to approve the plan.**
+
+---
+
+## 2026-09-30 — Debug request before resuming
+
+**User input (verbatim):**
+> Hey Claude. Let us continue the ai dlc, but before that I want you to debug something. I noticed that the apps/api for the sign up is pushed to the production and was being used even if it was not deployed to aws yet. can you switch to the legacy api
+
+**Action (2026-09-30):** Upstash `switch:registration` was unset (null); set to `legacy` and verified. Live `app.remontaservices.com.au/registration/worker` serves deployment `dpl_7GnTSdLGtX3Tz9WUPpxXw9w8VvwD`, the pre-S1 client page (edge cache Age ≈ 5.7 days) -- S1 is in main (PR #13 063da07) but not verified live. Vercel dashboard check requested from the user. State file updated; nothing committed.
+
+**User input (verbatim, 2026-09-30):**
+> Ok. now fix the reset password link, currently in the production it is serving the localhost:3000
+
+**Action (2026-09-30):** Reset link fix on branch `fix/reset-password-link`: `apps/app/src/lib/app-url.ts` resolves the app origin (NEXT_PUBLIC_APP_URL → NEXTAUTH_URL → canonical domain on production, never localhost on Vercel, no trailing slash); `lib/email.ts` uses it for the reset and dashboard links; dead `resetUrl` removed from the forgot-password route. Cause: production relies on NEXTAUTH_URL, which NextAuth does not need on Vercel and which is unset there, so the email fell back to `http://localhost:3000`.

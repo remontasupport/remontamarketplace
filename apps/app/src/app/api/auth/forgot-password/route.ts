@@ -125,11 +125,6 @@ export async function POST(request: Request) {
     });
 
     // ============================================
-    // CONSOLE LOG FOR TESTING (until email is configured)
-    // ============================================
-
-    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
-    // ============================================
     // SUCCESS RESPONSE
     // ============================================
 
