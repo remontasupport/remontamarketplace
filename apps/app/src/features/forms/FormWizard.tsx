@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { KINDS, type ApiBackend, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
-import { ConsentField, EmailCodeField, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
+import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
 import { transformCategoriesToServiceOptions, useCategories } from "@/hooks/queries/useCategories";
@@ -200,7 +200,7 @@ function ServicesSlot({ field, control, error }: { field: Extract<FieldDef, { ki
     if (keptSubs.length !== pickedSubs.length) subs.field.onChange(keptSubs);
   }, [categories, picked, pickedSubs, services.field, subs.field]);
 
-  if (isLoading) return <p className="text-center py-8 text-gray-600 font-poppins">Loading service categories...</p>;
+  if (isLoading) return <FieldLoading label="Loading service categories" />;
   if (isError) return <p className="text-red-600 text-sm font-poppins">Failed to load service categories. Please refresh the page or try again later.</p>;
   return (
     <ServicesField
