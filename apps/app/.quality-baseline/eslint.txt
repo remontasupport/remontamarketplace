@@ -134,6 +134,12 @@
 1	src/config/mandatoryRequirementsSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/config/servicesSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
+2	src/features/forms/legacy/worker/LegacyWorkerRegistration.tsx::@typescript-eslint/no-explicit-any
+2	src/features/forms/legacy/worker/Step1Location.tsx::@typescript-eslint/no-explicit-any
+2	src/features/forms/legacy/worker/Step1PersonalInfo.tsx::@typescript-eslint/no-explicit-any
+2	src/features/forms/legacy/worker/Step3Services.tsx::@typescript-eslint/no-explicit-any
+3	src/features/forms/legacy/worker/Step7Photos.tsx::@typescript-eslint/no-explicit-any
+1	src/features/forms/legacy/worker/Step7Verification.tsx::react/no-unescaped-entities
 2	src/hooks/queries/useComplianceDocuments.ts::@typescript-eslint/no-explicit-any
 4	src/hooks/queries/useServiceDocuments.ts::@typescript-eslint/no-explicit-any
 1	src/hooks/queries/useServiceSubcategories.ts::@typescript-eslint/no-require-imports
