@@ -1768,3 +1768,8 @@ Reported the position and the pending decisions; no code changed.
 > It is live now. Let's continue the ai dlc, but before that, make a plan that while testing the new backend api, make sure it is being done to the Preview before pusing to production, this will make sure that the production won't compromise, may be add it to the claude.md
 
 **Action (2026-09-30):** Plan written: `construction/plans/S1-preview-first-verification-plan.md` (rule, environments, `staging` branch model, steps S1–S8, the preview checklist, 7 questions). CLAUDE.md: "Preview before production" section, the "no staging branch" line replaced, gate counts refreshed. State re-ordered around the plan. Branch `aidlc/preview-first-plan`.
+
+**User input (verbatim, 2026-09-30):**
+> Before answering those, do we need those? my only goal is that we don't ship the new api to the production first without securing and testing, can you make sure with that
+
+**Action (2026-09-30):** Plan trimmed to the goal: no staging branch, no staging hostname, no CRM sandbox, no suburb-source switch. Kept: the code guard (production ignores `REGISTRATION_BACKEND`; only the Upstash key selects `api` -- `lib/registration-switch.ts`, test in forms.test.ts), the first api deploy as a staging stack on a Neon copy, Preview scope pointed at staging, the 8-item checklist on a PR preview before any production step. CLAUDE.md section shortened to match. Quality green (144 ts / 508 eslint known, 79 tests). One question left (Q1).

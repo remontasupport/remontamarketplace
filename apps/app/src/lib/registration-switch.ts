@@ -13,7 +13,11 @@ import type { Backend } from "@remonta/form-engine";
 export const SWITCH_KEY = "switch:registration";
 
 export function resolveBackend(requested: unknown, env: Record<string, string | undefined>): Backend {
-  const mode = requested === "api" || requested === "legacy" ? requested : env.REGISTRATION_BACKEND === "api" ? "api" : "legacy";
+  // On a production deployment only the Redis key can select "api": a variable
+  // copied into Vercel's production scope must not be able to flip real users onto
+  // a backend nobody has verified there. Previews and local use the env var.
+  const envMode = env.VERCEL_ENV === "production" ? undefined : env.REGISTRATION_BACKEND;
+  const mode = requested === "api" || requested === "legacy" ? requested : envMode === "api" ? "api" : "legacy";
   if (mode === "legacy") return { mode: "legacy" };
   const apiBaseUrl = env.NEXT_PUBLIC_API_URL;
   const recaptchaSiteKey = env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
