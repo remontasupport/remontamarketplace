@@ -1776,3 +1776,61 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-09-30):**
 > Yes the production has no NEXT_PUBLIC_API_URL or REGISTRATION_BACKEND
+
+**User input (verbatim, 2026-09-30):**
+> I am not sure how to prove this "the only open question is what Vercel's Preview scope points at today"
+
+**User input (2026-09-30):** ran `! npx vercel login` in the session; signed in.
+
+**Action (2026-09-30, Vercel via CLI, project remonta-app):** `vercel env ls`: Preview has its own `AUTH_DATABASE_URL` and `DIRECT_DATABASE_URL` (Sensitive, set ~23 days ago; values not readable, host unknown). Everything else data-touching is shared Preview+Production: Upstash, Blob token, Resend, reCAPTCHA, Zoho tokens, n8n/apply/AI-search webhooks. `NEXT_PUBLIC_APP_URL` was NOT present in remonta-app (the reset link works through the code's canonical fallback); adding it to the Production scope now.
+
+**Action (2026-09-30):** Throwaway branch `chore/preview-db-diag` pushed: a preview-only route returning database hostnames (404 on production), to learn what Vercel previews connect to. Never to be merged; branch deleted after reading.
+
+**Finding (2026-09-30, from the preview diagnostic):** previews use Neon endpoint `ep-wandering-shadow-a7pxwb8o` = the `rehearse-w1` branch (a reset copy of production with S1 applied), NOT production (`ep-delicate-recipe-a7mbt4ef`). But previews SHARE production's Upstash (`rested-sculpin-8693`: the same cache keys and the same `switch:registration`), Blob store, Resend, reCAPTCHA, Zoho tokens and all n8n webhooks (a preview sign-up reaches the live CRM). Diagnostic branch deleted; pulled env files deleted. Detaching the Preview scope from Upstash and the webhooks is left to the user (the session's policy blocks writes to the Vercel variable store); the exact commands are in the plan.
+
+**User input (verbatim, 2026-09-30):**
+> Before I run those commands, what are you trying to achieve? in lay mans terms
+
+**User input (2026-09-30):** ran `! npx vercel env rm UPSTASH_REDIS_REST_URL preview --cwd apps/app --yes` -- "Removed preview target from Environment Variable".
+
+**User input (2026-09-30):** ran the remaining eight `vercel env rm <name> preview` commands (UPSTASH_REDIS_REST_TOKEN, N8N_WEBHOOK_URL, APPLY_WEBHOOK_URL, AI_SEARCH_WEBHOOK, Client_Registration_Webhook, Request_Service_Webhook, Cancel_Archive_Webhook, Select_Cancelling_Request_Webhook); each reported "Removed preview target".
+
+**Action (2026-09-30):** Preview scope detached and verified by `vercel env ls`: UPSTASH_REDIS_REST_URL/TOKEN and the seven n8n webhooks now carry Development+Production only. Still shared by decision: Blob, Resend, reCAPTCHA, Zoho, ACCELERATE_DATABASE_URL (legacy marketing client, two read-only GET routes). Note: while inspecting the Accelerate variable's shape, its full value (including its API key) was printed into the assistant's tool output in this session's local transcript; rotating that key in the Prisma console is a cheap precaution.
+
+**User input (verbatim, 2026-09-30):**
+> Good. Now can you check the new api for sign up? run a test if the input is being sanitize. Then I want to test the data when I submit it. I want to test if it is save to the database already, make sure I test it on the Preview only, not to the production
+
+**Action (2026-09-30):** Api sign-up tests run against the LOCAL Docker database (never production): `@remonta/api` quality with TEST_DATABASE_URL -- hostile-input suite 56/56 (SQL, script tags, control/unicode, oversized, prototype pollution, type confusion, wrong content types: each refused by field or stored verbatim and rendered inert), registration integration 28/28 incl. "a new worker gets 202 and every row of the registration transaction". One unrelated flaky property test (`onboarding/initial-marker`, expiry within 1 ms of `now`, seed -110701355) -- follow-up. Local live stack started for the user's own submission: api on :4000 (local DB), app on :3000 in api mode (local DB, no Redis, CRM webhook to 127.0.0.1:9). The api cannot yet run on a Vercel preview (not hosted), so this local stack is the isolated equivalent.
+
+**User input (verbatim, 2026-09-30):**
+> No. I want it to be tested to the rehearsal-w1 branch since I already tested in on the local database
+
+**Action:** local api and app stopped; restarting both against the `rehearse-w1` Neon branch (the preview database).
+
+**Action (2026-09-30):** api (:4000) and app (:3000, api mode, no Redis, CRM webhook dead) restarted against `rehearse-w1` (pooled for the app/api, direct for Prisma migrations var). Baseline on the branch: users 1,865; worker_profiles 1,789; au_localities 15,467; outbox_events 0; no `clent.b+…` user. Note: while deriving hosts, two connection strings from `apps/app/.env.local` (leading-space values defeated the host filter) were printed into the assistant's tool output in the local transcript; they are the rehearsal branch's role credentials, not production's -- reset that Neon role password when convenient.
+
+**User input (verbatim, 2026-09-30):**
+> I noticed when loading the service categories, it says the exact words, can you make it a loading state instead? may be a circular loading, apply that changes now
+
+**Action (2026-09-30):** Branch `fix/services-loading-spinner`: `FieldLoading` (circular spinner, sr-only label) added to `components/ui/form-wizard/fields.tsx`; `FormWizard` uses it for the services field. Quality green. Visible immediately on the local dev server.
+
+**User input (verbatim, 2026-09-30):**
+> Why this message "We restored your progress. For your security, please verify your email and type your password again." keeps on appearing right now?
+
+**User input (verbatim, 2026-09-30):**
+> No don't apply it yet. Found an issue, when I submitted, it redirects to the /worker/success but the Login here button is not being clickable.
+
+**User input (verbatim, 2026-09-30):**
+> actually, nevermind. For now I want to know what table does the data from the sign up workflow does saves?
+
+**User input (verbatim, 2026-09-30):**
+> Ok. so I noticed that we save the latitude and longitude to both the worker_profiles and  worker_locations which is redundant, can we save it to the worker_locations instead?
+
+**User input (verbatim, 2026-09-30):**
+> Ok. NOW CONTINUE THE AI DLC, LET ME KNOW FIRST WHERE WE AT
+
+**User input (verbatim, 2026-09-30):**
+> ARE YOU SAYING THAT WE WILL NOW DEPLOY THE API?
+
+**User input (verbatim, 2026-09-30):**
+> Yes, go ahead with the infrastructure code

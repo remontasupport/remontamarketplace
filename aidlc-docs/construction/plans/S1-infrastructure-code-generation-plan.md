@@ -6,7 +6,8 @@
 `deployment-architecture.md` (both approved 2026-09-28)
 **Stories / requirements:** enablers US-MIG-01 (the switch is the canary), NFR-RES-02/-04/-06,
 NFR-SEC-01/-02/-05/-07/-09/-10, NFR-OBS-01, NFR-CMP-03
-**Status:** **PART 1 — PLANNING**, awaiting approval. This plan is the single source of truth for
+**Status:** **APPROVED 2026-09-30** (user: "go ahead with the infrastructure code") with the amendments in §3a;
+**PART 2 — GENERATION in progress** on branch `s1/infrastructure`. This plan is the single source of truth for
 this unit's code generation.
 
 ---
@@ -86,6 +87,27 @@ this unit's code generation.
 - [ ] `git diff --ignore-all-space --numstat` shows no regenerated Prisma client; `git status` clean apart from the intended files
 - [ ] Commits on `s1/worker-registration`, one per step; then the user opens the PR (the existing open PR may be merged first or this rides on it — the user's choice)
 
+## 3a. Amendments of 2026-09-30 (preview-first; approved by the user: "go ahead with the infrastructure code")
+
+The preview-first plan (`S1-preview-first-verification-plan.md`) requires that the api's first deployment target a
+copy of production and be verified from a Vercel preview before anything reaches production. That changes this
+unit as follows; everything else above stands.
+
+| # | Decision | Why |
+|---|---|---|
+| D9 | **One `ApiStack` construct, parameterised by stage; two instances: `RemontaApiStaging` and `RemontaApiProd`.** Stage table in `infra/lib/stages.ts`: prod as designed (2 × 0.5 vCPU/1 GB, 2→4, 90-day logs, seven alarms); staging = 1 × 0.25 vCPU/0.5 GB, no auto-scaling, 30-day logs, two alarms (`healthy-hosts` < 1, `outbox-dead-letter`), WAF on with the same rules. Names carry the stage: `remonta-api-<stage>-…`, secrets `remonta/api/<stage>/*`, log group `/remonta/api/<stage>`, hostname `api.` (prod) / `api-staging.` (staging) `remontaservices.com.au`. | The staging api must exist before production does, and must be the same code path. A hostname and certificate are needed after all: a Vercel preview is `https`, so a plain `http://<alb dns>` call would be blocked as mixed content (corrects the preview-first plan's "the ALB DNS name is enough") |
+| D10 | **Deploy flow: push to `main` → build image → deploy `RemontaApiStaging` automatically. `RemontaApiProd` deploys only by `workflow_dispatch` (`stage=prod`, `imageTag=<sha>`): a promotion of an image that already runs on staging.** The same dispatch with an older SHA is the rollback for either stage. | Q7.2's "deploy automatically on push to main" now means staging; production is a deliberate act after the preview checklist. Optional hardening the user can add in GitHub: an environment `production` with required reviewers on the prod job |
+| D11 | **Staging admits Vercel previews:** `CORS_ORIGINS=https://*.vercel.app` and `RECAPTCHA_ALLOWED_HOSTNAMES=*.vercel.app`. The api gains a small, tested pattern matcher (one leading `*.` label; `https` only; never for localhost or in production's values) used by the CORS plugin and the reCAPTCHA verifier. Production keeps exact values. | Preview hostnames differ per deployment. A wildcard on staging is acceptable: a caller still needs a token from the staging reCAPTCHA site key, the rate limits apply, and the data is a copy |
+| D12 | Staging `AUTH_DATABASE_URL` secret = the `rehearse-w1` Neon branch (pooled); `APP_BASE_URL` = `https://app.remontaservices.com.au` (the email links have no stable preview host; recorded); `N8N_REGISTRATION_WEBHOOK_URL` = a sink; `EMAIL_FROM` the same sender. | The branch already has the S1 tables, suburb list and backfills (rehearsed 2026-09-28; previews use it today) |
+| D13 | The OIDC deploy role trusts `refs/heads/main` only; `workflow_dispatch` runs on `main`, so the same role serves promotions and rollbacks. One role, both stacks. | Nothing but `main` ever deploys |
+
+Step changes: **Step 1** gains the pattern matcher (D11) with tests in `config.test.ts` and a unit test. **Step 2** gains
+`stages.ts`, the second stack instance and per-stage tests (staging has 1 task and 30-day logs; prod has 2 and
+90; both reference exactly their six `remonta/api/<stage>/*` names). **Step 4** implements D10. **Step 5**
+documents staging in CLAUDE.md and the runbook (bootstrap → staging first → checklist → prod). The runbook's
+step 5 ("verify with the switch off on production") becomes "verify on staging from a preview" and production
+gets the same checks after its own deploy.
+
 ## 4. Out of scope (recorded, not done here)
 
-Staging environment; private subnets / NAT; `cdk diff` in PRs (after bootstrap); S3 for photos (OI-07 → Onboarding); OpenTelemetry and an error tracker (observability unit); the CRM notification handler (step 5 of the path); Vercel variables and the switch flip (runbook steps 6–7, user actions).
+Private subnets / NAT; `cdk diff` in PRs (after bootstrap); S3 for photos (OI-07 → Onboarding); OpenTelemetry and an error tracker (observability unit); the CRM notification handler (step 5 of the path); Vercel variables and the switch flip (runbook steps 6–7, user actions); a GitHub `production` environment with required reviewers (user's choice, documented).

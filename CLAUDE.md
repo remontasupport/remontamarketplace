@@ -126,6 +126,40 @@ rollback and takes effect on the next request.
 
 ---
 
+## apps/api on AWS (`infra/`, CDK)
+
+Two deployments from one construct, `infra/lib/api-stack.ts`, driven by `infra/lib/stages.ts`:
+**staging** (`api-staging.remontaservices.com.au`, the `rehearse-w1` Neon copy, admits Vercel
+previews, 1 task) and **prod** (`api.remontaservices.com.au`, 2 tasks, seven alarms). Plus the
+image repository and the GitHub deploy role, deployed once by hand. Design:
+`aidlc-docs/construction/S1-registration/infrastructure-design/`; package guide: `infra/README.md`.
+
+```
+Quality:   pnpm --filter @remonta/infra run quality   (lint · tsc · CDK assertions · synth, no credentials)
+Deploy:    merge to main touching apps/api, packages, infra, lockfile → Actions "deploy-api" → STAGING only
+Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<sha that passed the preview checklist>
+Rollback:  the same dispatch with a previous sha (either stage); the ECS circuit breaker undoes a bad task definition itself
+Health:    https://api[-staging].remontaservices.com.au/v1/health   (a contract `probe`: never shed, plain HTTP allowed)
+Logs:      CloudWatch → /remonta/api/<stage>   (filter: { $.reqId = "<x-request-id>" })
+Secrets:   Secrets Manager remonta/api/<stage>/*   (change a value, then ECS → Update service → Force new deployment)
+Alarms:    SNS remonta-api-<stage>-alerts → support@remontaservices.com.au (confirm the subscription once)
+Switch:    Upstash key switch:registration = api | legacy   (production's only path to the api; no deploy needed)
+```
+
+Rules that have earned their place:
+
+- **Production is a promotion, never a push.** Nothing deploys `RemontaApiProd` except a
+  `workflow_dispatch` naming an image that already runs on staging.
+- **Rollback = redeploy an existing image, never rebuild.** Images stay in ECR (last 20).
+- **`cdk synth` must stay credential-free.** The VPC's availability zones are seeded in
+  `infra/cdk.json`; a construct that needs a lookup breaks CI, so add its answer there too.
+- **Staging's wildcards are staging's.** `https://*.vercel.app` and `*.vercel.app` (one label,
+  `apps/api/src/config/hosts.ts`) exist for previews. Production values are exact.
+- **The first deploy of a stage pauses on the ACM certificate** until its validation CNAME is
+  added in Vercel DNS; then add the `api`/`api-staging` CNAME to the `ApiLoadBalancerDns` output.
+
+---
+
 ## Rollback
 
 Promote the last known-good deployment in Vercel. Seconds, no rebuild.

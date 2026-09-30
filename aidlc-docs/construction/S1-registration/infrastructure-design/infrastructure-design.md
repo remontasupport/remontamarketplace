@@ -15,7 +15,7 @@
 | Q3.2 | DNS host | **Vercel DNS** (`ns1/ns2.vercel-dns.com`, found by lookup 2026-09-28): records go in the Vercel dashboard |
 | Q3.3 | Subnets | Public subnets with public IPs; inbound only from the load balancer; no NAT gateway |
 | Q3.4 | WAF | **Now**, AWS managed rules on the load balancer |
-| Q3.5 | Origins | Production api accepts the app's origin only; a staging api is a later unit |
+| Q3.5 | Origins | Production api accepts the app's origin only. **Amended 2026-09-30 (D9, D11):** a `staging` stack exists first, at `api-staging.remontaservices.com.au`, admitting Vercel previews through one wildcard label (`https://*.vercel.app`) |
 | Q4.1 | Neon plan / retention | *Not answered yet* — read from the Neon console at first deploy (runbook step 0); decides how far back point-in-time restore reaches |
 | Q4.2 | Photos | Keep Vercel Blob for S1; **OI-07** → the Onboarding unit moves photos and documents to S3 Sydney |
 | Q4.3 | Migrations | Manual, from a developer machine, per `S1-production-run.md` |
@@ -185,7 +185,7 @@ MAX_EVENT_LOOP_DELAY_MS=200
 | NFR-OBS-01 | Met | Request id accepted from `apps/app` (`genReqId`) and on every line |
 | NFR-OBS-02/-03/-04 | Partial | CloudWatch alarms and dashboard now; traces, error tracker, security dashboards in the observability unit |
 | NFR-RES-02 (99.9 %, RTO 30 min, RPO 5 min) | Met | 2 AZs; a lost AZ leaves one task and the ALB re-routes in ≤ 45 s; Neon is multi-AZ; RPO from Neon's continuous history |
-| NFR-RES-03 (staging) | **Deferred** (Q3.5 A) | First verification with the switch off on production; a staging api is a later unit |
+| NFR-RES-03 (staging) | **Met (amended 2026-09-30, D9/D10)** | `RemontaApiStaging`: the same construct, one small task on the `rehearse-w1` copy, deployed automatically on every push to `main`; production is a promotion of an image verified there from a Vercel preview |
 | NFR-RES-04 (canary, auto-rollback) | Met at two levels | ECS circuit breaker rolls back a bad task definition; the application switch is the traffic canary and its rollback (flip back) |
 | NFR-RES-05 (shallow + deep health) | Partial | One check, shallow + database. Storage/queue checks when those exist |
 | NFR-RES-06 | Met | 2 AZs, min 2 / max 4, quotas: Fargate vCPU default quota is ample |
@@ -194,6 +194,6 @@ MAX_EVENT_LOOP_DELAY_MS=200
 
 ## 11. What this unit does NOT do
 
-- No staging environment, no second account, no NAT, no private subnets, no OpenTelemetry, no external error tracker, no S3 for photos, no Redis, no queue. Each is recorded above with the unit that picks it up.
+- No second account, no NAT, no private subnets, no OpenTelemetry, no external error tracker, no S3 for photos, no Redis, no queue. Each is recorded above with the unit that picks it up. (A staging environment **was** added on 2026-09-30, D9: the same construct, deployed first.)
 - No change to `apps/app` or Vercel other than, at the end, the two public environment variables and the switch (deployment-architecture §6).
 - No migration or backfill: those are step 2 of the path, run manually and before the first deploy.
