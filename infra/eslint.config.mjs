@@ -2,9 +2,9 @@ import tsParser from '@typescript-eslint/parser'
 import { sharedIgnores } from '@remonta/config/eslint.base.mjs'
 
 export default [
-  { ignores: [...sharedIgnores.ignores, 'cdk.out/**'] },
+  { ignores: [...sharedIgnores.ignores] },
   {
-    files: ['bin/**/*.ts', 'lib/**/*.ts', 'test/**/*.ts', '*.ts'],
+    files: ['lib/**/*.ts', 'scripts/**/*.ts', 'test/**/*.ts', '*.ts'],
     languageOptions: { parser: tsParser, ecmaVersion: 'latest', sourceType: 'module' },
   },
 ]

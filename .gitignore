@@ -121,5 +121,3 @@ apps/api/dist/
 !apps/api/.env.example
 apps/api/.uploads/
 
-# CDK synth output (infra/)
-infra/cdk.out/

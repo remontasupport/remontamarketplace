@@ -2,25 +2,23 @@
   "name": "@remonta/infra",
   "version": "0.0.0",
   "private": true,
-  "description": "AWS infrastructure for apps/api as code (CDK, TypeScript): the GitHub OIDC deploy role, the ECR repository, and one ApiStack construct instantiated for staging and prod (VPC, ALB + ACM, WAF, ECS Fargate, Secrets Manager references, logs, alarms, dashboard). Synthesises without AWS credentials so it can be tested like any other package.",
+  "description": "How apps/api runs on Google Cloud Run: the stage table (lib/stages.ts) is the single source of truth; the Knative service definitions in cloudrun/ are rendered from it and checked for drift; cloudrun/bootstrap.sh prepares a fresh GCP project once (APIs, registry, service accounts, Workload Identity Federation for GitHub, empty secrets, log metrics, alerts). No IaC tool; gcloud and a rendered YAML.",
   "type": "module",
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "synth": "cdk synth --quiet",
-    "quality": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run synth",
-    "cdk": "cdk"
+    "render": "tsx scripts/render.ts",
+    "render:check": "tsx scripts/render.ts --check",
+    "quality": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run render:check"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.271.0",
-    "constructs": "^10.8.1"
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@remonta/config": "workspace:*",
     "@types/node": "^20",
     "@typescript-eslint/parser": "^8",
-    "aws-cdk": "^2.1143.0",
     "eslint": "^9",
     "tsx": "^4.23.13",
     "typescript": "^5",

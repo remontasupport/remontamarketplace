@@ -1,0 +1,25 @@
+{
+  "displayName": "__SERVICE__ request-failed",
+  "documentation": {
+    "content": "Five or more 500s from __SERVICE__ (__STAGE__) in 5 minutes. Each has a `request failed` log line with reqId and err; the client received only the request id. Repeated 500s on one route usually mean a dependency (database, Resend, reCAPTCHA) or a bad deploy -- roll back with the previous image SHA if it started with a deploy.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "500s in 5 minutes >= 5",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"__SERVICE__\" AND metric.type = \"logging.googleapis.com/user/remonta-api-request-failed\"",
+        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["resource.labels.service_name"] }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 4,
+        "duration": "0s",
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": ["__CHANNEL__"],
+  "alertStrategy": { "autoClose": "1800s" },
+  "severity": "ERROR",
+  "userLabels": { "remonta-stage": "__STAGE__", "remonta-service": "api" }
+}

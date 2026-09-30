@@ -1,39 +1,26 @@
-// The two deployments of apps/api, as data (D9, 2026-09-30). One ApiStack construct
-// reads this table; nothing else differs between staging and production.
+// The two deployments of apps/api on Google Cloud Run, as data (D14, 2026-09-30).
+// lib/render.ts turns each entry into the Knative service definition Cloud Run
+// runs (cloudrun/service.<stage>.yaml, committed and drift-checked). Nothing else
+// differs between staging and production.
 //
 // staging: the first thing deployed. It talks to the `rehearse-w1` Neon branch (a
 // reset copy of production) and admits Vercel previews, so the preview checklist
-// (aidlc-docs/construction/plans/S1-preview-first-verification-plan.md §3) can run
-// against real infrastructure before production exists. Small, one task.
+// (aidlc-docs/construction/plans/S1-preview-first-verification-plan.md §3) runs
+// against real infrastructure before production exists.
 //
-// prod: the design as approved on 2026-09-28 (infrastructure-design.md).
-import { RetentionDays } from 'aws-cdk-lib/aws-logs'
+// Both run with instance-based billing (CPU always allocated) and at least one
+// instance, because the outbox dispatcher and the scheduler work between requests.
 
 export type Stage = 'staging' | 'prod'
 
-export interface StageConfig {
-  readonly stage: Stage
-  /** Public hostname; the ACM certificate is requested for it, DNS lives in Vercel. */
-  readonly hostname: string
-  /** The VPC's CIDR; each stage has its own VPC. */
-  readonly vpcCidr: string
-  readonly desiredCount: number
-  readonly minCount: number
-  readonly maxCount: number
-  /** Target-tracking on CPU 60 % between min and max; off = a fixed desiredCount. */
-  readonly autoScale: boolean
-  /** Fargate task size (CPU units: 256 = 0.25 vCPU). */
-  readonly cpu: number
-  readonly memoryMiB: number
-  readonly logRetention: RetentionDays
-  /** 'full' = the seven alarms of the design; 'minimal' = healthy hosts + outbox dead letters. */
-  readonly alarms: 'full' | 'minimal'
-  readonly alertEmail: string
-  /** Plain (non-secret) task environment. Everything in apps/api/src/config/config.ts not listed under secrets. */
-  readonly environment: Readonly<Record<string, string>>
-}
+export const REGION = 'australia-southeast1'
+export const REGISTRY_REPOSITORY = 'remonta' // Artifact Registry repository; image `api`
+export const CONTAINER_PORT = 4000
+export const HEALTH_PATH = '/v1/health'
+export const ALERT_EMAIL = 'support@remontaservices.com.au'
+export const APP_ORIGIN = 'https://app.remontaservices.com.au'
 
-/** The six values held in Secrets Manager as `remonta/api/<stage>/<NAME>` (infrastructure-design §6). */
+/** The six values held in Secret Manager as `remonta-api-<stage>-<NAME>` (infrastructure-design §6, D17). */
 export const SECRET_NAMES = [
   'AUTH_DATABASE_URL',
   'RECAPTCHA_SECRET_KEY',
@@ -42,17 +29,35 @@ export const SECRET_NAMES = [
   'BLOB_READ_WRITE_TOKEN',
   'N8N_REGISTRATION_WEBHOOK_URL',
 ] as const
+export type SecretName = (typeof SECRET_NAMES)[number]
 
-export const secretPath = (stage: Stage, name: (typeof SECRET_NAMES)[number]) => `remonta/api/${stage}/${name}`
+export interface StageConfig {
+  readonly stage: Stage
+  /** The Cloud Run service name; also the prefix of its secrets and service account. */
+  readonly serviceName: string
+  readonly minInstances: number
+  readonly maxInstances: number
+  /** vCPU as Cloud Run spells it ('1', '2'); instance-based billing needs a whole vCPU with concurrency > 1. */
+  readonly cpu: string
+  readonly memory: string
+  readonly concurrency: number
+  readonly timeoutSeconds: number
+  /** 'full' = the prod alert set; 'minimal' = instance down + outbox dead letters. */
+  readonly alerts: 'full' | 'minimal'
+  /** Plain (non-secret) container environment: everything in apps/api/src/config/config.ts not listed under secrets. */
+  readonly environment: Readonly<Record<string, string>>
+}
 
-export const ALERT_EMAIL = 'support@remontaservices.com.au'
-export const APP_ORIGIN = 'https://app.remontaservices.com.au'
+export const secretName = (stage: Stage, name: SecretName) => `${STAGES[stage].serviceName}-${name}`
+export const runtimeServiceAccount = (stage: Stage, projectId: string) => `${STAGES[stage].serviceName}-run@${projectId}.iam.gserviceaccount.com`
+export const imageName = (projectId: string, tag: string) => `${REGION}-docker.pkg.dev/${projectId}/${REGISTRY_REPOSITORY}/api:${tag}`
 
 /** Shared by both stages; the differences are spelled out per stage below. */
 const common = {
   NODE_ENV: 'production',
   HOST: '0.0.0.0',
-  PORT: '4000',
+  PORT: String(CONTAINER_PORT),
+  // Cloud Run terminates TLS and adds X-Forwarded-Proto / X-Forwarded-For: one hop to trust.
   TRUST_PROXY: '1',
   RECAPTCHA_MIN_SCORE: '0.5',
   APP_BASE_URL: APP_ORIGIN,
@@ -69,17 +74,14 @@ const common = {
 export const STAGES: Readonly<Record<Stage, StageConfig>> = {
   staging: {
     stage: 'staging',
-    hostname: 'api-staging.remontaservices.com.au',
-    vpcCidr: '10.43.0.0/16',
-    desiredCount: 1,
-    minCount: 1,
-    maxCount: 1,
-    autoScale: false,
-    cpu: 256,
-    memoryMiB: 512,
-    logRetention: RetentionDays.ONE_MONTH,
-    alarms: 'minimal',
-    alertEmail: ALERT_EMAIL,
+    serviceName: 'remonta-api-staging',
+    minInstances: 1,
+    maxInstances: 1,
+    cpu: '1',
+    memory: '512Mi',
+    concurrency: 80,
+    timeoutSeconds: 60,
+    alerts: 'minimal',
     environment: {
       ...common,
       // Vercel previews: one wildcard label (apps/api/src/config/hosts.ts, D11).
@@ -90,17 +92,14 @@ export const STAGES: Readonly<Record<Stage, StageConfig>> = {
   },
   prod: {
     stage: 'prod',
-    hostname: 'api.remontaservices.com.au',
-    vpcCidr: '10.42.0.0/16',
-    desiredCount: 2,
-    minCount: 2,
-    maxCount: 4,
-    autoScale: true,
-    cpu: 512,
-    memoryMiB: 1024,
-    logRetention: RetentionDays.THREE_MONTHS,
-    alarms: 'full',
-    alertEmail: ALERT_EMAIL,
+    serviceName: 'remonta-api',
+    minInstances: 1,
+    maxInstances: 4,
+    cpu: '1',
+    memory: '1Gi',
+    concurrency: 80,
+    timeoutSeconds: 60,
+    alerts: 'full',
     environment: {
       ...common,
       CORS_ORIGINS: APP_ORIGIN,

@@ -1,8 +1,7 @@
-# CI for the infrastructure package (infra/): lint, strict tsc, the CDK assertion
-# tests and a `cdk synth` of every stack. None of it needs AWS credentials: the
-# availability zones the VPC pins are seeded in infra/cdk.json, so synthesis is
-# a pure function of the code. `cdk diff` against the live account comes after
-# the bootstrap exists (it needs the lookup role) and is not here yet.
+# CI for the infrastructure package (infra/): lint, strict tsc, the tests over the
+# rendered Cloud Run service definitions, and the drift check that the committed
+# infra/cloudrun/service.*.yaml equal what infra/lib/stages.ts renders. None of it
+# needs Google Cloud credentials.
 #
 # Check name: Infra Quality.
 
@@ -51,6 +50,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # eslint · tsc · vitest (CDK assertions) · cdk synth of all four stacks, no credentials.
+      # eslint · tsc · vitest · render:check (committed YAML == the stage table), no credentials.
       - name: Infra quality gate
         run: pnpm --filter @remonta/infra run quality
