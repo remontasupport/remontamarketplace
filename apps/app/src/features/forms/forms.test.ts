@@ -82,6 +82,12 @@ describe("the backend switch", () => {
     expect(resolveBackend(null, env).mode).toBe("legacy");
     expect(resolveBackend("garbage", env).mode).toBe("legacy");
   });
+  it("on a production deployment ignores the env var: only the Redis key can select api", () => {
+    const prod = { ...env, VERCEL_ENV: "production", REGISTRATION_BACKEND: "api" };
+    expect(resolveBackend(null, prod).mode).toBe("legacy");
+    expect(resolveBackend("api", prod).mode).toBe("api");
+    expect(resolveBackend(null, { ...env, VERCEL_ENV: "preview", REGISTRATION_BACKEND: "api" }).mode).toBe("api");
+  });
   it("falls back to legacy rather than serve an api page that cannot work", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(resolveBackend("api", { NEXT_PUBLIC_API_URL: "https://api.example" }).mode).toBe("legacy");

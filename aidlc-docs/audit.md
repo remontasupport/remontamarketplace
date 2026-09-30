@@ -1758,3 +1758,21 @@ Reported the position and the pending decisions; no code changed.
 > I noticed that when we fixed the reset link, the legacy api on the sign up was switch to the new api, make sure that we use the legacy api for now as well as making sure the reset link will be working
 
 **Action (2026-09-30):** Live check: `/registration/worker` served `mode: legacy` and Upstash `switch:registration` = `legacy` -- the submit target had not changed, but the page itself was S1's form engine (the pre-S1 page and its step components were deleted in f313a9a), which is what the user saw. Branch `fix/legacy-signup-page`: the pre-S1 page and six step components restored verbatim under `apps/app/src/features/forms/legacy/worker/` (import paths only), rendered by the server page when the switch is `legacy`; the engine wizard only in `api` mode. Their pre-existing lint debt (12 findings, same counts as before deletion) carried into the eslint baseline under the new paths. App quality green (144 ts / 508 eslint known, 78 tests); `next build` OK.
+
+**User input (verbatim, 2026-09-30):**
+> Merged
+
+**Action (2026-09-30):** PR #15 merged (94b7a85); production deployment `dpl_3Gb5dLo9vWokzhuEpLTWNEXuNupM` live ~02:25Z. `/registration/worker` now renders `LegacyWorkerRegistration` (no wizard reference in the payload). Reset requested for support@remontaservices.com.au at 02:26:18Z; email at 02:26:23Z links to `https://app.remontaservices.com.au/reset-password?token=…`. Both verified live.
+
+**User input (verbatim, 2026-09-30):**
+> It is live now. Let's continue the ai dlc, but before that, make a plan that while testing the new backend api, make sure it is being done to the Preview before pusing to production, this will make sure that the production won't compromise, may be add it to the claude.md
+
+**Action (2026-09-30):** Plan written: `construction/plans/S1-preview-first-verification-plan.md` (rule, environments, `staging` branch model, steps S1–S8, the preview checklist, 7 questions). CLAUDE.md: "Preview before production" section, the "no staging branch" line replaced, gate counts refreshed. State re-ordered around the plan. Branch `aidlc/preview-first-plan`.
+
+**User input (verbatim, 2026-09-30):**
+> Before answering those, do we need those? my only goal is that we don't ship the new api to the production first without securing and testing, can you make sure with that
+
+**Action (2026-09-30):** Plan trimmed to the goal: no staging branch, no staging hostname, no CRM sandbox, no suburb-source switch. Kept: the code guard (production ignores `REGISTRATION_BACKEND`; only the Upstash key selects `api` -- `lib/registration-switch.ts`, test in forms.test.ts), the first api deploy as a staging stack on a Neon copy, Preview scope pointed at staging, the 8-item checklist on a PR preview before any production step. CLAUDE.md section shortened to match. Quality green (144 ts / 508 eslint known, 79 tests). One question left (Q1).
+
+**User input (verbatim, 2026-09-30):**
+> Yes the production has no NEXT_PUBLIC_API_URL or REGISTRATION_BACKEND
