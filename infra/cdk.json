@@ -1,0 +1,17 @@
+{
+  "app": "npx tsx bin/remonta-api.ts",
+  "watch": {
+    "include": ["bin/**", "lib/**"],
+    "exclude": ["cdk.out", "node_modules", "test"]
+  },
+  "context": {
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:defaultCrossStackReferences": "strong",
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/aws-ecs:arnFormatIncludesClusterName": true,
+    "@aws-cdk/aws-ecs:removeDefaultDeploymentAlarm": true,
+    "//": "The VPC pins its subnets to 2a/2b and CDK checks them against the region's zones, which is a lookup. Seeding the answer for the placeholder and test accounts keeps `cdk synth` credential-free (tests, CI). A real account performs the lookup once at deploy time, with credentials.",
+    "availability-zones:account=000000000000:region=ap-southeast-2": ["ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"],
+    "availability-zones:account=123456789012:region=ap-southeast-2": ["ap-southeast-2a", "ap-southeast-2b", "ap-southeast-2c"]
+  }
+}

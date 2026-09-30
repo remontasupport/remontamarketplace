@@ -1,0 +1,34 @@
+# Build context for apps/api/Dockerfile (built from the repository root).
+# Everything not needed to build the api image stays out: faster context upload,
+# and no way for a secret or a machine-specific artifact to land in a layer.
+.git
+.github
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/.vercel
+**/.uploads
+**/*.tsbuildinfo
+# Secrets. Never in an image; the environment supplies them at run time.
+**/.env
+**/.env.*
+!**/.env.example
+# Build outputs the image regenerates itself.
+apps/api/generated
+apps/api/prisma/schema.prisma
+apps/api/load
+# The other products and the committed Prisma clients (not used by the api).
+apps/app/src
+apps/app/public
+apps/web/src
+apps/web/public
+# Documentation and the business record.
+aidlc-docs
+.brd
+.aidlc-rule-details
+*.md
+!packages/**/*.md
+# Infrastructure as code: not part of the api image.
+infra

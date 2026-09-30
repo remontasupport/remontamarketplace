@@ -1,0 +1,11 @@
+{
+  "extends": "@remonta/config/tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "types": ["node"]
+  },
+  "include": ["bin/**/*.ts", "lib/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
+  "exclude": ["node_modules", "cdk.out"]
+}
