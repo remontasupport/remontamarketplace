@@ -363,6 +363,15 @@ wrapper imports the definition (`WorkerRegistrationWizard.tsx`).
 
 ---
 
+## Reference docs
+
+**Worker sign-up** — the flow, every api endpoint (parameters, responses, errors, limits), the tables
+and columns it writes, the enums, and the emails/outbox/jobs: `docs/signup/README.md` (an index; start
+there). Written from the code; when you change the sign-up, its contract or its tables, update the matching
+file in the same PR.
+
+---
+
 ## AI-DLC
 
 This project follows the AI-DLC workflow in `aidlc-docs/`. Unit plans, summaries and

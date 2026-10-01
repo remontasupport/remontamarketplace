@@ -2081,3 +2081,22 @@ Reported the position and the pending decisions; no code changed.
 > merged
 
 **Action (2026-10-01):** PR #22 merged (4a97623). deploy-api run 4 (36824274317) **succeeded**. Staging: health 200; `/v1/service-categories` 200, 6 categories in order, `public, max-age=300`, CORS allowed for `*.vercel.app`. Live sign-up still legacy (fresh MISS). Branch `s1/preview-run-1` from main with the result in `preview-verification.md`; pushing it builds a fresh preview for the remaining checks.
+
+**User input (verbatim, 2026-10-01):**
+> Ok. Did you deploy the changes of the api to the google cloud?
+
+**Action (2026-10-01):** Answered: yes to staging only, automatically -- the PR #22 merge triggered deploy-api run 4 (build image 4a97623 -> remonta-api-staging -> health check), green; confirmed live by `/v1/service-categories`. Production Cloud Run (`remonta-api`) never deployed; prod secrets empty; prod deploys only by manual workflow_dispatch (stage=prod) after the checklist, the database run and the user's approval.
+
+**User input (verbatim, 2026-10-01):**
+> I checked on the F12 and Network but no api appear
+
+**Action (2026-10-01):** Diagnosis guidance (the preview is behind Vercel protection, so not checkable from here): requests are action-triggered (suburb typing, services step, email blur, Send code); Network needs Preserve log, filter All, `run.app`; asked which page renders (legacy welcome vs new form), whether page source contains `run.app` (api mode passes the base URL to the client), and whether the URL is the `s1/preview-run-1` deployment.
+
+**User input (2026-10-01):** screenshot `Screenshot 2026-10-01 143651.png` -- the new form ("Where are you located?") with "No 4 Branch, QLD 4856" picked; DevTools Network filtered to "Socket", "0 / 71 requests".
+
+**Action (2026-10-01):** The Socket filter hid all 71 requests. The new form renders on the preview and the suburb search returned a pick. Told the user to select Fetch/XHR (or All), Keep log, filter `run.app`, and retype the suburb; expect `localities?q=...` and, on the next step, `service-categories` from the staging api.
+
+**User input (verbatim, 2026-10-01):**
+> now, can you make a documentation for the signup flow and the apis? what are the parameters needed, what table it saves, what are the rows, include also the enum like statuses. I want you to organize the file so you can retrieve it easily.
+
+**Action (2026-10-01):** `docs/signup/` written from the code (contract, schemas, pipeline, register-worker, stage-photo, email-code, outbox, notifications, Prisma schema and migrations): `README.md` (lookup index + source-file map), `01-flow.md` (modes and switch, step-by-step calls, text diagram, rules R1-R6, where it runs), `02-api-reference.md` (base URLs, error envelope and codes, the 11-step pipeline, CORS, per-endpoint parameters/responses/errors/limits), `03-data-model.md` (every table and column a sign-up writes and its value, tables read, relationships, the legacy writes), `04-enums.md` (all enums with meanings, verificationStatus text values, contract literals), `05-events-and-emails.md` (emails, outbox events and retries, scheduled jobs, audit, alerts). Claims re-checked against code (breach status `clear`, audit ip/user agent, global rate-limit key `*`, photo purge job, `?id=` lead param); internal links/anchors checked. CLAUDE.md: "Reference docs" pointer.
