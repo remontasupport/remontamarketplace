@@ -27,6 +27,11 @@ describe.each(stages)('service definition: %s', (stage) => {
     expect(REGION).toBe('australia-southeast1')
   })
 
+  it('is reachable without a Google identity (browsers and the health check call it; the api does its own checks)', () => {
+    expect(svc.metadata.annotations['run.googleapis.com/ingress']).toBe('all')
+    expect(svc.metadata.annotations['run.googleapis.com/invoker-iam-disabled']).toBe('true')
+  })
+
   it('sets none of the variables Cloud Run reserves (it refuses the whole definition otherwise)', () => {
     // Cloud Run sets PORT to the container port itself; the api reads it from there.
     const reserved = ['PORT', 'K_SERVICE', 'K_REVISION', 'K_CONFIGURATION']

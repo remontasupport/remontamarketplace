@@ -1993,3 +1993,5 @@ Reported the position and the pending decisions; no code changed.
 > Error: Process completed with exit code 1.
 
 **Action (2026-10-01):** Confirmed: the PORT defect fixed on `fix/cloudrun-reserved-port`. The user opens and merges the PR; the merge re-runs deploy-api (path `infra/**`).
+
+**Action (2026-10-01, same branch):** Read ahead for the next failure: nothing made the service public (no allUsers/run.invoker/invoker-iam-disabled anywhere), so `api-health.sh`'s unauthenticated `curl $url/v1/health` -- and every browser -- would get 403. Added `run.googleapis.com/invoker-iam-disabled: "true"` to the service metadata (skips the invoker IAM check rather than granting allUsers, which a domain-restricted-sharing org policy may forbid). Test added and shown failing on both stages first; re-rendered; infra quality OK (19 tests).
