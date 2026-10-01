@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
-import { PROJECT_PLACEHOLDER, renderService, renderYaml, TAG_PLACEHOLDER } from '../lib/render'
+import { DEPLOY_PLACEHOLDER, PROJECT_PLACEHOLDER, renderService, renderYaml, TAG_PLACEHOLDER } from '../lib/render'
 import { REGION, SECRET_NAMES, STAGES, type Stage } from '../lib/stages'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -30,6 +30,10 @@ describe.each(stages)('service definition: %s', (stage) => {
   it('is reachable without a Google identity (browsers and the health check call it; the api does its own checks)', () => {
     expect(svc.metadata.annotations['run.googleapis.com/ingress']).toBe('all')
     expect(svc.metadata.annotations['run.googleapis.com/invoker-iam-disabled']).toBe('true')
+  })
+
+  it('carries a per-deploy marker, so every deploy (a re-run too) is a new revision that re-reads the secrets', () => {
+    expect(tpl.metadata.annotations['remonta-deploy-id']).toBe(DEPLOY_PLACEHOLDER)
   })
 
   it('sets none of the variables Cloud Run reserves (it refuses the whole definition otherwise)', () => {
@@ -103,5 +107,19 @@ describe('the stages differ only where the design says', () => {
     expect([STAGES.prod.minInstances, STAGES.prod.maxInstances]).toEqual([1, 4])
     expect(STAGES.staging.alerts).toBe('minimal')
     expect(STAGES.prod.alerts).toBe('full')
+  })
+})
+
+describe('the deploy workflow', () => {
+  const workflow = readFileSync(join(here, '../../.github/workflows/deploy-api.yml'), 'utf8')
+  const applies = workflow.split('\n').filter((l) => l.includes('sed "s/') && l.includes('service.'))
+
+  it('fills every placeholder on each path that applies a service definition', () => {
+    expect(applies.length).toBe(2) // push -> staging, and the promotion
+    for (const line of applies) for (const p of [PROJECT_PLACEHOLDER, TAG_PLACEHOLDER, DEPLOY_PLACEHOLDER]) expect(line).toContain(`s/${p}/`)
+  })
+
+  it('makes the deploy id unique per run AND per attempt (a re-run must be a new revision)', () => {
+    for (const line of applies) expect(line).toMatch(/__DEPLOY_ID__\/\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}\//)
   })
 })

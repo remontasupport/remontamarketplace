@@ -4,20 +4,49 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration. S1 code in main and live (2026-09-30) with the sign-up on the pre-S1 legacy page; `apps/api` hosting decided: **Google Cloud Run**, infrastructure code on branch `s1/infrastructure` (unmerged); bootstrap of GCP project `remonta-api-510206` **blocked on billing** (CEO). See "PENDING RIGHT NOW" under Resume here.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration. Production sign-up on the pre-S1 legacy page. `apps/api` **staging is live on Google Cloud Run** (2026-10-01); next: the fresh-revision PR, then Vercel Preview pointed at staging and the preview checklist. See "PENDING RIGHT NOW" under Resume here.
 
 ## Resume here (rewritten 2026-09-30, end of session)
 
 **Standing instruction (user, 2026-09-28):** no other work until `apps/api` is deployed and in use. Everything below is on that path only.
 
-### PENDING RIGHT NOW (2026-09-30, end of session -- read this first)
+### PENDING RIGHT NOW (2026-10-01 -- read this first)
 
-**Hosting decision:** Google Cloud Run (`australia-southeast1`), decided 2026-09-30 after AWS was judged too complicated
-and after establishing that the company already runs Google Cloud projects (`n8n Project`, `Remonta-Geocoding`).
-Branch `s1/infrastructure` (10 commits, unmerged) holds everything: the `probe` change, `infra/` (stage table →
-rendered Cloud Run YAML, `cloudrun/bootstrap.sh`, alert policies), `deploy-api.yml` (staging on push, prod by
-promotion), docs. Plan: `construction/plans/S1-infrastructure-code-generation-plan.md` §3b; summary:
-`construction/S1-registration/code/infra-summary.md`; guide: `infra/README.md`.
+**Staging api is LIVE (2026-10-01):** `https://remonta-api-staging-154148201608.australia-southeast1.run.app`
+(Cloud Run, `australia-southeast1`, project `remonta-api-510206`, against the `rehearse-w1` Neon branch). Checked:
+`/v1/health` 200 `{"status":"ok"}` with no Google identity (health runs `SELECT 1`); `/v1/localities?q=parram` returns
+rows with ids; CORS preflight from a `*.vercel.app` origin allowed, from another origin refused. **Production is
+untouched:** production Cloud Run (`remonta-api`) not deployed, prod secrets empty, Upstash `switch:registration` =
+`legacy`, the live sign-up served the legacy page after the merges (checked 03:07Z).
+
+**How it got there (2026-10-01):** billing linked by the user; `bootstrap.sh` completed (one fix: the OIDC provider
+display name must be <= 32 chars); three GitHub repository variables set; six staging secrets set. First deploys failed
+and were fixed: PR #20 (PORT is reserved by Cloud Run; the service is public via `invoker-iam-disabled`); then a mix-up
+in the secrets (the n8n single space had landed in IP_HASH_SECRET; both re-set). A re-run could not pick up the fixed
+secrets because an unchanged template makes no new revision, so the serving revision was created by hand in Cloud Shell
+(`gcloud run services update remonta-api-staging --revision-suffix=...`); the permanent fix is branch
+`fix/cloudrun-fresh-revision-per-deploy` (a per-run/attempt `remonta-deploy-id` annotation). Staging's
+`N8N_REGISTRATION_WEBHOOK_URL` is a single space (= unset) until the CRM notification is built.
+
+**Next, in order:**
+1. Merge `fix/cloudrun-fresh-revision-per-deploy`; its deploy-api run must go green and print the staging URL (proves
+   the normal path, and replaces the hand-made revision).
+2. Vercel **Preview** scope only (never Production): `REGISTRATION_BACKEND=api`, `NEXT_PUBLIC_API_URL=<staging URL>`,
+   `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=<the staging v3 site key>`. Redeploy a preview.
+3. The preview checklist (`plans/S1-preview-first-verification-plan.md` §3), recorded in
+   `S1-registration/preview-verification.md`.
+4. The CRM notification (outbox handler) against a test n8n webhook -- a hard gate before production.
+5. Only after that: production database run -> prod secrets (`remonta-api-<NAME>`) -> promote (`workflow_dispatch`
+   stage=prod) -> checks with the switch off -> canary flip of `switch:registration`.
+
+**Rotate when convenient:** the production Blob token (shown in editor context on 2026-10-01), the Prisma Accelerate key
+and the `rehearse-w1` role password (2026-09-30).
+
+**Production fixes 2026-10-01 (PR #18, live):** the legacy sign-up and 23 other `worker_profiles` reads failed on
+production because the auth client includes S1's three columns, which production lacks (no S1 migration there).
+`lib/auth-prisma.ts` now omits them globally; remove that once the S1 migrations run on production.
+
+### Superseded 2026-10-01 (kept for the record): the 2026-09-30 billing block
 
 **Where the bootstrap stopped:** GCP project **`remonta-api-510206`** (number 154148201608, display name
 "remonta-api") exists; `support@remontaservices.com.au` is Owner; the user cloned the branch in **Cloud Shell**
