@@ -61,7 +61,7 @@ const common = {
   TRUST_PROXY: '1',
   RECAPTCHA_MIN_SCORE: '0.5',
   APP_BASE_URL: APP_ORIGIN,
-  EMAIL_FROM: 'Remonta <noreply@remontaservices.com.au>',
+  EMAIL_FROM: 'Remonta <community@remontaservices.com.au>',
   PHOTO_STORE: 'vercel-blob',
   HASH_CONCURRENCY: '1',
   DB_POOL_SIZE: '5',

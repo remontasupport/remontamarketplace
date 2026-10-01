@@ -164,7 +164,7 @@ Body (JSON):
 | `expiresAt` | integer | Epoch milliseconds; 10 minutes after the send |
 
 The same 202 for any address. The email subject is "`<code>` is your Remonta verification code"
-(sender `noreply@remontaservices.com.au`; it can land in Spam). A retried request with the same ticket does
+(sender `community@remontaservices.com.au`; it can land in Spam). A retried request with the same ticket does
 not send a second copy.
 
 Errors: 400, 403 (reCAPTCHA refused), 429, 500 (provider refused the send), 503 (provider unreachable,

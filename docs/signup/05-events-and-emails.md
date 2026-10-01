@@ -13,7 +13,7 @@ commit, and a crash after the commit does not lose it.
 | Welcome | A new account committed (`WorkerRegistered`) | "Welcome to Remonta -- your account is ready" — links to `<APP_BASE_URL>/login` | Outbox |
 | Existing-account notice | Someone submitted with an email that already has an account (`RegistrationAttemptOnExistingAccount`) | "Someone tried to create a Remonta account with your email" — suggests signing in or resetting the password | Outbox |
 
-All are sent through Resend from `Remonta <noreply@remontaservices.com.au>`. Each send carries an
+All are sent through Resend from `Remonta <community@remontaservices.com.au>`. Each send carries an
 idempotency key (`email-code/<ticket>`, `registration-confirmation/<event id>`, …), so a retry never sends a
 second copy. The existing-account notice is sent at most once per account per 10 minutes, and not at all
 in the first 10 minutes after the account was created (that is the browser retrying its own sign-up).

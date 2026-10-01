@@ -2105,3 +2105,13 @@ Reported the position and the pending decisions; no code changed.
 > yes publish as a web page
 
 **Action (2026-10-01):** Published the sign-up reference as a Claude Docs page, "Worker Sign-up Reference" (https://claude.ai/code/artifact/c867b20a-324d-4b98-8eff-c957e5b44b10), private until the user shares it. Content mirrors `docs/signup/` (flow, backends, API basics, endpoint table and details, tables written/read, legacy writes, enums, after-sign-up, source files); no secrets.
+
+**User input (verbatim, 2026-10-01):**
+> are we done with the sign up new api? what else needs to do?
+
+**Action (2026-10-01):** Answered: not done -- built and on staging, no real users. Remaining in order: (1) preview checklist items 1, 4-7 (user testing; 2, 3, 8 done; 5 partial: code email arrived); (2) CRM notification (outbox handler to a test n8n webhook first) -- hard gate; (3) production prep on approval: database run per runbook, prod secrets (prod DB, prod reCAPTCHA key), manual prod deploy + checks with switch off, Vercel production api URL + site key, Resend SPF/DKIM/DMARC; (4) canary flip of switch:registration, then delete the legacy folder and the auth-prisma omit. Housekeeping: merge s1/preview-run-1, rotate exposed keys, re-record rollback ids, local Node 22, the 10 codes/h/IP decision. Offered to start the CRM notification.
+
+**User input (verbatim, 2026-10-01):**
+> the CRM and n8n is not priority. By the way I change the Email From in the apps/api/.env.example to Remonta <community@remontaservices.com.au>, can you confirm that that value was being used when sending the welcome email?
+
+**Action (2026-10-01):** CRM/n8n deprioritised by the user. Confirmed NOT used: `.env.example` is a local template only; on Cloud Run EMAIL_FROM comes from `infra/lib/stages.ts` (rendered into `service.{staging,prod}.yaml`; the image carries no .env). Changed `stages.ts` EMAIL_FROM to `Remonta <community@remontaservices.com.au>` (kept the user's `.env.example` edit), re-rendered both service YAMLs, infra quality OK (23 tests); updated `docs/signup/02` and `05` and the published page (stale mailto link removed). Takes effect on staging when this branch merges (deploy-api); production unaffected. Left as is: the comment example in config.ts, the config test fixture, the historical infra design docs.
