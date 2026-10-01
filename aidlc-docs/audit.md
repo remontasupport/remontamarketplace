@@ -2026,3 +2026,23 @@ Reported the position and the pending decisions; no code changed.
 > https://remonta-api-staging-154148201608.australia-southeast1.run.app
 
 **Action (2026-10-01):** **Staging api live.** From here: `/v1/health` 200 `{"status":"ok"}` without a Google identity (includes `SELECT 1` on rehearse-w1); `/v1/localities?q=parram` returns rows with ids; CORS preflight from `https://remonta-app-git-x.vercel.app` allowed (204 + allow-origin), from `https://evil.example` refused (404, no allow-origin). State file: "PENDING RIGHT NOW" rewritten for 2026-10-01; the billing block kept as superseded.
+
+**User input (verbatim, 2026-10-01):**
+> when I open the staging address, it says {"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"03ada169-bbfc-4469-a5dc-08b221043fc0"}}
+
+**Action (2026-10-01):** Expected: the api serves only contract endpoints, so `/` is a 404 from the api itself (requestId present). Pointed the user at `/v1/health` and `/v1/localities?q=parram`.
+
+**User input (verbatim, 2026-10-01):**
+> THERE IS A WARNING WHEN i AM PASTING THE NEXT PUBLIC URL Remove the public framework prefix to keep this value private. Public prefixes expose values to the browser. If that’s safe, change the variable to Config.
+
+**Action (2026-10-01):** Advised: keep the `NEXT_PUBLIC_` names (the browser must read the api URL and the reCAPTCHA site key; both public by design; without the prefix the switch falls back to legacy), set the type to Config, Preview scope only. The reCAPTCHA secret stays in Secret Manager.
+
+**User input (verbatim, 2026-10-01):**
+> A variable with the name `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` already exists for the target development,preview,production on branch undefined.
+
+**Action (2026-10-01):** The production site key is shared to all three targets (recorded as a deliberate share in the Q1 notes). Advised splitting it: edit the existing variable to untick Preview only (value unchanged), then add a Preview-only variable with the staging v3 site key. Noted the preview-only side effect (preview legacy forms would mismatch production's shared RECAPTCHA_SECRET_KEY; optional: split that too with the staging secret). Asked whether the other two variables saved cleanly.
+
+**User input (verbatim, 2026-10-01):**
+> done with the variables, what's next? SHOULD I REDEPLOY?
+
+**Action (2026-10-01):** PR #21 merged (f3be060); deploy-api run 36814542520 **succeeded** -- the normal path works and replaced the hand-made revision; staging health re-checked 200. Answered: a preview must be rebuilt (NEXT_PUBLIC_ values are build-time), never production. Branch `s1/preview-verification` with the verification record skeleton (`construction/S1-registration/preview-verification.md`); pushing it builds a preview with the new Preview-scope variables.
