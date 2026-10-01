@@ -182,6 +182,20 @@ describe.skipIf(!local)('registration on PostGIS', () => {
     })
   })
 
+  describe('service catalogue', () => {
+    it('lists the categories with their sub-categories and flags, cached, nothing else', async () => {
+      const res = await t.fastify.inject({ method: 'GET', url: '/v1/service-categories' })
+      expect(res.statusCode).toBe(200)
+      expect(res.headers['cache-control']).toBe('public, max-age=300')
+      // The database may hold the real catalogue too; look at this suite's rows.
+      const mine = (res.json().categories as { id: string }[]).filter((c) => c.id.startsWith('test-'))
+      expect(mine).toEqual([
+        { id: 'test-cleaning', name: 'Test Cleaning', requiresQualification: false, subcategories: [{ id: 'test-windows', name: 'Test Windows', requiresRegistration: null }] },
+        { id: 'test-support', name: 'Test Support Work', requiresQualification: false, subcategories: [{ id: 'test-personal-care', name: 'Test Personal Care', requiresRegistration: null }] },
+      ])
+    })
+  })
+
   describe('email availability (user decision: reveals existence; asked on blur)', () => {
     const available = (email: string) => t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/email-availability', payload: { email } })
 

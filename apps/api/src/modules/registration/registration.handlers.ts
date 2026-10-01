@@ -4,6 +4,7 @@ import { defineHandlers } from '../../platform/contract/handlers'
 import type { LocalityDirectory } from '../localities/locality-directory'
 import { confirmEmailCode, emailAvailable, requestEmailCode, type EmailCodeDeps } from './application/email-code'
 import { registerWorker, type RegisterDeps } from './application/register-worker'
+import { listServiceCategories } from './application/service-categories'
 import { stagePhoto, type StagePhotoDeps } from './application/stage-photo'
 
 export interface RegistrationModuleDeps extends RegisterDeps, Omit<StagePhotoDeps, 'db'>, EmailCodeDeps {
@@ -12,6 +13,8 @@ export interface RegistrationModuleDeps extends RegisterDeps, Omit<StagePhotoDep
 
 export function registrationHandlers(deps: RegistrationModuleDeps) {
   return defineHandlers(registrationContract, {
+    listServiceCategories: async () => ({ status: 200, body: { categories: await listServiceCategories(deps.db) } }),
+
     searchLocalities: async (req) => ({ status: 200, body: { localities: await deps.localities.search(req.query.q) } }),
 
     uploadRegistrationPhoto: async (req, ctx) => ({ status: 201, body: await stagePhoto(req.files.photo, ctx.ip, deps) }),
