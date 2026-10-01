@@ -1880,3 +1880,37 @@ Reported the position and the pending decisions; no code changed.
 > is the ai dlc also in github? can you create a script I could you step by step when I pull it from github
 
 **Action (2026-09-30):** `scripts/setup-new-machine.sh` (tools check, the three secret files, pnpm install, local PostGIS with migrations + suburb list + catalogue, optional --verify gates, resume pointers) verified on this machine; CLAUDE.md "New machine" section. All AI-DLC files (aidlc-docs 80, .aidlc-rule-details 31, .brd 9) are tracked and on GitHub; every local commit is on a remote branch.
+---
+
+## 2026-10-01 — Production fix: legacy worker sign-up submit
+
+**User input (verbatim, 2026-10-01):**
+> I want you to fix the registration/worker submit button. It cannot be save on the production, make sure you use the legacy api and not the new api for now since it is still on staging stage
+
+**Action (2026-10-01):** Branch `fix/legacy-worker-signup-submit`. The page is the verbatim pre-S1 code and still posts to `/api/auth/register-async`; the client changes since pre-S1 are inert. Root cause candidate: S1 added `consentProfileShareAt`, `consentWordingVersion`, `zohoLeadId` to `WorkerProfile` in `packages/db/prisma/schema.prisma`; Vercel's postinstall regenerates `authPrisma` from that schema, but no S1 migration has run on production (`aidlc-state.md`). The legacy processor's `user.create({ include: { workerProfile: true } })` selects every column, so production fails with "column does not exist". A read-only production schema query to confirm was blocked by the permission classifier; not retried. Scoping other full-row WorkerProfile reads.
+
+**User input (verbatim, 2026-10-01):**
+> go ahead with the code fix, no migration
+
+**Action (2026-10-01):** `lib/workers/workerRegistrationProcessor.ts`: `user.create` now `select`s `id`, `role` and `workerProfile.id` instead of `include: { workerProfile: true }`, so the legacy sign-up never reads S1's worker_profiles columns. No migration; production stays on legacy.
+
+**User input (verbatim, 2026-10-01):**
+> so the signup now stores to the authentication branch? yes do the option 1 in this same branch
+
+**Action (2026-10-01):** Answered: storage unchanged -- legacy sign-up writes through `authPrisma` to `AUTH_DATABASE_URL` as before. Option 1 (no migration) for the 23 other full-row `worker_profiles` queries (admin verification, setup progress on the worker dashboard, compliance and service-document uploads, profile wizard, availability and experience): instead of 23 call-site edits, `lib/auth-prisma.ts` sets Prisma's global `omit` for `workerProfile.consentProfileShareAt`, `consentWordingVersion`, `zohoLeadId`, so no query selects them. Nothing in apps/app reads them; `auth-prisma.ts` is the only constructor of the auth client. To be removed once the S1 migrations are on production. App quality OK (144 ts / 508 eslint known, 79 tests); `turbo run build --force` OK. Not proven at runtime: no local database (no Docker, no Postgres); production read was blocked earlier.
+
+**Action (2026-10-01):** PR #18 merged (12747b5): both fixes in main.
+
+---
+
+## 2026-10-01 — Resuming AI-DLC: S1 infrastructure (Cloud Run)
+
+**User input (verbatim, 2026-10-01):**
+> Perfect. Now let us continue the ai dlc. Can you check where we left off? the last time we made is to deploy the new api to google cloud instead to AWS
+
+**Action (2026-10-01):** Resume point found on the unmerged branch `origin/s1/infrastructure` (main still describes the AWS design): Cloud Run decided; GCP project `remonta-api-510206`; `bootstrap.sh` blocked at step 1 on billing. Summarised the next steps to the user.
+
+**User input (verbatim, 2026-10-01):**
+> billing is linked now, switch to the infra branch
+
+**Action (2026-10-01):** Regenerated Prisma clients discarded; switched to `s1/infrastructure`; merged `origin/main` (4 commits incl. PR #18). One conflict, in this file: both sides appended entries; kept both in date order. Next: the user re-runs `bootstrap.sh` in Cloud Shell.
