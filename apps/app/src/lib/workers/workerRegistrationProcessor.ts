@@ -109,8 +109,13 @@ export async function processWorkerRegistration(
             },
           },
         },
-        include: {
-          workerProfile: true,
+        // Read back only what is used below. A full workerProfile row would select
+        // S1's columns, which the production database does not have until the S1
+        // migrations run there -- and the insert would fail with "column does not exist".
+        select: {
+          id: true,
+          role: true,
+          workerProfile: { select: { id: true } },
         },
       });
     } catch (dbError: any) {
