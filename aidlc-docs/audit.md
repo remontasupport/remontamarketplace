@@ -2100,3 +2100,8 @@ Reported the position and the pending decisions; no code changed.
 > now, can you make a documentation for the signup flow and the apis? what are the parameters needed, what table it saves, what are the rows, include also the enum like statuses. I want you to organize the file so you can retrieve it easily.
 
 **Action (2026-10-01):** `docs/signup/` written from the code (contract, schemas, pipeline, register-worker, stage-photo, email-code, outbox, notifications, Prisma schema and migrations): `README.md` (lookup index + source-file map), `01-flow.md` (modes and switch, step-by-step calls, text diagram, rules R1-R6, where it runs), `02-api-reference.md` (base URLs, error envelope and codes, the 11-step pipeline, CORS, per-endpoint parameters/responses/errors/limits), `03-data-model.md` (every table and column a sign-up writes and its value, tables read, relationships, the legacy writes), `04-enums.md` (all enums with meanings, verificationStatus text values, contract literals), `05-events-and-emails.md` (emails, outbox events and retries, scheduled jobs, audit, alerts). Claims re-checked against code (breach status `clear`, audit ip/user agent, global rate-limit key `*`, photo purge job, `?id=` lead param); internal links/anchors checked. CLAUDE.md: "Reference docs" pointer.
+
+**User input (verbatim, 2026-10-01):**
+> yes publish as a web page
+
+**Action (2026-10-01):** Published the sign-up reference as a Claude Docs page, "Worker Sign-up Reference" (https://claude.ai/code/artifact/c867b20a-324d-4b98-8eff-c957e5b44b10), private until the user shares it. Content mirrors `docs/signup/` (flow, backends, API basics, endpoint table and details, tables written/read, legacy writes, enums, after-sign-up, source files); no secrets.
