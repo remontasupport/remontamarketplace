@@ -1790,3 +1790,8 @@ Reported the position and the pending decisions; no code changed.
 > go ahead with the code fix, no migration
 
 **Action (2026-10-01):** `lib/workers/workerRegistrationProcessor.ts`: `user.create` now `select`s `id`, `role` and `workerProfile.id` instead of `include: { workerProfile: true }`, so the legacy sign-up never reads S1's worker_profiles columns. No migration; production stays on legacy.
+
+**User input (verbatim, 2026-10-01):**
+> so the signup now stores to the authentication branch? yes do the option 1 in this same branch
+
+**Action (2026-10-01):** Answered: storage unchanged -- legacy sign-up writes through `authPrisma` to `AUTH_DATABASE_URL` as before. Option 1 (no migration) for the 23 other full-row `worker_profiles` queries (admin verification, setup progress on the worker dashboard, compliance and service-document uploads, profile wizard, availability and experience): instead of 23 call-site edits, `lib/auth-prisma.ts` sets Prisma's global `omit` for `workerProfile.consentProfileShareAt`, `consentWordingVersion`, `zohoLeadId`, so no query selects them. Nothing in apps/app reads them; `auth-prisma.ts` is the only constructor of the auth client. To be removed once the S1 migrations are on production. App quality OK (144 ts / 508 eslint known, 79 tests); `turbo run build --force` OK. Not proven at runtime: no local database (no Docker, no Postgres); production read was blocked earlier.
