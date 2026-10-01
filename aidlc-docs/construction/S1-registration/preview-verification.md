@@ -21,7 +21,7 @@ Preview: _(URL of this branch's Vercel preview)_ · commit: _(sha)_
 |---|---|---|---|
 | 1 | Sign in with a staging-only user; open a dashboard | | |
 | 2 | `GET /v1/health` on the staging api is 200 | ✅ | 200 `{"status":"ok"}` without a Google identity; includes `SELECT 1` on `rehearse-w1` (2026-10-01) |
-| 3 | Suburb search on the sign-up page returns rows with ids | | api alone: `/v1/localities?q=parram` returns rows with ids (2026-10-01) |
+| 3 | Suburb search on the sign-up page returns rows with ids | | api alone: `/v1/localities?q=parram` returns rows with ids (2026-10-01). Since PR #22 the form calls apps/api for it in api mode |
 | 4 | Photo upload stages a file on the api | | |
 | 5 | Full sign-up with an internal email: code arrives, account created, `ACCOUNT_REGISTERED` audit row, outbox `DONE`, worker in the admin list | | CRM sink part waits for the CRM notification (not built; staging webhook unset) |
 | 6 | Duplicate sign-up: existing-account notice, no second account | | |
@@ -30,3 +30,12 @@ Preview: _(URL of this branch's Vercel preview)_ · commit: _(sha)_
 
 Also checked on the api (2026-10-01): CORS preflight from a `*.vercel.app` origin is allowed; from another origin it
 is refused.
+
+### 2026-10-01 -- every sign-up call on apps/api (PR #22, deploy-api run 4 green)
+
+Before PR #22 the api-mode form still called the app for two things: suburb search (`/api/suburbs`) and the services
+list (`/api/categories`). Both now go to apps/api: `GET /v1/localities` and the new `GET /v1/service-categories`. The
+other calls were already on apps/api (email availability, send/verify code, photo upload, submit). Staging after the
+deploy: `/v1/service-categories` 200, 6 categories in display order (Support Worker 8 sub-categories first),
+`cache-control: public, max-age=300`, CORS allowed for a `*.vercel.app` origin. Live sign-up still the legacy page
+(checked fresh, `x-vercel-cache: MISS`). Fresh preview for the remaining checks: branch `s1/preview-run-1`.
