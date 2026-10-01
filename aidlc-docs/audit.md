@@ -2066,3 +2066,8 @@ Reported the position and the pending decisions; no code changed.
 > perfect. Now the Service offer page, I already changed the loading state to a circular state instead of "Loading service page.." can you check the code, why it is not being applied
 
 **Action (2026-10-01):** Cause: the change is commit 8bd9790 on `fix/services-loading-spinner` (2026-09-30), never merged to main, so no deployment has it. Merged it into `s1/preview-verification` (clean; `FieldLoading` spinner in the form engine's services step; Loader2 already imported). App quality OK (79 tests); app build OK. Pushed; the preview rebuilds. It applies to the new (api-mode) form only; the live legacy page keeps its pre-S1 text by design.
+
+**User input (verbatim, 2026-10-01):**
+> Can you delete this entirely? "We restored your progress. For your security, please verify your email and type your password again."
+
+**Action (2026-10-01):** Removed the restored-draft banner end to end: `restored` state and `restoredMessage` in `useFormWizard.ts`, the props in `FormWizard.tsx`, the props and banner in `FormWizardView.tsx`. The draft restore itself is unchanged (progress still comes back; email verification and password are still never saved and must be redone, now without a notice). App quality OK (79 tests); app build OK. Pushed to `s1/preview-verification`.

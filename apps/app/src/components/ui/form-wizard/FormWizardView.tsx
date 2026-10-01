@@ -38,9 +38,6 @@ export interface FormWizardViewProps {
   stepIndex: number;
   stepCount: number;
   offline: boolean;
-  restored: boolean;
-  /** Shown with the restored banner; says which fields the draft could not carry. */
-  restoredMessage?: string;
   /** A message the step itself raised, e.g. the legacy "email already exists". */
   stepMessage?: string | null;
   status: WizardStatus;
@@ -50,7 +47,7 @@ export interface FormWizardViewProps {
   children: ReactNode;
 }
 
-export function FormWizardView({ stepTitle, stepIndex, stepCount, offline, restored, restoredMessage, stepMessage, status, onBack, onNext, onSubmit, children }: FormWizardViewProps) {
+export function FormWizardView({ stepTitle, stepIndex, stepCount, offline, stepMessage, status, onBack, onNext, onSubmit, children }: FormWizardViewProps) {
   const last = stepIndex === stepCount - 1;
   const busy = status.kind === "sending" || status.kind === "uploading" || status.kind === "retrying" || status.kind === "waiting-for-connection";
   const submitLabel = { sending: "Submitting...", uploading: "Uploading photo...", retrying: "Still trying...", "waiting-for-connection": "Waiting for connection...", failed: "Try again", idle: "Complete Signup" }[status.kind];
@@ -69,11 +66,6 @@ export function FormWizardView({ stepTitle, stepIndex, stepCount, offline, resto
         {offline && (
           <div role="status" className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 font-poppins text-sm text-amber-900">
             You&apos;re offline. Your details are saved on this device -- we&apos;ll carry on as soon as you&apos;re back online.
-          </div>
-        )}
-        {restored && (
-          <div role="status" className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 font-poppins text-sm text-blue-900">
-            {restoredMessage ?? "We restored your progress. For your security, please type your password again."}
           </div>
         )}
         <Card>
