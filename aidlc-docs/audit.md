@@ -2021,3 +2021,8 @@ Reported the position and the pending decisions; no code changed.
 > (then pasted: the re-run failed with the same startup-probe error, naming revision remonta-api-staging-00001-n22)
 
 **Action (2026-10-01):** The re-run reported the SAME revision: `gcloud run services replace` with an unchanged template makes no new revision, so the corrected secrets (`latest`, read at revision start) were never read. Unblock given to the user: `gcloud run services update remonta-api-staging --revision-suffix=fix1` in Cloud Shell, then a health curl. Permanent fix on branch `fix/cloudrun-fresh-revision-per-deploy`: template annotation `remonta-deploy-id: __DEPLOY_ID__`, substituted in both workflow apply lines with `${{ github.run_id }}-${{ github.run_attempt }}`; tests that the template carries it and that both workflow lines fill all three placeholders with run id AND attempt (shown failing first); substituted value parses as a string. Infra quality OK (23 tests).
+
+**User input (2026-10-01, pasted):** a Cloud Shell line wrap on the health command, then the staging URL:
+> https://remonta-api-staging-154148201608.australia-southeast1.run.app
+
+**Action (2026-10-01):** **Staging api live.** From here: `/v1/health` 200 `{"status":"ok"}` without a Google identity (includes `SELECT 1` on rehearse-w1); `/v1/localities?q=parram` returns rows with ids; CORS preflight from `https://remonta-app-git-x.vercel.app` allowed (204 + allow-origin), from `https://evil.example` refused (404, no allow-origin). State file: "PENDING RIGHT NOW" rewritten for 2026-10-01; the billing block kept as superseded.
