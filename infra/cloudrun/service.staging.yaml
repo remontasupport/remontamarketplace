@@ -49,7 +49,7 @@ spec:
             - name: APP_BASE_URL
               value: https://app.remontaservices.com.au
             - name: EMAIL_FROM
-              value: Remonta <noreply@remontaservices.com.au>
+              value: Remonta <community@remontaservices.com.au>
             - name: PHOTO_STORE
               value: vercel-blob
             - name: HASH_CONCURRENCY

@@ -1,0 +1,91 @@
+# 01 — The sign-up flow
+
+## 1. Two backends
+
+`/registration/worker` (`apps/app/src/app/registration/worker/page.tsx`) is rendered per request and
+picks one of two backends (`apps/app/src/lib/registration-switch.ts`):
+
+| Mode | What renders | Where the data goes |
+|---|---|---|
+| `legacy` | The pre-S1 page itself (`features/forms/legacy/worker/`) | This app's routes, `POST /api/auth/register-async` (see [03 §5](03-data-model.md#5-legacy-sign-up)) |
+| `api` | The form engine wizard (`features/forms/FormWizard.tsx`) | `apps/api` on Cloud Run, every call (§2 below) |
+
+How the mode is chosen, first match wins:
+
+1. Upstash key `switch:registration` = `legacy` or `api`.
+2. The env var `REGISTRATION_BACKEND` — **ignored on a production deployment** (`VERCEL_ENV=production`),
+   so only the Upstash key can move real users.
+3. Otherwise `legacy`.
+
+`api` also needs `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; if either is missing the
+page falls back to `legacy` and logs why.
+
+Today (2026-10-01): production = `legacy` (Upstash key set). Vercel **Preview** deployments = `api`,
+pointed at the staging api.
+
+## 2. Step by step (api mode)
+
+| # | Screen (form step) | The worker does | Call to apps/api | Writes? |
+|---|---|---|---|---|
+| 0 | "Welcome to Remonta" intro | Clicks Continue | — | — |
+| 1 | "Where are you located?" | Types 2+ letters of a suburb or postcode, picks one | `GET /v1/localities?q=…` (debounced 300 ms, every keystroke) | no |
+| 2 | "Please provide your details" | Types first name, last name, mobile | — | — |
+| 2 | (same) | Types email, leaves the field | `POST /v1/registrations/worker/email-availability` | no |
+| 2 | (same) | Clicks **Send code** (only if the address is available) | `POST /v1/registrations/worker/email-codes` (with a reCAPTCHA token) → a signed ticket | no (an email is sent) |
+| 2 | (same) | Types the 6-digit code, clicks **Verify** | `POST /v1/registrations/worker/email-codes/verify` | no |
+| 2 | (same) | Types the password (enabled only after the email is verified) | — | — |
+| 3 | "What services can you offer?" | Picks services; sub-services through a dialog | `GET /v1/service-categories` (once, cached) | no |
+| 4 | Photo + consent | Uploads a photo | `POST /v1/registrations/worker/photo` (multipart) → `photoUploadId` | **yes**: `registration_photo_uploads` + the file in Blob |
+| 4 | (same) | Ticks the consent, clicks **Complete Signup** | `POST /v1/registrations/worker` (with a fresh reCAPTCHA token) | **yes**: everything in [03 §2](03-data-model.md#2-tables-written-by-a-sign-up) |
+| 5 | `/registration/worker/success` | — | — | — |
+
+After step 4 the account exists and can sign in at once. Emails and other follow-ups run in the
+background from the outbox ([05](05-events-and-emails.md)).
+
+### What the page keeps between visits
+
+The wizard saves progress in the browser (`localStorage`) and restores it on return. Never saved: the
+email verification (ticket and code) and the password, so a returning worker verifies the email and
+types the password again.
+
+### Text diagram
+
+```
+Browser (Vercel page)                         apps/api (Cloud Run)                     Postgres / Blob / Resend
+---------------------                         --------------------                     ------------------------
+suburb typing  ----- GET /v1/localities ----->  in-memory suburb list (from au_localities)
+email blur     ----- POST email-availability ->  SELECT users (lower(email))           read
+Send code      ----- POST email-codes ------->   sign ticket, send email  ------------> Resend (email)
+Verify         ----- POST email-codes/verify ->  check ticket (no storage)
+services step  ----- GET service-categories ->  SELECT Category + Subcategory          read
+photo          ----- POST photo (multipart) -->  check bytes, store file  ------------> Blob; INSERT registration_photo_uploads
+Complete       ----- POST /v1/registrations/worker
+                                               validate, check ticket, breach check,
+                                               ONE transaction ----------------------> users, worker_profiles, worker_services,
+                                                                                       worker_locations, worker_onboarding,
+                                                                                       worker_onboarding_transitions,
+                                                                                       registration_photo_uploads (claim),
+                                                                                       audit_logs, outbox_events
+               <---- 202 accepted ------------
+                                               outbox dispatcher (background) --------> Resend (welcome email)
+```
+
+## 3. Rules the flow guarantees
+
+| Rule | Meaning |
+|---|---|
+| R1 no enumeration | The **submit** answers the same `202` for a new and an existing email; the password is hashed in both cases so timing is similar. (The availability check on step 2 does reveal existence — a deliberate decision, 2026-09-28.) |
+| R2 truthful | The 202 message says the account is ready; it is. |
+| R3 atomic | Every row of a sign-up commits together or not at all. |
+| R4 photo claimed once | A staged photo can be used by one sign-up, within 24 h of upload. |
+| R5 retry-safe | A browser retry after a commit lands in R1 (no second account, no notice email). |
+| R6 email verified | The submit carries the code's ticket; the server re-checks it against the body's email before anything else. |
+
+## 4. Where it runs
+
+| Piece | Where |
+|---|---|
+| The page | Vercel, project `remonta-app` |
+| apps/api staging | `https://remonta-api-staging-154148201608.australia-southeast1.run.app` (Cloud Run, project `remonta-api-510206`), database = Neon branch `rehearse-w1` |
+| apps/api production | Cloud Run service `remonta-api` — **not deployed yet** |
+| Deploys | Merge to `main` → GitHub Actions `deploy-api` → staging. Production only by a manual promotion (`workflow_dispatch`, stage = prod). |

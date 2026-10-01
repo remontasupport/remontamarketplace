@@ -2076,3 +2076,42 @@ Reported the position and the pending decisions; no code changed.
 > I think the api looks good. before we proceed. Can you make sure that all the api being used to this sign up workflow is from the new api already? including the upload photo and submit, etc
 
 **Action (2026-10-01):** Traced every call the api-mode form makes. Already on apps/api: email availability, send/verify code, photo upload, submit (the `check-email` / `register-async` calls in the definition are legacy-mode only). NOT on apps/api: suburb search (always this app's `/api/suburbs`) and the services step's catalogue (this app's `/api/categories`; apps/api had no such endpoint). Changes: (1) contract entry `listServiceCategories` GET `/v1/service-categories` (public, cached 300 s, rate-limited; response = id, name, requiresQualification, sub-categories id/name/requiresRegistration; strict, no documents) + `public-endpoints.json` reason + openapi.json regenerated; contract tests (shown failing first). (2) apps/api `application/service-categories.ts` (same order as the app's route) + handler; unit + property tests for the ordering; an integration test (runs in CI with PostGIS). (3) apps/app: `adapters/useServiceCategories.ts` and `useLocalitySearch` call apps/api in api mode via the typed contract client, the app's routes in legacy mode; `fetchCategories` exported. Gates: app quality OK (79 tests), app build OK, api-contract 34 tests, api lint + tsc OK, api tests 239 passed under Node 22 (`npx node@22`: local Node 20.9 cannot load unplugin, which needs import.meta.dirname, Node >= 20.11; CI uses 20.x/22.x). Note: the staging api deploys only from main, so the preview's services step needs this merged before it can load.
+
+**User input (verbatim, 2026-10-01):**
+> merged
+
+**Action (2026-10-01):** PR #22 merged (4a97623). deploy-api run 4 (36824274317) **succeeded**. Staging: health 200; `/v1/service-categories` 200, 6 categories in order, `public, max-age=300`, CORS allowed for `*.vercel.app`. Live sign-up still legacy (fresh MISS). Branch `s1/preview-run-1` from main with the result in `preview-verification.md`; pushing it builds a fresh preview for the remaining checks.
+
+**User input (verbatim, 2026-10-01):**
+> Ok. Did you deploy the changes of the api to the google cloud?
+
+**Action (2026-10-01):** Answered: yes to staging only, automatically -- the PR #22 merge triggered deploy-api run 4 (build image 4a97623 -> remonta-api-staging -> health check), green; confirmed live by `/v1/service-categories`. Production Cloud Run (`remonta-api`) never deployed; prod secrets empty; prod deploys only by manual workflow_dispatch (stage=prod) after the checklist, the database run and the user's approval.
+
+**User input (verbatim, 2026-10-01):**
+> I checked on the F12 and Network but no api appear
+
+**Action (2026-10-01):** Diagnosis guidance (the preview is behind Vercel protection, so not checkable from here): requests are action-triggered (suburb typing, services step, email blur, Send code); Network needs Preserve log, filter All, `run.app`; asked which page renders (legacy welcome vs new form), whether page source contains `run.app` (api mode passes the base URL to the client), and whether the URL is the `s1/preview-run-1` deployment.
+
+**User input (2026-10-01):** screenshot `Screenshot 2026-10-01 143651.png` -- the new form ("Where are you located?") with "No 4 Branch, QLD 4856" picked; DevTools Network filtered to "Socket", "0 / 71 requests".
+
+**Action (2026-10-01):** The Socket filter hid all 71 requests. The new form renders on the preview and the suburb search returned a pick. Told the user to select Fetch/XHR (or All), Keep log, filter `run.app`, and retype the suburb; expect `localities?q=...` and, on the next step, `service-categories` from the staging api.
+
+**User input (verbatim, 2026-10-01):**
+> now, can you make a documentation for the signup flow and the apis? what are the parameters needed, what table it saves, what are the rows, include also the enum like statuses. I want you to organize the file so you can retrieve it easily.
+
+**Action (2026-10-01):** `docs/signup/` written from the code (contract, schemas, pipeline, register-worker, stage-photo, email-code, outbox, notifications, Prisma schema and migrations): `README.md` (lookup index + source-file map), `01-flow.md` (modes and switch, step-by-step calls, text diagram, rules R1-R6, where it runs), `02-api-reference.md` (base URLs, error envelope and codes, the 11-step pipeline, CORS, per-endpoint parameters/responses/errors/limits), `03-data-model.md` (every table and column a sign-up writes and its value, tables read, relationships, the legacy writes), `04-enums.md` (all enums with meanings, verificationStatus text values, contract literals), `05-events-and-emails.md` (emails, outbox events and retries, scheduled jobs, audit, alerts). Claims re-checked against code (breach status `clear`, audit ip/user agent, global rate-limit key `*`, photo purge job, `?id=` lead param); internal links/anchors checked. CLAUDE.md: "Reference docs" pointer.
+
+**User input (verbatim, 2026-10-01):**
+> yes publish as a web page
+
+**Action (2026-10-01):** Published the sign-up reference as a Claude Docs page, "Worker Sign-up Reference" (https://claude.ai/code/artifact/c867b20a-324d-4b98-8eff-c957e5b44b10), private until the user shares it. Content mirrors `docs/signup/` (flow, backends, API basics, endpoint table and details, tables written/read, legacy writes, enums, after-sign-up, source files); no secrets.
+
+**User input (verbatim, 2026-10-01):**
+> are we done with the sign up new api? what else needs to do?
+
+**Action (2026-10-01):** Answered: not done -- built and on staging, no real users. Remaining in order: (1) preview checklist items 1, 4-7 (user testing; 2, 3, 8 done; 5 partial: code email arrived); (2) CRM notification (outbox handler to a test n8n webhook first) -- hard gate; (3) production prep on approval: database run per runbook, prod secrets (prod DB, prod reCAPTCHA key), manual prod deploy + checks with switch off, Vercel production api URL + site key, Resend SPF/DKIM/DMARC; (4) canary flip of switch:registration, then delete the legacy folder and the auth-prisma omit. Housekeeping: merge s1/preview-run-1, rotate exposed keys, re-record rollback ids, local Node 22, the 10 codes/h/IP decision. Offered to start the CRM notification.
+
+**User input (verbatim, 2026-10-01):**
+> the CRM and n8n is not priority. By the way I change the Email From in the apps/api/.env.example to Remonta <community@remontaservices.com.au>, can you confirm that that value was being used when sending the welcome email?
+
+**Action (2026-10-01):** CRM/n8n deprioritised by the user. Confirmed NOT used: `.env.example` is a local template only; on Cloud Run EMAIL_FROM comes from `infra/lib/stages.ts` (rendered into `service.{staging,prod}.yaml`; the image carries no .env). Changed `stages.ts` EMAIL_FROM to `Remonta <community@remontaservices.com.au>` (kept the user's `.env.example` edit), re-rendered both service YAMLs, infra quality OK (23 tests); updated `docs/signup/02` and `05` and the published page (stale mailto link removed). Takes effect on staging when this branch merges (deploy-api); production unaffected. Left as is: the comment example in config.ts, the config test fixture, the historical infra design docs.
