@@ -220,6 +220,16 @@ export function saveSubcategories(category: ServiceCategory, chosen: string[], s
  * nothing is duplicated in local state: a service with sub-categories is picked
  * through its dialog, and un-picking it drops its sub-categories.
  */
+/** A field whose options are still arriving: a spinner, with the label for screen readers only. */
+export function FieldLoading({ label }: { label: string }) {
+  return (
+    <div role="status" aria-live="polite" className="flex justify-center py-8">
+      <Loader2 className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
 export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error }: ServicesFieldProps) {
   const [dialogFor, setDialogFor] = useState<ServiceCategory | null>(null);
   const subsOf = (c: ServiceCategory) => subcategories.filter((id) => c.subcategories.some((s) => s.id === id));
