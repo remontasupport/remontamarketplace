@@ -81,7 +81,7 @@ exists gcloud iam workload-identity-pools describe "$POOL" --location=global ||
   gcloud iam workload-identity-pools create "$POOL" --location=global --display-name="GitHub Actions"
 exists gcloud iam workload-identity-pools providers describe "$PROVIDER" --workload-identity-pool="$POOL" --location=global ||
   gcloud iam workload-identity-pools providers create-oidc "$PROVIDER" --workload-identity-pool="$POOL" --location=global \
-    --display-name="$GITHUB_REPO" --issuer-uri="https://token.actions.githubusercontent.com" \
+    --display-name="GitHub $PROVIDER" --issuer-uri="https://token.actions.githubusercontent.com" \
     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
     --attribute-condition="assertion.repository == '$GITHUB_REPO' && assertion.ref == 'refs/heads/main'"
 gcloud iam service-accounts add-iam-policy-binding "$DEPLOY_SA" --role=roles/iam.workloadIdentityUser \

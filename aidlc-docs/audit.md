@@ -1914,3 +1914,15 @@ Reported the position and the pending decisions; no code changed.
 > billing is linked now, switch to the infra branch
 
 **Action (2026-10-01):** Regenerated Prisma clients discarded; switched to `s1/infrastructure`; merged `origin/main` (4 commits incl. PR #18). One conflict, in this file: both sides appended entries; kept both in date order. Next: the user re-runs `bootstrap.sh` in Cloud Shell.
+
+**User input (verbatim, 2026-10-01):**
+> What the script will do again? can you explain in a laymans term what are we trying to achieve in google cloud?
+
+**Action (2026-10-01):** Explained bootstrap.sh's ten steps and the staging-first path in plain terms.
+
+**User input (verbatim, 2026-10-01):**
+> there is an error while running the script == 6. Workload Identity Federation: GitHub Actions on remontasupport/remontamarketplace main may act as github-deploy@remonta-api-510206.iam.gserviceaccount.com
+> Created workload identity pool [github].
+> ERROR: (gcloud.iam.workload-identity-pools.providers.create-oidc) INVALID_ARGUMENT: The WorkloadIdentityPoolProvider's display name must be less than or equal to 32 characters.
+
+**Action (2026-10-01):** The provider's display name was the repo slug (33 characters). Now "GitHub remontamarketplace" (25). Display name only; the attribute condition still pins the repository and `main`. Steps 1-5 and the pool already exist; the script is idempotent, so the user re-runs it.
