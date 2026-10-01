@@ -56,7 +56,7 @@ export const imageName = (projectId: string, tag: string) => `${REGION}-docker.p
 const common = {
   NODE_ENV: 'production',
   HOST: '0.0.0.0',
-  PORT: String(CONTAINER_PORT),
+  // No PORT: Cloud Run reserves it and sets it to the container port (CONTAINER_PORT).
   // Cloud Run terminates TLS and adds X-Forwarded-Proto / X-Forwarded-For: one hop to trust.
   TRUST_PROXY: '1',
   RECAPTCHA_MIN_SCORE: '0.5',

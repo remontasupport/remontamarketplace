@@ -51,6 +51,10 @@ export function renderService(stage: Stage, projectId = PROJECT_PLACEHOLDER, ima
       labels: { ...labels, 'cloud.googleapis.com/location': REGION },
       annotations: {
         'run.googleapis.com/ingress': 'all',
+        // Public: browsers and the deploy's health check call it with no Google identity.
+        // This skips the invoker IAM check instead of granting allUsers, which an
+        // organisation's domain-restricted-sharing policy may forbid.
+        'run.googleapis.com/invoker-iam-disabled': 'true',
         'run.googleapis.com/description': `apps/api ${stage} -- rendered from infra/lib/stages.ts; do not edit by hand`,
       },
     },

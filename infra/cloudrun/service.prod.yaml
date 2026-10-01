@@ -11,6 +11,7 @@ metadata:
     cloud.googleapis.com/location: australia-southeast1
   annotations:
     run.googleapis.com/ingress: all
+    run.googleapis.com/invoker-iam-disabled: "true"
     run.googleapis.com/description: apps/api prod -- rendered from infra/lib/stages.ts; do not edit by hand
 spec:
   template:
@@ -40,8 +41,6 @@ spec:
               value: production
             - name: HOST
               value: 0.0.0.0
-            - name: PORT
-              value: "4000"
             - name: TRUST_PROXY
               value: "1"
             - name: RECAPTCHA_MIN_SCORE

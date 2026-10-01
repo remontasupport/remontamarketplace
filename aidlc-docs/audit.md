@@ -1974,3 +1974,24 @@ Reported the position and the pending decisions; no code changed.
 > done with all three, what's next?
 
 **Action (2026-10-01):** All six staging secrets reported stored by the user. Next: verify the six versions, then the PR for `s1/infrastructure` (merge deploys staging only).
+
+**User input (verbatim, 2026-10-01):**
+> merged, the production is not compromised right?
+
+**Action (2026-10-01):** Verified: origin/main = 9eaf478 (PR #19, `s1/infrastructure` merged). The merge changed no file under apps/app or apps/web. Live `app.remontaservices.com.au/registration/worker` at 03:07Z: 200, x-vercel-cache MISS, legacy welcome text present, no wizard or run.app references. The deploy-api run (staging) could not be read from here (no gh CLI); asked the user for its result and the staging URL.
+
+**User input (verbatim, 2026-10-01):**
+> it is red
+
+**Action (2026-10-01):** deploy-api run 36808922152 (public API): Quality OK, Build and push OK (so Workload Identity Federation and the registry work), **Deploy staging failed at "Apply the rendered service definition"** (`gcloud run services replace`). Job log needs a GitHub login (403). Found a definite defect: `infra/lib/stages.ts` set `PORT` in the container environment; Cloud Run reserves PORT and rejects such a definition. Branch `fix/cloudrun-reserved-port`: test "sets none of the variables Cloud Run reserves" added and shown failing on both stages (`expected [ 'PORT' ] to deeply equal []`); PORT removed (Cloud Run sets it to the container port, 4000, which the api reads); both service YAMLs re-rendered. Infra quality OK (17 tests, render:check). The user to confirm the error text in the run log.
+
+**User input (2026-10-01, pasted from the failed step):**
+> Deploying new service...
+> failed
+> Deployment failed
+> ERROR: (gcloud.run.services.replace) spec.template.spec.containers[0].env: The following reserved env names were provided: PORT. These values are automatically set by the system.
+> Error: Process completed with exit code 1.
+
+**Action (2026-10-01):** Confirmed: the PORT defect fixed on `fix/cloudrun-reserved-port`. The user opens and merges the PR; the merge re-runs deploy-api (path `infra/**`).
+
+**Action (2026-10-01, same branch):** Read ahead for the next failure: nothing made the service public (no allUsers/run.invoker/invoker-iam-disabled anywhere), so `api-health.sh`'s unauthenticated `curl $url/v1/health` -- and every browser -- would get 403. Added `run.googleapis.com/invoker-iam-disabled: "true"` to the service metadata (skips the invoker IAM check rather than granting allUsers, which a domain-restricted-sharing org policy may forbid). Test added and shown failing on both stages first; re-rendered; infra quality OK (19 tests).
