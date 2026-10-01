@@ -67,6 +67,119 @@
         }
       }
     },
+    "/v1/service-categories": {
+      "get": {
+        "operationId": "registration.listServiceCategories",
+        "summary": "The service catalogue for the sign-up services step: categories in display order, sub-categories by name.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "requiresQualification": {
+                            "type": "boolean"
+                          },
+                          "subcategories": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "requiresRegistration": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "requiresRegistration"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "requiresQualification",
+                          "subcategories"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "categories"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": "public",
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "ip",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "global",
+              "limit": 3000,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "cacheSeconds": 300
+        }
+      }
+    },
     "/v1/localities": {
       "get": {
         "operationId": "registration.searchLocalities",

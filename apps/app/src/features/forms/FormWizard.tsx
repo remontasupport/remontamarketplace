@@ -6,10 +6,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { KINDS, type ApiBackend, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
-import { ConsentField, EmailCodeField, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
+import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
-import { transformCategoriesToServiceOptions, useCategories } from "@/hooks/queries/useCategories";
+import { transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
+import { useServiceCategories } from "./adapters/useServiceCategories";
 import { useLocalitySearch } from "./adapters/useLocalitySearch";
 import { useEmailCode } from "./useEmailCode";
 import { useFormWizard } from "./useFormWizard";
@@ -27,8 +28,6 @@ export function FormWizard({ definition, backend }: { definition: FormDefinition
       stepIndex={w.step}
       stepCount={definition.steps.length}
       offline={!w.online}
-      restored={w.restored}
-      restoredMessage={w.restoredMessage}
       stepMessage={w.stepMessage}
       status={w.status}
       onBack={w.back}
@@ -102,9 +101,9 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
         />
       );
     case "locality":
-      return <LocalitySlot field={field} control={control} error={error} />;
+      return <LocalitySlot field={field} control={control} backend={backend} error={error} />;
     case "services":
-      return <ServicesSlot field={field} control={control} error={error ?? errorOf(errors, field.subcategoriesName)} />;
+      return <ServicesSlot field={field} control={control} backend={backend} error={error ?? errorOf(errors, field.subcategoriesName)} />;
     case "photo":
       return (
         <Controller
@@ -137,9 +136,9 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
   }
 }
 
-function LocalitySlot({ field, control, error }: { field: Extract<FieldDef, { kind: "locality" }>; control: Control<Values>; error?: string }) {
+function LocalitySlot({ field, control, backend, error }: { field: Extract<FieldDef, { kind: "locality" }>; control: Control<Values>; backend: Backend; error?: string }) {
   const [query, setQuery] = useState("");
-  const { suggestions, loading } = useLocalitySearch(query);
+  const { suggestions, loading } = useLocalitySearch(query, backend);
   return (
     <Controller
       name={field.name}
@@ -169,8 +168,8 @@ function LocalitySlot({ field, control, error }: { field: Extract<FieldDef, { ki
 
 const PRIORITY = ["support-worker", "support-worker-high-intensity", "therapeutic-supports"];
 
-function ServicesSlot({ field, control, error }: { field: Extract<FieldDef, { kind: "services" }>; control: Control<Values>; error?: string }) {
-  const { data: categories, isLoading, isError } = useCategories();
+function ServicesSlot({ field, control, backend, error }: { field: Extract<FieldDef, { kind: "services" }>; control: Control<Values>; backend: Backend; error?: string }) {
+  const { data: categories, isLoading, isError } = useServiceCategories(backend);
   const options = useMemo(() => {
     if (!categories) return SERVICE_OPTIONS;
     return transformCategoriesToServiceOptions(categories).sort((a, b) => {
@@ -200,7 +199,7 @@ function ServicesSlot({ field, control, error }: { field: Extract<FieldDef, { ki
     if (keptSubs.length !== pickedSubs.length) subs.field.onChange(keptSubs);
   }, [categories, picked, pickedSubs, services.field, subs.field]);
 
-  if (isLoading) return <p className="text-center py-8 text-gray-600 font-poppins">Loading service categories...</p>;
+  if (isLoading) return <FieldLoading label="Loading service categories" />;
   if (isError) return <p className="text-red-600 text-sm font-poppins">Failed to load service categories. Please refresh the page or try again later.</p>;
   return (
     <ServicesField

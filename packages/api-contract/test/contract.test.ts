@@ -10,8 +10,20 @@ describe('the contracts as committed', () => {
     expect(checkContracts(contracts, allow)).toEqual([])
   })
 
-  it('declare the six S1 registration entries', () => {
-    expect(Object.keys(registrationContract.entries).sort()).toEqual(['checkEmailAvailability', 'requestEmailCode', 'searchLocalities', 'submitWorkerRegistration', 'uploadRegistrationPhoto', 'verifyEmailCode'])
+  it('declare the seven S1 registration entries', () => {
+    expect(Object.keys(registrationContract.entries).sort()).toEqual(['checkEmailAvailability', 'listServiceCategories', 'requestEmailCode', 'searchLocalities', 'submitWorkerRegistration', 'uploadRegistrationPhoto', 'verifyEmailCode'])
+  })
+
+  it('serve the service catalogue publicly, cached, with only what the sign-up shows', () => {
+    const e = registrationContract.entries.listServiceCategories
+    expect([e.method, e.path]).toEqual(['GET', '/v1/service-categories'])
+    expect(e.meta.access).toBe('public')
+    expect(e.meta.cacheSeconds).toBeGreaterThan(0)
+    const ok = e.responses[200].safeParse({ categories: [{ id: 'support-worker', name: 'Support Worker', requiresQualification: false, subcategories: [{ id: 'sw-1', name: 'Personal care', requiresRegistration: null }] }] })
+    expect(ok.success).toBe(true)
+    // Documents and anything else stay out of the response.
+    const extra = e.responses[200].safeParse({ categories: [{ id: 'x', name: 'X', requiresQualification: false, subcategories: [], documents: {} }] })
+    expect(extra.success).toBe(false)
   })
 
   it('put a CAPTCHA and an audit action on the sign-up itself', () => {

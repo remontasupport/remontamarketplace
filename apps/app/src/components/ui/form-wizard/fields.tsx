@@ -220,6 +220,16 @@ export function saveSubcategories(category: ServiceCategory, chosen: string[], s
  * nothing is duplicated in local state: a service with sub-categories is picked
  * through its dialog, and un-picking it drops its sub-categories.
  */
+/** A field whose options are still arriving: a spinner, with the label for screen readers only. */
+export function FieldLoading({ label }: { label: string }) {
+  return (
+    <div role="status" aria-live="polite" className="flex justify-center py-8">
+      <Loader2 className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
 export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error }: ServicesFieldProps) {
   const [dialogFor, setDialogFor] = useState<ServiceCategory | null>(null);
   const subsOf = (c: ServiceCategory) => subcategories.filter((id) => c.subcategories.some((s) => s.id === id));
@@ -408,7 +418,11 @@ export function EmailCodeField({ label, hint, email, status, code, onCodeChange,
             <button type="button" className={button} disabled={busy || !email || !canSend || (status.kind === "sent" && status.resendInSeconds > 0)} onClick={onSend}>
               {status.kind === "sending" ? "Sending..." : status.kind === "idle" ? "Send code" : status.kind === "sent" && status.resendInSeconds > 0 ? `Resend in ${status.resendInSeconds}s` : "Resend code"}
             </button>
-            {status.kind === "sent" && <span className="text-sm text-gray-600 font-poppins">We emailed a code to {email}.</span>}
+            {status.kind === "sent" && (
+              <span className="text-sm text-gray-600 font-poppins">
+                We emailed a code to {email}. Can&apos;t see it? Check your Spam or Junk folder.
+              </span>
+            )}
             {status.kind === "idle" && availability === "checking" && <span className="text-sm text-gray-600 font-poppins">Checking this address...</span>}
             {status.kind === "idle" && availability === "unknown" && email && <span className="text-sm text-gray-600 font-poppins">Leave the email field to check this address.</span>}
           </div>

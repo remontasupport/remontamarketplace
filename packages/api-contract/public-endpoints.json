@@ -8,6 +8,10 @@
     "reason": "Suburb autocomplete on the sign-up form, before any account exists. Returns public G-NAF suburb names only."
   },
   {
+    "route": "GET /v1/service-categories",
+    "reason": "The services list on the sign-up form, before any account exists. Returns category and sub-category names and their qualification/registration flags only; the same for every caller and cached."
+  },
+  {
     "route": "POST /v1/registrations/worker/photo",
     "reason": "Sign-up photo, before any account exists. Returns a staged upload id, never a URL; unclaimed uploads are purged after 24 h."
   },

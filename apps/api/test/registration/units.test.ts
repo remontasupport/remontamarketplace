@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { searchLocalities, toEntry } from '../../src/modules/localities/locality-directory'
 import { PwnedPasswordsChecker } from '../../src/modules/registration/adapters/pwned-passwords'
 import { detectImageType } from '../../src/modules/registration/domain/image-type'
+import { CATEGORY_ORDER, orderCategories } from '../../src/modules/registration/application/service-categories'
 import { SafeHttpClient } from '../../src/platform/http/safe-http-client'
 
 const entries = [
@@ -97,5 +98,34 @@ describe('PwnedPasswordsChecker (k-anonymity)', () => {
   })
   it('is "unknown", never "clear", when the service is unreachable', async () => {
     expect(await checker(new TypeError('fetch failed')).check('password')).toEqual({ status: 'unknown', reason: 'network' })
+  })
+})
+
+describe('orderCategories (GET /v1/service-categories)', () => {
+  it('puts the main services first, in their fixed order, then the rest by name', () => {
+    const names = ['Personal Trainer', 'Nursing Services', 'Support Worker', 'Cleaning Services', 'Beauty', 'Support Worker (High Intensity)']
+    expect(orderCategories(names.map((name) => ({ name }))).map((c) => c.name)).toEqual([
+      'Support Worker',
+      'Support Worker (High Intensity)',
+      'Cleaning Services',
+      'Nursing Services',
+      'Beauty',
+      'Personal Trainer',
+    ])
+  })
+
+  it('is a permutation with the listed names first (in order) and the others sorted', () => {
+    const name = fc.oneof(fc.constantFrom(...CATEGORY_ORDER), fc.string({ minLength: 1, maxLength: 12 }))
+    fc.assert(
+      fc.property(fc.uniqueArray(name, { maxLength: 15 }), (names) => {
+        const out = orderCategories(names.map((n) => ({ name: n }))).map((c) => c.name)
+        expect([...out].sort()).toEqual([...names].sort())
+        const listed = out.filter((n) => (CATEGORY_ORDER as readonly string[]).includes(n))
+        const rest = out.slice(listed.length)
+        expect(out.slice(0, listed.length)).toEqual(listed)
+        expect(listed).toEqual(CATEGORY_ORDER.filter((n) => listed.includes(n)))
+        expect(rest).toEqual([...rest].sort((a, b) => a.localeCompare(b)))
+      }),
+    )
   })
 })

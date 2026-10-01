@@ -52,7 +52,6 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
 
   const [step, setStep] = useState(0);
   const [showIntro, setShowIntro] = useState(!!def.intro);
-  const [restored, setRestored] = useState(false);
   const [stepMessage, setStepMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<WizardStatus>({ kind: "idle" });
   const uploads = useRef(new Set<Promise<unknown>>());
@@ -73,7 +72,6 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     form.reset({ ...defaultsOf(def), ...draft.values });
     setStep(Math.min(Math.max(draft.step, 0), def.steps.length - 1));
     setShowIntro(false);
-    setRestored(true);
   }, [def, backend.mode, store, neverSaved, form]);
 
   useEffect(() => {
@@ -146,13 +144,6 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     [def, step],
   );
 
-  /** What a restored draft does not carry: the never-saved fields, said in the person's terms. */
-  const restoredMessage = useMemo(() => {
-    const kinds = new Set(def.steps.flatMap((s) => s.fields.filter((f) => f.neverSaved).map((f) => f.kind)));
-    const parts = [...(kinds.has("emailCode") ? ["verify your email"] : []), ...(kinds.has("password") ? ["type your password"] : [])];
-    return parts.length ? `We restored your progress. For your security, please ${parts.join(" and ")} again.` : "We restored your progress.";
-  }, [def]);
-
   const next = useCallback(async () => {
     setStepMessage(null);
     if (!(await form.trigger(keysOfStep(def, step), { shouldFocus: true }))) return scrollToError();
@@ -213,5 +204,5 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     [form, backend, def, apply, query, getCaptchaToken, retry, showFirstInvalidStep],
   );
 
-  return { form, step, showIntro, start: () => setShowIntro(false), restored, restoredMessage, stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
+  return { form, step, showIntro, start: () => setShowIntro(false), stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
 }

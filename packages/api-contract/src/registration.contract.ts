@@ -23,7 +23,32 @@ export const localitySchema = z.strictObject({
   label: z.string(),
 })
 
+/** A service the worker can offer, with only what the sign-up's services step shows. */
+export const serviceCategorySchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  requiresQualification: z.boolean(),
+  subcategories: z.array(z.strictObject({ id: z.string(), name: z.string(), requiresRegistration: z.string().nullable() })),
+})
+
 export const registrationContract = defineContract('registration', {
+  listServiceCategories: {
+    method: 'GET',
+    path: '/v1/service-categories',
+    summary: 'The service catalogue for the sign-up services step: categories in display order, sub-categories by name.',
+    responses: { 200: z.strictObject({ categories: z.array(serviceCategorySchema) }) },
+    meta: meta({
+      access: 'public',
+      bot: 'none', // read-only, the same for everyone, cached
+      rateLimit: [
+        { per: 'ip', limit: 60, window: '1m' },
+        { per: 'global', limit: 3000, window: '1m' },
+      ],
+      maxBodyKb: 1,
+      cacheSeconds: 300,
+    }),
+  },
+
   searchLocalities: {
     method: 'GET',
     path: '/v1/localities',

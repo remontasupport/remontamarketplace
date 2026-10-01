@@ -2026,3 +2026,53 @@ Reported the position and the pending decisions; no code changed.
 > https://remonta-api-staging-154148201608.australia-southeast1.run.app
 
 **Action (2026-10-01):** **Staging api live.** From here: `/v1/health` 200 `{"status":"ok"}` without a Google identity (includes `SELECT 1` on rehearse-w1); `/v1/localities?q=parram` returns rows with ids; CORS preflight from `https://remonta-app-git-x.vercel.app` allowed (204 + allow-origin), from `https://evil.example` refused (404, no allow-origin). State file: "PENDING RIGHT NOW" rewritten for 2026-10-01; the billing block kept as superseded.
+
+**User input (verbatim, 2026-10-01):**
+> when I open the staging address, it says {"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"03ada169-bbfc-4469-a5dc-08b221043fc0"}}
+
+**Action (2026-10-01):** Expected: the api serves only contract endpoints, so `/` is a 404 from the api itself (requestId present). Pointed the user at `/v1/health` and `/v1/localities?q=parram`.
+
+**User input (verbatim, 2026-10-01):**
+> THERE IS A WARNING WHEN i AM PASTING THE NEXT PUBLIC URL Remove the public framework prefix to keep this value private. Public prefixes expose values to the browser. If that’s safe, change the variable to Config.
+
+**Action (2026-10-01):** Advised: keep the `NEXT_PUBLIC_` names (the browser must read the api URL and the reCAPTCHA site key; both public by design; without the prefix the switch falls back to legacy), set the type to Config, Preview scope only. The reCAPTCHA secret stays in Secret Manager.
+
+**User input (verbatim, 2026-10-01):**
+> A variable with the name `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` already exists for the target development,preview,production on branch undefined.
+
+**Action (2026-10-01):** The production site key is shared to all three targets (recorded as a deliberate share in the Q1 notes). Advised splitting it: edit the existing variable to untick Preview only (value unchanged), then add a Preview-only variable with the staging v3 site key. Noted the preview-only side effect (preview legacy forms would mismatch production's shared RECAPTCHA_SECRET_KEY; optional: split that too with the staging secret). Asked whether the other two variables saved cleanly.
+
+**User input (verbatim, 2026-10-01):**
+> done with the variables, what's next? SHOULD I REDEPLOY?
+
+**Action (2026-10-01):** PR #21 merged (f3be060); deploy-api run 36814542520 **succeeded** -- the normal path works and replaced the hand-made revision; staging health re-checked 200. Answered: a preview must be rebuilt (NEXT_PUBLIC_ values are build-time), never production. Branch `s1/preview-verification` with the verification record skeleton (`construction/S1-registration/preview-verification.md`); pushing it builds a preview with the new Preview-scope variables.
+
+**User input (verbatim, 2026-10-01):**
+> https://remonta-a8m73kvtl-remontas-projects.vercel.app/login
+
+**Action (2026-10-01):** The preview is behind Vercel deployment protection (requests redirect to vercel.com/login), so the checks run in the user's browser. Asked the user to open `/registration/worker` on it, confirm it is the `s1/preview-verification` build, report which form renders, and try the suburb search (no submit yet).
+
+**User input (verbatim, 2026-10-01):**
+> can I test the sign up? where will the data be save if I sign up?
+
+**Action (2026-10-01):** Explained: account rows go to the staging database (`rehearse-w1`), not production; sign-in on the preview uses the same copy; photo goes to the shared production Blob store (unreferenced clutter); the code email is real (internal address, a `+test` alias not already registered); no CRM (staging webhook unset). Flagged a possible blocker: the api sends from `noreply@remontaservices.com.au`, which Resend accepts only if the domain is verified (prior notes: not yet verified; apps/app falls back to `onboarding@resend.dev`).
+
+**User input (verbatim, 2026-10-01):**
+> The code email arrive to Spam, can you add a note in the front end to check the Spam folder as it arrives sometimes there? make the changes to code then push to preview
+
+**Action (2026-10-01):** Preview check 5 (partial): the code email from `noreply@remontaservices.com.au` was delivered (to Spam), so Resend accepts the sender. `components/ui/form-wizard/fields.tsx` `EmailCodeField`: after "We emailed a code to {email}." adds "Can't see it? Check your Spam or Junk folder." Used only by `FormWizard` (api mode); the live legacy page is unaffected. App quality OK (144/508 known, 79 tests); app build OK. Pushed to `s1/preview-verification` (rebuilds the preview). Spam placement itself is a deliverability matter (SPF/DKIM/DMARC for the domain in Resend) -- noted for later.
+
+**User input (verbatim, 2026-10-01):**
+> perfect. Now the Service offer page, I already changed the loading state to a circular state instead of "Loading service page.." can you check the code, why it is not being applied
+
+**Action (2026-10-01):** Cause: the change is commit 8bd9790 on `fix/services-loading-spinner` (2026-09-30), never merged to main, so no deployment has it. Merged it into `s1/preview-verification` (clean; `FieldLoading` spinner in the form engine's services step; Loader2 already imported). App quality OK (79 tests); app build OK. Pushed; the preview rebuilds. It applies to the new (api-mode) form only; the live legacy page keeps its pre-S1 text by design.
+
+**User input (verbatim, 2026-10-01):**
+> Can you delete this entirely? "We restored your progress. For your security, please verify your email and type your password again."
+
+**Action (2026-10-01):** Removed the restored-draft banner end to end: `restored` state and `restoredMessage` in `useFormWizard.ts`, the props in `FormWizard.tsx`, the props and banner in `FormWizardView.tsx`. The draft restore itself is unchanged (progress still comes back; email verification and password are still never saved and must be redone, now without a notice). App quality OK (79 tests); app build OK. Pushed to `s1/preview-verification`.
+
+**User input (verbatim, 2026-10-01):**
+> I think the api looks good. before we proceed. Can you make sure that all the api being used to this sign up workflow is from the new api already? including the upload photo and submit, etc
+
+**Action (2026-10-01):** Traced every call the api-mode form makes. Already on apps/api: email availability, send/verify code, photo upload, submit (the `check-email` / `register-async` calls in the definition are legacy-mode only). NOT on apps/api: suburb search (always this app's `/api/suburbs`) and the services step's catalogue (this app's `/api/categories`; apps/api had no such endpoint). Changes: (1) contract entry `listServiceCategories` GET `/v1/service-categories` (public, cached 300 s, rate-limited; response = id, name, requiresQualification, sub-categories id/name/requiresRegistration; strict, no documents) + `public-endpoints.json` reason + openapi.json regenerated; contract tests (shown failing first). (2) apps/api `application/service-categories.ts` (same order as the app's route) + handler; unit + property tests for the ordering; an integration test (runs in CI with PostGIS). (3) apps/app: `adapters/useServiceCategories.ts` and `useLocalitySearch` call apps/api in api mode via the typed contract client, the app's routes in legacy mode; `fetchCategories` exported. Gates: app quality OK (79 tests), app build OK, api-contract 34 tests, api lint + tsc OK, api tests 239 passed under Node 22 (`npx node@22`: local Node 20.9 cannot load unplugin, which needs import.meta.dirname, Node >= 20.11; CI uses 20.x/22.x). Note: the staging api deploys only from main, so the preview's services step needs this merged before it can load.

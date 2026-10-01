@@ -61,7 +61,7 @@ export interface ServiceOption {
 }
 
 // API Fetcher using axios
-async function fetchCategories(): Promise<Category[]> {
+export async function fetchCategories(): Promise<Category[]> {
   const response = await axios.get("/api/categories");
   return response.data;
 }
