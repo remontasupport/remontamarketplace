@@ -1995,3 +1995,29 @@ Reported the position and the pending decisions; no code changed.
 **Action (2026-10-01):** Confirmed: the PORT defect fixed on `fix/cloudrun-reserved-port`. The user opens and merges the PR; the merge re-runs deploy-api (path `infra/**`).
 
 **Action (2026-10-01, same branch):** Read ahead for the next failure: nothing made the service public (no allUsers/run.invoker/invoker-iam-disabled anywhere), so `api-health.sh`'s unauthenticated `curl $url/v1/health` -- and every browser -- would get 403. Added `run.googleapis.com/invoker-iam-disabled: "true"` to the service metadata (skips the invoker IAM check rather than granting allUsers, which a domain-restricted-sharing org policy may forbid). Test added and shown failing on both stages first; re-rendered; infra quality OK (19 tests).
+
+**User input (2026-10-01, pasted from the failed deploy step):**
+> Deployment failed
+> ERROR: (gcloud.run.services.replace) The user-provided container failed the configured startup probe checks. Logs for this revision might contain more information.
+> (Logs URL for revision remonta-api-staging-00001-n22)
+
+**Action (2026-10-01):** Progress: the definition was accepted (PORT and public-access fixes merged) and revision 00001-n22 was created; the container failed its startup probe. Checked in code: the probe (`/v1/health`) is exempt from the HTTPS check; boot validates config and exits naming the variable; health runs `SELECT 1` and returns 503 if the database is unreachable. Asked the user for the revision's logs.
+
+**User input (2026-10-01, pasted Cloud Run logs for revision 00001-n22):**
+> apps/api will not start -- configuration problems:
+>   N8N_REGISTRATION_WEBHOOK_URL: must be an https URL
+>   IP_HASH_SECRET: required
+> (repeated at 03:31:07 .. 03:31:26)
+
+**Action (2026-10-01):** `loadConfig` treats blank values as missing (config.ts:100), so IP_HASH_SECRET's latest version is blank and N8N's is non-blank and not an https URL. Likely cause: during the n8n step the `S=` line did not take effect, so the single space was written to IP_HASH_SECRET. Gave the user version-count checks and short self-contained blocks that re-set both (fresh random IP hash; single space for n8n), then "Re-run failed jobs" on the deploy-api run. No code change needed.
+
+**User input (verbatim, 2026-10-01):**
+> it has 2 versions, what's next?
+
+**Action (2026-10-01):** Confirmed: IP_HASH_SECRET has 2 versions, so the n8n space was written there. Next: the two fix blocks, then re-run the failed deploy job.
+
+**User input (verbatim, 2026-10-01):**
+> it has 2 versions, what's next? / how to re run the deploy
+> (then pasted: the re-run failed with the same startup-probe error, naming revision remonta-api-staging-00001-n22)
+
+**Action (2026-10-01):** The re-run reported the SAME revision: `gcloud run services replace` with an unchanged template makes no new revision, so the corrected secrets (`latest`, read at revision start) were never read. Unblock given to the user: `gcloud run services update remonta-api-staging --revision-suffix=fix1` in Cloud Shell, then a health curl. Permanent fix on branch `fix/cloudrun-fresh-revision-per-deploy`: template annotation `remonta-deploy-id: __DEPLOY_ID__`, substituted in both workflow apply lines with `${{ github.run_id }}-${{ github.run_attempt }}`; tests that the template carries it and that both workflow lines fill all three placeholders with run id AND attempt (shown failing first); substituted value parses as a string. Infra quality OK (23 tests).

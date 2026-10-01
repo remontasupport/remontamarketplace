@@ -120,7 +120,7 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
       - name: Apply the rendered service definition with this image
         run: |
-          sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ github.sha }}/g" infra/cloudrun/service.staging.yaml \
+          sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ github.sha }}/g; s/__DEPLOY_ID__/${{ github.run_id }}-${{ github.run_attempt }}/g" infra/cloudrun/service.staging.yaml \
             | gcloud run services replace - --region "$REGION" --project "${{ vars.GCP_PROJECT_ID }}" --quiet
       - name: Wait for the revision to be ready, then check health
         run: .github/scripts/api-health.sh staging "${{ vars.GCP_PROJECT_ID }}"
@@ -143,7 +143,7 @@ jobs:
         run: gcloud artifacts docker images describe "${{ env.IMAGE }}:${{ inputs.imageTag }}" --project "${{ vars.GCP_PROJECT_ID }}" --format='value(image_summary.digest)'
       - name: Apply the rendered service definition with that image
         run: |
-          sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ inputs.imageTag }}/g" "infra/cloudrun/service.${{ inputs.stage }}.yaml" \
+          sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ inputs.imageTag }}/g; s/__DEPLOY_ID__/${{ github.run_id }}-${{ github.run_attempt }}/g" "infra/cloudrun/service.${{ inputs.stage }}.yaml" \
             | gcloud run services replace - --region "$REGION" --project "${{ vars.GCP_PROJECT_ID }}" --quiet
       - name: Wait for the revision to be ready, then check health
         run: .github/scripts/api-health.sh ${{ inputs.stage }} "${{ vars.GCP_PROJECT_ID }}"
