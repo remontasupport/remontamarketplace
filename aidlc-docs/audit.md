@@ -2046,3 +2046,18 @@ Reported the position and the pending decisions; no code changed.
 > done with the variables, what's next? SHOULD I REDEPLOY?
 
 **Action (2026-10-01):** PR #21 merged (f3be060); deploy-api run 36814542520 **succeeded** -- the normal path works and replaced the hand-made revision; staging health re-checked 200. Answered: a preview must be rebuilt (NEXT_PUBLIC_ values are build-time), never production. Branch `s1/preview-verification` with the verification record skeleton (`construction/S1-registration/preview-verification.md`); pushing it builds a preview with the new Preview-scope variables.
+
+**User input (verbatim, 2026-10-01):**
+> https://remonta-a8m73kvtl-remontas-projects.vercel.app/login
+
+**Action (2026-10-01):** The preview is behind Vercel deployment protection (requests redirect to vercel.com/login), so the checks run in the user's browser. Asked the user to open `/registration/worker` on it, confirm it is the `s1/preview-verification` build, report which form renders, and try the suburb search (no submit yet).
+
+**User input (verbatim, 2026-10-01):**
+> can I test the sign up? where will the data be save if I sign up?
+
+**Action (2026-10-01):** Explained: account rows go to the staging database (`rehearse-w1`), not production; sign-in on the preview uses the same copy; photo goes to the shared production Blob store (unreferenced clutter); the code email is real (internal address, a `+test` alias not already registered); no CRM (staging webhook unset). Flagged a possible blocker: the api sends from `noreply@remontaservices.com.au`, which Resend accepts only if the domain is verified (prior notes: not yet verified; apps/app falls back to `onboarding@resend.dev`).
+
+**User input (verbatim, 2026-10-01):**
+> The code email arrive to Spam, can you add a note in the front end to check the Spam folder as it arrives sometimes there? make the changes to code then push to preview
+
+**Action (2026-10-01):** Preview check 5 (partial): the code email from `noreply@remontaservices.com.au` was delivered (to Spam), so Resend accepts the sender. `components/ui/form-wizard/fields.tsx` `EmailCodeField`: after "We emailed a code to {email}." adds "Can't see it? Check your Spam or Junk folder." Used only by `FormWizard` (api mode); the live legacy page is unaffected. App quality OK (144/508 known, 79 tests); app build OK. Pushed to `s1/preview-verification` (rebuilds the preview). Spam placement itself is a deliverability matter (SPF/DKIM/DMARC for the domain in Resend) -- noted for later.

@@ -408,7 +408,11 @@ export function EmailCodeField({ label, hint, email, status, code, onCodeChange,
             <button type="button" className={button} disabled={busy || !email || !canSend || (status.kind === "sent" && status.resendInSeconds > 0)} onClick={onSend}>
               {status.kind === "sending" ? "Sending..." : status.kind === "idle" ? "Send code" : status.kind === "sent" && status.resendInSeconds > 0 ? `Resend in ${status.resendInSeconds}s` : "Resend code"}
             </button>
-            {status.kind === "sent" && <span className="text-sm text-gray-600 font-poppins">We emailed a code to {email}.</span>}
+            {status.kind === "sent" && (
+              <span className="text-sm text-gray-600 font-poppins">
+                We emailed a code to {email}. Can&apos;t see it? Check your Spam or Junk folder.
+              </span>
+            )}
             {status.kind === "idle" && availability === "checking" && <span className="text-sm text-gray-600 font-poppins">Checking this address...</span>}
             {status.kind === "idle" && availability === "unknown" && email && <span className="text-sm text-gray-600 font-poppins">Leave the email field to check this address.</span>}
           </div>
