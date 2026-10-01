@@ -1926,3 +1926,51 @@ Reported the position and the pending decisions; no code changed.
 > ERROR: (gcloud.iam.workload-identity-pools.providers.create-oidc) INVALID_ARGUMENT: The WorkloadIdentityPoolProvider's display name must be less than or equal to 32 characters.
 
 **Action (2026-10-01):** The provider's display name was the repo slug (33 characters). Now "GitHub remontamarketplace" (25). Display name only; the attribute condition still pins the repository and `main`. Steps 1-5 and the pool already exist; the script is idempotent, so the user re-runs it.
+
+**User input (verbatim, 2026-10-01):**
+> I noticed there is a failed. can you check over it
+> (pasted: the end of the bootstrap output -- alert policies "remonta-api request-failed" and "remonta-api will-not-start" created; step 10 printed GCP_PROJECT_ID=remonta-api-510206, GCP_WORKLOAD_IDENTITY_PROVIDER=projects/154148201608/locations/global/workloadIdentityPools/github/providers/remontamarketplace, GCP_DEPLOY_SERVICE_ACCOUNT=github-deploy@remonta-api-510206.iam.gserviceaccount.com)
+
+**Action (2026-10-01):** No failure: "request-failed" is an alert policy's name, and the script (set -e) reached step 10. **Bootstrap of `remonta-api-510206` complete.** Next: the three GitHub repository variables, then the six staging secret values.
+
+**User input (verbatim, 2026-10-01):**
+> added the variables, what's next?
+
+**Action (2026-10-01):** GitHub variables set by the user. Next: the six staging secret values, entered by the user in Cloud Shell (values never pasted into the session). Sources per the plan and the Q1 decisions (branch `aidlc/q1-preview-scope`): database = `rehearse-w1` pooled string; IP hash = generated in Cloud Shell; webhook = a test sink, never the live n8n URL; Resend and Blob shared with production by decision; reCAPTCHA = a new v3 key pair for `vercel.app`.
+
+**User input (2026-10-01, pasted Cloud Shell output):** `put AUTH_DATABASE_URL` -> "ERROR: (gcloud.secrets.versions.add) argument --data-file: Must be specified." and "-bash: --data-file=-: command not found".
+
+**Action (2026-10-01):** The one-line `put` helper wrapped on paste, so `--data-file=-` ran as its own command; nothing was stored. Gave multi-line versions of the helper, the IP-hash command and the check loop.
+
+**User input (verbatim, 2026-10-01):**
+> it is successful on the auth_database_url, what's next?
+
+**Action (2026-10-01):** Staging `AUTH_DATABASE_URL` stored (1 of 6). Guided the user through the remaining five.
+
+**User input (2026-10-01, pasted Cloud Shell output):** the IP_HASH_SECRET command broke after `add` on paste -> "argument SECRET --data-file: Must be specified" and "remonta-api-staging-IP_HASH_SECRET: command not found".
+
+**Action (2026-10-01):** Nothing stored. Gave a version with short self-contained lines (variables, temp file removed after), no backslash continuations.
+
+**User input (2026-10-01, pasted):** "is this ok?" -- IP_HASH_SECRET: "Created version [1] of the secret [remonta-api-staging-IP_HASH_SECRET]." plus a harmless "--project=remonta-api-510206: command not found" (line wrapped; gcloud's default project is already remonta-api-510206).
+
+**Action (2026-10-01):** Staging secrets 2 of 6 stored (AUTH_DATABASE_URL, IP_HASH_SECRET). Remaining four via `put`; short per-secret check commands given.
+
+**User input (verbatim, 2026-10-01):**
+> what is the value of n8n? or can be left empty for now?
+
+**Action (2026-10-01):** Checked: `N8N_REGISTRATION_WEBHOOK_URL` is optional in `apps/api/src/config/config.ts` (CRM notification deferred), and blank/whitespace values are treated as unset (line 101). Cloud Run needs the secret to have a version (the staging service references `key: latest`), so staging gets a single-space value; to be replaced by a test n8n webhook when the CRM notification is built.
+
+**User input (verbatim, 2026-10-01):**
+> what value should I enter for n8n again?
+
+**Action (2026-10-01):** Repeated: a single space, via the four short lines.
+
+**User input (verbatim, 2026-10-01):**
+> done with n8n, what's next?
+
+**Action (2026-10-01):** Staging secrets 3 of 6 stored (AUTH_DATABASE_URL, IP_HASH_SECRET, N8N_REGISTRATION_WEBHOOK_URL). Next: RESEND_API_KEY, BLOB_READ_WRITE_TOKEN, RECAPTCHA_SECRET_KEY.
+
+**User input (verbatim, 2026-10-01):**
+> done with all three, what's next?
+
+**Action (2026-10-01):** All six staging secrets reported stored by the user. Next: verify the six versions, then the PR for `s1/infrastructure` (merge deploys staging only).
