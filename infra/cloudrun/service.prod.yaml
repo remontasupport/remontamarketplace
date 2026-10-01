@@ -40,8 +40,6 @@ spec:
               value: production
             - name: HOST
               value: 0.0.0.0
-            - name: PORT
-              value: "4000"
             - name: TRUST_PROXY
               value: "1"
             - name: RECAPTCHA_MIN_SCORE

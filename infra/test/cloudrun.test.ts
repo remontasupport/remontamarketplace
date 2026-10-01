@@ -27,6 +27,13 @@ describe.each(stages)('service definition: %s', (stage) => {
     expect(REGION).toBe('australia-southeast1')
   })
 
+  it('sets none of the variables Cloud Run reserves (it refuses the whole definition otherwise)', () => {
+    // Cloud Run sets PORT to the container port itself; the api reads it from there.
+    const reserved = ['PORT', 'K_SERVICE', 'K_REVISION', 'K_CONFIGURATION']
+    const names = (container.env as { name: string }[]).map((e) => e.name)
+    expect(names.filter((n) => reserved.includes(n))).toEqual([])
+  })
+
   it('keeps CPU allocated between requests and never scales to zero (the outbox dispatcher and the scheduler)', () => {
     expect(tpl.metadata.annotations['run.googleapis.com/cpu-throttling']).toBe('false')
     expect(Number(tpl.metadata.annotations['autoscaling.knative.dev/minScale'])).toBeGreaterThanOrEqual(1)
