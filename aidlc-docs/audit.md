@@ -2061,3 +2061,8 @@ Reported the position and the pending decisions; no code changed.
 > The code email arrive to Spam, can you add a note in the front end to check the Spam folder as it arrives sometimes there? make the changes to code then push to preview
 
 **Action (2026-10-01):** Preview check 5 (partial): the code email from `noreply@remontaservices.com.au` was delivered (to Spam), so Resend accepts the sender. `components/ui/form-wizard/fields.tsx` `EmailCodeField`: after "We emailed a code to {email}." adds "Can't see it? Check your Spam or Junk folder." Used only by `FormWizard` (api mode); the live legacy page is unaffected. App quality OK (144/508 known, 79 tests); app build OK. Pushed to `s1/preview-verification` (rebuilds the preview). Spam placement itself is a deliverability matter (SPF/DKIM/DMARC for the domain in Resend) -- noted for later.
+
+**User input (verbatim, 2026-10-01):**
+> perfect. Now the Service offer page, I already changed the loading state to a circular state instead of "Loading service page.." can you check the code, why it is not being applied
+
+**Action (2026-10-01):** Cause: the change is commit 8bd9790 on `fix/services-loading-spinner` (2026-09-30), never merged to main, so no deployment has it. Merged it into `s1/preview-verification` (clean; `FieldLoading` spinner in the form engine's services step; Loader2 already imported). App quality OK (79 tests); app build OK. Pushed; the preview rebuilds. It applies to the new (api-mode) form only; the live legacy page keeps its pre-S1 text by design.
