@@ -1776,3 +1776,17 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-09-30):**
 > Yes the production has no NEXT_PUBLIC_API_URL or REGISTRATION_BACKEND
+
+---
+
+## 2026-10-01 — Production fix: legacy worker sign-up submit
+
+**User input (verbatim, 2026-10-01):**
+> I want you to fix the registration/worker submit button. It cannot be save on the production, make sure you use the legacy api and not the new api for now since it is still on staging stage
+
+**Action (2026-10-01):** Branch `fix/legacy-worker-signup-submit`. The page is the verbatim pre-S1 code and still posts to `/api/auth/register-async`; the client changes since pre-S1 are inert. Root cause candidate: S1 added `consentProfileShareAt`, `consentWordingVersion`, `zohoLeadId` to `WorkerProfile` in `packages/db/prisma/schema.prisma`; Vercel's postinstall regenerates `authPrisma` from that schema, but no S1 migration has run on production (`aidlc-state.md`). The legacy processor's `user.create({ include: { workerProfile: true } })` selects every column, so production fails with "column does not exist". A read-only production schema query to confirm was blocked by the permission classifier; not retried. Scoping other full-row WorkerProfile reads.
+
+**User input (verbatim, 2026-10-01):**
+> go ahead with the code fix, no migration
+
+**Action (2026-10-01):** `lib/workers/workerRegistrationProcessor.ts`: `user.create` now `select`s `id`, `role` and `workerProfile.id` instead of `include: { workerProfile: true }`, so the legacy sign-up never reads S1's worker_profiles columns. No migration; production stays on legacy.
