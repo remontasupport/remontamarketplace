@@ -1,6 +1,9 @@
 # S1 — Deployment architecture: `apps/api` on AWS
 
-**Unit:** S1-registration. **Date:** 2026-09-28. **Status:** for the user's review.
+**Unit:** S1-registration. **Date:** 2026-09-28. **Status:** approved 2026-09-28; **hosting superseded 2026-09-30 by
+Google Cloud Run** (plan §3b, D14–D21) at the user's request. The pipeline shape below (build → registry → staging on push →
+promotion to prod → rollback = an existing image) is what was built; the AWS components (ALB, WAF, ECS, CDK) are replaced by
+Cloud Run's equivalents. Current operations: `infra/README.md` and CLAUDE.md "apps/api on Google Cloud Run".
 Read with `infrastructure-design.md` (the components, sizes, IAM, alarms, NFR mapping).
 
 ## 1. Runtime topology
@@ -91,6 +94,13 @@ The image for any previous commit stays in ECR (last 20) — rollback is a redep
 
 ## 5. First-deploy runbook
 
+> **Cloud Run (2026-09-30):** the AWS-specific steps below (account bootstrap, ACM certificate, DNS CNAMEs, Secrets
+> Manager names) are replaced by `infra/README.md` → "Bootstrap" and "Deploying" and by
+> `S1-registration/code/infra-summary.md` → "What the first deploy needs from the user": one `bootstrap.sh` run, three
+> GitHub variables, six secret values per stage, no DNS. **The verification lists in steps 5 and 5b still apply**, with
+> `https://api[-staging].remontaservices.com.au` read as the stage's `run.app` URL, and "ECS → task" read as
+> "Cloud Run → revision". Step 0 and the switch/canary steps 6–7 are unchanged.
+
 Order matters. Steps marked **(user)** need the user's credentials or accounts; the rest is done from the repository.
 
 **0. Before AWS (user)**
@@ -102,7 +112,7 @@ Order matters. Steps marked **(user)** need the user's credentials or accounts; 
 **1. AWS account bootstrap (user, once, ~20 min)**
 - An IAM identity with administrator access for the bootstrap only (not used afterwards).
 - `cdk bootstrap aws://<account>/ap-southeast-2` from the repo (`pnpm --filter @remonta/infra exec cdk bootstrap`).
-- Deploy the OIDC stack first: `cdk deploy RemontaGithubOidc` (creates the provider and `remonta-api-prod-deploy`). Add the role ARN to GitHub as a repository **variable** (`AWS_DEPLOY_ROLE_ARN`; it is not a secret).
+- Deploy the two shared stacks: `cdk deploy RemontaApiEcr RemontaGithubOidc` (the repository; the provider and the role `remonta-api-deploy`, D13). Add the role ARN to GitHub as a repository **variable** (`AWS_DEPLOY_ROLE_ARN`; it is not a secret).
 
 **2. Certificate and DNS (user, in Vercel DNS, ~15 min incl. validation)**
 - The stack requests an ACM certificate for `api.remontaservices.com.au` with DNS validation; the first `cdk deploy` prints the validation CNAME (name + value). Add it in Vercel → Domains → `remontaservices.com.au` → DNS records. The deploy waits until ACM sees it (typically 5–10 min).
@@ -111,18 +121,24 @@ Order matters. Steps marked **(user)** need the user's credentials or accounts; 
 **3. Secrets (user, Secrets Manager console, ~10 min)**
 - Create the six secrets from infrastructure-design §6 with exactly those names, plain-text values. The stack references them by name; a task fails to start (and the deploy rolls back) if one is missing, which is the intended behaviour.
 
-**4. First deploy (from the repository)**
-- Merge the PR containing `infra/`, the workflow and the `probe` change. The workflow builds and deploys. Watch: Actions → deploy-api; ECS → service events; the target group's targets turn `healthy`.
+**4. First deploy = STAGING (from the repository; amended 2026-09-30, D9/D10)**
+- Secrets for **staging** first: `remonta/api/staging/*` (`AUTH_DATABASE_URL` = the `rehearse-w1` **pooled** string; the same reCAPTCHA secret, Resend key and Blob token as production; a fresh `IP_HASH_SECRET`; a sink for `N8N_REGISTRATION_WEBHOOK_URL`).
+- Merge the PR containing `infra/`, the workflows and the `probe` change. `deploy-api` builds the image and deploys **`RemontaApiStaging`** only. It pauses on the certificate for `api-staging.remontaservices.com.au` until the validation CNAME is in Vercel DNS **(user)**; afterwards add `api-staging` CNAME → the `ApiLoadBalancerDns` output. Watch: Actions → deploy-api; ECS → `remonta-api-staging` events; targets turn `healthy`; the job's health step passes.
 - Confirm the SNS subscription email at `support@remontaservices.com.au` **(user)**; alarms are silent until then.
 
-**5. Verify with the switch OFF (nothing user-facing changes yet)**
-- `curl -i https://api.remontaservices.com.au/v1/health` → 200 `{"status":"ok"}`, `x-request-id`, HSTS, security headers.
-- `curl -i http://api.remontaservices.com.au/v1/health` → 301 to https.
-- `curl -s "https://api.remontaservices.com.au/v1/localities?q=parra"` → suburbs with ids (proves the database and the S1 tables).
-- A photo upload with a real reCAPTCHA token from the app's preview, or the test harness's multipart request → 201 and an object in Vercel Blob.
-- CloudWatch: logs arriving; the reconciler's first run logged (`scheduled job finished`, job `onboarding-reconciler`); no `request failed`.
-- WAF: sampled requests show `ALLOW`; send a request with a 20 KB body to `/v1/registrations/worker` → 413 from the service, not a WAF block (proves the `SizeRestrictions_BODY` override).
-- Kill one task in the console → the ALB stops routing to it within 45 s; ECS starts a replacement; `healthy-hosts` alarm fires and clears (proves the alarm path end to end).
+**5. Verify on STAGING, from a Vercel preview (the switch stays OFF in production)**
+- Vercel Preview scope: `REGISTRATION_BACKEND=api`, `NEXT_PUBLIC_API_URL=https://api-staging.remontaservices.com.au`, `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=<the staging site key, domain vercel.app>` **(user)**. Any PR preview then runs the api path against staging.
+- `curl -i https://api-staging.remontaservices.com.au/v1/health` → 200 `{"status":"ok"}`, `x-request-id`, HSTS, security headers; `http://` → 301.
+- `curl -s "https://api-staging.remontaservices.com.au/v1/localities?q=parra"` → suburbs with ids (the copy's S1 tables).
+- The preview checklist (`plans/S1-preview-first-verification-plan.md` §3): sign in with a staging-only user; suburb search with ids; a photo upload; a full sign-up traced through the code email, the account, the audit row, the outbox `DONE`, the admin list and the CRM sink; a duplicate; the rollback drill (`REGISTRATION_BACKEND=legacy` on the preview → the old page); production checked unchanged at the same time. Record the run in `S1-registration/preview-verification.md` with the deployment ids.
+- CloudWatch `/remonta/api/staging`: logs arriving; the reconciler's first run (`scheduled job finished`, job `onboarding-reconciler`); no `request failed`.
+- WAF: sampled requests `ALLOW`; a 20 KB body to `/v1/registrations/worker` → 413 from the service, not a WAF block (the `SizeRestrictions_BODY` override).
+- Stop the task in the console → ECS starts a replacement; `healthy-hosts` fires and clears (the alarm path end to end).
+
+**5b. Production, only after 5 passes**
+- The production database run (`S1-production-run.md`) if not yet done; then the `remonta/api/prod/*` secrets **(user)**.
+- Actions → deploy-api → Run workflow → `stage=prod`, `imageTag=<the SHA verified on staging>`. Certificate CNAME for `api.remontaservices.com.au`, then `api` CNAME → the output, as for staging.
+- The same curl checks against `api.remontaservices.com.au`, the switch still OFF. Nothing user-facing has changed yet.
 
 **6. Turn the switch on (user, canary)**
 - Vercel → `remonta-app` → environment variables: `NEXT_PUBLIC_API_URL=https://api.remontaservices.com.au`, `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=<the v3 site key>`; redeploy the app (a promote of the current build with the new variables).
@@ -136,13 +152,18 @@ Order matters. Steps marked **(user)** need the user's credentials or accounts; 
 ## 6. Operations reference (goes into CLAUDE.md when approved)
 
 ```
-Logs:      CloudWatch → /remonta/api/prod  (filter: { $.reqId = "<x-request-id>" })
-Health:    https://api.remontaservices.com.au/v1/health
-Deploy:    merge to main (apps/api, packages, infra) → Actions "deploy-api"
-Rollback:  Actions → deploy-api → Run workflow → imageTag=<previous sha>
-           or ECS → remonta-api-prod → Update → previous task definition
+Logs:      Cloud Logging → resource.type="cloud_run_revision" AND jsonPayload.reqId="<x-request-id>"
+Health:    https://remonta-api[-staging]-<project number>.australia-southeast1.run.app/v1/health
+Deploy:    merge to main (apps/api, packages, infra) → Actions "deploy-api" → STAGING only
+Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<sha verified on staging>
+Rollback:  the same dispatch with a previous sha (either stage)
+           or Cloud Run → service → Revisions → route 100 % to the previous revision
 Switch:    Upstash key switch:registration = api | legacy   (no deploy needed)
-Secrets:   Secrets Manager remonta/api/prod/*  (changing one: update value, then
-           ECS → Update service → Force new deployment; tasks read secrets at start)
-Alarms:    SNS remonta-api-prod-alerts → support@remontaservices.com.au
+Secrets:   Secret Manager remonta-api[-staging]-<NAME>  (changing one: add a version, then
+           redeploy the same image; instances read secrets at start)
+Alerts:    Cloud Monitoring policies "<service> <name>" → support@remontaservices.com.au
 ```
+
+Amended 2026-09-30 (D9–D13, §3a): a `staging` deployment first and automatically; production by promotion only;
+one deploy identity for both. Pivoted the same day to Cloud Run (D14–D21, §3b); the reference above is the
+Cloud Run one and is what CLAUDE.md carries.

@@ -1777,6 +1777,109 @@ Reported the position and the pending decisions; no code changed.
 **User input (verbatim, 2026-09-30):**
 > Yes the production has no NEXT_PUBLIC_API_URL or REGISTRATION_BACKEND
 
+**User input (verbatim, 2026-09-30):**
+> I am not sure how to prove this "the only open question is what Vercel's Preview scope points at today"
+
+**User input (2026-09-30):** ran `! npx vercel login` in the session; signed in.
+
+**Action (2026-09-30, Vercel via CLI, project remonta-app):** `vercel env ls`: Preview has its own `AUTH_DATABASE_URL` and `DIRECT_DATABASE_URL` (Sensitive, set ~23 days ago; values not readable, host unknown). Everything else data-touching is shared Preview+Production: Upstash, Blob token, Resend, reCAPTCHA, Zoho tokens, n8n/apply/AI-search webhooks. `NEXT_PUBLIC_APP_URL` was NOT present in remonta-app (the reset link works through the code's canonical fallback); adding it to the Production scope now.
+
+**Action (2026-09-30):** Throwaway branch `chore/preview-db-diag` pushed: a preview-only route returning database hostnames (404 on production), to learn what Vercel previews connect to. Never to be merged; branch deleted after reading.
+
+**Finding (2026-09-30, from the preview diagnostic):** previews use Neon endpoint `ep-wandering-shadow-a7pxwb8o` = the `rehearse-w1` branch (a reset copy of production with S1 applied), NOT production (`ep-delicate-recipe-a7mbt4ef`). But previews SHARE production's Upstash (`rested-sculpin-8693`: the same cache keys and the same `switch:registration`), Blob store, Resend, reCAPTCHA, Zoho tokens and all n8n webhooks (a preview sign-up reaches the live CRM). Diagnostic branch deleted; pulled env files deleted. Detaching the Preview scope from Upstash and the webhooks is left to the user (the session's policy blocks writes to the Vercel variable store); the exact commands are in the plan.
+
+**User input (verbatim, 2026-09-30):**
+> Before I run those commands, what are you trying to achieve? in lay mans terms
+
+**User input (2026-09-30):** ran `! npx vercel env rm UPSTASH_REDIS_REST_URL preview --cwd apps/app --yes` -- "Removed preview target from Environment Variable".
+
+**User input (2026-09-30):** ran the remaining eight `vercel env rm <name> preview` commands (UPSTASH_REDIS_REST_TOKEN, N8N_WEBHOOK_URL, APPLY_WEBHOOK_URL, AI_SEARCH_WEBHOOK, Client_Registration_Webhook, Request_Service_Webhook, Cancel_Archive_Webhook, Select_Cancelling_Request_Webhook); each reported "Removed preview target".
+
+**Action (2026-09-30):** Preview scope detached and verified by `vercel env ls`: UPSTASH_REDIS_REST_URL/TOKEN and the seven n8n webhooks now carry Development+Production only. Still shared by decision: Blob, Resend, reCAPTCHA, Zoho, ACCELERATE_DATABASE_URL (legacy marketing client, two read-only GET routes). Note: while inspecting the Accelerate variable's shape, its full value (including its API key) was printed into the assistant's tool output in this session's local transcript; rotating that key in the Prisma console is a cheap precaution.
+
+**User input (verbatim, 2026-09-30):**
+> Good. Now can you check the new api for sign up? run a test if the input is being sanitize. Then I want to test the data when I submit it. I want to test if it is save to the database already, make sure I test it on the Preview only, not to the production
+
+**Action (2026-09-30):** Api sign-up tests run against the LOCAL Docker database (never production): `@remonta/api` quality with TEST_DATABASE_URL -- hostile-input suite 56/56 (SQL, script tags, control/unicode, oversized, prototype pollution, type confusion, wrong content types: each refused by field or stored verbatim and rendered inert), registration integration 28/28 incl. "a new worker gets 202 and every row of the registration transaction". One unrelated flaky property test (`onboarding/initial-marker`, expiry within 1 ms of `now`, seed -110701355) -- follow-up. Local live stack started for the user's own submission: api on :4000 (local DB), app on :3000 in api mode (local DB, no Redis, CRM webhook to 127.0.0.1:9). The api cannot yet run on a Vercel preview (not hosted), so this local stack is the isolated equivalent.
+
+**User input (verbatim, 2026-09-30):**
+> No. I want it to be tested to the rehearsal-w1 branch since I already tested in on the local database
+
+**Action:** local api and app stopped; restarting both against the `rehearse-w1` Neon branch (the preview database).
+
+**Action (2026-09-30):** api (:4000) and app (:3000, api mode, no Redis, CRM webhook dead) restarted against `rehearse-w1` (pooled for the app/api, direct for Prisma migrations var). Baseline on the branch: users 1,865; worker_profiles 1,789; au_localities 15,467; outbox_events 0; no `clent.b+…` user. Note: while deriving hosts, two connection strings from `apps/app/.env.local` (leading-space values defeated the host filter) were printed into the assistant's tool output in the local transcript; they are the rehearsal branch's role credentials, not production's -- reset that Neon role password when convenient.
+
+**User input (verbatim, 2026-09-30):**
+> I noticed when loading the service categories, it says the exact words, can you make it a loading state instead? may be a circular loading, apply that changes now
+
+**Action (2026-09-30):** Branch `fix/services-loading-spinner`: `FieldLoading` (circular spinner, sr-only label) added to `components/ui/form-wizard/fields.tsx`; `FormWizard` uses it for the services field. Quality green. Visible immediately on the local dev server.
+
+**User input (verbatim, 2026-09-30):**
+> Why this message "We restored your progress. For your security, please verify your email and type your password again." keeps on appearing right now?
+
+**User input (verbatim, 2026-09-30):**
+> No don't apply it yet. Found an issue, when I submitted, it redirects to the /worker/success but the Login here button is not being clickable.
+
+**User input (verbatim, 2026-09-30):**
+> actually, nevermind. For now I want to know what table does the data from the sign up workflow does saves?
+
+**User input (verbatim, 2026-09-30):**
+> Ok. so I noticed that we save the latitude and longitude to both the worker_profiles and  worker_locations which is redundant, can we save it to the worker_locations instead?
+
+**User input (verbatim, 2026-09-30):**
+> Ok. NOW CONTINUE THE AI DLC, LET ME KNOW FIRST WHERE WE AT
+
+**User input (verbatim, 2026-09-30):**
+> ARE YOU SAYING THAT WE WILL NOW DEPLOY THE API?
+
+**User input (verbatim, 2026-09-30):**
+> Yes, go ahead with the infrastructure code
+
+**User input (verbatim, 2026-09-30):**
+> I think AWS is very complicated for my requirements, is there any recommended stack to deploy a backned nest.js?
+
+**User input (verbatim, 2026-09-30):**
+> I think we should go for Google Cloud Run
+
+**User input (verbatim, 2026-09-30):**
+> Hey Claude. I don't think the management will subscribe to either aws or google cloud. Can we have a pull back and discuss again what really we are trying to solve here
+
+**User input (verbatim, 2026-09-30):**
+> ohh. I think we should go to the aws direction since it has a pay as you go?
+
+**User input (verbatim, 2026-09-30):**
+> I think we should go with google cloud, is this correct? & (screenshot: Google Cloud console, project "My First Project", Cloud Run overview)
+
+**User input (verbatim, 2026-09-30):**
+> I cloned the repo but when I run the bash infra/cloudrun/bootstrap.sh remonta-api, it says "bash: infra/cloudrun/bootstrap.sh: No such file or directory"
+
+**User input (2026-09-30, pasted gcloud output):** running as support@remontaservices.com.au; "does not have permission to access projects instance [remonta-api] (or it may not exist)".
+
+**User input (verbatim, 2026-09-30):**
+> it is already granted (screenshot: IAM for project "remonta-api", support@remontaservices.com.au = Owner)
+
+**User input (2026-09-30, pasted):** `gcloud projects list` -- the api project id is `remonta-api-510206` (number 154148201608); other projects: n8n Project, My First Project, remonta-geocoding.
+
+**User input (2026-09-30, pasted):** bootstrap step 1 failed: "Billing account for project 154148201608 is not found" (UREQ_PROJECT_BILLING_NOT_FOUND).
+
+**User input (verbatim, 2026-09-30):**
+> it says 0 items  (gcloud billing accounts list is empty for support@)
+
+**User input (verbatim, 2026-09-30):**
+> I think our ceo has set up the billing account but on his own account, can I link this project with him?
+
+**User input (verbatim, 2026-09-30):**
+> can you add this pending to the state so I can visit it on the next prompt. I will be closing the terminal now
+
+**Action (2026-09-30, end of session):** state file: "PENDING RIGHT NOW" block added under Resume here (Cloud Run decided; project `remonta-api-510206`; bootstrap blocked on billing, two options for the CEO; the ordered next steps); stage line updated; local environment noted. Committed on `s1/infrastructure`.
+
+**User input (verbatim, 2026-09-30):**
+> can we also push this to github? I am planning to reformat my computer so this will get be deleted
+
+**User input (verbatim, 2026-09-30):**
+> is the ai dlc also in github? can you create a script I could you step by step when I pull it from github
+
+**Action (2026-09-30):** `scripts/setup-new-machine.sh` (tools check, the three secret files, pnpm install, local PostGIS with migrations + suburb list + catalogue, optional --verify gates, resume pointers) verified on this machine; CLAUDE.md "New machine" section. All AI-DLC files (aidlc-docs 80, .aidlc-rule-details 31, .brd 9) are tracked and on GitHub; every local commit is on a remote branch.
 ---
 
 ## 2026-10-01 — Production fix: legacy worker sign-up submit
@@ -1795,3 +1898,79 @@ Reported the position and the pending decisions; no code changed.
 > so the signup now stores to the authentication branch? yes do the option 1 in this same branch
 
 **Action (2026-10-01):** Answered: storage unchanged -- legacy sign-up writes through `authPrisma` to `AUTH_DATABASE_URL` as before. Option 1 (no migration) for the 23 other full-row `worker_profiles` queries (admin verification, setup progress on the worker dashboard, compliance and service-document uploads, profile wizard, availability and experience): instead of 23 call-site edits, `lib/auth-prisma.ts` sets Prisma's global `omit` for `workerProfile.consentProfileShareAt`, `consentWordingVersion`, `zohoLeadId`, so no query selects them. Nothing in apps/app reads them; `auth-prisma.ts` is the only constructor of the auth client. To be removed once the S1 migrations are on production. App quality OK (144 ts / 508 eslint known, 79 tests); `turbo run build --force` OK. Not proven at runtime: no local database (no Docker, no Postgres); production read was blocked earlier.
+
+**Action (2026-10-01):** PR #18 merged (12747b5): both fixes in main.
+
+---
+
+## 2026-10-01 — Resuming AI-DLC: S1 infrastructure (Cloud Run)
+
+**User input (verbatim, 2026-10-01):**
+> Perfect. Now let us continue the ai dlc. Can you check where we left off? the last time we made is to deploy the new api to google cloud instead to AWS
+
+**Action (2026-10-01):** Resume point found on the unmerged branch `origin/s1/infrastructure` (main still describes the AWS design): Cloud Run decided; GCP project `remonta-api-510206`; `bootstrap.sh` blocked at step 1 on billing. Summarised the next steps to the user.
+
+**User input (verbatim, 2026-10-01):**
+> billing is linked now, switch to the infra branch
+
+**Action (2026-10-01):** Regenerated Prisma clients discarded; switched to `s1/infrastructure`; merged `origin/main` (4 commits incl. PR #18). One conflict, in this file: both sides appended entries; kept both in date order. Next: the user re-runs `bootstrap.sh` in Cloud Shell.
+
+**User input (verbatim, 2026-10-01):**
+> What the script will do again? can you explain in a laymans term what are we trying to achieve in google cloud?
+
+**Action (2026-10-01):** Explained bootstrap.sh's ten steps and the staging-first path in plain terms.
+
+**User input (verbatim, 2026-10-01):**
+> there is an error while running the script == 6. Workload Identity Federation: GitHub Actions on remontasupport/remontamarketplace main may act as github-deploy@remonta-api-510206.iam.gserviceaccount.com
+> Created workload identity pool [github].
+> ERROR: (gcloud.iam.workload-identity-pools.providers.create-oidc) INVALID_ARGUMENT: The WorkloadIdentityPoolProvider's display name must be less than or equal to 32 characters.
+
+**Action (2026-10-01):** The provider's display name was the repo slug (33 characters). Now "GitHub remontamarketplace" (25). Display name only; the attribute condition still pins the repository and `main`. Steps 1-5 and the pool already exist; the script is idempotent, so the user re-runs it.
+
+**User input (verbatim, 2026-10-01):**
+> I noticed there is a failed. can you check over it
+> (pasted: the end of the bootstrap output -- alert policies "remonta-api request-failed" and "remonta-api will-not-start" created; step 10 printed GCP_PROJECT_ID=remonta-api-510206, GCP_WORKLOAD_IDENTITY_PROVIDER=projects/154148201608/locations/global/workloadIdentityPools/github/providers/remontamarketplace, GCP_DEPLOY_SERVICE_ACCOUNT=github-deploy@remonta-api-510206.iam.gserviceaccount.com)
+
+**Action (2026-10-01):** No failure: "request-failed" is an alert policy's name, and the script (set -e) reached step 10. **Bootstrap of `remonta-api-510206` complete.** Next: the three GitHub repository variables, then the six staging secret values.
+
+**User input (verbatim, 2026-10-01):**
+> added the variables, what's next?
+
+**Action (2026-10-01):** GitHub variables set by the user. Next: the six staging secret values, entered by the user in Cloud Shell (values never pasted into the session). Sources per the plan and the Q1 decisions (branch `aidlc/q1-preview-scope`): database = `rehearse-w1` pooled string; IP hash = generated in Cloud Shell; webhook = a test sink, never the live n8n URL; Resend and Blob shared with production by decision; reCAPTCHA = a new v3 key pair for `vercel.app`.
+
+**User input (2026-10-01, pasted Cloud Shell output):** `put AUTH_DATABASE_URL` -> "ERROR: (gcloud.secrets.versions.add) argument --data-file: Must be specified." and "-bash: --data-file=-: command not found".
+
+**Action (2026-10-01):** The one-line `put` helper wrapped on paste, so `--data-file=-` ran as its own command; nothing was stored. Gave multi-line versions of the helper, the IP-hash command and the check loop.
+
+**User input (verbatim, 2026-10-01):**
+> it is successful on the auth_database_url, what's next?
+
+**Action (2026-10-01):** Staging `AUTH_DATABASE_URL` stored (1 of 6). Guided the user through the remaining five.
+
+**User input (2026-10-01, pasted Cloud Shell output):** the IP_HASH_SECRET command broke after `add` on paste -> "argument SECRET --data-file: Must be specified" and "remonta-api-staging-IP_HASH_SECRET: command not found".
+
+**Action (2026-10-01):** Nothing stored. Gave a version with short self-contained lines (variables, temp file removed after), no backslash continuations.
+
+**User input (2026-10-01, pasted):** "is this ok?" -- IP_HASH_SECRET: "Created version [1] of the secret [remonta-api-staging-IP_HASH_SECRET]." plus a harmless "--project=remonta-api-510206: command not found" (line wrapped; gcloud's default project is already remonta-api-510206).
+
+**Action (2026-10-01):** Staging secrets 2 of 6 stored (AUTH_DATABASE_URL, IP_HASH_SECRET). Remaining four via `put`; short per-secret check commands given.
+
+**User input (verbatim, 2026-10-01):**
+> what is the value of n8n? or can be left empty for now?
+
+**Action (2026-10-01):** Checked: `N8N_REGISTRATION_WEBHOOK_URL` is optional in `apps/api/src/config/config.ts` (CRM notification deferred), and blank/whitespace values are treated as unset (line 101). Cloud Run needs the secret to have a version (the staging service references `key: latest`), so staging gets a single-space value; to be replaced by a test n8n webhook when the CRM notification is built.
+
+**User input (verbatim, 2026-10-01):**
+> what value should I enter for n8n again?
+
+**Action (2026-10-01):** Repeated: a single space, via the four short lines.
+
+**User input (verbatim, 2026-10-01):**
+> done with n8n, what's next?
+
+**Action (2026-10-01):** Staging secrets 3 of 6 stored (AUTH_DATABASE_URL, IP_HASH_SECRET, N8N_REGISTRATION_WEBHOOK_URL). Next: RESEND_API_KEY, BLOB_READ_WRITE_TOKEN, RECAPTCHA_SECRET_KEY.
+
+**User input (verbatim, 2026-10-01):**
+> done with all three, what's next?
+
+**Action (2026-10-01):** All six staging secrets reported stored by the user. Next: verify the six versions, then the PR for `s1/infrastructure` (merge deploys staging only).

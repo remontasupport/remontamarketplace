@@ -67,11 +67,11 @@ describe('SafeHttpClient', () => {
 })
 
 describe('RecaptchaV3Verifier (fails closed)', () => {
-  const verifier = (respond: () => Response | Promise<Response>) => {
+  const verifier = (respond: () => Response | Promise<Response>, allowedHostnames: readonly string[] = ['localhost']) => {
     const f = fakeFetch(respond)
     const v = new RecaptchaV3Verifier(new SafeHttpClient({ allowedHosts: ['www.google.com'], fetch: f.fn }), {
       secret: 'secret',
-      allowedHostnames: ['localhost'],
+      allowedHostnames,
       minScore: 0.5,
     })
     return { v, calls: f.calls }
@@ -80,6 +80,14 @@ describe('RecaptchaV3Verifier (fails closed)', () => {
 
   it('passes a good token', async () => {
     expect(await verifier(() => json(good)).v.verify('tok', 'worker_register', '1.2.3.4')).toEqual({ ok: true, score: 0.9 })
+  })
+
+  it('staging: a one-label wildcard admits a Vercel preview host and nothing under a deeper or foreign domain', async () => {
+    const preview = { ...good, hostname: 'remonta-app-git-fix-x-remontas-projects.vercel.app' }
+    expect(await verifier(() => json(preview), ['*.vercel.app']).v.verify('tok', 'worker_register', '1.2.3.4')).toEqual({ ok: true, score: 0.9 })
+    for (const hostname of ['a.b.vercel.app', 'vercel.app', 'x.vercel.app.evil.com', 'localhost']) {
+      expect(await verifier(() => json({ ...good, hostname }), ['*.vercel.app']).v.verify('tok', 'worker_register', '1.2.3.4'), hostname).toMatchObject({ ok: false, reason: 'rejected' })
+    }
   })
 
   it.each([

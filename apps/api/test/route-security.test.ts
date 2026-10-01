@@ -2,10 +2,11 @@
 // contract entry, the pipeline refuses what it must, before the handler runs.
 // Real contracts are all public in S1, so a synthetic signed-in contract covers
 // 401/403; it runs through exactly the same binder and pipeline.
-import { contracts, defineContract, errorResponseSchema, meta, type Contract, type EntryDef, type PublicEndpoint } from '@remonta/api-contract'
+import { contracts, defineContract, errorResponseSchema, meta, platformContract, type Contract, type EntryDef, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as z from 'zod'
+import type { HandlerSet } from '../src/platform/contract/handlers'
 import { multipart, testApp, unreachableHandlers, type TestApp } from './helpers'
 
 const privateContract = defineContract('testPrivate', {
@@ -192,12 +193,26 @@ describe('outside the contracts', () => {
 })
 
 describe('HTTPS only', () => {
-  it('refuses plain HTTP when required', async () => {
-    const h = await testApp({ contracts, handlerSets: contracts.map(unreachableHandlers), publicEndpoints: publicEndpoints as PublicEndpoint[], config: { requireHttps: true } })
+  it('refuses plain HTTP on every entry except the probe, which the load balancer checks without X-Forwarded-Proto', async () => {
+    // The real health handler shape, so that the probe can answer 200 when let through.
+    const health: HandlerSet = { contract: platformContract, handlers: { health: async () => ({ status: 200, body: { status: 'ok' } }) } } as unknown as HandlerSet
+    const others = contracts.filter((c) => c !== platformContract)
+    const h = await testApp({ contracts, handlerSets: [health, ...others.map(unreachableHandlers)], publicEndpoints: publicEndpoints as PublicEndpoint[], config: { requireHttps: true, TRUST_PROXY: 1 } })
     try {
-      const res = await h.fastify.inject({ method: 'GET', url: '/v1/health' })
-      expect(res.statusCode).toBe(403)
-      expect(res.headers['strict-transport-security']).toContain('max-age=')
+      const probe = await h.fastify.inject({ method: 'GET', url: '/v1/health' })
+      expect(probe.statusCode).toBe(200)
+      expect(probe.headers['strict-transport-security']).toContain('max-age=')
+      // Exactly one entry is a probe: every other entry over plain HTTP is 403, before its handler.
+      const probes = entries.filter(({ entry }) => entry.meta.probe)
+      expect(probes.map((p) => p.id)).toEqual(['platform.health'])
+      for (const { entry } of entries.filter(({ entry }) => !entry.meta.probe)) {
+        const res = await h.fastify.inject({ method: entry.method, url: url(entry, entry.query ? '?q=pa' : '') })
+        expect(res.statusCode, `${entry.method} ${entry.path}`).toBe(403)
+        expect(res.headers['strict-transport-security']).toContain('max-age=')
+      }
+      // And with X-Forwarded-Proto from a trusted proxy the same entries pass the HTTPS check (a proxied request).
+      const proxied = await h.fastify.inject({ method: 'GET', url: '/v1/localities?q=pa', headers: { 'x-forwarded-proto': 'https' } })
+      expect(proxied.statusCode).not.toBe(403)
     } finally {
       await h.close()
     }

@@ -1,0 +1,25 @@
+{
+  "displayName": "__SERVICE__ will-not-start",
+  "documentation": {
+    "content": "A container of __SERVICE__ (__STAGE__) refused to start: `apps/api will not start -- configuration problems` (a missing or malformed environment value or secret) or `-- contract problems` (an unbound contract entry). The revision never became ready and Cloud Run kept serving the previous one. The log line lists the problems by name.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "start refusals in 5 minutes >= 1",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"__SERVICE__\" AND metric.type = \"logging.googleapis.com/user/remonta-api-will-not-start\"",
+        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["resource.labels.service_name"] }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": ["__CHANNEL__"],
+  "alertStrategy": { "autoClose": "3600s" },
+  "severity": "CRITICAL",
+  "userLabels": { "remonta-stage": "__STAGE__", "remonta-service": "api" }
+}

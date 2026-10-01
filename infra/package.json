@@ -1,0 +1,27 @@
+{
+  "name": "@remonta/infra",
+  "version": "0.0.0",
+  "private": true,
+  "description": "How apps/api runs on Google Cloud Run: the stage table (lib/stages.ts) is the single source of truth; the Knative service definitions in cloudrun/ are rendered from it and checked for drift; cloudrun/bootstrap.sh prepares a fresh GCP project once (APIs, registry, service accounts, Workload Identity Federation for GitHub, empty secrets, log metrics, alerts). No IaC tool; gcloud and a rendered YAML.",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "render": "tsx scripts/render.ts",
+    "render:check": "tsx scripts/render.ts --check",
+    "quality": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run render:check"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@remonta/config": "workspace:*",
+    "@types/node": "^20",
+    "@typescript-eslint/parser": "^8",
+    "eslint": "^9",
+    "tsx": "^4.23.13",
+    "typescript": "^5",
+    "vitest": "^2.1.9"
+  }
+}

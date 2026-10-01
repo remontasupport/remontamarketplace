@@ -126,6 +126,44 @@ rollback and takes effect on the next request.
 
 ---
 
+## apps/api on Google Cloud Run (`infra/`)
+
+Two Cloud Run services in `australia-southeast1`, both described by **one table**, `infra/lib/stages.ts`:
+**staging** (`remonta-api-staging`: one always-on instance on the `rehearse-w1` Neon copy, admits
+Vercel previews) and **prod** (`remonta-api`: 1–4 instances, exact origins, the full alert set).
+`pnpm --filter @remonta/infra run render` turns the table into `infra/cloudrun/service.<stage>.yaml`,
+which is what gets deployed; a drift test fails if the two disagree. `infra/cloudrun/bootstrap.sh`
+prepares a fresh project once. Guide: `infra/README.md`; decisions: the code-generation plan §3b.
+
+```
+Quality:   pnpm --filter @remonta/infra run quality   (lint · tsc · tests · render:check, no credentials)
+Deploy:    merge to main touching apps/api, packages, infra, lockfile → Actions "deploy-api" → STAGING only
+Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<sha that passed the preview checklist>
+Rollback:  the same dispatch with a previous sha; or Cloud Run → service → Revisions → route traffic back
+URL:       https://remonta-api[-staging]-<project number>.australia-southeast1.run.app  (no custom hostname yet)
+Health:    <url>/v1/health   (a contract `probe`: never shed, plain HTTP allowed -- Cloud Run's probes hit it)
+Logs:      Cloud Logging → resource.type="cloud_run_revision" AND jsonPayload.reqId="<x-request-id>"
+Secrets:   Secret Manager remonta-api[-staging]-<NAME>   (add a version, then redeploy: instances read secrets at start)
+Alerts:    Cloud Monitoring policies "<service> <name>" → support@remontaservices.com.au
+Pause:     gcloud run services update remonta-api-staging --region australia-southeast1 --min-instances=0 --cpu-throttling
+Switch:    Upstash key switch:registration = api | legacy   (production's only path to the api; no deploy needed)
+```
+
+Rules that have earned their place:
+
+- **Production is a promotion, never a push.** Nothing deploys `remonta-api` except a
+  `workflow_dispatch` naming an image that already runs on staging.
+- **Rollback = redeploy an existing image, never rebuild.** Images stay in Artifact Registry (newest 20).
+- **Edit the table, not the YAML.** `service.*.yaml` is generated; the gate rejects a hand edit.
+- **CPU always allocated, minimum one instance.** The outbox dispatcher and the scheduler run between
+  requests; a service that scales to zero silently stops sending emails.
+- **Staging's wildcards are staging's.** `https://*.vercel.app` and `*.vercel.app` (one label,
+  `apps/api/src/config/hosts.ts`) exist for previews. Production values are exact.
+- **The api needs no DNS.** Its `run.app` URL is called only by the app's JavaScript
+  (`NEXT_PUBLIC_API_URL`); CORS and reCAPTCHA concern the app's origin, not the api's.
+
+---
+
 ## Rollback
 
 Promote the last known-good deployment in Vercel. Seconds, no rebuild.
@@ -140,7 +178,20 @@ deployment; do not redeploy a commit** — a rebuild can fail, an existing build
 
 ---
 
-## apps/api: the backend service (local and CI only until AWS)
+## New machine
+
+```bash
+git clone https://github.com/remontasupport/remontamarketplace.git && cd remontamarketplace
+git checkout <the branch aidlc-docs/aidlc-state.md names>      # s1/infrastructure as of 2026-09-30
+bash scripts/setup-new-machine.sh          # checks tools, the 3 secret files, installs, builds the local database
+bash scripts/setup-new-machine.sh --verify # ... and runs every quality gate
+```
+
+The three secret files (`apps/app/.env`, `apps/app/.env.local`, `apps/api/.env`) are not in git: restore
+them from the backup. Everything else, the AI-DLC record included (`aidlc-docs/`, `.aidlc-rule-details/`,
+`.brd/`), is in the repository. Then open Claude Code here and say "continue the AI-DLC".
+
+## apps/api: the backend service (local and CI only until deployed)
 
 ```bash
 # A database for the tests: the same image CI uses. Once.

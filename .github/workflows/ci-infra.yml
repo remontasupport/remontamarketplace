@@ -1,0 +1,55 @@
+# CI for the infrastructure package (infra/): lint, strict tsc, the tests over the
+# rendered Cloud Run service definitions, and the drift check that the committed
+# infra/cloudrun/service.*.yaml equal what infra/lib/stages.ts renders. None of it
+# needs Google Cloud credentials.
+#
+# Check name: Infra Quality.
+
+name: CI (infra)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ci-infra.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ci-infra.yml"
+
+concurrency:
+  group: ci-infra-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Infra Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # eslint · tsc · vitest · render:check (committed YAML == the stage table), no credentials.
+      - name: Infra quality gate
+        run: pnpm --filter @remonta/infra run quality

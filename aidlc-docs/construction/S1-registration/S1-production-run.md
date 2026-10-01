@@ -6,7 +6,8 @@
 
 ## Preconditions
 
-- The branch's commits with the matcher rules and the batched backfills are in `main` (PR after `81f5bf6`). The production run must use that code.
+- **Order relative to the api (2026-09-30):** this run happens **after** the api has been verified on staging from a Vercel preview (`infrastructure-design/deployment-architecture.md` §5 step 5) and **before** `RemontaApiProd` is promoted (step 5b): the production api's reconciler and suburb lookups expect the S1 tables. Staging needs nothing from this runbook — the `rehearse-w1` branch already has everything below applied.
+- The branch's commits with the matcher rules and the batched backfills are in `main` (merged 2026-09-30, PR #13). The production run must use that code.
 - `apps/api/.env` holds the production **direct** connection string under a name that is NOT `AUTH_DATABASE_URL` (e.g. `PRODUCTION_DIRECT_DATABASE_URL`) so nothing reads it by accident; the runner compares it against the rehearsal endpoint and refuses to continue if they are the same.
 - Nobody is deploying `apps/app` during the run (a deploy re-generates nothing on the database, but keep the window quiet).
 - Record, before anything: `SELECT extversion FROM pg_extension WHERE extname = 'postgis'` (rehearsal: none installed → the `s1_postgis` reverse script applies) and `SELECT count(*) FROM audit_logs WHERE action::text = 'ACCOUNT_REGISTERED'` (must be 0 for the `s1_registration` reverse script to run).

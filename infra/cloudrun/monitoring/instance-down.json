@@ -1,0 +1,26 @@
+{
+  "displayName": "__SERVICE__ instance-down",
+  "documentation": {
+    "content": "No active instance of the Cloud Run service __SERVICE__ (__STAGE__) for 5 minutes. The service should never scale to zero (min instances 1): a revision is failing to start or the service was paused. Check Cloud Run → __SERVICE__ → Revisions and the logs (\"apps/api will not start\").",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "active instances < 1",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"__SERVICE__\" AND metric.type = \"run.googleapis.com/container/instance_count\" AND metric.labels.state = \"active\"",
+        "aggregations": [{ "alignmentPeriod": "60s", "perSeriesAligner": "ALIGN_MAX", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["resource.labels.service_name"] }],
+        "comparison": "COMPARISON_LT",
+        "thresholdValue": 1,
+        "duration": "300s",
+        "trigger": { "count": 1 },
+        "evaluationMissingData": "EVALUATION_MISSING_DATA_ACTIVE"
+      }
+    }
+  ],
+  "notificationChannels": ["__CHANNEL__"],
+  "alertStrategy": { "autoClose": "1800s" },
+  "severity": "CRITICAL",
+  "userLabels": { "remonta-stage": "__STAGE__", "remonta-service": "api" }
+}

@@ -48,8 +48,8 @@ export function checkContracts(contracts: readonly Contract[], publicAllowList: 
       problems.push(`${id}: only public GETs may be cached`)
     }
     if (Object.keys(e.responses).length === 0) problems.push(`${id}: no success response`)
-    if (e.meta.loadShedding === 'exempt' && (e.method !== 'GET' || e.body || e.query || e.pathParams)) {
-      problems.push(`${id}: only a GET with no input may be exempt from load shedding`)
+    if (e.meta.probe && (e.method !== 'GET' || e.body || e.query || e.pathParams)) {
+      problems.push(`${id}: only a GET with no input may be a probe`)
     }
 
     if (e.body?.kind === 'json' && !rejectsUnknownFields(e.body.schema, 'input')) problems.push(`${id}: body must be a strict object (P9)`)

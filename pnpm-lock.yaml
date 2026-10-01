@@ -525,6 +525,34 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  infra:
+    dependencies:
+      yaml:
+        specifier: ^2.8.1
+        version: 2.9.0
+    devDependencies:
+      '@remonta/config':
+        specifier: workspace:*
+        version: link:../packages/config
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@typescript-eslint/parser':
+        specifier: ^8
+        version: 8.70.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      eslint:
+        specifier: ^9
+        version: 9.39.5(jiti@2.7.0)
+      tsx:
+        specifier: ^4.23.13
+        version: 4.23.13
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@20.19.43)(jsdom@26.1.0)(lightningcss@1.32.0)
+
   packages/api-contract:
     dependencies:
       '@remonta/schemas':

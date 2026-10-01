@@ -1,0 +1,149 @@
+# Build → registry → deploy for apps/api on Google Cloud Run (plan §3b, D14–D19).
+#
+#   push to main (api, packages, infra, lockfile)  →  quality  →  build image :<sha>  →  deploy STAGING
+#   workflow_dispatch (stage, imageTag)            →  promote an EXISTING image to staging or prod
+#
+# Production never deploys on a push. It is a promotion of an image that already
+# runs on staging and has passed the preview checklist
+# (aidlc-docs/construction/plans/S1-preview-first-verification-plan.md §3).
+# The same dispatch with an older SHA is the rollback for either stage: images stay
+# in Artifact Registry (newest 20), so a rollback is a redeploy, never a rebuild.
+#
+# Trust: Workload Identity Federation (no keys). The provider accepts tokens only from
+# this repository on main; the deploy service account may administer Cloud Run, push
+# images and act as the two runtime service accounts. GitHub repository VARIABLES:
+# GCP_PROJECT_ID, GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_DEPLOY_SERVICE_ACCOUNT (printed by
+# infra/cloudrun/bootstrap.sh).
+# Gate: the api and infra quality gates re-run before an image is built (the
+# database-backed suites skip without TEST_DATABASE_URL; ci-api.yml runs them on the PR).
+# What is deployed is the committed, drift-checked infra/cloudrun/service.<stage>.yaml
+# with the project id and the image tag substituted -- nothing is configured by hand.
+# Optional hardening (user): a GitHub environment `production` with required reviewers;
+# the promote job declares it for stage=prod.
+
+name: deploy-api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "infra/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-api.yml"
+      - ".github/scripts/api-health.sh"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Which deployment to update"
+        type: choice
+        required: true
+        default: staging
+        options: [staging, prod]
+      imageTag:
+        description: "Git SHA of an image already in the registry (the one that passed the checklist; an older one = rollback)"
+        type: string
+        required: true
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  REGION: australia-southeast1
+  IMAGE: australia-southeast1-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/remonta/api
+
+jobs:
+  # ---------------------------------------------------------------------------
+  quality:
+    name: Quality (api, infra)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: API quality gate (no database here; ci-api.yml runs the PostGIS suites on the PR)
+        run: pnpm --filter @remonta/api run quality
+      - name: Infra quality gate (incl. the render drift check)
+        run: pnpm --filter @remonta/infra run quality
+
+  # ---------------------------------------------------------------------------
+  build-push:
+    name: Build and push api:${{ github.sha }}
+    if: github.event_name == 'push'
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Log in to Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+      - uses: docker/setup-buildx-action@v3
+      - name: Build (linux/amd64, SBOM + provenance) and push
+        run: |
+          docker buildx build \
+            -f apps/api/Dockerfile \
+            --platform linux/amd64 \
+            --sbom=true --provenance=true \
+            --push \
+            -t "${{ env.IMAGE }}:${{ github.sha }}" \
+            .
+
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy staging (${{ github.sha }})
+    if: github.event_name == 'push'
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Apply the rendered service definition with this image
+        run: |
+          sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ github.sha }}/g" infra/cloudrun/service.staging.yaml \
+            | gcloud run services replace - --region "$REGION" --project "${{ vars.GCP_PROJECT_ID }}" --quiet
+      - name: Wait for the revision to be ready, then check health
+        run: .github/scripts/api-health.sh staging "${{ vars.GCP_PROJECT_ID }}"
+
+  # ---------------------------------------------------------------------------
+  promote:
+    name: Promote ${{ inputs.imageTag }} to ${{ inputs.stage }}
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # `production` may carry required reviewers in the repository settings; `staging` needs none.
+    environment: ${{ inputs.stage == 'prod' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: The image must already exist (no build on a promotion)
+        run: gcloud artifacts docker images describe "${{ env.IMAGE }}:${{ inputs.imageTag }}" --project "${{ vars.GCP_PROJECT_ID }}" --format='value(image_summary.digest)'
+      - name: Apply the rendered service definition with that image
+        run: |
+          sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ inputs.imageTag }}/g" "infra/cloudrun/service.${{ inputs.stage }}.yaml" \
+            | gcloud run services replace - --region "$REGION" --project "${{ vars.GCP_PROJECT_ID }}" --quiet
+      - name: Wait for the revision to be ready, then check health
+        run: .github/scripts/api-health.sh ${{ inputs.stage }} "${{ vars.GCP_PROJECT_ID }}"

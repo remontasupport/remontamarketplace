@@ -12,6 +12,7 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import type { Contract, PublicEndpoint } from '@remonta/api-contract'
 import type { FastifyError, FastifyInstance } from 'fastify'
 import type { Config } from './config/config'
+import { originAllowed } from './config/hosts'
 import { bindContracts, recordRoutes, verifyRoutes } from './platform/contract/binder'
 import type { HandlerSet } from './platform/contract/handlers'
 import { ApiError, errorBody, statusOf } from './platform/errors'
@@ -79,19 +80,26 @@ export async function createApp(opts: AppOptions): Promise<NestFastifyApplicatio
     reply.header('x-request-id', request.id)
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) reply.header(k, v)
     reply.header('cache-control', 'no-store')
+    // A probe (the health check, contract meta.probe) is never shed and is served
+    // over plain HTTP: the load balancer's health checker is not a proxied request
+    // and carries no X-Forwarded-Proto. Every other route is shed first, then held
+    // to HTTPS. HSTS goes out on every route when HTTPS is required.
+    const probe = request.routeOptions.config?.probe === true
     // Load shedding comes before any work, including the HTTPS check.
-    if (opts.shedder && !request.routeOptions.config?.shedExempt) {
+    if (opts.shedder && !probe) {
       const d = opts.shedder.tryAdmit()
       if (!d.admit) throw new ApiError(503, `shed: ${d.reason}`, undefined, { 'retry-after': String(d.retryAfter) })
       admitted.add(request)
     }
     if (opts.config.requireHttps) {
       reply.header('strict-transport-security', 'max-age=31536000; includeSubDomains')
-      if (request.protocol !== 'https') throw new ApiError(403, 'https required')
+      if (!probe && request.protocol !== 'https') throw new ApiError(403, 'https required')
     }
   })
   await fastify.register(cors, {
-    origin: opts.config.CORS_ORIGINS,
+    // Exact origins, or `https://*.<domain>` on staging for Vercel previews (config/hosts.ts).
+    // A request without an Origin header is not a CORS request and passes as before.
+    origin: (origin, cb) => cb(null, origin === undefined ? false : originAllowed(opts.config.CORS_ORIGINS, origin)),
     methods: [...new Set(opts.contracts.flatMap((c) => Object.values(c.entries).map((e) => e.method)))],
     allowedHeaders: ['content-type', 'x-request-id', 'authorization'],
     exposedHeaders: ['x-request-id', 'retry-after'],

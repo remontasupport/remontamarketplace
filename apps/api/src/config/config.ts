@@ -3,6 +3,7 @@
 // the variable and the problem, never the value (P6).
 import { availableParallelism } from 'node:os'
 import * as z from 'zod'
+import { isHostPattern, isOriginPattern } from './hosts'
 
 const list = z
   .string()
@@ -35,10 +36,12 @@ const envSchema = z.object({
 
   AUTH_DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\//, 'must be a postgresql:// URL'),
 
-  CORS_ORIGINS: list.pipe(z.array(origin).min(1, 'at least one origin')),
+  /** Exact origins; staging may add ONE wildcard label, `https://*.vercel.app`, for Vercel previews (hosts.ts). */
+  CORS_ORIGINS: list.pipe(z.array(z.string().refine(isOriginPattern, 'must be an origin like https://app.example.com (http only for localhost) or https://*.example.com, no path')).min(1, 'at least one origin')),
 
   RECAPTCHA_SECRET_KEY: z.string().min(20, 'missing or too short'),
-  RECAPTCHA_ALLOWED_HOSTNAMES: list.pipe(z.array(z.string().regex(/^[a-z0-9.-]+$/)).min(1)),
+  /** Hostnames Google reports for the page; staging may add `*.vercel.app` (one label). */
+  RECAPTCHA_ALLOWED_HOSTNAMES: list.pipe(z.array(z.string().refine(isHostPattern, 'must be a hostname or *.example.com')).min(1)),
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
 
   RESEND_API_KEY: z.string().min(10, 'missing or too short'),
