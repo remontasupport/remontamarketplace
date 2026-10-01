@@ -1984,3 +1984,12 @@ Reported the position and the pending decisions; no code changed.
 > it is red
 
 **Action (2026-10-01):** deploy-api run 36808922152 (public API): Quality OK, Build and push OK (so Workload Identity Federation and the registry work), **Deploy staging failed at "Apply the rendered service definition"** (`gcloud run services replace`). Job log needs a GitHub login (403). Found a definite defect: `infra/lib/stages.ts` set `PORT` in the container environment; Cloud Run reserves PORT and rejects such a definition. Branch `fix/cloudrun-reserved-port`: test "sets none of the variables Cloud Run reserves" added and shown failing on both stages (`expected [ 'PORT' ] to deeply equal []`); PORT removed (Cloud Run sets it to the container port, 4000, which the api reads); both service YAMLs re-rendered. Infra quality OK (17 tests, render:check). The user to confirm the error text in the run log.
+
+**User input (2026-10-01, pasted from the failed step):**
+> Deploying new service...
+> failed
+> Deployment failed
+> ERROR: (gcloud.run.services.replace) spec.template.spec.containers[0].env: The following reserved env names were provided: PORT. These values are automatically set by the system.
+> Error: Process completed with exit code 1.
+
+**Action (2026-10-01):** Confirmed: the PORT defect fixed on `fix/cloudrun-reserved-port`. The user opens and merges the PR; the merge re-runs deploy-api (path `infra/**`).
