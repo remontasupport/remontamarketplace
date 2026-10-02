@@ -60,7 +60,9 @@ jobs:
         run: semgrep --test .semgrep/
 
       # The registry packs plus .semgrep/. --metrics=off: nothing is sent to
-      # Semgrep. SARIF output for code scanning; the text output for the log.
+      # Semgrep. The text report goes to the log (stdout); --sarif-output writes
+      # the SARIF file for code scanning alongside it. (Combining --sarif --output
+      # with --text wrote the text table INTO the SARIF file: upload rejected.)
       # --exclude .semgrep: the rules' test file holds deliberate violations.
       - name: Scan
         run: |
@@ -76,8 +78,7 @@ jobs:
             --config p/github-actions \
             --config .semgrep/ \
             --metrics=off \
-            --sarif --output semgrep.sarif \
-            --text
+            --sarif-output semgrep.sarif
 
       - name: Upload findings to code scanning
         if: always() && hashFiles('semgrep.sarif') != ''

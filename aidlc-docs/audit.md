@@ -2207,3 +2207,13 @@ Reported the position and the pending decisions; no code changed.
 > There is an error on Semgrep on the PR
 
 **Action (2026-10-02):** Read the PR runs through the GitHub API: CodeQL green on both languages; Semgrep failed in "Test the repository's rules" with a Semgrep-internal crash (`IndexError: tuple index out of range` in `semgrep/test.py relatively_eq`) -- `--test` given a rule FILE via `--config` plus a target DIRECTORY trips its path comparison. Changed to the documented form `semgrep --test .semgrep/` (rule file and same-named test file in one directory); the test file is kept out of the main scan with `--exclude '.semgrep'` on the scan command rather than `.semgrepignore`, so the test step cannot be silently skipped. Pushed to `ci/code-scanning`.
+
+**User input (verbatim, 2026-10-02):**
+> In layman's term, can you explain the usage of the 2? is it for protection?
+
+**Action (2026-10-02):** Explained in plain terms: both are automated code reviewers that read every change for security mistakes before it reaches production -- prevention, not runtime protection (they do not block attacks on the live site; the api's pipeline, rate limits, CAPTCHA and the hosting do that). CodeQL = the thorough reviewer that traces where data travels; Semgrep = the quick checklist reviewer that also enforces the project's own house rules. They report; people decide.
+
+**User input (verbatim, 2026-10-02):**
+> Ok, can we remove Semgrep? it is keep on failing.
+
+**Action (2026-10-02):** Run on `a48f01b`: the rule self-test PASSED, the scan ran (271 rules, 996 files, 80 findings in existing code), and only the SARIF upload failed -- `--sarif --output semgrep.sarif --text` wrote the text table into the SARIF file ("Invalid SARIF. JSON syntax error: Unexpected token '┌'"). Fixed to `--sarif-output semgrep.sarif` (text report to the log, SARIF to the file). Pushed; told the user the remaining failure was a flag mistake, not the scanner, and offered removal if they still want it.
