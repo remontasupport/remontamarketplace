@@ -7,8 +7,9 @@ import * as z from 'zod'
 export const WORKER_REGISTERED = 'WorkerRegistered'
 export const EXISTING_ACCOUNT_ATTEMPT = 'RegistrationAttemptOnExistingAccount'
 
-export const workerRegisteredPayload = z.object({ userId: z.string().min(1), workerProfileId: z.string().min(1) })
-export const existingAccountAttemptPayload = z.object({ userId: z.string().min(1) })
+/** Every sign-up event names the account it concerns. A consumer that needs only that parses this. */
+export const eventUser = z.object({ userId: z.string().min(1) })
 
-export type WorkerRegisteredPayload = z.output<typeof workerRegisteredPayload>
-export type ExistingAccountAttemptPayload = z.output<typeof existingAccountAttemptPayload>
+/** What the producer sends (the full shape); consumers parse only the part they read. Type aliases, so they satisfy Prisma's JSON input type. */
+export type WorkerRegisteredPayload = { userId: string; workerProfileId: string }
+export type ExistingAccountAttemptPayload = { userId: string }
