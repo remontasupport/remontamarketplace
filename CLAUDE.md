@@ -101,7 +101,7 @@ The switch `switch:registration` (Upstash) decides what production's sign-up run
 `legacy` is the pre-S1 page itself (`features/forms/legacy/worker/`), `api` is the form
 engine talking to `apps/api`. Production stays on `legacy` until the api has been proven
 somewhere that is not production. The plan and its open questions:
-`aidlc-docs/construction/plans/S1-preview-first-verification-plan.md`.
+`aidlc-docs/archive/s1-worker-registration/construction/plans/S1-preview-first-verification-plan.md`.
 
 **The rule.** A merge to `main` may add code, but must not change what a live path does. A
 live-path change sits behind a switch whose "off" is the exact old code, and the flip
@@ -123,7 +123,7 @@ returns rows with ids · a photo upload · a full sign-up with an internal email
 arrives, account created, audit row, outbox `DONE`, admin list, CRM sink payload) ·
 duplicate-email notice · rollback drill (`REGISTRATION_BACKEND=legacy` renders the old
 page) · and the production domain checked at the same time is unchanged. Record each run
-in `aidlc-docs/construction/S1-registration/preview-verification.md`.
+in `aidlc-docs/archive/s1-worker-registration/construction/S1-registration/preview-verification.md`.
 
 **Never on a preview:** production database URLs, production Upstash, the live n8n
 webhook, the production Blob token. Preview-scope variables point at staging resources
@@ -191,7 +191,7 @@ deployment; do not redeploy a commit** — a rebuild can fail, an existing build
 
 ```bash
 git clone https://github.com/remontasupport/remontamarketplace.git && cd remontamarketplace
-git checkout <the branch aidlc-docs/aidlc-state.md names>      # s1/infrastructure as of 2026-09-30
+git checkout main                                                  # the S1 cycle is merged; see aidlc-docs/aidlc-state.md
 bash scripts/setup-new-machine.sh          # checks tools, the 3 secret files, installs, builds the local database
 bash scripts/setup-new-machine.sh --verify # ... and runs every quality gate
 ```
@@ -383,7 +383,8 @@ file in the same PR.
 
 ## AI-DLC
 
-This project follows the AI-DLC workflow in `aidlc-docs/`. Unit plans, summaries and
-the audit trail live there. `aidlc-docs/aidlc-state.md` is the current position.
+This project follows the AI-DLC workflow in `aidlc-docs/`. `aidlc-docs/aidlc-state.md` is the current
+position; `aidlc-docs/audit.md` is the append-only audit trail across cycles; finished cycles live under
+`aidlc-docs/archive/` (the monorepo migration; Slice 1 worker registration, live since 2026-10-02).
 
 Log every user input verbatim in `audit.md` by **appending** — never rewrite it.

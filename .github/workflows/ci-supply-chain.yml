@@ -59,7 +59,7 @@ jobs:
           echo "::group::pnpm audit summary"
           pnpm audit || true
           echo "::endgroup::"
-          echo "Audit is REPORT ONLY. See aidlc-docs/construction/U3/code/U3-summary.md."
+          echo "Audit is REPORT ONLY. See aidlc-docs/archive/monorepo-migration/construction/U3/code/U3-summary.md."
 
       # SECURITY-10: Software Bill of Materials. cdxgen reads the pnpm lockfile.
       # continue-on-error because an SBOM tool failing should not block a merge --

@@ -4,7 +4,7 @@
 #
 #   git clone https://github.com/remontasupport/remontamarketplace.git
 #   cd remontamarketplace
-#   git checkout s1/infrastructure          # or whichever branch aidlc-docs/aidlc-state.md names
+#   git checkout main                       # or whichever branch aidlc-docs/aidlc-state.md names
 #   bash scripts/setup-new-machine.sh        # add --verify to run every quality gate at the end
 #
 # It is idempotent: every step checks before it acts, so rerun it after fixing whatever
@@ -106,7 +106,7 @@ cat <<'EOF'
   The AI-DLC record is in the repository:
     aidlc-docs/aidlc-state.md      <- start here: "Resume here" then "PENDING RIGHT NOW"
     aidlc-docs/audit.md            <- every instruction given, verbatim
-    aidlc-docs/construction/...    <- plans, designs, runbooks, summaries
+    aidlc-docs/archive/...         <- finished cycles: plans, designs, runbooks, summaries
     .aidlc-rule-details/, .brd/    <- the method's rules and the business record
     CLAUDE.md                      <- how to work in this repository
 

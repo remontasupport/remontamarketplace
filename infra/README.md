@@ -9,8 +9,8 @@ How the api runs, as code, without an infrastructure tool to learn:
 | One-time project setup | `cloudrun/bootstrap.sh` | Idempotent `gcloud`: APIs, Artifact Registry, service accounts, empty secrets, Workload Identity Federation for GitHub, log metrics, retention, alert channel + policies (`cloudrun/monitoring/*.json`) |
 | Deploy | `.github/workflows/deploy-api.yml`, `.github/scripts/api-health.sh` | Push to `main` → build `api:<sha>` → **staging**. Production is a `workflow_dispatch` promotion of an image already on staging |
 
-Design record: `aidlc-docs/construction/plans/S1-infrastructure-code-generation-plan.md` §3b (D14–D21) and
-`aidlc-docs/construction/S1-registration/infrastructure-design/` (the AWS design it replaced is kept for the
+Design record: `aidlc-docs/archive/s1-worker-registration/construction/plans/S1-infrastructure-code-generation-plan.md` §3b (D14–D21) and
+`aidlc-docs/archive/s1-worker-registration/construction/S1-registration/infrastructure-design/` (the AWS design it replaced is kept for the
 reasoning; the components map to Cloud Run one-for-one).
 
 ## Why Cloud Run, and how it is configured
