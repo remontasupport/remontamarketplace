@@ -6,7 +6,8 @@
 - **Start Date**: 2026-10-02 (user: "start ai dlc")
 - **Current Stage**: CONSTRUCTION -- unit 1 `draft-storage` DONE (PR #30 merged into `main` at `98c1ffb`; the user
   verified it on the live domain 2026-10-02: "It works now!"). Unit 2 `recaptcha-badge` (execution-plan amendment
-  2026-10-02): plan approved and Code Generation complete 2026-10-02
+  2026-10-02): plan approved and Code Generation complete 2026-10-02; then, by user decision, the Google branding
+  line was removed again -- the badge is hidden with nothing in its place (terms risk recorded in the summary)
   (`aidlc-docs/construction/recaptcha-badge/code/recaptcha-badge-summary.md`); Build and Test in progress: branch
   `fix/recaptcha-badge` pushed, PR to be opened by the user, CI, preview checklist (summary), merge, live check.
 - **Requirements**: `aidlc-docs/inception/requirements/requirements.md` (D1-D7: sessionStorage; one-time clean-up of

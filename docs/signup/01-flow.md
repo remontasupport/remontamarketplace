@@ -52,10 +52,9 @@ browser; an entry left by that release is deleted the first time the form loads.
 
 ### reCAPTCHA badge
 
-Google's floating badge is hidden on every page (`app/globals.css`). As Google's terms require, the api-mode
-wizard shows the branding line "This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of
-Service apply." under its buttons instead (`components/ui/form-wizard/recaptchaNotice.ts`); a test keeps the
-CSS and the notice together. The legacy page loads no reCAPTCHA and shows no notice.
+Google's floating badge is hidden on every page (`app/globals.css`), and no replacement branding line is shown:
+a product decision of 2026-10-02, made knowing that Google's terms ask for the "protected by reCAPTCHA" line
+when the badge is hidden. reCAPTCHA itself still runs on the api-mode wizard; the legacy page loads none.
 
 ### Text diagram
 
