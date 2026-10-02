@@ -8,7 +8,6 @@ const complete = {
   RECAPTCHA_ALLOWED_HOSTNAMES: 'localhost,app.remontaservices.com.au',
   RESEND_API_KEY: 're_SECRETsecret',
   N8N_REGISTRATION_WEBHOOK_URL: 'https://n8n.example.test/webhook/a',
-  N8N_WEBHOOK_URL: 'https://n8n.example.test/webhook/b',
   IP_HASH_SECRET: 'x'.repeat(32),
   EMAIL_FROM: 'Remonta <noreply@remontaservices.com.au>',
   APP_BASE_URL: 'https://app.remontaservices.com.au',
@@ -57,7 +56,7 @@ describe('loadConfig', () => {
     ['a wildcard origin', { CORS_ORIGINS: '*' }],
     ['a plain-http public origin', { CORS_ORIGINS: 'http://app.remontaservices.com.au' }],
     ['an origin with a path', { CORS_ORIGINS: 'https://app.example.com/x' }],
-    ['an http webhook', { N8N_WEBHOOK_URL: 'http://n8n.example.test/b' }],
+    ['an http webhook', { N8N_REGISTRATION_WEBHOOK_URL: 'http://n8n.example.test/b' }],
     ['a non-postgres database URL', { AUTH_DATABASE_URL: 'mysql://x' }],
     ['a score outside 0..1', { RECAPTCHA_MIN_SCORE: '2' }],
   ])('refuses %s', (_label, patch) => {
@@ -65,8 +64,8 @@ describe('loadConfig', () => {
   })
 
   it('does not require the n8n URLs while the CRM notification is deferred', () => {
-    expect(problems({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined, N8N_WEBHOOK_URL: undefined })).toEqual([])
-    expect(loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined, N8N_WEBHOOK_URL: undefined }).outboundHosts).not.toContain('n8n.example.test')
+    expect(problems({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined })).toEqual([])
+    expect(loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined }).outboundHosts).not.toContain('n8n.example.test')
   })
 
   it('needs a Blob token for Vercel Blob, and refuses local photo storage in production', () => {

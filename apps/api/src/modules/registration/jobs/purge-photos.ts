@@ -4,7 +4,7 @@
 import type { Job } from '../../../platform/jobs/scheduler'
 import type { Db } from '../../../platform/persistence/db'
 import type { PhotoStore } from '../adapters/photo-store'
-import { PHOTO_CLAIM_WINDOW_HOURS } from '../application/register-worker'
+import { PHOTO_CLAIM_WINDOW_HOURS } from '../application/stage-photo'
 
 export function purgeUnclaimedPhotosJob(db: Db, store: PhotoStore, opts: { batch?: number } = {}): Job {
   return {

@@ -6,7 +6,7 @@
 // Dry run unless `apply`; idempotent: a worker with a HOME is never touched.
 import type { Db } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
-import { candidatePool, localityCandidates } from '../onboarding/reconciler'
+import { candidatePool, localityCandidates } from './candidates'
 import { placeHome, type Locality } from './domain/home'
 import { matchLegacyLocation, type MatchResult, type MatchVia } from './domain/legacy-match'
 

@@ -11,34 +11,20 @@
 //      backfilled. They are picked up regardless of the watermark.
 // The watermark moves only as far as A was fully processed, minus an overlap, so a
 // row committed late is still seen; recomputing is idempotent.
+import { randomUUID } from 'node:crypto'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Job } from '../../platform/jobs/scheduler'
 import type { Db, Tx } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
+import { candidatePool, localityCandidates, type CandidatesByPostcode } from '../locations/candidates'
 import { placeHome, type Locality } from '../locations/domain/home'
-import { matchLegacyLocation, normalisePostcode, type Candidate } from '../locations/domain/legacy-match'
-import { initialMarker, maxDate, minDate, obligationsFrom, type LegacyRequirement } from './domain/initial-marker'
+import { matchLegacyLocation } from '../locations/domain/legacy-match'
+import { maxDate, minDate, obligationsFrom, type LegacyRequirement } from './domain/initial-marker'
 import { countsOf, deriveStage, type Stage } from './domain/stage'
 import { changeOf } from './domain/transitions'
-
-export { obligationsFrom, type LegacyRequirement } from './domain/initial-marker'
+import { createInitialMarker, REQUIREMENT_SELECT } from './markers'
 
 export const OVERLAP_MS = 60_000
-
-/** The verification_requirements columns the marker is derived from. */
-export const REQUIREMENT_SELECT = {
-  requirementType: true,
-  status: true,
-  documentUrl: true,
-  documentUploadedAt: true,
-  submittedAt: true,
-  reviewedAt: true,
-  approvedAt: true,
-  rejectedAt: true,
-  expiresAt: true,
-  createdAt: true,
-  updatedAt: true,
-} as const
 
 export interface ReconcileOutcome {
   created: boolean
@@ -47,7 +33,7 @@ export interface ReconcileOutcome {
 }
 
 /** Recomputes one worker in one transaction. */
-export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date, candidatesFor: (postcode: string) => Promise<Candidate[]>): Promise<ReconcileOutcome | null> {
+export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date, candidatesFor: CandidatesByPostcode): Promise<ReconcileOutcome | null> {
   const p = await tx.workerProfile.findUnique({
     where: { id: workerProfileId },
     select: {
@@ -95,71 +81,11 @@ export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date
   return { created: false, changed: c ? { from: c.from, to: c.to, singleStep: c.singleStep } : null, home: await reconcileHome(tx, p, now, candidatesFor) }
 }
 
-export interface LegacyWorker {
-  workerProfileId: string
-  isPublished: boolean
-  createdAt: Date
-  updatedAt: Date
-  lastLoginAt: Date | null
-  requirements: readonly LegacyRequirement[]
-}
-
-/**
- * Writes a worker's first marker and its opening transition (from nothing to the
- * derived stage), dated from the facts. The backfill and the reconciler share it.
- */
-export async function createInitialMarker(tx: Tx, w: LegacyWorker, now: Date, source: 'RECONCILER' | 'BACKFILL', cause: string) {
-  return (await createInitialMarkers(tx, [w], now, source, cause))[0]!
-}
-
-/**
- * The batched form the backfill uses: one createMany for the markers and one for
- * the opening transitions, whatever the page size -- a round trip per worker was
- * a second each against a remote database (rehearsal, 2026-09-28).
- */
-export async function createInitialMarkers(tx: Tx, workers: readonly LegacyWorker[], now: Date, source: 'RECONCILER' | 'BACKFILL', cause: string) {
-  const markers = workers.map((w) => ({ workerProfileId: w.workerProfileId, ...initialMarker(w, now) }))
-  if (markers.length === 0) return []
-  await tx.workerOnboarding.createMany({ data: markers.map(({ approximations: _a, ...m }) => ({ ...m, updatedAt: now })) })
-  await tx.workerOnboardingTransition.createMany({
-    data: markers.map((m) => ({ workerProfileId: m.workerProfileId, fromStage: null, toStage: m.stage, at: m.stageEnteredAt, cause, source })),
-  })
-  return markers.map(({ workerProfileId: _id, ...m }) => m)
-}
-
-/** Candidates for every postcode the legacy columns mention, so the matcher sees them all. */
-export async function candidatePool(
-  p: { location: string | null; postalCode: string | null },
-  candidatesFor: (postcode: string) => Promise<Candidate[]>,
-): Promise<(postcode: string) => Candidate[]> {
-  const postcodes = new Set<string>()
-  const fromLocation = normalisePostcode(p.location ? /(d{3,4})s*$/.exec(p.location)?.[1] : undefined)
-  if (fromLocation) postcodes.add(fromLocation)
-  const fromColumn = normalisePostcode(p.postalCode)
-  if (fromColumn) postcodes.add(fromColumn)
-  const pool = new Map<string, Candidate[]>()
-  for (const pc of postcodes) pool.set(pc, await candidatesFor(pc))
-  return (pc) => pool.get(pc) ?? []
-}
-
-/** A cache over au_localities, current rows only, keyed by postcode. */
-export function localityCandidates(db: Db): (postcode: string) => Promise<Candidate[]> {
-  const cache = new Map<string, Candidate[]>()
-  return async (postcode) => {
-    let c = cache.get(postcode)
-    if (!c) {
-      c = await db.auLocality.findMany({ where: { postcode, retiredAt: null }, select: { id: true, searchName: true, state: true, postcode: true } })
-      cache.set(postcode, c)
-    }
-    return c
-  }
-}
-
 async function reconcileHome(
   tx: Tx,
   p: { id: string; location: string | null; city: string | null; state: string | null; postalCode: string | null },
   now: Date,
-  candidatesFor: (postcode: string) => Promise<Candidate[]>,
+  candidatesFor: CandidatesByPostcode,
 ): Promise<ReconcileOutcome['home']> {
   // The legacy page and legacy onboarding still write these columns in S1, so they
   // are the source of truth for where the worker is.
@@ -175,7 +101,7 @@ async function reconcileHome(
     await tx.workerLocation.update({ where: { id: home.id }, data: { localityId: locality.id, latitude: locality.latitude, longitude: locality.longitude, precision: 'LOCALITY', source: 'RECONCILER', updatedAt: now } })
     return 'moved'
   }
-  await tx.workerLocation.create({ data: { id: crypto.randomUUID(), workerProfileId: p.id, ...placed.home, updatedAt: now } })
+  await tx.workerLocation.create({ data: { id: randomUUID(), workerProfileId: p.id, ...placed.home, updatedAt: now } })
   return 'created'
 }
 

@@ -4,7 +4,8 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { backfillWorkerOnboarding, formatOnboardingReport } from '../../src/modules/onboarding/backfill'
-import { localityCandidates, reconcileWorker } from '../../src/modules/onboarding/reconciler'
+import { localityCandidates } from '../../src/modules/locations/candidates'
+import { reconcileWorker } from '../../src/modules/onboarding/reconciler'
 import { createDb, unitOfWork, type Db } from '../../src/platform/persistence/db'
 
 const url = process.env.TEST_DATABASE_URL

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# apps/api: the production container image (S1 Infrastructure Design, step 3).
+# apps/api: the container image Cloud Run runs (infra/README.md).
 #
 # Build from the REPOSITORY ROOT, because the workspace lockfile and the shared
 # packages live there:
@@ -14,7 +14,7 @@
 # generated Prisma client and the production node_modules, running as `node`.
 #
 # The image holds NO configuration. Every variable in src/config/config.ts comes
-# from the environment at run time (Secrets Manager on AWS); the service refuses
+# from the environment at run time (Cloud Run env + Secret Manager); the service refuses
 # to start if one is missing. `.env` files are excluded by the root .dockerignore.
 #
 # The base image is pinned by digest (NFR-SEC-07: pinned base images, no `latest`).
@@ -98,12 +98,12 @@ COPY --from=build --chown=node:node /repo/apps/api/dist ./dist
 COPY --from=build --chown=node:node /repo/apps/api/generated ./generated
 USER node
 EXPOSE 4000
-# Liveness for `docker run` and local checks. On AWS the load balancer's own check
-# hits the same endpoint; both fit inside the endpoint's 60/min per-IP limit.
-# In production the service refuses plain HTTP unless the request says it came in
-# over HTTPS at the proxy, so the check sends X-Forwarded-Proto. That header is only
-# honoured when TRUST_PROXY >= 1, which is always the case behind the load balancer
-# (measured 2026-09-28: without the header the check got 403 "https required").
+# Liveness for `docker run` and local checks. On Cloud Run the platform's own probe
+# hits the same endpoint (a contract `probe`: never shed, plain HTTP allowed).
+# In production the service refuses plain HTTP on every other route unless the
+# request says it came in over HTTPS at the proxy, so the check sends
+# X-Forwarded-Proto; the header is only honoured when TRUST_PROXY >= 1, which is
+# always the case behind Cloud Run's front end.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/v1/health',{headers:{'x-forwarded-proto':'https'}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 # Exec form, so SIGTERM reaches node and main.ts's shutdown runs (scheduler,

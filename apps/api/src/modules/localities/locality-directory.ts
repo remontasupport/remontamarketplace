@@ -4,16 +4,13 @@
 // memory and reloaded hourly, so a keystroke costs a lookup, not a query, and a
 // burst of typing never reaches the database. A reload that fails keeps serving
 // the previous list (it is refreshed twice a year; an hour-old copy is fine).
+import type { localitySchema } from '@remonta/api-contract'
+import type * as z from 'zod'
 import type { Db } from '../../platform/persistence/db'
 import { localityLabel, type Locality } from '../locations/domain/home'
 
-export interface LocalityMatch {
-  id: number
-  suburb: string
-  state: 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA' | 'TAS' | 'ACT' | 'NT' | 'OT'
-  postcode: string
-  label: string
-}
+/** A match is exactly what the contract returns; the pipeline rejects anything else. */
+export type LocalityMatch = z.output<typeof localitySchema>
 
 interface Entry extends LocalityMatch {
   searchName: string

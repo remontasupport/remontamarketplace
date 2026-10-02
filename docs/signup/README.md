@@ -31,11 +31,16 @@ this folder disagree, the code wins; fix this folder in the same PR.
 | Request pipeline (rate limit, captcha, validation…) | `apps/api/src/platform/pipeline/pipeline.ts` |
 | Handlers | `apps/api/src/modules/registration/registration.handlers.ts` |
 | The sign-up transaction | `apps/api/src/modules/registration/application/register-worker.ts` |
-| Photo staging | `apps/api/src/modules/registration/application/stage-photo.ts` |
+| Existing-email branch (R1/R5, the owner notice) | `apps/api/src/modules/registration/application/existing-account.ts` |
+| Services check against the catalogue | `apps/api/src/modules/registration/application/resolve-services.ts` |
+| Email lookup (case-insensitive, one place) | `apps/api/src/modules/registration/persistence/users.ts` |
+| Photo staging, claim and purge window | `apps/api/src/modules/registration/application/stage-photo.ts` |
+| Email availability | `apps/api/src/modules/registration/application/email-availability.ts` |
 | Email codes | `apps/api/src/modules/registration/application/email-code.ts`, `domain/email-code.ts` |
 | Service catalogue | `apps/api/src/modules/registration/application/service-categories.ts` |
+| Outbox event names and payloads | `apps/api/src/modules/registration/domain/events.ts` |
 | Location placement | `apps/api/src/modules/locations/domain/home.ts` |
-| Onboarding stage rule | `apps/api/src/modules/onboarding/domain/stage.ts` |
+| Onboarding stage rule; the first marker | `apps/api/src/modules/onboarding/domain/stage.ts`, `apps/api/src/modules/onboarding/markers.ts` |
 | Outbox and retries | `apps/api/src/platform/outbox/outbox.ts`, `dispatcher.ts` |
 | Emails | `apps/api/src/modules/notifications/` |
 | Tables and enums | `packages/db/prisma/schema.prisma` (+ hand-written SQL in `packages/db/prisma/migrations/`) |

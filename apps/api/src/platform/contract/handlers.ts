@@ -19,7 +19,6 @@ export type Files<E extends EntryDef> = E['body'] extends { kind: 'multipart'; f
 export interface HandlerContext {
   requestId: string
   ip: string
-  userAgent: string | undefined
   principal: Principal | null
   /** The body as received, before validation: only for noticing what validation dropped (e.g. a malformed zohoLeadId). */
   rawBody: unknown
@@ -33,12 +32,17 @@ export type Handler<E extends EntryDef> = (req: HandlerRequest<E>, ctx: HandlerC
 
 export type Handlers<C extends ContractDef> = { [N in keyof C]: Handler<C[N]> }
 
-export interface HandlerSet<C extends ContractDef = ContractDef> {
-  contract: Contract<C>
-  handlers: Handlers<C>
+/**
+ * A contract with its handlers, as the binder consumes it. The entry-level types
+ * are checked in defineHandlers; here they are erased, so sets for different areas
+ * can sit in one list without a cast at every composition root.
+ */
+export interface HandlerSet {
+  contract: Contract
+  handlers: Record<string, Handler<EntryDef>>
 }
 
-/** Pairs a contract with its handlers; the types make a missing handler a compile error. */
-export function defineHandlers<C extends ContractDef>(contract: Contract<C>, handlers: NoInfer<Handlers<C>>): HandlerSet<C> {
-  return { contract, handlers }
+/** Pairs a contract with its handlers; the types make a missing or mistyped handler a compile error. */
+export function defineHandlers<C extends ContractDef>(contract: Contract<C>, handlers: NoInfer<Handlers<C>>): HandlerSet {
+  return { contract, handlers: handlers as unknown as HandlerSet['handlers'] }
 }

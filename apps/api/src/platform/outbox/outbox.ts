@@ -22,22 +22,24 @@ export async function enqueue(tx: Tx, event: OutboxEventInput, now: Date = new D
   return id
 }
 
+/**
+ * Whether an event of `type` whose payload has `field` = `value` was queued since
+ * `since`. For "at most one such event per window" decisions made at enqueue time,
+ * under the caller's lock (register-worker's existing-account notice).
+ */
+export async function queuedSince(tx: Tx, type: string, field: string, value: string, since: Date): Promise<boolean> {
+  const rows = await tx.$queryRaw<unknown[]>`
+    SELECT 1 FROM outbox_events
+     WHERE type = ${type} AND payload->>${field} = ${value} AND "createdAt" > ${since}
+     LIMIT 1`
+  return rows.length > 0
+}
+
 export interface OutboxEvent {
   id: string
   type: string
   payload: unknown
   attempts: number
-}
-
-/**
- * Thrown by a handler when retrying cannot help (a malformed payload, an address
- * the provider rejects): the event goes straight to DEAD instead of being retried.
- */
-export class PermanentFailure extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'PermanentFailure'
-  }
 }
 
 /** What happens to an event after a failed attempt (attempts already counts it). */
@@ -46,7 +48,10 @@ export function afterFailure(attempts: number, permanent: boolean): { status: 'P
   return { status: dead ? 'DEAD' : 'PENDING', retryInMs: dead ? 0 : backoffMs(attempts) }
 }
 
-/** A handler must be idempotent on event.id: it can run more than once. */
+/**
+ * A handler must be idempotent on event.id: it can run more than once. Throwing
+ * PermanentFailure (platform/errors.ts) sends the event straight to DEAD.
+ */
 export type OutboxHandler = (event: OutboxEvent, signal: AbortSignal) => Promise<void>
 
 export const MAX_ATTEMPTS = 6

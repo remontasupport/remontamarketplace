@@ -26,8 +26,6 @@ export interface SafeRequest<S extends z.ZodType | undefined> {
   /** Parse the body with this schema (JSON, or the text itself with responseType 'text'). Omit to ignore the body. */
   schema?: S
   responseType?: 'json' | 'text'
-  /** Treat these statuses as success too (default: 2xx). */
-  okStatuses?: readonly number[]
   timeoutMs?: number
 }
 
@@ -81,8 +79,7 @@ export class SafeHttpClient {
       return fail({ kind: 'network', message: e instanceof Error ? e.message : String(e) })
     }
 
-    const okStatus = req.okStatuses ? req.okStatuses.includes(res.status) : res.status >= 200 && res.status < 300
-    if (!okStatus) {
+    if (res.status < 200 || res.status >= 300) {
       // The provider's reason ("domain not verified", "testing emails only to ...")
       // is worth a log line; keep the start of the body, never more.
       const detail = (await readBounded(res, ERROR_DETAIL_BYTES).catch(() => null))?.replace(/\s+/g, ' ').trim()

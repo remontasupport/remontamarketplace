@@ -3,7 +3,7 @@
 // the variable and the problem, never the value (P6).
 import { availableParallelism } from 'node:os'
 import * as z from 'zod'
-import { isHostPattern, isOriginPattern } from './hosts'
+import { isExactOrigin, isHostPattern, isOriginPattern } from './hosts'
 
 const list = z
   .string()
@@ -13,16 +13,6 @@ const list = z
       .map((x) => x.trim())
       .filter(Boolean),
   )
-
-const origin = z.string().refine((o) => {
-  try {
-    const u = new URL(o)
-    const local = u.hostname === 'localhost' || u.hostname === '127.0.0.1'
-    return (u.protocol === 'https:' || (u.protocol === 'http:' && local)) && u.origin === o
-  } catch {
-    return false
-  }
-}, 'must be an origin like https://app.example.com (http only for localhost), no path, no wildcard')
 
 const httpsUrl = z.url({ protocol: /^https$/, message: 'must be an https URL' })
 
@@ -48,11 +38,10 @@ const envSchema = z.object({
   /** Sender for Remonta's emails, e.g. "Remonta <noreply@remontaservices.com.au>" (a Resend-verified domain). */
   EMAIL_FROM: z.string().min(3),
   /** apps/app's origin, for the links in emails (/login, /forgot-password). */
-  APP_BASE_URL: origin,
+  APP_BASE_URL: z.string().refine(isExactOrigin, 'must be an origin like https://app.example.com (http only for localhost), no path, no wildcard'),
   RECONCILER_INTERVAL_MS: z.coerce.number().int().min(10_000).max(3_600_000).default(300_000),
-  // CRM notification is deferred (user, 2026-09-25): not required until it is built.
+  /** The CRM notification's webhook (deferred, user 2026-10-01): optional until that outbox handler exists. */
   N8N_REGISTRATION_WEBHOOK_URL: httpsUrl.optional(),
-  N8N_WEBHOOK_URL: httpsUrl.optional(),
 
   /** Keys the IP hash stored with staged photos, so raw IPs are never stored. */
   IP_HASH_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
@@ -115,7 +104,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
       'www.google.com', // reCAPTCHA siteverify
       'api.resend.com',
       'api.pwnedpasswords.com', // HIBP k-anonymity range API
-      ...[e.N8N_REGISTRATION_WEBHOOK_URL, e.N8N_WEBHOOK_URL].filter((u): u is string => !!u).map((u) => new URL(u).hostname),
+      ...(e.N8N_REGISTRATION_WEBHOOK_URL ? [new URL(e.N8N_REGISTRATION_WEBHOOK_URL).hostname] : []),
     ].filter((h, i, all) => all.indexOf(h) === i),
   }
 }

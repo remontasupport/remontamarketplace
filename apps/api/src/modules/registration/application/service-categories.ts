@@ -1,5 +1,7 @@
 // The service catalogue for the sign-up's services step (GET /v1/service-categories).
-// Read-only; the same rows register-worker checks the chosen ids against.
+// Read-only; the same rows resolve-services checks the chosen ids against.
+import type { serviceCategorySchema } from '@remonta/api-contract'
+import type * as z from 'zod'
 import type { Db } from '../../../platform/persistence/db'
 
 /** The categories shown first, in this order; the rest follow by name. Same order as apps/app's /api/categories. */
@@ -12,12 +14,8 @@ export const CATEGORY_ORDER = [
   'Nursing Services',
 ] as const
 
-export interface ServiceCategory {
-  id: string
-  name: string
-  requiresQualification: boolean
-  subcategories: { id: string; name: string; requiresRegistration: string | null }[]
-}
+/** The response shape is the contract's; the pipeline rejects anything else. */
+export type ServiceCategory = z.output<typeof serviceCategorySchema>
 
 export function orderCategories<T extends { name: string }>(categories: readonly T[]): T[] {
   const rank = (name: string) => {
