@@ -30,6 +30,8 @@ the handler-set casts). Merging it redeploys **staging** only. After it: resume 
 
 **Preview checklist: accepted by the user 2026-10-02** ("the preview is good now"; the sign-up workflow reviewed, two bug fixes on staging, the taken-email message and the photo thumbnail fixed in apps/app). **Production go given in principle 2026-10-02**; the legacy location columns stay until the search slice.
 
+**Production path progress (2026-10-02):** step 2 Resend DNS done (DKIM/SPF/MX/DMARC verified in public DNS); step 3 the six `remonta-api-<NAME>` production secrets set by the user in Cloud Shell and verified by shape (pooled auth db host `ep-delicate-recipe-a7mbt4ef-pooler`, db `workerprofiles`). **Next: step 4**, the production database run (`S1-production-run.md`), once `PRODUCTION_DIRECT_DATABASE_URL` is in `apps/api/.env`; then step 5 promote (stage=prod, the staging image tag) with the switch off; step 6 Vercel production variables + the canary flip.
+
 **Next, in order:**
 1. **The preview checklist, run by the user** on the latest preview (any PR preview from `main` now; the previews are
    behind Vercel protection, not reachable from here). Done: 2, 3, 8; 5 partial (code email arrived). Open: 1 (sign in
@@ -52,7 +54,7 @@ scanning, then make both required checks. The repository is **public** (checked 
 that is intended.
 
 **Housekeeping still open:** rotate the exposed keys (production Blob token, Prisma Accelerate key, `rehearse-w1`
-role password); the 10 codes/h per IP decision; `aidlc/q1-preview-scope` (docs, 2 commits) and
+role password, and -- 2026-10-02 -- the production auth database role `neondb_owner` on `ep-delicate-recipe-a7mbt4ef`, whose connection string appeared in tool output); the 10 codes/h per IP decision; `aidlc/q1-preview-scope` (docs, 2 commits) and
 `fix/services-loading-spinner` (0 commits ahead -- can be deleted) are the only non-merged S1-era branches.
 
 **This device (2026-10-02):** the three secret files are present; Node 24.21, pnpm 9.15.9, `node_modules` installed;

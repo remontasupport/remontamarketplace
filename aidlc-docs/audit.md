@@ -2254,3 +2254,49 @@ Reported the position and the pending decisions; no code changed.
 > We can skip the step 1
 
 **Action (2026-10-02):** Decision recorded: the CRM/n8n notification is NOT a gate for the production flip; api-mode sign-ups will be read from the admin list until it is built. State file updated. Listed what each remaining step needs from the user (Resend DNS; prod secret values and a prod reCAPTCHA key pair; the production direct connection string placed in `apps/api/.env` under a non-AUTH name for the database run; the go for the promotion and the flip).
+
+**User input (verbatim, 2026-10-02):**
+> Step 2 is Done
+
+**Action (2026-10-02):** Verified step 2 from public DNS (8.8.8.8): DKIM `resend._domainkey` TXT present (218 chars), `send.remontaservices.com.au` SPF `v=spf1 include:amazonses.com ~all` and MX `feedback-smtp.sa-east-1.amazonses.com`, `_dmarc` `v=DMARC1; p=none; rua=mailto:nse1.bo@…` -- the full set Resend asks for. Resend's own "verified" status could not be read: the RESEND_API_KEY in the local `apps/api/.env` answers 401 to the domains endpoint (a sending-only or rotated key; staging's key sent mail on 2026-10-01, so the deployed secret is fine). Next: step 3, the production secrets (user).
+
+**User input (verbatim, 2026-10-02):**
+> How to set up the Resend again?
+
+**Action (2026-10-02):** Gave the Resend steps: Domains page -> `remontaservices.com.au` must read Verified (DNS is already in place; press Verify if it still says Pending); API Keys -> Create, "Sending access" restricted to that domain, copy once; where the key goes: `remonta-api-RESEND_API_KEY` (production secret, step 3), `remonta-api-staging-RESEND_API_KEY` only if the old key was revoked, and `apps/api/.env` locally; the sender `Remonta <community@remontaservices.com.au>` is already in `infra/lib/stages.ts`; a test email can be sent from Resend's Emails page or by requesting a sign-up code on the preview.
+
+**User input (verbatim, 2026-10-02):**
+> we continue the step 3
+
+**Action (2026-10-02):** Step 3 instructions given (no gcloud on this machine; the user runs them in Cloud Shell): the six `remonta-api-<NAME>` secrets exist empty since bootstrap; one `printf '%s' '<value>' | gcloud secrets versions add remonta-api-<NAME> --data-file=-` each: AUTH_DATABASE_URL = production POOLED string; RECAPTCHA_SECRET_KEY = a NEW v3 key pair for `app.remontaservices.com.au` (site key kept for Vercel production); RESEND_API_KEY = the production key; IP_HASH_SECRET = `openssl rand -hex 32`; BLOB_READ_WRITE_TOKEN = production's; N8N_REGISTRATION_WEBHOOK_URL = a single space. Verification: `gcloud secrets versions list` per name (the user pastes names/states only, never values); the real proof is step 5's deploy health check, which reads them. Asked the user never to paste secret values into the chat.
+
+**User input (verbatim, 2026-10-02):**
+> I already install a google cloud shell on this machine
+
+**Action (2026-10-02):** gcloud 587 is installed locally (not yet on this session's PATH), signed in as support@remontaservices.com.au, project `remonta-api-510206`. Read-only check: all six production secrets have no versions yet (as recorded); staging's Resend key and Blob token each have version 1. The assistant's session is not permitted to write to the secret store, so no production secret was changed by the assistant; the six values are the user's to add from their own terminal, and the assistant verifies read-only afterwards.
+
+**User input (verbatim, 2026-10-02):**
+> can I run to the google cloud shell in the browser instead?
+>
+> Before that can you sure when we use the new api, will the data saves to the authentication branch and rehearsal-w1? confirm it 100%
+
+**Action (2026-10-02):** Confirmed by reading hosts (secret values and env files, host names only reported): the STAGING api's `AUTH_DATABASE_URL` secret points at `ep-wandering-shadow-a7pxwb8o-pooler` = the `rehearse-w1` Neon branch (identical to `REHEARSAL_DATABASE_URL` in the local `apps/api/.env`). The PRODUCTION api secret has no value yet, so the production api writes nowhere until step 3; the value to put there is the production auth database's pooled string, `ep-delicate-recipe-a7mbt4ef-pooler`, database `workerprofiles` -- the same database apps/app's `AUTH_DATABASE_URL` uses (apps/app's other database, `ep-polished-thunder-a7ovazge`, is never touched by the api; its schema is packages/db's 33 models). So: staging -> rehearse-w1 only; production -> the production auth database only; never both. Caveat: that database has none of the S1 tables until step 4 runs. **Exposure:** a host-extraction regex failed on a quoted value and the production auth connection string (role `neondb_owner`, password included) appeared in the assistant's tool output on this machine; the user should reset that role's password in Neon (then update apps/app's Vercel variables and `.env` files) -- added to the rotation list.
+
+**User input (verbatim, 2026-10-02):**
+> what script should I run in google cloud shell?
+
+**Action (2026-10-02):** Gave the browser Cloud Shell script for step 3: set the project; the six production secrets added one version each (pooled production auth string for host ep-delicate-recipe-a7mbt4ef / db workerprofiles; the new reCAPTCHA v3 secret; the production Resend key; an IP hash secret generated in the shell; the Blob token copied from the staging secret without display; a single space for the parked webhook); then a read-only listing of version states to paste back. Values typed only into Cloud Shell, never into the chat.
+
+**User input (2026-10-02):** pasted the step 3 check output: all six `remonta-api-<NAME>` secrets show `1 enabled`.
+
+**Action (2026-10-02):** Read-only shape check of the six production secrets (values never displayed): IP_HASH_SECRET 64 hex chars OK; BLOB_READ_WRITE_TOKEN identical to staging's OK; N8N a single blank OK. But AUTH_DATABASE_URL, RECAPTCHA_SECRET_KEY and RESEND_API_KEY hold the literal placeholders from the script (`<pooled connection string>`, `<recaptcha v3 secret>`, `<resend api key>`). Asked the user to re-run those three lines with the real values; the new version 2 becomes `latest`, so nothing else changes. Will re-check the same way.
+
+**User input (verbatim, 2026-10-02):**
+> cann you tell me what should I do
+
+**Action (2026-10-02):** Spelled out the three re-runs step by step: where to copy each value from (Vercel env of the live app or Neon for the pooled auth string; the reCAPTCHA admin console for the secret key; Resend for the key), how to paste it inside the single quotes, one line at a time, then "verify step 3".
+
+**User input (verbatim, 2026-10-02):**
+> VERIFY STEP 3
+
+**Action (2026-10-02):** Step 3 VERIFIED read-only (values never displayed): AUTH_DATABASE_URL v2 = postgresql, host `ep-delicate-recipe-a7mbt4ef-pooler.ap-southeast-2.aws.neon.tech`, db `workerprofiles`, sslmode=require, pooled; RECAPTCHA_SECRET_KEY v2 = 40 chars starting `6Ld`; RESEND_API_KEY v2 = 36 chars starting `re_`; IP_HASH_SECRET v1 64 hex; BLOB_READ_WRITE_TOKEN v1 = staging's; N8N v1 blank. Production secrets complete. Next: step 4, the production database run -- waits for `PRODUCTION_DIRECT_DATABASE_URL` in `apps/api/.env` and the user's go.
