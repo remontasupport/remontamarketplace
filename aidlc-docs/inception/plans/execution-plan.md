@@ -135,6 +135,16 @@ flowchart TD
    test for the adapter; `docs/signup/01-flow.md` updated.
 4. One PR for 2 and 3 (they are one change; no cross-package version coordination is needed inside the monorepo).
 
+## Amendment 2026-10-02 -- second unit, `recaptcha-badge`
+
+After unit `draft-storage` was merged (PR #30) and verified on the live domain by the user ("It works now!"), the
+user asked to remove the reCAPTCHA badge shown at the bottom corner of the sign-up page. Same page, same risk class
+(Low, browser-only, one-line rollback), no server change, so it joins this cycle as a second unit rather than a new
+cycle. Google's terms allow hiding the badge only when the reCAPTCHA branding text is shown in the user flow, so the
+unit hides the badge with CSS and shows the one-line notice under the wizard's buttons in api mode. Plan:
+`aidlc-docs/construction/plans/recaptcha-badge-code-generation-plan.md`. Stages for the unit: Code Generation and
+Build and Test; all design stages skipped for the same reasons as unit 1.
+
 ## Estimated Timeline
 - **Total Phases**: 5 executed (3 Inception done, Code Generation, Build and Test).
 - **Estimated Duration**: one session for code and gates; the preview check and merge depend on the user.
