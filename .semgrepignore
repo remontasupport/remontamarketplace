@@ -22,5 +22,5 @@ __tests__/
 *.map
 public/
 pnpm-lock.yaml
-# The rules' own test file (deliberate violations); run by `semgrep --test`, never as a target.
-.semgrep/
+# .semgrep/ (the rules' own test file, deliberate violations) is excluded on the
+# scan command line instead, so `semgrep --test .semgrep/` still sees it.

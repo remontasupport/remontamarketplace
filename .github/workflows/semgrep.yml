@@ -54,14 +54,18 @@ jobs:
       # Prove the repository's own rules reject what they should: every `ruleid:`
       # line in .semgrep/remonta.ts must be reported, every `ok:` line must not.
       # A rule that never fires is not a guard. This step DOES fail the check.
+      # (One directory holding both: the rule file and its same-named test file.
+      # Passing --config separately crashes Semgrep 1.179's path matching.)
       - name: Test the repository's rules
-        run: semgrep --test --config .semgrep/remonta.yml .semgrep/
+        run: semgrep --test .semgrep/
 
       # The registry packs plus .semgrep/. --metrics=off: nothing is sent to
       # Semgrep. SARIF output for code scanning; the text output for the log.
+      # --exclude .semgrep: the rules' test file holds deliberate violations.
       - name: Scan
         run: |
           semgrep scan \
+            --exclude '.semgrep' \
             --config p/default \
             --config p/typescript \
             --config p/nodejs \
