@@ -4,8 +4,12 @@
 - **Project**: Cut-over clean-up -- remove the legacy worker sign-up path (follow-up 3)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-02 (user: "delete the legacy api in sign up workflow and the connected codes of it")
-- **Current Stage**: CONSTRUCTION -- Code Generation complete 2026-10-02 (unit `legacy-removal`, parts A-D, gates
-  E1-E2 passed; summary `aidlc-docs/construction/legacy-removal/code/legacy-removal-summary.md`). Build and Test in
+- **Current Stage**: CONSTRUCTION -- unit `legacy-removal` DONE: PR #34 merged into `main` (`a30946e`, 2026-10-02) after
+  CI green (a CodeQL high alert in `packages/api-contract/src/client.ts` fixed on the way) and the user verified the
+  live site ("it works"). Summary `aidlc-docs/construction/legacy-removal/code/legacy-removal-summary.md`. Left for
+  the user: delete the Upstash key `switch:registration`; remove `REGISTRATION_BACKEND` from Vercel Preview. The cycle
+  is ready to close (archive) on request.
+- **Build and Test (old note, superseded)**: in
   progress: the user opens the PR for `feat/remove-legacy-signup`, CI, the preview protocol (`requirements.md` §5
   step 4), merge, production check (step 5), then the manual Upstash/Vercel clean-up.
   Inception done: inventory (`inception/requirements/legacy-signup-removal-inventory.md`), questions + clarification

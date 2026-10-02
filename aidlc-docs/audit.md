@@ -2623,3 +2623,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > There is a failure in Code scanning results/ CodeQL
 
 **AI action (2026-10-02, CodeQL on PR #34):** Read the check runs for `9f9d6db` from the public GitHub API: every quality check green (App/Web/API Quality on Node 20 and 22, Supply chain, Semgrep, both CodeQL analyses); the failing check is "Code scanning results / CodeQL" with **1 new high-severity alert in code changed by the PR**: `packages/api-contract/src/client.ts:30`, js/polynomial-redos -- `opts.baseUrl.replace(/\/+$/, '')` backtracks quadratically on a base URL made of many slashes; the base URL is "library input" (now reached from `resolveBackend` → `NEXT_PUBLIC_API_URL`). Fixed without a regex (index loop trimming trailing "/"); api-contract gate pass (34 tests, the trailing-slash test still covers it); no other regex of that shape in shipped code. Pushed to the PR branch.
+
+**User input (verbatim, 2026-10-02):**
+> Code scanning is green now, PR merged and it works. tO CHECK WHAT YOU HAVE DELETED, CAN YOU ENUMERATE THE FILES?
+
+**AI action (2026-10-02, unit `legacy-removal` Build and Test complete):** Verified by refs: PR #34 merged `feat/remove-legacy-signup` into `main` (`a30946e`); code scanning green after the regex fix; the user verified production ("it works"). Enumerated for the user, from `git diff b7ccc80 origin/main`: 15 files deleted, 3 added, 28 modified outside aidlc-docs (list in the reply). State updated on branch `aidlc/legacy-removal-close`. Manual clean-up still with the user: the Upstash key `switch:registration`, Vercel Preview `REGISTRATION_BACKEND`.
