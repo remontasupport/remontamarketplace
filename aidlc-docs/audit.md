@@ -2239,3 +2239,8 @@ Reported the position and the pending decisions; no code changed.
 
 **User input (verbatim, 2026-10-02):**
 > push it and give me the link
+
+**User input (verbatim, 2026-10-02):**
+> it works now. Now can you make sure the changes we made are also deployed to the google cloud?
+
+**Action (2026-10-02):** Verified: deploy-api run 6 (36963830664) on the PR #25 merge `7e79f8b` -- quality gates green, image `australia-southeast1-docker.pkg.dev/remonta-api-510206/remonta/api:7e79f8b…` built and pushed, `remonta-api-staging` revision created (deploy id 36963830664-1), traffic routed, health check passed. Staging now: `/v1/health` 200, `/v1/service-categories` serving. So the api review (both bug fixes) runs on STAGING. Production Cloud Run (`remonta-api`) unchanged by design: it only moves by a manual promotion after the checklist, and the Upstash switch is still `legacy`. The later merges (#26 scanning) touched no api path, so no deploy; the photo-preview and taken-email fixes are apps/app changes that Vercel deploys (the photo fix branch is not yet in main).
