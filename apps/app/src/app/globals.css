@@ -13,6 +13,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* reCAPTCHA's floating badge is hidden. Google permits this only when its
+   branding is shown in the user flow instead: components/ui/form-wizard/
+   recaptchaNotice.ts, rendered under the sign-up wizard's buttons on the form
+   that loads reCAPTCHA. A test (recaptchaNotice.test.ts) keeps the two together.
+   `visibility`, not `display`, as Google's own example does. */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
 /* Animation utilities */
 @keyframes fadeIn {
   from { opacity: 0; }

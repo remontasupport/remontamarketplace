@@ -6,9 +6,9 @@
 - **Start Date**: 2026-10-02 (user: "start ai dlc")
 - **Current Stage**: CONSTRUCTION -- unit 1 `draft-storage` DONE (PR #30 merged into `main` at `98c1ffb`; the user
   verified it on the live domain 2026-10-02: "It works now!"). Unit 2 `recaptcha-badge` (execution-plan amendment
-  2026-10-02): Code Generation Part 1 plan written,
-  `aidlc-docs/construction/plans/recaptcha-badge-code-generation-plan.md`, awaiting approval. Working branch
-  `fix/recaptcha-badge` from `98c1ffb`.
+  2026-10-02): plan approved and Code Generation complete 2026-10-02
+  (`aidlc-docs/construction/recaptcha-badge/code/recaptcha-badge-summary.md`); Build and Test in progress: branch
+  `fix/recaptcha-badge` pushed, PR to be opened by the user, CI, preview checklist (summary), merge, live check.
 - **Requirements**: `aidlc-docs/inception/requirements/requirements.md` (D1-D7: sessionStorage; one-time clean-up of
   the old localStorage key; Security + Resiliency blocking, PBT partial; Reverse Engineering skipped).
 - **Next**: Part 2 generation (steps 1-8), then Build and Test: PR, CI, preview checklist `requirements.md` §8,
@@ -111,7 +111,6 @@
 - [x] Unit 1 `draft-storage`: Code Generation 2026-10-02 (`construction/draft-storage/code/draft-storage-summary.md`)
 - [x] Unit 1 `draft-storage`: Build and Test -- gates pass, PR #30, CI and preview, merged to `main` (`98c1ffb`),
   verified live by the user 2026-10-02
-- [ ] Unit 2 `recaptcha-badge`: Code Generation -- Part 1 plan written 2026-10-02
-  (`construction/plans/recaptcha-badge-code-generation-plan.md`), awaiting approval; Part 2 pending on
-  `fix/recaptcha-badge`
+- [x] Unit 2 `recaptcha-badge`: Code Generation -- plan approved, all 8 steps generated 2026-10-02 on
+  `fix/recaptcha-badge` (`construction/recaptcha-badge/code/recaptcha-badge-summary.md`)
 - [ ] Unit 2 `recaptcha-badge`: Build and Test -- gates, PR, preview checklist, merge, production check

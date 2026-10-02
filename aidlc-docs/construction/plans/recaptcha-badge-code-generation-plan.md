@@ -33,15 +33,17 @@ under the wizard's navigation buttons, only on the form that uses reCAPTCHA.
 
 ## Steps
 
-- [ ] **Step 1** -- Create `recaptchaNotice.ts` (constants).
-- [ ] **Step 2** -- Modify `FormWizardView.tsx`: `footnote` prop, `RecaptchaNotice` component, render below the buttons.
-- [ ] **Step 3** -- Modify `FormWizard.tsx`: pass the footnote in api mode.
-- [ ] **Step 4** -- Modify `globals.css`: hide `.grecaptcha-badge`, with the comment.
-- [ ] **Step 5** -- Create `recaptchaNotice.test.ts` (the guard above).
-- [ ] **Step 6** -- Modify `docs/signup/01-flow.md`.
-- [ ] **Step 7** -- Gates: `pnpm --filter @remonta/app run quality`; `npx turbo run build` if the Prisma engine is
+- [x] **Step 1** -- Create `recaptchaNotice.ts` (constants).
+- [x] **Step 2** -- Modify `FormWizardView.tsx`: `footnote` prop, `RecaptchaNotice` component, render below the buttons.
+- [x] **Step 3** -- Modify `FormWizard.tsx`: pass the footnote in api mode.
+- [x] **Step 4** -- Modify `globals.css`: hide `.grecaptcha-badge`, with the comment.
+- [x] **Step 5** -- Create `recaptchaNotice.test.ts` (the guard above).
+- [x] **Step 6** -- Modify `docs/signup/01-flow.md`.
+- [x] **Step 7** -- Gates: `pnpm --filter @remonta/app run quality`; `npx turbo run build` if the Prisma engine is
   free (else CI). No generated Prisma files staged.
-- [ ] **Step 8** -- Summary `aidlc-docs/construction/recaptcha-badge/code/recaptcha-badge-summary.md`; PR.
+  *Result 2026-10-02: app gate pass (90 tests); guard proven to fail when the notice is broken; build left to CI (a
+  `next dev` server restarted at 19:38 holds the Prisma engine).*
+- [x] **Step 8** -- Summary `aidlc-docs/construction/recaptcha-badge/code/recaptcha-badge-summary.md`; PR.
 
 ## Extension checks
 
