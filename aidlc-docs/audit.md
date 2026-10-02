@@ -2217,3 +2217,30 @@ Reported the position and the pending decisions; no code changed.
 > Ok, can we remove Semgrep? it is keep on failing.
 
 **Action (2026-10-02):** Run on `a48f01b`: the rule self-test PASSED, the scan ran (271 rules, 996 files, 80 findings in existing code), and only the SARIF upload failed -- `--sarif --output semgrep.sarif --text` wrote the text table into the SARIF file ("Invalid SARIF. JSON syntax error: Unexpected token '┌'"). Fixed to `--sarif-output semgrep.sarif` (text report to the log, SARIF to the file). Pushed; told the user the remaining failure was a flag mistake, not the scanner, and offered removal if they still want it.
+
+**User input (verbatim, 2026-10-02):**
+> The checks are all green now. With this set up we did, will it be automatically runs everytime we make a PR? what does the 2 stacks run in the background?
+
+**Action (2026-10-02):** Confirmed via the API: on `bbc7823` every workflow on the branch is green, Semgrep and CodeQL included (the earlier background poll had a shell-quoting bug and reported nothing). Answered: yes -- every workflow triggers on `pull_request` to main and `push` to main (deploy-api on push to main and manual dispatch only); CodeQL and Semgrep also run weekly. Listed what runs per PR: the five quality workflows, the two scanners, the two Vercel preview builds; on merge: the same plus the Vercel production deploys and deploy-api to staging.
+
+**User input (verbatim, 2026-10-02):**
+> I found some bug to the registration flow. When I am on the last step to complete the sign up, and then I click the previous and go next again, the image being uploaded won't show up, but the text "Your photo is already uploaded. You can choose a different one if you like." is there which is confirming the image has been uploaded.
+>
+> Run a thorough check to the code and then give me an analysis why is that the behavior
+
+**Action (2026-10-02):** Analysis (no change made, as asked). Cause: the wizard renders only the current step's fields, so Previous unmounts `PhotoField`/`PhotoUpload` and Next mounts a new one; `PhotoUpload` keeps the preview in component state (`useState(currentPhoto)`, then `setPreviewUrl(croppedBlobUrl)`), which dies with the unmount; in api mode the form value is the staged `photoUploadId` (a UUID -- the api returns an id, never a URL, by design P1/P5), so on remount `FormWizard` passes `previewUrl=undefined` and `alreadyUploaded=true`, which is exactly the "restored after a reload" rendering the message was written for. Legacy mode stores the uploaded URL as the value, so its preview survives. Recommended fix (glue layer): keep a small preview (the cropped image as an object URL, or a thumbnail data URL stored in the draft) in the wizard keyed by field name and pass it as `previewUrl` in api mode; keep the contract and the api unchanged.
+
+**User input (verbatim, 2026-10-02):**
+> Go ahead and implement the thumbnail fix
+
+**Action (2026-10-02):** Implemented on `fix/photo-preview-thumbnail` (from `ci/code-scanning`, so the audit stays linear; merge the scanning PR first). `features/forms/photoPreview.ts`: `previewKeyOf(name)` = `<name>__preview` (a companion key in the form values: not a field, never validated -- `formSchemaFor` is a non-strict `z.object` -- never sent -- `toRequestBody` builds from declared fields -- and kept in the on-device draft) and `thumbnailDataUrl(file)` (160 px JPEG q0.7 via canvas, ~5-10 KB; null when undecodable). `useFormWizard.uploaderFor` makes the thumbnail alongside the upload and stores it only after the upload succeeded, so a preview never exists without its id. `FormWizard`: new `PhotoSlot` reads the key with `useWatch` and passes it as `previewUrl` in api mode; removing the photo clears both. The "already uploaded" sentence stays as the fallback for an undecodable image. Tests (forms.test.ts): the key is a plain RHF key and not a field, absent from the request body, accepted by the schema, saved and restored by the draft. App quality: 144/508 baseline findings all known, 82 tests pass.
+
+**Action (2026-10-02):** `pnpm --filter @remonta/app run build` failed before Next at `prisma generate` with the CLAUDE.md Windows trap (`EPERM ... rename query_engine-windows.dll.node`: a process holds the engine, likely OneDrive sync) -- unrelated to the change. `npx next build` alone: compiled successfully in 63 s, 97 static pages, `/registration/worker` 30.5 kB. Branch `fix/photo-preview-thumbnail` pushed (55d52db).
+
+**User input (verbatim, 2026-10-02):**
+> push it and give me the link
+
+**User input (verbatim, 2026-10-02):**
+> it works now. Now can you make sure the changes we made are also deployed to the google cloud?
+
+**Action (2026-10-02):** Verified: deploy-api run 6 (36963830664) on the PR #25 merge `7e79f8b` -- quality gates green, image `australia-southeast1-docker.pkg.dev/remonta-api-510206/remonta/api:7e79f8b…` built and pushed, `remonta-api-staging` revision created (deploy id 36963830664-1), traffic routed, health check passed. Staging now: `/v1/health` 200, `/v1/service-categories` serving. So the api review (both bug fixes) runs on STAGING. Production Cloud Run (`remonta-api`) unchanged by design: it only moves by a manual promotion after the checklist, and the Upstash switch is still `legacy`. The later merges (#26 scanning) touched no api path, so no deploy; the photo-preview and taken-email fixes are apps/app changes that Vercel deploys (the photo fix branch is not yet in main).

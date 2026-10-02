@@ -1,9 +1,10 @@
 import fc from "fast-check";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { formSchemaFor, toRequestBody } from "@remonta/form-engine";
+import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } from "@remonta/form-engine";
 import { saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { resolveBackend } from "@/lib/registration-switch";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
+import { previewKeyOf } from "./photoPreview";
 import { verificationError } from "./useEmailCode";
 
 const filled = {
@@ -71,6 +72,28 @@ describe("the worker sign-up definition", () => {
         },
       ]);
     });
+  });
+});
+
+describe("the photo preview kept beside the staged id (api mode)", () => {
+  const key = previewKeyOf("photoUploadId");
+  const values: Record<string, unknown> = { ...filled, email: "mary@example.com", emailVerification: { token: "ab".repeat(32), expiresAt: 1, code: "123456" }, photoUploadId: "8f6c0d3e-0f0e-4d6a-9c4b-1b2c3d4e5f60", [key]: "data:image/jpeg;base64,AAAA" };
+
+  it("is a companion key, not a field name, and never reaches the request body", () => {
+    expect(key).not.toMatch(/[.[\]]/); // a plain key for react-hook-form, not a nested path
+    expect(workerRegistrationForm.steps.flatMap((s) => s.fields.map((f) => f.name))).not.toContain(key);
+    const body = toRequestBody(workerRegistrationForm, values, new URLSearchParams());
+    expect(body).not.toHaveProperty(key);
+    expect(Object.keys(body).some((k) => k.includes("preview"))).toBe(false);
+  });
+
+  it("is tolerated by the form schema and kept in the on-device draft", () => {
+    expect(formSchemaFor(workerRegistrationForm, "api").safeParse(values).success).toBe(true);
+    expect(neverSavedKeys(workerRegistrationForm)).not.toContain(key);
+    const store = new Map<string, string>();
+    const kv = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+    saveDraft(kv, workerRegistrationForm.id, { mode: "api", step: 3, values }, neverSavedKeys(workerRegistrationForm));
+    expect(loadDraft(kv, workerRegistrationForm.id, "api", neverSavedKeys(workerRegistrationForm))?.values[key]).toBe(values[key]);
   });
 });
 

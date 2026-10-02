@@ -28,6 +28,7 @@ import {
 import type { WizardStatus } from "@/components/ui/form-wizard/FormWizardView";
 import { browserStore, isOnline, waitUntilOnline } from "./adapters/browser";
 import { shrinkImage } from "./adapters/shrinkImage";
+import { previewKeyOf, thumbnailDataUrl } from "./photoPreview";
 import { useOnlineStatus } from "./adapters/useOnlineStatus";
 import { useRecaptcha } from "./adapters/useRecaptcha";
 
@@ -107,12 +108,22 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   }, [form, def]);
 
   // ---- photo uploads (api mode) -----------------------------------------------------
-  /** The uploader for a photo field: api mode stages it in apps/api; legacy keeps PhotoUpload's own. */
+  /**
+   * The uploader for a photo field: api mode stages it in apps/api; legacy keeps
+   * PhotoUpload's own. Alongside the upload, a thumbnail of the same image is kept
+   * in the form (photoPreview.ts) so the field can still show it after the step
+   * remounts or the page reloads; it is set only once the upload succeeded, so a
+   * preview never exists without its id.
+   */
   const uploaderFor = useCallback(
     (field: Extract<FieldDef, { kind: "photo" }>) => {
       if (backend.mode !== "api") return undefined;
       return async (file: File) => {
-        const p = (async () => uploadToApi(def, backend, field.uploadEntry, await shrinkImage(file), { retry }))();
+        const p = (async () => {
+          const [id, preview] = await Promise.all([uploadToApi(def, backend, field.uploadEntry, await shrinkImage(file), { retry }), thumbnailDataUrl(file)]);
+          form.setValue(previewKeyOf(field.name), preview, { shouldValidate: false, shouldDirty: true });
+          return id;
+        })();
         uploads.current.add(p);
         try {
           return await p;
@@ -121,7 +132,7 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
         }
       };
     },
-    [backend, def, retry],
+    [backend, def, retry, form],
   );
 
   // ---- navigation ---------------------------------------------------------------------
