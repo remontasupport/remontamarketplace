@@ -4,11 +4,11 @@
 - **Project**: Worker sign-up draft -- no answers kept on the device between visits (`/registration/worker`, api mode)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-02 (user: "start ai dlc")
-- **Current Stage**: CONSTRUCTION -- Code Generation Part 2 complete 2026-10-02 (unit `draft-storage`, steps 1-8;
-  summary `aidlc-docs/construction/draft-storage/code/draft-storage-summary.md`); awaiting the user's review of the
-  code. Then Build and Test: PR for `fix/signup-draft-session-storage`, CI (the build runs there: locally it is
-  blocked by the dev server holding the Prisma engine), preview checklist `requirements.md` §8, merge, production
-  check. Plan approved 2026-10-02 ("approved, go ahead"). PR #28 merged `aidlc/archive-s1` into `main` (`ea3e669`).
+- **Current Stage**: CONSTRUCTION -- unit 1 `draft-storage` DONE (PR #30 merged into `main` at `98c1ffb`; the user
+  verified it on the live domain 2026-10-02: "It works now!"). Unit 2 `recaptcha-badge` (execution-plan amendment
+  2026-10-02): plan approved and Code Generation complete 2026-10-02
+  (`aidlc-docs/construction/recaptcha-badge/code/recaptcha-badge-summary.md`); Build and Test in progress: branch
+  `fix/recaptcha-badge` pushed, PR to be opened by the user, CI, preview checklist (summary), merge, live check.
 - **Requirements**: `aidlc-docs/inception/requirements/requirements.md` (D1-D7: sessionStorage; one-time clean-up of
   the old localStorage key; Security + Resiliency blocking, PBT partial; Reverse Engineering skipped).
 - **Next**: Part 2 generation (steps 1-8), then Build and Test: PR, CI, preview checklist `requirements.md` §8,
@@ -108,6 +108,9 @@
 
 ### 🟢 CONSTRUCTION PHASE
 - [x] Functional Design, NFR Requirements, NFR Design, Infrastructure Design -- SKIPPED (see execution plan)
-- [x] Code Generation -- plan approved and all 8 steps generated 2026-10-02 on `fix/signup-draft-session-storage`
-  (`construction/draft-storage/code/draft-storage-summary.md`); code review by the user pending
-- [ ] Build and Test -- quality gates, PR, preview checklist, merge, production check
+- [x] Unit 1 `draft-storage`: Code Generation 2026-10-02 (`construction/draft-storage/code/draft-storage-summary.md`)
+- [x] Unit 1 `draft-storage`: Build and Test -- gates pass, PR #30, CI and preview, merged to `main` (`98c1ffb`),
+  verified live by the user 2026-10-02
+- [x] Unit 2 `recaptcha-badge`: Code Generation -- plan approved, all 8 steps generated 2026-10-02 on
+  `fix/recaptcha-badge` (`construction/recaptcha-badge/code/recaptcha-badge-summary.md`)
+- [ ] Unit 2 `recaptcha-badge`: Build and Test -- gates, PR, preview checklist, merge, production check

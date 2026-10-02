@@ -50,6 +50,13 @@ comes back later starts at step 1. Even within the tab the email verification (t
 password are never saved. Until 2026-10-02 the draft lived in `localStorage` and survived closing the
 browser; an entry left by that release is deleted the first time the form loads.
 
+### reCAPTCHA badge
+
+Google's floating badge is hidden on every page (`app/globals.css`). As Google's terms require, the api-mode
+wizard shows the branding line "This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of
+Service apply." under its buttons instead (`components/ui/form-wizard/recaptchaNotice.ts`); a test keeps the
+CSS and the notice together. The legacy page loads no reCAPTCHA and shows no notice.
+
 ### Text diagram
 
 ```
