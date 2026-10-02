@@ -2555,3 +2555,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > are you done? can I test it already
 
 **Action (2026-10-02):** Answered: code generation is done and pushed; the fix is testable now on the local dev server (the running `next dev` picks up the changed adapter) and, once the PR is opened, on its Vercel preview; the preview checklist is in the summary. Not yet in production -- that needs the PR merged.
+
+**User input (verbatim, 2026-10-02):**
+> I think the dev server I have and main is not merged yet, the form page is the old one in the development server
+
+**Action (2026-10-02):** Diagnosed from the code, not the server: the local dev server runs from this working tree (cwd verified) and has the new files, but `apps/app/.env` points at the production Upstash, whose switch reads `api`, while no local env file sets `NEXT_PUBLIC_API_URL`/`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; `resolveBackend` therefore falls back to **legacy** (logging "[registration-switch] 'api' requested but ... missing; serving legacy"). The legacy page is the old form and keeps no draft, so the local server cannot show the change. Advised testing on the PR's Vercel preview (api mode against staging), or locally only with the api running and the CLAUDE.md env overrides.
