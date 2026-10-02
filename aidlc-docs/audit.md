@@ -2244,3 +2244,13 @@ Reported the position and the pending decisions; no code changed.
 > it works now. Now can you make sure the changes we made are also deployed to the google cloud?
 
 **Action (2026-10-02):** Verified: deploy-api run 6 (36963830664) on the PR #25 merge `7e79f8b` -- quality gates green, image `australia-southeast1-docker.pkg.dev/remonta-api-510206/remonta/api:7e79f8b…` built and pushed, `remonta-api-staging` revision created (deploy id 36963830664-1), traffic routed, health check passed. Staging now: `/v1/health` 200, `/v1/service-categories` serving. So the api review (both bug fixes) runs on STAGING. Production Cloud Run (`remonta-api`) unchanged by design: it only moves by a manual promotion after the checklist, and the Upstash switch is still `legacy`. The later merges (#26 scanning) touched no api path, so no deploy; the photo-preview and taken-email fixes are apps/app changes that Vercel deploys (the photo fix branch is not yet in main).
+
+**User input (verbatim, 2026-10-02):**
+> perfect. Now I think the sign up workflow is ok. Now I want to use this api to the production and drop the column on the tables that will be affected. Do you recommend that approach? or let's continue the other API, then migrate everything in a single time?
+
+**Action (2026-10-02):** Recommended: take the sign-up api to production now (the strangler path as designed: small blast radius, rollback = the Upstash key, real traffic proves the platform), but do NOT drop the legacy columns yet -- apps/app's search, public list, admin list and legacy onboarding still read and write `worker_profiles.location/city/state/postalCode/latitude/longitude`; the api dual-writes them for that reason. Dropping comes with the parked search slice: move the readers to `worker_locations` + PostGIS, stop the dual write, then a reversible migration. Against the big-bang alternative: it concentrates risk and delays the feedback the api needs. Listed the production gates still open: the CRM notification (or an accepted interim), Resend DNS, prod secrets + prod reCAPTCHA key, the production database run (12 migrations, suburb list, two backfills with reviewed reports), promote with the switch off, then the canary flip.
+
+**User input (verbatim, 2026-10-02):**
+> We can skip the step 1
+
+**Action (2026-10-02):** Decision recorded: the CRM/n8n notification is NOT a gate for the production flip; api-mode sign-ups will be read from the admin list until it is built. State file updated. Listed what each remaining step needs from the user (Resend DNS; prod secret values and a prod reCAPTCHA key pair; the production direct connection string placed in `apps/api/.env` under a non-AUTH name for the database run; the go for the promotion and the flip).

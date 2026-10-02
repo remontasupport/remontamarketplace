@@ -28,6 +28,8 @@ twice), the sign-up transaction split into reusable pieces (events, user lookup,
 check, photo claim, onboarding marker), dead code removed (`N8N_WEBHOOK_URL`, `okStatuses`, the `pg` dev dependencies,
 the handler-set casts). Merging it redeploys **staging** only. After it: resume the list below.
 
+**Preview checklist: accepted by the user 2026-10-02** ("the preview is good now"; the sign-up workflow reviewed, two bug fixes on staging, the taken-email message and the photo thumbnail fixed in apps/app). **Production go given in principle 2026-10-02**; the legacy location columns stay until the search slice.
+
 **Next, in order:**
 1. **The preview checklist, run by the user** on the latest preview (any PR preview from `main` now; the previews are
    behind Vercel protection, not reachable from here). Done: 2, 3, 8; 5 partial (code email arrived). Open: 1 (sign in
@@ -39,7 +41,7 @@ the handler-set casts). Merging it redeploys **staging** only. After it: resume 
    Blob); `workflow_dispatch` stage=prod with the sha that passed the checklist; checks with the switch off; Vercel
    Production gets `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; Resend SPF/DKIM/DMARC for
    `community@remontaservices.com.au`.
-3. The CRM notification (outbox handler to a test n8n webhook) before the canary flip of `switch:registration`.
+3. ~~The CRM notification before the flip~~ -- **user decision 2026-10-02: skipped.** Api-mode sign-ups are read from the admin list until the n8n/Zoho handler is built (parked, not on the path).
 4. After cut-over: delete `features/forms/legacy/worker/`, remove the `lib/auth-prisma.ts` omit once the S1
    migrations are on production, re-record the Vercel rollback ids in CLAUDE.md.
 
