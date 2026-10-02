@@ -19,7 +19,7 @@ refactor, and CLAUDE.md's "Moving a legacy form over" guidance is rewritten.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: If I answer B, will the form still works on the production?
 
 ## Question 2
 Today, if `NEXT_PUBLIC_API_URL` or `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` is missing, the page falls back to the legacy
@@ -36,7 +36,7 @@ C) **Keep the switch as a kill switch**: `switch:registration` = `legacy` (or a 
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: can you refactor this? I want a totally removal of the legacy but at the same time, the production won't compromise
 
 ## Question 3
 Deleting the legacy page removes the instant rollback for the api sign-up (Upstash key back to `legacy`). The api
@@ -49,7 +49,7 @@ B) **Prepare the PR now but merge it after a week of real sign-ups.**
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 4
 Extensions for this cycle (the last cycle used Security: yes, blocking; Resiliency: yes, blocking; PBT: partial).
@@ -60,4 +60,4 @@ B) Security yes, Resiliency yes, PBT no (this cycle only deletes code; no pure f
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
