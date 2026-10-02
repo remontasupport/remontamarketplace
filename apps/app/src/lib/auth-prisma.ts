@@ -42,18 +42,6 @@ const createAuthPrismaClient = () => {
   return new AuthPrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
     datasources: { db: { url: databaseUrl } },
-    // S1's worker_profiles columns are in the schema this client is generated from,
-    // but the S1 migrations have not run on production. Without this, every query
-    // that returns a whole worker profile asks for them and fails with "column does
-    // not exist". Nothing in apps/app reads them. Remove once the S1 migrations are
-    // on production.
-    omit: {
-      workerProfile: {
-        consentProfileShareAt: true,
-        consentWordingVersion: true,
-        zohoLeadId: true,
-      },
-    },
   })
 }
 

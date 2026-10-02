@@ -1,14 +1,10 @@
 // Worker sign-up, as DATA (S1 step 9 revision). The steps, labels and wording are
-// those of the page before S1. The rules come from apps/api's contract entry;
-// the legacy adapter keeps the previous rules and request, so switching the
-// backend back to legacy is a true rollback.
+// those of the page before S1; the rules come from apps/api's contract entry, so
+// the form and the server agree by construction. The pre-S1 page and its legacy
+// adapter were removed on 2026-10-02 (cut-over clean-up).
 import { registrationContract } from "@remonta/api-contract";
-import { defineForm, type LocalityValue } from "@remonta/form-engine";
+import { defineForm } from "@remonta/form-engine";
 import { CONSENT_WORDING_VERSION } from "@remonta/schemas/schema/workerRegistrationSchema";
-import { contractorFormSchema } from "@/schema/contractorFormSchema";
-import { fetchWithRetry } from "@/utils/apiRetry";
-
-const legacyRules = contractorFormSchema.shape;
 
 export const workerRegistrationForm = defineForm({
   id: "worker-registration",
@@ -91,61 +87,4 @@ export const workerRegistrationForm = defineForm({
       ],
     },
   ],
-
-  legacy: {
-    // The rules the page used before S1, for the fields whose rule changed.
-    fieldSchemas: {
-      firstName: legacyRules.firstName,
-      lastName: legacyRules.lastName,
-      email: legacyRules.email,
-      mobile: legacyRules.mobile,
-      password: legacyRules.password,
-      services: legacyRules.services,
-      consentProfileShare: legacyRules.consentProfileShare,
-    },
-
-    // Kept in legacy mode only: the legacy route reveals an existing email at
-    // submit anyway, so dropping the early check would only worsen legacy's
-    // experience. In api mode an existing email gets the same answer as a new one.
-    afterStep: {
-      2: async (values) => {
-        const email = values.email;
-        if (typeof email !== "string" || !email) return null;
-        try {
-          const res = await fetchWithRetry("/api/auth/check-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) }, { maxRetries: 2, initialDelay: 500 });
-          const result = await res.json();
-          return result.exists ? "An account with this email already exists. Please use a different email or log in to your existing account." : null;
-        } catch {
-          return null; // as before: continue if the check fails
-        }
-      },
-    },
-
-    // The exact body and route the page used before S1.
-    submit: async (v, { query }) => {
-      const locality = v.localityId as LocalityValue | null;
-      const zohoLeadId = query.get("id");
-      const body = {
-        location: locality ? `${locality.name}, ${locality.state} ${locality.postcode}` : "",
-        firstName: v.firstName,
-        lastName: v.lastName,
-        email: v.email,
-        mobile: v.mobile,
-        password: v.password,
-        services: v.services,
-        supportWorkerCategories: v.supportWorkerCategories,
-        photo: v.photoUploadId,
-        consentProfileShare: v.consentProfileShare,
-        ...(zohoLeadId ? { zohoLeadId } : {}),
-      };
-      const res = await fetchWithRetry(
-        "/api/auth/register-async",
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
-        { maxRetries: 3, initialDelay: 1000, maxDelay: 5000 },
-      );
-      const result = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, kind: "failed", message: `Registration failed: ${result.error ?? "please try again"}` };
-      return { ok: true };
-    },
-  },
 });

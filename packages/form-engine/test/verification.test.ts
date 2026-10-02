@@ -38,7 +38,7 @@ const steps = (extra: object = {}) => [
 ];
 const form = defineForm({ ...base, steps: steps() });
 const field = form.steps[1]!.fields[1] as EmailCodeField;
-const backend = { mode: "api" as const, apiBaseUrl: "https://api.example", recaptchaSiteKey: "k" };
+const backend = { apiBaseUrl: "https://api.example", recaptchaSiteKey: "k" };
 
 describe("defineForm with an emailCode field", () => {
   it.each([
@@ -60,14 +60,13 @@ describe("defineForm with an emailCode field", () => {
     expect(() => defineForm({ ...base, steps: shown } as never)).toThrow("visibleWhen ghost is not a field");
   });
 
-  it("holds no proof by default, requires one in api mode only, and clears it when the address changes", () => {
+  it("holds no proof by default, requires one, and clears it when the address changes", () => {
     expect(defaultsOf(form).emailVerification).toBeNull();
     const values = { localityId: { id: 1, name: "P", state: "NSW", postcode: "2150" }, email: "a@b.test", password: "Str0ng!pass", mobile: "0412345678", firstName: "A", lastName: "B", services: ["s"], supportWorkerCategories: [], photoUploadId: "3f2b8c1e-7d4a-4f5b-9c2e-1a2b3c4d5e6f", consentProfileShare: true, emailVerification: null };
-    const api = formSchemaFor(form, "api").safeParse(values);
+    const api = formSchemaFor(form).safeParse(values);
     expect(api.success).toBe(false);
     expect(api.error!.issues.map((i) => [i.path.join("."), i.message])).toContainEqual(["emailVerification", "Please verify your email address"]);
-    expect(formSchemaFor(form, "api").safeParse({ ...values, emailVerification: { token: "ab".repeat(32), expiresAt: 1, code: "123456" } }).success).toBe(true);
-    expect(formSchemaFor(form, "legacy").safeParse(values).success).toBe(true);
+    expect(formSchemaFor(form).safeParse({ ...values, emailVerification: { token: "ab".repeat(32), expiresAt: 1, code: "123456" } }).success).toBe(true);
     expect(resetsOf(form)).toEqual([{ when: "email", reset: "emailVerification" }]);
   });
 });

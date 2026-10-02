@@ -4,9 +4,9 @@
 // fresh CAPTCHA token per attempt, as its entry demands. What comes back on
 // success is the PROOF the sign-up body carries: the ticket plus the code.
 import type { EntryDef } from "@remonta/api-contract";
-import { ATTEMPT_TIMEOUT_MS, contractCall, messageFor, outcomeOf, type ApiBackend } from "./submit";
+import { ATTEMPT_TIMEOUT_MS, contractCall, messageFor, outcomeOf } from "./submit";
 import { RetriesExhausted, withRetry, type RetryOptions } from "./retry";
-import type { FieldDef, FormDefinition } from "./types";
+import type { Backend, FieldDef, FormDefinition } from "./types";
 
 export type EmailCodeField = Extract<FieldDef, { kind: "emailCode" }>;
 
@@ -34,7 +34,7 @@ export const EMAIL_TAKEN = "An account with this email already exists. Please si
  * retries: the person is waiting, and a failed check does not block them (the
  * sign-up itself still handles an existing address).
  */
-export async function checkEmailAvailability(def: FormDefinition, backend: ApiBackend, field: EmailCodeField, email: string): Promise<AvailabilityResult> {
+export async function checkEmailAvailability(def: FormDefinition, backend: Backend, field: EmailCodeField, email: string): Promise<AvailabilityResult> {
   if (!field.availabilityEntry) return { ok: true, available: true };
   const ask = contractCall(def.contract, backend.apiBaseUrl, field.availabilityEntry);
   try {
@@ -72,7 +72,7 @@ export function captchaActionOf(entry: EntryDef | undefined): string | undefined
 
 export async function requestEmailCode(
   def: FormDefinition,
-  backend: ApiBackend,
+  backend: Backend,
   field: EmailCodeField,
   email: string,
   deps: { getCaptchaToken?: (action: string) => Promise<string>; retry?: RetryOptions },
@@ -96,7 +96,7 @@ export async function requestEmailCode(
 
 export async function confirmEmailCode(
   def: FormDefinition,
-  backend: ApiBackend,
+  backend: Backend,
   field: EmailCodeField,
   args: { email: string; code: string; ticket: EmailCodeTicket },
   deps: { retry?: RetryOptions } = {},

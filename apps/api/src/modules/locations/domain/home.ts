@@ -31,7 +31,7 @@ export interface HomeLocation {
   source: LocationSource
 }
 
-/** The worker_profiles columns apps/app reads today (register-async + location-parser). */
+/** The worker_profiles location columns the worker-search readers in apps/app still read (follow-up 1: move them to worker_locations). */
 export interface LegacyLocationColumns {
   /** "Parramatta, NSW 2150" -- the string Step1Location.tsx builds from a suggestion. */
   location: string

@@ -4,21 +4,16 @@
 import * as z from "zod";
 import type { FieldDef } from "./types";
 
-export type Mode = "legacy" | "api";
-
 export interface KindContext {
   field: FieldDef;
-  mode: Mode;
-  /** The contract body's schema for each field name (api mode's rules). */
+  /** The contract body's schema for each field name: the rules apps/api applies. */
   contractShape: Record<string, z.ZodType>;
-  /** The previous rules for fields that changed (legacy mode only). */
-  legacyShape: Record<string, z.ZodType>;
 }
 
 export interface KindRules {
   /** Form-state keys this field owns, with their empty values. */
   defaults(field: FieldDef): Record<string, unknown>;
-  /** Validation for each key it owns, in the given mode. */
+  /** Validation for each key it owns. */
   schemas(ctx: KindContext): Record<string, z.ZodType>;
   /** What it contributes to the api request body. */
   toBody(field: FieldDef, values: Record<string, unknown>): Record<string, unknown>;
@@ -46,9 +41,9 @@ export function constrainAuMobileInput(raw: string): string {
   return s;
 }
 
-/** The rule for `name`: the legacy one in legacy mode if it changed, else the contract's. */
+/** The rule for `name`: the contract's, so the form and apps/api agree. */
 function ruleFor(ctx: KindContext, name: string): z.ZodType {
-  const rule = (ctx.mode === "legacy" ? ctx.legacyShape[name] : undefined) ?? ctx.contractShape[name];
+  const rule = ctx.contractShape[name];
   if (!rule) throw new Error(`field ${name} is not in the contract body`);
   return rule;
 }
@@ -82,8 +77,8 @@ export const KINDS: Record<FieldDef["kind"], KindRules> = {
       [ctx.field.name]: localityValue
         .nullable()
         .refine((v) => v !== null, CHOOSE_SUBURB)
-        // apps/api needs the id; the legacy backend takes the label.
-        .refine((v) => ctx.mode === "legacy" || v?.id != null, CHOOSE_SUBURB),
+        // apps/api needs the au_localities id, not the label.
+        .refine((v) => v?.id != null, CHOOSE_SUBURB),
     }),
     toBody: (f, v) => ({ [f.name]: (v[f.name] as LocalityValue | null)?.id }),
   },
@@ -115,9 +110,8 @@ export const KINDS: Record<FieldDef["kind"], KindRules> = {
 
   emailCode: {
     defaults: (f) => ({ [f.name]: null }),
-    // Legacy backends have no verification step. In api mode the contract's rule
-    // applies: the proof object, or "Please verify your email address".
-    schemas: (ctx) => ({ [ctx.field.name]: ctx.mode === "legacy" ? z.unknown().optional() : ruleFor(ctx, ctx.field.name) }),
+    // The contract's rule: the proof object, or "Please verify your email address".
+    schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name) }),
     toBody: (f, v) => ({ [f.name]: v[f.name] }),
   },
 };

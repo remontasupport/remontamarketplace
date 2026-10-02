@@ -1,14 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-// Parity targets: the committed suburb list, and apps/app's own parser for the
-// legacy location string. The parser is loaded at runtime so that apps/app's file
-// is not type-checked under apps/api's stricter settings.
+// Parity target: the committed suburb list. (Until 2026-10-02 this also loaded
+// apps/app's legacy location parser as an oracle; that parser went with the pre-S1
+// sign-up page, and the columns are now asserted directly.)
 import { fromCsv } from '../../../../packages/db/scripts/localities/csv'
 import { DEFAULT_TRAVEL_RADIUS_KM, localityLabel, placeHome, type Locality } from '../../src/modules/locations/domain/home'
-
-type ParseLocation = (s: string) => { city: string | null; state: string | null; postalCode: string | null }
-const PARSER = '../../../app/src/lib/location-parser'
 
 const loc = (p: Partial<Locality> = {}): Locality => ({
   id: 7,
@@ -54,27 +51,21 @@ describe('placeHome', () => {
   })
 })
 
-describe('legacy parity over every real suburb', () => {
-  it('writes the location string as the form did, and its postcode reads back, for every suburb', async () => {
-    const { parseLocation } = (await import(PARSER)) as { parseLocation: ParseLocation }
+describe('legacy columns over every real suburb', () => {
+  it('writes the location string as the pre-S1 form did, and the city, state and postcode columns it implies, for every suburb', async () => {
     const rows = fromCsv(await readFile(new URL('../../../../packages/db/data/au_localities.csv', import.meta.url), 'utf8'))
     expect(rows.length).toBeGreaterThan(15000)
-    const cityOrStateDiffers: string[] = []
     rows.forEach((row, i) => {
       const r = placeHome({ id: i + 1, suburb: row.suburb, state: row.state, postcode: row.postcode, latitude: row.latitude, longitude: row.longitude, retiredAt: null }, 'BACKFILL')
       if (!r.ok) throw new Error('unexpected retired row')
-      // Step1Location.tsx builds: name + ", " + state abbreviation + " " + postcode
+      // The pre-S1 form built: name + ", " + state abbreviation + " " + postcode. The
+      // search readers still read these columns (follow-up 1), so the format holds.
       expect(r.legacy.location).toBe(row.suburb + ', ' + row.state + ' ' + row.postcode)
-      const parsed = parseLocation(r.legacy.location)
-      expect(parsed.postalCode).toBe(row.postcode)
-      if (parsed.city !== r.legacy.city || parsed.state !== r.legacy.state) cityOrStateDiffers.push(r.legacy.location)
+      expect(r.legacy.city).toBe(row.suburb)
+      expect(r.legacy.state).toBe(row.state)
+      expect(r.legacy.postalCode).toBe(row.postcode)
+      expect(r.legacy.latitude).toBe(row.latitude)
+      expect(r.legacy.longitude).toBe(row.longitude)
     })
-    // apps/app's parser is wrong for exactly two kinds of suburb, and the columns we
-    // write are right where it is wrong (step 6 finding):
-    //  - a name containing a state's full name: "Mount Victoria, NSW 2786" -> city "Mount"
-    //  - the OT territories, which it does not know: state null
-    const FULL_STATE = /Victoria|Queensland|Tasmania|New South Wales|South Australia|Western Australia|Northern Territory|Australian Capital Territory/i
-    expect(cityOrStateDiffers.filter((l) => !FULL_STATE.test(l) && !l.includes(', OT '))).toEqual([])
-    expect(cityOrStateDiffers).toHaveLength(23) // pinned: a change means the parser or the data changed
   })
 })

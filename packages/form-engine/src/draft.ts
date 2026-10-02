@@ -18,8 +18,6 @@ export interface KeyValueStore {
 export interface Draft {
   v: 1;
   savedAt: number;
-  /** A draft saved in the other backend mode is ignored: its values mean something else. */
-  mode: "legacy" | "api";
   step: number;
   values: Record<string, unknown>;
 }
@@ -41,18 +39,19 @@ export function saveDraft(store: KeyValueStore | null, formId: string, d: Omit<D
   }
 }
 
-export function loadDraft(store: KeyValueStore | null, formId: string, mode: Draft["mode"], neverSaved: readonly string[], now = Date.now()): Draft | null {
+export function loadDraft(store: KeyValueStore | null, formId: string, neverSaved: readonly string[], now = Date.now()): Draft | null {
   if (!store) return null;
   const key = draftKey(formId);
   try {
     const raw = store.getItem(key);
     if (!raw) return null;
     const d = JSON.parse(raw) as Draft;
-    if (d?.v !== 1 || d.mode !== mode || typeof d.savedAt !== "number" || now - d.savedAt > DRAFT_MAX_AGE_MS || typeof d.values !== "object") {
+    if (d?.v !== 1 || typeof d.savedAt !== "number" || typeof d.step !== "number" || now - d.savedAt > DRAFT_MAX_AGE_MS || typeof d.values !== "object" || d.values === null) {
       store.removeItem(key);
       return null;
     }
-    return { ...d, values: strip(d.values, neverSaved) };
+    // Drafts written before 2026-10-02 carry a `mode` key; only the fields above are kept.
+    return { v: 1, savedAt: d.savedAt, step: d.step, values: strip(d.values, neverSaved) };
   } catch {
     store.removeItem(key);
     return null;
