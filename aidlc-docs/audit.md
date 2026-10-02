@@ -2490,3 +2490,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > ahh, so I am going to start a new ai dlc, can you delete the states and all files related to the dlc for the signup workflow
 
 **Action (2026-10-02):** Closed the Slice 1 cycle the way the monorepo cycle was closed: `git mv` of `aidlc-docs/inception/`, `aidlc-docs/construction/` and `aidlc-docs/aidlc-state.md` into `aidlc-docs/archive/s1-worker-registration/` (history kept; nothing deleted from git), a fresh `aidlc-docs/aidlc-state.md` for the next cycle (previous cycles table; "what is live" facts to build on; the open follow-ups; empty stage checklist), and `audit.md` continues unchanged (append-only across cycles). Repointed every reference to the moved files: CLAUDE.md (preview plan, preview record, new-machine checkout, AI-DLC paragraph), `infra/README.md`, the `deploy-api.yml` and `ci-supply-chain.yml` comments, `scripts/setup-new-machine.sh`. Branch `aidlc/archive-s1` (on top of `fix/photo-preview-thumbnail`).
+
+**User input (verbatim, 2026-10-02):**
+> how about the aidlc-state? can it be deleted?
+
+**Action (2026-10-02):** Answered: two files now carry that name. The new `aidlc-docs/aidlc-state.md` must stay -- it is how a session resumes ("continue the AI-DLC"), and CLAUDE.md and the new-machine script point at it; the new cycle overwrites its contents. The archived copy under `archive/s1-worker-registration/` is the closing snapshot of the finished cycle (the monorepo cycle kept its own the same way); it can be deleted if unwanted since git history keeps it, but recommended keeping it. No change made.
+
+**User input (verbatim, 2026-10-02):**
+> Yeah you can delete it
+
+**Action (2026-10-02):** Deleted the archived closing snapshot `aidlc-docs/archive/s1-worker-registration/aidlc-state.md` (user decision; git history keeps it at 49abb8e). The live `aidlc-docs/aidlc-state.md` stays.
