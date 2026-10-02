@@ -1,6 +1,6 @@
 # S1 production run — the database side (runbook)
 
-**Status:** rehearsed end to end on the Neon branch `rehearse-w1` (a reset copy of production of 2026-09-28) on 2026-09-28. Every step below ran there with the results shown. **Not yet run on production; needs the user's approval.**
+**Status:** rehearsed end to end on the Neon branch `rehearse-w1` (a reset copy of production of 2026-09-28) on 2026-09-28. Every step below ran there with the results shown. **RUN ON PRODUCTION 2026-10-02 06:42-07:15Z** (user-approved at each stop): 12 migrations; suburb list plan `074d18238f0f0465`, 15,467 rows; locations 1,751 written / 60 ambiguous / 10 unmatched; onboarding 1,821 written (941/20/744/105/11/0); re-runs wrote 0 and 0; live `/api/suburbs` returns ids. Record in `aidlc-docs/audit.md`.
 
 **What it changes for the live apps the moment it is done:** `apps/app`'s suburb search (`/api/suburbs`) starts reading `au_localities` instead of calling Google (it falls back to Google only while the table is absent). Nothing else in the live apps changes: the sign-up stays on the legacy route until the api is deployed and the switch is flipped.
 

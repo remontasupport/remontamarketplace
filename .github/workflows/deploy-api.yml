@@ -5,7 +5,7 @@
 #
 # Production never deploys on a push. It is a promotion of an image that already
 # runs on staging and has passed the preview checklist
-# (aidlc-docs/construction/plans/S1-preview-first-verification-plan.md §3).
+# (aidlc-docs/archive/s1-worker-registration/construction/plans/S1-preview-first-verification-plan.md §3).
 # The same dispatch with an older SHA is the rollback for either stage: images stay
 # in Artifact Registry (newest 20), so a rollback is a redeploy, never a rebuild.
 #

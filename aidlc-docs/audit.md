@@ -2244,3 +2244,291 @@ Reported the position and the pending decisions; no code changed.
 > it works now. Now can you make sure the changes we made are also deployed to the google cloud?
 
 **Action (2026-10-02):** Verified: deploy-api run 6 (36963830664) on the PR #25 merge `7e79f8b` -- quality gates green, image `australia-southeast1-docker.pkg.dev/remonta-api-510206/remonta/api:7e79f8b…` built and pushed, `remonta-api-staging` revision created (deploy id 36963830664-1), traffic routed, health check passed. Staging now: `/v1/health` 200, `/v1/service-categories` serving. So the api review (both bug fixes) runs on STAGING. Production Cloud Run (`remonta-api`) unchanged by design: it only moves by a manual promotion after the checklist, and the Upstash switch is still `legacy`. The later merges (#26 scanning) touched no api path, so no deploy; the photo-preview and taken-email fixes are apps/app changes that Vercel deploys (the photo fix branch is not yet in main).
+
+**User input (verbatim, 2026-10-02):**
+> perfect. Now I think the sign up workflow is ok. Now I want to use this api to the production and drop the column on the tables that will be affected. Do you recommend that approach? or let's continue the other API, then migrate everything in a single time?
+
+**Action (2026-10-02):** Recommended: take the sign-up api to production now (the strangler path as designed: small blast radius, rollback = the Upstash key, real traffic proves the platform), but do NOT drop the legacy columns yet -- apps/app's search, public list, admin list and legacy onboarding still read and write `worker_profiles.location/city/state/postalCode/latitude/longitude`; the api dual-writes them for that reason. Dropping comes with the parked search slice: move the readers to `worker_locations` + PostGIS, stop the dual write, then a reversible migration. Against the big-bang alternative: it concentrates risk and delays the feedback the api needs. Listed the production gates still open: the CRM notification (or an accepted interim), Resend DNS, prod secrets + prod reCAPTCHA key, the production database run (12 migrations, suburb list, two backfills with reviewed reports), promote with the switch off, then the canary flip.
+
+**User input (verbatim, 2026-10-02):**
+> We can skip the step 1
+
+**Action (2026-10-02):** Decision recorded: the CRM/n8n notification is NOT a gate for the production flip; api-mode sign-ups will be read from the admin list until it is built. State file updated. Listed what each remaining step needs from the user (Resend DNS; prod secret values and a prod reCAPTCHA key pair; the production direct connection string placed in `apps/api/.env` under a non-AUTH name for the database run; the go for the promotion and the flip).
+
+**User input (verbatim, 2026-10-02):**
+> Step 2 is Done
+
+**Action (2026-10-02):** Verified step 2 from public DNS (8.8.8.8): DKIM `resend._domainkey` TXT present (218 chars), `send.remontaservices.com.au` SPF `v=spf1 include:amazonses.com ~all` and MX `feedback-smtp.sa-east-1.amazonses.com`, `_dmarc` `v=DMARC1; p=none; rua=mailto:nse1.bo@…` -- the full set Resend asks for. Resend's own "verified" status could not be read: the RESEND_API_KEY in the local `apps/api/.env` answers 401 to the domains endpoint (a sending-only or rotated key; staging's key sent mail on 2026-10-01, so the deployed secret is fine). Next: step 3, the production secrets (user).
+
+**User input (verbatim, 2026-10-02):**
+> How to set up the Resend again?
+
+**Action (2026-10-02):** Gave the Resend steps: Domains page -> `remontaservices.com.au` must read Verified (DNS is already in place; press Verify if it still says Pending); API Keys -> Create, "Sending access" restricted to that domain, copy once; where the key goes: `remonta-api-RESEND_API_KEY` (production secret, step 3), `remonta-api-staging-RESEND_API_KEY` only if the old key was revoked, and `apps/api/.env` locally; the sender `Remonta <community@remontaservices.com.au>` is already in `infra/lib/stages.ts`; a test email can be sent from Resend's Emails page or by requesting a sign-up code on the preview.
+
+**User input (verbatim, 2026-10-02):**
+> we continue the step 3
+
+**Action (2026-10-02):** Step 3 instructions given (no gcloud on this machine; the user runs them in Cloud Shell): the six `remonta-api-<NAME>` secrets exist empty since bootstrap; one `printf '%s' '<value>' | gcloud secrets versions add remonta-api-<NAME> --data-file=-` each: AUTH_DATABASE_URL = production POOLED string; RECAPTCHA_SECRET_KEY = a NEW v3 key pair for `app.remontaservices.com.au` (site key kept for Vercel production); RESEND_API_KEY = the production key; IP_HASH_SECRET = `openssl rand -hex 32`; BLOB_READ_WRITE_TOKEN = production's; N8N_REGISTRATION_WEBHOOK_URL = a single space. Verification: `gcloud secrets versions list` per name (the user pastes names/states only, never values); the real proof is step 5's deploy health check, which reads them. Asked the user never to paste secret values into the chat.
+
+**User input (verbatim, 2026-10-02):**
+> I already install a google cloud shell on this machine
+
+**Action (2026-10-02):** gcloud 587 is installed locally (not yet on this session's PATH), signed in as support@remontaservices.com.au, project `remonta-api-510206`. Read-only check: all six production secrets have no versions yet (as recorded); staging's Resend key and Blob token each have version 1. The assistant's session is not permitted to write to the secret store, so no production secret was changed by the assistant; the six values are the user's to add from their own terminal, and the assistant verifies read-only afterwards.
+
+**User input (verbatim, 2026-10-02):**
+> can I run to the google cloud shell in the browser instead?
+>
+> Before that can you sure when we use the new api, will the data saves to the authentication branch and rehearsal-w1? confirm it 100%
+
+**Action (2026-10-02):** Confirmed by reading hosts (secret values and env files, host names only reported): the STAGING api's `AUTH_DATABASE_URL` secret points at `ep-wandering-shadow-a7pxwb8o-pooler` = the `rehearse-w1` Neon branch (identical to `REHEARSAL_DATABASE_URL` in the local `apps/api/.env`). The PRODUCTION api secret has no value yet, so the production api writes nowhere until step 3; the value to put there is the production auth database's pooled string, `ep-delicate-recipe-a7mbt4ef-pooler`, database `workerprofiles` -- the same database apps/app's `AUTH_DATABASE_URL` uses (apps/app's other database, `ep-polished-thunder-a7ovazge`, is never touched by the api; its schema is packages/db's 33 models). So: staging -> rehearse-w1 only; production -> the production auth database only; never both. Caveat: that database has none of the S1 tables until step 4 runs. **Exposure:** a host-extraction regex failed on a quoted value and the production auth connection string (role `neondb_owner`, password included) appeared in the assistant's tool output on this machine; the user should reset that role's password in Neon (then update apps/app's Vercel variables and `.env` files) -- added to the rotation list.
+
+**User input (verbatim, 2026-10-02):**
+> what script should I run in google cloud shell?
+
+**Action (2026-10-02):** Gave the browser Cloud Shell script for step 3: set the project; the six production secrets added one version each (pooled production auth string for host ep-delicate-recipe-a7mbt4ef / db workerprofiles; the new reCAPTCHA v3 secret; the production Resend key; an IP hash secret generated in the shell; the Blob token copied from the staging secret without display; a single space for the parked webhook); then a read-only listing of version states to paste back. Values typed only into Cloud Shell, never into the chat.
+
+**User input (2026-10-02):** pasted the step 3 check output: all six `remonta-api-<NAME>` secrets show `1 enabled`.
+
+**Action (2026-10-02):** Read-only shape check of the six production secrets (values never displayed): IP_HASH_SECRET 64 hex chars OK; BLOB_READ_WRITE_TOKEN identical to staging's OK; N8N a single blank OK. But AUTH_DATABASE_URL, RECAPTCHA_SECRET_KEY and RESEND_API_KEY hold the literal placeholders from the script (`<pooled connection string>`, `<recaptcha v3 secret>`, `<resend api key>`). Asked the user to re-run those three lines with the real values; the new version 2 becomes `latest`, so nothing else changes. Will re-check the same way.
+
+**User input (verbatim, 2026-10-02):**
+> cann you tell me what should I do
+
+**Action (2026-10-02):** Spelled out the three re-runs step by step: where to copy each value from (Vercel env of the live app or Neon for the pooled auth string; the reCAPTCHA admin console for the secret key; Resend for the key), how to paste it inside the single quotes, one line at a time, then "verify step 3".
+
+**User input (verbatim, 2026-10-02):**
+> VERIFY STEP 3
+
+**Action (2026-10-02):** Step 3 VERIFIED read-only (values never displayed): AUTH_DATABASE_URL v2 = postgresql, host `ep-delicate-recipe-a7mbt4ef-pooler.ap-southeast-2.aws.neon.tech`, db `workerprofiles`, sslmode=require, pooled; RECAPTCHA_SECRET_KEY v2 = 40 chars starting `6Ld`; RESEND_API_KEY v2 = 36 chars starting `re_`; IP_HASH_SECRET v1 64 hex; BLOB_READ_WRITE_TOKEN v1 = staging's; N8N v1 blank. Production secrets complete. Next: step 4, the production database run -- waits for `PRODUCTION_DIRECT_DATABASE_URL` in `apps/api/.env` and the user's go.
+
+**User input (verbatim, 2026-10-02):**
+> wHAT IS THE STEP 4 AGAIN, BE CLEAR ON YOUR INSTRUCTIONS
+
+**Action (2026-10-02):** Restated step 4 plainly: what it is (preparing the production database for the api: 12 migrations, the suburb list, two backfills; adds tables and columns, deletes nothing; rehearsed on the Neon copy), what the user does (one line `PRODUCTION_DIRECT_DATABASE_URL=<direct string>` in `apps/api/.env`, with where to copy the direct string from in Neon), what the assistant does, the two approval stops, and the rollback (12 down scripts, rehearsed).
+
+**User input (verbatim, 2026-10-02):**
+> THE BRANCH NAME IN THE NEON FOR PRODUCTION IS authentication, is that what I am going to copy the string from?
+
+**Action (2026-10-02):** Answered: very likely yes, but the branch name is not the proof -- the host is. The production auth database is the endpoint `ep-delicate-recipe-a7mbt4ef` (read from the live app's AUTH_DATABASE_URL and the production secret); if the `authentication` branch's Direct connection string shows that host and database `workerprofiles`, it is the right one; if it shows a different `ep-…`, stop and tell me.
+
+**User input (verbatim, 2026-10-02):**
+> Do i need to remove the -pooler?
+
+**Action (2026-10-02):** Answered: for step 4 the line must be the DIRECT string, which has no `-pooler` -- Neon's "Direct connection" toggle gives it; removing `-pooler` by hand from the pooled string gives the same result. Reason: migrations and the backfills need a direct (non-PgBouncer) connection; the api service itself keeps the pooled one (already in the secret).
+
+**User input (verbatim, 2026-10-02):**
+> saved. before running, what will happen? explain in simple terms
+
+**Action (2026-10-02):** Preflight (read-only, host names only): `PRODUCTION_DIRECT_DATABASE_URL` present, host `ep-delicate-recipe-a7mbt4ef.ap-southeast-2.aws.neon.tech`, db `workerprofiles`, direct (no `-pooler`), sslmode=require; differs from the rehearsal endpoint; `AUTH_DATABASE_URL` still local. Explained step 4 in plain terms before running; nothing executed against production yet.
+
+**User input (verbatim, 2026-10-02):**
+> run the database
+
+**Action (2026-10-02, production database run, steps 1-2 read-only):** target host `ep-delicate-recipe-a7mbt4ef` (refused if it equalled the rehearsal endpoint; it does not). `migrate:status`: the 12 S1 migrations pending, the 3 pre-baseline names known only to the database -- exactly the rehearsal picture. Counts: users 1,898 / worker_profiles 1,821 / verification_requirements 10,236 (rehearsal copy of 2026-09-28: 1,865 / 1,789 / 10,112 -- growth since, as expected). PostGIS not installed (so the `s1_postgis` reverse script applies on rollback); `ACCOUNT_REGISTERED` audit rows 0; no S1 table exists yet. STOPPED for the user's "go" before step 3 (migrate).
+
+**User input (verbatim, 2026-10-02):**
+> go
+
+**Action (2026-10-02, production database run, steps 3-5):** step 3 `migrate:deploy` 06:42:54Z-06:43:30Z, all 12 applied; after: PostGIS 3.5.0, the 8 S1 tables present, app counts unchanged (users 1,898 / profiles 1,821; verification_requirements 10,238, +2 from live activity). Step 4 suburb list: dry-run plan hash `074d18238f0f0465` (identical to the rehearsal), applied at 06:44:14Z-06:44:29Z `--by=clent.b`; `au_localities` 15,467 rows, all current, all with `point`; Parramatta NSW 2150 = id 5410. Step 5 dry runs (reports kept outside the repo in the session scratchpad -- they hold worker ids and addresses): locations -- 1,821 without a HOME, 1,751 matched (1,095 by the form's string, 608 by the columns, 32 suburb-in-text, 1 wrong state, 15 single-suburb postcode), 60 ambiguous, 10 unmatched (3 empty, 2 overseas, 1 Fiji, 1 Nigeria, 3 unparseable); onboarding -- 1,821 without a marker: SIGNED_UP 941, DOCUMENTS_IN_PROGRESS 20, DOCUMENTS_SUBMITTED 744, ACTION_REQUIRED 105, VERIFIED 11, PUBLISHED 0; 1,421 markers use the last sign-in as the first sign-in. (The onboarding dry run and the count failed once with "can't reach database server" when three processes opened the direct endpoint at once; retried sequentially, fine.) STOPPED for the user's review ("apply").
+
+**User input (verbatim, 2026-10-02):**
+> Ok, what to do next?
+
+**Action (2026-10-02):** Answered: the run is paused at the review stop; the next action is the user's word "apply" (writes the two backfills, then the idempotence re-run and the live suburb check), or any question about the 70 unplaced workers first. Nothing was executed.
+
+**User input (verbatim, 2026-10-02):**
+> apply
+
+**Action (2026-10-02, production database run, steps 7-9 -- COMPLETE):** step 7 locations apply 07:11:12Z-07:14:55Z: 1,751 written, 0 failed, 60 ambiguous + 10 unmatched left unplaced; onboarding apply 07:14:55Z-07:15:16Z: 1,821 written (941/20/744/105/11/0). Step 8 re-runs: locations "already placed 1751, written 0"; onboarding "already had a marker 1821, written 0". Row verification: worker_locations 1,751 rows, all HOME, all source BACKFILL, none without `point`; worker_onboarding 1,821 rows over 5 stages; 1,821 opening transitions; 70 profiles without a HOME (the reviewed list); users 1,898 / profiles 1,821 unchanged. Step 9: `app.remontaservices.com.au/api/suburbs?q=parra` 200, rows with ids (Parramatta = 5410), no nulls -- the live suburb search now reads `au_localities`. Follow-up noted: `apps/app/src/lib/auth-prisma.ts` omits the three S1 columns (PR #18) because production lacked them; it can now be removed in its own PR. Dashboard/sign-in check: the user's.
+
+**User input (verbatim, 2026-10-02):**
+> why is my github account hard to load?
+
+**Action (2026-10-02):** Checked: GitHub's status page reports all systems operational. From this machine: google.com and the staging api answer in <0.5 s; api.github.com (a tiny response) in 1 s; github.com and cloudflare.com connect and finish TLS within ~2 s but the full page never completes within 15 s. Pattern = the local network path stalls on larger responses to some hosts (MTU/packet loss on the Wi-Fi/VPN, or a filtering proxy), not GitHub and not anything in this project. Advised: a different network (phone hotspot), VPN off, router restart; the deploy promotion can wait until the connection is steady.
+
+**User input (verbatim, 2026-10-02):**
+> what should I enter this field "Git SHA of an image already in the registry (the one that passed the checklist; an older one = rollback)"
+
+**Action (2026-10-02):** Answered: the full SHA `7e79f8b5f58a16785cddbd4c9bb4a277e9fcddc9` (the PR #25 merge, the image staging runs and the preview was accepted on; deploy-api run 6 built it); stage = `prod`.
+
+**User input (verbatim, 2026-10-02):**
+> check CI
+
+**Action (2026-10-02):** deploy-api run 7 (36984342469) was a `workflow_dispatch` with stage left at its default `staging` and imageTag `7e79f8b…`: it re-promoted the same image to staging (harmless; staging health 200 afterwards). Asked the user to dispatch again with stage=prod.
+
+**User input (verbatim, 2026-10-02):**
+> check CI
+
+**Action (2026-10-02):** No production run exists yet: the latest deploy-api run is still run 7 (staging, success); Cloud Run lists only `remonta-api-staging` (revision 00007). The stage=prod dispatch has not reached GitHub -- likely the user's connection (large pages stalling). Told the user; will check again on their word.
+
+**User input (verbatim, 2026-10-02):**
+> check CI
+
+**Action (2026-10-02, step 5 DONE):** deploy-api run 8 (36986240870, `workflow_dispatch` stage=prod, imageTag 7e79f8b…) succeeded 08:49:33Z-08:51:10Z: image existed (no build), service definition applied, revision ready, health check passed. Cloud Run now has `remonta-api` (revision `remonta-api-00001-t9d`, 100 % traffic, image `…/remonta/api:7e79f8b5f58a16785cddbd4c9bb4a277e9fcddc9`) beside staging. Verified from here on `https://remonta-api-154148201608.australia-southeast1.run.app`: `/v1/health` 200 with request id and HSTS; `/v1/localities?q=parram` rows with ids (Parramatta 5410); `/v1/service-categories` 200 `public, max-age=300`; CORS preflight from `https://app.remontaservices.com.au` 204 with the allow-origin header, from a `*.vercel.app` origin refused (no header); a test photo staged (201, id d3aff84f…, purged by the daily job if unclaimed). Switch still `legacy` (Upstash read), live sign-up page still the legacy page (no `run.app` in the HTML). A forged `X-Forwarded-Proto: http` on an https request got 200 -- Cloud Run's front end sets that header itself; checked separately that plain `http://` never reaches the service.
+Plain `http://` to the production URL: 302 to https from Google Frontend -- the service never sees plain HTTP; the in-app guard is a second line only.
+
+**User input (2026-10-02):** screenshot `Screenshot 2026-10-02 165743.png` -- Vercel notice while adding a variable: "Keep This Value Private -- The NEXT_PUBLIC_ prefix exposes this value to the browser. Remove the prefix, or change the variable to Config if it's safe to expose. [Change to Config]".
+
+**Action (2026-10-02):** Explained: a warning, not an error. Both values are public by design (the api URL and the reCAPTCHA site key are sent to every browser; the secret half stays in Secret Manager). Press "Change to Config" for each, keep the `NEXT_PUBLIC_` prefix (the code reads exactly those names), save, then redeploy production.
+
+**User input (verbatim, 2026-10-02):**
+> I redeployed it
+
+**Action (2026-10-02):** After the user's production redeploy: live sign-up page 200 (fresh), still the legacy page (welcome card, no `run.app`); switch `legacy`. The two new variables cannot be seen from outside in legacy mode (the api base URL and the site key reach the page only in api mode), and the server page falls back to legacy if they are missing -- so the flip is the test, and it fails safe. STOPPED for the user's go on the canary flip (Part B).
+
+**User input (verbatim, 2026-10-02):**
+> the production site still serves the legacy form
+
+**Action (2026-10-02):** Clarified: that is expected -- the switch key is still `legacy` and nothing in the redeploy changes it; only the Upstash key selects the form, by design (a production deployment ignores the env var). The new form appears the moment the key is set to `api`, which happens on the user's "flip".
+
+**User input (verbatim, 2026-10-02):**
+> Flip
+
+**Action (2026-10-02, step 6 Part B -- CANARY FLIP at 09:07:09Z):** Upstash `switch:registration`: `legacy` -> `api` (SET OK, read back `api`). First fresh fetch of `app.remontaservices.com.au/registration/worker` afterwards: 200, the page carries the production api URL `https://remonta-api-154148201608.australia-southeast1.run.app` and one reCAPTCHA site key -- the api-mode page is live (the intro card shows first; the form steps follow "Start"). Production sign-ups now go to apps/api on Cloud Run against the production auth database. Rollback: the key back to `legacy`. Waiting for the user's test sign-up with an internal email.
+
+**User input (verbatim, 2026-10-02):**
+> there is an error ERROR for site owner:
+> Invalid dom
+
+**Action (2026-10-02, ROLLBACK at 09:10:48Z):** The user reported Google's reCAPTCHA notice "ERROR for site owner: Invalid domain for site key" on the live api form. Rolled the switch back: the first SET at 09:10:13Z got no response from Upstash (the flaky connection) and the key still read `api`; retried at 09:10:48Z: SET OK, read back `legacy`; the live page is the legacy form again. Window api-mode was live: 09:07:09Z-09:10:48Z (~3.5 min); the CAPTCHA failure blocks the code request and the submit, so no account could be created in it (checked below). Cause to establish with the user: the site key served on the page (starts `6LdsuN`, ends `gKb3`) is not allowed on `app.remontaservices.com.au` -- either it is not the production pair (the Vercel variable holds another key) or the production key's Domains list lacks the host.
+
+**User input (2026-10-02):** screenshot `Screenshot 2026-10-02 171046.png` -- Vercel shows three `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` rows: Production `6LdsuNgt…` (added 8 min ago), Development `6LeTjvEr…` (updated 1 min ago), Preview `6LdsuNgt…` (added 1 day ago).
+
+**Action (2026-10-02):** Cause found: the Production value is byte-for-byte the Preview value, i.e. the STAGING site key (created 2026-10-01 with domain `vercel.app`), which Google refuses on `app.remontaservices.com.au` -- matching the served key `6LdsuN…gKb3`. Production checks (DB): no users/audit/outbox/photos in the window. Fix: set Production's site key to the SITE half of the pair created today for `app.remontaservices.com.au` (whose SECRET half is in `remonta-api-RECAPTCHA_SECRET_KEY`, 40 chars, starts `6Ld`); the Development row (`6LeTjvEr…`, changed a minute ago) may be where that key was pasted by mistake -- the user verifies in the reCAPTCHA admin console; then redeploy production and flip again. Cloud Logging read attempts failed on shell quoting (not needed: the CAPTCHA error is raised by Google's widget in the browser, before any api call).
+
+**User input (verbatim, 2026-10-02):**
+> Do I need to create new keys?
+
+**Action (2026-10-02):** Answered: no, if the pair created this morning for `app.remontaservices.com.au` exists -- its SITE key goes into Vercel Production; only if that pair cannot be found, or the secret stored in Secret Manager is not its secret, create one new v3 pair (domain `app.remontaservices.com.au`), put the secret in `remonta-api-RECAPTCHA_SECRET_KEY` (version 3) and the site key in Vercel Production; the staging pair stays untouched.
+
+**User input (verbatim, 2026-10-02):**
+> I didnt create this morning
+
+**Action (2026-10-02):** Established (prefixes only, values never shown): the production secret `remonta-api-RECAPTCHA_SECRET_KEY` v2 is byte-identical to the staging secret (`6LdsuNgt…`, the `vercel.app` pair) -- the user pasted the staging secret this morning, so the api would also have rejected tokens even with a right site key. The app already owns a pair for its own domain: `6LeTjvEr…` (site key and secret in `apps/app/.env`/`.env.local`, used by the legacy page; the same site key now sits in Vercel's Development row). No new key needed: use that pair for production -- the user adds its SECRET as version 3 of `remonta-api-RECAPTCHA_SECRET_KEY` (Cloud Shell), puts its SITE key in Vercel Production, redeploys production, re-promotes the api (instances read secrets at start), then flip. Assistant to verify prefixes before the flip.
+
+**User input (verbatim, 2026-10-02):**
+> the shell says Created version [3] of the secret [remonta-api-RECAPTCHA_SECRET_KEY].
+
+**Action (2026-10-02):** Verified version 3 of `remonta-api-RECAPTCHA_SECRET_KEY`: 40 chars, prefix `6LeTjvEr`, identical to the app's secret, no longer the staging one. Remaining for the user: Vercel Production `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` = the app's site key (same prefix), redeploy production, re-promote the api (stage=prod, tag 7e79f8b…) so the instances read version 3.
+
+**User input (verbatim, 2026-10-02):**
+> verify
+
+**Action (2026-10-02):** Verified: deploy-api run 9 (stage=prod, same tag) succeeded 09:30Z; `remonta-api` now serves revision `remonta-api-00002-9zc` (created 09:30:51Z, 100 % traffic) -- instances started after secret version 3, so they hold the app's reCAPTCHA pair; health 200. The Vercel side (site key `6LeTjvEr…` in Production) cannot be seen until api mode is on; the flip will show it on the page. Ready to flip on the user's word.
+
+**User input (verbatim, 2026-10-02):**
+> flip
+
+**Action (2026-10-02, CANARY FLIP #2 at 09:35:14Z):** switch `legacy` -> `api` (read back `api`). First fresh fetch of the live sign-up page: api mode (production api URL present) and the site key starts `6LeTjvEr` -- the app's pair, matching secret version 3 on revision 00002. Live. Waiting for the user's test sign-up with an internal email.
+
+**User input (verbatim, 2026-10-02):**
+> Why this error occured when sending the code "We couldn't reach Remonta. Please check your connection and try again."
+
+**Action (2026-10-02):** Production api log 09:35-09:37Z: the user's browser reached the api fine (GET /v1/localities x4 -> 200 in 0.05-0.25 s; OPTIONS+POST email-availability -> 204/200, twice); the ONLY POST to /v1/registrations/worker/email-codes was the assistant's curl probe (403 captcha, invalid-input-response, expected). So the form never sent the code request: `requestEmailCode` fetches the reCAPTCHA token inside its retry loop, and a token failure (script blocked, or the key's Domains not allowing the host) is reported by the engine as UNREACHABLE ("We couldn't reach Remonta…") -- a misleading message, noted as a follow-up. Rolled the switch back to `legacy` (second window: 09:35:14Z to the rollback below; no code request reached the api, so no account could be created). Suspect: the `6LeTjvEr` key was created for local development and its Domains list lacks `app.remontaservices.com.au` (the production Vercel env had no site key until today, so the legacy page never executed reCAPTCHA in production).
+
+**User input (verbatim, 2026-10-02):**
+> done, added. Flip it
+
+**Action (2026-10-02, CANARY FLIP #3 at 09:41:38Z):** after the user added `app.remontaservices.com.au` to the `6LeTjvEr` key's Domains: switch `legacy` -> `api` (read back `api`); live page in api mode with site key `6LeTjvEr…`; Google serves the reCAPTCHA script for that key (200). Watching the production api log for the user's test sign-up.
+
+**User input (verbatim, 2026-10-02):**
+> it still says We couldn't reach Remonta. Please check your connection and try again.
+
+**Action (2026-10-02, rollback #3 at 09:44:53Z):** The watch saw the user's availability checks at 09:43:04, 09:43:38, 09:44:14 (all 200) and again NO POST to email-codes -- the browser still fails before sending, i.e. the reCAPTCHA token fetch. Rolled back to `legacy` (window 09:41:38Z-09:44:53Z, no code request reached the api). Next: a browser-console test on the live site in legacy mode (no flip needed) that loads the reCAPTCHA script with the public site key `6LeTjvErAAAAAJSnw0mMZKSnQzwjn1KW7exauXDN` and calls execute, to see Google's actual error (domain not allowed / script blocked / propagation).
+
+**User input (2026-10-02):** the browser-console test printed `Uncaught (in promise) Error: Invalid site key or not loaded in api.js: 6LeTjvErAAAAAJSnw0mMZKSnQzwjn1KW7exauXDN` from `recaptcha__en.js`.
+
+**Action (2026-10-02):** Diagnosis: that error from `grecaptcha.execute` means the key is not a v3 (score-based) key -- a v2 checkbox/invisible key loads through `api.js?render=` but cannot `execute`. The `6LeTjvEr` pair is therefore unusable for the api form regardless of its Domains. Recommended the clean fix: create ONE new reCAPTCHA **v3** key for `app.remontaservices.com.au` (+ `localhost`), its SECRET as version 4 of `remonta-api-RECAPTCHA_SECRET_KEY` and as Vercel Production `RECAPTCHA_SECRET_KEY` (the legacy page now also sees a production site key since today, so both paths must use one consistent v3 pair), its SITE key as Vercel Production `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; redeploy Vercel production and re-promote the api; then the console test, then flip.
+
+**User input (verbatim, 2026-10-02):**
+> In the recapcha I used the one the Remonta Auth instead of remonta-api-staging, am I wrong? here is the site key of remonta-api 6LdsuNgtAAAAAHTbd-5i2Ez8-U8F1jdLZWUigKb3
+
+**Action (2026-10-02):** Answered: the reCAPTCHA console holds two keys -- "Remonta Auth" (`6LeTjvEr`, the legacy app's key, not v3: cannot work for the api form) and "remonta-api-staging" (`6LdsuNgt`, v3, domain `vercel.app`, the previews' key). Neither is right for production: recommended a THIRD key, "remonta-api" (v3, domain `app.remontaservices.com.au`), so production values stay exact and the staging secret is not shared with production; alternative accepted if preferred: add the production domain to the staging v3 key and reuse its pair (secret copied staging -> prod in Cloud Shell without display). Steps unchanged: secret -> Secret Manager (new version) + Vercel Production `RECAPTCHA_SECRET_KEY`; site key -> Vercel Production `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; redeploy Vercel; re-promote the api; console test; verify; flip.
+
+**User input (verbatim, 2026-10-02):**
+> Done
+
+**Action (2026-10-02):** Verified: `remonta-api-RECAPTCHA_SECRET_KEY` version 4 (09:52:45Z), prefix `6LdcDNst` -- a new pair, neither staging's nor the legacy app's; production revision `remonta-api-00003-l9x` created 10:08:22Z (after v4), 100 % traffic, health 200. The Vercel side shows only after the flip; asked for the console test result ("TOKEN OK" with the new key) before flipping.
+
+**User input (2026-10-02):** console test with the new key printed `Uncaught Error: Invalid site key or not loaded in api.js: 6LdcDNstAAAAAFfOO79rYrF-I1grqrnes5rsK3eB`.
+
+**Action (2026-10-02):** Same error with a brand-new v3 key rules out the v2 theory. The remaining common cause: the key was created in Google Cloud's reCAPTCHA (Enterprise) console rather than the classic admin (google.com/recaptcha/admin). Enterprise keys do not work with classic `api.js?render=` (that exact error) and cannot be verified at `siteverify`, which the api and the legacy app both use; the staging key, which works on previews, was created in the classic admin. Asked the user where "remonta-api" was created; if Enterprise, create it again at the classic admin (v3, `app.remontaservices.com.au`) and repeat secret v5 / Vercel / redeploys / console test.
+
+**Action (2026-10-02):** Both secrets (new `6LdcDNst`, staging `6LdsuNgt`) are classic keys: Google's `siteverify` answers `invalid-input-response` for a dummy token (an Enterprise secret would give `invalid-input-secret`), so the Enterprise theory is out. No other code on the worker page loads the reCAPTCHA script, and the live page in legacy mode carries none, so the console test is clean. The remaining explanation for `grecaptcha.execute` -> "Invalid site key or not loaded in api.js" on a classic key is that the key is **v2** ("Challenge") rather than **v3** ("Score based"): `execute` exists only for v3 keys. Asked the user to check the key's type in the classic admin; a control test with the staging key on the production domain should fail with "Invalid domain", proving the snippet; if "remonta-api" is v2, create it again choosing "Score based (v3)".
+
+**User input (2026-10-02):** screenshot `Screenshot 2026-10-02 181804.png` -- the classic admin shows the `remonta-api` key as "reCAPTCHA type: v3" (with a "View in Cloud Console" link, i.e. a classic key associated with the Cloud project).
+
+**Action (2026-10-02):** With the key proven classic (siteverify) and v3 (admin), the remaining explanation for the console failure is the test itself: the script was loaded earlier in the same tab with another key (`api.js?render=6LeTjvEr…`), and a second `api.js` with a different `render=` does not register a client for the new key -- `execute(newKey)` then reports "not loaded in api.js". The new v3 key has never been tried in the real form (the 09:43 attempt used the v2 key). Asked the user to open a fresh private window and run the snippet once with the new key; `TOKEN OK` -> flip.
+
+**User input (verbatim, 2026-10-02):**
+> it says OK now
+
+**Action (2026-10-02, CANARY FLIP #4 at 10:20:40Z):** console test `TOKEN OK` in a clean private window with the new v3 key. Switch `legacy` -> `api` (read back `api`); first fresh fetch of the live page: api mode, site key `6LdcDNst…` (the new pair, matching secret v4 on revision 00003). Watching the production api log for the test sign-up.
+
+**Action (2026-10-02, the test sign-up on the production api):** the log watch saw the user's browser: email-availability 200, email-codes 202 (10:21:38, then again at 10:23:19, 10:25:31, 10:26:25 -- the user restarted/changed address), email-codes/verify 200 (10:23:47, 10:25:42, 10:26:36), photo 201 (10:26:02), and `POST /v1/registrations/worker -> 202` at 10:26:47Z. Verifying the written rows, the outbox delivery and the application log.
+
+**Action (2026-10-02, VERIFIED -- the first production sign-up on apps/api):** one user created at 10:26:48Z (internal address cl***@remontaservices.com.au, role WORKER, ACTIVE); profile "Test", legacy columns dual-written ("Christmas Island, OT 6798", lat/lng set), photo URL set, consent v1; two services with sub-categories; HOME location (locality 9386, LOCALITY precision, source REGISTRATION, radius 50, `point` set); onboarding marker SIGNED_UP with its opening transition (cause WorkerRegistered, source API); the staged photo claimed by the profile (image/jpeg, 257 KB), no unclaimed photo left; audit `ACCOUNT_REGISTERED` with request id and `breachedPasswordCheck: clear`, followed by a `LOGIN_SUCCESS` -- the user signed in to the new account at once (R2); outbox `WorkerRegistered` DONE after 1 attempt at 10:26:49Z (the welcome email went through Resend). Every row the transaction promises is present. Production sign-up is LIVE on apps/api; the switch stays `api`; rollback = the key to `legacy`.
+
+**User input (2026-10-02):**
+> The forms and api works noW! hoWEVER I noticed something on the console. the localhost saves this
+> `{event: "session", data: {trigger: "getSession"}, timestamp: 1790937322}`
+> , can it be deleted?
+
+**Action (2026-10-02):** Answered: that is NextAuth's own `nextauth.message` entry in browser storage, written whenever the session is read so other open tabs of the app stay in sync; it holds no personal data (an event name, a trigger and a timestamp), every NextAuth app has it, and it is not written by our code. Not worth removing: it would mean patching NextAuth or dropping the session provider from the sign-up page (the photo component reads the session). Left as is.
+
+**User input (verbatim, 2026-10-02):**
+> I think the sign up api is now working, can you delete the test codes that we have used for this feature? check first
+
+**Action (2026-10-02):** Inventory before deleting anything (no deletion done). Production: (1) the test worker account of 10:26Z (user, profile, 2 services, HOME location, onboarding marker + transition, 2 audit rows, 1 DONE outbox event, the claimed photo row and its blob in the production Blob store) -- the app has no admin delete route; deleting the user cascades through profile, services, locations, onboarding and transitions; audit rows and the photo claim are set to null by FK; the outbox row (payload only) and the blob need explicit deletion; (2) the assistant's probe photo of 08:5xZ, unclaimed -- the daily purge job deletes blob and row after 24 h, nothing to do; (3) rate-limit buckets -- purged by the 10-minute job. Repository: (4) `features/forms/legacy/worker/` + the `legacy` branches of the definition and switch -- these ARE the rollback; recommended keeping them until the canary is accepted (a week of real sign-ups); (5) `apps/app/src/lib/auth-prisma.ts` omit of the three S1 columns -- safe to remove now in its own PR; (6) no throw-away test code was added to the repo for this feature (the automated tests stay). This machine: (7) the backfill reports and log files in the session scratchpad hold worker ids and legacy addresses -- delete once the 70 unplaced workers have been reviewed (the list is in the locations report). Asked the user to choose.
+
+**User input (verbatim, 2026-10-02):**
+> I mean on the apps/api there are a test.ts files, can it be deleted
+
+**Action (2026-10-02):** Advised against: the `test/**/*.test.ts` files in apps/api are the automated test suite (23 files, 373 tests: unit, property-based and PostGIS-backed), run by the API Quality workflow on every PR and before every staging deploy; they are the gate CLAUDE.md relies on and they caught a real regression today (the outbox payload schema). Deleting them would leave compile-only checks. Nothing deleted.
+
+**User input (verbatim, 2026-10-02):**
+> ahh, so I am going to start a new ai dlc, can you delete the states and all files related to the dlc for the signup workflow
+
+**Action (2026-10-02):** Closed the Slice 1 cycle the way the monorepo cycle was closed: `git mv` of `aidlc-docs/inception/`, `aidlc-docs/construction/` and `aidlc-docs/aidlc-state.md` into `aidlc-docs/archive/s1-worker-registration/` (history kept; nothing deleted from git), a fresh `aidlc-docs/aidlc-state.md` for the next cycle (previous cycles table; "what is live" facts to build on; the open follow-ups; empty stage checklist), and `audit.md` continues unchanged (append-only across cycles). Repointed every reference to the moved files: CLAUDE.md (preview plan, preview record, new-machine checkout, AI-DLC paragraph), `infra/README.md`, the `deploy-api.yml` and `ci-supply-chain.yml` comments, `scripts/setup-new-machine.sh`. Branch `aidlc/archive-s1` (on top of `fix/photo-preview-thumbnail`).
+
+**User input (verbatim, 2026-10-02):**
+> how about the aidlc-state? can it be deleted?
+
+**Action (2026-10-02):** Answered: two files now carry that name. The new `aidlc-docs/aidlc-state.md` must stay -- it is how a session resumes ("continue the AI-DLC"), and CLAUDE.md and the new-machine script point at it; the new cycle overwrites its contents. The archived copy under `archive/s1-worker-registration/` is the closing snapshot of the finished cycle (the monorepo cycle kept its own the same way); it can be deleted if unwanted since git history keeps it, but recommended keeping it. No change made.
+
+**User input (verbatim, 2026-10-02):**
+> Yeah you can delete it
+
+**Action (2026-10-02):** Deleted the archived closing snapshot `aidlc-docs/archive/s1-worker-registration/aidlc-state.md` (user decision; git history keeps it at 49abb8e). The live `aidlc-docs/aidlc-state.md` stays.
+
+**User input (verbatim, 2026-10-02):**
+> What is the slice ai dlc?
+
+**Action (2026-10-02):** Explained "slice": the strangler approach decided at the start of the backend cycle -- the new api replaces apps/app one business domain (slice) at a time, each with its own switch and rollback; Slice 1 = worker registration (done, live); the candidates for Slice 2 are listed in the new state file (search/location readers first), and the AI-DLC phases (Inception -> Construction) run per slice.
+
+## 2026-10-02 -- New cycle started
+
+**User input (verbatim, 2026-10-02):**
+> start ai dlc
+
+**AI action (2026-10-02, Workspace Detection):** `aidlc-docs/aidlc-state.md` exists with "INCEPTION -- not started" (the fresh file written at the S1 close-out), so this is the start of the new cycle, not a resume. Brownfield: pnpm + Turborepo monorepo, TypeScript, `apps/{app,web,api}`, `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`. `aidlc-docs/inception/reverse-engineering/` is empty; the archived S1 analysis (2026-09-25, HEAD `8e530c1`) predates `apps/api`, `packages/api-contract`, `packages/form-engine` and `infra/`, so it is stale for those and current only for the untouched `apps/app` domains. As in the previous cycle, the Reverse Engineering decision is deferred until the cycle's intent is known. Repository state noted: branch `aidlc/archive-s1` carries 12 commits not on `main` (close-out audit, archive move, and the photo-preview thumbnail code change `55d52db`); `origin/main` = `461eccd`; no PR open. State file updated (start date, stage, workspace state, Workspace Detection ticked).
+
+**Questions presented (2026-10-02):** `aidlc-docs/inception/requirements/cycle-kickoff-questions.md`, three questions: Q1 the cycle's intent (Slice 2 search on PostGIS / another domain onto apps/api / S1 close-out and hardening / security and housekeeping / other feature); Q2 the Reverse Engineering mode (targeted refresh / full re-run / skip); Q3 what to do with the unmerged `aidlc/archive-s1` branch (PR and merge now, recommended / PR but keep stacking / leave). Waiting for answers.
+
+**User input (verbatim, 2026-10-02):**
+> ahh. I want to fix something on the registration/worker. I noticed that the answers to the form is being save to the localhost. If I close the browser and go to the registration/worker, the answers are still there. Can you design a system that deletes it instead? I don't want to save an answer to a localhost
+
+**AI action (2026-10-02, Requirements Analysis, minimal depth):** Intent received; recorded as kick-off Q1 = E in `cycle-kickoff-questions.md`. Request type: enhancement/fix; scope: single component (the form engine's draft and the browser adapter in `apps/app/src/features/forms`); complexity: simple. Read the code: `packages/form-engine/src/draft.ts` saves values+step as one JSON entry 500 ms after each change through a platform-supplied store, expires it after 23 h and clears it on success; `apps/app/src/features/forms/adapters/browser.ts` supplies `window.localStorage`, which is why the answers survive closing the browser; `neverSaved` strips the password and the email verification; the photo thumbnail and staged photo id are saved; the legacy page saves nothing; `docs/signup/01-flow.md` documents the localStorage behaviour. Reverse Engineering: skip proposed (kick-off Q2 = C), final decision at Workflow Planning. Kick-off Q3 (the unmerged branch) moved into the new question file so one file is answered.
+
+**Questions presented (2026-10-02):** `aidlc-docs/inception/requirements/requirement-verification-questions.md`, six questions: Q1 what replaces localStorage (sessionStorage, recommended / memory only / localStorage cleared on pagehide, not recommended); Q2 one-time deletion of drafts already stored under the old key (yes, recommended / let them expire); Q3 the unmerged `aidlc/archive-s1` branch (PR and merge now, recommended / PR but keep stacking / leave); Q4-Q6 the Security, Resiliency and PBT extension opt-ins with the S1 choices noted. State file: project named, stage set to Requirements Analysis. Waiting for answers.
+
+**User input (verbatim, 2026-10-02):**
+> ANSWERED
+
+**AI action (2026-10-02, answers read):** V1 A (sessionStorage), V2 A (delete the old localStorage entry on the next visit), V3 A (PR and merge `aidlc/archive-s1` first, then a fresh branch from `main`), V4 A (Security baseline: yes, blocking), V5 A (Resiliency baseline: yes, blocking), V6 B (PBT partial). No contradictions. Extension rule files loaded (security-baseline, resiliency-baseline, property-based-testing). The resiliency baseline's RTO/RPO, change-management, tooling, rollback and topology questions were not re-asked: they were decided in Slice 1 (NFR-RES-01..04, OI-06: SLA 99.9 %, RTO <= 30 min, RPO <= 5 min, CLAUDE.md process, GitHub Actions/Vercel, single region multi-zone) and this cycle changes no deployed component; the baseline itself says to conform to an existing process rather than redefine it.
+
+**AI action (2026-10-02, Requirements Analysis complete):** wrote `aidlc-docs/inception/requirements/requirements.md` (minimal depth): intent analysis; what the code does today; decisions D1-D7; FR-01..07 (empty form after a closed browser; refresh in the same tab still restores; old key deleted on next load; engine unchanged; storage-less browsers unaffected; legacy page untouched; docs updated); NFR-01..05 (privacy, no new dependency/contract/schema, one-line rollback, tests incl. a PBT round-trip, quality gates and the CLAUDE.md PR process); extension compliance at this stage (Security: N/A or unchanged throughout, compliant on 09/10/11/13; Resiliency: 01-04 inherited, 05-09 N/A; PBT: 02/03/07 to do at Code Generation, 08/09 compliant via fast-check 4.9 already in both packages); acceptance checklist for the preview. Extension Configuration recorded in the state file.
+
+**AI action (2026-10-02, Workflow Planning complete):** wrote `aidlc-docs/inception/plans/execution-plan.md`. Risk Low (isolated, browser-only, one-line revert). Stages: Reverse Engineering SKIP, User Stories SKIP, Application Design SKIP, Units Generation SKIP, Functional/NFR/Infrastructure Design SKIP; Code Generation and Build and Test EXECUTE. Pre-step per V3 A: PR and merge of `aidlc/archive-s1`, then branch `fix/signup-draft-session-storage` from `main`. Package sequence: form-engine (comment + PBT tests, no logic change) and apps/app (adapter + test + docs/signup/01-flow.md) in one PR. State file updated.
+
+**Approval prompt presented (2026-10-02):** "Workflow Planning Complete. Review `aidlc-docs/inception/plans/execution-plan.md`. Request changes, or approve and continue to Code Generation. Separately: open and merge the PR for `aidlc/archive-s1` (compare URL given; `gh` is not installed on this machine, so the PR is created in the browser)."
