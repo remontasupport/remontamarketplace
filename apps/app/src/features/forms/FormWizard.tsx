@@ -12,6 +12,7 @@ import { SERVICE_OPTIONS } from "@/constants";
 import { transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
 import { useServiceCategories } from "./adapters/useServiceCategories";
 import { useLocalitySearch } from "./adapters/useLocalitySearch";
+import { previewKeyOf } from "./photoPreview";
 import { useEmailCode, verificationError } from "./useEmailCode";
 import { useFormWizard } from "./useFormWizard";
 
@@ -105,24 +106,7 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
     case "services":
       return <ServicesSlot field={field} control={control} backend={backend} error={error ?? errorOf(errors, field.subcategoriesName)} />;
     case "photo":
-      return (
-        <Controller
-          name={field.name}
-          control={control}
-          render={({ field: f }) => (
-            <PhotoField
-              label={field.label ?? "Photo"}
-              hint={field.hint}
-              // legacy: the value is the uploaded URL; api: an id, so there is no URL to show
-              previewUrl={backend.mode === "legacy" ? (f.value as string) || undefined : undefined}
-              alreadyUploaded={backend.mode === "api" && !!f.value}
-              upload={uploader}
-              onChange={(v) => f.onChange(v ?? "")}
-              error={error}
-            />
-          )}
-        />
-      );
+      return <PhotoSlot field={field} control={control} backend={backend} uploader={uploader} wizard={wizard} error={error} />;
     case "consent":
       return (
         <Controller
@@ -214,6 +198,39 @@ function ServicesSlot({ field, control, backend, error }: { field: Extract<Field
         subs.field.onChange(c);
       }}
       error={error}
+    />
+  );
+}
+
+type PhotoDef = Extract<FieldDef, { kind: "photo" }>;
+
+/**
+ * legacy: the value is the uploaded URL, so it is the preview. api: the value is a
+ * staged id with no URL; the preview is the thumbnail kept under the companion
+ * key (photoPreview.ts), which survives the step remount and the draft. Removing
+ * the photo clears both.
+ */
+function PhotoSlot({ field, control, backend, uploader, wizard, error }: { field: PhotoDef; control: Control<Values>; backend: Backend; uploader?: (file: File) => Promise<string>; wizard: Wizard; error?: string }) {
+  const previewKey = previewKeyOf(field.name);
+  const thumbnail = useWatch({ control, name: previewKey }) as string | null | undefined;
+  return (
+    <Controller
+      name={field.name}
+      control={control}
+      render={({ field: f }) => (
+        <PhotoField
+          label={field.label ?? "Photo"}
+          hint={field.hint}
+          previewUrl={backend.mode === "legacy" ? (f.value as string) || undefined : f.value ? thumbnail || undefined : undefined}
+          alreadyUploaded={backend.mode === "api" && !!f.value}
+          upload={uploader}
+          onChange={(v) => {
+            f.onChange(v ?? "");
+            if (!v) wizard.form.setValue(previewKey, null, { shouldValidate: false, shouldDirty: true });
+          }}
+          error={error}
+        />
+      )}
     />
   );
 }
