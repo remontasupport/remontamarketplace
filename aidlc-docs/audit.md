@@ -2125,3 +2125,8 @@ Reported the position and the pending decisions; no code changed.
 > I will be using another device, and I want to make sure all the codes and changes will be applied to the device, can you make sure it is on the repo
 
 **Action (2026-10-02):** Checked: `s1/preview-run-1` is identical to `origin/main` (PR #23, cd6d537) apart from this audit file; no stashes or unpushed commits on the S1 branches. Committed the pending audit entries on `s1/handoff-audit` (from `origin/main`) and pushed it. Not in git by design: `apps/app/.env`, `apps/app/.env.local`, `apps/api/.env` (restore from backup on the new device).
+
+**User input (verbatim, 2026-10-02):**
+> Can we continue the AI DLC now? scan codebase and see where we at left
+
+**Action (2026-10-02):** Resumed on the new device. Checked: all S1 branches merged into `main` (last merge 55f1cfd, PR #24), including `fix/cloudrun-fresh-revision-per-deploy`; `aidlc/q1-preview-scope` (2 docs commits) is the only unmerged S1-era branch, `fix/services-loading-spinner` is 0 ahead. Staging api: `/v1/health` 200, localities return ids. Production sign-up: legacy page (fresh MISS, no `run.app` in the HTML). This device: the three secret files present, Node 24.21, pnpm 9.15.9, `node_modules` installed, no Docker. Rewrote the "PENDING RIGHT NOW" block of `aidlc-state.md` for 2026-10-02 (steps 1-2 of the 2026-10-01 list done; next = the user-run preview checklist items 1, 4-7, then production prep; CRM deprioritised but still needed before the flip).

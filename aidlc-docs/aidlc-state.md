@@ -4,13 +4,47 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration. Production sign-up on the pre-S1 legacy page. `apps/api` **staging is live on Google Cloud Run** (2026-10-01); next: the fresh-revision PR, then Vercel Preview pointed at staging and the preview checklist. See "PENDING RIGHT NOW" under Resume here.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration. Production sign-up on the pre-S1 legacy page. `apps/api` **staging is live on Google Cloud Run**; every sign-up call of the api-mode form goes to it; Vercel Preview points at it. Next: the user-run preview checklist (items 1, 4-7), then production prep. See "PENDING RIGHT NOW" under Resume here.
 
 ## Resume here (rewritten 2026-09-30, end of session)
 
 **Standing instruction (user, 2026-09-28):** no other work until `apps/api` is deployed and in use. Everything below is on that path only.
 
-### PENDING RIGHT NOW (2026-10-01 -- read this first)
+### PENDING RIGHT NOW (2026-10-02 -- read this first)
+
+**Position (re-checked 2026-10-02 from a new device):** every S1 branch is in `main` (PRs #20-#24; last merge 55f1cfd),
+including `fix/cloudrun-fresh-revision-per-deploy` (step 1 of the 2026-10-01 list, done: deploy-api runs 4 and 5 green).
+Staging api healthy (`/v1/health` 200, `/v1/localities?q=parram` rows with ids). Production sign-up still the legacy
+page (fresh `MISS`, no `run.app` in the HTML). Vercel Preview scope set to the staging api on 2026-10-01 (step 2, done).
+PR #22 put the last two form calls (suburb search, services list) on apps/api, so the preview form is 100 % apps/api.
+`EMAIL_FROM` = `Remonta <community@remontaservices.com.au>` on staging since deploy-api run 5. **CRM/n8n notification
+deprioritised by the user (2026-10-01)** -- no longer a gate before the preview checks; still needed before any
+production flip, because api-mode sign-ups would otherwise never reach Zoho.
+
+**Next, in order:**
+1. **The preview checklist, run by the user** on the latest preview (any PR preview from `main` now; the previews are
+   behind Vercel protection, not reachable from here). Done: 2, 3, 8; 5 partial (code email arrived). Open: 1 (sign in
+   with a staging-only user, open a dashboard), 4 (photo upload), 5 (full sign-up with an internal email: account
+   created, audit row, outbox `DONE`, admin list), 6 (duplicate-email notice), 7 (rollback drill: Preview
+   `REGISTRATION_BACKEND=legacy` renders the old page). Record each in `S1-registration/preview-verification.md`.
+2. Production prep, only on the user's go: the production database run per `S1-production-run.md`; prod secrets
+   (`remonta-api-<NAME>`: prod DB string, a prod reCAPTCHA key for `app.remontaservices.com.au`, IP hash, Resend,
+   Blob); `workflow_dispatch` stage=prod with the sha that passed the checklist; checks with the switch off; Vercel
+   Production gets `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; Resend SPF/DKIM/DMARC for
+   `community@remontaservices.com.au`.
+3. The CRM notification (outbox handler to a test n8n webhook) before the canary flip of `switch:registration`.
+4. After cut-over: delete `features/forms/legacy/worker/`, remove the `lib/auth-prisma.ts` omit once the S1
+   migrations are on production, re-record the Vercel rollback ids in CLAUDE.md.
+
+**Housekeeping still open:** rotate the exposed keys (production Blob token, Prisma Accelerate key, `rehearse-w1`
+role password); the 10 codes/h per IP decision; `aidlc/q1-preview-scope` (docs, 2 commits) and
+`fix/services-loading-spinner` (0 commits ahead -- can be deleted) are the only non-merged S1-era branches.
+
+**This device (2026-10-02):** the three secret files are present; Node 24.21, pnpm 9.15.9, `node_modules` installed;
+**no Docker**, so the api's and `@remonta/db`'s database tests are skipped locally (CI runs them with PostGIS). Clean
+tree on `main` apart from regenerated Prisma clients (never commit them).
+
+### Superseded 2026-10-02 (kept for the record): the 2026-10-01 pending list
 
 **Staging api is LIVE (2026-10-01):** `https://remonta-api-staging-154148201608.australia-southeast1.run.app`
 (Cloud Run, `australia-southeast1`, project `remonta-api-510206`, against the `rehearse-w1` Neon branch). Checked:
