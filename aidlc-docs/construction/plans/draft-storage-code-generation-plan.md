@@ -34,32 +34,35 @@ export function browserStore(formId: string, host: StorageHost | null = defaultH
 
 ## Steps
 
-- [ ] **Step 1 -- Adapter (apps/app).** Modify `apps/app/src/features/forms/adapters/browser.ts`: `StorageHost`,
+- [x] **Step 1 -- Adapter (apps/app).** Modify `apps/app/src/features/forms/adapters/browser.ts`: `StorageHost`,
   `browserStore(formId, host?)` as designed, comment explaining why session storage and the clean-up. FR-01, 02, 03,
   05; NFR-01, 02.
-- [ ] **Step 2 -- Wire the call site.** Modify `apps/app/src/features/forms/useFormWizard.ts`: pass `def.id`,
+- [x] **Step 2 -- Wire the call site.** Modify `apps/app/src/features/forms/useFormWizard.ts`: pass `def.id`,
   depend on it in `useMemo`. No other change. FR-04.
-- [ ] **Step 3 -- Adapter tests (apps/app, example-based).** Create
+- [x] **Step 3 -- Adapter tests (apps/app, example-based).** Create
   `apps/app/src/features/forms/adapters/browser.test.ts` (node environment, fake hosts): returns the session store;
   returns `null` without a host; returns `null` when the session-storage getter throws; removes the old key from
   `localStorage` and leaves other keys; survives a `localStorage` getter that throws; a draft saved through the
   returned store lands in the session store only. FR-01, 03, 05.
-- [ ] **Step 4 -- Engine tests (packages/form-engine, property-based).** Modify
+- [x] **Step 4 -- Engine tests (packages/form-engine, property-based).** Modify
   `packages/form-engine/test/engine.test.ts`: in "draft on the device", add (a) PBT-02 round-trip: for generated
   drafts (realistic values: text, phone-like strings, booleans, string arrays, locality-like objects, a data-URL-like
   string; step 0..9; `neverSaved` keys drawn from the value keys), `loadDraft(saveDraft(d))` equals `d` minus the
   `neverSaved` keys when read in the same mode within 23 h; (b) PBT-03 invariant: no `neverSaved` key is ever present
   in the stored JSON or in the loaded values. Generators per PBT-07; `fc.assert` default shrinking and seed reporting
   per PBT-08. Existing example-based tests stay (PBT-10). No logic change in `src/`.
-- [ ] **Step 5 -- Engine comment.** Modify the header comment of `packages/form-engine/src/draft.ts`: the platform
+- [x] **Step 5 -- Engine comment.** Modify the header comment of `packages/form-engine/src/draft.ts`: the platform
   supplies the storage; in the browser it is the tab's session storage, so nothing outlives the tab. FR-07.
-- [ ] **Step 6 -- Documentation.** Modify `docs/signup/01-flow.md` "What the page keeps between visits": progress
+- [x] **Step 6 -- Documentation.** Modify `docs/signup/01-flow.md` "What the page keeps between visits": progress
   is kept for the tab's session only (refresh restores; closing the tab or browser clears it; a draft left by the
   previous release in `localStorage` is deleted on the next visit). FR-07.
-- [ ] **Step 7 -- Quality gates.** `pnpm --filter @remonta/form-engine run quality`,
+- [x] **Step 7 -- Quality gates.** `pnpm --filter @remonta/form-engine run quality`,
   `pnpm --filter @remonta/app run quality`, `npx turbo run build`. Check `git diff --ignore-all-space --numstat` for
   regenerated Prisma clients and revert them if content-free (CLAUDE.md trap). NFR-05.
-- [ ] **Step 8 -- Summary.** Write `aidlc-docs/construction/draft-storage/code/draft-storage-summary.md`: files
+  *Result 2026-10-02: form-engine and app gates pass; `turbo run build` blocked locally by the running `next dev`
+  server holding the Prisma engine (EPERM) and stopping it was not permitted -- the build is proven by CI and the
+  Vercel preview. Generated Prisma files were already modified before this cycle and are not staged (see summary).*
+- [x] **Step 8 -- Summary.** Write `aidlc-docs/construction/draft-storage/code/draft-storage-summary.md`: files
   modified/created, tests added, extension compliance (Security, Resiliency, PBT) at Code Generation, what Build and
   Test must verify on the preview (`requirements.md` §8).
 

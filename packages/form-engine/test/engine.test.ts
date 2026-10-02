@@ -8,6 +8,7 @@ import {
   clearDraft,
   defaultsOf,
   defineForm,
+  draftKey,
   formSchemaFor,
   keysOfStep,
   loadDraft,
@@ -179,6 +180,49 @@ describe("draft on the device", () => {
     const s = new MemoryStore();
     saveDraft(s, form.id, { mode: "api", step: 1, values: filled }, [], 0);
     expect(loadDraft(s, form.id, "api", ["password"], 1)!.values.password).toBeUndefined();
+  });
+
+  // Property-based (PBT-02 round-trip, PBT-03 invariant). The generators produce
+  // what a real form holds -- names, phone-like strings, booleans, id lists, a
+  // locality object, a small data-URL -- not arbitrary JSON (PBT-07).
+  const fieldName = fc.constantFrom("firstName", "lastName", "mobile", "email", "password", "services", "supportWorkerCategories", "localityId", "photoUploadId", "photoUploadId__preview", "consentProfileShare", "zohoLeadId");
+  const fieldValue = fc.oneof(
+    fc.string({ minLength: 0, maxLength: 60 }),
+    fc.constantFrom("0412 345 678", "+61 412 345 678", "mary@example.com", "Str0ng!pass", "José O'Neil"),
+    fc.boolean(),
+    fc.array(fc.constantFrom("support-worker", "cleaner", "gardener", "personal-care"), { maxLength: 4 }),
+    fc.record({ id: fc.integer({ min: 1, max: 20_000 }), name: fc.string({ minLength: 1, maxLength: 30 }), state: fc.constantFrom("NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT", "OT"), postcode: fc.stringMatching(/^[0-9]{4}$/) }),
+    fc.base64String({ minLength: 16, maxLength: 200 }).map((b) => `data:image/jpeg;base64,${b}`),
+  );
+  const draftValues = fc.dictionary(fieldName, fieldValue, { minKeys: 1, maxKeys: 8 });
+  const mode = fc.constantFrom("api", "legacy") as fc.Arbitrary<"api" | "legacy">;
+  const generatedDraft = fc
+    .record({ values: draftValues, step: fc.integer({ min: 0, max: 9 }), mode, savedAt: fc.integer({ min: 0, max: 2_000_000_000_000 }), age: fc.integer({ min: 0, max: 23 * 3_600_000 }) })
+    .chain((d) => fc.subarray(Object.keys(d.values)).map((neverSaved) => ({ ...d, neverSaved })));
+
+  it("round-trips any draft read in the same mode within 23 h, minus the neverSaved keys (PBT-02)", () => {
+    fc.assert(
+      fc.property(generatedDraft, ({ values, step, mode, savedAt, age, neverSaved }) => {
+        const s = new MemoryStore();
+        saveDraft(s, form.id, { mode, step, values }, neverSaved, savedAt);
+        const expected = Object.fromEntries(Object.entries(values).filter(([k]) => !neverSaved.includes(k)));
+        expect(loadDraft(s, form.id, mode, neverSaved, savedAt + age)).toEqual({ v: 1, savedAt, mode, step, values: expected });
+      }),
+    );
+  });
+
+  it("never lets a neverSaved key reach the store or come back from it (PBT-03)", () => {
+    fc.assert(
+      fc.property(generatedDraft, ({ values, step, mode, savedAt, age, neverSaved }) => {
+        const s = new MemoryStore();
+        saveDraft(s, form.id, { mode, step, values }, neverSaved, savedAt);
+        const stored = JSON.parse(s.getItem(draftKey(form.id))!) as { values: Record<string, unknown> };
+        for (const k of neverSaved) expect(stored.values).not.toHaveProperty(k);
+        // ...and a key marked neverSaved only after the draft was written is still stripped on load.
+        const loaded = loadDraft(s, form.id, mode, Object.keys(values), savedAt + age);
+        expect(loaded?.values).toEqual({});
+      }),
+    );
   });
 });
 
