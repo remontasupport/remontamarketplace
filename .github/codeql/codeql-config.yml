@@ -1,0 +1,30 @@
+# CodeQL configuration for the Remonta monorepo (used by .github/workflows/codeql.yml).
+#
+# Query suite: `security-extended` -- the default security queries plus the
+# lower-precision ones. More findings to triage once, in exchange for fewer
+# misses. `security-and-quality` would add code-quality queries that overlap the
+# existing type and lint baselines; not wanted here.
+name: Remonta CodeQL configuration
+
+queries:
+  - uses: security-extended
+
+# What is NOT scanned. Generated and built code is not ours to fix; test code
+# and the load harness run against fakes and would only add noise. Everything
+# under apps/, packages/ and infra/ that ships is scanned.
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/generated/**" # Prisma clients: apps/app/src/generated, apps/web/src/generated, apps/api/generated
+  - "**/dist/**"
+  - "**/.next/**"
+  - "**/coverage/**"
+  - "apps/api/prisma/**" # derived from packages/db at build time
+  - "**/test/**"
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.test.mjs"
+  - "apps/api/load/**" # the k6 burst harness
+  - "apps/app/public/**"
+  - "apps/web/public/**"
+  - ".semgrep/**" # the Semgrep rules' test file holds deliberate violations

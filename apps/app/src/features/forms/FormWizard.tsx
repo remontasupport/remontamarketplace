@@ -12,7 +12,7 @@ import { SERVICE_OPTIONS } from "@/constants";
 import { transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
 import { useServiceCategories } from "./adapters/useServiceCategories";
 import { useLocalitySearch } from "./adapters/useLocalitySearch";
-import { useEmailCode } from "./useEmailCode";
+import { useEmailCode, verificationError } from "./useEmailCode";
 import { useFormWizard } from "./useFormWizard";
 
 type Values = Record<string, unknown>;
@@ -231,7 +231,7 @@ function EmailCodeSlot({ field, backend, wizard, definition, error }: { field: E
       onSend={v.send}
       onVerify={v.verify}
       message={v.message}
-      error={error}
+      error={verificationError(v.availability, error)}
       availability={v.availability}
       signInHref="/login"
     />

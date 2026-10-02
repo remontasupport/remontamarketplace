@@ -61,7 +61,16 @@ you changed. Hundreds of commits means the base is wrong.
 
 `App Quality`, `Web Quality`, `API Quality` (its own PostGIS service container: migrations, the
 suburb list, the db, api-contract, form-engine and api gates), `Supply chain`, `Package boundaries`,
-plus both Vercel previews.
+`CodeQL` and `Semgrep` (code scanning, below), plus both Vercel previews.
+
+**Code scanning.** Two report-only scanners run on every PR and weekly, and post to Security → Code
+scanning: **CodeQL** (`.github/workflows/codeql.yml`, `security-extended`, JavaScript/TypeScript and
+the workflow files; exclusions in `.github/codeql/codeql-config.yml`) and **Semgrep**
+(`.github/workflows/semgrep.yml`: the registry packs for this stack plus this repository's own rules
+in `.semgrep/remonta.yml`; exclusions in `.semgrepignore`). A finding does not fail the check until
+the backlog is triaged; the one step that does fail is `semgrep --test`, which proves each repository
+rule fires on `.semgrep/remonta.ts`. Adding a convention: one rule in `remonta.yml`, one `ruleid:` line
+and one `ok:` line in `remonta.ts`.
 
 ### 5. Verify the preview — this is the step that catches real problems
 

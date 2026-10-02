@@ -1,0 +1,70 @@
+# CodeQL: GitHub's semantic code scanning for the whole monorepo.
+#
+# What it does: builds a database of the JavaScript/TypeScript program and runs
+# the `security-extended` query suite over it -- data-flow queries that follow a
+# value from where it enters (a request body, a query string, a file name) to
+# where it is used (a SQL query, a path, a redirect, an outbound call). The
+# `actions` language scans the workflow files themselves (script injection,
+# untrusted checkout). Findings are code-scanning alerts: annotated on the pull
+# request and listed under Security -> Code scanning.
+#
+# REPORT ONLY at first: a finding does not fail the check, so the existing
+# backlog can be triaged (fix, or dismiss with a reason) before this becomes a
+# required check in branch protection. Exclusions live in .github/codeql/.
+#
+# No build step: CodeQL extracts TypeScript without compiling (build-mode none),
+# so the generated Prisma clients and the Next build output are never needed.
+
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Weekly full scan, so new queries shipped by GitHub are applied to code that
+    # did not change. Monday 02:30 UTC = Monday 13:30 in Sydney.
+    - cron: "30 2 * * 1"
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

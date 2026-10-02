@@ -4,6 +4,7 @@ import { formSchemaFor, toRequestBody } from "@remonta/form-engine";
 import { saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { resolveBackend } from "@/lib/registration-switch";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
+import { verificationError } from "./useEmailCode";
 
 const filled = {
   localityId: { id: 5410, name: "Parramatta", state: "NSW", postcode: "2150" },
@@ -70,6 +71,15 @@ describe("the worker sign-up definition", () => {
         },
       ]);
     });
+  });
+});
+
+describe("the email verification field", () => {
+  it("shows the step's \"verify your email\" error only while the address could be verified: a taken address shows the existing-account notice alone", () => {
+    const error = "Please verify your email address";
+    expect(verificationError("taken", error)).toBeUndefined();
+    for (const a of ["unknown", "checking", "available", "unavailable"] as const) expect(verificationError(a, error)).toBe(error);
+    expect(verificationError("available", undefined)).toBeUndefined();
   });
 });
 
