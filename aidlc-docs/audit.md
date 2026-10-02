@@ -2300,3 +2300,43 @@ Reported the position and the pending decisions; no code changed.
 > VERIFY STEP 3
 
 **Action (2026-10-02):** Step 3 VERIFIED read-only (values never displayed): AUTH_DATABASE_URL v2 = postgresql, host `ep-delicate-recipe-a7mbt4ef-pooler.ap-southeast-2.aws.neon.tech`, db `workerprofiles`, sslmode=require, pooled; RECAPTCHA_SECRET_KEY v2 = 40 chars starting `6Ld`; RESEND_API_KEY v2 = 36 chars starting `re_`; IP_HASH_SECRET v1 64 hex; BLOB_READ_WRITE_TOKEN v1 = staging's; N8N v1 blank. Production secrets complete. Next: step 4, the production database run -- waits for `PRODUCTION_DIRECT_DATABASE_URL` in `apps/api/.env` and the user's go.
+
+**User input (verbatim, 2026-10-02):**
+> wHAT IS THE STEP 4 AGAIN, BE CLEAR ON YOUR INSTRUCTIONS
+
+**Action (2026-10-02):** Restated step 4 plainly: what it is (preparing the production database for the api: 12 migrations, the suburb list, two backfills; adds tables and columns, deletes nothing; rehearsed on the Neon copy), what the user does (one line `PRODUCTION_DIRECT_DATABASE_URL=<direct string>` in `apps/api/.env`, with where to copy the direct string from in Neon), what the assistant does, the two approval stops, and the rollback (12 down scripts, rehearsed).
+
+**User input (verbatim, 2026-10-02):**
+> THE BRANCH NAME IN THE NEON FOR PRODUCTION IS authentication, is that what I am going to copy the string from?
+
+**Action (2026-10-02):** Answered: very likely yes, but the branch name is not the proof -- the host is. The production auth database is the endpoint `ep-delicate-recipe-a7mbt4ef` (read from the live app's AUTH_DATABASE_URL and the production secret); if the `authentication` branch's Direct connection string shows that host and database `workerprofiles`, it is the right one; if it shows a different `ep-…`, stop and tell me.
+
+**User input (verbatim, 2026-10-02):**
+> Do i need to remove the -pooler?
+
+**Action (2026-10-02):** Answered: for step 4 the line must be the DIRECT string, which has no `-pooler` -- Neon's "Direct connection" toggle gives it; removing `-pooler` by hand from the pooled string gives the same result. Reason: migrations and the backfills need a direct (non-PgBouncer) connection; the api service itself keeps the pooled one (already in the secret).
+
+**User input (verbatim, 2026-10-02):**
+> saved. before running, what will happen? explain in simple terms
+
+**Action (2026-10-02):** Preflight (read-only, host names only): `PRODUCTION_DIRECT_DATABASE_URL` present, host `ep-delicate-recipe-a7mbt4ef.ap-southeast-2.aws.neon.tech`, db `workerprofiles`, direct (no `-pooler`), sslmode=require; differs from the rehearsal endpoint; `AUTH_DATABASE_URL` still local. Explained step 4 in plain terms before running; nothing executed against production yet.
+
+**User input (verbatim, 2026-10-02):**
+> run the database
+
+**Action (2026-10-02, production database run, steps 1-2 read-only):** target host `ep-delicate-recipe-a7mbt4ef` (refused if it equalled the rehearsal endpoint; it does not). `migrate:status`: the 12 S1 migrations pending, the 3 pre-baseline names known only to the database -- exactly the rehearsal picture. Counts: users 1,898 / worker_profiles 1,821 / verification_requirements 10,236 (rehearsal copy of 2026-09-28: 1,865 / 1,789 / 10,112 -- growth since, as expected). PostGIS not installed (so the `s1_postgis` reverse script applies on rollback); `ACCOUNT_REGISTERED` audit rows 0; no S1 table exists yet. STOPPED for the user's "go" before step 3 (migrate).
+
+**User input (verbatim, 2026-10-02):**
+> go
+
+**Action (2026-10-02, production database run, steps 3-5):** step 3 `migrate:deploy` 06:42:54Z-06:43:30Z, all 12 applied; after: PostGIS 3.5.0, the 8 S1 tables present, app counts unchanged (users 1,898 / profiles 1,821; verification_requirements 10,238, +2 from live activity). Step 4 suburb list: dry-run plan hash `074d18238f0f0465` (identical to the rehearsal), applied at 06:44:14Z-06:44:29Z `--by=clent.b`; `au_localities` 15,467 rows, all current, all with `point`; Parramatta NSW 2150 = id 5410. Step 5 dry runs (reports kept outside the repo in the session scratchpad -- they hold worker ids and addresses): locations -- 1,821 without a HOME, 1,751 matched (1,095 by the form's string, 608 by the columns, 32 suburb-in-text, 1 wrong state, 15 single-suburb postcode), 60 ambiguous, 10 unmatched (3 empty, 2 overseas, 1 Fiji, 1 Nigeria, 3 unparseable); onboarding -- 1,821 without a marker: SIGNED_UP 941, DOCUMENTS_IN_PROGRESS 20, DOCUMENTS_SUBMITTED 744, ACTION_REQUIRED 105, VERIFIED 11, PUBLISHED 0; 1,421 markers use the last sign-in as the first sign-in. (The onboarding dry run and the count failed once with "can't reach database server" when three processes opened the direct endpoint at once; retried sequentially, fine.) STOPPED for the user's review ("apply").
+
+**User input (verbatim, 2026-10-02):**
+> Ok, what to do next?
+
+**Action (2026-10-02):** Answered: the run is paused at the review stop; the next action is the user's word "apply" (writes the two backfills, then the idempotence re-run and the live suburb check), or any question about the 70 unplaced workers first. Nothing was executed.
+
+**User input (verbatim, 2026-10-02):**
+> apply
+
+**Action (2026-10-02, production database run, steps 7-9 -- COMPLETE):** step 7 locations apply 07:11:12Z-07:14:55Z: 1,751 written, 0 failed, 60 ambiguous + 10 unmatched left unplaced; onboarding apply 07:14:55Z-07:15:16Z: 1,821 written (941/20/744/105/11/0). Step 8 re-runs: locations "already placed 1751, written 0"; onboarding "already had a marker 1821, written 0". Row verification: worker_locations 1,751 rows, all HOME, all source BACKFILL, none without `point`; worker_onboarding 1,821 rows over 5 stages; 1,821 opening transitions; 70 profiles without a HOME (the reviewed list); users 1,898 / profiles 1,821 unchanged. Step 9: `app.remontaservices.com.au/api/suburbs?q=parra` 200, rows with ids (Parramatta = 5410), no nulls -- the live suburb search now reads `au_localities`. Follow-up noted: `apps/app/src/lib/auth-prisma.ts` omits the three S1 columns (PR #18) because production lacked them; it can now be removed in its own PR. Dashboard/sign-in check: the user's.
