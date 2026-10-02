@@ -5,7 +5,7 @@
 // than 429 is permanent (bad address, unverified sender): retrying cannot help.
 import * as z from 'zod'
 import type { SafeHttpClient } from '../http/safe-http-client'
-import { PermanentFailure } from '../outbox/outbox'
+import { PermanentFailure } from '../errors'
 
 export interface Email {
   to: string

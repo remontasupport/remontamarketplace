@@ -6,7 +6,7 @@ import type { Db } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
 import { initialMarker, type Approximation, type LegacyRequirement } from './domain/initial-marker'
 import { STAGES, type Stage } from './domain/stage'
-import { createInitialMarkers, REQUIREMENT_SELECT, type LegacyWorker } from './reconciler'
+import { createInitialMarkers, REQUIREMENT_SELECT, type LegacyWorker } from './markers'
 
 export interface OnboardingBackfillReport {
   apply: boolean

@@ -21,6 +21,13 @@ PR #22 put the last two form calls (suburb search, services list) on apps/api, s
 deprioritised by the user (2026-10-01)** -- no longer a gate before the preview checks; still needed before any
 production flip, because api-mode sign-ups would otherwise never reach Zoho.
 
+**In flight (2026-10-02): PR for `s1/api-structure`** -- the apps/api review the user asked for before the preview
+checks: two bug fixes (the reconciler/backfill postcode regex that never matched; the email lookup that compared exact
+case in the sign-up but ignored case in the availability check, letting a pre-api account with capitals be created
+twice), the sign-up transaction split into reusable pieces (events, user lookup, existing-account notice, services
+check, photo claim, onboarding marker), dead code removed (`N8N_WEBHOOK_URL`, `okStatuses`, the `pg` dev dependencies,
+the handler-set casts). Merging it redeploys **staging** only. After it: resume the list below.
+
 **Next, in order:**
 1. **The preview checklist, run by the user** on the latest preview (any PR preview from `main` now; the previews are
    behind Vercel protection, not reachable from here). Done: 2, 3, 8; 5 partial (code email arrived). Open: 1 (sign in

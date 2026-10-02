@@ -28,6 +28,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Thrown by an adapter or an outbox handler when retrying cannot help: a provider
+ * refused the request (an unverified sender, an address it will not deliver to), or
+ * the input is malformed. The outbox sends such an event straight to DEAD instead
+ * of retrying; a synchronous caller turns it into a 500 the client does not retry.
+ */
+export class PermanentFailure extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'PermanentFailure'
+  }
+}
+
 export function errorBody(status: ErrorStatus, requestId: string, fields?: Record<string, string[]>): ErrorResponse {
   return { error: { code: ERROR_CODES[status], message: GENERIC[status], requestId, ...(fields ? { fields } : {}) } }
 }

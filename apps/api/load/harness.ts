@@ -9,7 +9,7 @@ import { defineContract, meta, platformContract, type PublicEndpoint } from '@re
 import bcrypt from 'bcryptjs'
 import * as z from 'zod'
 import { createApp } from '../src/app'
-import { defineHandlers, type HandlerSet } from '../src/platform/contract/handlers'
+import { defineHandlers } from '../src/platform/contract/handlers'
 import { LoadShedder } from '../src/platform/load/load-shedder'
 import { WorkerPoolHasher } from '../src/platform/security/password-hasher'
 
@@ -32,7 +32,7 @@ const sets = [
       return { status: 202, body: {} }
     },
   }),
-] as unknown as HandlerSet[]
+]
 
 const app = await createApp({
   config: { CORS_ORIGINS: ['http://localhost:3000'], TRUST_PROXY: 0, requireHttps: false, NODE_ENV: 'development' },

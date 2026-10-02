@@ -6,7 +6,6 @@ import { createApp } from './app'
 import { loadConfig } from './config/config'
 import { DenyAllAuthenticator } from './platform/auth/authenticator'
 import { RecaptchaV3Verifier } from './platform/captcha/captcha'
-import type { HandlerSet } from './platform/contract/handlers'
 import { SafeHttpClient } from './platform/http/safe-http-client'
 import { OutboxDispatcher } from './platform/outbox/dispatcher'
 import type { OutboxHandler } from './platform/outbox/outbox'
@@ -48,8 +47,8 @@ async function main() {
       // The server's keyed-hash secret also signs the 10-minute email-code tickets.
       codeSecret: config.IP_HASH_SECRET,
     }),
-  ] as unknown as HandlerSet[]
-  // Outbox event handlers by type. The CRM notification is deferred (user, 2026-09-25).
+  ]
+  // Outbox event handlers by type. The CRM notification is deferred (user, 2026-10-01).
   const outboxHandlers: Map<string, OutboxHandler> = notificationHandlers({ db, mailer, appBaseUrl: config.APP_BASE_URL })
 
   const shedder = new LoadShedder({ maxInFlight: config.MAX_IN_FLIGHT, maxEventLoopDelayMs: config.MAX_EVENT_LOOP_DELAY_MS })
@@ -90,6 +89,7 @@ async function main() {
     log.info({ signal }, 'shutting down')
     await scheduler.stop()
     await dispatcher.stop()
+    shedder.stop()
     await hasher.close()
     await app.close()
     await db.$disconnect()

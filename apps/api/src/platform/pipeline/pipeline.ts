@@ -66,7 +66,7 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
 
     // 8. Handler.
     const audit = new RequestAudit({ ip: request.ip, userAgent: request.headers['user-agent'], requestId: request.id })
-    const ctx: HandlerContext = { requestId: request.id, ip: request.ip, userAgent: request.headers['user-agent'], principal, rawBody: request.body, log: request.log, audit }
+    const ctx: HandlerContext = { requestId: request.id, ip: request.ip, principal, rawBody: request.body, log: request.log, audit }
     const result = await handler({ params, query, body, files } as never, ctx)
 
     // 9. Output shaping. A status the contract does not declare, or a body that does

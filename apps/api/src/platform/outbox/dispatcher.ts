@@ -9,7 +9,8 @@
 // PENDING with exponential back-off, and after MAX_ATTEMPTS -> DEAD plus an alert log.
 import type { FastifyBaseLogger } from 'fastify'
 import type { Db } from '../persistence/db'
-import { afterFailure, PermanentFailure, type OutboxEvent, type OutboxHandler } from './outbox'
+import { PermanentFailure } from '../errors'
+import { afterFailure, type OutboxEvent, type OutboxHandler } from './outbox'
 
 export interface DispatcherOptions {
   batchSize?: number

@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { escapeHtml, existingAccountNotice, registrationConfirmation } from '../../src/modules/notifications/templates'
 import { ResendMailer } from '../../src/platform/email/mailer'
 import { SafeHttpClient } from '../../src/platform/http/safe-http-client'
-import { afterFailure, backoffMs, MAX_ATTEMPTS, PermanentFailure } from '../../src/platform/outbox/outbox'
+import { PermanentFailure } from '../../src/platform/errors'
+import { afterFailure, backoffMs, MAX_ATTEMPTS } from '../../src/platform/outbox/outbox'
 
 describe('email templates', () => {
   it('say the account is ready -- never "verify your email"', () => {

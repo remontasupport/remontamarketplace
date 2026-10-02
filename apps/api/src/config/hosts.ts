@@ -10,6 +10,11 @@
 
 const LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i
 
+/** The host pattern of a wildcard origin (`https://*.example.com` -> `*.example.com`), else null. */
+const wildcardHostOf = (origin: string): string | null => /^https:\/\/(\*\.[^/:?#]+)$/.exec(origin)?.[1] ?? null
+
+const isLocalHost = (hostname: string) => hostname === 'localhost' || hostname === '127.0.0.1'
+
 /** A hostname pattern: exact (`app.example.com`) or one leading wildcard label (`*.example.com`). */
 export function isHostPattern(p: string): boolean {
   const labels = p.split('.')
@@ -36,21 +41,25 @@ export function hostAllowed(patterns: readonly string[], hostname: string): bool
 }
 
 /**
- * An origin pattern: an exact origin (`https://app.example.com`, `http://localhost:3000`)
- * or `https://*.example.com`. A wildcard origin must be https and have no port.
+ * An exact origin: `https://app.example.com`, or `http://localhost:3000` (http only
+ * for localhost); no path, no credentials, no wildcard. What APP_BASE_URL must be.
  */
-export function isOriginPattern(o: string): boolean {
-  const wild = o.match(/^https:\/\/(\*\.[^/:?#]+)$/)
-  if (wild) return isHostPattern(wild[1]!)
+export function isExactOrigin(o: string): boolean {
   try {
     const u = new URL(o)
-    const local = u.hostname === 'localhost' || u.hostname === '127.0.0.1'
+    const local = isLocalHost(u.hostname)
     // The URL parser tolerates `*` in a hostname; an exact origin must be a real one.
     const realHost = local || (isHostPattern(u.hostname) && !u.hostname.startsWith('*'))
     return realHost && (u.protocol === 'https:' || (u.protocol === 'http:' && local)) && u.origin === o
   } catch {
     return false
   }
+}
+
+/** An origin pattern: an exact origin, or `https://*.example.com` (https, no port). */
+export function isOriginPattern(o: string): boolean {
+  const wild = wildcardHostOf(o)
+  return wild ? isHostPattern(wild) : isExactOrigin(o)
 }
 
 /** Does a request's Origin header value match one of the patterns? */
@@ -63,8 +72,8 @@ export function originAllowed(patterns: readonly string[], origin: string): bool
   }
   if (u.origin !== origin) return false
   return patterns.some((p) => {
-    const wild = p.match(/^https:\/\/(\*\.[^/:?#]+)$/)
-    if (wild) return u.protocol === 'https:' && u.port === '' && hostMatches(wild[1]!, u.hostname)
+    const wild = wildcardHostOf(p)
+    if (wild) return u.protocol === 'https:' && u.port === '' && hostMatches(wild, u.hostname)
     return p.toLowerCase() === origin.toLowerCase()
   })
 }

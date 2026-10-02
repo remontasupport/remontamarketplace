@@ -22,8 +22,7 @@ import { EMAIL_NOT_VERIFIED } from '../../src/modules/registration/application/r
 import { EMAIL_CODE_TTL_MS, signEmailCode } from '../../src/modules/registration/domain/email-code'
 import { registrationHandlers } from '../../src/modules/registration/registration.handlers'
 import type { Email } from '../../src/platform/email/mailer'
-import { PermanentFailure } from '../../src/platform/outbox/outbox'
-import type { HandlerSet } from '../../src/platform/contract/handlers'
+import { PermanentFailure } from '../../src/platform/errors'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { WorkerPoolHasher } from '../../src/platform/security/password-hasher'
 import { multipart, testApp, unreachableHandlers, type TestApp } from '../helpers'
@@ -83,7 +82,7 @@ describe.skipIf(!local)('registration on PostGIS', () => {
     })
     t = await testApp({
       contracts,
-      handlerSets: [unreachableHandlers(platformContract), handlers as unknown as HandlerSet],
+      handlerSets: [unreachableHandlers(platformContract), handlers],
       publicEndpoints: publicEndpoints as PublicEndpoint[],
     })
   })
@@ -425,6 +424,21 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       expect([x.statusCode, y.statusCode]).toEqual([202, 202])
       expect(x.body).toBe(y.body)
       expect(await db.user.count({ where: { email: b.email } })).toBe(1)
+    })
+
+    it('an account stored with capitals (created before the api) is the same account: no second row, the owner notified', async () => {
+      // apps/app never lower-cased emails; the contract does. The lookup must ignore case
+      // everywhere, or "Mary@..." could sign up again as "mary@...".
+      const stored = `Legacy-${randomUUID().slice(0, 8)}@${DOMAIN}`
+      const legacy = await db.user.create({
+        data: { email: stored, passwordHash: 'x', role: 'WORKER', status: 'ACTIVE', createdAt: new Date(Date.now() - 3_600_000), updatedAt: new Date() },
+      })
+      expect(stored).not.toBe(stored.toLowerCase())
+      const res = await register(await body({ email: stored.toLowerCase() }))
+      expect(res.statusCode).toBe(202)
+      expect(await db.user.count({ where: { email: { equals: stored, mode: 'insensitive' } } })).toBe(1)
+      const types = await db.$queryRaw<{ type: string }[]>`SELECT type FROM outbox_events WHERE payload->>'userId' = ${legacy.id}`
+      expect(types.map((r) => r.type)).toEqual(['RegistrationAttemptOnExistingAccount'])
     })
   })
 

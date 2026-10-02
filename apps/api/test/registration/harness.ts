@@ -12,7 +12,6 @@ import { expect } from 'vitest'
 import { LocalityDirectory } from '../../src/modules/localities/locality-directory'
 import { LocalDiskPhotoStore } from '../../src/modules/registration/adapters/photo-store'
 import { registrationHandlers } from '../../src/modules/registration/registration.handlers'
-import type { HandlerSet } from '../../src/platform/contract/handlers'
 import type { Email } from '../../src/platform/email/mailer'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { WorkerPoolHasher } from '../../src/platform/security/password-hasher'
@@ -69,7 +68,7 @@ export async function registrationHarness(domain: string): Promise<RegistrationH
   })
   const t = await testApp({
     contracts,
-    handlerSets: [unreachableHandlers(platformContract), handlers as unknown as HandlerSet],
+    handlerSets: [unreachableHandlers(platformContract), handlers],
     publicEndpoints: publicEndpoints as PublicEndpoint[],
   })
 
