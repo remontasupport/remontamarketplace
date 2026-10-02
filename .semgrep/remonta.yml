@@ -1,0 +1,120 @@
+# Remonta's own Semgrep rules (run by .github/workflows/semgrep.yml together with
+# the registry packs). Each encodes a convention from CLAUDE.md that the ESLint
+# boundary rules cannot express, or that is worth a second, independent check
+# ("neither alone is sufficient"). Test with `semgrep scan --config .semgrep/`.
+rules:
+  # "Clients call through createClient(contract); nobody hand-writes fetch to apps/api."
+  - id: remonta-no-raw-fetch-to-api
+    message: >-
+      Call apps/api through the contract client (createClient(contract) / the form
+      engine's contractCall), never with a hand-written fetch. The client applies
+      the entry's path, method, body schema and error shape; a raw fetch drifts
+      from the contract silently.
+    severity: ERROR
+    languages: [typescript, javascript]
+    paths:
+      include:
+        - apps/app/src
+        - apps/web/src
+        - packages/form-engine/src
+      exclude:
+        - packages/api-contract/src/client.ts
+    patterns:
+      - pattern: fetch($URL, ...)
+      - metavariable-regex:
+          metavariable: $URL
+          regex: (?s).*(/v1/|NEXT_PUBLIC_API_URL|apiBaseUrl|\.run\.app).*
+    metadata:
+      category: correctness
+      references:
+        - CLAUDE.md "Dynamic by default: Endpoints"
+
+  # "Never re-implement a limit, a CAPTCHA check or error handling in a handler."
+  # The pipeline (apps/api/src/platform/pipeline) runs both for every entry from
+  # its meta(); a second check in a module would be a parallel, untested path.
+  - id: remonta-api-no-manual-limit-or-captcha
+    message: >-
+      Rate limits and CAPTCHA checks are declared in the contract entry's meta()
+      and enforced by the central pipeline. Do not call the limiter or the CAPTCHA
+      verifier from a module.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include:
+        - apps/api/src/modules
+    pattern-either:
+      - pattern: $LIMITER.hit($KEY, $LIMIT, $WINDOW, ...)
+      - pattern: $CAPTCHA.verify($TOKEN, $ACTION, $IP)
+    metadata:
+      category: security
+      references:
+        - apps/api/src/platform/pipeline/pipeline.ts
+
+  # Every raw query in apps/api is a tagged template ($queryRaw`...`), which Prisma
+  # parameterises. The *Unsafe variants take a string and are SQL injection waiting
+  # for an interpolation; the tests may use them to set up rows, the service may not.
+  - id: remonta-api-no-unsafe-raw-sql
+    message: >-
+      Use the tagged-template form ($queryRaw`...` / $executeRaw`...`), which
+      parameterises every value. $queryRawUnsafe / $executeRawUnsafe take a string
+      and are injectable.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include:
+        - apps/api/src
+        - apps/app/src
+    pattern-either:
+      - pattern: $DB.$queryRawUnsafe(...)
+      - pattern: $DB.$executeRawUnsafe(...)
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+
+  # P-1 / P-2: the marketing site holds no database access. ESLint enforces this
+  # too; this is the independent second check CLAUDE.md asks for.
+  - id: remonta-web-no-database-import
+    message: >-
+      apps/web must never import @remonta/db or a domain package (P-1, P-2): the
+      marketing site has no database access.
+    severity: ERROR
+    languages: [typescript, javascript]
+    paths:
+      include:
+        - apps/web/src
+    pattern-either:
+      - pattern: import $X from "@remonta/db"
+      - pattern: import { ... } from "@remonta/db"
+      - pattern: import * as $X from "@remonta/db"
+      - pattern: import $X from "@prisma/client"
+      - pattern: import { ... } from "@prisma/client"
+      - pattern: require("@remonta/db")
+      - pattern: require("@prisma/client")
+    metadata:
+      category: security
+      references:
+        - CLAUDE.md "Layout"
+
+  # Routes come only from the contract (apps/api lint rule). Second check, the
+  # same way: a Nest controller would register a route the pipeline never sees.
+  - id: remonta-api-no-nest-controllers
+    message: >-
+      Routes are declared in @remonta/api-contract and bound by
+      apps/api/src/platform/contract. Do not add Nest controllers or route
+      decorators.
+    severity: ERROR
+    languages: [typescript]
+    paths:
+      include:
+        - apps/api/src
+    pattern-either:
+      - pattern: "@Controller(...)"
+      - pattern: "@Get(...)"
+      - pattern: "@Post(...)"
+      - pattern: "@Put(...)"
+      - pattern: "@Patch(...)"
+      - pattern: "@Delete(...)"
+    metadata:
+      category: correctness
+      references:
+        - apps/api/eslint.config.mjs

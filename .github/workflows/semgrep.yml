@@ -1,0 +1,83 @@
+# Semgrep: fast pattern-based scanning of every source file, on every pull request.
+#
+# Two kinds of rules run:
+#   - the open-source registry packs for this stack (TypeScript, Node, React,
+#     Next.js, secrets, Dockerfiles, GitHub Actions);
+#   - this repository's own rules in .semgrep/, which encode conventions the
+#     ESLint boundary rules cannot see (a raw fetch to apps/api instead of the
+#     contract client, a limit or CAPTCHA check hand-written in a handler, ...).
+#
+# Results are uploaded as SARIF to GitHub code scanning, so they appear next to
+# CodeQL's: annotated on the pull request and listed under Security -> Code
+# scanning. REPORT ONLY at first (no --error): findings do not fail the check
+# until the backlog has been triaged. No Semgrep account or token is involved;
+# metrics are off. Exclusions: .semgrepignore at the repository root.
+
+name: Semgrep
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, after CodeQL: new registry rules applied to unchanged code.
+    - cron: "0 3 * * 1"
+
+concurrency:
+  group: semgrep-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    # Pinned by tag (NFR-SEC-07: no `latest`). To move: change the tag after
+    # checking the release notes; the run prints the version it used.
+    container:
+      image: semgrep/semgrep:1.179.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Semgrep version
+        run: semgrep --version
+
+      # Prove the repository's own rules reject what they should: every `ruleid:`
+      # line in .semgrep/remonta.ts must be reported, every `ok:` line must not.
+      # A rule that never fires is not a guard. This step DOES fail the check.
+      - name: Test the repository's rules
+        run: semgrep --test --config .semgrep/remonta.yml .semgrep/
+
+      # The registry packs plus .semgrep/. --metrics=off: nothing is sent to
+      # Semgrep. SARIF output for code scanning; the text output for the log.
+      - name: Scan
+        run: |
+          semgrep scan \
+            --config p/default \
+            --config p/typescript \
+            --config p/nodejs \
+            --config p/react \
+            --config p/nextjs \
+            --config p/secrets \
+            --config p/dockerfile \
+            --config p/github-actions \
+            --config .semgrep/ \
+            --metrics=off \
+            --sarif --output semgrep.sarif \
+            --text
+
+      - name: Upload findings to code scanning
+        if: always() && hashFiles('semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep

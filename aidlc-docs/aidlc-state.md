@@ -43,6 +43,12 @@ the handler-set casts). Merging it redeploys **staging** only. After it: resume 
 4. After cut-over: delete `features/forms/legacy/worker/`, remove the `lib/auth-prisma.ts` omit once the S1
    migrations are on production, re-record the Vercel rollback ids in CLAUDE.md.
 
+**Code scanning (2026-10-02, branch `ci/code-scanning`, PR to open):** CodeQL (`security-extended`, JS/TS + Actions,
+weekly) and Semgrep (registry packs + `.semgrep/remonta.yml`, five repo rules with a self-test) as report-only
+workflows uploading to GitHub code scanning. After the first runs: triage the backlog under Security -> Code
+scanning, then make both required checks. The repository is **public** (checked 2026-10-02); the user to confirm
+that is intended.
+
 **Housekeeping still open:** rotate the exposed keys (production Blob token, Prisma Accelerate key, `rehearse-w1`
 role password); the 10 codes/h per IP decision; `aidlc/q1-preview-scope` (docs, 2 commits) and
 `fix/services-loading-spinner` (0 commits ahead -- can be deleted) are the only non-merged S1-era branches.

@@ -1,0 +1,26 @@
+# What Semgrep does not scan (.github/workflows/semgrep.yml). Listing this file
+# REPLACES Semgrep's built-in default ignores, so the usual ones are repeated.
+# Mirrors .github/codeql/codeql-config.yml: generated and built code is not ours
+# to fix; test code and the load harness run against fakes.
+node_modules/
+.git/
+.pnpm-store/
+.turbo/
+.vercel/
+coverage/
+dist/
+.next/
+generated/
+apps/api/prisma/
+apps/api/load/
+test/
+__tests__/
+*.test.ts
+*.test.tsx
+*.test.mjs
+*.min.js
+*.map
+public/
+pnpm-lock.yaml
+# The rules' own test file (deliberate violations); run by `semgrep --test`, never as a target.
+.semgrep/
