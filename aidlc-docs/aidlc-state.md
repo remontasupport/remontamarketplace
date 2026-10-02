@@ -1,12 +1,14 @@
 # AI-DLC State Tracking
 
 ## Project Information
-- **Project**: _(new cycle -- to be named at Inception)_
+- **Project**: Worker sign-up draft -- no answers kept on the device between visits (`/registration/worker`, api mode)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-02 (user: "start ai dlc")
-- **Current Stage**: INCEPTION -- Workspace Detection complete (2026-10-02). Waiting for the cycle's intent:
-  `aidlc-docs/inception/requirements/cycle-kickoff-questions.md`. The previous cycle closed on 2026-10-02; see
-  "What is live" below before planning anything.
+- **Current Stage**: INCEPTION -- Requirements Analysis (minimal depth), 2026-10-02. Intent received in chat (kick-off
+  Q1 = E). Waiting for `aidlc-docs/inception/requirements/requirement-verification-questions.md` (storage model,
+  clean-up of old drafts, the unmerged branch, the three extension opt-ins). Reverse Engineering: skip proposed
+  (kick-off Q2 = C; the four files involved were read during analysis). The previous cycle closed on 2026-10-02;
+  see "What is live" below.
 
 ## Previous cycles (archived, read-only)
 

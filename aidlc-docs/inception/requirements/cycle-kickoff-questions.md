@@ -30,7 +30,10 @@ E) **A feature that is not in the follow-ups list.** Describe it after the tag.
 
 F) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: E -- answered in chat (2026-10-02): "I want to fix something on the registration/worker. I noticed that the
+answers to the form is being save to the localhost. If I close the browser and go to the registration/worker, the
+answers are still there. Can you design a system that deletes it instead? I don't want to save an answer to a
+localhost". Recorded by the AI; the detail questions are in `requirement-verification-questions.md`.
 
 ## Question 2
 Reverse Engineering. The archived analysis (2026-09-25) covered the registration, onboarding, identity and platform
@@ -48,7 +51,9 @@ C) **Skip**: rely on the archive, `docs/signup/README.md` and CLAUDE.md. Reasona
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C -- proposed by the AI (2026-10-02) given Q1: the change touches the form engine's draft module, the
+browser adapter, their tests and one doc paragraph, all read during Requirements Analysis; a reverse-engineering pass
+would add nothing. Say so if you want A instead. Final decision recorded at Workflow Planning.
 
 ## Question 3
 The branch `aidlc/archive-s1` holds 12 commits that are not on `main`: the S1 close-out audit entries, the archive
@@ -67,4 +72,5 @@ C) **Leave it for now**; keep stacking the cycle's documents on this branch. The
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: moved -- this question is now Question 3 of `requirement-verification-questions.md`, so there is one file
+to answer.
