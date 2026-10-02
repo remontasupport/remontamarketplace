@@ -10,6 +10,17 @@ import { checkEmailAvailability, confirmEmailCode, EMAIL_TAKEN, requestEmailCode
 import type { EmailAvailability, EmailCodeStatus } from "@/components/ui/form-wizard/fields";
 
 export const RESEND_AFTER_SECONDS = 60;
+
+/**
+ * The step's own validation error to show under the field. An address that already
+ * has an account cannot be verified here ("Send code" is off), so "Please verify your
+ * email address" would ask for the impossible: while the address is taken, only the
+ * existing-account notice (with its sign-in link) is shown. Next stays blocked either
+ * way, because there is no proof.
+ */
+export function verificationError(availability: EmailAvailability, error: string | undefined): string | undefined {
+  return availability === "taken" ? undefined : error;
+}
 /** Fewer, shorter retries than the submission: the person is waiting on this button and can press it again. */
 const SEND_RETRY = { maxAttempts: 3, maxRetryAfterMs: 5_000 } as const;
 
