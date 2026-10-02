@@ -4,11 +4,19 @@
 - **Project**: Worker sign-up draft -- no answers kept on the device between visits (`/registration/worker`, api mode)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-02 (user: "start ai dlc")
-- **Current Stage**: INCEPTION -- Requirements Analysis (minimal depth), 2026-10-02. Intent received in chat (kick-off
-  Q1 = E). Waiting for `aidlc-docs/inception/requirements/requirement-verification-questions.md` (storage model,
-  clean-up of old drafts, the unmerged branch, the three extension opt-ins). Reverse Engineering: skip proposed
-  (kick-off Q2 = C; the four files involved were read during analysis). The previous cycle closed on 2026-10-02;
-  see "What is live" below.
+- **Current Stage**: INCEPTION -- Workflow Planning complete (2026-10-02), awaiting the user's approval of
+  `aidlc-docs/inception/plans/execution-plan.md`. Requirements: `aidlc-docs/inception/requirements/requirements.md`
+  (decisions D1-D7: sessionStorage; one-time clean-up of the old localStorage key; merge `aidlc/archive-s1` first;
+  Security + Resiliency blocking, PBT partial; Reverse Engineering skipped).
+- **Next**: (1) the user merges the PR for `aidlc/archive-s1`; (2) branch `fix/signup-draft-session-storage` from
+  `main`; (3) Code Generation (plan at `aidlc-docs/construction/plans/draft-storage-code-generation-plan.md`);
+  (4) Build and Test, preview checklist `requirements.md` §8.
+
+## Execution Plan Summary
+- **Stages to execute**: Code Generation, Build and Test.
+- **Stages skipped**: Reverse Engineering (files read in analysis), User Stories (one persona, one behaviour),
+  Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Infrastructure Design
+  (single adapter change; NFRs and extension assessments live in `requirements.md`).
 
 ## Previous cycles (archived, read-only)
 
@@ -82,20 +90,21 @@
 ## Extension Configuration
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | _(decide at Requirements Analysis; S1 used: Yes, blocking)_ | |
-| Resiliency Baseline | _(S1: Yes, blocking)_ | |
-| Property-Based Testing | _(S1: Yes, full enforcement)_ | |
+| Security Baseline | Yes, blocking (V4 A) | Requirements Analysis, 2026-10-02 |
+| Resiliency Baseline | Yes, blocking (V5 A); targets and processes inherited from Slice 1 (NFR-RES-01..04) | Requirements Analysis, 2026-10-02 |
+| Property-Based Testing | Partial (V6 B): PBT-02, 03, 07, 08, 09 enforced, the rest advisory | Requirements Analysis, 2026-10-02 |
 
 ## Stage Progress
 ### 🔵 INCEPTION PHASE
 - [x] Workspace Detection -- 2026-10-02 (brownfield; RE decision deferred to Workflow Planning)
-- [ ] Reverse Engineering
-- [ ] Requirements Analysis
-- [ ] User Stories
-- [ ] Workflow Planning
-- [ ] Application Design
-- [ ] Units Generation
+- [x] Reverse Engineering -- SKIPPED (kick-off Q2 = C)
+- [x] Requirements Analysis -- 2026-10-02, minimal depth (`inception/requirements/requirements.md`)
+- [x] User Stories -- SKIPPED (one persona, one behaviour; acceptance in requirements §8)
+- [x] Workflow Planning -- 2026-10-02 (`inception/plans/execution-plan.md`), awaiting approval
+- [x] Application Design -- SKIPPED
+- [x] Units Generation -- SKIPPED (one unit)
 
 ### 🟢 CONSTRUCTION PHASE
-- [ ] Per unit: Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation
-- [ ] Build and Test
+- [x] Functional Design, NFR Requirements, NFR Design, Infrastructure Design -- SKIPPED (see execution plan)
+- [ ] Code Generation (plan, then generation) -- on `fix/signup-draft-session-storage` from `main`
+- [ ] Build and Test -- quality gates, PR, preview checklist, merge, production check

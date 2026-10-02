@@ -33,7 +33,7 @@ and mobile browsers do not fire the event reliably, so a draft can survive. Not 
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 2
 Drafts already saved by the current code sit in visitors' browsers under the `localStorage` key until they expire
@@ -46,7 +46,7 @@ B) **No, let them expire.** Simpler; the old entries disappear by themselves wit
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 3
 The branch `aidlc/archive-s1` holds 13 commits that are not on `main`: the S1 close-out audit entries, the archive
@@ -63,7 +63,7 @@ C) **Leave it for now**; keep stacking on this branch and merge everything later
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 4: Security Extensions
 Should security extension rules be enforced for this project? (Slice 1 used: Yes, blocking.)
@@ -74,7 +74,7 @@ B) No -- skip all SECURITY rules (suitable for PoCs, prototypes, and experimenta
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 5: Resiliency Extensions
 Should the resiliency baseline be applied to this project? (Slice 1 used: Yes, blocking. This cycle changes only the
@@ -86,7 +86,7 @@ B) No -- skip the resiliency baseline for this cycle
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 6: Property-Based Testing Extension
 Should property-based testing (PBT) rules be enforced for this project? (Slice 1 used: Yes, full enforcement. The
@@ -100,4 +100,4 @@ C) No -- skip all PBT rules
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: B
