@@ -54,10 +54,6 @@ const form = defineForm({
     },
   ],
   successRedirect: "/done",
-  legacy: {
-    fieldSchemas: { firstName: z.string().min(1, "First name is required"), lastName: z.string().min(1, "Last name is required") },
-    submit: async () => ({ ok: true }),
-  },
 });
 
 const filled = {
@@ -87,24 +83,21 @@ describe("defineForm", () => {
   });
 });
 
-describe("validation comes from the contract (api) or the previous rules (legacy)", () => {
-  it("accepts a filled form in both modes, and normalises it the way the server will", () => {
-    const api = formSchemaFor(form, "api").parse(filled);
+describe("validation comes from the contract", () => {
+  it("accepts a filled form, and normalises it the way the server will", () => {
+    const api = formSchemaFor(form).parse(filled);
     expect(api).toMatchObject({ email: "mary@example.com", mobile: "+61412345678" });
-    expect(formSchemaFor(form, "legacy").safeParse(filled).success).toBe(true);
   });
 
-  it("applies the stricter name rule in api mode only (user decision)", () => {
+  it("applies the contract's name rule (no digits), as the server does", () => {
     const withDigits = { ...filled, firstName: "John2" };
-    expect(formSchemaFor(form, "api").safeParse(withDigits).success).toBe(false);
-    expect(formSchemaFor(form, "legacy").safeParse(withDigits).success).toBe(true);
+    expect(formSchemaFor(form).safeParse(withDigits).success).toBe(false);
   });
 
-  it("needs a suburb picked from the list, and in api mode one with an id", () => {
-    expect(formSchemaFor(form, "api").safeParse({ ...filled, localityId: null }).success).toBe(false);
-    const fallback = { ...filled, localityId: { ...filled.localityId, id: null } }; // the pre-migration Google lookup
-    expect(formSchemaFor(form, "api").safeParse(fallback).success).toBe(false);
-    expect(formSchemaFor(form, "legacy").safeParse(fallback).success).toBe(true);
+  it("needs a suburb picked from the list, with an au_localities id", () => {
+    expect(formSchemaFor(form).safeParse({ ...filled, localityId: null }).success).toBe(false);
+    const fallback = { ...filled, localityId: { ...filled.localityId, id: null } }; // a label without an id (the old Google lookup)
+    expect(formSchemaFor(form).safeParse(fallback).success).toBe(false);
   });
 
   it("agrees with the server on every field it validates: what the form accepts, the contract accepts", () => {
@@ -112,7 +105,7 @@ describe("validation comes from the contract (api) or the previous rules (legacy
     fc.assert(
       fc.property(fc.constantFrom("Mary", "O'Neil", "Anne-Marie", "José", "R2D2", "", " "), fc.constantFrom("0412345678", "+61412345678", "02 9999 0000", "abc"), (firstName, mobile) => {
         const values = { ...filled, firstName, mobile };
-        const formOk = formSchemaFor(form, "api").safeParse(values).success;
+        const formOk = formSchemaFor(form).safeParse(values).success;
         const serverOk = body.safeParse({ ...toRequestBody(form, values, new URLSearchParams()), captchaToken: "t" }).success;
         expect(formOk).toBe(serverOk);
       }),
@@ -160,26 +153,26 @@ class MemoryStore implements KeyValueStore {
 describe("draft on the device", () => {
   it("never stores a neverSaved field, and restores the rest", () => {
     const s = new MemoryStore();
-    saveDraft(s, form.id, { mode: "api", step: 2, values: filled }, ["password"], 1000);
+    saveDraft(s, form.id, { step: 2, values: filled }, ["password"], 1000);
     expect([...s.data.values()].join()).not.toContain("Str0ng!pass");
-    expect(loadDraft(s, form.id, "api", ["password"], 2000)).toMatchObject({ step: 2, values: { firstName: "Mary" } });
+    expect(loadDraft(s, form.id, ["password"], 2000)).toMatchObject({ step: 2, values: { firstName: "Mary" } });
   });
-  it("is dropped when stale, from the other mode, corrupt, or once cleared", () => {
+  it("is dropped when stale, corrupt, or once cleared, and tolerates the pre-2026-10-02 mode key", () => {
     const s = new MemoryStore();
-    saveDraft(s, form.id, { mode: "api", step: 1, values: filled }, [], 0);
-    expect(loadDraft(s, form.id, "legacy", [], 1)).toBeNull();
-    saveDraft(s, form.id, { mode: "api", step: 1, values: filled }, [], 0);
-    expect(loadDraft(s, form.id, "api", [], 23 * 3_600_000 + 1)).toBeNull();
+    s.setItem("remonta.form.test-worker.draft.v1", JSON.stringify({ v: 1, savedAt: 0, mode: "api", step: 1, values: { firstName: "Old" } }));
+    expect(loadDraft(s, form.id, [], 1)).toEqual({ v: 1, savedAt: 0, step: 1, values: { firstName: "Old" } });
+    saveDraft(s, form.id, { step: 1, values: filled }, [], 0);
+    expect(loadDraft(s, form.id, [], 23 * 3_600_000 + 1)).toBeNull();
     s.setItem("remonta.form.test-worker.draft.v1", "{not json");
-    expect(loadDraft(s, form.id, "api", [], 1)).toBeNull();
-    saveDraft(s, form.id, { mode: "api", step: 1, values: filled }, [], 0);
+    expect(loadDraft(s, form.id, [], 1)).toBeNull();
+    saveDraft(s, form.id, { step: 1, values: filled }, [], 0);
     clearDraft(s, form.id);
-    expect(loadDraft(s, form.id, "api", [], 1)).toBeNull();
+    expect(loadDraft(s, form.id, [], 1)).toBeNull();
   });
   it("strips a neverSaved field even from a draft written before it was marked", () => {
     const s = new MemoryStore();
-    saveDraft(s, form.id, { mode: "api", step: 1, values: filled }, [], 0);
-    expect(loadDraft(s, form.id, "api", ["password"], 1)!.values.password).toBeUndefined();
+    saveDraft(s, form.id, { step: 1, values: filled }, [], 0);
+    expect(loadDraft(s, form.id, ["password"], 1)!.values.password).toBeUndefined();
   });
 
   // Property-based (PBT-02 round-trip, PBT-03 invariant). The generators produce
@@ -195,31 +188,30 @@ describe("draft on the device", () => {
     fc.base64String({ minLength: 16, maxLength: 200 }).map((b) => `data:image/jpeg;base64,${b}`),
   );
   const draftValues = fc.dictionary(fieldName, fieldValue, { minKeys: 1, maxKeys: 8 });
-  const mode = fc.constantFrom("api", "legacy") as fc.Arbitrary<"api" | "legacy">;
   const generatedDraft = fc
-    .record({ values: draftValues, step: fc.integer({ min: 0, max: 9 }), mode, savedAt: fc.integer({ min: 0, max: 2_000_000_000_000 }), age: fc.integer({ min: 0, max: 23 * 3_600_000 }) })
+    .record({ values: draftValues, step: fc.integer({ min: 0, max: 9 }), savedAt: fc.integer({ min: 0, max: 2_000_000_000_000 }), age: fc.integer({ min: 0, max: 23 * 3_600_000 }) })
     .chain((d) => fc.subarray(Object.keys(d.values)).map((neverSaved) => ({ ...d, neverSaved })));
 
-  it("round-trips any draft read in the same mode within 23 h, minus the neverSaved keys (PBT-02)", () => {
+  it("round-trips any draft read within 23 h, minus the neverSaved keys (PBT-02)", () => {
     fc.assert(
-      fc.property(generatedDraft, ({ values, step, mode, savedAt, age, neverSaved }) => {
+      fc.property(generatedDraft, ({ values, step, savedAt, age, neverSaved }) => {
         const s = new MemoryStore();
-        saveDraft(s, form.id, { mode, step, values }, neverSaved, savedAt);
+        saveDraft(s, form.id, { step, values }, neverSaved, savedAt);
         const expected = Object.fromEntries(Object.entries(values).filter(([k]) => !neverSaved.includes(k)));
-        expect(loadDraft(s, form.id, mode, neverSaved, savedAt + age)).toEqual({ v: 1, savedAt, mode, step, values: expected });
+        expect(loadDraft(s, form.id, neverSaved, savedAt + age)).toEqual({ v: 1, savedAt, step, values: expected });
       }),
     );
   });
 
   it("never lets a neverSaved key reach the store or come back from it (PBT-03)", () => {
     fc.assert(
-      fc.property(generatedDraft, ({ values, step, mode, savedAt, age, neverSaved }) => {
+      fc.property(generatedDraft, ({ values, step, savedAt, age, neverSaved }) => {
         const s = new MemoryStore();
-        saveDraft(s, form.id, { mode, step, values }, neverSaved, savedAt);
+        saveDraft(s, form.id, { step, values }, neverSaved, savedAt);
         const stored = JSON.parse(s.getItem(draftKey(form.id))!) as { values: Record<string, unknown> };
         for (const k of neverSaved) expect(stored.values).not.toHaveProperty(k);
         // ...and a key marked neverSaved only after the draft was written is still stripped on load.
-        const loaded = loadDraft(s, form.id, mode, Object.keys(values), savedAt + age);
+        const loaded = loadDraft(s, form.id, Object.keys(values), savedAt + age);
         expect(loaded?.values).toEqual({});
       }),
     );
@@ -267,7 +259,7 @@ describe("retry", () => {
 });
 
 describe("submitting through the contract", () => {
-  const backend = { mode: "api" as const, apiBaseUrl: "https://api.example", recaptchaSiteKey: "k" };
+  const backend = { apiBaseUrl: "https://api.example", recaptchaSiteKey: "k" };
   function server(responses: (() => Response)[]) {
     const bodies: unknown[] = [];
     const real = globalThis.fetch;

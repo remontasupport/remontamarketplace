@@ -297,9 +297,9 @@ export function ServicesField({ title, hint, options, categories, services, subc
 export interface PhotoFieldProps {
   label: string;
   hint?: string;
-  /** A displayable URL, if there is one (legacy: the uploaded photo). */
+  /** A displayable URL, if there is one (the wizard passes the kept thumbnail). */
   previewUrl?: string;
-  /** Uploads and returns the value to keep; omitted = the legacy /api/upload/worker-photo. */
+  /** Uploads and returns the value to keep. The wizard always passes the apps/api stager; omitted = PhotoUpload's own default, used by other screens. */
   upload?: (file: File) => Promise<string>;
   onChange: (value: string | null) => void;
   onUploadStart?: () => void;

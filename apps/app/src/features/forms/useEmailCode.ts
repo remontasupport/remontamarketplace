@@ -6,7 +6,7 @@
 // retries; the wizard clears the value again when the address changes (resetsOf).
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { checkEmailAvailability, confirmEmailCode, EMAIL_TAKEN, requestEmailCode, type ApiBackend, type EmailCodeField, type EmailCodeTicket, type FormDefinition, type RetryOptions } from "@remonta/form-engine";
+import { checkEmailAvailability, confirmEmailCode, EMAIL_TAKEN, requestEmailCode, type Backend, type EmailCodeField, type EmailCodeTicket, type FormDefinition, type RetryOptions } from "@remonta/form-engine";
 import type { EmailAvailability, EmailCodeStatus } from "@/components/ui/form-wizard/fields";
 
 export const RESEND_AFTER_SECONDS = 60;
@@ -28,7 +28,7 @@ type Values = Record<string, unknown>;
 
 export function useEmailCode(
   def: FormDefinition,
-  backend: ApiBackend,
+  backend: Backend,
   field: EmailCodeField,
   form: UseFormReturn<Values>,
   deps: { getCaptchaToken: (action: string) => Promise<string>; retry?: RetryOptions; onFieldBlur: (name: string, cb: () => void) => () => void },

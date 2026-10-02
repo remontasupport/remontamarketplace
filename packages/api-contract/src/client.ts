@@ -27,7 +27,13 @@ export interface ClientOptions {
 
 export function createClient<C extends ContractDef>(contract: Contract<C>, opts: ClientOptions): Client<C> {
   const doFetch = opts.fetch ?? globalThis.fetch.bind(globalThis)
-  const base = opts.baseUrl.replace(/\/+$/, '')
+  // Trailing slashes off the base URL. Not a regex: `/\/+$/` backtracks
+  // quadratically on a URL made of many slashes (CodeQL js/polynomial-redos),
+  // and the base URL comes from configuration a caller controls.
+  let base = opts.baseUrl
+  let end = base.length
+  while (end > 0 && base.charCodeAt(end - 1) === 47 /* "/" */) end--
+  base = base.slice(0, end)
   const client = {} as Record<string, unknown>
 
   for (const [name, entry] of Object.entries(contract.entries)) {

@@ -19,10 +19,10 @@ describe("browserStore: where a form's progress is kept", () => {
     const store = browserStore(FORM, { sessionStorage: session, localStorage: local });
     expect(store).toBe(session);
 
-    saveDraft(store, FORM, { mode: "api", step: 1, values: { firstName: "Mary" } }, []);
+    saveDraft(store, FORM, { step: 1, values: { firstName: "Mary" } }, []);
     expect(session.data.has(OLD_KEY)).toBe(true);
     expect(local.data.size).toBe(0);
-    expect(loadDraft(store, FORM, "api", [])?.values).toEqual({ firstName: "Mary" });
+    expect(loadDraft(store, FORM, [])?.values).toEqual({ firstName: "Mary" });
   });
 
   it("deletes a draft left in localStorage by the previous release, and only that", () => {

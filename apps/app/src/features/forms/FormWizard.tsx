@@ -5,7 +5,7 @@
 // a definition file, not new screens.
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
-import { KINDS, type ApiBackend, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
+import { KINDS, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
 import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
@@ -79,8 +79,7 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
         />
       );
     case "emailCode":
-      // Legacy backends have no verification step; the kind validates as nothing in that mode.
-      return backend.mode === "api" ? <EmailCodeSlot field={field} backend={backend} wizard={wizard} definition={definition} error={error} /> : null;
+      return <EmailCodeSlot field={field} backend={backend} wizard={wizard} definition={definition} error={error} />;
     case "password":
       return (
         <Controller
@@ -106,7 +105,7 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
     case "services":
       return <ServicesSlot field={field} control={control} backend={backend} error={error ?? errorOf(errors, field.subcategoriesName)} />;
     case "photo":
-      return <PhotoSlot field={field} control={control} backend={backend} uploader={uploader} wizard={wizard} error={error} />;
+      return <PhotoSlot field={field} control={control} uploader={uploader} wizard={wizard} error={error} />;
     case "consent":
       return (
         <Controller
@@ -205,12 +204,11 @@ function ServicesSlot({ field, control, backend, error }: { field: Extract<Field
 type PhotoDef = Extract<FieldDef, { kind: "photo" }>;
 
 /**
- * legacy: the value is the uploaded URL, so it is the preview. api: the value is a
- * staged id with no URL; the preview is the thumbnail kept under the companion
- * key (photoPreview.ts), which survives the step remount and the draft. Removing
- * the photo clears both.
+ * The value is a staged id with no URL; the preview is the thumbnail kept under
+ * the companion key (photoPreview.ts), which survives the step remount and the
+ * draft. Removing the photo clears both.
  */
-function PhotoSlot({ field, control, backend, uploader, wizard, error }: { field: PhotoDef; control: Control<Values>; backend: Backend; uploader?: (file: File) => Promise<string>; wizard: Wizard; error?: string }) {
+function PhotoSlot({ field, control, uploader, wizard, error }: { field: PhotoDef; control: Control<Values>; uploader?: (file: File) => Promise<string>; wizard: Wizard; error?: string }) {
   const previewKey = previewKeyOf(field.name);
   const thumbnail = useWatch({ control, name: previewKey }) as string | null | undefined;
   return (
@@ -221,8 +219,8 @@ function PhotoSlot({ field, control, backend, uploader, wizard, error }: { field
         <PhotoField
           label={field.label ?? "Photo"}
           hint={field.hint}
-          previewUrl={backend.mode === "legacy" ? (f.value as string) || undefined : f.value ? thumbnail || undefined : undefined}
-          alreadyUploaded={backend.mode === "api" && !!f.value}
+          previewUrl={f.value ? thumbnail || undefined : undefined}
+          alreadyUploaded={!!f.value}
           upload={uploader}
           onChange={(v) => {
             f.onChange(v ?? "");
@@ -235,7 +233,7 @@ function PhotoSlot({ field, control, backend, uploader, wizard, error }: { field
   );
 }
 
-function EmailCodeSlot({ field, backend, wizard, definition, error }: { field: EmailCodeDef; backend: ApiBackend; wizard: Wizard; definition: FormDefinition; error?: string }) {
+function EmailCodeSlot({ field, backend, wizard, definition, error }: { field: EmailCodeDef; backend: Backend; wizard: Wizard; definition: FormDefinition; error?: string }) {
   const v = useEmailCode(definition, backend, field, wizard.form, { getCaptchaToken: wizard.getCaptchaToken, retry: wizard.retry, onFieldBlur: wizard.onFieldBlur });
   return (
     <EmailCodeField

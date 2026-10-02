@@ -9,8 +9,7 @@ import type { Backend, FormDefinition, SubmitResult } from "./types";
 
 export const ATTEMPT_TIMEOUT_MS = 20_000;
 
-export type ApiBackend = Extract<Backend, { mode: "api" }>;
-type Api = ApiBackend;
+type Api = Backend;
 type AnyCall = (args: { body: unknown }, init?: { signal?: AbortSignal }) => Promise<{ ok: boolean; status: number; body: unknown; retryAfterSeconds?: number }>;
 
 /** The contract client's method for an entry, untyped: the definition already checked the entry exists. */

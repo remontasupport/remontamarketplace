@@ -3,9 +3,9 @@
 // renders any definition with one wizard and one component per field kind; the
 // validation comes from the contract entry's schema. No UI framework here (P-7).
 import type { Contract, ContractDef } from "@remonta/api-contract";
-import type * as z from "zod";
 
-export type Backend = { mode: "legacy" } | { mode: "api"; apiBaseUrl: string; recaptchaSiteKey: string };
+/** Where a form is sent: apps/api, and the reCAPTCHA site key its public entries need. */
+export type Backend = { apiBaseUrl: string; recaptchaSiteKey: string };
 
 interface FieldBase {
   /** The contract body field this fills (also the key in the form state). */
@@ -28,13 +28,13 @@ export type FieldDef =
   | (FieldBase & { kind: "locality"; placeholder?: string })
   /** Services, and the sub-categories chosen for them (a second contract field). */
   | (FieldBase & { kind: "services"; subcategoriesName: string; title?: string })
-  /** A photo staged through another contract entry (api mode); its id is the value. */
+  /** A photo staged through another contract entry; its id is the value. */
   | (FieldBase & { kind: "photo"; uploadEntry: string })
   | (FieldBase & { kind: "consent"; statement: string; paragraphs?: string[] })
   /**
    * A code emailed to the `for` field's address and checked before the step can
-   * continue (api mode; legacy has no such step). The value is the proof the
-   * sign-up sends: the code and its signed ticket. Changing the address resets it.
+   * continue. The value is the proof the sign-up sends: the code and its signed
+   * ticket. Changing the address resets it.
    */
   | (FieldBase & {
       kind: "emailCode";
@@ -53,18 +53,6 @@ export interface StepDef {
   fields: FieldDef[];
 }
 
-/**
- * The backend that existed before this form moved to apps/api. It keeps the
- * previous rules and request exactly, so switching back to it is a true rollback.
- */
-export interface LegacyAdapter {
-  /** Previous validation for fields whose rule changed (e.g. names). */
-  fieldSchemas: Record<string, z.ZodType>;
-  /** Runs after step N (1-based) validates; a returned message keeps the user on that step. */
-  afterStep?: Record<number, (values: Record<string, unknown>) => Promise<string | null>>;
-  submit(values: Record<string, unknown>, ctx: { query: URLSearchParams }): Promise<SubmitResult>;
-}
-
 export type SubmitResult =
   | { ok: true }
   | { ok: false; kind: "invalid"; fields: Record<string, string[]> }
@@ -76,7 +64,7 @@ export interface FormDefinition<C extends ContractDef = ContractDef> {
   contract: Contract<C>;
   /** The entry that receives the submission. Its body schema is the validation. */
   submitEntry: keyof C & string;
-  /** reCAPTCHA v3 action, fetched fresh for every attempt (api mode). */
+  /** reCAPTCHA v3 action, fetched fresh for every attempt. */
   captcha?: string;
   /** Body fields the form sets itself, e.g. the consent wording version. */
   constants?: Record<string, unknown>;
@@ -85,5 +73,4 @@ export interface FormDefinition<C extends ContractDef = ContractDef> {
   intro?: { title: string; text: string; button: string };
   steps: StepDef[];
   successRedirect: string;
-  legacy?: LegacyAdapter;
 }

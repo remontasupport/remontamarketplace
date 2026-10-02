@@ -26,7 +26,7 @@ git checkout -b <type>/<short-name>      # fix/… feat/… u9/…
 ### 2. Verify locally, before pushing
 
 ```bash
-pnpm --filter @remonta/app run quality     # 144 type · 508 lint known · 78 tests (2026-09-30)
+pnpm --filter @remonta/app run quality     # 144 type · 488 lint known · 83 tests (2026-10-02)
 pnpm --filter @remonta/web run quality     # 76 lint · strict tsc
 pnpm --filter @remonta/schemas run quality # P-1..P-5 boundaries
 pnpm --filter @remonta/api-contract run quality  # contract checks, openapi.json drift
@@ -97,41 +97,36 @@ variables; a working preview does not prove a working production.
 
 ## Preview before production (the `apps/api` path)
 
-The switch `switch:registration` (Upstash) decides what production's sign-up runs:
-`legacy` is the pre-S1 page itself (`features/forms/legacy/worker/`), `api` is the form
-engine talking to `apps/api`. Production stays on `legacy` until the api has been proven
-somewhere that is not production. The plan and its open questions:
-`aidlc-docs/archive/s1-worker-registration/construction/plans/S1-preview-first-verification-plan.md`.
+The worker sign-up runs on `apps/api`: the form engine in `apps/app` talks to the api named
+by `NEXT_PUBLIC_API_URL`, with the reCAPTCHA site key `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
+(`lib/registration-backend.ts`, tested). If either variable is missing the page shows
+"Sign-up is temporarily unavailable" and logs which one. There is no other sign-up path:
+the pre-S1 page and the Upstash switch `switch:registration` were removed on 2026-10-02
+(history: `aidlc-docs/archive/s1-worker-registration/`).
 
-**The rule.** A merge to `main` may add code, but must not change what a live path does. A
-live-path change sits behind a switch whose "off" is the exact old code, and the flip
-happens only after the checklist below has passed on a Preview for the same commit.
+**The rule.** A merge to `main` may add code, but must not change what a live path does
+until the same commit has passed the checklist below on a Preview. Production users never
+see new backend code before that.
 
-**Three locks hold production on `legacy`, and they are checked, not assumed:** the api is
-deployed nowhere; the Upstash key reads `legacy`; and in code, a production deployment
-ignores the env var `REGISTRATION_BACKEND` (`lib/registration-switch.ts`, tested), so a
-variable copied into Vercel cannot flip real users. Only a deliberate key change can.
-
-**Where the api is tested.** Its first AWS deploy is a `staging` stack against a Neon copy
-of production, never the production database. Vercel's **Preview** scope points every PR
-preview at it (`REGISTRATION_BACKEND=api`, `NEXT_PUBLIC_API_URL`, a staging reCAPTCHA
-key) and at staging data. Production's scope stays as it is. No dedicated branch.
+**Where the api is tested.** Every merge touching the api path deploys the `staging`
+Cloud Run service against a Neon copy of production, never the production database.
+Vercel's **Preview** scope points every PR preview at it (`NEXT_PUBLIC_API_URL`, a staging
+reCAPTCHA key) and at staging data. Production's scope points at the `prod` service and the
+production key. No dedicated branch.
 
 **The checklist, on the PR preview, before any production step:** sign in with a
-staging-only user and open a dashboard · api health 200 through the ALB · suburb search
-returns rows with ids · a photo upload · a full sign-up with an internal email (code
-arrives, account created, audit row, outbox `DONE`, admin list, CRM sink payload) ·
-duplicate-email notice · rollback drill (`REGISTRATION_BACKEND=legacy` renders the old
-page) · and the production domain checked at the same time is unchanged. Record each run
-in `aidlc-docs/archive/s1-worker-registration/construction/S1-registration/preview-verification.md`.
+staging-only user and open a dashboard · api health 200 · suburb search returns rows with
+ids · a photo upload · a full sign-up with an internal email (code arrives, account created,
+audit row, outbox `DONE`, admin list) · duplicate-email notice · and the production domain
+checked at the same time is unchanged. Record each run in the cycle's construction notes.
 
 **Never on a preview:** production database URLs, production Upstash, the live n8n
 webhook, the production Blob token. Preview-scope variables point at staging resources
 or are empty.
 
-**Production flip = the Upstash key only**, set to `api` for a short canary after the
-`prod` stack is deployed and healthy with the switch off; the key back to `legacy` is the
-rollback and takes effect on the next request.
+**Production = a promotion.** The api moves by `workflow_dispatch` of an image that already
+runs on staging; the app moves by merging to `main`. Rollback: Vercel promote of the
+previous `remonta-app` deployment (seconds), and the api's previous revision or image.
 
 ---
 
@@ -155,7 +150,7 @@ Logs:      Cloud Logging → resource.type="cloud_run_revision" AND jsonPayload.
 Secrets:   Secret Manager remonta-api[-staging]-<NAME>   (add a version, then redeploy: instances read secrets at start)
 Alerts:    Cloud Monitoring policies "<service> <name>" → support@remontaservices.com.au
 Pause:     gcloud run services update remonta-api-staging --region australia-southeast1 --min-instances=0 --cpu-throttling
-Switch:    Upstash key switch:registration = api | legacy   (production's only path to the api; no deploy needed)
+Reach:     the app calls the api named by NEXT_PUBLIC_API_URL (Vercel scope: Preview → staging, Production → prod)
 ```
 
 Rules that have earned their place:
@@ -223,7 +218,8 @@ TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test pnpm --f
   (the process holds the query engine). Stop the service first.
 - To run `apps/app` against the same local database, override its variables on the command line -- its
   `.env` points at production: `AUTH_DATABASE_URL=… DATABASE_URL=… DIRECT_DATABASE_URL=… UPSTASH_REDIS_REST_URL=
-  UPSTASH_REDIS_REST_TOKEN= REGISTRATION_BACKEND=api NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev`.
+  UPSTASH_REDIS_REST_TOKEN= NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev`. Without `NEXT_PUBLIC_API_URL`
+  the sign-up page shows "temporarily unavailable" (there is no other backend).
 - `pnpm --filter @remonta/api backfill:locations` and `backfill:onboarding`: the S1 backfills. Dry run by
   default, `--apply` to write, `--report=<file>` for the full JSON. They read `apps/api/.env`.
 
@@ -350,8 +346,9 @@ Three layers. Keep them apart:
   - every form gets retries with back-off honouring `Retry-After`, and a fresh CAPTCHA token per attempt;
   - an offline pause, and the draft on the device (mark secrets `neverSaved`);
   - server field errors are mapped back to the right step.
-- **Moving a legacy form over:** give the definition a `legacy` adapter with the old
-  rules and the exact old request. That keeps a switch back to legacy a true rollback.
+- **Moving a hand-built form over:** add its contract entry to `apps/api` first, then write the
+  definition against it. The engine is api-only (its legacy mode went with the pre-S1 sign-up on
+  2026-10-02); rollback of a moved form is a Vercel promote, so move one form per PR.
 - **Existing hand-built forms** (8 suburb pickers, 11 multi-step pages) move onto the
   engine one at a time. Don't add new ones.
 

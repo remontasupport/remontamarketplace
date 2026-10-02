@@ -37,10 +37,10 @@ type Values = Record<string, unknown>;
 export function useFormWizard(def: FormDefinition, backend: Backend) {
   const query = useSearchParams();
   const online = useOnlineStatus();
-  const getCaptchaToken = useRecaptcha(backend.mode === "api" ? backend.recaptchaSiteKey : null);
+  const getCaptchaToken = useRecaptcha(backend.recaptchaSiteKey);
   const store = useMemo(() => browserStore(def.id), [def.id]);
   const neverSaved = useMemo(() => neverSavedKeys(def), [def]);
-  const schema = useMemo(() => formSchemaFor(def, backend.mode), [def, backend.mode]);
+  const schema = useMemo(() => formSchemaFor(def), [def]);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema) as never,
@@ -68,24 +68,24 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
 
   // ---- progress kept on the device ------------------------------------------------
   useEffect(() => {
-    const draft = loadDraft(store, def.id, backend.mode, neverSaved);
+    const draft = loadDraft(store, def.id, neverSaved);
     if (!draft) return;
     form.reset({ ...defaultsOf(def), ...draft.values });
     setStep(Math.min(Math.max(draft.step, 0), def.steps.length - 1));
     setShowIntro(false);
-  }, [def, backend.mode, store, neverSaved, form]);
+  }, [def, store, neverSaved, form]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const sub = form.watch(() => {
       clearTimeout(timer);
-      timer = setTimeout(() => saveDraft(store, def.id, { mode: backend.mode, step, values: form.getValues() }, neverSaved), 500);
+      timer = setTimeout(() => saveDraft(store, def.id, { step, values: form.getValues() }, neverSaved), 500);
     });
     return () => {
       clearTimeout(timer);
       sub.unsubscribe();
     };
-  }, [form, store, def.id, backend.mode, step, neverSaved]);
+  }, [form, store, def.id, step, neverSaved]);
 
   const retry = useMemo(
     () => ({
@@ -107,17 +107,15 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     return () => sub.unsubscribe();
   }, [form, def]);
 
-  // ---- photo uploads (api mode) -----------------------------------------------------
+  // ---- photo uploads ----------------------------------------------------------------
   /**
-   * The uploader for a photo field: api mode stages it in apps/api; legacy keeps
-   * PhotoUpload's own. Alongside the upload, a thumbnail of the same image is kept
-   * in the form (photoPreview.ts) so the field can still show it after the step
-   * remounts or the page reloads; it is set only once the upload succeeded, so a
-   * preview never exists without its id.
+   * The uploader for a photo field stages it in apps/api. Alongside the upload, a
+   * thumbnail of the same image is kept in the form (photoPreview.ts) so the field
+   * can still show it after the step remounts or the page reloads; it is set only
+   * once the upload succeeded, so a preview never exists without its id.
    */
   const uploaderFor = useCallback(
     (field: Extract<FieldDef, { kind: "photo" }>) => {
-      if (backend.mode !== "api") return undefined;
       return async (file: File) => {
         const p = (async () => {
           const [id, preview] = await Promise.all([uploadToApi(def, backend, field.uploadEntry, await shrinkImage(file), { retry }), thumbnailDataUrl(file)]);
@@ -158,13 +156,8 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   const next = useCallback(async () => {
     setStepMessage(null);
     if (!(await form.trigger(keysOfStep(def, step), { shouldFocus: true }))) return scrollToError();
-    const guard = backend.mode === "legacy" ? def.legacy?.afterStep?.[step + 1] : undefined;
-    if (guard) {
-      const message = await guard(form.getValues());
-      if (message) return setStepMessage(message);
-    }
     setStep((s) => Math.min(s + 1, def.steps.length - 1));
-  }, [form, def, step, backend.mode]);
+  }, [form, def, step]);
 
   const back = useCallback(() => {
     setStepMessage(null);
@@ -203,11 +196,6 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
             await Promise.allSettled([...uploads.current]);
           }
           setStatus({ kind: "sending" });
-          if (backend.mode === "legacy") {
-            if (!def.legacy) return setStatus({ kind: "failed", message: "This form is not available right now." });
-            // The legacy body is built from the values as typed, exactly as before.
-            return apply(await def.legacy.submit(form.getValues(), { query }));
-          }
           apply(await submitToApi(def, backend, values, { query, getCaptchaToken, retry }));
         },
         (errors) => showFirstInvalidStep(errors as Record<string, unknown>),

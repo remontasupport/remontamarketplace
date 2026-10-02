@@ -17,7 +17,7 @@ this folder disagree, the code wins; fix this folder in the same PR.
 | The sign-up body's fields and their validation rules | [02-api-reference.md](02-api-reference.md) | §4.7 Submit |
 | Which tables a sign-up writes, and every column it sets | [03-data-model.md](03-data-model.md) | §2 Tables written |
 | Which tables the sign-up only reads | [03-data-model.md](03-data-model.md) | §3 Tables read |
-| What the legacy sign-up writes | [03-data-model.md](03-data-model.md) | §5 Legacy |
+| What the pre-S1 sign-up wrote (rows before 2026-10-02) | [03-data-model.md](03-data-model.md) | §5 Legacy (historical) |
 | Any enum (role, status, onboarding stage, outbox status…) | [04-enums.md](04-enums.md) | one section per enum |
 | What happens after the sign-up: emails, outbox events, retries, audit | [05-events-and-emails.md](05-events-and-emails.md) | |
 
@@ -45,5 +45,5 @@ this folder disagree, the code wins; fix this folder in the same PR.
 | Emails | `apps/api/src/modules/notifications/` |
 | Tables and enums | `packages/db/prisma/schema.prisma` (+ hand-written SQL in `packages/db/prisma/migrations/`) |
 | The form (steps and fields) | `apps/app/src/features/forms/definitions/workerRegistration.ts` |
-| The backend switch | `apps/app/src/lib/registration-switch.ts`, `apps/app/src/app/registration/worker/page.tsx` |
+| Where the page finds the api (the two public variables) | `apps/app/src/lib/registration-backend.ts`, `apps/app/src/app/registration/worker/page.tsx` |
 | Generated API inventory | `packages/api-contract/openapi.json` (regenerate: `pnpm --filter @remonta/api-contract openapi`) |

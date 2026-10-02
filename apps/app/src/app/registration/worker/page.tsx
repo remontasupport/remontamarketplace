@@ -1,17 +1,18 @@
 import { Suspense } from "react";
+import { SignupUnavailable } from "@/components/ui/form-wizard/SignupUnavailable";
 import { WorkerRegistrationWizard } from "@/features/forms/definitions/WorkerRegistrationWizard";
-import { LegacyWorkerRegistration } from "@/features/forms/legacy/worker/LegacyWorkerRegistration";
-import { getRegistrationBackend } from "@/lib/registration-switch";
+import { resolveBackend } from "@/lib/registration-backend";
 
-// The switch is read per request (no deploy to flip it), so this page is dynamic.
+// The backend is read on the server per request, so fixing a missing variable in
+// Vercel needs no rebuild to take effect.
 export const dynamic = "force-dynamic";
 
-// `legacy` is the pre-S1 page itself, not the form engine posting the old request:
-// production must not change until apps/api is deployed and verified. Rollback
-// from `api` is therefore a return to the exact old code.
-export default async function Page() {
-  const backend = await getRegistrationBackend();
-  if (backend.mode === "legacy") return <LegacyWorkerRegistration />;
+// The sign-up runs on apps/api. If the deployment lacks the api configuration the
+// page says so rather than serving a form that cannot work (the pre-S1 page this
+// used to fall back to was removed on 2026-10-02).
+export default function Page() {
+  const backend = resolveBackend(process.env);
+  if (!backend) return <SignupUnavailable />;
   return (
     <Suspense>
       <WorkerRegistrationWizard backend={backend} />

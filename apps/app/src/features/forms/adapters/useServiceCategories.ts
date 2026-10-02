@@ -1,13 +1,12 @@
 "use client";
 
-// The services step's catalogue. In api mode it comes from apps/api
-// (GET /v1/service-categories), like every other call the sign-up makes; in legacy
-// mode from this app's /api/categories, as before. Same Category shape either way,
-// so the step and its descriptions do not care which.
+// The services step's catalogue, from apps/api (GET /v1/service-categories), like
+// every other call the sign-up makes. The same Category shape the rest of the app
+// uses, so the step and its descriptions do not care where it came from.
 import { useQuery } from "@tanstack/react-query";
 import { createClient, registrationContract } from "@remonta/api-contract";
 import type { Backend } from "@remonta/form-engine";
-import { categoriesKeys, fetchCategories, type Category } from "@/hooks/queries/useCategories";
+import { categoriesKeys, type Category } from "@/hooks/queries/useCategories";
 
 async function fetchFromApi(apiBaseUrl: string): Promise<Category[]> {
   const r = await createClient(registrationContract, { baseUrl: apiBaseUrl }).listServiceCategories({});
@@ -21,10 +20,10 @@ async function fetchFromApi(apiBaseUrl: string): Promise<Category[]> {
 }
 
 export function useServiceCategories(backend: Backend) {
-  const apiBaseUrl = backend.mode === "api" ? backend.apiBaseUrl : null;
+  const apiBaseUrl = backend.apiBaseUrl;
   return useQuery({
-    queryKey: [...categoriesKeys.all, apiBaseUrl ?? "app"],
-    queryFn: apiBaseUrl ? () => fetchFromApi(apiBaseUrl) : fetchCategories,
+    queryKey: [...categoriesKeys.all, apiBaseUrl],
+    queryFn: () => fetchFromApi(apiBaseUrl),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,

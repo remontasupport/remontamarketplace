@@ -26,7 +26,7 @@ literals the sign-up uses. **Bold** = the value a new sign-up gets.
 | Value | Written by |
 |---|---|
 | **`ACCOUNT_REGISTERED`** | The new sign-up (apps/api), once per new account |
-| `LOGIN_SUCCESS` | Sign-in; **also what the legacy sign-up writes** for a registration |
+| `LOGIN_SUCCESS` | Sign-in; also what the pre-S1 sign-up wrote for a registration (rows before 2026-10-02) |
 | `LOGIN_FAILED`, `LOGOUT` | Sign-in / sign-out |
 | `PASSWORD_CHANGE`, `PASSWORD_RESET_REQUEST`, `PASSWORD_RESET_SUCCESS` | Password flows |
 | `EMAIL_CHANGE`, `EMAIL_VERIFIED`, `PROFILE_UPDATE` | Account changes |
@@ -120,4 +120,3 @@ replaces it over time.
 | Outbox event `type` | `WorkerRegistered`, `RegistrationAttemptOnExistingAccount` | [05](05-events-and-emails.md) |
 | Error `code` | `INVALID_REQUEST` `UNAUTHENTICATED` `FORBIDDEN` `NOT_FOUND` `CONFLICT` `PAYLOAD_TOO_LARGE` `UNSUPPORTED_MEDIA_TYPE` `RATE_LIMITED` `INTERNAL` `UNAVAILABLE` | [02 §2](02-api-reference.md#2-errors) |
 | Photo types | `image/jpeg` `image/png` `image/webp` `image/heic` | 4.6 |
-| Backend mode | `legacy`, `api` | Upstash `switch:registration`, env `REGISTRATION_BACKEND` |

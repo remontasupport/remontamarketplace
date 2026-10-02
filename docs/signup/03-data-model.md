@@ -218,12 +218,14 @@ outbox_events: no foreign keys; payload carries userId / workerProfileId
 Deleting a `worker_profiles` row cascades to its services, locations, onboarding marker and transitions;
 staged photos keep their row with `claimedByWorkerProfileId` set to NULL.
 
-## 5. Legacy sign-up
+## 5. Legacy sign-up (historical)
 
-What production runs today (`legacy` mode): the pre-S1 page posts to apps/app's
-`POST /api/auth/register-async` (`apps/app/src/lib/workers/workerRegistrationProcessor.ts`).
+**Removed on 2026-10-02.** Until then the pre-S1 page posted to apps/app's `POST /api/auth/register-async`
+(`lib/workers/workerRegistrationProcessor.ts`, both deleted; last version at git tag-less commit `b7ccc80`).
+Kept here because rows written by it still exist in production and differ from the api's (mobile as typed,
+no `worker_locations` row until the S1 backfill, `LOGIN_SUCCESS` as the registration audit action).
 
-| Table | What it writes |
+| Table | What it wrote |
 |---|---|
 | `users` | `email` (lower-cased), `passwordHash`, `role = WORKER`, `status = ACTIVE` |
 | `worker_profiles` | names, `mobile` **as typed** (not E.164), `location` (the string the page built), `photos` (the URL uploaded earlier by `/api/upload/worker-photo`), `city`/`state`/`postalCode`/`latitude`/`longitude` from a **Google geocode** of the location string, `languages = []`, `profileCompleted = false`, `isPublished = false`, `verificationStatus = NOT_STARTED` |

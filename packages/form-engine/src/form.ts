@@ -1,8 +1,8 @@
-// Turning a definition into what a renderer needs: defaults, a validation schema
-// for the mode, which step owns which field, and the api request body.
+// Turning a definition into what a renderer needs: defaults, the validation
+// schema, which step owns which field, and the api request body.
 import type { ContractDef, EntryDef } from "@remonta/api-contract";
 import * as z from "zod";
-import { KINDS, type Mode } from "./kinds";
+import { KINDS } from "./kinds";
 import type { FieldDef, FormDefinition } from "./types";
 
 /**
@@ -59,11 +59,10 @@ export function defaultsOf(def: FormDefinition): Record<string, unknown> {
   return Object.assign({}, ...def.steps.flatMap((s) => s.fields.map((f) => KINDS[f.kind].defaults(f))));
 }
 
-/** The form-state schema for a mode: the contract's rules, or the legacy ones where they differ. */
-export function formSchemaFor(def: FormDefinition, mode: Mode): z.ZodObject {
+/** The form-state schema: the contract's rules, field by field. */
+export function formSchemaFor(def: FormDefinition): z.ZodObject {
   const contractShape = bodyShape(def.contract.entries[def.submitEntry] as EntryDef);
-  const legacyShape = mode === "legacy" ? (def.legacy?.fieldSchemas ?? {}) : {};
-  const entries = def.steps.flatMap((s) => s.fields.map((field) => KINDS[field.kind].schemas({ field, mode, contractShape, legacyShape })));
+  const entries = def.steps.flatMap((s) => s.fields.map((field) => KINDS[field.kind].schemas({ field, contractShape })));
   return z.object(Object.assign({}, ...entries));
 }
 

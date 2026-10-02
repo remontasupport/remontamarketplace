@@ -1,29 +1,23 @@
 # 01 — The sign-up flow
 
-## 1. Two backends
+## 1. One backend
 
-`/registration/worker` (`apps/app/src/app/registration/worker/page.tsx`) is rendered per request and
-picks one of two backends (`apps/app/src/lib/registration-switch.ts`):
+`/registration/worker` (`apps/app/src/app/registration/worker/page.tsx`) renders the form engine wizard
+(`features/forms/FormWizard.tsx`), which sends every call to `apps/api` on Cloud Run (§2 below). The api is
+named by two public variables, read on the server per request (`apps/app/src/lib/registration-backend.ts`):
 
-| Mode | What renders | Where the data goes |
+| Variable | Production | Vercel Preview |
 |---|---|---|
-| `legacy` | The pre-S1 page itself (`features/forms/legacy/worker/`) | This app's routes, `POST /api/auth/register-async` (see [03 §5](03-data-model.md#5-legacy-sign-up)) |
-| `api` | The form engine wizard (`features/forms/FormWizard.tsx`) | `apps/api` on Cloud Run, every call (§2 below) |
+| `NEXT_PUBLIC_API_URL` | the `prod` Cloud Run service | the `staging` service |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | the production v3 key | the staging key (`vercel.app`) |
 
-How the mode is chosen, first match wins:
+If either is missing the page renders "Sign-up is temporarily unavailable" and logs which variable, instead
+of a form that cannot work. There is no other sign-up path: the pre-S1 page, its routes
+(`POST /api/auth/register-async`, `POST /api/auth/check-email`) and the Upstash switch `switch:registration`
+were removed on 2026-10-02, after the api had served production since that morning. History:
+`aidlc-docs/archive/s1-worker-registration/` and [03 §5](03-data-model.md#5-legacy-sign-up-historical).
 
-1. Upstash key `switch:registration` = `legacy` or `api`.
-2. The env var `REGISTRATION_BACKEND` — **ignored on a production deployment** (`VERCEL_ENV=production`),
-   so only the Upstash key can move real users.
-3. Otherwise `legacy`.
-
-`api` also needs `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; if either is missing the
-page falls back to `legacy` and logs why.
-
-Today (2026-10-01): production = `legacy` (Upstash key set). Vercel **Preview** deployments = `api`,
-pointed at the staging api.
-
-## 2. Step by step (api mode)
+## 2. Step by step
 
 | # | Screen (form step) | The worker does | Call to apps/api | Writes? |
 |---|---|---|---|---|
@@ -54,7 +48,7 @@ browser; an entry left by that release is deleted the first time the form loads.
 
 Google's floating badge is hidden on every page (`app/globals.css`), and no replacement branding line is shown:
 a product decision of 2026-10-02, made knowing that Google's terms ask for the "protected by reCAPTCHA" line
-when the badge is hidden. reCAPTCHA itself still runs on the api-mode wizard; the legacy page loads none.
+when the badge is hidden. reCAPTCHA itself still runs on the wizard.
 
 ### Text diagram
 
