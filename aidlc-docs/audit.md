@@ -2532,3 +2532,12 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 **AI action (2026-10-02, Workflow Planning complete):** wrote `aidlc-docs/inception/plans/execution-plan.md`. Risk Low (isolated, browser-only, one-line revert). Stages: Reverse Engineering SKIP, User Stories SKIP, Application Design SKIP, Units Generation SKIP, Functional/NFR/Infrastructure Design SKIP; Code Generation and Build and Test EXECUTE. Pre-step per V3 A: PR and merge of `aidlc/archive-s1`, then branch `fix/signup-draft-session-storage` from `main`. Package sequence: form-engine (comment + PBT tests, no logic change) and apps/app (adapter + test + docs/signup/01-flow.md) in one PR. State file updated.
 
 **Approval prompt presented (2026-10-02):** "Workflow Planning Complete. Review `aidlc-docs/inception/plans/execution-plan.md`. Request changes, or approve and continue to Code Generation. Separately: open and merge the PR for `aidlc/archive-s1` (compare URL given; `gh` is not installed on this machine, so the PR is created in the browser)."
+
+**User input (verbatim, 2026-10-02):**
+> PR merged, approved, go ahead
+
+**AI action (2026-10-02, execution plan approved):** Verified the merge by refs, not by report: `bcd23f3` is an ancestor of `origin/main`; `origin/main` = `ea3e669` ("Merge pull request #28 from remontasupport/aidlc/archive-s1"). Checked out `main`, fast-forwarded, branched `fix/signup-draft-session-storage` (D3). Execution plan status: Approved.
+
+**AI action (2026-10-02, Code Generation Part 1):** wrote `aidlc-docs/construction/plans/draft-storage-code-generation-plan.md` (unit `draft-storage`, 8 steps): 1 adapter `browserStore(formId, host?)` returning the session store and deleting the old localStorage key; 2 wire `def.id` in `useFormWizard`; 3 adapter example tests (node, fake hosts); 4 engine property-based tests (PBT-02 round-trip, PBT-03 neverSaved invariant, realistic generators); 5 engine header comment; 6 `docs/signup/01-flow.md`; 7 quality gates and the Prisma line-ending check; 8 summary document. Engine logic unchanged; P-7 kept (storage choice stays in apps/app). State file updated (Code Generation Part 1 complete).
+
+**Approval prompt presented (2026-10-02T11:40Z approx.):** "Code generation plan ready: `aidlc-docs/construction/plans/draft-storage-code-generation-plan.md`, 8 steps. Request changes, or approve to start generation."

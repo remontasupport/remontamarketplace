@@ -4,13 +4,14 @@
 - **Project**: Worker sign-up draft -- no answers kept on the device between visits (`/registration/worker`, api mode)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-02 (user: "start ai dlc")
-- **Current Stage**: INCEPTION -- Workflow Planning complete (2026-10-02), awaiting the user's approval of
-  `aidlc-docs/inception/plans/execution-plan.md`. Requirements: `aidlc-docs/inception/requirements/requirements.md`
-  (decisions D1-D7: sessionStorage; one-time clean-up of the old localStorage key; merge `aidlc/archive-s1` first;
-  Security + Resiliency blocking, PBT partial; Reverse Engineering skipped).
-- **Next**: (1) the user merges the PR for `aidlc/archive-s1`; (2) branch `fix/signup-draft-session-storage` from
-  `main`; (3) Code Generation (plan at `aidlc-docs/construction/plans/draft-storage-code-generation-plan.md`);
-  (4) Build and Test, preview checklist `requirements.md` §8.
+- **Current Stage**: CONSTRUCTION -- Code Generation, Part 1 (planning) complete 2026-10-02; awaiting approval of
+  `aidlc-docs/construction/plans/draft-storage-code-generation-plan.md` (unit `draft-storage`, 8 steps). Execution
+  plan approved 2026-10-02 ("PR merged, approved, go ahead"); PR #28 merged `aidlc/archive-s1` into `main`
+  (`ea3e669`). Working branch: `fix/signup-draft-session-storage` from `ea3e669`.
+- **Requirements**: `aidlc-docs/inception/requirements/requirements.md` (D1-D7: sessionStorage; one-time clean-up of
+  the old localStorage key; Security + Resiliency blocking, PBT partial; Reverse Engineering skipped).
+- **Next**: Part 2 generation (steps 1-8), then Build and Test: PR, CI, preview checklist `requirements.md` §8,
+  merge, production check.
 
 ## Execution Plan Summary
 - **Stages to execute**: Code Generation, Build and Test.
@@ -100,11 +101,12 @@
 - [x] Reverse Engineering -- SKIPPED (kick-off Q2 = C)
 - [x] Requirements Analysis -- 2026-10-02, minimal depth (`inception/requirements/requirements.md`)
 - [x] User Stories -- SKIPPED (one persona, one behaviour; acceptance in requirements §8)
-- [x] Workflow Planning -- 2026-10-02 (`inception/plans/execution-plan.md`), awaiting approval
+- [x] Workflow Planning -- 2026-10-02 (`inception/plans/execution-plan.md`), approved 2026-10-02
 - [x] Application Design -- SKIPPED
 - [x] Units Generation -- SKIPPED (one unit)
 
 ### 🟢 CONSTRUCTION PHASE
 - [x] Functional Design, NFR Requirements, NFR Design, Infrastructure Design -- SKIPPED (see execution plan)
-- [ ] Code Generation (plan, then generation) -- on `fix/signup-draft-session-storage` from `main`
+- [ ] Code Generation -- Part 1 plan written 2026-10-02 (`construction/plans/draft-storage-code-generation-plan.md`),
+  awaiting approval; Part 2 generation pending -- on `fix/signup-draft-session-storage` from `main`
 - [ ] Build and Test -- quality gates, PR, preview checklist, merge, production check
