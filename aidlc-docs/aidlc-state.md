@@ -1,11 +1,14 @@
 # AI-DLC State Tracking
 
 ## Project Information
-- **Project**: _(new cycle -- to be named at Inception)_
+- **Project**: Cut-over clean-up -- remove the legacy worker sign-up path (follow-up 3)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
-- **Start Date**: _(set when the new cycle starts)_
-- **Current Stage**: INCEPTION -- not started. The previous cycle closed on 2026-10-02; see "What is live" below before
-  planning anything.
+- **Start Date**: 2026-10-02 (user: "delete the legacy api in sign up workflow and the connected codes of it")
+- **Current Stage**: INCEPTION -- Workspace Detection done (brownfield, same workspace; Reverse Engineering replaced
+  by a targeted inventory of the legacy path). Requirements Analysis in progress: inventory written
+  (`aidlc-docs/inception/requirements/legacy-signup-removal-inventory.md`), waiting for the decisions in
+  `legacy-signup-removal-questions.md` (engine legacy mode keep/remove; behaviour when the api is not configured;
+  timing vs the canary week; extensions). **Nothing deleted yet.** Branch `feat/remove-legacy-signup` from `b7ccc80`.
 
 ## Previous cycles (archived, read-only)
 
