@@ -4,11 +4,19 @@
 - **Project**: Cut-over clean-up -- remove the legacy worker sign-up path (follow-up 3)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-02 (user: "delete the legacy api in sign up workflow and the connected codes of it")
-- **Current Stage**: INCEPTION -- Workspace Detection done (brownfield, same workspace; Reverse Engineering replaced
-  by a targeted inventory of the legacy path). Requirements Analysis in progress: inventory written
-  (`aidlc-docs/inception/requirements/legacy-signup-removal-inventory.md`), waiting for the decisions in
-  `legacy-signup-removal-questions.md` (engine legacy mode keep/remove; behaviour when the api is not configured;
-  timing vs the canary week; extensions). **Nothing deleted yet.** Branch `feat/remove-legacy-signup` from `b7ccc80`.
+- **Current Stage**: CONSTRUCTION -- Code Generation Part 1 (plan) written 2026-10-02, awaiting approval:
+  `aidlc-docs/construction/plans/legacy-removal-code-generation-plan.md` (unit `legacy-removal`, parts A-E).
+  Inception done: inventory (`inception/requirements/legacy-signup-removal-inventory.md`), questions + clarification
+  answered (Q1 = B remove engine legacy mode, Q2 = A unavailable card, Q3 = A now, Q4 = B Security + Resiliency, no
+  PBT; clarification A "make sure the production api still works 100%"), `requirements.md`, `plans/execution-plan.md`.
+  **Nothing deleted yet.** Branch `feat/remove-legacy-signup` from `b7ccc80`.
+
+## Extension Configuration (this cycle)
+| Extension | Enabled | Decided At |
+|---|---|---|
+| Security Baseline | Yes, blocking (Q4 B) | Requirements Analysis, 2026-10-02 |
+| Resiliency Baseline | Yes, blocking (Q4 B); targets inherited from S1 | Requirements Analysis, 2026-10-02 |
+| Property-Based Testing | No (Q4 B); the engine's existing PBT tests stay | Requirements Analysis, 2026-10-02 |
 
 ## Previous cycles (archived, read-only)
 
