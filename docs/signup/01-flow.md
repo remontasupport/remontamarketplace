@@ -44,9 +44,11 @@ background from the outbox ([05](05-events-and-emails.md)).
 
 ### What the page keeps between visits
 
-The wizard saves progress in the browser (`localStorage`) and restores it on return. Never saved: the
-email verification (ticket and code) and the password, so a returning worker verifies the email and
-types the password again.
+Nothing. The wizard keeps its progress in the tab's `sessionStorage` only: a page refresh or the offline
+pause restores the step and the answers, and closing the tab or the browser deletes them, so a worker who
+comes back later starts at step 1. Even within the tab the email verification (ticket and code) and the
+password are never saved. Until 2026-10-02 the draft lived in `localStorage` and survived closing the
+browser; an entry left by that release is deleted the first time the form loads.
 
 ### Text diagram
 

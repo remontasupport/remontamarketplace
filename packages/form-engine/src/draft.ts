@@ -2,7 +2,10 @@
 // nothing. Fields marked neverSaved (passwords) are stripped before saving and
 // again on load. Expires after 23 h -- inside the 24 h a staged photo stays
 // claimable -- and is deleted when the form succeeds. The platform supplies the
-// storage (browser: localStorage), so this has no DOM dependency.
+// storage, so this has no DOM dependency. In the browser that is the tab's
+// sessionStorage (apps/app features/forms/adapters/browser.ts): a refresh keeps
+// the draft, closing the tab or the browser deletes it, so nothing a user typed
+// outlives the visit.
 
 export const DRAFT_MAX_AGE_MS = 23 * 3_600_000;
 

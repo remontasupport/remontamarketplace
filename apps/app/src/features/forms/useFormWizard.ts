@@ -38,7 +38,7 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   const query = useSearchParams();
   const online = useOnlineStatus();
   const getCaptchaToken = useRecaptcha(backend.mode === "api" ? backend.recaptchaSiteKey : null);
-  const store = useMemo(() => browserStore(), []);
+  const store = useMemo(() => browserStore(def.id), [def.id]);
   const neverSaved = useMemo(() => neverSavedKeys(def), [def]);
   const schema = useMemo(() => formSchemaFor(def, backend.mode), [def, backend.mode]);
 
