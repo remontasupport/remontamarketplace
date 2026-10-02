@@ -2180,3 +2180,18 @@ Reported the position and the pending decisions; no code changed.
 > before we merged. I found a bug that I want you to fix.IF the email account is already exists. this error message "Please verify your email address" won't show up instead
 
 **Action (2026-10-02):** Traced it: in api mode a taken address (availability check on blur) shows "An account with this email already exists. Please sign in instead." and disables "Send code"; pressing Next then also raises the step's validation error "Please verify your email address" (the contract's `emailVerification` rule), which the person cannot act on. Fix in the glue layer (`features/forms`): `verificationError(availability, error)` in `useEmailCode.ts` hides the step's error while the address is taken, so only the existing-account notice with its sign-in link shows; Next stays blocked (no proof). `EmailCodeSlot` in `FormWizard.tsx` uses it; unit test in `forms.test.ts`. App quality: 144 type and 508 lint findings all known, 80 tests pass. Committed on `s1/api-structure` (the PR the user asked to fix before merging).
+
+**User input (verbatim, 2026-10-02):**
+> I think the preview is good now. Now I want to run a scan to the code base. which of these tools are mst effecient to us to use?
+>
+> Semgrep, SonarQube, CodeQL, bANDIT, Gosec, brakemna
+
+**Action (2026-10-02):** Preview accepted by the user. Answered the scanner question: the codebase is TypeScript/JavaScript (+ SQL, shell, Dockerfile), so Bandit (Python), Gosec (Go) and Brakeman (Ruby on Rails) do not apply. Recommended CodeQL (GitHub default setup: free because the repository is public, zero config, taint-tracking for JS/TS) plus Semgrep CI (fast, OSS rule packs for TS/Next/Node, custom rules can encode this repo's own boundaries); SonarQube/SonarCloud only if a quality dashboard is wanted. Flagged that the repository is public (visibility checked via the GitHub API), which the user should confirm is intended. Existing: the supply-chain workflow (dependency audit + SBOM), the ESLint boundary rules, the `/security-review` skill.
+
+**User input (verbatim, 2026-10-02):**
+> after we setup, what will the 2 tools do?
+
+**Action (2026-10-02):** Explained what CodeQL and Semgrep do day to day once set up: both run as GitHub Actions on every PR and on main; CodeQL builds a database of the code and runs data-flow queries (injection, SSRF, path traversal, weak crypto, secrets in code), reporting as code-scanning alerts on the PR with a weekly full scan; Semgrep pattern-matches each changed file against rule packs and the repo's own rules in about a minute, reporting inline on the PR. Neither changes code or blocks a merge unless configured as a required check; both have false positives that are dismissed with a reason; findings in existing code appear once as a backlog, then only new ones.
+
+**User input (verbatim, 2026-10-02):**
+> Ok set up both CodeQL and Semgrep on a branch
