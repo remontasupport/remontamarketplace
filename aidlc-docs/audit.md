@@ -2340,3 +2340,29 @@ Reported the position and the pending decisions; no code changed.
 > apply
 
 **Action (2026-10-02, production database run, steps 7-9 -- COMPLETE):** step 7 locations apply 07:11:12Z-07:14:55Z: 1,751 written, 0 failed, 60 ambiguous + 10 unmatched left unplaced; onboarding apply 07:14:55Z-07:15:16Z: 1,821 written (941/20/744/105/11/0). Step 8 re-runs: locations "already placed 1751, written 0"; onboarding "already had a marker 1821, written 0". Row verification: worker_locations 1,751 rows, all HOME, all source BACKFILL, none without `point`; worker_onboarding 1,821 rows over 5 stages; 1,821 opening transitions; 70 profiles without a HOME (the reviewed list); users 1,898 / profiles 1,821 unchanged. Step 9: `app.remontaservices.com.au/api/suburbs?q=parra` 200, rows with ids (Parramatta = 5410), no nulls -- the live suburb search now reads `au_localities`. Follow-up noted: `apps/app/src/lib/auth-prisma.ts` omits the three S1 columns (PR #18) because production lacked them; it can now be removed in its own PR. Dashboard/sign-in check: the user's.
+
+**User input (verbatim, 2026-10-02):**
+> why is my github account hard to load?
+
+**Action (2026-10-02):** Checked: GitHub's status page reports all systems operational. From this machine: google.com and the staging api answer in <0.5 s; api.github.com (a tiny response) in 1 s; github.com and cloudflare.com connect and finish TLS within ~2 s but the full page never completes within 15 s. Pattern = the local network path stalls on larger responses to some hosts (MTU/packet loss on the Wi-Fi/VPN, or a filtering proxy), not GitHub and not anything in this project. Advised: a different network (phone hotspot), VPN off, router restart; the deploy promotion can wait until the connection is steady.
+
+**User input (verbatim, 2026-10-02):**
+> what should I enter this field "Git SHA of an image already in the registry (the one that passed the checklist; an older one = rollback)"
+
+**Action (2026-10-02):** Answered: the full SHA `7e79f8b5f58a16785cddbd4c9bb4a277e9fcddc9` (the PR #25 merge, the image staging runs and the preview was accepted on; deploy-api run 6 built it); stage = `prod`.
+
+**User input (verbatim, 2026-10-02):**
+> check CI
+
+**Action (2026-10-02):** deploy-api run 7 (36984342469) was a `workflow_dispatch` with stage left at its default `staging` and imageTag `7e79f8b…`: it re-promoted the same image to staging (harmless; staging health 200 afterwards). Asked the user to dispatch again with stage=prod.
+
+**User input (verbatim, 2026-10-02):**
+> check CI
+
+**Action (2026-10-02):** No production run exists yet: the latest deploy-api run is still run 7 (staging, success); Cloud Run lists only `remonta-api-staging` (revision 00007). The stage=prod dispatch has not reached GitHub -- likely the user's connection (large pages stalling). Told the user; will check again on their word.
+
+**User input (verbatim, 2026-10-02):**
+> check CI
+
+**Action (2026-10-02, step 5 DONE):** deploy-api run 8 (36986240870, `workflow_dispatch` stage=prod, imageTag 7e79f8b…) succeeded 08:49:33Z-08:51:10Z: image existed (no build), service definition applied, revision ready, health check passed. Cloud Run now has `remonta-api` (revision `remonta-api-00001-t9d`, 100 % traffic, image `…/remonta/api:7e79f8b5f58a16785cddbd4c9bb4a277e9fcddc9`) beside staging. Verified from here on `https://remonta-api-154148201608.australia-southeast1.run.app`: `/v1/health` 200 with request id and HSTS; `/v1/localities?q=parram` rows with ids (Parramatta 5410); `/v1/service-categories` 200 `public, max-age=300`; CORS preflight from `https://app.remontaservices.com.au` 204 with the allow-origin header, from a `*.vercel.app` origin refused (no header); a test photo staged (201, id d3aff84f…, purged by the daily job if unclaimed). Switch still `legacy` (Upstash read), live sign-up page still the legacy page (no `run.app` in the HTML). A forged `X-Forwarded-Proto: http` on an https request got 200 -- Cloud Run's front end sets that header itself; checked separately that plain `http://` never reaches the service.
+Plain `http://` to the production URL: 302 to https from Google Frontend -- the service never sees plain HTTP; the in-app guard is a second line only.
