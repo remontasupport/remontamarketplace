@@ -2628,3 +2628,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > Code scanning is green now, PR merged and it works. tO CHECK WHAT YOU HAVE DELETED, CAN YOU ENUMERATE THE FILES?
 
 **AI action (2026-10-02, unit `legacy-removal` Build and Test complete):** Verified by refs: PR #34 merged `feat/remove-legacy-signup` into `main` (`a30946e`); code scanning green after the regex fix; the user verified production ("it works"). Enumerated for the user, from `git diff b7ccc80 origin/main`: 15 files deleted, 3 added, 28 modified outside aidlc-docs (list in the reply). State updated on branch `aidlc/legacy-removal-close`. Manual clean-up still with the user: the Upstash key `switch:registration`, Vercel Preview `REGISTRATION_BACKEND`.
+
+**User input (verbatim, 2026-10-02):**
+> switch:registration where to delete that?
+
+**Action (2026-10-02):** Answered: the key lives in the production Upstash Redis database that `apps/app/.env` names in `UPSTASH_REDIS_REST_URL` (the one `lib/redis.ts` talks to); delete it in the Upstash console's Data Browser, or with one REST call using the database's token. Offered to run the call. Not deleted by the assistant.
+
+**User input (verbatim, 2026-10-02):**
+> Ok run it but make sure before deleting it, it is safe
+
+**Action (2026-10-02, Upstash key deleted):** Safety checks first: (1) `git grep` on `origin/main` finds `switch:registration`/`SWITCH_KEY` only in two historical sentences (CLAUDE.md, docs/signup/01-flow.md), no code; (2) the production page `https://app.remontaservices.com.au/registration/worker` returned 200 with the wizard intro and the prod api URL (`remonta-api-154148201608…run.app`), no "unavailable" card, no legacy marker -- the merged code is live; (3) the key read `"api"` and was the only `switch:*` key. Then `DEL switch:registration` on the production Upstash database (result 1), `GET` → null, and a fresh production page request still renders the wizard. Vercel Preview `REGISTRATION_BACKEND` remains for the user (no console access here).
