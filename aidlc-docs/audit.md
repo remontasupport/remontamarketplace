@@ -2115,3 +2115,13 @@ Reported the position and the pending decisions; no code changed.
 > the CRM and n8n is not priority. By the way I change the Email From in the apps/api/.env.example to Remonta <community@remontaservices.com.au>, can you confirm that that value was being used when sending the welcome email?
 
 **Action (2026-10-01):** CRM/n8n deprioritised by the user. Confirmed NOT used: `.env.example` is a local template only; on Cloud Run EMAIL_FROM comes from `infra/lib/stages.ts` (rendered into `service.{staging,prod}.yaml`; the image carries no .env). Changed `stages.ts` EMAIL_FROM to `Remonta <community@remontaservices.com.au>` (kept the user's `.env.example` edit), re-rendered both service YAMLs, infra quality OK (23 tests); updated `docs/signup/02` and `05` and the published page (stale mailto link removed). Takes effect on staging when this branch merges (deploy-api); production unaffected. Left as is: the comment example in config.ts, the config test fixture, the historical infra design docs.
+
+**User input (verbatim, 2026-10-01):**
+> why there is a deployment to the production? will it not be affected the production legacy?
+
+**Action (2026-10-01):** PR #23 (`s1/preview-run-1`) merged (cd6d537). Explained: every merge to main rebuilds both Vercel production projects (CLAUDE.md); this merge changed no file under apps/app or apps/web (docs, infra, audit only), so the rebuilt production is the same code. Live sign-up checked twice after the merge (fresh MISS): legacy page, no new form, no staging URL. deploy-api run 5 = staging only (new EMAIL_FROM); production Cloud Run untouched.
+
+**User input (verbatim, 2026-10-02):**
+> I will be using another device, and I want to make sure all the codes and changes will be applied to the device, can you make sure it is on the repo
+
+**Action (2026-10-02):** Checked: `s1/preview-run-1` is identical to `origin/main` (PR #23, cd6d537) apart from this audit file; no stashes or unpushed commits on the S1 branches. Committed the pending audit entries on `s1/handoff-audit` (from `origin/main`) and pushed it. Not in git by design: `apps/app/.env`, `apps/app/.env.local`, `apps/api/.env` (restore from backup on the new device).
