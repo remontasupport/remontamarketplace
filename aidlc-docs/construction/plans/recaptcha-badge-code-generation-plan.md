@@ -45,6 +45,13 @@ under the wizard's navigation buttons, only on the form that uses reCAPTCHA.
   `next dev` server restarted at 19:38 holds the Prisma engine).*
 - [x] **Step 8** -- Summary `aidlc-docs/construction/recaptcha-badge/code/recaptcha-badge-summary.md`; PR.
 
+## Amendment 2026-10-02 (user decision after generation)
+
+The user asked to remove the branding line entirely. The concern above was raised before generation and
+reaffirmed, so it is their decision: steps 1, 2, 3 and 5 are undone (notice module, `footnote` prop and
+`RecaptchaNotice`, glue change, guard test); step 4 stays with its comment rewritten; step 6 rewritten. The badge is
+hidden and nothing replaces it. Residual terms risk recorded in the summary and the audit.
+
 ## Extension checks
 
 - **Security**: no secret, no endpoint, no change to token handling; links are to Google's policy pages only;

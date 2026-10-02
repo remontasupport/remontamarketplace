@@ -8,7 +8,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { RECAPTCHA_NOTICE } from "./recaptchaNotice";
 
 export type WizardStatus = { kind: "idle" } | { kind: "sending" } | { kind: "uploading" } | { kind: "retrying" } | { kind: "waiting-for-connection" } | { kind: "failed"; message: string };
 
@@ -45,33 +44,10 @@ export interface FormWizardViewProps {
   onBack: () => void;
   onNext: () => void;
   onSubmit: () => void;
-  /** Small print under the navigation buttons, e.g. the reCAPTCHA notice on forms that load it. */
-  footnote?: ReactNode;
   children: ReactNode;
 }
 
-/**
- * The branding Google requires when its floating badge is hidden (globals.css
- * hides `.grecaptcha-badge`). Shown only by forms that load reCAPTCHA.
- */
-export function RecaptchaNotice() {
-  const link = "underline hover:text-gray-700";
-  return (
-    <>
-      {RECAPTCHA_NOTICE.before}
-      <a href={RECAPTCHA_NOTICE.privacy.href} target="_blank" rel="noopener noreferrer" className={link}>
-        {RECAPTCHA_NOTICE.privacy.label}
-      </a>
-      {RECAPTCHA_NOTICE.between}
-      <a href={RECAPTCHA_NOTICE.terms.href} target="_blank" rel="noopener noreferrer" className={link}>
-        {RECAPTCHA_NOTICE.terms.label}
-      </a>
-      {RECAPTCHA_NOTICE.after}
-    </>
-  );
-}
-
-export function FormWizardView({ stepTitle, stepIndex, stepCount, offline, stepMessage, status, onBack, onNext, onSubmit, footnote, children }: FormWizardViewProps) {
+export function FormWizardView({ stepTitle, stepIndex, stepCount, offline, stepMessage, status, onBack, onNext, onSubmit, children }: FormWizardViewProps) {
   const last = stepIndex === stepCount - 1;
   const busy = status.kind === "sending" || status.kind === "uploading" || status.kind === "retrying" || status.kind === "waiting-for-connection";
   const submitLabel = { sending: "Submitting...", uploading: "Uploading photo...", retrying: "Still trying...", "waiting-for-connection": "Waiting for connection...", failed: "Try again", idle: "Complete Signup" }[status.kind];
@@ -129,7 +105,6 @@ export function FormWizardView({ stepTitle, stepIndex, stepCount, offline, stepM
                 {!last && <ChevronRight className="w-4 h-4" />}
               </Button>
             </div>
-            {footnote && <p className="pt-2 text-center font-poppins text-xs text-gray-500">{footnote}</p>}
           </CardContent>
         </Card>
       </div>

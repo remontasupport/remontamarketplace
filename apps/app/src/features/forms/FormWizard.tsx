@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { KINDS, type ApiBackend, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
 import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
-import { FormWizardView, RecaptchaNotice, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
+import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
 import { transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
 import { useServiceCategories } from "./adapters/useServiceCategories";
@@ -34,8 +34,6 @@ export function FormWizard({ definition, backend }: { definition: FormDefinition
       onBack={w.back}
       onNext={w.next}
       onSubmit={w.submit}
-      // Only the api backend loads reCAPTCHA (useRecaptcha); its badge is hidden, so the notice stands in for it.
-      footnote={backend.mode === "api" ? <RecaptchaNotice /> : undefined}
     >
       {step.fields.map((field) => (
         <FieldSlot key={field.name} field={field} control={w.form.control} errors={w.form.formState.errors} backend={backend} uploader={field.kind === "photo" ? w.uploaderFor(field) : undefined} wizard={w} definition={definition} />
