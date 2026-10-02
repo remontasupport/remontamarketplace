@@ -4,13 +4,15 @@
 - **Project**: New backend system — NestJS service (`apps/api`) for the existing Remonta product
 - **Project Type**: Brownfield — a new service alongside `apps/app`, sharing its database and auth, with domains moved over incrementally (strangler)
 - **Start Date**: 2026-09-24T13:53:59+05:30
-- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration. Production sign-up on the pre-S1 legacy page. `apps/api` **staging is live on Google Cloud Run**; every sign-up call of the api-mode form goes to it; Vercel Preview points at it. Next: the user-run preview checklist (items 1, 4-7), then production prep. See "PENDING RIGHT NOW" under Resume here.
+- **Current Stage**: CONSTRUCTION - Slice 1 Worker Registration **LIVE IN PRODUCTION on apps/api since 2026-10-02 10:20Z** (Upstash `switch:registration` = `api`; rollback = `legacy`). The production database carries the S1 schema, suburb list and backfills; `remonta-api` on Cloud Run serves revision 00003 of image `7e79f8b…`. First real sign-up verified end to end at 10:26Z. See "PENDING RIGHT NOW".
 
 ## Resume here (rewritten 2026-09-30, end of session)
 
 **Standing instruction (user, 2026-09-28):** no other work until `apps/api` is deployed and in use. Everything below is on that path only.
 
-### PENDING RIGHT NOW (2026-10-02 -- read this first)
+### PENDING RIGHT NOW (2026-10-02, evening -- read this first)
+
+**S1 is LIVE on apps/api (canary since 10:20Z).** Steps 1-6 of the production path are done: database run 06:42-07:15Z, secrets, promotion (revisions 00001-00003; the third after a new v3 reCAPTCHA pair `remonta-api`, secret version 4, site key in Vercel Production), the flip at 10:20:40Z after three rolled-back attempts caused by reCAPTCHA keys (staging key on the production domain; the legacy app's v2 key; a contaminated console test). First production sign-up verified at 10:26Z: every row, audit, outbox DONE, welcome email, immediate sign-in. **Watch next:** the admin list and the daily jobs (photo purge, outbox retention, reconciler) over the first days; Cloud Monitoring alerts go to support@. **Follow-ups opened today:** the form engine words a reCAPTCHA token failure as "couldn't reach Remonta" (misleading); remove the `auth-prisma.ts` omit of the S1 columns; delete `features/forms/legacy/worker/` once the canary is accepted; reset the production auth db password (exposed in tool output) and the earlier rotation list; the CRM/n8n notification is still parked (sign-ups are read from the admin list).
 
 **Position (re-checked 2026-10-02 from a new device):** every S1 branch is in `main` (PRs #20-#24; last merge 55f1cfd),
 including `fix/cloudrun-fresh-revision-per-deploy` (step 1 of the 2026-10-01 list, done: deploy-api runs 4 and 5 green).

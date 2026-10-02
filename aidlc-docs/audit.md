@@ -2366,3 +2366,105 @@ Reported the position and the pending decisions; no code changed.
 
 **Action (2026-10-02, step 5 DONE):** deploy-api run 8 (36986240870, `workflow_dispatch` stage=prod, imageTag 7e79f8b…) succeeded 08:49:33Z-08:51:10Z: image existed (no build), service definition applied, revision ready, health check passed. Cloud Run now has `remonta-api` (revision `remonta-api-00001-t9d`, 100 % traffic, image `…/remonta/api:7e79f8b5f58a16785cddbd4c9bb4a277e9fcddc9`) beside staging. Verified from here on `https://remonta-api-154148201608.australia-southeast1.run.app`: `/v1/health` 200 with request id and HSTS; `/v1/localities?q=parram` rows with ids (Parramatta 5410); `/v1/service-categories` 200 `public, max-age=300`; CORS preflight from `https://app.remontaservices.com.au` 204 with the allow-origin header, from a `*.vercel.app` origin refused (no header); a test photo staged (201, id d3aff84f…, purged by the daily job if unclaimed). Switch still `legacy` (Upstash read), live sign-up page still the legacy page (no `run.app` in the HTML). A forged `X-Forwarded-Proto: http` on an https request got 200 -- Cloud Run's front end sets that header itself; checked separately that plain `http://` never reaches the service.
 Plain `http://` to the production URL: 302 to https from Google Frontend -- the service never sees plain HTTP; the in-app guard is a second line only.
+
+**User input (2026-10-02):** screenshot `Screenshot 2026-10-02 165743.png` -- Vercel notice while adding a variable: "Keep This Value Private -- The NEXT_PUBLIC_ prefix exposes this value to the browser. Remove the prefix, or change the variable to Config if it's safe to expose. [Change to Config]".
+
+**Action (2026-10-02):** Explained: a warning, not an error. Both values are public by design (the api URL and the reCAPTCHA site key are sent to every browser; the secret half stays in Secret Manager). Press "Change to Config" for each, keep the `NEXT_PUBLIC_` prefix (the code reads exactly those names), save, then redeploy production.
+
+**User input (verbatim, 2026-10-02):**
+> I redeployed it
+
+**Action (2026-10-02):** After the user's production redeploy: live sign-up page 200 (fresh), still the legacy page (welcome card, no `run.app`); switch `legacy`. The two new variables cannot be seen from outside in legacy mode (the api base URL and the site key reach the page only in api mode), and the server page falls back to legacy if they are missing -- so the flip is the test, and it fails safe. STOPPED for the user's go on the canary flip (Part B).
+
+**User input (verbatim, 2026-10-02):**
+> the production site still serves the legacy form
+
+**Action (2026-10-02):** Clarified: that is expected -- the switch key is still `legacy` and nothing in the redeploy changes it; only the Upstash key selects the form, by design (a production deployment ignores the env var). The new form appears the moment the key is set to `api`, which happens on the user's "flip".
+
+**User input (verbatim, 2026-10-02):**
+> Flip
+
+**Action (2026-10-02, step 6 Part B -- CANARY FLIP at 09:07:09Z):** Upstash `switch:registration`: `legacy` -> `api` (SET OK, read back `api`). First fresh fetch of `app.remontaservices.com.au/registration/worker` afterwards: 200, the page carries the production api URL `https://remonta-api-154148201608.australia-southeast1.run.app` and one reCAPTCHA site key -- the api-mode page is live (the intro card shows first; the form steps follow "Start"). Production sign-ups now go to apps/api on Cloud Run against the production auth database. Rollback: the key back to `legacy`. Waiting for the user's test sign-up with an internal email.
+
+**User input (verbatim, 2026-10-02):**
+> there is an error ERROR for site owner:
+> Invalid dom
+
+**Action (2026-10-02, ROLLBACK at 09:10:48Z):** The user reported Google's reCAPTCHA notice "ERROR for site owner: Invalid domain for site key" on the live api form. Rolled the switch back: the first SET at 09:10:13Z got no response from Upstash (the flaky connection) and the key still read `api`; retried at 09:10:48Z: SET OK, read back `legacy`; the live page is the legacy form again. Window api-mode was live: 09:07:09Z-09:10:48Z (~3.5 min); the CAPTCHA failure blocks the code request and the submit, so no account could be created in it (checked below). Cause to establish with the user: the site key served on the page (starts `6LdsuN`, ends `gKb3`) is not allowed on `app.remontaservices.com.au` -- either it is not the production pair (the Vercel variable holds another key) or the production key's Domains list lacks the host.
+
+**User input (2026-10-02):** screenshot `Screenshot 2026-10-02 171046.png` -- Vercel shows three `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` rows: Production `6LdsuNgt…` (added 8 min ago), Development `6LeTjvEr…` (updated 1 min ago), Preview `6LdsuNgt…` (added 1 day ago).
+
+**Action (2026-10-02):** Cause found: the Production value is byte-for-byte the Preview value, i.e. the STAGING site key (created 2026-10-01 with domain `vercel.app`), which Google refuses on `app.remontaservices.com.au` -- matching the served key `6LdsuN…gKb3`. Production checks (DB): no users/audit/outbox/photos in the window. Fix: set Production's site key to the SITE half of the pair created today for `app.remontaservices.com.au` (whose SECRET half is in `remonta-api-RECAPTCHA_SECRET_KEY`, 40 chars, starts `6Ld`); the Development row (`6LeTjvEr…`, changed a minute ago) may be where that key was pasted by mistake -- the user verifies in the reCAPTCHA admin console; then redeploy production and flip again. Cloud Logging read attempts failed on shell quoting (not needed: the CAPTCHA error is raised by Google's widget in the browser, before any api call).
+
+**User input (verbatim, 2026-10-02):**
+> Do I need to create new keys?
+
+**Action (2026-10-02):** Answered: no, if the pair created this morning for `app.remontaservices.com.au` exists -- its SITE key goes into Vercel Production; only if that pair cannot be found, or the secret stored in Secret Manager is not its secret, create one new v3 pair (domain `app.remontaservices.com.au`), put the secret in `remonta-api-RECAPTCHA_SECRET_KEY` (version 3) and the site key in Vercel Production; the staging pair stays untouched.
+
+**User input (verbatim, 2026-10-02):**
+> I didnt create this morning
+
+**Action (2026-10-02):** Established (prefixes only, values never shown): the production secret `remonta-api-RECAPTCHA_SECRET_KEY` v2 is byte-identical to the staging secret (`6LdsuNgt…`, the `vercel.app` pair) -- the user pasted the staging secret this morning, so the api would also have rejected tokens even with a right site key. The app already owns a pair for its own domain: `6LeTjvEr…` (site key and secret in `apps/app/.env`/`.env.local`, used by the legacy page; the same site key now sits in Vercel's Development row). No new key needed: use that pair for production -- the user adds its SECRET as version 3 of `remonta-api-RECAPTCHA_SECRET_KEY` (Cloud Shell), puts its SITE key in Vercel Production, redeploys production, re-promotes the api (instances read secrets at start), then flip. Assistant to verify prefixes before the flip.
+
+**User input (verbatim, 2026-10-02):**
+> the shell says Created version [3] of the secret [remonta-api-RECAPTCHA_SECRET_KEY].
+
+**Action (2026-10-02):** Verified version 3 of `remonta-api-RECAPTCHA_SECRET_KEY`: 40 chars, prefix `6LeTjvEr`, identical to the app's secret, no longer the staging one. Remaining for the user: Vercel Production `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` = the app's site key (same prefix), redeploy production, re-promote the api (stage=prod, tag 7e79f8b…) so the instances read version 3.
+
+**User input (verbatim, 2026-10-02):**
+> verify
+
+**Action (2026-10-02):** Verified: deploy-api run 9 (stage=prod, same tag) succeeded 09:30Z; `remonta-api` now serves revision `remonta-api-00002-9zc` (created 09:30:51Z, 100 % traffic) -- instances started after secret version 3, so they hold the app's reCAPTCHA pair; health 200. The Vercel side (site key `6LeTjvEr…` in Production) cannot be seen until api mode is on; the flip will show it on the page. Ready to flip on the user's word.
+
+**User input (verbatim, 2026-10-02):**
+> flip
+
+**Action (2026-10-02, CANARY FLIP #2 at 09:35:14Z):** switch `legacy` -> `api` (read back `api`). First fresh fetch of the live sign-up page: api mode (production api URL present) and the site key starts `6LeTjvEr` -- the app's pair, matching secret version 3 on revision 00002. Live. Waiting for the user's test sign-up with an internal email.
+
+**User input (verbatim, 2026-10-02):**
+> Why this error occured when sending the code "We couldn't reach Remonta. Please check your connection and try again."
+
+**Action (2026-10-02):** Production api log 09:35-09:37Z: the user's browser reached the api fine (GET /v1/localities x4 -> 200 in 0.05-0.25 s; OPTIONS+POST email-availability -> 204/200, twice); the ONLY POST to /v1/registrations/worker/email-codes was the assistant's curl probe (403 captcha, invalid-input-response, expected). So the form never sent the code request: `requestEmailCode` fetches the reCAPTCHA token inside its retry loop, and a token failure (script blocked, or the key's Domains not allowing the host) is reported by the engine as UNREACHABLE ("We couldn't reach Remonta…") -- a misleading message, noted as a follow-up. Rolled the switch back to `legacy` (second window: 09:35:14Z to the rollback below; no code request reached the api, so no account could be created). Suspect: the `6LeTjvEr` key was created for local development and its Domains list lacks `app.remontaservices.com.au` (the production Vercel env had no site key until today, so the legacy page never executed reCAPTCHA in production).
+
+**User input (verbatim, 2026-10-02):**
+> done, added. Flip it
+
+**Action (2026-10-02, CANARY FLIP #3 at 09:41:38Z):** after the user added `app.remontaservices.com.au` to the `6LeTjvEr` key's Domains: switch `legacy` -> `api` (read back `api`); live page in api mode with site key `6LeTjvEr…`; Google serves the reCAPTCHA script for that key (200). Watching the production api log for the user's test sign-up.
+
+**User input (verbatim, 2026-10-02):**
+> it still says We couldn't reach Remonta. Please check your connection and try again.
+
+**Action (2026-10-02, rollback #3 at 09:44:53Z):** The watch saw the user's availability checks at 09:43:04, 09:43:38, 09:44:14 (all 200) and again NO POST to email-codes -- the browser still fails before sending, i.e. the reCAPTCHA token fetch. Rolled back to `legacy` (window 09:41:38Z-09:44:53Z, no code request reached the api). Next: a browser-console test on the live site in legacy mode (no flip needed) that loads the reCAPTCHA script with the public site key `6LeTjvErAAAAAJSnw0mMZKSnQzwjn1KW7exauXDN` and calls execute, to see Google's actual error (domain not allowed / script blocked / propagation).
+
+**User input (2026-10-02):** the browser-console test printed `Uncaught (in promise) Error: Invalid site key or not loaded in api.js: 6LeTjvErAAAAAJSnw0mMZKSnQzwjn1KW7exauXDN` from `recaptcha__en.js`.
+
+**Action (2026-10-02):** Diagnosis: that error from `grecaptcha.execute` means the key is not a v3 (score-based) key -- a v2 checkbox/invisible key loads through `api.js?render=` but cannot `execute`. The `6LeTjvEr` pair is therefore unusable for the api form regardless of its Domains. Recommended the clean fix: create ONE new reCAPTCHA **v3** key for `app.remontaservices.com.au` (+ `localhost`), its SECRET as version 4 of `remonta-api-RECAPTCHA_SECRET_KEY` and as Vercel Production `RECAPTCHA_SECRET_KEY` (the legacy page now also sees a production site key since today, so both paths must use one consistent v3 pair), its SITE key as Vercel Production `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; redeploy Vercel production and re-promote the api; then the console test, then flip.
+
+**User input (verbatim, 2026-10-02):**
+> In the recapcha I used the one the Remonta Auth instead of remonta-api-staging, am I wrong? here is the site key of remonta-api 6LdsuNgtAAAAAHTbd-5i2Ez8-U8F1jdLZWUigKb3
+
+**Action (2026-10-02):** Answered: the reCAPTCHA console holds two keys -- "Remonta Auth" (`6LeTjvEr`, the legacy app's key, not v3: cannot work for the api form) and "remonta-api-staging" (`6LdsuNgt`, v3, domain `vercel.app`, the previews' key). Neither is right for production: recommended a THIRD key, "remonta-api" (v3, domain `app.remontaservices.com.au`), so production values stay exact and the staging secret is not shared with production; alternative accepted if preferred: add the production domain to the staging v3 key and reuse its pair (secret copied staging -> prod in Cloud Shell without display). Steps unchanged: secret -> Secret Manager (new version) + Vercel Production `RECAPTCHA_SECRET_KEY`; site key -> Vercel Production `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; redeploy Vercel; re-promote the api; console test; verify; flip.
+
+**User input (verbatim, 2026-10-02):**
+> Done
+
+**Action (2026-10-02):** Verified: `remonta-api-RECAPTCHA_SECRET_KEY` version 4 (09:52:45Z), prefix `6LdcDNst` -- a new pair, neither staging's nor the legacy app's; production revision `remonta-api-00003-l9x` created 10:08:22Z (after v4), 100 % traffic, health 200. The Vercel side shows only after the flip; asked for the console test result ("TOKEN OK" with the new key) before flipping.
+
+**User input (2026-10-02):** console test with the new key printed `Uncaught Error: Invalid site key or not loaded in api.js: 6LdcDNstAAAAAFfOO79rYrF-I1grqrnes5rsK3eB`.
+
+**Action (2026-10-02):** Same error with a brand-new v3 key rules out the v2 theory. The remaining common cause: the key was created in Google Cloud's reCAPTCHA (Enterprise) console rather than the classic admin (google.com/recaptcha/admin). Enterprise keys do not work with classic `api.js?render=` (that exact error) and cannot be verified at `siteverify`, which the api and the legacy app both use; the staging key, which works on previews, was created in the classic admin. Asked the user where "remonta-api" was created; if Enterprise, create it again at the classic admin (v3, `app.remontaservices.com.au`) and repeat secret v5 / Vercel / redeploys / console test.
+
+**Action (2026-10-02):** Both secrets (new `6LdcDNst`, staging `6LdsuNgt`) are classic keys: Google's `siteverify` answers `invalid-input-response` for a dummy token (an Enterprise secret would give `invalid-input-secret`), so the Enterprise theory is out. No other code on the worker page loads the reCAPTCHA script, and the live page in legacy mode carries none, so the console test is clean. The remaining explanation for `grecaptcha.execute` -> "Invalid site key or not loaded in api.js" on a classic key is that the key is **v2** ("Challenge") rather than **v3** ("Score based"): `execute` exists only for v3 keys. Asked the user to check the key's type in the classic admin; a control test with the staging key on the production domain should fail with "Invalid domain", proving the snippet; if "remonta-api" is v2, create it again choosing "Score based (v3)".
+
+**User input (2026-10-02):** screenshot `Screenshot 2026-10-02 181804.png` -- the classic admin shows the `remonta-api` key as "reCAPTCHA type: v3" (with a "View in Cloud Console" link, i.e. a classic key associated with the Cloud project).
+
+**Action (2026-10-02):** With the key proven classic (siteverify) and v3 (admin), the remaining explanation for the console failure is the test itself: the script was loaded earlier in the same tab with another key (`api.js?render=6LeTjvEr…`), and a second `api.js` with a different `render=` does not register a client for the new key -- `execute(newKey)` then reports "not loaded in api.js". The new v3 key has never been tried in the real form (the 09:43 attempt used the v2 key). Asked the user to open a fresh private window and run the snippet once with the new key; `TOKEN OK` -> flip.
+
+**User input (verbatim, 2026-10-02):**
+> it says OK now
+
+**Action (2026-10-02, CANARY FLIP #4 at 10:20:40Z):** console test `TOKEN OK` in a clean private window with the new v3 key. Switch `legacy` -> `api` (read back `api`); first fresh fetch of the live page: api mode, site key `6LdcDNst…` (the new pair, matching secret v4 on revision 00003). Watching the production api log for the test sign-up.
+
+**Action (2026-10-02, the test sign-up on the production api):** the log watch saw the user's browser: email-availability 200, email-codes 202 (10:21:38, then again at 10:23:19, 10:25:31, 10:26:25 -- the user restarted/changed address), email-codes/verify 200 (10:23:47, 10:25:42, 10:26:36), photo 201 (10:26:02), and `POST /v1/registrations/worker -> 202` at 10:26:47Z. Verifying the written rows, the outbox delivery and the application log.
+
+**Action (2026-10-02, VERIFIED -- the first production sign-up on apps/api):** one user created at 10:26:48Z (internal address cl***@remontaservices.com.au, role WORKER, ACTIVE); profile "Test", legacy columns dual-written ("Christmas Island, OT 6798", lat/lng set), photo URL set, consent v1; two services with sub-categories; HOME location (locality 9386, LOCALITY precision, source REGISTRATION, radius 50, `point` set); onboarding marker SIGNED_UP with its opening transition (cause WorkerRegistered, source API); the staged photo claimed by the profile (image/jpeg, 257 KB), no unclaimed photo left; audit `ACCOUNT_REGISTERED` with request id and `breachedPasswordCheck: clear`, followed by a `LOGIN_SUCCESS` -- the user signed in to the new account at once (R2); outbox `WorkerRegistered` DONE after 1 attempt at 10:26:49Z (the welcome email went through Resend). Every row the transaction promises is present. Production sign-up is LIVE on apps/api; the switch stays `api`; rollback = the key to `legacy`.
