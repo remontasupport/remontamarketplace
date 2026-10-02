@@ -2500,3 +2500,17 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > Yeah you can delete it
 
 **Action (2026-10-02):** Deleted the archived closing snapshot `aidlc-docs/archive/s1-worker-registration/aidlc-state.md` (user decision; git history keeps it at 49abb8e). The live `aidlc-docs/aidlc-state.md` stays.
+
+**User input (verbatim, 2026-10-02):**
+> What is the slice ai dlc?
+
+**Action (2026-10-02):** Explained "slice": the strangler approach decided at the start of the backend cycle -- the new api replaces apps/app one business domain (slice) at a time, each with its own switch and rollback; Slice 1 = worker registration (done, live); the candidates for Slice 2 are listed in the new state file (search/location readers first), and the AI-DLC phases (Inception -> Construction) run per slice.
+
+## 2026-10-02 -- New cycle started
+
+**User input (verbatim, 2026-10-02):**
+> start ai dlc
+
+**AI action (2026-10-02, Workspace Detection):** `aidlc-docs/aidlc-state.md` exists with "INCEPTION -- not started" (the fresh file written at the S1 close-out), so this is the start of the new cycle, not a resume. Brownfield: pnpm + Turborepo monorepo, TypeScript, `apps/{app,web,api}`, `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`. `aidlc-docs/inception/reverse-engineering/` is empty; the archived S1 analysis (2026-09-25, HEAD `8e530c1`) predates `apps/api`, `packages/api-contract`, `packages/form-engine` and `infra/`, so it is stale for those and current only for the untouched `apps/app` domains. As in the previous cycle, the Reverse Engineering decision is deferred until the cycle's intent is known. Repository state noted: branch `aidlc/archive-s1` carries 12 commits not on `main` (close-out audit, archive move, and the photo-preview thumbnail code change `55d52db`); `origin/main` = `461eccd`; no PR open. State file updated (start date, stage, workspace state, Workspace Detection ticked).
+
+**Questions presented (2026-10-02):** `aidlc-docs/inception/requirements/cycle-kickoff-questions.md`, three questions: Q1 the cycle's intent (Slice 2 search on PostGIS / another domain onto apps/api / S1 close-out and hardening / security and housekeeping / other feature); Q2 the Reverse Engineering mode (targeted refresh / full re-run / skip); Q3 what to do with the unmerged `aidlc/archive-s1` branch (PR and merge now, recommended / PR but keep stacking / leave). Waiting for answers.

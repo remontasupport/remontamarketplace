@@ -3,8 +3,10 @@
 ## Project Information
 - **Project**: _(new cycle -- to be named at Inception)_
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
-- **Start Date**: _(set when the new cycle starts)_
-- **Current Stage**: INCEPTION -- not started. The previous cycle closed on 2026-10-02; see "What is live" below before planning anything.
+- **Start Date**: 2026-10-02 (user: "start ai dlc")
+- **Current Stage**: INCEPTION -- Workspace Detection complete (2026-10-02). Waiting for the cycle's intent:
+  `aidlc-docs/inception/requirements/cycle-kickoff-questions.md`. The previous cycle closed on 2026-10-02; see
+  "What is live" below before planning anything.
 
 ## Previous cycles (archived, read-only)
 
@@ -60,8 +62,15 @@
 - **Build System**: pnpm workspaces + Turborepo
 - **Project Structure**: Monorepo -- `apps/app` (Next.js application), `apps/web` (Next.js marketing site),
   `apps/api` (NestJS + Fastify on Cloud Run), `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`
-- **Reverse Engineering Needed**: Decide at Workspace Detection. The S1 archive holds a targeted refresh of the
-  in-scope domains (2026-09-25) and `.brd/phase-0…8` the business view (2026-09-23).
+- **Workspace Root**: `C:\Users\floil\OneDrive\Documents\Projects\Remonta\remontamarketplace`
+- **Brownfield**: yes. `aidlc-docs/inception/reverse-engineering/` is empty for this cycle. The S1 archive holds a
+  targeted refresh of the registration/onboarding/identity/platform domains (2026-09-25, HEAD `8e530c1`); it predates
+  `apps/api`, `packages/api-contract`, `packages/form-engine` and `infra/`, so it is stale for those and current only
+  as a map of the untouched `apps/app` domains. `.brd/phase-0…8` holds the business view (2026-09-23).
+- **Reverse Engineering Needed**: deferred, as in the previous cycle, until the cycle's intent is known (kick-off
+  Q2). Decision recorded in Workflow Planning.
+- **Repository state at kick-off**: branch `aidlc/archive-s1` carries 12 commits not on `main` (the S1 close-out
+  audit entries, the archive move, and one code change: `55d52db` photo-preview thumbnail). No PR open (kick-off Q3).
 
 ## Code Location Rules
 - **Application Code**: Workspace root (NEVER in aidlc-docs/)
@@ -77,7 +86,7 @@
 
 ## Stage Progress
 ### 🔵 INCEPTION PHASE
-- [ ] Workspace Detection
+- [x] Workspace Detection -- 2026-10-02 (brownfield; RE decision deferred to Workflow Planning)
 - [ ] Reverse Engineering
 - [ ] Requirements Analysis
 - [ ] User Stories
