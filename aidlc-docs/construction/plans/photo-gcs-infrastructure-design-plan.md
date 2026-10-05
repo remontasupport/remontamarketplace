@@ -69,10 +69,10 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the three answers; resolve ambiguity in a clarification file
-- [ ] 2. `aidlc-docs/construction/photo-gcs/infrastructure-design/infrastructure-design.md`: every Google Cloud
+- [x] 1. Confirm the three answers; resolve ambiguity in a clarification file
+- [x] 2. `aidlc-docs/construction/photo-gcs/infrastructure-design/infrastructure-design.md`: every Google Cloud
   resource with its exact settings and the gcloud commands bootstrap will run; the stage table changes; the CI
   change; the configuration per stage
-- [ ] 3. `deployment-architecture.md`: the three-PR rollout with what exists before each merge and promotion,
+- [x] 3. `deployment-architecture.md`: the three-PR rollout with what exists before each merge and promotion,
   the verification per step, the rollback per step, the cut-over window and the token removal
-- [ ] 4. Present for approval
+- [x] 4. Present for approval

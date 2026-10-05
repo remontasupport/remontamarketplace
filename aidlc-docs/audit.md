@@ -2805,3 +2805,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > continue
 
 **AI action (2026-10-05, U3 NFR Design approved; Infrastructure Design started):** Checked that Cloud Storage CORS accepts a subdomain wildcard origin and that `gcloud storage managed-folders` is available. Wrote `aidlc-docs/construction/plans/photo-gcs-infrastructure-design-plan.md` with three questions pre-filled: Q1 bucket names matching the service names; Q2 one bucket per stage with a public managed folder `workers/`; Q3 the user runs bootstrap (new step 11) before PR 3a merges. Fixed points: region, uniform access, soft delete, lifecycle, CORS, IAM, audit config, two log metrics, stage table + `lib.sh` names with a test, the CI container, no new secrets. Awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> approved
+
+**AI action (2026-10-05, U3 Infrastructure Design generated):** Plan approved (Q1-Q3 A). Wrote `aidlc-docs/construction/photo-gcs/infrastructure-design/infrastructure-design.md` (resources per stage; bucket settings incl. public-access-prevention `inherited` with the org-policy check noted; IAM; bootstrap step 11 with `bucket_for`/`origins_for` in `lib.sh`, lifecycle and CORS JSON files, the audit-config merge, two metrics; stage table and render; the `API Quality` fake storage container; configuration per stage; compliance table) and `deployment-architecture.md` (topology after 3b; PR 3a/3b/3c each with branch, prerequisites incl. the user running bootstrap before 3a merges, merge effect, verification, promotion, rollback; the cut-over window table; the latency-goal verification). Plan checklist complete. Approval prompt presented; awaiting the user.
