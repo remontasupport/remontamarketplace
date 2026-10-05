@@ -2,21 +2,18 @@
 // over HTTP: the real pipeline, handlers, transaction and hasher (cost 4); fakes
 // for the CAPTCHA, the rate limiter, the breached-password service and the mailer.
 import { randomUUID } from 'node:crypto'
-import { mkdtemp, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { contracts, platformContract, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { CONSENT_WORDING_VERSION } from '@remonta/schemas/schema/workerRegistrationSchema'
 import { expect } from 'vitest'
 import { LocalityDirectory } from '../../src/modules/localities/locality-directory'
-import { LocalDiskPhotoStore, type PhotoStore } from '../../src/modules/registration/adapters/photo-store'
+import type { PhotoStore } from '../../src/modules/registration/adapters/photo-store'
 import { InMemoryPhotoStore } from './fakes'
 import { registrationHandlers } from '../../src/modules/registration/registration.handlers'
 import type { Email } from '../../src/platform/email/mailer'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { WorkerPoolHasher } from '../../src/platform/security/password-hasher'
-import { multipart, testApp, unreachableHandlers, type TestApp } from '../helpers'
+import { testApp, unreachableHandlers, type TestApp } from '../helpers'
 
 export const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0xff, 0xd9])
 
@@ -38,6 +35,8 @@ export interface HarnessOptions {
   /** The bucket the direct upload uses (U3); in-memory unless a suite passes the real adapter against the fake server. */
   bucket?: PhotoStore
   publicBaseUrl?: string
+  /** Stands in for the browser's upload to the bucket; defaults to the in-memory store's. A suite on the real adapter passes its own. */
+  putAsBrowser?: (key: string, data: Buffer, contentType: string) => Promise<void>
 }
 
 /** `domain` isolates this suite's rows: everything it creates is deleted by close(). */
@@ -46,7 +45,12 @@ export async function registrationHarness(domain: string, options: HarnessOption
   const db = createDb(url)
   const bucket = options.bucket ?? new InMemoryPhotoStore()
   const publicBaseUrl = options.publicBaseUrl ?? 'http://bucket.test/photos'
-  const photos = await mkdtemp(join(tmpdir(), 'photos-'))
+  const putAsBrowser =
+    options.putAsBrowser ??
+    (async (key: string, data: Buffer, contentType: string) => {
+      if (!(bucket instanceof InMemoryPhotoStore)) throw new Error('registrationHarness: pass putAsBrowser for a bucket that is not the in-memory store')
+      bucket.putAsBrowser(key, data, contentType)
+    })
   const hasher = new WorkerPoolHasher({ threads: 2, cost: 4 })
   const sent: Email[] = []
   const prefix = `${domain}-`
@@ -57,7 +61,8 @@ export async function registrationHarness(domain: string, options: HarnessOption
     await db.$executeRaw`DELETE FROM outbox_events WHERE payload->>'userId' = ANY(${ids}::text[])`
     await db.auditLog.deleteMany({ where: { userId: { in: ids } } })
     await db.user.deleteMany({ where: { id: { in: ids } } })
-    await db.registrationPhotoUpload.deleteMany({ where: { url: { startsWith: 'local-photo://' }, claimedAt: null } })
+    await db.$executeRaw`DELETE FROM outbox_events WHERE type = 'PhotoUploaded' AND payload->>'photoUploadId' IN (SELECT id::text FROM registration_photo_uploads WHERE url LIKE ${publicBaseUrl + '/%'})`
+    await db.registrationPhotoUpload.deleteMany({ where: { url: { startsWith: `${publicBaseUrl}/` } } })
     await db.subcategory.deleteMany({ where: { id: { startsWith: prefix } } })
     await db.category.deleteMany({ where: { id: { startsWith: prefix } } })
   }
@@ -70,7 +75,6 @@ export async function registrationHarness(domain: string, options: HarnessOption
     hasher,
     breaches: { check: async () => ({ status: 'clear' }) },
     localities: new LocalityDirectory(db),
-    store: new LocalDiskPhotoStore(photos),
     bucket,
     publicBaseUrl,
     ipHashSecret: 'test-secret-'.repeat(4),
@@ -84,10 +88,15 @@ export async function registrationHarness(domain: string, options: HarnessOption
   })
 
   const email = () => `worker-${randomUUID().slice(0, 8)}@${domain}`
+  /** The direct upload as the browser does it: a ticket, the object under the ticket's key, confirm. */
   async function stagedPhotoId() {
-    const res = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo', ...multipart([{ name: 'photo', filename: 'me.jpg', type: 'image/jpeg', data: JPEG }]) })
-    expect(res.statusCode).toBe(201)
-    return res.json().photoUploadId as string
+    const ticket = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo-tickets', payload: { contentType: 'image/jpeg', sizeBytes: JPEG.byteLength } })
+    expect(ticket.statusCode).toBe(201)
+    const { photoUploadId, upload } = ticket.json() as { photoUploadId: string; upload: { fields: Record<string, string> } }
+    await putAsBrowser(upload.fields.key!, JPEG, 'image/jpeg')
+    const confirm = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo-confirmations', payload: { photoUploadId } })
+    expect(confirm.statusCode).toBe(200)
+    return photoUploadId
   }
   async function verifiedEmail(to: string) {
     const res = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/email-codes', payload: { email: to, captchaToken: 'test-token' } })
@@ -109,7 +118,7 @@ export async function registrationHarness(domain: string, options: HarnessOption
       password: 'Str0ng!pass',
       services: [`${prefix}support`],
       supportWorkerCategories: [`${prefix}care`],
-      photoUploadId: await stagedPhotoId(),
+      photoUploadId: (patch.photoUploadId as string | undefined) ?? (await stagedPhotoId()),
       consentProfileShare: true,
       consentWordingVersion: CONSENT_WORDING_VERSION,
       captchaToken: 'test-token',
@@ -126,7 +135,6 @@ export async function registrationHarness(domain: string, options: HarnessOption
       await cleanup()
       await hasher.close()
       await db.$disconnect()
-      await rm(photos, { recursive: true, force: true })
     },
   }
 }

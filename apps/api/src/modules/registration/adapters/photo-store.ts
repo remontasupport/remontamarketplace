@@ -1,13 +1,11 @@
 // Where sign-up photos are stored: ports, so a store is an adapter swap (S1-design
 // 3.2, OI-07). Keys are server-generated; the client never names a file.
 //
-// Two ports during the overlap (U3 deployment architecture, PR 3a..3c):
-//   PhotoStore      the bucket: the browser uploads under a ticket, the api inspects,
-//                   reads, writes the processed copies and deletes (gcs-photo-store.ts).
-//   BlobPhotoStore  what the multipart entry still needs until the clean-up PR: put and
-//                   delete (Vercel Blob in production, the local disk in tests).
-import { mkdir, rm, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+// Two ports (U3, option 2):
+//   PhotoStore      the bucket: the browser uploads under a ticket; the api inspects,
+//                   reads and deletes (gcs-photo-store.ts). Private, upload-only.
+//   BlobPhotoStore  Vercel Blob, where every photo lives and is served from: the
+//                   processing handler puts the clean copies there.
 import type { ImageType } from '@remonta/schemas/image-type'
 
 /** A signed POST policy: the browser sends `fields` plus the file as a multipart form to `url`. */
@@ -50,34 +48,11 @@ export interface BlobPhotoStore {
   delete(key: string): Promise<void>
 }
 
-/** Tests only (the multipart path during the overlap): files under a local folder. */
-export class LocalDiskPhotoStore implements BlobPhotoStore {
-  private readonly root: string
-  constructor(dir: string) {
-    this.root = resolve(dir)
-  }
-  private pathOf(key: string): string {
-    const p = resolve(join(this.root, key))
-    if (!p.startsWith(this.root)) throw new Error('photo key escapes the store')
-    return p
-  }
-  async put(key: string, data: Buffer): Promise<string> {
-    const p = this.pathOf(key)
-    await mkdir(dirname(p), { recursive: true })
-    await writeFile(p, data)
-    return `local-photo://${key}`
-  }
-  async delete(key: string): Promise<void> {
-    await rm(this.pathOf(key), { force: true })
-  }
-}
-
 /**
  * Vercel Blob, public: where every photo lives and is served from (user decision
- * 2026-10-05). The processing handler writes the clean copies here; the multipart
- * entry still writes originals here until the clean-up PR. The SDK makes its own
- * request to Vercel's fixed API host -- not through SafeHttpClient; no caller-supplied
- * URL is involved.
+ * 2026-10-05). The processing handler writes the clean copies here. The SDK makes its
+ * own request to Vercel's fixed API host -- not through SafeHttpClient; no
+ * caller-supplied URL is involved.
  */
 export class VercelBlobPhotoStore implements BlobPhotoStore {
   constructor(private readonly token: string) {}

@@ -2,7 +2,7 @@ import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { searchLocalities, toEntry } from '../../src/modules/localities/locality-directory'
 import { PwnedPasswordsChecker } from '../../src/modules/registration/adapters/pwned-passwords'
-import { detectImageType } from '../../src/modules/registration/domain/image-type'
+import { detectImageType } from '@remonta/schemas/image-type'
 import { CATEGORY_ORDER, orderCategories } from '../../src/modules/registration/application/service-categories'
 import { SafeHttpClient } from '../../src/platform/http/safe-http-client'
 

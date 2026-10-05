@@ -1,5 +1,5 @@
 // Test doubles for the sign-up photo (U3): an in-memory bucket with failure
-// injection, and a Blob double for the multipart path kept during the overlap.
+// injection, and a Blob double for the clean copies.
 import type { ImageType } from '@remonta/schemas/image-type'
 import { StoreUnavailable, type BlobPhotoStore, type ObjectInfo, type PhotoStore, type UploadTicket } from '../../src/modules/registration/adapters/photo-store'
 

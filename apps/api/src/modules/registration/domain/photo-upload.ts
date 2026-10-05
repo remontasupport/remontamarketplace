@@ -13,7 +13,7 @@ export const PHOTO_CLAIM_WINDOW_HOURS = 24
 export const STAGING_PREFIX = 'staging/'
 /** Where processed copies live: publicly readable (a managed folder). */
 export const PROCESSED_PREFIX = 'workers/'
-/** The prefix every Vercel Blob row ever had (the multipart entry, kept until the clean-up PR). */
+/** The prefix of the rows the multipart entry wrote (removed in PR 3c); any that remain are never touched. */
 export const BLOB_PREFIX = 'workers/registration/'
 
 export type PhotoStoreName = 'gcs' | 'vercel-blob'

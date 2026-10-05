@@ -26,11 +26,10 @@ import { openOnboarding } from '../../onboarding/markers'
 import type { BreachCheck, BreachedPasswordChecker } from '../adapters/pwned-passwords'
 import { checkEmailCode } from '../domain/email-code'
 import { PHOTO_UPLOADED, WORKER_REGISTERED, type PhotoUploadedPayload, type WorkerRegisteredPayload } from '../domain/events'
-import { storeOf } from '../domain/photo-upload'
 import { findUserIdByEmail } from '../persistence/users'
 import { noticeExistingAccount } from './existing-account'
+import { attachPhoto, claimPhoto } from './photo-claim'
 import { resolveServices, type ResolvedService } from './resolve-services'
-import { attachPhoto, claimPhoto } from './stage-photo'
 
 export interface RegisterDeps {
   db: Db
@@ -109,11 +108,8 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   // R4: claim the staged photo before anything else is written.
   const photo = await claimPhoto(tx, input.photoUploadId, now)
   if (!photo) throw new ApiError(400, 'photo upload missing, used or expired', { photoUploadId: ['Please upload your photo again'] })
-  // U3 R3.3/R3.4: a Blob row's URL is public and goes on the profile at once; a bucket
-  // row's object is private until the processing handler writes the clean copy and
-  // points the profile at it (a gap of seconds; the event is queued below).
-  const fromBucket = storeOf(photo.key) === 'gcs'
-  const photoUrl = fromBucket ? null : photo.url
+  // U3 R3.4: the object is private until the processing handler writes the clean copy
+  // to Blob and points the profile at it (a gap of seconds; the event is queued below).
 
   let user: { id: string; workerProfile: { id: string } | null }
   try {
@@ -129,7 +125,7 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
             firstName: input.firstName,
             lastName: input.lastName,
             mobile: input.mobile,
-            photos: photoUrl,
+            photos: null,
             // Legacy columns, dual-written in today's shape (S1-data-model 2.2).
             ...placed.legacy,
             languages: [],
@@ -163,8 +159,6 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   })
   const payload: WorkerRegisteredPayload = { userId: user.id, workerProfileId }
   await enqueue(tx, { type: WORKER_REGISTERED, payload }, now)
-  if (fromBucket) {
-    const photoPayload: PhotoUploadedPayload = { photoUploadId: input.photoUploadId, workerProfileId }
-    await enqueue(tx, { type: PHOTO_UPLOADED, payload: photoPayload }, now)
-  }
+  const photoPayload: PhotoUploadedPayload = { photoUploadId: input.photoUploadId, workerProfileId }
+  await enqueue(tx, { type: PHOTO_UPLOADED, payload: photoPayload }, now)
 }
