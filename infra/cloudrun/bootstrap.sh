@@ -108,10 +108,12 @@ for STAGE in "${STAGES[@]}"; do
     echo "   exists:  gs://$B"
   else
     gcloud storage buckets create "gs://$B" --location="$REGION" --uniform-bucket-level-access --no-public-access-prevention \
-      --soft-delete-duration=7d --labels="remonta-project=remonta,remonta-service=api,remonta-stage=$STAGE" >/dev/null
+      --soft-delete-duration=7d >/dev/null
     echo "   created: gs://$B"
   fi
-  gcloud storage buckets update "gs://$B" --lifecycle-file="$here/storage/lifecycle.json" --cors-file="$here/storage/cors.$STAGE.json" >/dev/null
+  # Settings that `create` does not take (labels) or that may change later (lifecycle, CORS): always applied.
+  gcloud storage buckets update "gs://$B" --lifecycle-file="$here/storage/lifecycle.json" --cors-file="$here/storage/cors.$STAGE.json" \
+    --update-labels="remonta-project=remonta,remonta-service=api,remonta-stage=$STAGE" >/dev/null
   # The processed copies are public; nothing under staging/ is (SECURITY-09 exception, documented).
   exists gcloud storage managed-folders describe "gs://$B/workers/" || gcloud storage managed-folders create "gs://$B/workers/" >/dev/null
   if gcloud storage managed-folders add-iam-policy-binding "gs://$B/workers/" --member=allUsers --role=roles/storage.objectViewer >/dev/null 2>&1; then
