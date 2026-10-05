@@ -57,7 +57,7 @@ A database lease makes only one instance run each job at a time (`scheduled_jobs
 | Job (`scheduled_jobs.name`) | Every | Does |
 |---|---|---|
 | `onboarding-reconciler` | 5 min (`RECONCILER_INTERVAL_MS`) | Re-derives `worker_onboarding` stages and counts from the source rows; writes a `RECONCILER` transition when a stage changes |
-| `purge-unclaimed-registration-photos` | daily | Deletes confirmed photos (object first, from the store the key names; then the row) never claimed within 24 h. Objects never confirmed have no row: the bucket's lifecycle rule deletes `staging/` objects after a day. Summary: `deletedGcs`, `deletedBlob`, `skippedUnknownStore`, `failed` |
+| `purge-unclaimed-registration-photos` | daily | Deletes confirmed photos (the staging object first, then the row) never claimed within 24 h. Objects never confirmed have no row: the bucket's lifecycle rule deletes `staging/` objects after a day. A row whose key is not the bucket's (the removed multipart entry's prefix) is skipped and counted. Summary: `deletedGcs`, `skippedUnknownStore`, `failed` |
 | `outbox-retention` | daily | Deletes `DONE` outbox events older than 30 days |
 | `rate-limit-purge` | 10 min | Deletes expired `rate_limit_buckets` rows |
 
