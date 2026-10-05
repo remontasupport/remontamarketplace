@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: CONSTRUCTION -- U3 `photo-gcs` PR 3a live on production (2026-10-05); PR 3b (wizard switch) next (scope: sign-up only, user 2026-10-05).
+- **Current Stage**: CONSTRUCTION -- U3 `photo-gcs` PR 3b (the wizard switch) generated and pushed 2026-10-05 on `feat/photo-gcs-wizard`; gates green; awaiting the user's preview checklist (`construction/photo-gcs/code/preview-checklist-3b.md`), merge and production check. PR 3a live on production since 2026-10-05. Scope: sign-up only (user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.

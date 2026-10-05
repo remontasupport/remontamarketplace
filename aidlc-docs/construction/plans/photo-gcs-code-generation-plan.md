@@ -171,15 +171,15 @@ by a production promotion; 3b by the app's own production deploy.
 
 ### Part G -- `packages/form-engine`
 
-- [ ] **G1 `src/types.ts`**: photo kind `{ kind: "photo"; ticketEntry: string; confirmEntry: string }`;
+- [x] **G1 `src/types.ts`**: photo kind `{ kind: "photo"; ticketEntry: string; confirmEntry: string }`;
   `UploadTarget`, `Uploader`, `UploadError` (`status`, `policyRefused`), `UploadProgress`.
-- [ ] **G2 `src/form.ts`**: `defineForm` checks `ticketEntry` and `confirmEntry` exist and are JSON entries.
-- [ ] **G3 new `src/photo-upload.ts`**: `stagePhoto(def, backend, field, file, deps)` per L6 and R6; `HEIC_MESSAGE`;
+- [x] **G2 `src/form.ts`**: `defineForm` checks `ticketEntry` and `confirmEntry` exist and are JSON entries.
+- [x] **G3 new `src/photo-upload.ts`**: `stagePhoto(def, backend, field, file, deps)` per L6 and R6; `HEIC_MESSAGE`;
   `isHeicHeader` re-exported from `@remonta/schemas` (engine already depends on it through the contract? -- add
   `@remonta/schemas` as a direct dependency; P-7 unaffected).
-- [ ] **G4 `src/submit.ts`**: delete `uploadToApi`; `messageFor(413)` → "Your photo is too large. Please choose a
+- [x] **G4 `src/submit.ts`**: delete `uploadToApi`; `messageFor(413)` → "Your photo is too large. Please choose a
   photo under 5 MB."; `messageFor(415)` → "Please upload a JPEG, PNG or WebP photo."; `index.ts` exports.
-- [ ] **G5 tests `test/engine.test.ts`**: replace "uploads a photo through its entry" with a `stagePhoto` suite on
+- [x] **G5 tests `test/engine.test.ts`**: replace "uploads a photo through its entry" with a `stagePhoto` suite on
   a modelled api (ticket/confirm stubs) and a fake `Uploader` with scripted failures: happy path; retry on the
   same ticket; fresh ticket after 403; final message after the budget; abort stops requests; 413/415 final;
   `fast-check` property: at most 3 uploads per ticket and 2 tickets for any failure sequence. `defineForm` case
@@ -187,34 +187,34 @@ by a production promotion; 3b by the app's own production deploy.
 
 ### Part H -- `apps/app`
 
-- [ ] **H1 new `features/forms/adapters/xhrUploader.ts`** + `xhrUploader.test.ts` (fake XHR: fields order, file
+- [x] **H1 new `features/forms/adapters/xhrUploader.ts`** + `xhrUploader.test.ts` (fake XHR: fields order, file
   last, progress events, abort, 2xx resolve, 403 → `policyRefused`).
-- [ ] **H2 new `features/forms/adapters/readHeader.ts`** (`file.slice(0, 16).arrayBuffer()`).
-- [ ] **H3 `features/forms/useFormWizard.ts`**: `uploaderFor` per frontend design (shrink, header, HEIC stop with
+- [x] **H2 new `features/forms/adapters/readHeader.ts`** (`file.slice(0, 16).arrayBuffer()`).
+- [x] **H3 `features/forms/useFormWizard.ts`**: `uploaderFor` per frontend design (shrink, header, HEIC stop with
   `console.warn('[photo] heic-rejected')`, per-field `AbortController`, `stagePhoto` with `xhrUploader`, progress
   callback; abort on unmount); imports `stagePhoto` instead of `uploadToApi`.
-- [ ] **H4 `features/forms/FormWizard.tsx`**: `PhotoSlot` holds `progress` state and passes it; `uploader`
+- [x] **H4 `features/forms/FormWizard.tsx`**: `PhotoSlot` holds `progress` state and passes it; `uploader`
   signature gains `onProgress`.
-- [ ] **H5 `components/ui/form-wizard/fields.tsx`**: `PhotoField` passes `accept`, `allowedTypes`,
+- [x] **H5 `components/ui/form-wizard/fields.tsx`**: `PhotoField` passes `accept`, `allowedTypes`,
   `typeErrorMessage`, `progress` to `PhotoUpload`.
-- [ ] **H6 `components/forms/fields/PhotoUpload.tsx`**: optional props `accept`, `allowedTypes`,
+- [x] **H6 `components/forms/fields/PhotoUpload.tsx`**: optional props `accept`, `allowedTypes`,
   `typeErrorMessage`, `progress`; `upload?(file, onProgress?)`; render a `role="progressbar"` bar
   (`data-testid="photo-upload-progress"`) when `progress` is set, else today's label; defaults unchanged
   (dashboard screens untouched).
-- [ ] **H7 `features/forms/definitions/workerRegistration.ts`**: `ticketEntry: "createPhotoUploadTicket"`,
+- [x] **H7 `features/forms/definitions/workerRegistration.ts`**: `ticketEntry: "createPhotoUploadTicket"`,
   `confirmEntry: "confirmPhotoUpload"`.
 - [ ] **H8 `next.config.ts`**: `remotePatterns` += `{ protocol: 'https', hostname: 'storage.googleapis.com',
   pathname: '/remonta-api-photos*/**' }`.
-- [ ] **H9 tests**: `forms.test.ts` (definition carries both entries; the preview tests unchanged); a hook test for
+- [~] **H9 tests** (`forms.test.ts` holds; the hook and component tests cannot run in the app's Node-only vitest -- recorded in the summary, proven on the preview): `forms.test.ts` (definition carries both entries; the preview tests unchanged); a hook test for
   the HEIC stop (no network call, the message); `PhotoUpload` prop defaults test.
-- [ ] **H10 docs**: `docs/signup/01-flow.md` step 4 (the three calls, progress, HEIC); `02-api-reference.md` client
+- [x] **H10 docs**: `docs/signup/01-flow.md` step 4 (the three calls, progress, HEIC); `02-api-reference.md` client
   notes.
 
 ### Part I -- gates and hand-off (3b)
 
-- [ ] **I1** `pnpm --filter @remonta/form-engine run quality`, `@remonta/app run quality` (baselines not grown),
+- [x] **I1** `pnpm --filter @remonta/form-engine run quality`, `@remonta/app run quality` (baselines not grown),
   `npx turbo run build`.
-- [ ] **I2** Summary `photo-gcs-3b-summary.md`; push; PR; the preview checklist (requirements §6.2, phone in hand)
+- [~] **I2** (summary written, pushed, PR link given 2026-10-05; the checklist, merge and production check pending on the user) Summary `photo-gcs-3b-summary.md`; push; PR; the preview checklist (requirements §6.2, phone in hand)
   recorded in `aidlc-docs/construction/photo-gcs/code/preview-checklist-3b.md`; merge; production check.
 
 ---
