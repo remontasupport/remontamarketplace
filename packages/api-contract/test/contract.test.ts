@@ -19,7 +19,6 @@ describe('the contracts as committed', () => {
       'requestEmailCode',
       'searchLocalities',
       'submitWorkerRegistration',
-      'uploadRegistrationPhoto',
       'verifyEmailCode',
     ])
   })
