@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: CONSTRUCTION -- U1 `alert-policy` code generated, awaiting approval; then Build and Test (scope: sign-up only, user 2026-10-05).
+- **Current Stage**: CONSTRUCTION -- U1 done (applied live 2026-10-05); next U3 `photo-gcs` Functional Design (scope: sign-up only, user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.
@@ -110,7 +110,7 @@
 - [ ] Units Generation -- SKIP (units fixed in the execution plan: U1 `alert-policy`, U3 `photo-gcs` in PRs 3a/3b/3c)
 
 ### 🟢 CONSTRUCTION PHASE
-- [~] U1 `alert-policy`: code generated 2026-10-05 on `fix/alert-latency-policy` (`8893230`, pushed; PR to open); summary `construction/alert-policy/code/alert-policy-summary.md`; awaiting code approval, then Build and Test (PR, merge, live apply with the user's go)
+- [x] U1 `alert-policy`: PR #36 merged (`e20dee4`), policies applied to prod and staging 2026-10-05 03:45Z, live policy verified; one observation open (no latency email the next day). Summary: `construction/alert-policy/code/alert-policy-summary.md`
 - [ ] U3 `photo-gcs`: Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation (one plan, three PRs), Build and Test per PR
 - [ ] Build and Test (per PR: gates, CI, preview checklist, merge, staging, promotion)
 
