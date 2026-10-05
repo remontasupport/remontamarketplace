@@ -5,7 +5,7 @@
 // a definition file, not new screens.
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
-import { KINDS, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue } from "@remonta/form-engine";
+import { KINDS, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue, type UploadProgress } from "@remonta/form-engine";
 import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
@@ -44,7 +44,9 @@ export function FormWizard({ definition, backend }: { definition: FormDefinition
 
 type Wizard = ReturnType<typeof useFormWizard>;
 
-function FieldSlot({ field, control, errors, backend, uploader, wizard, definition }: { field: FieldDef; control: Control<Values>; errors: FieldErrors<Values>; backend: Backend; uploader?: (file: File) => Promise<string>; wizard: Wizard; definition: FormDefinition }) {
+type PhotoUploader = (file: File, onProgress?: (p: UploadProgress) => void) => Promise<string>;
+
+function FieldSlot({ field, control, errors, backend, uploader, wizard, definition }: { field: FieldDef; control: Control<Values>; errors: FieldErrors<Values>; backend: Backend; uploader?: PhotoUploader; wizard: Wizard; definition: FormDefinition }) {
   const error = errorOf(errors, field.name);
   // enabledWhen / visibleWhen: the field is disabled, or not shown, until that key holds a value
   // (e.g. the password until the email is verified).
@@ -208,9 +210,20 @@ type PhotoDef = Extract<FieldDef, { kind: "photo" }>;
  * the companion key (photoPreview.ts), which survives the step remount and the
  * draft. Removing the photo clears both.
  */
-function PhotoSlot({ field, control, uploader, wizard, error }: { field: PhotoDef; control: Control<Values>; uploader?: (file: File) => Promise<string>; wizard: Wizard; error?: string }) {
+function PhotoSlot({ field, control, uploader, wizard, error }: { field: PhotoDef; control: Control<Values>; uploader?: PhotoUploader; wizard: Wizard; error?: string }) {
   const previewKey = previewKeyOf(field.name);
   const thumbnail = useWatch({ control, name: previewKey }) as string | null | undefined;
+  // The upload's progress (U3): bytes sent during the transfer, indeterminate around it, null when idle.
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const upload = uploader
+    ? async (file: File) => {
+        try {
+          return await uploader(file, setProgress);
+        } finally {
+          setProgress(null);
+        }
+      }
+    : undefined;
   return (
     <Controller
       name={field.name}
@@ -221,7 +234,8 @@ function PhotoSlot({ field, control, uploader, wizard, error }: { field: PhotoDe
           hint={field.hint}
           previewUrl={f.value ? thumbnail || undefined : undefined}
           alreadyUploaded={!!f.value}
-          upload={uploader}
+          upload={upload}
+          progress={progress}
           onChange={(v) => {
             f.onChange(v ?? "");
             if (!v) wizard.form.setValue(previewKey, null, { shouldValidate: false, shouldDirty: true });

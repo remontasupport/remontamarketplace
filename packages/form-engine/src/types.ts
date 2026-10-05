@@ -28,8 +28,11 @@ export type FieldDef =
   | (FieldBase & { kind: "locality"; placeholder?: string })
   /** Services, and the sub-categories chosen for them (a second contract field). */
   | (FieldBase & { kind: "services"; subcategoriesName: string; title?: string })
-  /** A photo staged through another contract entry; its id is the value. */
-  | (FieldBase & { kind: "photo"; uploadEntry: string })
+  /**
+   * A photo uploaded straight to storage (U3): `ticketEntry` names the key the browser
+   * may fill, `confirmEntry` checks what landed; the staged id is the value.
+   */
+  | (FieldBase & { kind: "photo"; ticketEntry: string; confirmEntry: string })
   | (FieldBase & { kind: "consent"; statement: string; paragraphs?: string[] })
   /**
    * A code emailed to the `for` field's address and checked before the step can
@@ -46,6 +49,33 @@ export type FieldDef =
     });
 
 export type FieldKind = FieldDef["kind"];
+
+/** What the ticket entry answers: where to POST the file and the signed form fields to send with it. */
+export interface UploadTarget {
+  url: string;
+  method: "POST";
+  fields: Record<string, string>;
+  fileField: string;
+}
+
+export type UploadProgress = { sent: number; total: number } | "indeterminate";
+
+/** A transport failure the engine may retry; `policyRefused` = storage rejected the ticket (expired or constraint). */
+export class UploadError extends Error {
+  constructor(
+    readonly status: number,
+    readonly policyRefused: boolean,
+    message = `upload failed (${status || "network"})`,
+  ) {
+    super(message);
+    this.name = "UploadError";
+  }
+}
+
+/** The browser transport (apps/app implements it with XMLHttpRequest; the engine stays DOM-free, P-7). */
+export interface Uploader {
+  upload(file: Blob, target: UploadTarget, opts: { onProgress?: (sent: number, total: number) => void; signal?: AbortSignal }): Promise<void>;
+}
 
 export interface StepDef {
   /** Shown as the step heading; omit when the fields carry their own headings. */

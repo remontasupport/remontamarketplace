@@ -69,7 +69,9 @@ export const workerRegistrationForm = defineForm({
         {
           name: "photoUploadId",
           kind: "photo",
-          uploadEntry: "uploadRegistrationPhoto",
+          // The direct upload (U3): a ticket for storage, then confirm; the api never carries the bytes.
+          ticketEntry: "createPhotoUploadTicket",
+          confirmEntry: "confirmPhotoUpload",
           label: "Profile Photo",
           hint: "Upload a professional photo that clearly shows your face. This helps clients recognize you.",
         },

@@ -628,6 +628,9 @@ importers:
       '@remonta/api-contract':
         specifier: workspace:*
         version: link:../api-contract
+      '@remonta/schemas':
+        specifier: workspace:*
+        version: link:../schemas
       zod:
         specifier: ^4.1.11
         version: 4.6.1
@@ -635,9 +638,6 @@ importers:
       '@remonta/config':
         specifier: workspace:*
         version: link:../config
-      '@remonta/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       '@types/node':
         specifier: ^20
         version: 20.19.43

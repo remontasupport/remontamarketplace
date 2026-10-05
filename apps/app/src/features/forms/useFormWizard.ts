@@ -19,15 +19,21 @@ import {
   saveDraft,
   stepOfKey,
   submitToApi,
-  uploadToApi,
+  stagePhoto,
+  HEIC_MESSAGE,
+  isHeicHeader,
+  PhotoFieldError,
   type Backend,
+  type UploadProgress,
   type FieldDef,
   type FormDefinition,
   type SubmitResult,
 } from "@remonta/form-engine";
 import type { WizardStatus } from "@/components/ui/form-wizard/FormWizardView";
 import { browserStore, isOnline, waitUntilOnline } from "./adapters/browser";
+import { readHeader } from "./adapters/readHeader";
 import { shrinkImage } from "./adapters/shrinkImage";
+import { xhrUploader } from "./adapters/xhrUploader";
 import { previewKeyOf, thumbnailDataUrl } from "./photoPreview";
 import { useOnlineStatus } from "./adapters/useOnlineStatus";
 import { useRecaptcha } from "./adapters/useRecaptcha";
@@ -56,6 +62,9 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   const [stepMessage, setStepMessage] = useState<string | null>(null);
   const [status, setStatus] = useState<WizardStatus>({ kind: "idle" });
   const uploads = useRef(new Set<Promise<unknown>>());
+  // One upload in flight per photo field: a new pick aborts the previous one (R6.8).
+  const uploadControllers = useRef(new Map<string, AbortController>());
+  useEffect(() => () => uploadControllers.current.forEach((c) => c.abort(new Error("form left"))), []);
   // Fields that want to know when another field loses focus (the email code's availability check).
   const blurListeners = useRef(new Map<string, Set<() => void>>());
   const fieldBlurred = useCallback((name: string) => blurListeners.current.get(name)?.forEach((cb) => cb()), []);
@@ -109,16 +118,32 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
 
   // ---- photo uploads ----------------------------------------------------------------
   /**
-   * The uploader for a photo field stages it in apps/api. Alongside the upload, a
-   * thumbnail of the same image is kept in the form (photoPreview.ts) so the field
-   * can still show it after the step remounts or the page reloads; it is set only
-   * once the upload succeeded, so a preview never exists without its id.
+   * The uploader for a photo field (U3): shrink on the device, refuse a HEIC the
+   * browser could not decode before any network call, then the engine's three steps
+   * (ticket from apps/api, the file straight to storage with progress, confirm).
+   * Alongside, a thumbnail of the same image is kept in the form (photoPreview.ts) so
+   * the field can still show it after the step remounts or the page reloads; it is
+   * set only once the upload succeeded, so a preview never exists without its id.
    */
   const uploaderFor = useCallback(
     (field: Extract<FieldDef, { kind: "photo" }>) => {
-      return async (file: File) => {
+      return async (file: File, onProgress?: (p: UploadProgress) => void) => {
+        uploadControllers.current.get(field.name)?.abort(new Error("replaced by a new pick"));
+        const controller = new AbortController();
+        uploadControllers.current.set(field.name, controller);
         const p = (async () => {
-          const [id, preview] = await Promise.all([uploadToApi(def, backend, field.uploadEntry, await shrinkImage(file), { retry }), thumbnailDataUrl(file)]);
+          onProgress?.("indeterminate");
+          const shrunk = await shrinkImage(file);
+          const header = await readHeader(shrunk);
+          // Not decodable here and HEIC by its bytes: say so now, upload nothing (R7.2).
+          if (shrunk === file && isHeicHeader(header)) {
+            console.warn("[photo] heic-rejected");
+            throw new PhotoFieldError(HEIC_MESSAGE);
+          }
+          const [id, preview] = await Promise.all([
+            stagePhoto(def, backend, field, shrunk, header, { uploader: xhrUploader, onProgress, signal: controller.signal, retry }),
+            thumbnailDataUrl(file),
+          ]);
           form.setValue(previewKeyOf(field.name), preview, { shouldValidate: false, shouldDirty: true });
           return id;
         })();
@@ -127,6 +152,7 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
           return await p;
         } finally {
           uploads.current.delete(p);
+          if (uploadControllers.current.get(field.name) === controller) uploadControllers.current.delete(field.name);
         }
       };
     },

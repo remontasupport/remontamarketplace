@@ -31,7 +31,7 @@ const steps = (extra: object = {}) => [
   {
     title: "Photo",
     fields: [
-      { name: "photoUploadId", kind: "photo" as const, uploadEntry: "uploadRegistrationPhoto" },
+      { name: "photoUploadId", kind: "photo" as const, ticketEntry: "createPhotoUploadTicket", confirmEntry: "confirmPhotoUpload" },
       { name: "consentProfileShare", kind: "consent" as const, statement: "I consent" },
     ],
   },
