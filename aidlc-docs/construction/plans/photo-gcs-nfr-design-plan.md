@@ -59,11 +59,11 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the two answers; resolve ambiguity in a clarification file
-- [ ] 2. `aidlc-docs/construction/photo-gcs/nfr-design/nfr-design-patterns.md`: the patterns applied (timeouts,
+- [x] 1. Confirm the two answers; resolve ambiguity in a clarification file
+- [x] 2. `aidlc-docs/construction/photo-gcs/nfr-design/nfr-design-patterns.md`: the patterns applied (timeouts,
   bounded retries, bulkhead, idempotent handlers, fail-closed, single-purpose credentials, immutable keys,
   lifecycle as backstop, observability per stage, degraded modes), each tied to the requirement it satisfies, plus
   the resiliency test scenarios
-- [ ] 3. `logical-components.md`: every component with its NFR responsibilities and the platform pieces it uses;
+- [x] 3. `logical-components.md`: every component with its NFR responsibilities and the platform pieces it uses;
   the CI topology (PostGIS + fake storage); configuration surface
-- [ ] 4. Present for approval
+- [x] 4. Present for approval

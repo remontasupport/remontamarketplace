@@ -2795,3 +2795,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > continue to next stage
 
 **AI action (2026-10-05, U3 NFR Requirements approved; NFR Design started):** Read the NFR Design rules and the api's `Bulkhead`. Wrote `aidlc-docs/construction/plans/photo-gcs-nfr-design-plan.md` with two questions pre-filled: Q1 the RESILIENCY-14 resiliency testing approach (B proposed: failure-injection tests in CI against the fake server, one staging drill per release revoking the bucket role, the DR runbook extended); Q2 no circuit breaker on the bucket client in this unit (A). Fixed points: timeouts, retry ownership, bulkhead behaviour when full, fail-closed, signing credential handling. Awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> approved
+
+**AI action (2026-10-05, U3 NFR Design generated):** Plan approved (Q1 B resiliency testing plan, Q2 A no breaker). Wrote `aidlc-docs/construction/photo-gcs/nfr-design/nfr-design-patterns.md` (P1 bounded calls, P2 the engine's retry budget, P3 the bulkhead, P4 idempotent handlers and claim-safe jobs, P5 fail closed / write last, P6 single-purpose credentials and immutable keys, P7 private by default, P8 backstops without code, P9 observability per stage with the log lines and two metrics, P10 degraded modes table, P11 no breaker justification, P12 the resiliency testing plan: nine CI scenarios, the staging drill revoking the bucket role, runbook additions) and `logical-components.md` (api, browser, Google Cloud, CI/local components with their NFR responsibilities; the configuration surface incl. `PHOTO_PROCESS_CONCURRENCY`; the capacity envelope). Plan checklist complete. Approval prompt presented; awaiting the user.
