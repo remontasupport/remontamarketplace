@@ -26,7 +26,7 @@ change under `infra/`.
 
 ### Part A -- the policy
 
-- [ ] **A1 `infra/cloudrun/monitoring/latency-p95.json`**: replace the single condition with the two of the design:
+- [x] **A1 `infra/cloudrun/monitoring/latency-p95.json`**: replace the single condition with the two of the design:
   `p95 latency > 2000 ms` (`request_latencies`, `ALIGN_DELTA` + `REDUCE_PERCENTILE_95`, group by service, `> 2000`,
   `600s`, missing data inactive) and `requests per 5 min >= 60` (`request_count`, `ALIGN_DELTA` + `REDUCE_SUM`,
   group by service, `> 59`, `600s`, missing data inactive); `combiner: AND`; the new documentation text; everything
@@ -34,24 +34,24 @@ change under `infra/`.
 
 ### Part B -- the scripts
 
-- [ ] **B1 new `infra/cloudrun/lib.sh`**: `STAGES=(staging prod)`, `service_for`, `alerts_for` (moved verbatim
+- [x] **B1 new `infra/cloudrun/lib.sh`**: `STAGES=(staging prod)`, `service_for`, `alerts_for` (moved verbatim
   from bootstrap), `say`, `exists`, `resolve_channel <email>` (find-or-create, moved from step 9),
   `render_policy <file> <service> <stage> <channel> <project>` (the sed line). Comment: "sourced by bootstrap.sh and
   apply-alerts.sh; the test suite reads the two tables from here".
-- [ ] **B2 new `infra/cloudrun/apply-alerts.sh`**: usage `apply-alerts.sh <staging|prod> [--project <id>]
+- [x] **B2 new `infra/cloudrun/apply-alerts.sh`**: usage `apply-alerts.sh <staging|prod> [--project <id>]
   [--email <address>] [--only <policy>] [--dry-run]`; defaults: the active gcloud project, the bootstrap email.
   For each policy of the stage: render; list by display name; absent → `create --policy-from-file=-` (or print
   `would create` in dry run); present → `describe --format=json`, normalise both sides with `node -e` (drop
   `name`, `creationRecord`, `mutationRecord`, `enabled`, condition `name`s; sort keys), equal → `unchanged`;
   different → print a unified diff of the two normalised documents, then `update <name> --policy-from-file=-` (or
   `would update` in dry run). Summary line at the end; `set -euo pipefail`. (US-PH-18)
-- [ ] **B3 `infra/cloudrun/bootstrap.sh`**: `source "$here/lib.sh"`; delete the local copies of the tables and
+- [x] **B3 `infra/cloudrun/bootstrap.sh`**: `source "$here/lib.sh"`; delete the local copies of the tables and
   helpers; step 9 becomes `resolve_channel`, then `"$here/apply-alerts.sh" "$STAGE" --project "$PROJECT" --email
   "$EMAIL"` per stage; the header comment's step 9 line mentions the apply script. `bash -n` both scripts.
 
 ### Part C -- the test
 
-- [ ] **C1 new `infra/test/monitoring.test.ts`**: (a) every `cloudrun/monitoring/*.json` parses, has
+- [x] **C1 new `infra/test/monitoring.test.ts`**: (a) every `cloudrun/monitoring/*.json` parses, has
   `displayName` starting `__SERVICE__`, uses only the four placeholders, `notificationChannels == ["__CHANNEL__"]`;
   (b) `lib.sh`'s `alerts_for` names for each stage match files on disk (read the file, regex the two `case` arms);
   (c) `latency-p95.json`: two conditions, combiner `AND`, condition 1 and 2 exactly as A1 (metric types, aligners,
@@ -60,16 +60,16 @@ change under `infra/`.
 
 ### Part D -- documentation
 
-- [ ] **D1 `infra/README.md`**: add the row "Apply alert policies | `cloudrun/apply-alerts.sh` | …" to the table
+- [x] **D1 `infra/README.md`**: add the row "Apply alert policies | `cloudrun/apply-alerts.sh` | …" to the table
   and one sentence under the bootstrap row (bootstrap calls it; run it alone after editing a policy JSON;
   `--dry-run` shows the diff).
-- [ ] **D2 `CLAUDE.md`**: in the Cloud Run block, the `Alerts:` line gains "change a policy: edit
+- [x] **D2 `CLAUDE.md`**: in the Cloud Run block, the `Alerts:` line gains "change a policy: edit
   `infra/cloudrun/monitoring/<name>.json`, merge, then `bash infra/cloudrun/apply-alerts.sh prod`".
 
 ### Part E -- gates (before the PR)
 
-- [ ] **E1** `pnpm --filter @remonta/infra run quality` green (lint, tsc, the new and existing tests, render:check).
-- [ ] **E2** `bash -n infra/cloudrun/bootstrap.sh infra/cloudrun/apply-alerts.sh infra/cloudrun/lib.sh`; then
+- [x] **E1** `pnpm --filter @remonta/infra run quality` green (lint, tsc, the new and existing tests, render:check).
+- [x] **E2** `bash -n infra/cloudrun/bootstrap.sh infra/cloudrun/apply-alerts.sh infra/cloudrun/lib.sh`; then
   `bash infra/cloudrun/apply-alerts.sh prod --dry-run` from this machine (read-only: lists and describes) must print
   `would update: remonta-api latency-p95` with the diff and `unchanged` for the other five, and
   `apply-alerts.sh staging --dry-run` must print `unchanged` for both of staging's policies.
