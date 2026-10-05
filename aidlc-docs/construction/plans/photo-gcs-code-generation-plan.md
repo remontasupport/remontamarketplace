@@ -221,18 +221,18 @@ by a production promotion; 3b by the app's own production deploy.
 
 ## PR 3c -- clean-up (`feat/photo-gcs-cleanup`, after the cut-over window)
 
-- [ ] **J1 `packages/api-contract`**: remove `uploadRegistrationPhoto`, its `public-endpoints.json` line, regenerate
+- [x] **J1 `packages/api-contract`**: remove `uploadRegistrationPhoto`, its `public-endpoints.json` line, regenerate
   `openapi.json`; tests (nine → eight; the synthetic multipart case stays on a synthetic contract).
-- [ ] **J2 `apps/api`**: remove `stage-photo.ts` (move `claimPhoto`/`attachPhoto`/`hashIp` to
+- [x] **J2 `apps/api`** (amended by option 2: `VercelBlobPhotoStore`, `BlobPhotoStore`, `@vercel/blob` and the token STAY for the clean copies; the rest as written): remove `stage-photo.ts` (move `claimPhoto`/`attachPhoto`/`hashIp` to
   `application/photo-claim.ts`), `LocalDiskPhotoStore`, `VercelBlobPhotoStore`, `BlobPhotoStore`, the
   `@vercel/blob` dependency, `BLOB_READ_WRITE_TOKEN` from config; purge takes one store; `domain/image-type.ts`
   re-export removed (imports point at `@remonta/schemas`); `route-security.test.ts` multipart section becomes a
   synthetic-contract test; harness and int tests use ticket + confirm on the in-memory or fake store.
-- [ ] **J3 `infra/`**: `SECRET_NAMES` minus `BLOB_READ_WRITE_TOKEN`; render; `lib.sh`/bootstrap `SECRETS` list;
+- [x] **J3 `infra/`** (CANCELLED by option 2, 2026-10-05: the Blob token remains one of the six secrets): `SECRET_NAMES` minus `BLOB_READ_WRITE_TOKEN`; render; `lib.sh`/bootstrap `SECRETS` list;
   tests ("exactly the five secrets").
-- [ ] **J4 docs**: `02-api-reference.md` 4.6c removed; `03-data-model.md` §5 history note; CLAUDE.md secrets
+- [x] **J4 docs**: `02-api-reference.md` 4.6c removed; `03-data-model.md` §5 history note; CLAUDE.md secrets
   count; `README` source files.
-- [ ] **J5** gates; summary `photo-gcs-3c-summary.md`; PR; merge; staging; promotion; the user deletes the two
+- [~] **J5** (gates green locally except the PostGIS and fake-bucket suites, Docker down: CI proves them; summary written; pushed 2026-10-05; PR, merge, staging, promotion wait for the cut-over window, 2026-10-08 at the earliest) gates; summary `photo-gcs-3c-summary.md`; PR; merge; staging; promotion; the user deletes the two
   Blob secrets in Secret Manager.
 
 ---

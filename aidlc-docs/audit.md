@@ -2932,3 +2932,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > Merged
 
 **AI action (2026-10-05, PR 3b Build and Test, production):** Verified by refs: `origin/main` `177a2c2` = "Merge pull request #38", contains `0d5e478`. Live sign-up page 200 with the wizard; its chunks contain the ticket path, the progress bar and the HEIC log (production serves the direct upload). `remonta-api` health 200, ticket entry answers; `remonta-api-staging` health 200 after the merge's deploy-api run. The preview checklist's results were not reported before the merge; the production phone run (P1-P2) remains the user's. Summary, checklist, plan (I2) and state updated. The cut-over window for PR 3c starts today.
+
+**User input (verbatim, 2026-10-05):**
+> is this the latest merge to the production? Merge pull request #38 from remontasupport/feat/photo-gcs-wizard
+
+**AI action (2026-10-05):** Yes: `refs/heads/main` = `177a2c2` (PR #38); the live page serves its chunks. The other ref matching "main", `app/main` at `4a826b2`, is a leftover branch from the monorepo cycle, not production.
+
+**User input (verbatim, 2026-10-05):**
+> continue
+
+**AI action (2026-10-05, PR 3b production evidence; PR 3c Code Generation):** Cloud Logging on `remonta-api`: three ticket/confirm pairs through the live wizard at 08:57Z (tickets 345-424 ms, confirms 159-284 ms, CORS preflights 204) and `photo-process outcome=processed` at 08:58:00Z for upload `118fa0a1…` (profile `cmuv0oju40001s6014vmje0bp`): the direct upload works end to end on production; rows P1-P2 of the 3b checklist filled from the logs. Then PR 3c generated ahead of the cut-over window on `feat/photo-gcs-cleanup` from `177a2c2`: the multipart entry removed from the contract (openapi regenerated), `stage-photo.ts` → `photo-claim.ts`, no store branch in the sign-up transaction, `LocalDiskPhotoStore` and the image-type re-export gone, the purge on the bucket only (foreign keys skipped and counted), the harness and the PostGIS suite staging through ticket/confirm, docs. Option 2 amendment applied: Blob adapter, dependency and token stay; J3 cancelled. Gates: api-contract 35, api 276 passed / 128 skipped (PostGIS and fake-bucket suites not run: Docker not responding; CI proves them), form-engine 58, app tsc at the 144 baseline, api build ok. Three commits (`574be0a`, `7740497`, `686a6c6`), pushed. Summary `photo-gcs-3c-summary.md`. Rule stated to the user: not to merge before 2026-10-08 and three clean purge summaries.

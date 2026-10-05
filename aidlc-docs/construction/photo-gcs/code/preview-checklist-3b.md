@@ -20,5 +20,5 @@ Test address: `clent.b@remontaservices.com.au` (user, 2026-10-05). Fill in as ea
 
 | # | Check | Result | When | Notes |
 |---|---|---|---|---|
-| P1 | One internal sign-up from a phone; the processed copy appears | | | |
-| P2 | Cloud Run request log: ticket and confirm under 300 ms; no photo route above 1.5 s | | | |
+| P1 | One internal sign-up from a phone; the processed copy appears | evidence in the logs | 2026-10-05 08:57Z | Three ticket/confirm pairs through the live wizard (CORS preflights from the app origin, then POSTs); the third, upload `118fa0a1…`, was claimed and processed at 08:58:00Z: `photo-process outcome=processed`, 2159 bytes in → 1099 out, profile `cmuv0oju40001s6014vmje0bp`. Whether the phone and the on-screen progress were as specified was not reported |
+| P2 | Cloud Run request log: ticket and confirm under 300 ms; no photo route above 1.5 s | partly | 2026-10-05 08:57Z | tickets 345-424 ms (the IAM signBlob round trip), confirms 159-284 ms; nothing near 1.5 s. The ticket sits above the 300 ms the design hoped for and far inside the unit's goal (the old multipart route: 4 s p95) |

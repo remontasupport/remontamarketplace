@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: CONSTRUCTION -- U3 `photo-gcs` PR 3b (the wizard switch) **live**: PR #38 merged 2026-10-05 as `177a2c2`; production serves the direct upload. Pending on the user: the phone sign-up on production (`construction/photo-gcs/code/preview-checklist-3b.md`, P1-P2). Next: the cut-over window (three days of clean purge summaries, R9.3), then PR 3c clean-up; U1's observation (no latency email). PR 3a live on production since 2026-10-05. Scope: sign-up only (user 2026-10-05).
+- **Current Stage**: CONSTRUCTION -- U3 `photo-gcs`: PR 3b **live** (PR #38, `177a2c2`, 2026-10-05; a real sign-up processed at 08:58Z, ticket ~0.4 s, confirm ~0.2 s). PR 3c (clean-up) **generated and pushed** on `feat/photo-gcs-cleanup` (`686a6c6`), summary `construction/photo-gcs/code/photo-gcs-3c-summary.md`; **not to merge before 2026-10-08** and three clean purge summaries (R9.3); CI must prove the rewritten PostGIS suites. Then: staging, promotion, U1's observation (no latency email), and closing the cycle. PR 3a live on production since 2026-10-05. Scope: sign-up only (user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.
