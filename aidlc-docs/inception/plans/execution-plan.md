@@ -43,7 +43,6 @@
 | Component | Change type | Reason | Priority |
 |---|---|---|---|
 | `infra/` monitoring + apply step | Configuration | the alert unit | Critical (first) |
-| `apps/app` shared `PhotoUpload` | Minor | accept list and messages | Important (independent) |
 | `infra/` buckets, IAM, stages table, bootstrap | Major (new resources) | the storage move | Critical (before any api promotion) |
 | `packages/db` | Minor, additive migration | row states, store, processed URLs | Critical |
 | `packages/api-contract` | Major (new entries) | ticket, confirm | Critical |
@@ -126,10 +125,9 @@ flowchart TD
 | Unit | Name | Stories | PRs | Design stages |
 |---|---|---|---|---|
 | **U1** | `alert-policy` -- the corrected latency policy and the apply step | US-PH-17, US-PH-18 | 1 (infra only), **first** | Infrastructure Design (short), Code Generation, Build and Test |
-| **U2** | `heic-accept` -- the shared component's accept list and messages | US-PH-05 (dashboard clause) | 1 (`apps/app` only), independent | Code Generation, Build and Test |
 | **U3** | `photo-gcs` -- the storage move | US-PH-01..16 | 3, in order (below) | Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation, Build and Test |
 
-U1 and U2 can proceed in either order and in parallel with U3's design. U3's three PRs are sequential.
+U1 can proceed in parallel with U3's design. U3's three PRs are sequential. (U2 `heic-accept` was removed on 2026-10-05 when the scope was narrowed to the sign-up: the wizard-only accept list lives in PR 3b.)
 
 ## Phases to Execute
 
@@ -149,17 +147,17 @@ U1 and U2 can proceed in either order and in parallel with U3's design. U3's thr
     (§Package Change Sequence); the three mandatory artifacts would restate the table above.
 
 ### 🟢 CONSTRUCTION PHASE
-- [ ] Functional Design -- **EXECUTE for U3**; skip for U1, U2
+- [ ] Functional Design -- **EXECUTE for U3**; skip for U1
   - **Rationale**: U3 holds the business rules (row state machine, ticket constraints, confirm decisions,
     processing idempotence, purge across two stores, cut-over) and PBT-01 requires the property list here. U1 is
-    configuration; U2 is a one-line change with messages.
-- [ ] NFR Requirements -- **EXECUTE for U3**; skip for U1, U2
+    configuration.
+- [ ] NFR Requirements -- **EXECUTE for U3**; skip for U1
   - **Rationale**: tech stack decisions: `sharp`, the Storage client, `fake-gcs-server`, signing method (OI-2),
     timeouts; PBT-09 framework confirmation.
-- [ ] NFR Design -- **EXECUTE for U3**; skip for U1, U2
+- [ ] NFR Design -- **EXECUTE for U3**; skip for U1
   - **Rationale**: timeouts and isolation (NFR-10), degraded mode (NFR-11), the RESILIENCY-14 testing question,
     observability of each stage.
-- [ ] Infrastructure Design -- **EXECUTE for U1 and U3**; skip for U2
+- [ ] Infrastructure Design -- **EXECUTE for U1 and U3**
   - **Rationale**: U1 is the policy and the apply step; U3 is buckets, IAM, CORS, lifecycle, soft delete, the
     stages table, bootstrap, secrets, the CI container.
 - [ ] Code Generation -- EXECUTE (ALWAYS), one plan per unit (U3: one plan covering its three PRs)
@@ -179,9 +177,6 @@ keep the old entry, before the app switches to them.
 (`infra/` script or workflow step), `bootstrap.sh` calling it, `infra/README.md`, CLAUDE.md alert line. Apply to
 staging and production policies. No api image change.
 
-**U2 `heic-accept` (PR 2, independent):** `apps/app` shared `PhotoUpload` accept list, type check and messages;
-app tests. Vercel preview, merge, production check on one dashboard upload screen.
-
 **U3 `photo-gcs`:**
 
 | PR | Packages | What it does | Live behaviour after merge |
@@ -196,14 +191,14 @@ requires rolling 3b back first.
 ## Estimated Timeline
 - **Total Phases**: 5 remaining stages (Application Design, then per unit Functional / NFR / Infrastructure
   Design where marked, Code Generation, Build and Test)
-- **Estimated Duration**: U1 and U2 one session each including verification; U3 design two sessions, 3a and 3b
+- **Estimated Duration**: U1 one session including verification; U3 design two sessions, 3a and 3b
   one to two sessions each with their preview checklists, 3c one short session after the cut-over window
 
 ## Success Criteria
 - **Primary Goal**: a sign-up photo uploaded from a phone goes straight to the Sydney bucket with visible progress,
   is verified by the api, processed in the background into a clean copy and a thumbnail, and the api's photo
   route no longer appears among slow requests
-- **Key Deliverables**: the corrected alert policy applied live; the shared component without HEIC; the three U3
+- **Key Deliverables**: the corrected alert policy applied live; the three U3
   PRs merged and promoted; docs updated; the Blob token removed from the api
 - **Quality Gates**: every package's quality gate; `API Quality` with PostGIS and the fake bucket; both Vercel
   previews; the preview checklist of requirements §6 passed and recorded in the construction notes before each

@@ -22,7 +22,7 @@ CI, docs) plus one independent alert fix. **Sources:** the chat decisions of 202
 | D3 | **Old photos stay in Vercel Blob** (store region `syd1`) and keep their URLs; nothing migrates; dashboard uploads keep writing to Blob | chat, Q2 A |
 | D4 | The targeted inventory is the cycle's reverse-engineering artifact | Q1 A |
 | D5 | Scope is the **sign-up photo only**; the dashboard's photo replacement is a later cycle | Q2 A |
-| D6 | **HEIC is no longer accepted.** The accept list changes in the shared component, everywhere it is used, as its own small PR; the wizard adds byte-level detection and a specific message; the api drops HEIC from the contract and the sniffer | Q3 A, chat |
+| D6 | **HEIC is no longer accepted on the sign-up.** The wizard passes its own accept list (JPEG, PNG, WebP) and messages to the shared component, adds byte-level detection and a specific message; the api drops HEIC from the contract and the sniffer. The shared component's defaults and the dashboard screens are untouched | Q3 B (changed 2026-10-05: "edit only the api for the sign up"), chat |
 | D7 | Photos are served as **public objects straight from Google** (`storage.googleapis.com/<bucket>/...`); the host is added to the app's allowed image hosts; no custom domain, no signed reads | Q4 A |
 | D8 | **Full processing** after claim: re-encode to JPEG, longest edge 1600 px, metadata removed, a 256 px thumbnail; the profile points at the processed copy; the original upload is deleted once the copies exist | Q5 A |
 | D9 | The **latency alert correction is a unit of this cycle, delivered first** as its own PR | Q6 A |
@@ -55,7 +55,7 @@ CI, docs) plus one independent alert fix. **Sources:** the chat decisions of 202
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-09 | The shared upload component's accept list becomes `image/jpeg,image/png,image/webp` everywhere it is rendered (its own PR), and its own type check and messages match. iPhones then hand over JPEG instead of HEIC | Must |
+| FR-09 | On the sign-up wizard the file input's accept list is `image/jpeg,image/png,image/webp` (passed to the shared component, whose defaults stay) and the type check and messages match. iPhones then hand over JPEG instead of HEIC | Must |
 | FR-10 | The wizard identifies a HEIC by its bytes (`ftyp` brand) when the browser cannot decode the file, before any upload, and shows: the photo is in HEIC format, please choose a JPEG or PNG, and on iPhone set Camera > Formats > Most Compatible. The occurrence is logged (no file content) so the frequency is known | Must |
 | FR-11 | The contract's type list, the ticket's allowed types and the api's byte sniffer no longer include HEIC; the engine's 415 wording drops HEIC | Must |
 
@@ -186,7 +186,7 @@ say otherwise at this review:
 
 ## 8. Out of scope
 
-The dashboard's photo replacement and every other `apps/app` upload route (Q2 A); migrating old Blob objects;
+The dashboard's photo replacement, every other `apps/app` upload route, and the shared upload component's behaviour on dashboard screens, HEIC included (Q2 A, Q3 B); migrating old Blob objects;
 displaying thumbnails (FR-08 records them only); a custom domain or CDN in front of the bucket (Q4 A); client-side
 HEIC conversion (add later if FR-10's count justifies it); the search slice and the other follow-ups in the state
 file.

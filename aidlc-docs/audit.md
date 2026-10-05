@@ -2702,3 +2702,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > approved
 
 **AI action (2026-10-05, User Stories approved; Workflow Planning):** Stories approved. Wrote `aidlc-docs/inception/plans/execution-plan.md`: risk Medium-High; three units fixed in the plan (U1 `alert-policy` first, U2 `heic-accept` independent, U3 `photo-gcs` in three sequential PRs: 3a additive backend + infra + db + contract with the multipart entry kept, promoted to production before 3b; 3b the wizard switch verified on a preview against staging; 3c clean-up after the cut-over window). Stages: Application Design EXECUTE (concise); Units Generation SKIP; Functional Design, NFR Requirements, NFR Design EXECUTE for U3 only; Infrastructure Design EXECUTE for U1 and U3; Code Generation and Build and Test per unit. The sequencing follows CLAUDE.md's rule that previews call the staging api and production's api moves only by promotion; it settles US-PH-16's open question (the multipart entry stays for one release). Approval prompt presented; awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> approve and continue
+
+**AI action (2026-10-05, Workflow Planning approved):** Execution plan approved; Application Design started (reading the stage rules and the code shapes the design must fit: contract entries and `meta()`, outbox handler registration, scheduler `Job`, the engine's photo kind, `PhotoUpload` props, the upload row schema).
+
+**User input (verbatim, 2026-10-05, interrupting):**
+> OHH, I DECIDED TO EDIT ONLY THE API FOR THE SIGN UP, DO NOT INCLUDE THE OTHER API FOR NOW
+
+**AI action (2026-10-05, scope narrowed):** Read as: only the sign-up path changes; the dashboard's own upload routes (`apps/app` `api/upload/*`, `api/blob/upload-token`) and the shared `PhotoUpload` component as used by dashboard screens are not touched. Consequences recorded: questions file Q3 changes from A to B (accept list and messages for the sign-up wizard only); requirements D6 and FR-09 revised, dashboard screens added to §8 out of scope; story US-PH-05's dashboard clause removed; execution plan: unit U2 `heic-accept` removed, its wizard-only part folded into U3 PR 3b; state file updated. Then `aidlc-docs/inception/plans/application-design-plan.md` written with four design questions pre-filled with proposals (signing method, thumbnail URL location, the kept multipart entry's behaviour during the overlap, code placement). Awaiting the user.

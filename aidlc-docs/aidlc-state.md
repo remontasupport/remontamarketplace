@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: INCEPTION -- Workflow Planning, `inception/plans/execution-plan.md` awaiting approval; then Application Design.
+- **Current Stage**: INCEPTION -- Application Design, `inception/plans/application-design-plan.md` awaiting approval (scope: sign-up only, user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.
@@ -105,17 +105,17 @@
 - [x] Reverse Engineering (targeted inventory `inception/requirements/signup-photo-inventory.md`, confirmed Q1 A)
 - [x] Requirements Analysis (`inception/requirements/requirements.md`, approved 2026-10-05)
 - [x] User Stories (`inception/user-stories/personas.md`, `stories.md`: 18 stories; approved 2026-10-05)
-- [~] Workflow Planning (`inception/plans/execution-plan.md` written 2026-10-05; awaiting approval)
-- [ ] Application Design -- EXECUTE (concise)
-- [ ] Units Generation -- SKIP (units fixed in the execution plan: U1 `alert-policy`, U2 `heic-accept`, U3 `photo-gcs` in PRs 3a/3b/3c)
+- [x] Workflow Planning (`inception/plans/execution-plan.md`, approved 2026-10-05; scope narrowed the same day to the sign-up only: unit U2 removed, Q3 = B)
+- [~] Application Design -- EXECUTE (concise); `inception/plans/application-design-plan.md` written 2026-10-05, awaiting approval
+- [ ] Units Generation -- SKIP (units fixed in the execution plan: U1 `alert-policy`, U3 `photo-gcs` in PRs 3a/3b/3c)
 
 ### 🟢 CONSTRUCTION PHASE
 - [ ] U1 `alert-policy`: Infrastructure Design (short), Code Generation, Build and Test -- first
-- [ ] U2 `heic-accept`: Code Generation, Build and Test -- independent
 - [ ] U3 `photo-gcs`: Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation (one plan, three PRs), Build and Test per PR
 - [ ] Build and Test (per PR: gates, CI, preview checklist, merge, staging, promotion)
 
 ## Execution Plan Summary
 - **Stages to execute**: Application Design; for U3 Functional Design, NFR Requirements, NFR Design; Infrastructure Design for U1 and U3; Code Generation and Build and Test per unit
-- **Stages to skip**: Units Generation (units fixed in the plan); the per-unit design stages for U1 (configuration) and U2 (a one-line change with messages)
-- **Sequence**: PR 1 (U1) first; PR 2 (U2) any time; U3 as 3a backend additive (bootstrap buckets first, merge, staging checklist, promote), 3b wizard switch (preview against staging, merge), 3c clean-up after the cut-over window
+- **Stages to skip**: Units Generation (units fixed in the plan); the per-unit design stages for U1 (configuration)
+- **Scope rule (user, 2026-10-05)**: only the sign-up path changes. The dashboard's upload routes and the shared `PhotoUpload` component's behaviour on dashboard screens are untouched; the wizard passes its own accept list
+- **Sequence**: PR 1 (U1) first; U3 as 3a backend additive (bootstrap buckets first, merge, staging checklist, promote), 3b wizard switch (preview against staging, merge), 3c clean-up after the cut-over window

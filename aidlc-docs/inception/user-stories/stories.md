@@ -73,7 +73,7 @@ As a worker with an iPhone, I want to pick a photo from my camera roll and have 
 
 - **Given** the file input no longer lists HEIC or HEIF in its accept list (JPEG first), **when** I pick a photo shot in HEIC on an iPhone or iPad, in Safari or an in-app browser, **then** the device hands the page a JPEG and the upload proceeds as US-PH-01.
 - **Given** I pick a HEIC on a Mac in Safari, **then** the browser decodes it and the shrink step uploads a JPEG; no message is shown.
-- **Given** the shared upload component is used on dashboard screens, **then** the same accept list applies there (own PR), and its own type check and messages name JPEG, PNG and WebP only.
+- **Given** the dashboard screens that render the same shared component, **then** they are unchanged in this cycle (scope narrowed 2026-10-05: sign-up only).
 
 ### US-PH-06 -- I am told exactly what to do with a HEIC I cannot upload
 **Persona:** P1 Worker (V8b) · **Priority:** M · **FRs:** FR-10, FR-11

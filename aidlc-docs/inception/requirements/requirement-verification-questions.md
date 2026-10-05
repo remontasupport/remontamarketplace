@@ -58,7 +58,7 @@ they are for a later cycle.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: a
+[Answer]: B -- changed 2026-10-05 in chat: "edit only the api for the sign up, do not include the other api for now"; the dashboard screens and the shared component as they use it are untouched
 
 ## Question 4
 How the stored photos are served to the app (dashboard, admin list, public worker list).
