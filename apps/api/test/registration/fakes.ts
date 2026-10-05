@@ -86,6 +86,16 @@ export class InMemoryBlobStore implements BlobPhotoStore {
   }
 }
 
+/**
+ * A throwaway service-account key so the Cloud Storage client can sign upload
+ * policies offline (never a real account; generated per test run, never committed).
+ */
+export function throwawayCredentials(): { client_email: string; private_key: string } {
+  const { generateKeyPairSync } = require('node:crypto') as typeof import('node:crypto')
+  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+  return { client_email: 'throwaway@test-project.iam.gserviceaccount.com', private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }) as string }
+}
+
 /** A minimal JPEG (SOI, APP0, EOI): passes the sniffer, cannot be decoded by sharp. */
 export const TINY_JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0xff, 0xd9])
 

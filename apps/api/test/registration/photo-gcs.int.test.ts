@@ -13,7 +13,7 @@ import { photoUploadedHandler } from '../../src/modules/registration/application
 import { PHOTO_UPLOADED } from '../../src/modules/registration/domain/events'
 import { processedKey, stagingKey, thumbnailKey } from '../../src/modules/registration/domain/photo-upload'
 import { purgeUnclaimedPhotosJob } from '../../src/modules/registration/jobs/purge-photos'
-import { InMemoryBlobStore, jpegWithExif, TINY_JPEG } from './fakes'
+import { InMemoryBlobStore, jpegWithExif, throwawayCredentials, TINY_JPEG } from './fakes'
 import { registrationHarness, type RegistrationHarness } from './harness'
 
 const dbUrl = process.env.TEST_DATABASE_URL
@@ -33,7 +33,8 @@ describe.skipIf(!localDb || !endpoint)('the direct photo upload against the fake
     raw = new Storage({ apiEndpoint: endpoint!, projectId: 'local' })
     const [exists] = await raw.bucket(BUCKET).exists()
     if (!exists) await raw.createBucket(BUCKET)
-    store = new GcsPhotoStore({ bucket: BUCKET, publicBaseUrl, apiEndpoint: endpoint!, timeoutMs: 5000 })
+    // The fake server checks no signatures, but the client must still be able to sign: a throwaway key.
+    store = new GcsPhotoStore({ bucket: BUCKET, publicBaseUrl, apiEndpoint: endpoint!, credentials: throwawayCredentials(), timeoutMs: 5000 })
     h = await registrationHarness('photo-gcs.example', { bucket: store, publicBaseUrl })
   })
   afterAll(async () => {
