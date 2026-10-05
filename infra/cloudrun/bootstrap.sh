@@ -107,7 +107,7 @@ for STAGE in "${STAGES[@]}"; do
   if exists gcloud storage buckets describe "gs://$B"; then
     echo "   exists:  gs://$B"
   else
-    gcloud storage buckets create "gs://$B" --location="$REGION" --uniform-bucket-level-access --public-access-prevention=inherited \
+    gcloud storage buckets create "gs://$B" --location="$REGION" --uniform-bucket-level-access --no-public-access-prevention \
       --soft-delete-duration=7d --labels="remonta-project=remonta,remonta-service=api,remonta-stage=$STAGE" >/dev/null
     echo "   created: gs://$B"
   fi
