@@ -26,6 +26,7 @@ import { PermanentFailure } from '../../src/platform/errors'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { WorkerPoolHasher } from '../../src/platform/security/password-hasher'
 import { multipart, testApp, unreachableHandlers, type TestApp } from '../helpers'
+import { InMemoryPhotoStore } from './fakes'
 
 const url = process.env.TEST_DATABASE_URL
 const local = url ? ['localhost', '127.0.0.1'].includes(new URL(url).hostname) : false
@@ -69,6 +70,8 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       breaches: { check: async () => breach },
       localities: new LocalityDirectory(db),
       store: new LocalDiskPhotoStore(photos),
+      bucket: new InMemoryPhotoStore(),
+      publicBaseUrl: 'http://bucket.test/photos',
       ipHashSecret: 'test-secret-'.repeat(4),
       mailer: {
         send: async (e: Email) => {

@@ -49,13 +49,11 @@ const policy = (name: string): Policy => JSON.parse(readFileSync(join(monitoring
 /** The two tables from cloudrun/lib.sh, read the way the shell defines them. */
 function shellTables(): { services: Record<string, string>; alerts: Record<string, string[]> } {
   const sh = readFileSync(join(here, '..', 'cloudrun', 'lib.sh'), 'utf8')
+  const line = (fn: string) => sh.split('\n').find((l) => l.startsWith(`${fn}()`)) ?? ''
   const services: Record<string, string> = {}
   const alerts: Record<string, string[]> = {}
-  for (const m of sh.matchAll(/(\w+)\) echo (\S+) ;;/g)) {
-    const [, stage, value] = m
-    if (!value!.startsWith('"')) services[stage!] = value!
-  }
-  for (const m of sh.matchAll(/(\w+)\) echo "([^"]*)" ;;/g)) alerts[m[1]!] = m[2]!.split(/\s+/).filter(Boolean)
+  for (const m of line('service_for').matchAll(/(\w+)\) echo (\S+) ;;/g)) services[m[1]!] = m[2]!
+  for (const m of line('alerts_for').matchAll(/(\w+)\) echo "([^"]*)" ;;/g)) alerts[m[1]!] = m[2]!.split(/\s+/).filter(Boolean)
   return { services, alerts }
 }
 
@@ -130,5 +128,31 @@ describe('latency-p95', () => {
     expect(p.documentation.content).toContain('apply-alerts.sh')
     expect(p.severity).toBe('WARNING')
     expect(p.alertStrategy.autoClose).toBe('1800s')
+  })
+})
+
+describe('the photo buckets (U3)', () => {
+  const sh = readFileSync(join(here, '..', 'cloudrun', 'lib.sh'), 'utf8')
+  const buckets: Record<string, string> = {}
+  for (const m of sh.matchAll(/(\w+)\) echo (remonta-api-photos\S*) ;;/g)) buckets[m[1]!] = m[2]!
+
+  it('are named in lib.sh exactly as the stage table names them, with the matching public base URL', () => {
+    for (const stage of Object.keys(STAGES) as (keyof typeof STAGES)[]) {
+      const env = STAGES[stage].environment as Record<string, string>
+      expect(buckets[stage], `bucket_for ${stage}`).toBe(env.PHOTO_BUCKET)
+      expect(env.PHOTO_PUBLIC_BASE_URL).toBe(`https://storage.googleapis.com/${env.PHOTO_BUCKET}`)
+    }
+  })
+
+  it('have a lifecycle rule for staging/ only and CORS for exactly the stage origins and POST', () => {
+    const storageDir = join(here, '..', 'cloudrun', 'storage')
+    const lifecycle = JSON.parse(readFileSync(join(storageDir, 'lifecycle.json'), 'utf8')) as { rule: { action: { type: string }; condition: { age: number; matchesPrefix: string[] } }[] }
+    expect(lifecycle.rule).toEqual([{ action: { type: 'Delete' }, condition: { age: 1, matchesPrefix: ['staging/'] } }])
+    for (const stage of Object.keys(STAGES) as (keyof typeof STAGES)[]) {
+      const cors = JSON.parse(readFileSync(join(storageDir, `cors.${stage}.json`), 'utf8')) as { origin: string[]; method: string[] }[]
+      expect(cors).toHaveLength(1)
+      expect(cors[0]!.method).toEqual(['POST'])
+      expect(cors[0]!.origin).toEqual((STAGES[stage].environment as Record<string, string>).CORS_ORIGINS!.split(',').map((o) => o.trim()))
+    }
   })
 })

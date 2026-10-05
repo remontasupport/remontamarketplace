@@ -11,6 +11,9 @@ const complete = {
   IP_HASH_SECRET: 'x'.repeat(32),
   EMAIL_FROM: 'Remonta <noreply@remontaservices.com.au>',
   APP_BASE_URL: 'https://app.remontaservices.com.au',
+  PHOTO_BUCKET: 'remonta-api-photos-staging',
+  PHOTO_PUBLIC_BASE_URL: 'https://storage.googleapis.com/remonta-api-photos-staging',
+  BLOB_READ_WRITE_TOKEN: 'vercel_blob_rw_token_000000',
 }
 
 function problems(env: Record<string, string | undefined>): string[] {
@@ -29,10 +32,10 @@ describe('loadConfig', () => {
     expect(c.CORS_ORIGINS).toEqual(['http://localhost:3000', 'https://app.remontaservices.com.au'])
     expect(c.outboundHosts).toEqual(['www.google.com', 'api.resend.com', 'api.pwnedpasswords.com', 'n8n.example.test'])
     expect(c.requireHttps).toBe(false)
-    expect(loadConfig({ ...complete, NODE_ENV: 'production', PHOTO_STORE: 'vercel-blob', BLOB_READ_WRITE_TOKEN: 'vercel_blob_rw_token_000000' }).requireHttps).toBe(true)
+    expect(loadConfig({ ...complete, NODE_ENV: 'production' }).requireHttps).toBe(true)
   })
 
-  it.each(['AUTH_DATABASE_URL', 'CORS_ORIGINS', 'RECAPTCHA_SECRET_KEY', 'RECAPTCHA_ALLOWED_HOSTNAMES', 'RESEND_API_KEY', 'IP_HASH_SECRET'])(
+  it.each(['AUTH_DATABASE_URL', 'CORS_ORIGINS', 'RECAPTCHA_SECRET_KEY', 'RECAPTCHA_ALLOWED_HOSTNAMES', 'RESEND_API_KEY', 'IP_HASH_SECRET', 'PHOTO_BUCKET', 'PHOTO_PUBLIC_BASE_URL'])(
     'refuses to start without %s -- and a blank value counts as missing',
     (key) => {
       expect(problems({ ...complete, [key]: undefined }).join()).toContain(key)
@@ -68,9 +71,14 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined }).outboundHosts).not.toContain('n8n.example.test')
   })
 
-  it('needs a Blob token for Vercel Blob, and refuses local photo storage in production', () => {
-    expect(problems({ ...complete, PHOTO_STORE: 'vercel-blob' }).join()).toContain('BLOB_READ_WRITE_TOKEN')
-    expect(problems({ ...complete, NODE_ENV: 'production' }).join()).toContain('PHOTO_STORE')
+  it('names the photo bucket per stage and needs the Blob token (the clean copies live in Blob)', () => {
+    expect(problems({ ...complete, BLOB_READ_WRITE_TOKEN: undefined }).join()).toContain('BLOB_READ_WRITE_TOKEN')
+    expect(problems({ ...complete, PHOTO_BUCKET: 'Not A Bucket' }).join()).toContain('PHOTO_BUCKET')
+    expect(problems({ ...complete, PHOTO_PUBLIC_BASE_URL: 'http://storage.googleapis.com/b' }).join()).toContain('PHOTO_PUBLIC_BASE_URL')
+    const local = loadConfig({ ...complete, PHOTO_PUBLIC_BASE_URL: 'http://localhost:4443/test-photos', GCS_API_ENDPOINT: 'http://localhost:4443' })
+    expect([local.GCS_API_ENDPOINT, local.GCS_TIMEOUT_MS, local.PHOTO_PROCESS_CONCURRENCY]).toEqual(['http://localhost:4443', 5000, 2])
+    // A fake storage server never reaches production.
+    expect(problems({ ...complete, NODE_ENV: 'production', GCS_API_ENDPOINT: 'http://localhost:4443' }).join()).toContain('GCS_API_ENDPOINT')
   })
 
   it('never echoes a value in its errors (P6)', () => {

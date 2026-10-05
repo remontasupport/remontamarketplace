@@ -14,8 +14,11 @@ import { createDb } from './platform/persistence/db'
 import { PostgresRateLimiter } from './platform/rate-limit/rate-limiter'
 import { LocalityDirectory } from './modules/localities/locality-directory'
 import { platformHandlers } from './modules/platform/platform.handlers'
-import { LocalDiskPhotoStore, VercelBlobPhotoStore } from './modules/registration/adapters/photo-store'
+import { GcsPhotoStore } from './modules/registration/adapters/gcs-photo-store'
+import { VercelBlobPhotoStore } from './modules/registration/adapters/photo-store'
 import { PwnedPasswordsChecker } from './modules/registration/adapters/pwned-passwords'
+import { photoUploadedHandler } from './modules/registration/application/photo-process'
+import { PHOTO_UPLOADED } from './modules/registration/domain/events'
 import { registrationHandlers } from './modules/registration/registration.handlers'
 import { WorkerPoolHasher } from './platform/security/password-hasher'
 import { notificationHandlers } from './modules/notifications/notification.handlers'
@@ -33,7 +36,10 @@ async function main() {
 
   const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
   const mailer = new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
-  const photoStore = config.PHOTO_STORE === 'vercel-blob' ? new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN!) : new LocalDiskPhotoStore(config.PHOTO_LOCAL_DIR)
+  // The bucket (U3): the browser uploads straight to it under a ticket; private, upload-only.
+  // Vercel Blob: where every photo lives and is served from -- the clean copies go there.
+  const bucket = new GcsPhotoStore({ bucket: config.PHOTO_BUCKET, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, apiEndpoint: config.GCS_API_ENDPOINT, timeoutMs: config.GCS_TIMEOUT_MS })
+  const blobStore = new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN)
   const handlerSets = [
     platformHandlers(db),
     registrationHandlers({
@@ -41,7 +47,9 @@ async function main() {
       hasher,
       breaches: new PwnedPasswordsChecker(http),
       localities: new LocalityDirectory(db),
-      store: photoStore,
+      store: blobStore,
+      bucket,
+      publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL,
       ipHashSecret: config.IP_HASH_SECRET,
       mailer,
       // The server's keyed-hash secret also signs the 10-minute email-code tickets.
@@ -69,11 +77,12 @@ async function main() {
     },
   })
   const log = app.getHttpAdapter().getInstance().log
+  outboxHandlers.set(PHOTO_UPLOADED, photoUploadedHandler({ db, bucket, blob: blobStore, log, concurrency: config.PHOTO_PROCESS_CONCURRENCY }))
   const dispatcher = new OutboxDispatcher(db, outboxHandlers, log)
   dispatcher.start(config.OUTBOX_POLL_MS)
   const jobs: Job[] = [
     onboardingReconcilerJob(db, log, { everyMs: config.RECONCILER_INTERVAL_MS }),
-    purgeUnclaimedPhotosJob(db, photoStore),
+    purgeUnclaimedPhotosJob(db, { gcs: bucket, blob: blobStore }),
     outboxRetentionJob(db),
     {
       name: 'rate-limit-purge',

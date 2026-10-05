@@ -89,12 +89,20 @@ else
   if [ "${cats:-0}" -gt 0 ]; then ok "service catalogue seeded ($cats categories)"; else
     docker exec -i remonta-s1-pg psql -U postgres -d s1test < packages/db/scripts/local/seed-catalogue.sql >/dev/null 2>&1 && ok "service catalogue seeded" || fail "seed-catalogue.sql failed"
   fi
+
+  say "3b. Fake Cloud Storage for the sign-up photo tests (Docker container remonta-s1-gcs, port 4443)"
+  if docker ps -a --format '{{.Names}}' | grep -qx remonta-s1-gcs; then
+    docker start remonta-s1-gcs >/dev/null; ok "container remonta-s1-gcs exists (started)"
+  else
+    docker run -d --name remonta-s1-gcs -p 4443:4443 fsouza/fake-gcs-server:1.52.2 -scheme http -public-host localhost:4443 >/dev/null && ok "container remonta-s1-gcs created"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
 if [ "$VERIFY" = "1" ]; then
   say "4. Quality gates (this takes several minutes)"
   export TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test
+  export GCS_API_ENDPOINT=http://localhost:4443 PHOTO_BUCKET=test-photos PHOTO_PUBLIC_BASE_URL=http://localhost:4443/test-photos
   for p in app web schemas api-contract form-engine infra api; do
     if pnpm --filter @remonta/$p run quality >/dev/null 2>&1; then ok "@remonta/$p"; else fail "@remonta/$p -- run: pnpm --filter @remonta/$p run quality"; fi
   done

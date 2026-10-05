@@ -4,19 +4,23 @@
 // The file is checked by its bytes, stored under a server-generated name, and
 // recorded as a staged upload; the caller gets an id, never a URL, and registration
 // can reference only that id (P1, P5).
+//
+// U3: this is the multipart path, kept unchanged in behaviour until the wizard uses
+// the direct upload (ticket + confirm, photo-ticket.ts / photo-confirm.ts); it goes
+// in the clean-up PR. Its rows are recognisable by the `workers/registration/` prefix.
 import { createHmac, randomUUID } from 'node:crypto'
 import { ApiError } from '../../../platform/errors'
 import type { Db, Tx } from '../../../platform/persistence/db'
 import type { UploadedFile } from '../../../platform/contract/handlers'
-import type { PhotoStore } from '../adapters/photo-store'
+import type { BlobPhotoStore } from '../adapters/photo-store'
 import { detectImageType, extensionOf } from '../domain/image-type'
+import { PHOTO_CLAIM_WINDOW_HOURS } from '../domain/photo-upload'
 
-/** A staged photo can be claimed by a sign-up within this window; after it, the purge job deletes it. */
-export const PHOTO_CLAIM_WINDOW_HOURS = 24
+export { PHOTO_CLAIM_WINDOW_HOURS }
 
 export interface StagePhotoDeps {
   db: Db
-  store: PhotoStore
+  store: BlobPhotoStore
   ipHashSecret: string
 }
 
@@ -43,18 +47,19 @@ export async function stagePhoto(file: UploadedFile, ip: string, deps: StagePhot
 }
 
 /**
- * R4: claims a staged photo, once. Returns its URL, or null if the id was never
- * issued, was already claimed, or is older than the window. Runs inside the
- * registration transaction before anything else is written; once the profile row
- * exists, attachPhoto records which profile claimed it.
+ * R4 / U3 R3.1: claims a staged photo, once. Returns its URL and key, or null if the
+ * id was never confirmed, was already claimed, or is older than the window. Runs
+ * inside the registration transaction before anything else is written; once the
+ * profile row exists, attachPhoto records which profile claimed it. The key's prefix
+ * says which store holds the object (domain/photo-upload.ts storeOf).
  */
-export async function claimPhoto(tx: Tx, photoUploadId: string, now: Date): Promise<string | null> {
+export async function claimPhoto(tx: Tx, photoUploadId: string, now: Date): Promise<{ url: string; key: string } | null> {
   const since = new Date(now.getTime() - PHOTO_CLAIM_WINDOW_HOURS * 3_600_000)
-  const claimed = await tx.$queryRaw<{ url: string }[]>`
+  const claimed = await tx.$queryRaw<{ url: string; blobKey: string }[]>`
     UPDATE registration_photo_uploads SET "claimedAt" = ${now}
      WHERE id = ${photoUploadId}::uuid AND "claimedAt" IS NULL AND "createdAt" > ${since}
-    RETURNING url`
-  return claimed[0]?.url ?? null
+    RETURNING url, "blobKey"`
+  return claimed[0] ? { url: claimed[0].url, key: claimed[0].blobKey } : null
 }
 
 export async function attachPhoto(tx: Tx, photoUploadId: string, workerProfileId: string): Promise<void> {

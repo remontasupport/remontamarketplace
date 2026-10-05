@@ -73,7 +73,10 @@ describe.each(stages)('service definition: %s', (stage) => {
     for (const n of SECRET_NAMES) expect(plain[n], `${n} must not be plain environment`).toBeUndefined()
     expect(plain.TRUST_PROXY).toBe('1')
     expect(plain.NODE_ENV).toBe('production')
-    expect(plain.PHOTO_STORE).toBe('vercel-blob')
+    // The sign-up photo bucket (U3): one per stage, named in the table; the api refuses to boot without it.
+    expect(plain.PHOTO_STORE).toBeUndefined()
+    expect(plain.PHOTO_BUCKET).toMatch(/^remonta-api-photos(-staging)?$/)
+    expect(plain.PHOTO_PUBLIC_BASE_URL).toBe(`https://storage.googleapis.com/${plain.PHOTO_BUCKET}`)
   })
 
   it('runs as its own service account and the placeholders are where the workflow substitutes', () => {
@@ -99,7 +102,7 @@ describe('the stages differ only where the design says', () => {
   })
   it('everything else in the environment is shared', () => {
     const differing = Object.keys(STAGES.prod.environment).filter((k) => STAGES.prod.environment[k] !== STAGES.staging.environment[k])
-    expect(differing.sort()).toEqual(['CORS_ORIGINS', 'MAX_IN_FLIGHT', 'RECAPTCHA_ALLOWED_HOSTNAMES'])
+    expect(differing.sort()).toEqual(['CORS_ORIGINS', 'MAX_IN_FLIGHT', 'PHOTO_BUCKET', 'PHOTO_PUBLIC_BASE_URL', 'RECAPTCHA_ALLOWED_HOSTNAMES'])
     expect(Object.keys(STAGES.prod.environment).sort()).toEqual(Object.keys(STAGES.staging.environment).sort())
   })
   it('staging is one small instance; prod scales to four', () => {

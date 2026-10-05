@@ -27,6 +27,7 @@ worker to check Spam. Checking SPF / DKIM / DMARC for `remontaservices.com.au` i
 |---|---|---|
 | `WorkerRegistered` | `{ userId, workerProfileId }` | Reads the user's email and first name at send time; sends the welcome email |
 | `RegistrationAttemptOnExistingAccount` | `{ userId }` | Sends the existing-account notice |
+| `PhotoUploaded` | `{ photoUploadId, workerProfileId }` | Bucket rows only (U3). Reads the staging object from the private bucket, applies the orientation, resizes inside 1600 px, re-encodes as JPEG with every metadata block removed, writes it and a 256 px thumbnail to Vercel Blob under `workers/<profileId>/`, sets `worker_profiles.photos` to the Blob URL, deletes the staging object. At most 2 in flight per instance. Undecodable bytes: stored as uploaded under the profile instead, logged `photo-processing-fallback` (a log-based metric). Idempotent on re-run |
 
 Payloads carry ids only; names and addresses are read when sending, so no personal data sits in the
 outbox.
@@ -56,7 +57,7 @@ A database lease makes only one instance run each job at a time (`scheduled_jobs
 | Job (`scheduled_jobs.name`) | Every | Does |
 |---|---|---|
 | `onboarding-reconciler` | 5 min (`RECONCILER_INTERVAL_MS`) | Re-derives `worker_onboarding` stages and counts from the source rows; writes a `RECONCILER` transition when a stage changes |
-| `purge-unclaimed-registration-photos` | daily | Deletes staged photos (row and file) never claimed within 24 h |
+| `purge-unclaimed-registration-photos` | daily | Deletes confirmed photos (object first, from the store the key names; then the row) never claimed within 24 h. Objects never confirmed have no row: the bucket's lifecycle rule deletes `staging/` objects after a day. Summary: `deletedGcs`, `deletedBlob`, `skippedUnknownStore`, `failed` |
 | `outbox-retention` | daily | Deletes `DONE` outbox events older than 30 days |
 | `rate-limit-purge` | 10 min | Deletes expired `rate_limit_buckets` rows |
 

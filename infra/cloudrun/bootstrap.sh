@@ -15,6 +15,7 @@
 #   3. Runtime service accounts      8. 90-day log retention
 #   4. Empty secrets + accessor      9. Alert notification channel and policies per stage (apply-alerts.sh)
 #   5. Deploy service account       10. Prints the three GitHub repository variables
+#                                   11. Photo buckets, their IAM, audit logs and metrics (U3)
 set -euo pipefail
 
 PROJECT="${1:?usage: bootstrap.sh <project-id> [alert-email]}"
@@ -97,6 +98,45 @@ say "9. Alerts to $EMAIL (monitoring/*.json applied by apply-alerts.sh: created,
 for STAGE in "${STAGES[@]}"; do
   bash "$here/apply-alerts.sh" "$STAGE" --project "$PROJECT" --email "$EMAIL"
 done
+
+say "11. Photo buckets (U3): regional, uniform access, private (upload-only; the clean copies live in Vercel Blob), staging/ expires after a day"
+gcloud services enable storage.googleapis.com >/dev/null
+for STAGE in "${STAGES[@]}"; do
+  B=$(bucket_for "$STAGE")
+  RUN_SA="$(service_for "$STAGE")-run@$PROJECT.iam.gserviceaccount.com"
+  if exists gcloud storage buckets describe "gs://$B"; then
+    echo "   exists:  gs://$B"
+  else
+    gcloud storage buckets create "gs://$B" --location="$REGION" --uniform-bucket-level-access --no-public-access-prevention \
+      --soft-delete-duration=7d >/dev/null
+    echo "   created: gs://$B"
+  fi
+  # Settings that `create` does not take (labels) or that may change later (lifecycle, CORS): always applied.
+  # Nothing in the bucket is ever public: uploads land under staging/ and leave once processed.
+  # (Domain restricted sharing in this organisation forbids allUsers grants anyway, 2026-10-05.)
+  gcloud storage buckets update "gs://$B" --lifecycle-file="$here/storage/lifecycle.json" --cors-file="$here/storage/cors.$STAGE.json" \
+    --public-access-prevention --update-labels="remonta-project=remonta,remonta-service=api,remonta-stage=$STAGE" >/dev/null
+  # An earlier revision of this step created a managed folder workers/ for a public grant; remove it if present.
+  exists gcloud storage managed-folders describe "gs://$B/workers/" && gcloud storage managed-folders delete "gs://$B/workers/" --quiet >/dev/null 2>&1 || true
+  gcloud storage buckets add-iam-policy-binding "gs://$B" --member="serviceAccount:$RUN_SA" --role=roles/storage.objectUser >/dev/null
+  # Tickets are signed through IAM signBlob with the runtime account itself (no key file).
+  gcloud iam service-accounts add-iam-policy-binding "$RUN_SA" --member="serviceAccount:$RUN_SA" --role=roles/iam.serviceAccountTokenCreator >/dev/null
+done
+# Data-access audit logs for Cloud Storage writes: who created or deleted which object (SECURITY-13/14).
+POLICY=$(mktemp)
+gcloud projects get-iam-policy "$PROJECT" --format=json >"$POLICY"
+node -e '
+  const fs = require("fs"); const p = JSON.parse(fs.readFileSync(process.argv[1], "utf8"))
+  p.auditConfigs = p.auditConfigs || []
+  let s = p.auditConfigs.find((c) => c.service === "storage.googleapis.com")
+  if (!s) { s = { service: "storage.googleapis.com", auditLogConfigs: [] }; p.auditConfigs.push(s) }
+  if (!s.auditLogConfigs.some((c) => c.logType === "DATA_WRITE")) s.auditLogConfigs.push({ logType: "DATA_WRITE" })
+  fs.writeFileSync(process.argv[1], JSON.stringify(p))
+' "$POLICY"
+gcloud projects set-iam-policy "$PROJECT" "$POLICY" >/dev/null && rm -f "$POLICY"
+echo "   audit: storage.googleapis.com DATA_WRITE"
+metric remonta-api-photo-rejected "a sign-up photo was rejected at confirm (size, bytes or type)" 'resource.type="cloud_run_revision" AND jsonPayload.msg="photo-rejected"'
+metric remonta-api-photo-processing-fallback "a sign-up photo could not be processed and was stored as uploaded" 'resource.type="cloud_run_revision" AND jsonPayload.msg="photo-processing-fallback"'
 
 say "10. GitHub repository VARIABLES (Settings -> Secrets and variables -> Actions -> Variables)"
 cat <<EOF

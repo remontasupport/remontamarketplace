@@ -10,8 +10,36 @@ describe('the contracts as committed', () => {
     expect(checkContracts(contracts, allow)).toEqual([])
   })
 
-  it('declare the seven S1 registration entries', () => {
-    expect(Object.keys(registrationContract.entries).sort()).toEqual(['checkEmailAvailability', 'listServiceCategories', 'requestEmailCode', 'searchLocalities', 'submitWorkerRegistration', 'uploadRegistrationPhoto', 'verifyEmailCode'])
+  it('declare the seven S1 registration entries plus the two of the direct photo upload (U3)', () => {
+    expect(Object.keys(registrationContract.entries).sort()).toEqual([
+      'checkEmailAvailability',
+      'confirmPhotoUpload',
+      'createPhotoUploadTicket',
+      'listServiceCategories',
+      'requestEmailCode',
+      'searchLocalities',
+      'submitWorkerRegistration',
+      'uploadRegistrationPhoto',
+      'verifyEmailCode',
+    ])
+  })
+
+  it('bind the photo ticket to the accepted types and the size cap, and the confirm to a uuid', () => {
+    const ticket = registrationContract.entries.createPhotoUploadTicket
+    const body = ticket.body as { kind: 'json'; schema: z.ZodType }
+    expect(body.schema.safeParse({ contentType: 'image/jpeg', sizeBytes: 1 }).success).toBe(true)
+    expect(body.schema.safeParse({ contentType: 'image/heic', sizeBytes: 1 }).success).toBe(false)
+    expect(body.schema.safeParse({ contentType: 'image/png', sizeBytes: 0 }).success).toBe(false)
+    expect(body.schema.safeParse({ contentType: 'image/png', sizeBytes: 5 * 1024 * 1024 + 1 }).success).toBe(false)
+    expect(ticket.meta.bot).toBe('none')
+    expect(ticket.meta.rateLimit).toEqual([
+      { per: 'ip', limit: 10, window: '1h' },
+      { per: 'global', limit: 300, window: '1h' },
+    ])
+    const confirm = registrationContract.entries.confirmPhotoUpload
+    const cbody = confirm.body as { kind: 'json'; schema: z.ZodType }
+    expect(cbody.schema.safeParse({ photoUploadId: 'not-a-uuid' }).success).toBe(false)
+    expect(cbody.schema.safeParse({ photoUploadId: '6f1c2c1e-6d8a-4b7e-9f3d-2b0e1d4c5a6b', extra: 1 }).success).toBe(false)
   })
 
   it('serve the service catalogue publicly, cached, with only what the sign-up shows', () => {

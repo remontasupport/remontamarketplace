@@ -3,6 +3,7 @@
 // handler in apps/api's registration module.
 // The subpath, not the package index: the index re-exports older schemas with
 // tracked type errors, which would otherwise enter this package's strict tsc.
+import { ACCEPTED_IMAGE_TYPES } from '@remonta/schemas/image-type'
 import { emailAvailabilitySchema, emailCodeRequestSchema, emailCodeTicketSchema, emailCodeVerifySchema, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
 import * as z from 'zod'
 import { defineContract } from './define'
@@ -13,6 +14,29 @@ export const REGISTRATION_ACCEPTED_MESSAGE =
   'Check your inbox — if this email is new, your account is ready and you can sign in now.'
 
 export const PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
+// The sign-up photo's direct upload (U3): a ticket names one key the browser may fill
+// for ten minutes; confirm checks what landed before any row exists.
+export const photoTicketRequestSchema = z.strictObject({
+  contentType: z.enum(ACCEPTED_IMAGE_TYPES),
+  sizeBytes: z.int().min(1).max(PHOTO_MAX_BYTES),
+})
+export type PhotoTicketRequest = z.infer<typeof photoTicketRequestSchema>
+
+export const photoTicketResponseSchema = z.strictObject({
+  photoUploadId: z.uuid(),
+  upload: z.strictObject({
+    url: z.url(),
+    method: z.literal('POST'),
+    /** The signed policy's form fields, sent before the file. */
+    fields: z.record(z.string(), z.string()),
+    fileField: z.literal('file'),
+  }),
+  expiresAt: z.iso.datetime(),
+})
+export type PhotoTicketResponse = z.infer<typeof photoTicketResponseSchema>
+
+export const photoConfirmSchema = z.strictObject({ photoUploadId: z.uuid() })
 
 export const localitySchema = z.strictObject({
   id: z.number().int().positive(),
@@ -141,6 +165,40 @@ export const registrationContract = defineContract('registration', {
       rateLimit: [
         { per: 'ip', limit: 30, window: '1h' },
         { per: 'global', limit: 5000, window: '1h' },
+      ],
+      maxBodyKb: 1,
+    }),
+  },
+
+  createPhotoUploadTicket: {
+    method: 'POST',
+    path: '/v1/registrations/worker/photo-tickets',
+    summary: 'A ticket to upload the sign-up photo straight to storage: one key, one type, at most 5 MB, ten minutes. Nothing is stored until confirm.',
+    body: { kind: 'json', schema: photoTicketRequestSchema },
+    responses: { 201: photoTicketResponseSchema },
+    meta: meta({
+      access: 'public',
+      bot: 'none', // the limits bound tickets; an unused ticket costs nothing but a signing call
+      rateLimit: [
+        { per: 'ip', limit: 10, window: '1h' },
+        { per: 'global', limit: 300, window: '1h' },
+      ],
+      maxBodyKb: 1,
+    }),
+  },
+
+  confirmPhotoUpload: {
+    method: 'POST',
+    path: '/v1/registrations/worker/photo-confirmations',
+    summary: 'Confirm an uploaded sign-up photo: the object is checked (size, first bytes) and only then recorded. Returns the same id, never a URL.',
+    body: { kind: 'json', schema: photoConfirmSchema },
+    responses: { 200: z.strictObject({ photoUploadId: z.uuid() }) },
+    meta: meta({
+      access: 'public',
+      bot: 'none',
+      rateLimit: [
+        { per: 'ip', limit: 30, window: '1h' },
+        { per: 'global', limit: 1000, window: '1h' },
       ],
       maxBodyKb: 1,
     }),

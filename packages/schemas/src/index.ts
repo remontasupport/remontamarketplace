@@ -37,6 +37,11 @@ export * from './schema/workerRegistrationSchema'
 // its subpath: import from '@remonta/schemas/schema/serviceRequestSchema'.
 // Recorded as a follow-up in the U7 summary.
 
+// The image byte sniffer (sign-up photo): also at the subpath `@remonta/schemas/image-type`,
+// which the contract and the form engine use (the index carries older schemas with
+// tracked type errors that strict consumers avoid).
+export * from "./image-type"
+
 // Validation schemas shared by both web apps.
 export * from './validations/contractor'
 

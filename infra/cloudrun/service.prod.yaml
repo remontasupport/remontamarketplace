@@ -50,8 +50,6 @@ spec:
               value: https://app.remontaservices.com.au
             - name: EMAIL_FROM
               value: Remonta <community@remontaservices.com.au>
-            - name: PHOTO_STORE
-              value: vercel-blob
             - name: HASH_CONCURRENCY
               value: "1"
             - name: DB_POOL_SIZE
@@ -68,6 +66,10 @@ spec:
               value: https://app.remontaservices.com.au
             - name: RECAPTCHA_ALLOWED_HOSTNAMES
               value: app.remontaservices.com.au
+            - name: PHOTO_BUCKET
+              value: remonta-api-photos
+            - name: PHOTO_PUBLIC_BASE_URL
+              value: https://storage.googleapis.com/remonta-api-photos
             - name: MAX_IN_FLIGHT
               value: "128"
             - name: AUTH_DATABASE_URL

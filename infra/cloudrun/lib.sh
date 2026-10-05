@@ -25,3 +25,7 @@ create_channel() {
 render_policy() {
   sed "s/__SERVICE__/$2/g; s/__STAGE__/$3/g; s#__CHANNEL__#$4#g; s/__PROJECT_ID__/$5/g" "$1"
 }
+
+# The sign-up photo bucket per stage (U3). Keep in step with PHOTO_BUCKET in
+# infra/lib/stages.ts (the test suite checks) and with cloudrun/storage/cors.<stage>.json.
+bucket_for() { case "$1" in staging) echo remonta-api-photos-staging ;; prod) echo remonta-api-photos ;; esac; }
