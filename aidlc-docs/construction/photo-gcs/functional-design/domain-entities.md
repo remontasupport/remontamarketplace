@@ -78,3 +78,18 @@ signed policy's form fields (`key`, `Content-Type`, `policy`, `x-goog-algorithm`
 `x-goog-date`, `x-goog-signature`, `success_action_status: 201`). The policy binds: exact `key = staging/<id>`,
 exact `Content-Type` (the declared one), `content-length-range` 1..5242880, expiry 10 minutes. The id is a fresh
 uuid minted by the api; it is unguessable, so confirm's lookup by id cannot be aimed at someone else's object.
+
+## Amendment 2026-10-05 (option 2: the clean copies live in Vercel Blob)
+
+The organisation's **Domain restricted sharing** policy (`iam.allowedPolicyMemberDomains`, customer
+`C02vymhrm`) forbids `allUsers` grants, so the bucket cannot serve photos publicly (HTTP 412 at bootstrap;
+public-access prevention itself was not the blocker). User decision: keep Vercel Blob as the home of every
+photo. The bucket is **private and upload-only**: the browser uploads the original under a ticket, confirm
+checks it, and after the claim the processing handler writes the clean copy and the thumbnail to **Blob**
+(`workers/<profileId>/<id>.jpg`, `...-256.jpg`, public, immutable cache), sets the profile to the Blob URL
+and deletes the original from the bucket. Consequences: no public prefix, no managed folder, public access
+prevention enforced on the buckets; no new image host in `apps/app` (the Blob hosts are already allowed);
+the Blob token stays in the api for good (PR 3c removes only the multipart entry, `stage-photo.ts` and the
+local disk store); the latency goal is unchanged (one upload, in-region, the api out of the byte path).
+Earlier text in this document that places processed copies in the bucket's `workers/` prefix or removes
+the Blob token is superseded by this note.

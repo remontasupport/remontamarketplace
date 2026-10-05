@@ -2820,3 +2820,50 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > approved
 
 **AI action (2026-10-05, U3 Code Generation, PR 3a generated):** On `feat/photo-gcs-api` from `main` `e20dee4`: parts A (sniffer in `packages/schemas` with the `image-type` subpath and 14 tests), B (two contract entries, public-endpoints lines, `openapi.json` regenerated, contract tests), C (domain keys/stores/claimability, ports and the Cloud Storage adapter, ticket, confirm, processing with sharp and a bulkhead, claim change with the `PhotoUploaded` event, purge over both stores, handlers, config, wiring, `.env.example`, dependencies `@google-cloud/storage` 7 and `sharp` 0.34; test doubles, generators, unit and property tests, the offline policy test, the fake-server integration suite; the existing tests updated), D (stage table with bucket names, rendered YAML, `lib.sh` `bucket_for`, bootstrap step 11, storage JSON files, infra tests, README), E (CI fake storage step and variables, setup script, CLAUDE.md, docs/signup). Gates: schemas 60, api-contract 35, api 284 passed / 128 skipped (Docker not running here: database and bucket suites skipped; CI runs them), infra 37, api tsup build, turbo build both apps. Commit `2198a74` (52 files, +2238/-121) pushed; PR link given. Summary `aidlc-docs/construction/photo-gcs/code/photo-gcs-3a-summary.md` with the pre-merge steps (the user runs bootstrap step 11 for the buckets before the staging deploy needs them). Awaiting code approval, then Build and Test for 3a.
+
+**User input (verbatim, 2026-10-05):**
+> == 11. Photo buckets (U3): regional, uniform access, public read on workers/ only, staging/ expires after a day
+> ERROR: (gcloud.storage.buckets.create) argument --public-access-prevention/--pap: ignore, there is an error
+
+**AI action (2026-10-05):** `gcloud storage buckets create` takes a boolean `--[no-]public-access-prevention`; the script passed a value. Fixed (`--no-public-access-prevention`), committed `b55181d`, pushed; the user asked to re-run (idempotent).
+
+**User input (verbatim, 2026-10-05):**
+> git pull
+> (pasted: "There is no tracking information for the current branch...")
+
+**AI action (2026-10-05):** The shared working copy was on the AI-DLC branch; the fix was already local on `feat/photo-gcs-api`. Told the user to `git checkout feat/photo-gcs-api` and run bootstrap.
+
+**User input (verbatim, 2026-10-05):**
+> (pasted bootstrap output ending in) ERROR: (gcloud.storage.buckets.create) unrecognized arguments: --labels=remonta-project=
+
+**AI action (2026-10-05):** `buckets create` takes no `--labels` in this SDK; labels moved to `buckets update --update-labels`; the other step-11 commands verified against the installed gcloud. Committed `016d41d`, pushed; working copy left on the code branch for the user's run.
+
+**User input (verbatim, 2026-10-05):**
+> (pasted the full bootstrap output: steps 1-10 idempotent; step 11: created gs://remonta-api-photos-staging and gs://remonta-api-photos; "WARNING: public read on gs://.../workers/ refused -- an org policy enforces public access prevention..." for both; IAM bindings updated; "audit: storage.googleapis.com DATA_WRITE"; metrics remonta-api-photo-rejected and remonta-api-photo-processing-fallback created)
+
+**AI action (2026-10-05, diagnosis):** Checked: the managed folders exist; the buckets have public_access_prevention inherited; the grant fails with HTTP 412 "One or more users named in the policy do not belong to a permitted customer"; effective org policies: storage.publicAccessPrevention not enforced, iam.allowedPolicyMemberDomains restricted to customer C02vymhrm (Domain restricted sharing). The blocker is domain-restricted sharing, not public-access prevention (the script's warning text guessed wrong). Presented: A) a project-level org-policy override allowing all members (the documented remedy for public buckets), B) keep the processed copies in Vercel Blob with the bucket private and upload-only.
+
+**User input (verbatim, 2026-10-05):**
+> if I choose A, does it mean, the blob will be store to the google cloud?
+
+**AI action (2026-10-05):** Answered: yes -- with A every new photo (original, clean copy, thumbnail) lives in Google; Blob keeps only old photos and dashboard uploads; with B the clean copy returns to Blob.
+
+**User input (verbatim, 2026-10-05):**
+> which is better to store the blob? in vercel? or google? also how about the preview url, where will be it coming from?
+
+**AI action (2026-10-05):** Answered: Google for what the api writes (in-region; the measured 1.3 s Blob write floor from Sydney; IAM without a token), Blob for what the Vercel app writes; the three meanings of "preview URL" (the device-made thumbnail in the wizard; the stored photo URL the dashboard renders; Vercel preview deployments on *.vercel.app using the staging api and bucket).
+
+**User input (verbatim, 2026-10-05):**
+> But the problem is that in the existing workers, their images have been save to the Vercel, how can we migrate it to Google cloud?
+
+**AI action (2026-10-05):** Answered: nothing breaks without a migration (absolute URLs); a one-off idempotent backfill script in the api's existing shape (dry run, --apply, --report) could re-process each Blob profile photo into the bucket and swap the URL, Blob objects kept until a later clean-up; documents and other dashboard uploads stay unless the scope widens; offered as a U4 after 3b.
+
+**User input (verbatim, 2026-10-05):**
+> I think we can stick for Vercel Blob for now, but still fix the issue that we are trying to solve. what is it again we are trying to solve?
+
+**AI action (2026-10-05):** Restated the problem (the api in the byte path; the 1.3 s Blob forward; the person waits for two transfers) and two Blob-keeping fixes: 1) presigned direct upload to Blob (one store; the person's wait keeps Blob's floor), 2) upload to the private Sydney bucket, clean copies written to Blob in the background (full latency fix; Blob stays the home of every photo; no org-policy change). Recommended 2.
+
+**User input (verbatim, 2026-10-05):**
+> go with option 2
+
+**AI action (2026-10-05, PR 3a amended for option 2):** On feat/photo-gcs-api: photo-process.ts writes the clean copy, thumbnail and as-is fallback to Vercel Blob (BlobPhotoStore.put gains cacheControlMaxAge; one-year immutable cache), reads and deletes the original from the bucket, "already done" is the profile URL containing the upload's key; the Blob token is required (config.ts); the multipart path loses its 503 guard; main.ts wires the Blob store into processing; bootstrap step 11 enforces public access prevention on update, removes the earlier managed folder, makes no public grant; tests repointed (processing output on the Blob double, bucket left empty; config token required); docs (02 section 4.6, 03 section 2.8, 05 events, infra README) and .env.example (which an earlier substitution had silently left unchanged) updated. Gates: api 284 passed / 128 skipped, infra 37. Commit dd9ff21 pushed (branch: 4 commits, 53 files, +2263/-128). Design records amended (notes appended). Next: the user re-runs bootstrap (step 11 now enforces prevention and deletes the folders), then the PR.

@@ -60,3 +60,19 @@ first place to look.
 
 Promote the previous image. The buckets stay. The multipart path is untouched, so the live wizard is
 unaffected in either direction.
+
+## Amendment 2026-10-05 -- option 2 (copies in Vercel Blob), commits b55181d, 016d41d, dd9ff21
+
+Bootstrap step 11 ran on the project: both buckets created, IAM bindings, write audit logs and the two
+metrics in place. The public grant on `workers/` was refused: Domain restricted sharing (org policy) forbids
+`allUsers` grants (HTTP 412), not public-access prevention. Decision: the bucket is private and upload-only;
+the processing handler writes the clean copy, the thumbnail and the as-is fallback to Vercel Blob
+(`cacheControlMaxAge` one year) and the profile gets the Blob URL; the Blob token is required and stays.
+Code: `photo-process.ts`, `photo-store.ts` (`put` options), `stage-photo.ts` (no 503 guard), `config.ts`,
+`main.ts`, bootstrap (prevention enforced on update, managed folder deleted, no grant), tests, docs,
+`.env.example`. Gates after the change: api 284 passed / 128 skipped, infra 37. Two earlier flag errors in
+bootstrap (`--public-access-prevention=inherited`, `--labels` on create) were fixed on the way.
+
+**Before the PR:** the user re-runs `bash infra/cloudrun/bootstrap.sh remonta-api-510206` so step 11
+enforces public access prevention and removes the two managed folders (expected: `exists: gs://...` for both,
+no WARNING line, the audit and metric lines). Then open the PR (4 commits, 53 files).

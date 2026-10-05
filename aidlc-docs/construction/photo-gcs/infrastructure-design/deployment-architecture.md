@@ -65,3 +65,18 @@ scheduler (in the api) ──daily──> purge (bucket + Blob until 3c)
 After 3b on production, one week of Cloud Logging: no request to `/v1/registrations/worker/photo-tickets` or
 `…/photo-confirmations` above 500 ms; the old multipart route absent; the corrected latency policy silent. Record
 in the construction notes beside U1's observation.
+
+## Amendment 2026-10-05 (option 2: the clean copies live in Vercel Blob)
+
+The organisation's **Domain restricted sharing** policy (`iam.allowedPolicyMemberDomains`, customer
+`C02vymhrm`) forbids `allUsers` grants, so the bucket cannot serve photos publicly (HTTP 412 at bootstrap;
+public-access prevention itself was not the blocker). User decision: keep Vercel Blob as the home of every
+photo. The bucket is **private and upload-only**: the browser uploads the original under a ticket, confirm
+checks it, and after the claim the processing handler writes the clean copy and the thumbnail to **Blob**
+(`workers/<profileId>/<id>.jpg`, `...-256.jpg`, public, immutable cache), sets the profile to the Blob URL
+and deletes the original from the bucket. Consequences: no public prefix, no managed folder, public access
+prevention enforced on the buckets; no new image host in `apps/app` (the Blob hosts are already allowed);
+the Blob token stays in the api for good (PR 3c removes only the multipart entry, `stage-photo.ts` and the
+local disk store); the latency goal is unchanged (one upload, in-region, the api out of the byte path).
+Earlier text in this document that places processed copies in the bucket's `workers/` prefix or removes
+the Blob token is superseded by this note.
