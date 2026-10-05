@@ -1,7 +1,7 @@
 {
   "displayName": "__SERVICE__ 5xx-ratio",
   "documentation": {
-    "content": "More than 2 % of responses from __SERVICE__ (__STAGE__) were 5xx over 5 minutes. The service is failing: read the `request failed` log lines (they carry reqId and err) and the outbox/database state. Rollback: Actions → deploy-api → Run workflow with the previous image SHA.",
+    "content": "More than 2 % of responses from __SERVICE__ (__STAGE__) were 5xx over 5 minutes. The service is failing: read the `request failed` log lines (they carry reqId and err) and the outbox/database state. Rollback: Actions -> deploy-api -> Run workflow with the previous image SHA.",
     "mimeType": "text/markdown"
   },
   "combiner": "OR",

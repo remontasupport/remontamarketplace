@@ -1,7 +1,7 @@
 {
   "displayName": "__SERVICE__ instance-down",
   "documentation": {
-    "content": "No active instance of the Cloud Run service __SERVICE__ (__STAGE__) for 5 minutes. The service should never scale to zero (min instances 1): a revision is failing to start or the service was paused. Check Cloud Run → __SERVICE__ → Revisions and the logs (\"apps/api will not start\").",
+    "content": "No active instance of the Cloud Run service __SERVICE__ (__STAGE__) for 5 minutes. The service should never scale to zero (min instances 1): a revision is failing to start or the service was paused. Check Cloud Run -> __SERVICE__ -> Revisions and the logs (\"apps/api will not start\").",
     "mimeType": "text/markdown"
   },
   "combiner": "OR",
