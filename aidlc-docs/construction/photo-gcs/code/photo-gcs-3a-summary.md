@@ -103,3 +103,18 @@ no WARNING line, the audit and metric lines). Then open the PR (4 commits, 53 fi
 
 **Next:** production promotion by the user (Actions → deploy-api → Run workflow → stage=prod,
 imageTag=`fbc6705bc51310069f6c05e4e3d73525c0d0a64c`), then the same checks on production.
+
+## Build and Test, PR 3a -- production (2026-10-05)
+
+- Promotion by the user: `deploy-api` `workflow_dispatch` on `fbc6705` succeeded 08:11Z; `remonta-api`
+  serves revision `remonta-api-00004-glh` (100 %) on image `api:fbc6705...`; boot log "apps/api listening".
+- Checks from this machine (08:13Z): health 200; ticket 201 in 0.79 s (eight signed fields; IAM signing by
+  the production runtime account works); the form POST of the test JPEG to
+  `https://storage.googleapis.com/remonta-api-photos/` → 201; object present `image/jpeg`; confirm 200 in
+  0.68 s; second confirm 200. A guessed id → 409; a HEIC ticket → 400. CORS preflight from
+  `https://app.remontaservices.com.au` on the ticket entry → 204 with the exact allow-origin and `POST`.
+  The old multipart entry → 201 in 2.5 s (Blob, unchanged). The live sign-up page → 200, wizard present,
+  no "unavailable" card, pointing at the production api.
+- Left behind on purpose, both purged by the daily job after 24 h: one staged test row and object in the
+  production bucket (`0e04a38f-...`) and one staged Blob test row (`26721e2c-...`).
+- The live path is unchanged for people: the wizard still posts multipart until PR 3b. **PR 3a is done.**

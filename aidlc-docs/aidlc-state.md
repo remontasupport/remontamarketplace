@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: CONSTRUCTION -- U3 `photo-gcs` PR 3a generated, awaiting code approval; then Build and Test 3a (scope: sign-up only, user 2026-10-05).
+- **Current Stage**: CONSTRUCTION -- U3 `photo-gcs` PR 3a live on production (2026-10-05); PR 3b (wizard switch) next (scope: sign-up only, user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.
@@ -111,7 +111,7 @@
 
 ### 🟢 CONSTRUCTION PHASE
 - [x] U1 `alert-policy`: PR #36 merged (`e20dee4`), policies applied to prod and staging 2026-10-05 03:45Z, live policy verified; one observation open (no latency email the next day). Summary: `construction/alert-policy/code/alert-policy-summary.md`
-- [~] U3 `photo-gcs`: PR 3a merged (#37, `fbc6705`), staging verified 2026-10-05 (ticket, upload, confirm on the real bucket; old entry unchanged); production promotion pending (imageTag fbc6705bc51310069f6c05e4e3d73525c0d0a64c), summary `construction/photo-gcs/code/photo-gcs-3a-summary.md`; awaiting code approval, then Build and Test 3a (user runs bootstrap for the buckets, PR, CI, merge, staging checks, promotion); then 3b, 3c
+- [~] U3 `photo-gcs`: **PR 3a done** (#37, `fbc6705`, promoted to prod `remonta-api-00004-glh` 2026-10-05, verified on staging and production); next PR 3b (`feat/photo-gcs-wizard`): parts G-I, then the preview checklist by the user with the test address; then PR 3c after the cut-over window, summary `construction/photo-gcs/code/photo-gcs-3a-summary.md`; awaiting code approval, then Build and Test 3a (user runs bootstrap for the buckets, PR, CI, merge, staging checks, promotion); then 3b, 3c
 - [ ] Build and Test (per PR: gates, CI, preview checklist, merge, staging, promotion)
 
 ## Execution Plan Summary

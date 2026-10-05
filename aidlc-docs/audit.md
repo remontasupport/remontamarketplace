@@ -2917,3 +2917,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > use clent.b@remontaservices.com.au
 
 **AI action (2026-10-05):** Recorded as the test address for the 3b preview checklist (not usable from curl now: CAPTCHA).
+
+**User input (verbatim, 2026-10-05):**
+> promoted to prod
+
+**AI action (2026-10-05, PR 3a Build and Test, production):** Verified: the dispatch run on `fbc6705` succeeded; production revision `remonta-api-00004-glh` on that image, booted. Production checks: health 200; ticket 201 (0.79 s); form POST to the production bucket 201; object present; confirm 200 (0.68 s) and idempotent; guessed id 409; HEIC ticket 400; CORS preflight from the app origin 204 with the exact allow-origin; the old multipart entry 201 (Blob); the live sign-up page 200 with the wizard and the production api URL. Two staged test rows left for the purge. PR 3a closed in the summary and the state file. Next: PR 3b (the wizard switch) code generation, parts G-I of the approved plan.
