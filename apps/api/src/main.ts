@@ -36,10 +36,10 @@ async function main() {
 
   const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
   const mailer = new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
-  // The bucket (U3): the browser uploads straight to it under a ticket. The Blob store
-  // serves only the multipart entry kept until the clean-up PR; absent token = 503 there.
+  // The bucket (U3): the browser uploads straight to it under a ticket; private, upload-only.
+  // Vercel Blob: where every photo lives and is served from -- the clean copies go there.
   const bucket = new GcsPhotoStore({ bucket: config.PHOTO_BUCKET, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, apiEndpoint: config.GCS_API_ENDPOINT, timeoutMs: config.GCS_TIMEOUT_MS })
-  const blobStore = config.BLOB_READ_WRITE_TOKEN ? new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN) : undefined
+  const blobStore = new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN)
   const handlerSets = [
     platformHandlers(db),
     registrationHandlers({
@@ -77,7 +77,7 @@ async function main() {
     },
   })
   const log = app.getHttpAdapter().getInstance().log
-  outboxHandlers.set(PHOTO_UPLOADED, photoUploadedHandler({ db, bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, log, concurrency: config.PHOTO_PROCESS_CONCURRENCY }))
+  outboxHandlers.set(PHOTO_UPLOADED, photoUploadedHandler({ db, bucket, blob: blobStore, log, concurrency: config.PHOTO_PROCESS_CONCURRENCY }))
   const dispatcher = new OutboxDispatcher(db, outboxHandlers, log)
   dispatcher.start(config.OUTBOX_POLL_MS)
   const jobs: Job[] = [

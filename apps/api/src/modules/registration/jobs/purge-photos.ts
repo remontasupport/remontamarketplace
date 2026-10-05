@@ -10,7 +10,7 @@ import { PHOTO_CLAIM_WINDOW_HOURS, storeOf } from '../domain/photo-upload'
 
 export interface PurgeStores {
   gcs: PhotoStore
-  /** Absent once the Blob token is gone; remaining Blob rows are then skipped and counted. */
+  /** Rows of the multipart entry (kept until the clean-up PR); absent in some tests, then skipped and counted. */
   blob?: BlobPhotoStore
 }
 

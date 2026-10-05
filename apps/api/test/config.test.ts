@@ -13,6 +13,7 @@ const complete = {
   APP_BASE_URL: 'https://app.remontaservices.com.au',
   PHOTO_BUCKET: 'remonta-api-photos-staging',
   PHOTO_PUBLIC_BASE_URL: 'https://storage.googleapis.com/remonta-api-photos-staging',
+  BLOB_READ_WRITE_TOKEN: 'vercel_blob_rw_token_000000',
 }
 
 function problems(env: Record<string, string | undefined>): string[] {
@@ -70,8 +71,8 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined }).outboundHosts).not.toContain('n8n.example.test')
   })
 
-  it('names the photo bucket per stage; the Blob token is optional (the multipart entry until the clean-up PR)', () => {
-    expect(problems({ ...complete, BLOB_READ_WRITE_TOKEN: undefined })).toEqual([])
+  it('names the photo bucket per stage and needs the Blob token (the clean copies live in Blob)', () => {
+    expect(problems({ ...complete, BLOB_READ_WRITE_TOKEN: undefined }).join()).toContain('BLOB_READ_WRITE_TOKEN')
     expect(problems({ ...complete, PHOTO_BUCKET: 'Not A Bucket' }).join()).toContain('PHOTO_BUCKET')
     expect(problems({ ...complete, PHOTO_PUBLIC_BASE_URL: 'http://storage.googleapis.com/b' }).join()).toContain('PHOTO_PUBLIC_BASE_URL')
     const local = loadConfig({ ...complete, PHOTO_PUBLIC_BASE_URL: 'http://localhost:4443/test-photos', GCS_API_ENDPOINT: 'http://localhost:4443' })

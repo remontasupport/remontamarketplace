@@ -55,8 +55,8 @@ const envSchema = z.object({
   GCS_TIMEOUT_MS: z.coerce.number().int().min(500).max(60_000).default(5000),
   /** Decodes in flight per instance (the processing bulkhead). */
   PHOTO_PROCESS_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(2),
-  /** Vercel Blob, for the multipart entry kept until the clean-up PR. Absent = that entry answers 503. */
-  BLOB_READ_WRITE_TOKEN: z.string().min(20).optional(),
+  /** Vercel Blob: where every photo lives and is served from. The processing handler writes the clean copies here. */
+  BLOB_READ_WRITE_TOKEN: z.string().min(20, 'missing or malformed'),
 
   OUTBOX_POLL_MS: z.coerce.number().int().min(100).max(60000).default(2000),
 

@@ -99,7 +99,7 @@ for STAGE in "${STAGES[@]}"; do
   bash "$here/apply-alerts.sh" "$STAGE" --project "$PROJECT" --email "$EMAIL"
 done
 
-say "11. Photo buckets (U3): regional, uniform access, public read on workers/ only, staging/ expires after a day"
+say "11. Photo buckets (U3): regional, uniform access, private (upload-only; the clean copies live in Vercel Blob), staging/ expires after a day"
 gcloud services enable storage.googleapis.com >/dev/null
 for STAGE in "${STAGES[@]}"; do
   B=$(bucket_for "$STAGE")
@@ -112,15 +112,12 @@ for STAGE in "${STAGES[@]}"; do
     echo "   created: gs://$B"
   fi
   # Settings that `create` does not take (labels) or that may change later (lifecycle, CORS): always applied.
+  # Nothing in the bucket is ever public: uploads land under staging/ and leave once processed.
+  # (Domain restricted sharing in this organisation forbids allUsers grants anyway, 2026-10-05.)
   gcloud storage buckets update "gs://$B" --lifecycle-file="$here/storage/lifecycle.json" --cors-file="$here/storage/cors.$STAGE.json" \
-    --update-labels="remonta-project=remonta,remonta-service=api,remonta-stage=$STAGE" >/dev/null
-  # The processed copies are public; nothing under staging/ is (SECURITY-09 exception, documented).
-  exists gcloud storage managed-folders describe "gs://$B/workers/" || gcloud storage managed-folders create "gs://$B/workers/" >/dev/null
-  if gcloud storage managed-folders add-iam-policy-binding "gs://$B/workers/" --member=allUsers --role=roles/storage.objectViewer >/dev/null 2>&1; then
-    echo "   public read: gs://$B/workers/"
-  else
-    echo "   WARNING: public read on gs://$B/workers/ refused -- an org policy enforces public access prevention; the serving design must be revisited (U3 infrastructure design, section 2)"
-  fi
+    --public-access-prevention --update-labels="remonta-project=remonta,remonta-service=api,remonta-stage=$STAGE" >/dev/null
+  # An earlier revision of this step created a managed folder workers/ for a public grant; remove it if present.
+  exists gcloud storage managed-folders describe "gs://$B/workers/" && gcloud storage managed-folders delete "gs://$B/workers/" --quiet >/dev/null 2>&1 || true
   gcloud storage buckets add-iam-policy-binding "gs://$B" --member="serviceAccount:$RUN_SA" --role=roles/storage.objectUser >/dev/null
   # Tickets are signed through IAM signBlob with the runtime account itself (no key file).
   gcloud iam service-accounts add-iam-policy-binding "$RUN_SA" --member="serviceAccount:$RUN_SA" --role=roles/iam.serviceAccountTokenCreator >/dev/null

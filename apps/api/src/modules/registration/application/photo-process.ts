@@ -1,12 +1,14 @@
 // R4: the clean copy. After the account exists (the claim enqueued PhotoUploaded), the
-// original is decoded, oriented, resized inside 1600 px, re-encoded as JPEG with every
-// metadata block removed, plus a 256 px thumbnail; the profile is pointed at the clean
-// copy and the original deleted. Idempotent: "already done" is read from the profile
-// (the URLs derive from the ids; nothing is recorded on the row -- U3, zero columns).
-// Undecodable bytes end in a copy stored as uploaded (R4.8), so the account never ends
-// without a photo; the event completes with a warning. A bulkhead keeps at most a few
-// decodes in flight per instance (NFR design P3); when full, the handler waits and the
-// outbox retries if it must.
+// original is read from the bucket's private staging area, decoded, oriented, resized
+// inside 1600 px, re-encoded as JPEG with every metadata block removed, plus a 256 px
+// thumbnail; both are written to Vercel Blob -- where every photo lives and is
+// served from (user decision 2026-10-05: the bucket is upload-only and private) --
+// the profile is pointed at the clean copy and the original deleted. Idempotent:
+// "already done" is read from the profile (the keys derive from the ids; nothing is
+// recorded on the row -- U3, zero columns). Undecodable bytes end in a copy stored as
+// uploaded (R4.8), so the account never ends without a photo; the event completes
+// with a warning. A bulkhead keeps at most a few decodes in flight per instance (NFR
+// design P3); when full, the handler waits and the outbox retries if it must.
 import { extensionOf, type ImageType } from '@remonta/schemas/image-type'
 import type { FastifyBaseLogger } from 'fastify'
 import { PermanentFailure } from '../../../platform/errors'
@@ -14,20 +16,22 @@ import { Bulkhead } from '../../../platform/load/bulkhead'
 import type { OutboxEvent, OutboxHandler } from '../../../platform/outbox/outbox'
 import type { Db } from '../../../platform/persistence/db'
 import { isNotFound } from '../adapters/gcs-photo-store'
-import type { PhotoStore } from '../adapters/photo-store'
+import type { BlobPhotoStore, PhotoStore } from '../adapters/photo-store'
 import { photoUploadedPayload } from '../domain/events'
-import { asIsKey, processedKey, profilePrefix, publicUrl, thumbnailKey } from '../domain/photo-upload'
+import { asIsKey, processedKey, profilePrefix, thumbnailKey } from '../domain/photo-upload'
 
 export const PROCESSED_MAX_EDGE = 1600
 export const THUMBNAIL_MAX_EDGE = 256
 export const JPEG_QUALITY = 85
 /** Keys are unique per upload, so a copy never changes: cache for a year. */
-export const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable'
+export const IMMUTABLE_CACHE_S = 365 * 24 * 3600
 
 export interface PhotoProcessDeps {
   db: Db
+  /** The upload bucket: the original is read from and deleted under `staging/`. */
   bucket: PhotoStore
-  publicBaseUrl: string
+  /** Vercel Blob: the processed copy and the thumbnail are written here (public). */
+  blob: BlobPhotoStore
   log: FastifyBaseLogger
   /** At most this many decodes in flight per instance (default 2). */
   concurrency?: number
@@ -42,8 +46,8 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
   if (!profile) throw new PermanentFailure(`photo ${photoUploadId}: profile ${workerProfileId} no longer exists`)
 
   // R4.1: done already (a re-run after a crash between the profile update and the delete).
-  const donePrefix = publicUrl(deps.publicBaseUrl, profilePrefix(workerProfileId, photoUploadId))
-  if (profile.photos?.startsWith(donePrefix)) {
+  // Blob's host is not known here, so the test is the key, which is unique to this upload.
+  if (profile.photos?.includes(`/${profilePrefix(workerProfileId, photoUploadId)}`)) {
     await deps.bucket.delete(row.blobKey).catch(() => {})
     return 'already'
   }
@@ -74,8 +78,7 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
   } catch (err) {
     // R4.8: undecodable. Store the upload as it is under the profile; no thumbnail.
     const type = row.contentType as ImageType
-    const key = asIsKey(workerProfileId, photoUploadId, type)
-    const url = await deps.bucket.write(key, original, type, { cacheControl: IMMUTABLE_CACHE })
+    const url = await deps.blob.put(asIsKey(workerProfileId, photoUploadId, type), original, type, { cacheControlMaxAge: IMMUTABLE_CACHE_S })
     await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: { photos: url } })
     await deps.bucket.delete(row.blobKey).catch(() => {})
     deps.log.warn({ photoUploadId, workerProfileId, err: err instanceof Error ? err.message : String(err), bytesIn: original.byteLength, outcome: 'fallback' }, 'photo-processing-fallback')
@@ -83,8 +86,8 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
   }
   throwIfAborted(signal)
 
-  const processedUrl = await deps.bucket.write(processedKey(workerProfileId, photoUploadId), main, 'image/jpeg', { cacheControl: IMMUTABLE_CACHE })
-  await deps.bucket.write(thumbnailKey(workerProfileId, photoUploadId), thumb, 'image/jpeg', { cacheControl: IMMUTABLE_CACHE })
+  const processedUrl = await deps.blob.put(processedKey(workerProfileId, photoUploadId), main, 'image/jpeg', { cacheControlMaxAge: IMMUTABLE_CACHE_S })
+  await deps.blob.put(thumbnailKey(workerProfileId, photoUploadId), thumb, 'image/jpeg', { cacheControlMaxAge: IMMUTABLE_CACHE_S })
   await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: { photos: processedUrl } })
   await deps.bucket.delete(row.blobKey).catch((err: unknown) => deps.log.warn({ photoUploadId, err: err instanceof Error ? err.message : String(err) }, 'photo-process staging delete failed'))
   deps.log.info({ photoUploadId, workerProfileId, decodeMs, encodeMs: Date.now() - started - decodeMs, bytesIn: original.byteLength, bytesOut: main.byteLength, outcome: 'processed' }, 'photo-process')

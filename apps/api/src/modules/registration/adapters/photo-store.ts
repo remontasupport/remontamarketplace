@@ -45,8 +45,8 @@ export interface PhotoStore {
 }
 
 export interface BlobPhotoStore {
-  /** Stores the bytes under `key` and returns the public URL. */
-  put(key: string, data: Buffer, contentType: string): Promise<string>
+  /** Stores the bytes under `key` and returns the public URL. `cacheControlMaxAge` in seconds (immutable copies). */
+  put(key: string, data: Buffer, contentType: string, opts?: { cacheControlMaxAge?: number }): Promise<string>
   delete(key: string): Promise<void>
 }
 
@@ -73,15 +73,17 @@ export class LocalDiskPhotoStore implements BlobPhotoStore {
 }
 
 /**
- * Vercel Blob, public, as before U3. The SDK makes its own request to Vercel's fixed
- * API host -- not through SafeHttpClient; no caller-supplied URL is involved. Leaves
- * with the multipart entry in the clean-up PR.
+ * Vercel Blob, public: where every photo lives and is served from (user decision
+ * 2026-10-05). The processing handler writes the clean copies here; the multipart
+ * entry still writes originals here until the clean-up PR. The SDK makes its own
+ * request to Vercel's fixed API host -- not through SafeHttpClient; no caller-supplied
+ * URL is involved.
  */
 export class VercelBlobPhotoStore implements BlobPhotoStore {
   constructor(private readonly token: string) {}
-  async put(key: string, data: Buffer, contentType: string): Promise<string> {
+  async put(key: string, data: Buffer, contentType: string, opts: { cacheControlMaxAge?: number } = {}): Promise<string> {
     const { put } = await import('@vercel/blob')
-    const blob = await put(key, data, { access: 'public', contentType, token: this.token, addRandomSuffix: false })
+    const blob = await put(key, data, { access: 'public', contentType, token: this.token, addRandomSuffix: false, ...(opts.cacheControlMaxAge ? { cacheControlMaxAge: opts.cacheControlMaxAge } : {}) })
     return blob.url
   }
   async delete(key: string): Promise<void> {

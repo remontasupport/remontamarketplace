@@ -71,11 +71,13 @@ export class InMemoryPhotoStore implements PhotoStore {
 
 export class InMemoryBlobStore implements BlobPhotoStore {
   readonly objects = new Map<string, Buffer>()
+  readonly meta = new Map<string, { contentType: string; cacheControlMaxAge?: number }>()
   readonly deleted: string[] = []
   constructor(private readonly down = false) {}
-  async put(key: string, data: Buffer): Promise<string> {
+  async put(key: string, data: Buffer, contentType = 'application/octet-stream', opts: { cacheControlMaxAge?: number } = {}): Promise<string> {
     this.objects.set(key, data)
-    return `local-photo://${key}`
+    this.meta.set(key, { contentType, cacheControlMaxAge: opts.cacheControlMaxAge })
+    return `https://blob.test/${key}`
   }
   async delete(key: string): Promise<void> {
     if (this.down) throw new Error('blob store down')

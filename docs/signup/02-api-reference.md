@@ -198,9 +198,11 @@ Also 429. Nothing is stored; the browser keeps the ticket and the code and sends
 ### 4.6 The profile photo: a direct upload to storage (ticket, upload, confirm)
 
 The api never carries the photo's bytes. The browser asks for a **ticket** (4.6a), sends the file
-straight to the Cloud Storage bucket with the ticket's signed fields, then asks the api to **confirm**
-(4.6b). Nothing is stored in the database until confirm has checked the object. The bucket is
-`remonta-api-photos[-staging]` in Sydney (`infra/lib/stages.ts`).
+straight to a private Cloud Storage bucket with the ticket's signed fields, then asks the api to **confirm**
+(4.6b). Nothing is stored in the database until confirm has checked the object. The bucket
+(`remonta-api-photos[-staging]` in Sydney, `infra/lib/stages.ts`) is upload-only: once the account exists
+the clean copy is written to **Vercel Blob**, where every photo lives and is served from, and the original
+leaves the bucket.
 
 #### 4.6a `POST /v1/registrations/worker/photo-tickets` — a ticket
 
@@ -245,10 +247,11 @@ not the type the ticket was bound to: "Please upload a JPEG, PNG or WebP photo";
 429, 503. A rejected upload leaves no row.
 
 After the sign-up claims the row (4.7), a background job makes the clean copy: orientation applied,
-longest edge 1600 px, JPEG, every metadata block removed, plus a 256 px thumbnail, under
-`workers/<profileId>/<uuid>.jpg` and `…-256.jpg` (publicly readable); the profile's `photos` is then set
-to the copy's URL and the staging object deleted. Until then the profile has no photo (seconds).
-Undecodable bytes are stored as uploaded under the profile instead ([05 §2](05-events-and-emails.md#2-outbox-events)).
+longest edge 1600 px, JPEG, every metadata block removed, plus a 256 px thumbnail, written to Vercel Blob
+as `workers/<profileId>/<uuid>.jpg` and `…-256.jpg` (public, immutable cache); the profile's `photos` is
+then set to the Blob URL and the staging object deleted from the bucket. Until then the profile has no
+photo (seconds). Undecodable bytes are stored as uploaded in Blob instead
+([05 §2](05-events-and-emails.md#2-outbox-events)).
 
 #### 4.6c `POST /v1/registrations/worker/photo` — stage through the api (kept for one release)
 

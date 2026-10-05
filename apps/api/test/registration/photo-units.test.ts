@@ -1,12 +1,14 @@
 // The sign-up photo's pure rules and use cases on in-memory doubles (U3 functional
-// design R1-R5, L1-L5; PBT-01 properties). No database, no network.
+// design R1-R5, L1-L5; PBT-01 properties). No database, no network. The upload
+// bucket is private and upload-only; the clean copies go to Vercel Blob (user
+// decision 2026-10-05), so processing tests look at the Blob double for the output.
 import { randomUUID } from 'node:crypto'
 import { PHOTO_MAX_BYTES } from '@remonta/api-contract'
 import * as fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { confirmPhotoUpload } from '../../src/modules/registration/application/photo-confirm'
 import { createPhotoTicket } from '../../src/modules/registration/application/photo-ticket'
-import { photoUploadedHandler, processPhoto } from '../../src/modules/registration/application/photo-process'
+import { IMMUTABLE_CACHE_S, photoUploadedHandler, processPhoto } from '../../src/modules/registration/application/photo-process'
 import { asIsKey, idFromStagingKey, isClaimable, processedKey, profilePrefix, publicUrl, stagingKey, storeOf, thumbnailKey, TICKET_TTL_MS } from '../../src/modules/registration/domain/photo-upload'
 import { purgeUnclaimedPhotosJob } from '../../src/modules/registration/jobs/purge-photos'
 import { PermanentFailure } from '../../src/platform/errors'
@@ -170,55 +172,57 @@ describe('confirmPhotoUpload (R2)', () => {
   })
 })
 
-describe('processPhoto (R4)', () => {
+describe('processPhoto (R4): reads the bucket, writes the clean copies to Blob', () => {
   const setup = async (original: Buffer, type = 'image/jpeg') => {
     const bucket = new InMemoryPhotoStore()
+    const blob = new InMemoryBlobStore()
     const { db, uploads, profiles } = fakeDb()
     const id = randomUUID()
     const pid = 'profile-1'
     bucket.putAsBrowser(stagingKey(id), original, type)
     uploads.set(id, { id, blobKey: stagingKey(id), url: 'u', contentType: type, sizeBytes: original.byteLength, createdAt: new Date(), claimedAt: new Date() })
     profiles.set(pid, { photos: null })
-    return { bucket, db, uploads, profiles, id, pid, deps: { db, bucket, publicBaseUrl: bucket.publicBaseUrl, log } }
+    return { bucket, blob, db, uploads, profiles, id, pid, deps: { db, bucket, blob, log } }
   }
   const signal = () => new AbortController().signal
 
-  it('writes a 1600 px metadata-free JPEG and a 256 px thumbnail, points the profile at the copy, deletes the original; re-runs are no-ops', async () => {
+  it('writes a 1600 px metadata-free JPEG and a 256 px thumbnail to Blob, points the profile at the copy, deletes the original; re-runs are no-ops', async () => {
     const sharp = (await import('sharp')).default
-    const { bucket, deps, id, pid, profiles } = await setup(await jpegWithExif(3000, 2000))
+    const { bucket, blob, deps, id, pid, profiles } = await setup(await jpegWithExif(3000, 2000))
     expect(await processPhoto(id, pid, deps, signal())).toBe('processed')
-    const main = bucket.objects.get(processedKey(pid, id))!
-    const thumb = bucket.objects.get(thumbnailKey(pid, id))!
-    expect(main.contentType).toBe('image/jpeg')
-    expect(main.cacheControl).toContain('immutable')
-    const m = await sharp(main.data).metadata()
+    const main = blob.objects.get(processedKey(pid, id))!
+    const thumb = blob.objects.get(thumbnailKey(pid, id))!
+    expect(blob.meta.get(processedKey(pid, id))).toEqual({ contentType: 'image/jpeg', cacheControlMaxAge: IMMUTABLE_CACHE_S })
+    const m = await sharp(main).metadata()
     // orientation 6 was applied: the 3000x2000 source becomes portrait, longest edge 1600
     expect(Math.max(m.width!, m.height!)).toBe(1600)
     expect(m.exif).toBeUndefined()
     expect(m.icc).toBeUndefined()
     expect(m.orientation).toBeUndefined()
-    const t = await sharp(thumb.data).metadata()
+    const t = await sharp(thumb).metadata()
     expect(Math.max(t.width!, t.height!)).toBe(256)
-    expect(profiles.get(pid)!.photos).toBe(`${bucket.publicBaseUrl}/${processedKey(pid, id)}`)
+    expect(profiles.get(pid)!.photos).toBe(`https://blob.test/${processedKey(pid, id)}`)
     expect(bucket.objects.has(stagingKey(id))).toBe(false)
+    expect(bucket.objects.size).toBe(0) // the bucket is upload-only: nothing stays in it
     const calls = bucket.calls.length
     expect(await processPhoto(id, pid, deps, signal())).toBe('already')
     expect(bucket.calls.length - calls).toBe(1) // one best-effort delete, nothing written
+    expect(blob.objects.size).toBe(2)
   })
 
   it('never enlarges a small image, and converts PNG to JPEG', async () => {
     const sharp = (await import('sharp')).default
-    const { bucket, deps, id, pid } = await setup(await pngOf(300, 200), 'image/png')
+    const { blob, deps, id, pid } = await setup(await pngOf(300, 200), 'image/png')
     expect(await processPhoto(id, pid, deps, signal())).toBe('processed')
-    const m = await sharp(bucket.objects.get(processedKey(pid, id))!.data).metadata()
+    const m = await sharp(blob.objects.get(processedKey(pid, id))!).metadata()
     expect([m.width, m.height, m.format]).toEqual([300, 200, 'jpeg'])
   })
 
   it('stores undecodable bytes as uploaded under the profile and completes (R4.8)', async () => {
-    const { bucket, deps, id, pid, profiles } = await setup(TINY_JPEG)
+    const { bucket, blob, deps, id, pid, profiles } = await setup(TINY_JPEG)
     expect(await processPhoto(id, pid, deps, signal())).toBe('fallback')
-    expect(profiles.get(pid)!.photos).toBe(`${bucket.publicBaseUrl}/${asIsKey(pid, id, 'image/jpeg')}`)
-    expect(bucket.objects.has(thumbnailKey(pid, id))).toBe(false)
+    expect(profiles.get(pid)!.photos).toBe(`https://blob.test/${asIsKey(pid, id, 'image/jpeg')}`)
+    expect(blob.objects.has(thumbnailKey(pid, id))).toBe(false)
     expect(bucket.objects.has(stagingKey(id))).toBe(false)
   })
 
@@ -229,15 +233,16 @@ describe('processPhoto (R4)', () => {
   })
 
   it('throws (so the outbox retries) when the bucket is unavailable, leaving the profile untouched (R4.9)', async () => {
-    const { bucket, deps, id, pid, profiles } = await setup(await pngOf(10, 10), 'image/png')
-    bucket.failNext('write')
+    const { bucket, blob, deps, id, pid, profiles } = await setup(await pngOf(10, 10), 'image/png')
+    bucket.failNext('read')
     await expect(processPhoto(id, pid, deps, signal())).rejects.toThrow(/injected failure/)
     expect(profiles.get(pid)!.photos).toBeNull()
     expect(bucket.objects.has(stagingKey(id))).toBe(true)
+    expect(blob.objects.size).toBe(0)
   })
 
   it('keeps at most `concurrency` decodes in flight (the bulkhead, P3)', async () => {
-    const { bucket, db, uploads, profiles } = await setup(await pngOf(10, 10), 'image/png')
+    const { bucket, blob, db, uploads, profiles } = await setup(await pngOf(10, 10), 'image/png')
     let inFlight = 0
     let peak = 0
     const slow: typeof bucket.read = async (key) => {
@@ -248,7 +253,7 @@ describe('processPhoto (R4)', () => {
       return bucket.objects.get(key)!.data
     }
     const b2 = Object.assign(Object.create(Object.getPrototypeOf(bucket)), bucket, { read: slow }) as InMemoryPhotoStore
-    const handler = photoUploadedHandler({ db, bucket: b2, publicBaseUrl: bucket.publicBaseUrl, log, concurrency: 2 })
+    const handler = photoUploadedHandler({ db, bucket: b2, blob, log, concurrency: 2 })
     const events = [] as Promise<void>[]
     for (let i = 0; i < 5; i++) {
       const id = randomUUID()
@@ -264,8 +269,8 @@ describe('processPhoto (R4)', () => {
   })
 
   it('rejects a malformed payload permanently', async () => {
-    const { db, bucket } = await setup(TINY_JPEG)
-    const handler = photoUploadedHandler({ db, bucket, publicBaseUrl: bucket.publicBaseUrl, log })
+    const { db, bucket, blob } = await setup(TINY_JPEG)
+    const handler = photoUploadedHandler({ db, bucket, blob, log })
     await expect(handler({ id: 'e', type: 'PhotoUploaded', payload: { nope: 1 }, attempts: 0 }, signal())).rejects.toBeInstanceOf(PermanentFailure)
   })
 })

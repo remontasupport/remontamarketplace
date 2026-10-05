@@ -172,8 +172,9 @@ the object was checked; which store holds the object is the key's prefix.
 
 Claimable once and only within 24 h of `createdAt`. Unclaimed rows (and their objects) are purged daily
 from whichever store the key names. For bucket rows the profile's `photos` is set later by the
-processing job to `…/workers/<profileId>/<id>.jpg` (the thumbnail sits beside it as `<id>-256.jpg`);
-nothing about that is recorded on the row — the URLs derive from the ids.
+processing job to the Vercel Blob URL of `workers/<profileId>/<id>.jpg` (the thumbnail sits beside it as
+`<id>-256.jpg`); nothing about that is recorded on the row — the keys derive from the ids. The bucket
+itself holds nothing after processing.
 
 ### 2.9 `outbox_events`
 

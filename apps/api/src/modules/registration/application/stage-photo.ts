@@ -18,12 +18,9 @@ import { PHOTO_CLAIM_WINDOW_HOURS } from '../domain/photo-upload'
 
 export { PHOTO_CLAIM_WINDOW_HOURS }
 
-export const PHOTO_UPLOADS_UNAVAILABLE = 'Photo uploads are temporarily unavailable. Please try again in a moment.'
-
 export interface StagePhotoDeps {
   db: Db
-  /** Absent once the Blob token is gone (clean-up PR); the entry then answers 503. */
-  store: BlobPhotoStore | undefined
+  store: BlobPhotoStore
   ipHashSecret: string
 }
 
@@ -32,7 +29,6 @@ export function hashIp(ip: string, secret: string): string {
 }
 
 export async function stagePhoto(file: UploadedFile, ip: string, deps: StagePhotoDeps): Promise<{ photoUploadId: string }> {
-  if (!deps.store) throw new ApiError(503, 'blob store not configured', { photo: [PHOTO_UPLOADS_UNAVAILABLE] }, { 'retry-after': '60' })
   const type = detectImageType(file.data)
   if (!type) throw new ApiError(415, `photo bytes are not an accepted image (declared ${file.declaredType})`, { photo: ['Please upload a JPEG, PNG, WebP or HEIC photo'] })
 

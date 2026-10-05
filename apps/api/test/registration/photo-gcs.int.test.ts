@@ -13,7 +13,7 @@ import { photoUploadedHandler } from '../../src/modules/registration/application
 import { PHOTO_UPLOADED } from '../../src/modules/registration/domain/events'
 import { processedKey, stagingKey, thumbnailKey } from '../../src/modules/registration/domain/photo-upload'
 import { purgeUnclaimedPhotosJob } from '../../src/modules/registration/jobs/purge-photos'
-import { jpegWithExif, TINY_JPEG } from './fakes'
+import { InMemoryBlobStore, jpegWithExif, TINY_JPEG } from './fakes'
 import { registrationHarness, type RegistrationHarness } from './harness'
 
 const dbUrl = process.env.TEST_DATABASE_URL
@@ -80,12 +80,13 @@ describe.skipIf(!localDb || !endpoint)('the direct photo upload against the fake
     expect((await h.db.workerProfile.findUniqueOrThrow({ where: { id: profileId } })).photos).toBeNull()
     const event = await h.db.outboxEvent.findFirstOrThrow({ where: { type: PHOTO_UPLOADED, payload: { path: ['photoUploadId'], equals: id } } })
 
-    await photoUploadedHandler({ db: h.db, bucket: store, publicBaseUrl, log })({ id: event.id, type: event.type, payload: event.payload, attempts: 0 }, new AbortController().signal)
+    const blob = new InMemoryBlobStore() // the clean copies go to Vercel Blob; its SDK is not exercised here
+    await photoUploadedHandler({ db: h.db, bucket: store, blob, log })({ id: event.id, type: event.type, payload: event.payload, attempts: 0 }, new AbortController().signal)
     const profile = await h.db.workerProfile.findUniqueOrThrow({ where: { id: profileId } })
-    expect(profile.photos).toBe(`${publicBaseUrl}/${processedKey(profileId, id)}`)
-    expect(await store.inspect(processedKey(profileId, id))).toMatchObject({ contentType: 'image/jpeg' })
-    expect(await store.inspect(thumbnailKey(profileId, id))).toMatchObject({ contentType: 'image/jpeg' })
-    expect(await store.inspect(stagingKey(id))).toBeNull()
+    expect(profile.photos).toBe(`https://blob.test/${processedKey(profileId, id)}`)
+    expect(blob.meta.get(processedKey(profileId, id))).toMatchObject({ contentType: 'image/jpeg' })
+    expect(blob.meta.get(thumbnailKey(profileId, id))).toMatchObject({ contentType: 'image/jpeg' })
+    expect(await store.inspect(stagingKey(id))).toBeNull() // the bucket is upload-only: nothing stays
     await h.db.outboxEvent.delete({ where: { id: event.id } })
   })
 
