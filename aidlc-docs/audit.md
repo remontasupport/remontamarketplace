@@ -2897,3 +2897,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > ok leave it at 30 minutes
 
 **AI action (2026-10-05):** Decision recorded: 30 minutes stays (`PHOTO_CACHE_S`, commit `922c374`). No code change. Next: the user re-runs bootstrap and opens the PR.
+
+**User input (verbatim, 2026-10-05):**
+> The CI(api)/API Quality Node has an error
+
+**AI action (2026-10-05, PR 3a CI):** Both API Quality jobs (Node 20, 22) failed at the gate step; GitHub refused the log without a login. First fix from code reading: the fake-bucket integration suite built the real adapter without a signing credential, so the ticket call could not sign a policy on the runner (503) -- added `throwawayCredentials()` in `fakes.ts` and used it in the suite; commit `2aeb6cd`. Still failing; read the job log with the GitHub credential the machine stores for pushes (token not displayed): 411 of 412 tests passed with the database and the fake bucket (the end-to-end scenario included); the one failure was the oversize case asking for a ticket declaring 5 MB + 14 bytes, which the contract refuses with 400 before anything happens. Test fixed to declare a size within the limit and send more (the fake enforces no policy, so confirm's 413 is exercised); commit `3082b5b`. All seven checks green on `3082b5b` (api, app, web, infra, supply chain, CodeQL, Semgrep). Branch: 7 commits. Pending on the user: the bootstrap re-run (prevention enforced, folders removed), then merge with "Merge pull request".

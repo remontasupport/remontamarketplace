@@ -78,3 +78,5 @@ enforces public access prevention and removes the two managed folders (expected:
 no WARNING line, the audit and metric lines). Then open the PR (4 commits, 53 files).
 
 **Amendment 2026-10-05, commit `922c374`:** the copies written to Blob carry `cacheControlMaxAge` of 30 minutes (user decision), not one year; constant `PHOTO_CACHE_S` in `photo-process.ts`.
+
+**CI, 2026-10-05:** first run failed (no signing credential in the fake-bucket suite; `2aeb6cd`), second run 411/412 (the oversize test declared a size over the limit; `3082b5b`), third run green on every check. The fake-bucket suite has now run in CI: adapter calls, ticket, upload, confirm, sign-up, processing with sharp on Linux, purge.
