@@ -248,7 +248,7 @@ not the type the ticket was bound to: "Please upload a JPEG, PNG or WebP photo";
 
 After the sign-up claims the row (4.7), a background job makes the clean copy: orientation applied,
 longest edge 1600 px, JPEG, every metadata block removed, plus a 256 px thumbnail, written to Vercel Blob
-as `workers/<profileId>/<uuid>.jpg` and `…-256.jpg` (public, immutable cache); the profile's `photos` is
+as `workers/<profileId>/<uuid>.jpg` and `…-256.jpg` (public, cached for 30 minutes); the profile's `photos` is
 then set to the Blob URL and the staging object deleted from the bucket. Until then the profile has no
 photo (seconds). Undecodable bytes are stored as uploaded in Blob instead
 ([05 §2](05-events-and-emails.md#2-outbox-events)).

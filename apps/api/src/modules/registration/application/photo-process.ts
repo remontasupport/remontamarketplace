@@ -23,8 +23,8 @@ import { asIsKey, processedKey, profilePrefix, thumbnailKey } from '../domain/ph
 export const PROCESSED_MAX_EDGE = 1600
 export const THUMBNAIL_MAX_EDGE = 256
 export const JPEG_QUALITY = 85
-/** Keys are unique per upload, so a copy never changes: cache for a year. */
-export const IMMUTABLE_CACHE_S = 365 * 24 * 3600
+/** How long browsers and the edge may keep a copy (user decision 2026-10-05: 30 minutes, so a withdrawn photo disappears within that). */
+export const PHOTO_CACHE_S = 30 * 60
 
 export interface PhotoProcessDeps {
   db: Db
@@ -78,7 +78,7 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
   } catch (err) {
     // R4.8: undecodable. Store the upload as it is under the profile; no thumbnail.
     const type = row.contentType as ImageType
-    const url = await deps.blob.put(asIsKey(workerProfileId, photoUploadId, type), original, type, { cacheControlMaxAge: IMMUTABLE_CACHE_S })
+    const url = await deps.blob.put(asIsKey(workerProfileId, photoUploadId, type), original, type, { cacheControlMaxAge: PHOTO_CACHE_S })
     await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: { photos: url } })
     await deps.bucket.delete(row.blobKey).catch(() => {})
     deps.log.warn({ photoUploadId, workerProfileId, err: err instanceof Error ? err.message : String(err), bytesIn: original.byteLength, outcome: 'fallback' }, 'photo-processing-fallback')
@@ -86,8 +86,8 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
   }
   throwIfAborted(signal)
 
-  const processedUrl = await deps.blob.put(processedKey(workerProfileId, photoUploadId), main, 'image/jpeg', { cacheControlMaxAge: IMMUTABLE_CACHE_S })
-  await deps.blob.put(thumbnailKey(workerProfileId, photoUploadId), thumb, 'image/jpeg', { cacheControlMaxAge: IMMUTABLE_CACHE_S })
+  const processedUrl = await deps.blob.put(processedKey(workerProfileId, photoUploadId), main, 'image/jpeg', { cacheControlMaxAge: PHOTO_CACHE_S })
+  await deps.blob.put(thumbnailKey(workerProfileId, photoUploadId), thumb, 'image/jpeg', { cacheControlMaxAge: PHOTO_CACHE_S })
   await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: { photos: processedUrl } })
   await deps.bucket.delete(row.blobKey).catch((err: unknown) => deps.log.warn({ photoUploadId, err: err instanceof Error ? err.message : String(err) }, 'photo-process staging delete failed'))
   deps.log.info({ photoUploadId, workerProfileId, decodeMs, encodeMs: Date.now() - started - decodeMs, bytesIn: original.byteLength, bytesOut: main.byteLength, outcome: 'processed' }, 'photo-process')

@@ -45,7 +45,7 @@ export interface PhotoStore {
 }
 
 export interface BlobPhotoStore {
-  /** Stores the bytes under `key` and returns the public URL. `cacheControlMaxAge` in seconds (immutable copies). */
+  /** Stores the bytes under `key` and returns the public URL. `cacheControlMaxAge` in seconds. */
   put(key: string, data: Buffer, contentType: string, opts?: { cacheControlMaxAge?: number }): Promise<string>
   delete(key: string): Promise<void>
 }

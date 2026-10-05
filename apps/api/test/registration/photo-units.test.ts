@@ -8,7 +8,7 @@ import * as fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { confirmPhotoUpload } from '../../src/modules/registration/application/photo-confirm'
 import { createPhotoTicket } from '../../src/modules/registration/application/photo-ticket'
-import { IMMUTABLE_CACHE_S, photoUploadedHandler, processPhoto } from '../../src/modules/registration/application/photo-process'
+import { PHOTO_CACHE_S, photoUploadedHandler, processPhoto } from '../../src/modules/registration/application/photo-process'
 import { asIsKey, idFromStagingKey, isClaimable, processedKey, profilePrefix, publicUrl, stagingKey, storeOf, thumbnailKey, TICKET_TTL_MS } from '../../src/modules/registration/domain/photo-upload'
 import { purgeUnclaimedPhotosJob } from '../../src/modules/registration/jobs/purge-photos'
 import { PermanentFailure } from '../../src/platform/errors'
@@ -192,7 +192,7 @@ describe('processPhoto (R4): reads the bucket, writes the clean copies to Blob',
     expect(await processPhoto(id, pid, deps, signal())).toBe('processed')
     const main = blob.objects.get(processedKey(pid, id))!
     const thumb = blob.objects.get(thumbnailKey(pid, id))!
-    expect(blob.meta.get(processedKey(pid, id))).toEqual({ contentType: 'image/jpeg', cacheControlMaxAge: IMMUTABLE_CACHE_S })
+    expect(blob.meta.get(processedKey(pid, id))).toEqual({ contentType: 'image/jpeg', cacheControlMaxAge: PHOTO_CACHE_S })
     const m = await sharp(main).metadata()
     // orientation 6 was applied: the 3000x2000 source becomes portrait, longest edge 1600
     expect(Math.max(m.width!, m.height!)).toBe(1600)
