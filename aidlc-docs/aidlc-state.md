@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: INCEPTION -- Application Design, `inception/plans/application-design-plan.md` awaiting approval (scope: sign-up only, user 2026-10-05).
+- **Current Stage**: INCEPTION -- Application Design artifacts written (`inception/application-design/`), awaiting approval; then CONSTRUCTION with U1 `alert-policy` (scope: sign-up only, user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.
@@ -106,7 +106,7 @@
 - [x] Requirements Analysis (`inception/requirements/requirements.md`, approved 2026-10-05)
 - [x] User Stories (`inception/user-stories/personas.md`, `stories.md`: 18 stories; approved 2026-10-05)
 - [x] Workflow Planning (`inception/plans/execution-plan.md`, approved 2026-10-05; scope narrowed the same day to the sign-up only: unit U2 removed, Q3 = B)
-- [~] Application Design -- EXECUTE (concise); `inception/plans/application-design-plan.md` written 2026-10-05, awaiting approval
+- [~] Application Design (plan approved 2026-10-05; five artifacts in `inception/application-design/` written; awaiting approval)
 - [ ] Units Generation -- SKIP (units fixed in the execution plan: U1 `alert-policy`, U3 `photo-gcs` in PRs 3a/3b/3c)
 
 ### 🟢 CONSTRUCTION PHASE

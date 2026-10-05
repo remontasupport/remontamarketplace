@@ -98,14 +98,14 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the four answers above; resolve any ambiguity in a clarification file
-- [ ] 2. `aidlc-docs/inception/application-design/components.md`: each component's purpose, responsibilities and
+- [x] 1. Confirm the four answers above; resolve any ambiguity in a clarification file
+- [x] 2. `aidlc-docs/inception/application-design/components.md`: each component's purpose, responsibilities and
   interface, across engine, app, contract, api, infra
-- [ ] 3. `component-methods.md`: method signatures with input and output types (rules deferred to Functional
+- [x] 3. `component-methods.md`: method signatures with input and output types (rules deferred to Functional
   Design)
-- [ ] 4. `services.md`: the orchestration of ticket, upload, confirm, claim, process and purge, with the sequence
+- [x] 4. `services.md`: the orchestration of ticket, upload, confirm, claim, process and purge, with the sequence
   per PR (3a, 3b, 3c)
-- [ ] 5. `component-dependency.md`: dependency matrix, communication patterns, data flow for the upload, the claim
+- [x] 5. `component-dependency.md`: dependency matrix, communication patterns, data flow for the upload, the claim
   and the processing; the boundary rules P-6 and P-7 respected
-- [ ] 6. `application-design.md`: the consolidated document
-- [ ] 7. Present for approval
+- [x] 6. `application-design.md`: the consolidated document
+- [x] 7. Present for approval

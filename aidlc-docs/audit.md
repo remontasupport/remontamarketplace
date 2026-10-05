@@ -2712,3 +2712,16 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > OHH, I DECIDED TO EDIT ONLY THE API FOR THE SIGN UP, DO NOT INCLUDE THE OTHER API FOR NOW
 
 **AI action (2026-10-05, scope narrowed):** Read as: only the sign-up path changes; the dashboard's own upload routes (`apps/app` `api/upload/*`, `api/blob/upload-token`) and the shared `PhotoUpload` component as used by dashboard screens are not touched. Consequences recorded: questions file Q3 changes from A to B (accept list and messages for the sign-up wizard only); requirements D6 and FR-09 revised, dashboard screens added to §8 out of scope; story US-PH-05's dashboard clause removed; execution plan: unit U2 `heic-accept` removed, its wizard-only part folded into U3 PR 3b; state file updated. Then `aidlc-docs/inception/plans/application-design-plan.md` written with four design questions pre-filled with proposals (signing method, thumbnail URL location, the kept multipart entry's behaviour during the overlap, code placement). Awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> wait, do we need to add another table?
+
+**AI action (2026-10-05):** Answered: no new table; additive columns on `registration_photo_uploads` (`state`, `store`, `processedUrl`, `thumbnailUrl`); the profile keeps `photos`; the outbox already has its table.
+
+**User input (verbatim, 2026-10-05):**
+> ahh, ok. approved and continue
+
+**User input (verbatim, 2026-10-05, after an interruption):**
+> continue
+
+**AI action (2026-10-05, Application Design generated):** Plan approved with the proposals (Q1 A signed POST policy, Q2 A URLs on the upload row, Q3 A multipart entry frozen on Blob during the overlap, Q4 A code in `modules/registration`). Wrote `aidlc-docs/inception/application-design/components.md` (21 components across schemas, contract, engine, app, api, infra, CI), `component-methods.md` (signatures), `services.md` (flows S-A..S-H), `component-dependency.md` (package matrix, runtime calls with timeouts, data flow, change coupling per PR), `application-design.md` (consolidated; decisions AD-1..AD-10; items open for Functional Design; extension compliance, no blocking finding). One simplification against the plan: no separate ticket signer, the GCS adapter signs through the client library (IAM `signBlob` on Cloud Run). The byte sniffer moves to `packages/schemas` so the wizard and the api share one implementation. Plan checklist complete. Approval prompt presented; awaiting the user.
