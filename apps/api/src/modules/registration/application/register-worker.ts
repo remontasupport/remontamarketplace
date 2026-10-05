@@ -25,7 +25,8 @@ import { placeHome } from '../../locations/domain/home'
 import { openOnboarding } from '../../onboarding/markers'
 import type { BreachCheck, BreachedPasswordChecker } from '../adapters/pwned-passwords'
 import { checkEmailCode } from '../domain/email-code'
-import { WORKER_REGISTERED, type WorkerRegisteredPayload } from '../domain/events'
+import { PHOTO_UPLOADED, WORKER_REGISTERED, type PhotoUploadedPayload, type WorkerRegisteredPayload } from '../domain/events'
+import { storeOf } from '../domain/photo-upload'
 import { findUserIdByEmail } from '../persistence/users'
 import { noticeExistingAccount } from './existing-account'
 import { resolveServices, type ResolvedService } from './resolve-services'
@@ -106,8 +107,13 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   if (!placed.ok) throw new ApiError(400, 'locality retired', { localityId: ['Please choose your suburb from the list'] })
 
   // R4: claim the staged photo before anything else is written.
-  const photoUrl = await claimPhoto(tx, input.photoUploadId, now)
-  if (!photoUrl) throw new ApiError(400, 'photo upload missing, used or expired', { photoUploadId: ['Please upload your photo again'] })
+  const photo = await claimPhoto(tx, input.photoUploadId, now)
+  if (!photo) throw new ApiError(400, 'photo upload missing, used or expired', { photoUploadId: ['Please upload your photo again'] })
+  // U3 R3.3/R3.4: a Blob row's URL is public and goes on the profile at once; a bucket
+  // row's object is private until the processing handler writes the clean copy and
+  // points the profile at it (a gap of seconds; the event is queued below).
+  const fromBucket = storeOf(photo.key) === 'gcs'
+  const photoUrl = fromBucket ? null : photo.url
 
   let user: { id: string; workerProfile: { id: string } | null }
   try {
@@ -157,4 +163,8 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   })
   const payload: WorkerRegisteredPayload = { userId: user.id, workerProfileId }
   await enqueue(tx, { type: WORKER_REGISTERED, payload }, now)
+  if (fromBucket) {
+    const photoPayload: PhotoUploadedPayload = { photoUploadId: input.photoUploadId, workerProfileId }
+    await enqueue(tx, { type: PHOTO_UPLOADED, payload: photoPayload }, now)
+  }
 }

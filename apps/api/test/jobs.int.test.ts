@@ -109,7 +109,7 @@ describe.skipIf(!local)('scheduled jobs and notifications on PostGIS', () => {
   describe('purge-unclaimed-registration-photos', () => {
     it('deletes unclaimed photos older than 24 h, blob first; keeps claimed and recent ones', async () => {
       const deleted: string[] = []
-      const store: PhotoStore = { put: async () => '', delete: async (k) => void deleted.push(k) }
+      const gcs = { delete: async (k: string) => void deleted.push(k) } as unknown as PhotoStore
       const mk = async (hoursAgo: number, claimed: boolean) => {
         const id = randomUUID()
         await db.$executeRaw`
@@ -120,7 +120,7 @@ describe.skipIf(!local)('scheduled jobs and notifications on PostGIS', () => {
       const old = await mk(25, false)
       const recent = await mk(2, false)
       const claimed = await mk(30, true)
-      const r = await purgeUnclaimedPhotosJob(db, store).run({ watermark: null, now: new Date(), signal: new AbortController().signal })
+      const r = await purgeUnclaimedPhotosJob(db, { gcs }).run({ watermark: null, now: new Date(), signal: new AbortController().signal })
       expect(deleted).toContain(`test/${old}.jpg`)
       expect(deleted).not.toContain(`test/${recent}.jpg`)
       expect(deleted).not.toContain(`test/${claimed}.jpg`)
@@ -133,8 +133,8 @@ describe.skipIf(!local)('scheduled jobs and notifications on PostGIS', () => {
     it('keeps the row when the blob could not be deleted, so the next run retries', async () => {
       const id = randomUUID()
       await db.$executeRaw`INSERT INTO registration_photo_uploads (id, "blobKey", url, "contentType", "sizeBytes", "ipHash", "createdAt") VALUES (${id}::uuid, ${`test/${id}.jpg`}, 'x', 'image/jpeg', 1, 'h', now() - interval '2 days')`
-      const store: PhotoStore = { put: async () => '', delete: async () => { throw new Error('blob store down') } }
-      await purgeUnclaimedPhotosJob(db, store).run({ watermark: null, now: new Date(), signal: new AbortController().signal })
+      const gcs = { delete: async () => { throw new Error('store down') } } as unknown as PhotoStore
+      await purgeUnclaimedPhotosJob(db, { gcs }).run({ watermark: null, now: new Date(), signal: new AbortController().signal })
       expect(await db.registrationPhotoUpload.count({ where: { id } })).toBe(1)
       await db.registrationPhotoUpload.delete({ where: { id } })
     })

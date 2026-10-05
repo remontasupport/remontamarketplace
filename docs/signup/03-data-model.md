@@ -154,21 +154,26 @@ fills the counts from `verification_requirements` later.
 
 ### 2.8 `registration_photo_uploads`
 
-Inserted by the photo upload (4.6), claimed by the submit (4.7).
+Inserted by the photo confirm (4.6b) — or, until the wizard switch, by the multipart upload (4.6c) —
+and claimed by the submit (4.7). No column was added for the direct upload (U3): a row exists only once
+the object was checked; which store holds the object is the key's prefix.
 
-| Column | Type | At upload | At submit |
+| Column | Type | At confirm (4.6b) / upload (4.6c) | At submit |
 |---|---|---|---|
-| `id` | uuid | generated; returned as `photoUploadId` | — |
-| `blobKey` | text, unique | `workers/registration/<id>.<ext>` | — |
-| `url` | text | the Blob URL (copied to `worker_profiles.photos` on claim) | — |
+| `id` | uuid | the ticket's id (4.6b) or generated (4.6c); returned as `photoUploadId` | — |
+| `blobKey` | text, unique | `staging/<id>` (bucket) or `workers/registration/<id>.<ext>` (Blob) | — |
+| `url` | text | bucket rows: the staging URL (private; diagnostic only). Blob rows: the public Blob URL, copied to `worker_profiles.photos` on claim | — |
 | `contentType` | text | detected from the bytes | — |
-| `sizeBytes` | int (> 0) | file size | — |
-| `ipHash` | text | HMAC of the uploader's IP (never the raw IP) | — |
+| `sizeBytes` | int (> 0) | the object's size | — |
+| `ipHash` | text | HMAC of the confirming / uploading IP (never the raw IP) | — |
 | `createdAt` | timestamp | now | — |
 | `claimedAt` | timestamp | NULL | now |
 | `claimedByWorkerProfileId` | text (FK, `SET NULL`) | NULL | the new profile |
 
-Claimable once and only within 24 h of `createdAt`. Unclaimed rows (and their files) are purged daily.
+Claimable once and only within 24 h of `createdAt`. Unclaimed rows (and their objects) are purged daily
+from whichever store the key names. For bucket rows the profile's `photos` is set later by the
+processing job to `…/workers/<profileId>/<id>.jpg` (the thumbnail sits beside it as `<id>-256.jpg`);
+nothing about that is recorded on the row — the URLs derive from the ids.
 
 ### 2.9 `outbox_events`
 

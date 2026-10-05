@@ -16,6 +16,14 @@
     "reason": "Sign-up photo, before any account exists. Returns a staged upload id, never a URL; unclaimed uploads are purged after 24 h."
   },
   {
+    "route": "POST /v1/registrations/worker/photo-tickets",
+    "reason": "Sign-up photo, before any account exists: a signed ticket naming one storage key the browser may fill for ten minutes, bound to type and size. Nothing is stored until confirm; per-IP and global limits."
+  },
+  {
+    "route": "POST /v1/registrations/worker/photo-confirmations",
+    "reason": "Sign-up photo, before any account exists: the api checks the uploaded object's size and first bytes before a row exists. Ids are random uuids; a guessed id answers 409 and costs one metadata read."
+  },
+  {
     "route": "POST /v1/registrations/worker/email-availability",
     "reason": "Tells the sign-up page whether an address already has an account, before any account exists. Reveals account existence by design (user decision, 2026-09-28; the live form already does this); bounded by a per-IP limit of 60 an hour."
   },

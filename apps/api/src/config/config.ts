@@ -45,9 +45,17 @@ const envSchema = z.object({
 
   /** Keys the IP hash stored with staged photos, so raw IPs are never stored. */
   IP_HASH_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
-  /** Where registration photos go. 'local' writes to PHOTO_LOCAL_DIR (development only). */
-  PHOTO_STORE: z.enum(['local', 'vercel-blob']).default('local'),
-  PHOTO_LOCAL_DIR: z.string().default('.uploads'),
+  /** The Cloud Storage bucket sign-up photos are uploaded to (U3). One per stage; infra/lib/stages.ts. */
+  PHOTO_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$/, 'must be a bucket name'),
+  /** `https://storage.googleapis.com/<bucket>` in production; the fake server's URL for tests. */
+  PHOTO_PUBLIC_BASE_URL: z.string().url().refine((u) => /^https:/.test(u) || /^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(u), 'must be https (http only for localhost)'),
+  /** A fake Cloud Storage server (tests, local development). Unset in production. */
+  GCS_API_ENDPOINT: z.string().url().optional(),
+  /** Per-call deadline for the bucket. */
+  GCS_TIMEOUT_MS: z.coerce.number().int().min(500).max(60_000).default(5000),
+  /** Decodes in flight per instance (the processing bulkhead). */
+  PHOTO_PROCESS_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(2),
+  /** Vercel Blob, for the multipart entry kept until the clean-up PR. Absent = that entry answers 503. */
   BLOB_READ_WRITE_TOKEN: z.string().min(20).optional(),
 
   OUTBOX_POLL_MS: z.coerce.number().int().min(100).max(60000).default(2000),
@@ -94,8 +102,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
   }
   const e = parsed.data
   const extra: string[] = []
-  if (e.PHOTO_STORE === 'vercel-blob' && !e.BLOB_READ_WRITE_TOKEN) extra.push('BLOB_READ_WRITE_TOKEN: required when PHOTO_STORE=vercel-blob')
-  if (e.NODE_ENV === 'production' && e.PHOTO_STORE === 'local') extra.push('PHOTO_STORE: local storage is not allowed in production')
+  if (e.NODE_ENV === 'production' && e.GCS_API_ENDPOINT) extra.push('GCS_API_ENDPOINT: a fake storage server is not allowed in production')
   if (extra.length) throw new ConfigError(extra)
   return {
     ...e,

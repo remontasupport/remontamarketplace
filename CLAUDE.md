@@ -206,11 +206,16 @@ pnpm --filter @remonta/db localities:refresh          # dry run: prints the plan
 pnpm --filter @remonta/db localities:refresh --apply --expect=<hash>
 docker exec -i remonta-s1-pg psql -U postgres -d s1test < packages/db/scripts/local/seed-catalogue.sql  # service categories
 
-# Run it (port 4000). apps/api/.env holds the secrets and must point at the LOCAL database.
+# A fake Cloud Storage server for the sign-up photo tests (the same image CI uses). Once.
+docker run -d --name remonta-s1-gcs -p 4443:4443 fsouza/fake-gcs-server:1.52.2 -scheme http -public-host localhost:4443
+
+# Run it (port 4000). apps/api/.env holds the secrets and must point at the LOCAL database and the fake bucket
+# (PHOTO_BUCKET, PHOTO_PUBLIC_BASE_URL, GCS_API_ENDPOINT; see apps/api/.env.example).
 cd apps/api && pnpm run build && node --env-file=.env dist/main.js
 
-# The tests that need the database run only when TEST_DATABASE_URL points at localhost.
-TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test pnpm --filter @remonta/api run quality
+# The tests that need the database run only when TEST_DATABASE_URL points at localhost; the ones that need
+# the bucket only when GCS_API_ENDPOINT is set. Without them they are skipped: a weaker gate, not a passing one.
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test GCS_API_ENDPOINT=http://localhost:4443 PHOTO_BUCKET=test-photos PHOTO_PUBLIC_BASE_URL=http://localhost:4443/test-photos pnpm --filter @remonta/api run quality
 ```
 
 - A shell variable named `AUTH_DATABASE_URL` wins over `--env-file`. Unset it before running the service.

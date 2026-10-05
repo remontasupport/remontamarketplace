@@ -10,7 +10,8 @@ import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { CONSENT_WORDING_VERSION } from '@remonta/schemas/schema/workerRegistrationSchema'
 import { expect } from 'vitest'
 import { LocalityDirectory } from '../../src/modules/localities/locality-directory'
-import { LocalDiskPhotoStore } from '../../src/modules/registration/adapters/photo-store'
+import { LocalDiskPhotoStore, type PhotoStore } from '../../src/modules/registration/adapters/photo-store'
+import { InMemoryPhotoStore } from './fakes'
 import { registrationHandlers } from '../../src/modules/registration/registration.handlers'
 import type { Email } from '../../src/platform/email/mailer'
 import { createDb, type Db } from '../../src/platform/persistence/db'
@@ -33,10 +34,18 @@ export interface RegistrationHarness {
   close(): Promise<void>
 }
 
+export interface HarnessOptions {
+  /** The bucket the direct upload uses (U3); in-memory unless a suite passes the real adapter against the fake server. */
+  bucket?: PhotoStore
+  publicBaseUrl?: string
+}
+
 /** `domain` isolates this suite's rows: everything it creates is deleted by close(). */
-export async function registrationHarness(domain: string): Promise<RegistrationHarness> {
+export async function registrationHarness(domain: string, options: HarnessOptions = {}): Promise<RegistrationHarness> {
   const url = process.env.TEST_DATABASE_URL!
   const db = createDb(url)
+  const bucket = options.bucket ?? new InMemoryPhotoStore()
+  const publicBaseUrl = options.publicBaseUrl ?? 'http://bucket.test/photos'
   const photos = await mkdtemp(join(tmpdir(), 'photos-'))
   const hasher = new WorkerPoolHasher({ threads: 2, cost: 4 })
   const sent: Email[] = []
@@ -62,6 +71,8 @@ export async function registrationHarness(domain: string): Promise<RegistrationH
     breaches: { check: async () => ({ status: 'clear' }) },
     localities: new LocalityDirectory(db),
     store: new LocalDiskPhotoStore(photos),
+    bucket,
+    publicBaseUrl,
     ipHashSecret: 'test-secret-'.repeat(4),
     mailer: { send: async (e) => (sent.push(e), { id: `msg_${sent.length}` }) },
     codeSecret: 'code-secret-'.repeat(4),

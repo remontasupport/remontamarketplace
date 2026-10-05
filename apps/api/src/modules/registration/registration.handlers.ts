@@ -4,11 +4,13 @@ import { defineHandlers } from '../../platform/contract/handlers'
 import type { LocalityDirectory } from '../localities/locality-directory'
 import { emailAvailable } from './application/email-availability'
 import { confirmEmailCode, requestEmailCode, type EmailCodeDeps } from './application/email-code'
+import { confirmPhotoUpload, type PhotoConfirmDeps } from './application/photo-confirm'
+import { createPhotoTicket, type PhotoTicketDeps } from './application/photo-ticket'
 import { registerWorker, type RegisterDeps } from './application/register-worker'
 import { listServiceCategories } from './application/service-categories'
 import { stagePhoto, type StagePhotoDeps } from './application/stage-photo'
 
-export interface RegistrationModuleDeps extends RegisterDeps, Omit<StagePhotoDeps, 'db'>, EmailCodeDeps {
+export interface RegistrationModuleDeps extends RegisterDeps, Omit<StagePhotoDeps, 'db'>, Omit<PhotoConfirmDeps, 'db' | 'now'>, PhotoTicketDeps, EmailCodeDeps {
   localities: LocalityDirectory
 }
 
@@ -18,7 +20,13 @@ export function registrationHandlers(deps: RegistrationModuleDeps) {
 
     searchLocalities: async (req) => ({ status: 200, body: { localities: await deps.localities.search(req.query.q) } }),
 
+    // The multipart path, kept until the wizard uses the direct upload (clean-up PR).
     uploadRegistrationPhoto: async (req, ctx) => ({ status: 201, body: await stagePhoto(req.files.photo, ctx.ip, deps) }),
+
+    // The direct upload (U3): a ticket for the bucket, then confirm what landed.
+    createPhotoUploadTicket: async (req, ctx) => ({ status: 201, body: await createPhotoTicket(req.body, deps, ctx.log) }),
+
+    confirmPhotoUpload: async (req, ctx) => ({ status: 200, body: await confirmPhotoUpload(req.body.photoUploadId, ctx.ip, deps, ctx.log) }),
 
     checkEmailAvailability: async (req) => ({ status: 200, body: await emailAvailable(deps.db, req.body) }),
 

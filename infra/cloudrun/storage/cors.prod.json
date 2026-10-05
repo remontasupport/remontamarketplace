@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://app.remontaservices.com.au"],
+    "method": ["POST"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]
