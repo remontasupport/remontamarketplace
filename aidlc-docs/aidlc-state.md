@@ -95,15 +95,15 @@
 ## Extension Configuration
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | _(decide at Requirements Analysis; every cycle so far: Yes, blocking)_ | |
-| Resiliency Baseline | _(every cycle so far: Yes, blocking; targets SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min)_ | |
-| Property-Based Testing | _(S1: Yes, full; then Partial; last cycle: No)_ | |
+| Security Baseline | Yes, blocking | Requirements Analysis, 2026-10-05 (Q9 A) |
+| Resiliency Baseline | Yes, blocking; S1's targets carried forward (SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region) | Requirements Analysis, 2026-10-05 (Q10 A) |
+| Property-Based Testing | Yes, full | Requirements Analysis, 2026-10-05 (Q11 A) |
 
 ## Stage Progress
 ### 🔵 INCEPTION PHASE
 - [x] Workspace Detection (2026-10-05: brownfield, monorepo; branch `aidlc/signup-photo-gcs` from `main` `635273b`)
-- [~] Reverse Engineering (targeted inventory written 2026-10-05; Q1 of the questions file confirms)
-- [~] Requirements Analysis (questions file created 2026-10-05; awaiting answers)
+- [x] Reverse Engineering (targeted inventory `inception/requirements/signup-photo-inventory.md`, confirmed Q1 A)
+- [~] Requirements Analysis (answers received 2026-10-05, all A; `inception/requirements/requirements.md` written; awaiting approval)
 - [ ] User Stories
 - [ ] Workflow Planning
 - [ ] Application Design

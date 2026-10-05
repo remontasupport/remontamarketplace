@@ -27,7 +27,7 @@ B) **No** -- run a full reverse-engineering pass over `apps/api`, `packages/api-
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 Scope of the storage move. The dashboard also lets a worker replace their profile photo later
@@ -43,7 +43,7 @@ authentication on the api side.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 HEIC. You do not want to accept HEIC. The `accept` list that invites it lives in the shared
@@ -58,7 +58,7 @@ they are for a later cycle.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 4
 How the stored photos are served to the app (dashboard, admin list, public worker list).
@@ -76,7 +76,7 @@ from day one, so this must be decided now, not added later.
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 5
 Processing after the photo is claimed by a sign-up (runs in the background through the outbox).
@@ -94,7 +94,7 @@ D) **None** in this cycle: store what was uploaded, as today; processing is a la
 
 E) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 6
 The latency alert. Today's policy fires on one slow request. The correction (service-wide p95 with `ALIGN_DELTA` +
@@ -110,7 +110,7 @@ C) **Leave it**: the storage move will make the photo route fast enough; revisit
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 7
 Local development and CI. `apps/api`'s database tests run against a local PostGIS container, the same image CI uses.
@@ -129,7 +129,7 @@ with a mocked client.
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 8
 Cut-over. Uploads staged on Blob in the 24 h before the switch may still be claimed or purged after it.
@@ -143,7 +143,7 @@ bucket can be rolled back by an environment change and a redeploy instead of an 
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 9: Security Extensions
 Should security extension rules be enforced for this project?
@@ -155,7 +155,7 @@ B) No -- skip all SECURITY rules (suitable for PoCs, prototypes, and experimenta
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 10: Resiliency Extensions
 Should the resiliency baseline be applied to this project?
@@ -177,7 +177,7 @@ B) No -- skip the resiliency baseline (suitable for PoCs, prototypes, and experi
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 11: Property-Based Testing Extension
 Should property-based testing (PBT) rules be enforced for this project?
@@ -192,4 +192,4 @@ C) No -- skip all PBT rules (the last cycle's choice)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
