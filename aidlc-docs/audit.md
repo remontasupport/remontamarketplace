@@ -2952,3 +2952,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > I am sure that all who have signup today has submitted an image, no need tow ait for 10/08, can merge now
 
 **AI action (2026-10-05):** User decision recorded: PR 3c may be merged now (the cut-over window waived). Noted once that completed sign-ups are not the concern, abandoned ones are; cost accepted. The read-only count of Blob-era unclaimed rows in production was refused by the session's policy (production reads), so it was not run. Next: the user opens the PR; CI (API Quality proves the rewritten PostGIS suites); merge; staging checks; promotion.
+
+**User input (verbatim, 2026-10-05):**
+> Done
+
+**AI action (2026-10-05, PR 3c Build and Test, staging):** Verified by refs: `origin/main` `0dbed46` = "Merge pull request #39", contains `686a6c6`. CI on the PR head all green, `CI (api)` included (the rewritten PostGIS suites ran against the service container). `deploy-api` built the image for `0dbed46` and deployed staging revision `remonta-api-staging-00014-dkq` (booted clean, "apps/api listening" 09:23Z). Staging: health 200; the removed multipart route answers 404; ticket and confirm answer 400 to an empty body (present). Production unchanged (still `fbc6705`, the multipart route still answers). Next, on the user: promote `0dbed46` to production (deploy-api, stage=prod).
