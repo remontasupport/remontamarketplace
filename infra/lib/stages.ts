@@ -62,7 +62,6 @@ const common = {
   RECAPTCHA_MIN_SCORE: '0.5',
   APP_BASE_URL: APP_ORIGIN,
   EMAIL_FROM: 'Remonta <community@remontaservices.com.au>',
-  PHOTO_STORE: 'vercel-blob',
   HASH_CONCURRENCY: '1',
   DB_POOL_SIZE: '5',
   DB_POOL_TIMEOUT_S: '5',
@@ -87,6 +86,9 @@ export const STAGES: Readonly<Record<Stage, StageConfig>> = {
       // Vercel previews: one wildcard label (apps/api/src/config/hosts.ts, D11).
       CORS_ORIGINS: 'https://*.vercel.app',
       RECAPTCHA_ALLOWED_HOSTNAMES: '*.vercel.app',
+      // The sign-up photo bucket (U3): created by bootstrap step 11; cloudrun/lib.sh names it too.
+      PHOTO_BUCKET: 'remonta-api-photos-staging',
+      PHOTO_PUBLIC_BASE_URL: 'https://storage.googleapis.com/remonta-api-photos-staging',
       MAX_IN_FLIGHT: '64',
     },
   },
@@ -104,6 +106,8 @@ export const STAGES: Readonly<Record<Stage, StageConfig>> = {
       ...common,
       CORS_ORIGINS: APP_ORIGIN,
       RECAPTCHA_ALLOWED_HOSTNAMES: 'app.remontaservices.com.au',
+      PHOTO_BUCKET: 'remonta-api-photos',
+      PHOTO_PUBLIC_BASE_URL: 'https://storage.googleapis.com/remonta-api-photos',
       MAX_IN_FLIGHT: '128',
     },
   },

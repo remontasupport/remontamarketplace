@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import PhotoUpload from "@/components/forms/fields/PhotoUpload";
+import { ACCEPTED_IMAGE_TYPES } from "@remonta/schemas/image-type";
+import type { UploadProgress } from "@remonta/form-engine";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 
 export function FieldError({ message }: { message?: string }) {
@@ -307,16 +309,34 @@ export interface PhotoFieldProps {
   /** A value exists but there is no preview (e.g. restored after a reload). */
   alreadyUploaded?: boolean;
   error?: string;
+  /** The direct upload's progress (U3): bytes during the transfer, indeterminate around it, null when idle. */
+  progress?: UploadProgress | null;
 }
 
-export function PhotoField({ label, hint, previewUrl, upload, onChange, onUploadStart, onUploadEnd, alreadyUploaded, error }: PhotoFieldProps) {
+/** The sign-up accepts these; HEIC is not listed, so iPhones hand over JPEG instead (R7.5). */
+export const SIGNUP_PHOTO_ACCEPT = ACCEPTED_IMAGE_TYPES.join(",");
+export const SIGNUP_PHOTO_TYPE_MESSAGE = "Please choose a JPEG, PNG or WebP photo.";
+
+export function PhotoField({ label, hint, previewUrl, upload, onChange, onUploadStart, onUploadEnd, alreadyUploaded, error, progress }: PhotoFieldProps) {
   return (
     <div>
       <Label className="text-lg font-poppins font-medium">
         {label} <span className="text-red-500">*</span>
       </Label>
       {hint && <p className="text-sm font-poppins text-gray-600 mt-1 mb-3">{hint}</p>}
-      <PhotoUpload currentPhoto={previewUrl || null} onPhotoChange={onChange} onUploadStart={onUploadStart} onUploadEnd={onUploadEnd} maxSizeMB={10} error={error} upload={upload} />
+      <PhotoUpload
+        currentPhoto={previewUrl || null}
+        onPhotoChange={onChange}
+        onUploadStart={onUploadStart}
+        onUploadEnd={onUploadEnd}
+        maxSizeMB={10}
+        error={error}
+        upload={upload}
+        accept={SIGNUP_PHOTO_ACCEPT}
+        allowedTypes={ACCEPTED_IMAGE_TYPES}
+        typeErrorMessage={SIGNUP_PHOTO_TYPE_MESSAGE}
+        progress={progress ?? null}
+      />
       {alreadyUploaded && !previewUrl && <p className="text-sm font-poppins text-green-700 mt-2">Your photo is already uploaded. You can choose a different one if you like.</p>}
     </div>
   );

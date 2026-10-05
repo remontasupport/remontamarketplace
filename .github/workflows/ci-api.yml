@@ -50,6 +50,11 @@ env:
   AUTH_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/s1test
   DIRECT_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/s1test
   TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/s1test
+  # The fake Cloud Storage service container below (U3): the bucket adapter, ticket,
+  # confirm, processing and purge tests run against it; without it they are skipped.
+  GCS_API_ENDPOINT: http://localhost:4443
+  PHOTO_BUCKET: test-photos
+  PHOTO_PUBLIC_BASE_URL: http://localhost:4443/test-photos
 
 jobs:
   quality:
@@ -77,6 +82,13 @@ jobs:
           --health-retries 12
 
     steps:
+      # A service container cannot take command arguments, so the fake storage server
+      # starts here (pinned tag; the same command developers run locally).
+      - name: Fake Cloud Storage (fsouza/fake-gcs-server)
+        run: |
+          docker run -d --name fake-gcs -p 4443:4443 fsouza/fake-gcs-server:1.52.2 -scheme http -public-host localhost:4443
+          for i in $(seq 1 20); do curl -fsS http://localhost:4443/storage/v1/b >/dev/null 2>&1 && break; sleep 1; done
+          curl -fsS http://localhost:4443/storage/v1/b >/dev/null
       - name: Checkout
         uses: actions/checkout@v4
 

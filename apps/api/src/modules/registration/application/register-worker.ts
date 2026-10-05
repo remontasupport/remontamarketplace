@@ -25,11 +25,11 @@ import { placeHome } from '../../locations/domain/home'
 import { openOnboarding } from '../../onboarding/markers'
 import type { BreachCheck, BreachedPasswordChecker } from '../adapters/pwned-passwords'
 import { checkEmailCode } from '../domain/email-code'
-import { WORKER_REGISTERED, type WorkerRegisteredPayload } from '../domain/events'
+import { PHOTO_UPLOADED, WORKER_REGISTERED, type PhotoUploadedPayload, type WorkerRegisteredPayload } from '../domain/events'
 import { findUserIdByEmail } from '../persistence/users'
 import { noticeExistingAccount } from './existing-account'
+import { attachPhoto, claimPhoto } from './photo-claim'
 import { resolveServices, type ResolvedService } from './resolve-services'
-import { attachPhoto, claimPhoto } from './stage-photo'
 
 export interface RegisterDeps {
   db: Db
@@ -106,8 +106,10 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   if (!placed.ok) throw new ApiError(400, 'locality retired', { localityId: ['Please choose your suburb from the list'] })
 
   // R4: claim the staged photo before anything else is written.
-  const photoUrl = await claimPhoto(tx, input.photoUploadId, now)
-  if (!photoUrl) throw new ApiError(400, 'photo upload missing, used or expired', { photoUploadId: ['Please upload your photo again'] })
+  const photo = await claimPhoto(tx, input.photoUploadId, now)
+  if (!photo) throw new ApiError(400, 'photo upload missing, used or expired', { photoUploadId: ['Please upload your photo again'] })
+  // U3 R3.4: the object is private until the processing handler writes the clean copy
+  // to Blob and points the profile at it (a gap of seconds; the event is queued below).
 
   let user: { id: string; workerProfile: { id: string } | null }
   try {
@@ -123,7 +125,7 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
             firstName: input.firstName,
             lastName: input.lastName,
             mobile: input.mobile,
-            photos: photoUrl,
+            photos: null,
             // Legacy columns, dual-written in today's shape (S1-data-model 2.2).
             ...placed.legacy,
             languages: [],
@@ -157,4 +159,6 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   })
   const payload: WorkerRegisteredPayload = { userId: user.id, workerProfileId }
   await enqueue(tx, { type: WORKER_REGISTERED, payload }, now)
+  const photoPayload: PhotoUploadedPayload = { photoUploadId: input.photoUploadId, workerProfileId }
+  await enqueue(tx, { type: PHOTO_UPLOADED, payload: photoPayload }, now)
 }

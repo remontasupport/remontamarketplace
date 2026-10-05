@@ -27,7 +27,9 @@ export function defineForm<C extends ContractDef>(def: FormDefinition<C>): FormD
   }
   def.steps.forEach((s, stepIndex) => {
     for (const f of s.fields) {
-      if (f.kind === "photo" && !(f.uploadEntry in def.contract.entries)) problems.push(`photo ${f.name}: ${f.uploadEntry} is not in the contract`);
+      if (f.kind === "photo") {
+        for (const e of [f.ticketEntry, f.confirmEntry]) if (!(e in def.contract.entries)) problems.push(`photo ${f.name}: ${e} is not in the contract`);
+      }
       if (f.kind === "emailCode") {
         for (const e of [f.sendEntry, f.verifyEntry, ...(f.availabilityEntry ? [f.availabilityEntry] : [])]) {
           if (!(e in def.contract.entries)) problems.push(`emailCode ${f.name}: ${e} is not in the contract`);

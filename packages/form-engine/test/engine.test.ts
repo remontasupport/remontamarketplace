@@ -18,8 +18,13 @@ import {
   stepOfKey,
   submitToApi,
   toRequestBody,
-  uploadToApi,
   withRetry,
+  stagePhoto,
+  declaredTypeOf,
+  isHeicHeader,
+  UploadError,
+  UPLOAD_FAILED_MESSAGE,
+  type FieldDef,
   type FormDefinition,
   type KeyValueStore,
 } from "../src/index";
@@ -48,7 +53,7 @@ const form = defineForm({
     {
       title: "Photo",
       fields: [
-        { name: "photoUploadId", kind: "photo", uploadEntry: "uploadRegistrationPhoto" },
+        { name: "photoUploadId", kind: "photo", ticketEntry: "createPhotoUploadTicket", confirmEntry: "confirmPhotoUpload" },
         { name: "consentProfileShare", kind: "consent", statement: "I consent" },
       ],
     },
@@ -77,7 +82,7 @@ describe("defineForm", () => {
     ["the same field twice", { steps: [{ title: "s", fields: [{ name: "email", kind: "email" }, { name: "email", kind: "email" }] }] }, /email appears twice/],
     ["an entry the contract does not have", { submitEntry: "deleteEverything" }, /not in the registration contract/],
     ["a constant the body does not have", { constants: { isAdmin: true } }, /isAdmin is not in/],
-    ["a photo upload entry that does not exist", { steps: [{ title: "s", fields: [{ name: "photoUploadId", kind: "photo", uploadEntry: "nope" }] }] }, /nope is not in the contract/],
+    ["a photo entry that does not exist", { steps: [{ title: "s", fields: [{ name: "photoUploadId", kind: "photo", ticketEntry: "createPhotoUploadTicket", confirmEntry: "nope" }] }] }, /nope is not in the contract/],
   ])("refuses %s", (_label, patch, message) => {
     expect(() => defineForm({ ...base, ...patch } as never)).toThrow(message);
   });
@@ -298,14 +303,189 @@ describe("submitting through the contract", () => {
     }
   });
 
-  it("uploads a photo through its entry and returns the staged id", async () => {
-    const s = server([busy, () => new Response(JSON.stringify({ photoUploadId: filled.photoUploadId }), { status: 201 })]);
+});
+
+describe("staging a photo: ticket, direct upload, confirm (U3, R6)", () => {
+  const backend = { apiBaseUrl: "https://api.example", recaptchaSiteKey: "k" };
+  const field = form.steps[3]!.fields[0] as Extract<FieldDef, { kind: "photo" }>;
+  const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1, 0, 0, 0, 0]);
+  const file = new Blob([JPEG], { type: "image/jpeg" });
+  type Script = ("ok" | "network" | "storage-5xx" | "policy-403" | "confirm-409" | "confirm-503" | "confirm-413")[];
+
+  /** A modelled api and uploader: tickets count up; each upload/confirm pair consumes one scripted outcome. */
+  function world(script: Script, opts: { ttlMs?: number } = {}) {
+    const steps = [...script];
+    const log: string[] = [];
+    let tickets = 0;
+    let now = 1_000_000;
+    const real = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init: RequestInit) => {
+      const path = new URL(url).pathname;
+      if (path.endsWith("/photo-tickets")) {
+        tickets++;
+        log.push("ticket");
+        const id = `00000000-0000-4000-8000-00000000000${tickets}`;
+        return new Response(JSON.stringify({ photoUploadId: id, upload: { url: "https://bucket.example/", method: "POST", fields: { key: `staging/${id}` }, fileField: "file" }, expiresAt: new Date(now + (opts.ttlMs ?? 600_000)).toISOString() }), { status: 201 });
+      }
+      if (path.endsWith("/photo-confirmations")) {
+        log.push("confirm");
+        const next = steps.shift() ?? "ok";
+        const { photoUploadId } = JSON.parse(init.body as string);
+        if (next === "confirm-409") return new Response(JSON.stringify({ error: { code: "CONFLICT", message: "m", requestId: "r", fields: { photo: ["did not finish"] } } }), { status: 409 });
+        if (next === "confirm-503") return new Response(JSON.stringify({ error: { code: "UNAVAILABLE", message: "m", requestId: "r" } }), { status: 503, headers: { "retry-after": "1" } });
+        if (next === "confirm-413") return new Response(JSON.stringify({ error: { code: "PAYLOAD_TOO_LARGE", message: "m", requestId: "r", fields: { photo: ["too big"] } } }), { status: 413 });
+        return new Response(JSON.stringify({ photoUploadId }), { status: 200 });
+      }
+      return new Response("{}", { status: 500 });
+    }) as unknown as typeof fetch;
+    const uploader = {
+      async upload(_f: Blob, _t: unknown, o: { onProgress?: (s: number, t: number) => void }) {
+        log.push("upload");
+        const next = steps[0];
+        if (next === "network") {
+          steps.shift();
+          throw new UploadError(0, false);
+        }
+        if (next === "storage-5xx") {
+          steps.shift();
+          throw new UploadError(503, false);
+        }
+        if (next === "policy-403") {
+          steps.shift();
+          throw new UploadError(403, true);
+        }
+        o.onProgress?.(5, 10);
+        o.onProgress?.(10, 10);
+        // "ok" and the confirm-* outcomes are consumed by the confirm call
+      },
+    };
+    const deps = { uploader, retry: { sleep: async () => {} }, sleep: async () => {}, now: () => now };
+    return { log, deps, restore: () => void (globalThis.fetch = real), tick: (ms: number) => (now += ms), tickets: () => tickets };
+  }
+
+  it("ticket, upload with progress, confirm: returns the staged id", async () => {
+    const w = world(["ok"]);
+    const progress: unknown[] = [];
     try {
-      const id = await uploadToApi(form, backend, "uploadRegistrationPhoto", new Blob([new Uint8Array([0xff, 0xd8, 0xff])], { type: "image/jpeg" }), { retry: { sleep: async () => {} } });
-      expect(id).toBe(filled.photoUploadId);
-      expect(s.bodies[1]).toBeInstanceOf(FormData);
+      const id = await stagePhoto(form, backend, field, file, JPEG, { ...w.deps, onProgress: (p) => progress.push(p) });
+      expect(id).toMatch(/^00000000-0000-4000-8000-/);
+      expect(w.log).toEqual(["ticket", "upload", "confirm"]);
+      expect(progress).toEqual(["indeterminate", { sent: 5, total: 10 }, { sent: 10, total: 10 }, "indeterminate"]);
     } finally {
-      s.restore();
+      w.restore();
     }
+  });
+
+  it("retries the same ticket on a dropped transfer and on a 409, then succeeds (R6.3, R6.5)", async () => {
+    const w = world(["network", "confirm-409", "ok"]);
+    try {
+      await stagePhoto(form, backend, field, file, JPEG, w.deps);
+      expect(w.tickets()).toBe(1);
+      expect(w.log).toEqual(["ticket", "upload", "upload", "confirm", "upload", "confirm"]);
+    } finally {
+      w.restore();
+    }
+  });
+
+  it("asks for a fresh ticket once when storage refuses the policy, or the ticket expired (R6.4, R6.6)", async () => {
+    const w = world(["policy-403", "ok"]);
+    try {
+      await stagePhoto(form, backend, field, file, JPEG, w.deps);
+      expect(w.tickets()).toBe(2);
+    } finally {
+      w.restore();
+    }
+    const w2 = world(["network", "ok"], { ttlMs: 1000 });
+    try {
+      // the back-off after the dropped transfer outlives the ticket: a fresh one, not a retry
+      await stagePhoto(form, backend, field, file, JPEG, { ...w2.deps, sleep: async () => void w2.tick(5000) });
+      expect(w2.tickets()).toBe(2);
+      expect(w2.log).toEqual(["ticket", "upload", "ticket", "upload", "confirm"]);
+    } finally {
+      w2.restore();
+    }
+  });
+
+  it("gives up with the field message after the budget: 3 uploads per ticket, 2 tickets (R6.7)", async () => {
+    const w = world(["network", "network", "network", "network", "network", "network", "network"]);
+    try {
+      await expect(stagePhoto(form, backend, field, file, JPEG, w.deps)).rejects.toThrow(UPLOAD_FAILED_MESSAGE);
+      expect(w.tickets()).toBe(2);
+      expect(w.log.filter((l) => l === "upload")).toHaveLength(6);
+    } finally {
+      w.restore();
+    }
+  });
+
+  it("413 and 415 from confirm are final, with the api's message (R8)", async () => {
+    const w = world(["confirm-413"]);
+    try {
+      await expect(stagePhoto(form, backend, field, file, JPEG, w.deps)).rejects.toThrow("too big");
+      expect(w.tickets()).toBe(1);
+    } finally {
+      w.restore();
+    }
+  });
+
+  it("stops at once on abort and makes no further request (R6.8)", async () => {
+    const w = world(["network", "ok"]);
+    const controller = new AbortController();
+    const uploader = {
+      async upload() {
+        controller.abort(new Error("new pick"));
+        throw new UploadError(0, false);
+      },
+    };
+    try {
+      await expect(stagePhoto(form, backend, field, file, JPEG, { ...w.deps, uploader, signal: controller.signal })).rejects.toThrow("new pick");
+      expect(w.log).toEqual(["ticket"]);
+    } finally {
+      w.restore();
+    }
+  });
+
+  it("property: for any failure sequence, at most 3 uploads per ticket and 2 tickets; success iff an upload-then-confirm pair succeeded within the budget", async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.array(fc.constantFrom("ok", "network", "storage-5xx", "policy-403", "confirm-409"), { maxLength: 10 }), async (script) => {
+        const w = world(script as Script);
+        try {
+          const r = await stagePhoto(form, backend, field, file, JPEG, w.deps).then(() => "ok", (e: Error) => e.message);
+          expect(w.tickets()).toBeLessThanOrEqual(2);
+          // uploads per ticket: split the log at each "ticket"
+          let perTicket = 0;
+          for (const l of w.log) {
+            if (l === "ticket") perTicket = 0;
+            if (l === "upload") expect(++perTicket).toBeLessThanOrEqual(3);
+          }
+          // the model: walk the script with the same budget; success iff it reaches an "ok" (or runs out of script, which the model treats as ok)
+          const sim = (() => {
+            const s = [...script];
+            for (let t = 0; t < 2; t++) {
+              let tries = 0;
+              for (;;) {
+                const next = s.shift() ?? "ok";
+                if (next === "ok") return true;
+                if (next === "policy-403") break;
+                if (++tries > 2) break;
+              }
+            }
+            return false;
+          })();
+          expect(r === "ok").toBe(sim);
+        } finally {
+          w.restore();
+        }
+      }),
+      { numRuns: 60 },
+    );
+  });
+
+  it("detects a HEIC header, and declares the type from the bytes", () => {
+    expect(isHeicHeader(new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0, 0, 0]))).toBe(true);
+    expect(isHeicHeader(JPEG)).toBe(false);
+    expect(declaredTypeOf(JPEG, "image/png")).toBe("image/jpeg");
+    expect(declaredTypeOf(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), undefined)).toBe("image/png");
+    expect(declaredTypeOf(new Uint8Array([1, 2, 3]), "image/webp")).toBe("image/webp");
+    expect(declaredTypeOf(new Uint8Array([1, 2, 3]), "application/octet-stream")).toBe("image/jpeg");
   });
 });

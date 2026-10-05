@@ -154,21 +154,26 @@ fills the counts from `verification_requirements` later.
 
 ### 2.8 `registration_photo_uploads`
 
-Inserted by the photo upload (4.6), claimed by the submit (4.7).
+Inserted by the photo confirm (4.6b) and claimed by the submit (4.7). No column was added for the direct upload (U3): a row exists only once
+the object was checked; which store holds the object is the key's prefix.
 
-| Column | Type | At upload | At submit |
+| Column | Type | At confirm (4.6b) | At submit |
 |---|---|---|---|
-| `id` | uuid | generated; returned as `photoUploadId` | — |
-| `blobKey` | text, unique | `workers/registration/<id>.<ext>` | — |
-| `url` | text | the Blob URL (copied to `worker_profiles.photos` on claim) | — |
+| `id` | uuid | the ticket's id; returned as `photoUploadId` | — |
+| `blobKey` | text, unique | `staging/<id>` (the bucket). Rows of the removed multipart entry carry `workers/registration/<id>.<ext>` (Blob) and are never purged | — |
+| `url` | text | the staging URL (private; diagnostic only) | — |
 | `contentType` | text | detected from the bytes | — |
-| `sizeBytes` | int (> 0) | file size | — |
-| `ipHash` | text | HMAC of the uploader's IP (never the raw IP) | — |
+| `sizeBytes` | int (> 0) | the object's size | — |
+| `ipHash` | text | HMAC of the confirming IP (never the raw IP) | — |
 | `createdAt` | timestamp | now | — |
 | `claimedAt` | timestamp | NULL | now |
 | `claimedByWorkerProfileId` | text (FK, `SET NULL`) | NULL | the new profile |
 
-Claimable once and only within 24 h of `createdAt`. Unclaimed rows (and their files) are purged daily.
+Claimable once and only within 24 h of `createdAt`. Unclaimed rows (and their objects) are purged daily
+from whichever store the key names. For bucket rows the profile's `photos` is set later by the
+processing job to the Vercel Blob URL of `workers/<profileId>/<id>.jpg` (the thumbnail sits beside it as
+`<id>-256.jpg`); nothing about that is recorded on the row — the keys derive from the ids. The bucket
+itself holds nothing after processing.
 
 ### 2.9 `outbox_events`
 
@@ -219,6 +224,12 @@ Deleting a `worker_profiles` row cascades to its services, locations, onboarding
 staged photos keep their row with `claimedByWorkerProfileId` set to NULL.
 
 ## 5. Legacy sign-up (historical)
+
+**Multipart photo staging, removed in PR 3c (2026-10).** From S1 until the direct upload (U3) the wizard
+posted the photo through the api (`POST /v1/registrations/worker/photo`), which stored the original in Vercel
+Blob under `workers/registration/<uuid>.<ext>` and inserted the `registration_photo_uploads` row at once; on claim the
+Blob URL went straight onto `worker_profiles.photos`. Those profiles keep their Blob URL; unclaimed rows of that era
+drained through the purge during the cut-over window.
 
 **Removed on 2026-10-02.** Until then the pre-S1 page posted to apps/app's `POST /api/auth/register-async`
 (`lib/workers/workerRegistrationProcessor.ts`, both deleted; last version at git tag-less commit `b7ccc80`).

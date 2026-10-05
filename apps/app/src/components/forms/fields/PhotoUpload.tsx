@@ -29,7 +29,23 @@ interface PhotoUploadProps {
    * cropped image stays as the preview. Without it: /api/upload/worker-photo as before.
    */
   upload?: (file: File) => Promise<string>;
+  /** The file input's accept list. Default: today's list, HEIC included (dashboard screens). */
+  accept?: string;
+  /** Types accepted before the crop. Default: today's list. */
+  allowedTypes?: readonly string[];
+  /** Shown when the picked type is not allowed. Default: today's message. */
+  typeErrorMessage?: string;
+  /**
+   * Upload progress (the sign-up's direct upload): a number of bytes sent out of a
+   * total, "indeterminate" while the ticket or the confirmation is in flight, or null.
+   * When set, a progress bar replaces the "Uploading..." label.
+   */
+  progress?: { sent: number; total: number } | "indeterminate" | null;
 }
+
+const DEFAULT_ACCEPT = "image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif";
+const DEFAULT_ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+const DEFAULT_TYPE_MESSAGE = "Only JPG, PNG, WebP, and HEIC formats are allowed";
 
 export default function PhotoUpload({
   currentPhoto,
@@ -41,6 +57,10 @@ export default function PhotoUpload({
   error,
   inputId = "photo-upload-input",
   upload,
+  accept = DEFAULT_ACCEPT,
+  allowedTypes = DEFAULT_ALLOWED_TYPES,
+  typeErrorMessage = DEFAULT_TYPE_MESSAGE,
+  progress = null,
 }: PhotoUploadProps) {
   const { data: session } = useSession();
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhoto || null);
@@ -73,13 +93,12 @@ export default function PhotoUpload({
       return;
     }
 
-    // Allowed image formats (security-safe raster formats only)
-    const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+    // Allowed image formats (security-safe raster formats only; the sign-up passes its own list)
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    // Validate file type
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
-      setUploadError("Only JPG, PNG, WebP, and HEIC formats are allowed");
+    // Validate file type (an empty type, e.g. a .heic on Windows, is left to the uploader's byte check)
+    if (file.type && !allowedTypes.includes(file.type.toLowerCase())) {
+      setUploadError(typeErrorMessage);
       return;
     }
 
@@ -206,10 +225,11 @@ export default function PhotoUpload({
         <div className="photo-upload-section-horizontal">
           <input
             type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+            accept={accept}
             onChange={handleFileChange}
             className="hidden"
             id={inputId}
+            data-testid="photo-upload-input"
           />
           <label
             htmlFor={inputId}
@@ -221,6 +241,34 @@ export default function PhotoUpload({
           >
             {isUploading ? "Uploading..." : "Upload photo"}
           </label>
+          {isUploading && progress !== null && (
+            <div
+              className="photo-upload-progress"
+              role="progressbar"
+              aria-label="Photo upload"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress === "indeterminate" ? undefined : Math.round((progress.sent / Math.max(progress.total, 1)) * 100)}
+              data-testid="photo-upload-progress"
+              style={{ height: 6, borderRadius: 3, background: "rgba(0,0,0,0.08)", overflow: "hidden", marginTop: 8 }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  background: "var(--brand-primary)",
+                  width: progress === "indeterminate" ? "40%" : `${Math.round((progress.sent / Math.max(progress.total, 1)) * 100)}%`,
+                  transition: "width 200ms linear",
+                  animation: progress === "indeterminate" ? "photo-upload-indeterminate 1.2s ease-in-out infinite" : undefined,
+                }}
+              />
+              <style>{`@keyframes photo-upload-indeterminate { 0% { margin-left: -40% } 100% { margin-left: 100% } }`}</style>
+            </div>
+          )}
+          {isUploading && progress !== null && (
+            <p className="photo-upload-note" aria-live="polite">
+              {progress === "indeterminate" ? "Preparing..." : `${Math.round((progress.sent / Math.max(progress.total, 1)) * 100)}% uploaded`}
+            </p>
+          )}
           <p className="photo-upload-note">Max: {maxSizeMB}MB</p>
 
           {/* Error Messages */}

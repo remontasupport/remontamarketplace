@@ -29,7 +29,7 @@ were removed on 2026-10-02, after the api had served production since that morni
 | 2 | (same) | Types the 6-digit code, clicks **Verify** | `POST /v1/registrations/worker/email-codes/verify` | no |
 | 2 | (same) | Types the password (enabled only after the email is verified) | — | — |
 | 3 | "What services can you offer?" | Picks services; sub-services through a dialog | `GET /v1/service-categories` (once, cached) | no |
-| 4 | Photo + consent | Uploads a photo | `POST /v1/registrations/worker/photo` (multipart) → `photoUploadId` | **yes**: `registration_photo_uploads` + the file in Blob |
+| 4 | Photo + consent | Uploads a photo | `POST …/photo-tickets` → the browser POSTs the file straight to the bucket (a progress bar) → `POST …/photo-confirmations` → `photoUploadId` (U3; HEIC is refused on the device) | **yes**: `registration_photo_uploads` (+ the file in the bucket until the sign-up claims it) |
 | 4 | (same) | Ticks the consent, clicks **Complete Signup** | `POST /v1/registrations/worker` (with a fresh reCAPTCHA token) | **yes**: everything in [03 §2](03-data-model.md#2-tables-written-by-a-sign-up) |
 | 5 | `/registration/worker/success` | — | — | — |
 
@@ -60,7 +60,9 @@ email blur     ----- POST email-availability ->  SELECT users (lower(email))    
 Send code      ----- POST email-codes ------->   sign ticket, send email  ------------> Resend (email)
 Verify         ----- POST email-codes/verify ->  check ticket (no storage)
 services step  ----- GET service-categories ->  SELECT Category + Subcategory          read
-photo          ----- POST photo (multipart) -->  check bytes, store file  ------------> Blob; INSERT registration_photo_uploads
+photo          ----- POST photo-tickets ------>  sign a policy (nothing stored)
+               ----- POST file to the bucket --> (storage enforces key, type, size, expiry)
+               ----- POST photo-confirmations -> inspect + 16 bytes, INSERT registration_photo_uploads
 Complete       ----- POST /v1/registrations/worker
                                                validate, check ticket, breach check,
                                                ONE transaction ----------------------> users, worker_profiles, worker_services,

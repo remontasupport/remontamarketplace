@@ -1,20 +1,33 @@
 {
   "displayName": "__SERVICE__ latency-p95",
   "documentation": {
-    "content": "p95 request latency of __SERVICE__ (__STAGE__) above 2 s over 5 minutes: saturation (a sign-up is ~1.6 s at full load). Check instance count and CPU in Cloud Run → __SERVICE__ → Metrics; the database's pooler; the load-shedding log lines (`shed:`).",
+    "content": "p95 request latency of __SERVICE__ (__STAGE__) above 2 s for two consecutive 5-minute windows while the service handled at least 60 requests per window: saturation, not one slow request (a single upload cannot trip this; p95 over 60 requests is the third slowest). Check instance count and CPU in Cloud Run -> __SERVICE__ -> Metrics; the database's pooler; the load-shedding log lines (`shed:`). To change this policy: edit `infra/cloudrun/monitoring/latency-p95.json`, merge, then `bash infra/cloudrun/apply-alerts.sh __STAGE__`.",
     "mimeType": "text/markdown"
   },
-  "combiner": "OR",
+  "combiner": "AND",
   "conditions": [
     {
       "displayName": "p95 latency > 2000 ms",
       "conditionThreshold": {
         "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"__SERVICE__\" AND metric.type = \"run.googleapis.com/request_latencies\"",
-        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_PERCENTILE_95", "crossSeriesReducer": "REDUCE_MAX", "groupByFields": ["resource.labels.service_name"] }],
+        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_DELTA", "crossSeriesReducer": "REDUCE_PERCENTILE_95", "groupByFields": ["resource.labels.service_name"] }],
         "comparison": "COMPARISON_GT",
         "thresholdValue": 2000,
-        "duration": "300s",
-        "trigger": { "count": 1 }
+        "duration": "600s",
+        "trigger": { "count": 1 },
+        "evaluationMissingData": "EVALUATION_MISSING_DATA_INACTIVE"
+      }
+    },
+    {
+      "displayName": "requests per 5 min >= 60",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"__SERVICE__\" AND metric.type = \"run.googleapis.com/request_count\"",
+        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_DELTA", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["resource.labels.service_name"] }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 59,
+        "duration": "600s",
+        "trigger": { "count": 1 },
+        "evaluationMissingData": "EVALUATION_MISSING_DATA_INACTIVE"
       }
     }
   ],

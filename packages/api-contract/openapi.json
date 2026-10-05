@@ -310,127 +310,6 @@
         }
       }
     },
-    "/v1/registrations/worker/photo": {
-      "post": {
-        "operationId": "registration.uploadRegistrationPhoto",
-        "summary": "Stage a profile photo for a sign-up. Returns an upload id, never a URL.",
-        "security": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "photo"
-                ],
-                "properties": {
-                  "photo": {
-                    "type": "string",
-                    "contentMediaType": "application/octet-stream"
-                  }
-                }
-              },
-              "encoding": {
-                "photo": {
-                  "contentType": "image/jpeg, image/png, image/webp, image/heic"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "photoUploadId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                    }
-                  },
-                  "required": [
-                    "photoUploadId"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "PAYLOAD_TOO_LARGE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "UNSUPPORTED_MEDIA_TYPE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "RATE_LIMITED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "INTERNAL",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "x-remonta-security": {
-          "access": "public",
-          "bot": "none",
-          "rateLimit": [
-            {
-              "per": "ip",
-              "limit": 10,
-              "window": "1h"
-            },
-            {
-              "per": "global",
-              "limit": 300,
-              "window": "1h"
-            }
-          ],
-          "maxBodyKb": 5120
-        }
-      }
-    },
     "/v1/registrations/worker/email-availability": {
       "post": {
         "operationId": "registration.checkEmailAvailability",
@@ -783,6 +662,271 @@
             {
               "per": "global",
               "limit": 5000,
+              "window": "1h"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
+    "/v1/registrations/worker/photo-tickets": {
+      "post": {
+        "operationId": "registration.createPhotoUploadTicket",
+        "summary": "A ticket to upload the sign-up photo straight to storage: one key, one type, at most 5 MB, ten minutes. Nothing is stored until confirm.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5242880
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "sizeBytes"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photoUploadId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "upload": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "method": {
+                          "type": "string",
+                          "const": "POST"
+                        },
+                        "fields": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "fileField": {
+                          "type": "string",
+                          "const": "file"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "method",
+                        "fields",
+                        "fileField"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "photoUploadId",
+                    "upload",
+                    "expiresAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": "public",
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "ip",
+              "limit": 10,
+              "window": "1h"
+            },
+            {
+              "per": "global",
+              "limit": 300,
+              "window": "1h"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
+    "/v1/registrations/worker/photo-confirmations": {
+      "post": {
+        "operationId": "registration.confirmPhotoUpload",
+        "summary": "Confirm an uploaded sign-up photo: the object is checked (size, first bytes) and only then recorded. Returns the same id, never a URL.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photoUploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                },
+                "required": [
+                  "photoUploadId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photoUploadId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  },
+                  "required": [
+                    "photoUploadId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": "public",
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "ip",
+              "limit": 30,
+              "window": "1h"
+            },
+            {
+              "per": "global",
+              "limit": 1000,
               "window": "1h"
             }
           ],
