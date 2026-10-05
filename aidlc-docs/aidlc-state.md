@@ -1,11 +1,13 @@
 # AI-DLC State Tracking
 
 ## Project Information
-- **Project**: _(new cycle -- to be named at Inception)_
+- **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
-- **Start Date**: _(set when the new cycle starts)_
-- **Current Stage**: INCEPTION -- not started. The previous cycle closed on 2026-10-02; see "What is live" below before
-  planning anything.
+- **Start Date**: 2026-10-05
+- **Current Stage**: INCEPTION -- Requirements Analysis, gate open: `aidlc-docs/inception/requirements/requirement-verification-questions.md`
+  awaits the user's answers (11 questions). Decision so far (chat, 2026-10-05): "Option A" -- a Google Cloud Storage
+  bucket in Sydney with api-issued upload tickets; old photos stay in Vercel Blob (store region `syd1`). Evidence and
+  code map: `inception/requirements/signup-photo-inventory.md`.
 
 ## Previous cycles (archived, read-only)
 
@@ -80,9 +82,10 @@
 - **Project Structure**: Monorepo -- `apps/app` (Next.js application), `apps/web` (Next.js marketing site),
   `apps/api` (NestJS + Fastify on Cloud Run), `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`
 - **Workspace Root**: `C:\Users\floil\OneDrive\Documents\Projects\Remonta\remontamarketplace`
-- **Reverse Engineering Needed**: decide at Workspace Detection, once the intent is known (the last three cycles
-  deferred it or replaced it with a targeted inventory). The S1 archive holds the 2026-09-25 analysis (stale for
-  `apps/api`, `packages/api-contract`, `packages/form-engine`, `infra/`); `.brd/phase-0…8` the business view.
+- **Reverse Engineering Needed**: replaced by the targeted inventory `inception/requirements/signup-photo-inventory.md`
+  (2026-10-05), pending the user's confirmation in Q1 of the questions file. The S1 archive holds the 2026-09-25
+  analysis (stale for `apps/api`, `packages/api-contract`, `packages/form-engine`, `infra/`); `.brd/phase-0…8` the
+  business view.
 
 ## Code Location Rules
 - **Application Code**: Workspace root (NEVER in aidlc-docs/)
@@ -98,9 +101,9 @@
 
 ## Stage Progress
 ### 🔵 INCEPTION PHASE
-- [ ] Workspace Detection
-- [ ] Reverse Engineering
-- [ ] Requirements Analysis
+- [x] Workspace Detection (2026-10-05: brownfield, monorepo; branch `aidlc/signup-photo-gcs` from `main` `635273b`)
+- [~] Reverse Engineering (targeted inventory written 2026-10-05; Q1 of the questions file confirms)
+- [~] Requirements Analysis (questions file created 2026-10-05; awaiting answers)
 - [ ] User Stories
 - [ ] Workflow Planning
 - [ ] Application Design

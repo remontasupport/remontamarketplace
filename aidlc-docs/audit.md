@@ -2643,3 +2643,42 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > ok, close and archive
 
 **AI action (2026-10-02, cycle `legacy-removal` closed):** Closed the way the previous cycles were: `git mv` of `aidlc-docs/inception/` and `aidlc-docs/construction/` into `aidlc-docs/archive/legacy-signup-removal/` (history kept; no closing state snapshot, per the user's S1 choice); a fresh `aidlc-docs/aidlc-state.md` (four finished cycles in the table; "what is live" rewritten for one backend, the deleted switch, the sessionStorage draft, the hidden badge, the dual write that stays, the gate counts, the CodeQL behaviour; follow-ups renumbered: search slice, CRM handler, Vercel rollback ids, wording, credentials, visibility, Prisma clients, stale exports/docs, smaller items incl. `REGISTRATION_BACKEND` in Vercel Preview still to remove). No file outside `aidlc-docs/` references this cycle's folders (the `git grep` hits are the monorepo cycle's old comments in `.npmrc`, `next.config.ts`, `schema.target.prisma`, pre-existing). `audit.md` continues unchanged. Branch `aidlc/legacy-removal-close` (from `a30946e`) holds the unit's closing entries, the Upstash deletion record and this archive; the user merges its PR, then says "start ai dlc".
+
+---
+
+## Cycle: sign-up photo on Google Cloud Storage (started 2026-10-05)
+
+**User input (verbatim, 2026-10-05):**
+> Hey Claude, I kept on receiving an email from Google Cloud about the new api I deployed to them, can you see this message attached and find the fix? Do not code yet, analyze first & 'c:\Users\floil\Downloads\Screenshot 2026-10-05 090322.png'
+
+**AI action (2026-10-05, analysis only, no code):** Read the screenshot: Cloud Monitoring policy `remonta-api latency-p95` (prod) firing at 2026-10-04 00:08Z, p95 request latency 4034 ms against the 2000 ms threshold. Traced the policy to `infra/cloudrun/monitoring/latency-p95.json`: per-series `ALIGN_PERCENTILE_95` over 300 s then `REDUCE_MAX` across series grouped by service -- on a service with a handful of requests per 5-minute window this is "the slowest single request on any route", not saturation; duration 300 s = one window; autoClose 1800 s explains the repeated emails. gcloud's cached login had expired (re-authenticated by the user with `gcloud auth login`); with logs: the 4.043 s request was `POST /v1/registrations/worker/photo` (424 KB, iPhone in the Facebook in-app browser, 201) at 23:57:09Z, the person completed the sign-up ten seconds later. Over 5 days, 212 production requests; every request above 1.5 s was a photo upload (3.58 s / 258 KB, 4.04 s / 424 KB, 2.22 s / 140 KB, 1.92 s / 707 bytes); sign-ups 0.95-1.27 s, email codes 0.6-0.8 s; one revision, no restarts, no shedding, no warnings. The handler buffers the multipart file, sniffs the bytes, uploads to Vercel Blob with the SDK, inserts one row. Recommended: fix the policy (service-wide p95 via `ALIGN_DELTA` + `REDUCE_PERCENTILE_95`, a request-count condition joined by AND, duration 2-3 windows; `bootstrap.sh` only creates policies, so the live policy needs an update by name), and optionally time the Blob call. Side effect noted: gcloud installed its `alpha` component.
+
+**User input (verbatim, 2026-10-05):**
+> We should fix the system of uploading a photo. Analyze the internet and see what is the best practices on uploading an image, what stack, architecture and system for the feature
+
+**AI action (2026-10-05, research, no code):** Web research (Vercel Blob client uploads and the newer presigned uploads with `issueSignedToken`/`presignUrl`/`handleUploadPresigned`; Vercel Blob regions since July 2025; Google Cloud Storage V4 signed URLs and signed policy documents, signing from Cloud Run through IAM `signBlob` with no key file; OWASP File Upload Cheat Sheet; presigned-direct-upload vs proxy articles; sharp's prebuilt binaries exclude the HEIC decoder; HEIC renders in no browser) plus a code map of the current flow (`useFormWizard.uploaderFor` -> `shrinkImage` 1600 px JPEG q0.85 -> `uploadToApi` multipart -> `stagePhoto` -> `VercelBlobPhotoStore.put` -> `registration_photo_uploads`; the `PhotoStore` port with a `LocalDiskPhotoStore`; claim at registration; daily purge; the app's dashboard already uses Blob client uploads through `api/blob/upload-token`). Recommended architecture: intent -> direct upload with a short-lived constrained credential -> confirm with server-side HEAD + 16-byte range sniff -> asynchronous re-encode/metadata strip/thumbnail through the outbox -> HEIC rejected/converted on the device -> per-stage timing. First recommendation: stay on Vercel Blob with presigned direct uploads (one storage product), with Google Cloud Storage as the alternative.
+
+**User input (verbatim, 2026-10-05):**
+> I am not sure which region the Blob is tore, I don't want to accpet HEIC however how can we handle if the user submitted a HEIC?
+
+**AI action (2026-10-05):** Answered: the region is on the store's Settings page in the Vercel dashboard (fixed at creation). HEIC handling in layers: remove `image/heic`/`image/heif` from the file input's accept list (Safari 17+ transcodes to the first listed type, keeps HEIC only when listed; the shared `components/forms/fields/PhotoUpload.tsx` lists both today); the existing shrink step converts what the browser can decode (macOS Safari); detect leftovers on the device by the `ftyp` brand bytes and show a specific message (JPEG/PNG, iPhone Camera > Formats > Most Compatible); drop HEIC from the contract and the server sniffer as the backstop (415); add an on-demand WebAssembly converter only if the logged count justifies it; server-side conversion not available (sharp).
+
+**User input (verbatim, 2026-10-05):**
+> THE REGION IS IN syd1
+
+**AI action (2026-10-05, measurement):** Timed the staging api from this machine: health 0.38-0.46 s, service categories 0.41 s, a 22-byte JPEG upload 1.69-1.85 s (time-to-first-byte = total). The ~1.3 s difference is the Blob `put` from Cloud Run Sydney even with the store in `syd1`; direct probes of `blob.vercel-storage.com` answer via Vercel's anycast edge with a ~0.25 s post-TLS delay (edge-to-origin hop). Three staged rows created on staging (purged by the daily job). Updated recommendation: Option A = Google Cloud Storage bucket in `australia-southeast1` with the api issuing signed upload tickets (in-region, no key file, residency in AU, Blob token leaves the api; trade-off: dashboard uploads stay on Blob); Option B = Blob presigned direct uploads (floor unchanged for the user).
+
+**User input (verbatim, 2026-10-05):**
+> If we choose Option A, will it affects the old images that are stored in Vercel blob?
+
+**AI action (2026-10-05):** Answered: no -- stored photos are absolute Blob URLs copied into the profile; the dashboard, admin picker and `next/image` already allow the Blob hosts; only new sign-up photos go to the bucket; dashboard upload routes unchanged. Cut-over details: the purge job must keep deleting Blob keys for rows staged in the last 24 h (keep the Blob token one day, then remove); the claim path copies whatever URL the row holds.
+
+**User input (verbatim, 2026-10-05):**
+> explain the plan in simple terms, so are we storing the image to Google Cloud now?
+
+**AI action (2026-10-05):** Explained in plain terms: yes for new sign-up photos; today's four steps vs the plan's seven (pick+shrink, ticket, direct upload with progress, confirm+check, claim, background clean copy + thumbnail with metadata removed, 24 h purge); what stays the same; the one-time setup (bucket, IAM for tickets, allowed image host).
+
+**User input (verbatim, 2026-10-05):**
+> Go with Option A, start the AI-DLC cycle for it
+
+**AI action (2026-10-05, cycle opened):** PR #35 (`aidlc/legacy-removal-close`) is merged (`635273b` on `origin/main`), so the cycle branches from `main`: `aidlc/signup-photo-gcs`. Workspace Detection: brownfield, monorepo, unchanged from the state file. Reverse Engineering replaced by a targeted inventory of the photo path written from this session's reading and measurements (`aidlc-docs/inception/requirements/signup-photo-inventory.md`); the full decision is Q1 of the questions file. Requirements Analysis step 6: `aidlc-docs/inception/requirements/requirement-verification-questions.md` created (scope, HEIC accept-list scope, serving, processing, alert policy, local/CI storage, cut-over, the three extension opt-ins, reverse engineering). State file updated. Gate: awaiting the user's answers.
