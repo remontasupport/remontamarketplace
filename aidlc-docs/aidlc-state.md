@@ -103,8 +103,8 @@
 ### 🔵 INCEPTION PHASE
 - [x] Workspace Detection (2026-10-05: brownfield, monorepo; branch `aidlc/signup-photo-gcs` from `main` `635273b`)
 - [x] Reverse Engineering (targeted inventory `inception/requirements/signup-photo-inventory.md`, confirmed Q1 A)
-- [~] Requirements Analysis (answers received 2026-10-05, all A; `inception/requirements/requirements.md` written; awaiting approval)
-- [ ] User Stories
+- [x] Requirements Analysis (`inception/requirements/requirements.md`, approved 2026-10-05)
+- [~] User Stories (assessment and `inception/plans/story-generation-plan.md` written 2026-10-05; plan awaiting approval)
 - [ ] Workflow Planning
 - [ ] Application Design
 - [ ] Units Generation
