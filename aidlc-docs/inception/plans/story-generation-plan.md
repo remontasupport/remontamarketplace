@@ -53,16 +53,16 @@ D) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the three answers above; resolve any ambiguity in a clarification file
-- [ ] 2. Write `aidlc-docs/inception/user-stories/personas.md` per Q2
-- [ ] 3. Write `aidlc-docs/inception/user-stories/stories.md` per Q1 and Q3:
-  - [ ] 3a. E1 worker journey stories with criteria for progress, HEIC (both arrival paths), ticket expiry,
+- [x] 1. Confirm the three answers above; resolve any ambiguity in a clarification file
+- [x] 2. Write `aidlc-docs/inception/user-stories/personas.md` per Q2
+- [x] 3. Write `aidlc-docs/inception/user-stories/stories.md` per Q1 and Q3:
+  - [x] 3a. E1 worker journey stories with criteria for progress, HEIC (both arrival paths), ticket expiry,
     upload failure and retry, picking another photo, submit waiting for the upload
-  - [ ] 3b. E2 administrator stories: processed photo on the profile, old Blob photos unchanged, thumbnail recorded
-  - [ ] 3c. E3 system stories: ticket constraints, confirm checks and idempotence, processing and its failure path,
+  - [x] 3b. E2 administrator stories: processed photo on the profile, old Blob photos unchanged, thumbnail recorded
+  - [x] 3c. E3 system stories: ticket constraints, confirm checks and idempotence, processing and its failure path,
     purge of both stores, cut-over window, per-stage logging without sensitive data
-  - [ ] 3d. E4 operator stories: the corrected policy's behaviour on a quiet service, applying it to the live project
-  - [ ] 3e. Map every FR of requirements §3 to at least one story; name the PBT property where one applies
-  - [ ] 3f. INVEST check: each story independently testable on the preview, small enough for one unit's plan
-- [ ] 4. Cross-check the stories against the preview checklist in requirements §6 (every checklist item traceable)
-- [ ] 5. Present for approval
+  - [x] 3d. E4 operator stories: the corrected policy's behaviour on a quiet service, applying it to the live project
+  - [x] 3e. Map every FR of requirements §3 to at least one story; name the PBT property where one applies
+  - [x] 3f. INVEST check: each story independently testable on the preview, small enough for one unit's plan
+- [x] 4. Cross-check the stories against the preview checklist in requirements §6 (every checklist item traceable)
+- [x] 5. Present for approval

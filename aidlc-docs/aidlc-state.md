@@ -104,7 +104,7 @@
 - [x] Workspace Detection (2026-10-05: brownfield, monorepo; branch `aidlc/signup-photo-gcs` from `main` `635273b`)
 - [x] Reverse Engineering (targeted inventory `inception/requirements/signup-photo-inventory.md`, confirmed Q1 A)
 - [x] Requirements Analysis (`inception/requirements/requirements.md`, approved 2026-10-05)
-- [~] User Stories (assessment and `inception/plans/story-generation-plan.md` written 2026-10-05; plan awaiting approval)
+- [~] User Stories (plan approved 2026-10-05; `inception/user-stories/personas.md` and `stories.md` written, 18 stories; awaiting approval)
 - [ ] Workflow Planning
 - [ ] Application Design
 - [ ] Units Generation
