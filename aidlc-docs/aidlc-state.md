@@ -111,7 +111,7 @@
 
 ### 🟢 CONSTRUCTION PHASE
 - [x] U1 `alert-policy`: PR #36 merged (`e20dee4`), policies applied to prod and staging 2026-10-05 03:45Z, live policy verified; one observation open (no latency email the next day). Summary: `construction/alert-policy/code/alert-policy-summary.md`
-- [~] U3 `photo-gcs`: Functional Design artifacts written 2026-10-05 (`construction/photo-gcs/functional-design/`), awaiting approval; then NFR Requirements, NFR Design, Infrastructure Design, Code Generation (one plan, three PRs), Build and Test per PR
+- [~] U3 `photo-gcs`: Functional Design artifacts rewritten 2026-10-05 for zero new columns (user), awaiting approval; then NFR Requirements, NFR Design, Infrastructure Design, Code Generation (one plan, three PRs; 3a without a migration), Build and Test per PR
 - [ ] Build and Test (per PR: gates, CI, preview checklist, merge, staging, promotion)
 
 ## Execution Plan Summary

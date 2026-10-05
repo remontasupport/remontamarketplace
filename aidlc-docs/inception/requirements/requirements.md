@@ -199,3 +199,11 @@ file.
 | OI-2 | Signed POST policy document vs V4 signed PUT URL for the ticket: the policy document enforces the size range at the bucket, the PUT URL does not; decided at Functional Design |
 | OI-3 | Whether the thumbnail URL lives on the upload row or a new profile column (FR-08) |
 | OI-4 | The request-count threshold for the alert's second condition, derived from current traffic |
+
+## Amendment 2026-10-05 (Functional Design)
+
+At the user's request the data model gains **no columns**. Where FR-01, FR-03, FR-07 and NFR-14 speak of a
+`PENDING`/`STAGED`/`REJECTED` row state, read: no row until confirm succeeds; a rejected or never-finished upload
+leaves no row (the object is deleted at once or by the bucket's lifecycle rule); the store is known from the key's
+prefix; processed and thumbnail URLs are derived from ids (FR-08: the thumbnail is stored at a derivable key,
+nothing is recorded). The behaviour the stories describe is unchanged.

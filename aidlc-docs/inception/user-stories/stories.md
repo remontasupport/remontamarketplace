@@ -247,3 +247,10 @@ As the operator, I want a repeatable step that updates existing alert policies f
 **Preview checklist cross-check (requirements §6.2):** phone upload with progress = US-PH-01/02; HEIC on iPhone =
 US-PH-05; HEIC on Android or desktop = US-PH-06; full sign-up = US-PH-04/12; processed copy, thumbnail, original
 gone, no EXIF = US-PH-07/09/13; old Blob photo displays = US-PH-08; slow single request does not fire = US-PH-17.
+
+## Amendment 2026-10-05 (Functional Design)
+
+No new columns (user decision). In US-PH-10, US-PH-11, US-PH-14 and US-PH-16 read "a `PENDING` row" as "no row
+yet", "`STAGED`" as "the row exists, unclaimed", "`REJECTED`" as "object deleted, no row", and "the row records
+which store" as "the key's prefix says which store". Acceptance criteria otherwise unchanged; the purge of
+never-confirmed objects is the bucket lifecycle rule.

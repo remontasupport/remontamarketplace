@@ -207,3 +207,8 @@ requires rolling 3b back first.
   Blob photo displayed after 3b; the purge log after 3c
 - **Operational Readiness**: the dead-letter alert covers processing; per-stage timing in logs; no single-upload
   latency emails after U1
+
+## Amendment 2026-10-05
+
+PR 3a no longer touches `packages/db`: the functional design was reworked to need **no new columns and no
+migration** (user decision). The Package Change Sequence row for 3a reads without the `packages/db` item.

@@ -2765,3 +2765,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > approved
 
 **AI action (2026-10-05, U3 Functional Design generated):** Plan approved (Q1 A, Q2 A, Q3 A). Wrote `aidlc-docs/construction/photo-gcs/functional-design/domain-entities.md` (the upload row with `state`, `store`, `expiresAt`, `rejectedReason`, `processedUrl`, `thumbnailUrl`, `processedAt`; additive migration with backfill; the state machine; bucket prefixes; the `PhotoUploaded` event; what the profile holds at each moment; the ticket), `business-rules.md` (R1 ticket, R2 confirm decision table, R3 claim, R4 processing incl. the as-is fallback, R5 purge, R6 the engine's retry budget, R7 device-side HEIC and shrink, R8 the error map, R9 overlap and cut-over), `business-logic-model.md` (algorithms L1-L6 with idempotence and race arguments; the PBT-01 testable-properties table, 10 rows) and `frontend-components.md` (hierarchy, optional props on the shared component, the uploader flow, the `Uploader` port and `xhrUploader`, messages, test ids). Plan checklist complete. Approval prompt presented; awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> state, store, expiry, rejection reason, processed and thumbnail URLs, processed time, are those the new columns?
+
+**AI action (2026-10-05):** Answered: yes, eight new columns on the existing table plus two indexes, with their writers and purposes.
+
+**User input (verbatim, 2026-10-05):**
+> processedUrl, thumbnailUrl, how will these two uses? is there another alternative way not to add a column but still fixes the issue? I don't want more columns
+
+**AI action (2026-10-05, Functional Design amended -- zero new columns):** Answered that both URLs were convenience copies (the profile holds the processed URL; the thumbnail URL derives from the id) and reworked the design to need no new columns and no migration: no row at ticket time (the ticket is a signed policy for `staging/<uuid>`); confirm creates the row after the checks, so existence = staged and `claimedAt` = claimed, as today; rejected or never-finished uploads leave no row (object deleted at once, or by the lifecycle rule); the store derives from the key prefix; processed and thumbnail URLs derive from ids; "done" is read from the profile. Rewrote `domain-entities.md`, `business-rules.md` (R1-R5, R9) and `business-logic-model.md` (L1-L6, properties); `frontend-components.md` unchanged. Dated amendment notes appended to `application-design.md` (AD-2 replaced), `execution-plan.md` (3a without `packages/db`), `requirements.md` and `stories.md`. Approval prompt presented again; awaiting the user.

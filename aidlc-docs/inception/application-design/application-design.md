@@ -60,3 +60,13 @@ goes.
 - **Resiliency**: timeouts named on every store call (C11, `GCS_TIMEOUT_MS`), processing isolated in the outbox
   with retries and dead-lettering (C15), degraded mode is a retryable field error (C4). No blocking finding.
 - **PBT**: properties identified for Functional Design (above); `fast-check` present. No blocking finding.
+
+## Amendment 2026-10-05 (Functional Design, user: "I don't want more columns")
+
+AD-2 is replaced: **no new columns, no migration.** Nothing is persisted at ticket time (the ticket is a signed
+policy for `staging/<uuid>`); confirm creates the row after checking the object, so a row's existence means
+"staged" and `claimedAt` means "claimed", as today; the store is derived from the key's prefix
+(`workers/registration/` = Blob, otherwise the bucket); the processed and thumbnail URLs are derived from the
+profile id and the upload id, and "processing done" is read from the profile's `photos`. C10 loses the state
+machine (replaced by `isClaimable` and `storeOf`); C12 writes nothing; C13 inserts the row; C17 keeps today's
+query. Details: `../../construction/photo-gcs/functional-design/`.
