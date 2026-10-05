@@ -1,11 +1,12 @@
 # AI-DLC State Tracking
 
 ## Project Information
-- **Project**: _(new cycle -- to be named at Inception)_
-- **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
-- **Start Date**: _(set when the new cycle starts)_
-- **Current Stage**: INCEPTION -- not started. The previous cycle closed on 2026-10-02; see "What is live" below before
-  planning anything.
+- **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
+- **Project Type**: Brownfield
+- **Current Stage**: **No cycle open.** The last cycle, *Sign-up photo on Google Cloud Storage* (2026-10-05), is closed
+  and archived under `aidlc-docs/archive/signup-photo-gcs/`; its two time-based observations are follow-ups 10 and 11
+  below (user decision 2026-10-05: close now, observe later). To start the next cycle: open a branch `aidlc/<name>`,
+  say "continue the AI-DLC" and name the goal; the Workspace Detection step reads this file first.
 
 ## Previous cycles (archived, read-only)
 
@@ -15,6 +16,7 @@
 | Slice 1 -- worker registration on `apps/api` | `aidlc-docs/archive/s1-worker-registration/` | Live in production since 2026-10-02 10:20Z |
 | Sign-up draft + reCAPTCHA badge (2 units) | `aidlc-docs/archive/signup-draft-and-recaptcha-badge/` | PR #30 and PR #32 merged 2026-10-02; verified live |
 | Legacy sign-up removal (cut-over clean-up) | `aidlc-docs/archive/legacy-signup-removal/` | PR #34 merged 2026-10-02 (`a30946e`); verified live; Upstash switch key deleted |
+| Sign-up photo on Google Cloud Storage (U1 `alert-policy`, U3 `photo-gcs` in PRs 3a/3b/3c) | `aidlc-docs/archive/signup-photo-gcs/` | PR #36 (`e20dee4`, the latency alert), #37 (`fbc6705`, api), #38 (`177a2c2`, wizard), #39 (`0dbed46`, clean-up) all merged and verified live 2026-10-05; production api revision `remonta-api-00005-j74`. Cycle closed 2026-10-05 with two observations open (follow-ups 10, 11) |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
@@ -27,6 +29,23 @@
   `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (`apps/app/src/lib/registration-backend.ts`); with either
   missing the page shows "Sign-up is temporarily unavailable" and logs the variable name. Rollback of an app change =
   Vercel promote; of the api = its previous revision/image.
+- **The sign-up photo goes straight from the browser to a private, upload-only Cloud Storage bucket** (2026-10-05, U3):
+  the api issues a signed POST-policy ticket (`POST /v1/registrations/worker/photo-tickets`, 10 min, bound to key,
+  type and 5 MB), the browser POSTs the file to `remonta-api-photos[-staging]` (Sydney) with a progress bar, then
+  confirms (`…/photo-confirmations`: the api inspects size, type and the first 16 bytes before the
+  `registration_photo_uploads` row exists). After the sign-up claims the row, the `PhotoUploaded` outbox handler makes
+  the clean copy (orientation applied, inside 1600 px, JPEG q85, metadata stripped) and a 256 px thumbnail and writes
+  them to **Vercel Blob** under `workers/<profileId>/` (public, `Cache-Control` 30 min, user decision), sets
+  `worker_profiles.photos` to the Blob URL and deletes the staging object. HEIC is refused on the device (the wizard's
+  accept list; dashboard screens keep theirs). No new database column. Blob remains the home of every photo (option 2,
+  2026-10-05: the organisation policy `iam.allowedPolicyMemberDomains` forbids public buckets). The multipart entry
+  `POST /v1/registrations/worker/photo` is gone (PR 3c); rows it wrote carry `workers/registration/` keys and are never
+  purged. Reference: `docs/signup/` (01 flow, 02 api, 03 data model, 05 events); code map in the archive's
+  `inception/requirements/signup-photo-inventory.md`. Measured on production: ticket ~0.35-0.45 s (IAM signBlob),
+  confirm ~0.2-0.3 s; the old multipart route was 4 s p95.
+- **The latency alert `remonta-api latency-p95`** (U1, PR #36) measures a true p95 over 5-minute windows
+  (`ALIGN_DELTA` + `REDUCE_PERCENTILE_95`), fires only with 60+ requests in the window for 10 minutes, treats missing
+  data as inactive; applied by `infra/cloudrun/apply-alerts.sh` from `infra/cloudrun/monitoring/<name>.json`.
 - **Staging** `remonta-api-staging` deploys from every merge to `main` that touches the api path; production moves only
   by `workflow_dispatch` promotion (CLAUDE.md "apps/api on Google Cloud Run"). Vercel Preview points at staging through
   the two public variables. **Still to remove by hand:** `REGISTRATION_BACKEND` in Vercel's Preview scope (unread).
@@ -37,18 +56,22 @@
   `worker_profiles.location/city/state/postalCode/latitude/longitude` because the search readers read them (follow-up 1).
 - **The sign-up draft lives in the tab's `sessionStorage`** (PR #30): a refresh restores it, closing the tab deletes it.
 - **The reCAPTCHA badge is hidden with no branding line** (PR #32, user decision; compliant variant = commit `ea8f89f`).
-- **Secrets** `remonta-api-<NAME>` in Secret Manager; the reCAPTCHA pair is the classic v3 key `remonta-api`
-  (domain `app.remontaservices.com.au`), secret version 4; the staging pair stays on `vercel.app` for previews.
-  `RECAPTCHA_SECRET_KEY` in `apps/app` still serves the client/coordinator register routes.
+- **Secrets** `remonta-api[-staging]-<NAME>`, six per stage, in Secret Manager (`BLOB_READ_WRITE_TOKEN` stays: the clean
+  copies go to Blob); the reCAPTCHA pair is the classic v3 key `remonta-api` (domain `app.remontaservices.com.au`),
+  secret version 4; the staging pair stays on `vercel.app` for previews. `RECAPTCHA_SECRET_KEY` in `apps/app` still
+  serves the client/coordinator register routes. The api's runtime service account signs upload policies through
+  IAM `signBlob` (no key file).
 - **Local dev shows "Sign-up is temporarily unavailable"** unless `NEXT_PUBLIC_API_URL` is set (`apps/app/.env` has no
-  api URL). Test sign-up changes on a Vercel preview, or run the api on port 4000 with the CLAUDE.md env overrides.
+  api URL). Test sign-up changes on a Vercel preview, or run the api on port 4000 with the CLAUDE.md env overrides
+  (the api now also needs `PHOTO_BUCKET`, `PHOTO_PUBLIC_BASE_URL` and, locally, `GCS_API_ENDPOINT` for the fake bucket).
 - **Local Prisma clients differ from the committed ones** (content, not only line endings) after a local
   `prisma generate`; never staged so far; cause unexamined (follow-up 7).
-- **Quality gates (2026-10-02):** app 144 type / 488 lint known / 83 tests; form-engine 51; api-contract 34; api 373
-  (124 need `TEST_DATABASE_URL`). CodeQL and Semgrep run on every PR; "Code scanning results / CodeQL" fails a PR on a
-  new high-severity alert (it did once, fixed in `packages/api-contract/src/client.ts`).
-- **Reference**: `docs/signup/README.md` documents the live sign-up; `03-data-model.md` §5 keeps the pre-S1 writes as
-  history (rows from before 2026-10-02 differ: mobile as typed, `LOGIN_SUCCESS` as the registration audit action).
+- **Quality gates (2026-10-05):** app 144 type / 488 lint known / 86 tests; form-engine 58; api-contract 35; api 404
+  (128 need `TEST_DATABASE_URL` and the fake bucket; CI runs both); infra 37; schemas 60. CodeQL and Semgrep run on
+  every PR; "Code scanning results / CodeQL" fails a PR on a new high-severity alert (it did once, fixed in
+  `packages/api-contract/src/client.ts`).
+- **Reference**: `docs/signup/README.md` documents the live sign-up; `03-data-model.md` §5 keeps the pre-S1 writes and
+  the multipart photo staging as history.
 
 ## Follow-ups left open (candidates for the next cycle or housekeeping)
 
@@ -70,8 +93,20 @@
 9. Smaller: SERVICE_OPTIONS in `apps/app/src/constants` stale vs the catalogue; two duplicate `users.email` indexes;
    the other hand-built forms onto the form engine (api-only now: add the contract entry first); admin users search
    still `contains` + insensitive; the 10 codes/h per IP decision; the production test worker account of
-   2026-10-02 10:26Z; stale branches (`aidlc/*`, `fix/*`, `feat/remove-legacy-signup`, and the older ones); tighten
+   2026-10-02 10:26Z; stale branches (`aidlc/*`, `fix/*`, `feat/*` merged ones, and the old `app/main`); tighten
    the app lint baseline file to 488 deliberately.
+10. **Observation, alert unit (U1)**: no `remonta-api latency-p95` email on 2026-10-06 (the first full day on the
+    corrected policy and the direct upload). If one arrives, read the policy's incident: the condition now needs 60+
+    requests in a 5-minute window.
+11. **Observation, latency goal (U3)**: after a week (by 2026-10-12), Cloud Logging on `remonta-api`: no request to
+    `/v1/registrations/worker/photo-tickets` or `…/photo-confirmations` above 500 ms, the multipart route absent (404),
+    the policy silent. Note the ticket's ~0.4 s (IAM signBlob) against the design's 300 ms hope: acceptable, or cache
+    nothing and accept, or sign with a key (rejected for key hygiene).
+12. **Photo-era leftovers**: the two staged test rows the 3a checks left in production (purged after 24 h by the job);
+    the multipart-era unclaimed rows, if any, now skipped by the purge (`skippedUnknownStore` in the daily summary);
+    the production test sign-up of 2026-10-05 08:57Z (profile `cmuv0oju40001s6014vmje0bp`) if it is not a real worker.
+13. **Dashboard uploads** (`/api/upload/worker-photo` and the shared `PhotoUpload` defaults, HEIC accepted there):
+    out of scope by the user's 2026-10-05 decision; the same ticket/confirm pattern can be applied later.
 
 ## Workspace State
 - **Existing Code**: Yes
@@ -80,32 +115,25 @@
 - **Project Structure**: Monorepo -- `apps/app` (Next.js application), `apps/web` (Next.js marketing site),
   `apps/api` (NestJS + Fastify on Cloud Run), `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`
 - **Workspace Root**: `C:\Users\floil\OneDrive\Documents\Projects\Remonta\remontamarketplace`
-- **Reverse Engineering Needed**: decide at Workspace Detection, once the intent is known (the last three cycles
-  deferred it or replaced it with a targeted inventory). The S1 archive holds the 2026-09-25 analysis (stale for
-  `apps/api`, `packages/api-contract`, `packages/form-engine`, `infra/`); `.brd/phase-0…8` the business view.
+- **Reverse Engineering**: the S1 archive holds the 2026-09-25 analysis (stale for `apps/api`, `packages/api-contract`,
+  `packages/form-engine`, `infra/`); the photo cycle's targeted inventory
+  (`archive/signup-photo-gcs/inception/requirements/signup-photo-inventory.md`) maps every photo path as of 2026-10-05;
+  `.brd/phase-0…8` the business view. A new cycle on another area should start with a targeted inventory of that area.
 
 ## Code Location Rules
 - **Application Code**: Workspace root (NEVER in aidlc-docs/)
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration
+## Extension Configuration (as last decided, 2026-10-05; re-decide at the next Requirements Analysis)
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | _(decide at Requirements Analysis; every cycle so far: Yes, blocking)_ | |
-| Resiliency Baseline | _(every cycle so far: Yes, blocking; targets SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min)_ | |
-| Property-Based Testing | _(S1: Yes, full; then Partial; last cycle: No)_ | |
+| Security Baseline | Yes, blocking | Requirements Analysis, 2026-10-05 (Q9 A) |
+| Resiliency Baseline | Yes, blocking; S1's targets carried forward (SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region) | Requirements Analysis, 2026-10-05 (Q10 A) |
+| Property-Based Testing | Yes, full | Requirements Analysis, 2026-10-05 (Q11 A) |
 
 ## Stage Progress
-### 🔵 INCEPTION PHASE
-- [ ] Workspace Detection
-- [ ] Reverse Engineering
-- [ ] Requirements Analysis
-- [ ] User Stories
-- [ ] Workflow Planning
-- [ ] Application Design
-- [ ] Units Generation
-
-### 🟢 CONSTRUCTION PHASE
-- [ ] Per unit: Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation
-- [ ] Build and Test
+No cycle open. The closed cycle's full stage record is in `aidlc-docs/archive/signup-photo-gcs/` (inception:
+requirements, 18 stories, execution plan, application design; construction: U1 infrastructure design and code, U3
+functional design, NFR requirements and design, infrastructure design, code generation plan with every step ticked,
+the three PR summaries and the 3b preview checklist).
