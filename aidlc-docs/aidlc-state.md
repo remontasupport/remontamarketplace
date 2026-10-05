@@ -111,7 +111,7 @@
 
 ### 🟢 CONSTRUCTION PHASE
 - [x] U1 `alert-policy`: PR #36 merged (`e20dee4`), policies applied to prod and staging 2026-10-05 03:45Z, live policy verified; one observation open (no latency email the next day). Summary: `construction/alert-policy/code/alert-policy-summary.md`
-- [~] U3 `photo-gcs`: PR 3a generated 2026-10-05 on `feat/photo-gcs-api` (4 commits to `dd9ff21`; option 2: copies in Blob, bucket private; buckets created by bootstrap; re-run pending), summary `construction/photo-gcs/code/photo-gcs-3a-summary.md`; awaiting code approval, then Build and Test 3a (user runs bootstrap for the buckets, PR, CI, merge, staging checks, promotion); then 3b, 3c
+- [~] U3 `photo-gcs`: PR 3a merged (#37, `fbc6705`), staging verified 2026-10-05 (ticket, upload, confirm on the real bucket; old entry unchanged); production promotion pending (imageTag fbc6705bc51310069f6c05e4e3d73525c0d0a64c), summary `construction/photo-gcs/code/photo-gcs-3a-summary.md`; awaiting code approval, then Build and Test 3a (user runs bootstrap for the buckets, PR, CI, merge, staging checks, promotion); then 3b, 3c
 - [ ] Build and Test (per PR: gates, CI, preview checklist, merge, staging, promotion)
 
 ## Execution Plan Summary

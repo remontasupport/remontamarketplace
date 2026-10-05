@@ -80,3 +80,26 @@ no WARNING line, the audit and metric lines). Then open the PR (4 commits, 53 fi
 **Amendment 2026-10-05, commit `922c374`:** the copies written to Blob carry `cacheControlMaxAge` of 30 minutes (user decision), not one year; constant `PHOTO_CACHE_S` in `photo-process.ts`.
 
 **CI, 2026-10-05:** first run failed (no signing credential in the fake-bucket suite; `2aeb6cd`), second run 411/412 (the oversize test declared a size over the limit; `3082b5b`), third run green on every check. The fake-bucket suite has now run in CI: adapter calls, ticket, upload, confirm, sign-up, processing with sharp on Linux, purge.
+
+## Build and Test, PR 3a -- staging (2026-10-05)
+
+- Bootstrap re-run by the user: both buckets `public_access_prevention: enforced`, uniform access, Sydney,
+  soft delete 7 d, lifecycle age 1 on `staging/`, labels; no managed folders left.
+- PR #37 merged into `main` as `fbc6705` (verified by refs). `deploy-api`: quality green, image
+  `api:fbc6705...` built and pushed (sharp and the storage client install in the container), staging
+  revision `remonta-api-staging-00012-sqn` serving; boot log "apps/api listening", no "will not start".
+- Staging checks from this machine (08:07Z): health 200 (0.28 s); ticket 201 in 0.72 s with the eight
+  signed fields and the expiry (IAM `signBlob` by the runtime account works); the browser-style form POST of
+  a 23.5 KB JPEG (EXIF + GPS + orientation 6) to `https://storage.googleapis.com/remonta-api-photos-staging/`
+  → 201 in 1.2 s from here; the object present with `image/jpeg`; confirm 200 in 0.50 s; a second confirm
+  200 (idempotent). Rejections: a guessed id → 409 "upload did not finish"; a ticket declaring HEIC → 400.
+  The old multipart entry on the same revision → 201 in 2.6 s (Blob unchanged). Production: health 200,
+  the ticket entry 404 (not promoted yet), sign-up page unchanged.
+- Not verifiable from here: a sign-up claiming a bucket row (reCAPTCHA needs a browser), so the processing
+  handler's first real run on staging happens in PR 3b's preview checklist, by the user, with
+  `clent.b@remontaservices.com.au`. The staged test row (`4717c4dd-...`) and its object are purged after 24 h.
+- The first upload attempt failed locally (http 000): the Windows curl does not read Git Bash `/c/...`
+  paths; `cygpath -m` fixed the script. Not an api issue.
+
+**Next:** production promotion by the user (Actions → deploy-api → Run workflow → stage=prod,
+imageTag=`fbc6705bc51310069f6c05e4e3d73525c0d0a64c`), then the same checks on production.
