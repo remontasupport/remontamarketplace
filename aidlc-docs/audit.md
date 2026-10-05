@@ -2800,3 +2800,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > approved
 
 **AI action (2026-10-05, U3 NFR Design generated):** Plan approved (Q1 B resiliency testing plan, Q2 A no breaker). Wrote `aidlc-docs/construction/photo-gcs/nfr-design/nfr-design-patterns.md` (P1 bounded calls, P2 the engine's retry budget, P3 the bulkhead, P4 idempotent handlers and claim-safe jobs, P5 fail closed / write last, P6 single-purpose credentials and immutable keys, P7 private by default, P8 backstops without code, P9 observability per stage with the log lines and two metrics, P10 degraded modes table, P11 no breaker justification, P12 the resiliency testing plan: nine CI scenarios, the staging drill revoking the bucket role, runbook additions) and `logical-components.md` (api, browser, Google Cloud, CI/local components with their NFR responsibilities; the configuration surface incl. `PHOTO_PROCESS_CONCURRENCY`; the capacity envelope). Plan checklist complete. Approval prompt presented; awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> continue
+
+**AI action (2026-10-05, U3 NFR Design approved; Infrastructure Design started):** Checked that Cloud Storage CORS accepts a subdomain wildcard origin and that `gcloud storage managed-folders` is available. Wrote `aidlc-docs/construction/plans/photo-gcs-infrastructure-design-plan.md` with three questions pre-filled: Q1 bucket names matching the service names; Q2 one bucket per stage with a public managed folder `workers/`; Q3 the user runs bootstrap (new step 11) before PR 3a merges. Fixed points: region, uniform access, soft delete, lifecycle, CORS, IAM, audit config, two log metrics, stage table + `lib.sh` names with a test, the CI container, no new secrets. Awaiting the user.
