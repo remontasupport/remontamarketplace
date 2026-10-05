@@ -2,8 +2,7 @@
 
 **Branch** `feat/photo-gcs-cleanup` from `main` `177a2c2` (3b merged), three commits `574be0a` (contract),
 `7740497` (api), `686a6c6` (docs), pushed 2026-10-05.
-**PR**: https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fphoto-gcs-cleanup?expand=1
-(24 files, +136 / -358). Plan: `../../plans/photo-gcs-code-generation-plan.md`, steps J1-J5, **as amended
+**PR #39**: https://github.com/remontasupport/remontamarketplace/pull/39 (24 files, +136 / -358), **merged 2026-10-05** as `0dbed46`; the cut-over window **waived by the user** the same day ("all who signed up today submitted an image"). Plan: `../../plans/photo-gcs-code-generation-plan.md`, steps J1-J5, **as amended
 by option 2** (2026-10-05): the Blob adapter, the `@vercel/blob` dependency and `BLOB_READ_WRITE_TOKEN` stay,
 because the clean copies live in Vercel Blob; step J3 (the secret out of `infra/`) is therefore cancelled.
 
@@ -48,6 +47,16 @@ CLAUDE.md.
    works through the wizard (ticket, confirm, submit; the processed copy in Blob).
 4. Promote (`workflow_dispatch`, stage=prod, the staging image tag); production health 200; the multipart route answers
    404; one internal sign-up from a phone still processes.
+
+## Build and Test (2026-10-05)
+
+| Step | Evidence |
+|---|---|
+| CI on the PR head `686a6c6` | all green, `CI (api)` included: the rewritten PostGIS suites ran against the service container (not runnable on the dev machine, Docker down) |
+| Staging | `deploy-api` on `0dbed46` → revision `remonta-api-staging-00014-dkq`, "apps/api listening" 09:23Z; health 200; multipart route 404; ticket and confirm answer |
+| Production | user promotion of `0dbed468ac9945f39513c12d9aa222b78d9ff2b7` → revision `remonta-api-00005-j74`, "apps/api listening" 09:41Z, no errors; health 200 (0.56 s); multipart route **404**; ticket and confirm 400 to an empty body (present); CORS preflight from the app origin 204; live sign-up page 200 |
+
+Not done: the production phone sign-up after the promotion (the wizard and the api's kept entries are unchanged by this PR; the morning's processed sign-up on `177a2c2` + `fbc6705` stands as the end-to-end proof). Nothing to delete in Secret Manager: the Blob token stays.
 
 ## Rollback
 

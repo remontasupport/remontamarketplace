@@ -2957,3 +2957,18 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > Done
 
 **AI action (2026-10-05, PR 3c Build and Test, staging):** Verified by refs: `origin/main` `0dbed46` = "Merge pull request #39", contains `686a6c6`. CI on the PR head all green, `CI (api)` included (the rewritten PostGIS suites ran against the service container). `deploy-api` built the image for `0dbed46` and deployed staging revision `remonta-api-staging-00014-dkq` (booted clean, "apps/api listening" 09:23Z). Staging: health 200; the removed multipart route answers 404; ticket and confirm answer 400 to an empty body (present). Production unchanged (still `fbc6705`, the multipart route still answers). Next, on the user: promote `0dbed46` to production (deploy-api, stage=prod).
+
+**User input (verbatim, 2026-10-05):**
+> what is the image tag?
+
+**AI action (2026-10-05):** `0dbed468ac9945f39513c12d9aa222b78d9ff2b7` (the full merge sha; the tag staging runs).
+
+**User input (verbatim, 2026-10-05):**
+> what is the branch? main?
+
+**AI action (2026-10-05):** Yes, `main`: the dropdown picks the workflow file; the image comes from the tag.
+
+**User input (verbatim, 2026-10-05):**
+> promoted to prod
+
+**AI action (2026-10-05, PR 3c Build and Test, production):** Verified: `remonta-api` runs image `0dbed468…`, revision `remonta-api-00005-j74`, "apps/api listening" 09:41:07Z, no errors in the log; health 200 (0.56 s); the multipart route answers 404; ticket and confirm answer 400 to an empty body; CORS preflight from the app origin 204; the live sign-up page 200. Summary, plan (J5) and state updated: U3's three PRs are live. Remaining for the cycle: U1's observation (no alert email 2026-10-06), the one-week latency check, then closing the cycle.

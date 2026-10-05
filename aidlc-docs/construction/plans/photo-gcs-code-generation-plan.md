@@ -232,7 +232,7 @@ by a production promotion; 3b by the app's own production deploy.
   tests ("exactly the five secrets").
 - [x] **J4 docs**: `02-api-reference.md` 4.6c removed; `03-data-model.md` §5 history note; CLAUDE.md secrets
   count; `README` source files.
-- [~] **J5** (gates green locally except the PostGIS and fake-bucket suites, Docker down: CI proves them; summary written; pushed 2026-10-05; PR, merge, staging, promotion wait for the cut-over window, 2026-10-08 at the earliest) gates; summary `photo-gcs-3c-summary.md`; PR; merge; staging; promotion; the user deletes the two
+- [x] **J5** (CI green incl. the PostGIS suites; PR #39 merged 2026-10-05 as `0dbed46`, window waived by the user; staging `00014-dkq` and production `00005-j74` verified; no secret to delete under option 2) gates; summary `photo-gcs-3c-summary.md`; PR; merge; staging; promotion; the user deletes the two
   Blob secrets in Secret Manager.
 
 ---
