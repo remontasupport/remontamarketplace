@@ -50,18 +50,7 @@ export async function submitToApi(def: FormDefinition, backend: Api, values: Rec
   }
 }
 
-/** Stages a file through an upload entry and returns the field value it answers with. */
-export async function uploadToApi(def: FormDefinition, backend: Api, entry: string, file: Blob & { name?: string }, deps: { retry?: RetryOptions } = {}): Promise<string> {
-  const send = contractCall(def.contract, backend.apiBaseUrl, entry);
-  const { value, ok } = await withRetry(async () => {
-    const body = new FormData();
-    body.append("photo", file, file.name ?? "photo.jpg");
-    return outcomeOf(await send({ body }, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) }));
-  }, deps.retry);
-  const answer = value.body as { photoUploadId?: string; error?: { fields?: Record<string, string[]> } } | null;
-  if (ok && value.ok && answer?.photoUploadId) return answer.photoUploadId;
-  throw new Error(answer?.error?.fields?.photo?.[0] ?? "Your photo could not be uploaded. Please try another photo.");
-}
+// The photo upload lives in photo-upload.ts (U3): ticket, direct upload, confirm.
 
 /** "services.0" -> "services": messages attach to the field, not an array index. */
 function topLevel(f: Record<string, string[]>): Record<string, string[]> {
@@ -72,6 +61,7 @@ function topLevel(f: Record<string, string[]>): Record<string, string[]> {
 
 export function messageFor(status: number): string {
   if (status === 403) return "We couldn't confirm you're not a robot. Please refresh the page and try again.";
-  if (status === 413 || status === 415) return "Your photo could not be accepted. Please upload a JPEG, PNG, WebP or HEIC photo.";
+  if (status === 413) return "Your photo is too large. Please choose a photo under 5 MB.";
+  if (status === 415) return "Please upload a JPEG, PNG or WebP photo.";
   return "Something went wrong on our side. Your details are saved on this device -- please try again in a moment.";
 }
