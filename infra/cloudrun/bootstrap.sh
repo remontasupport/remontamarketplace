@@ -13,7 +13,7 @@
 #   1. APIs                          6. Workload Identity Federation for GitHub Actions (no keys)
 #   2. Artifact Registry `remonta`   7. Log-based metrics the alerts read
 #   3. Runtime service accounts      8. 90-day log retention
-#   4. Empty secrets + accessor      9. Alert notification channel and policies per stage
+#   4. Empty secrets + accessor      9. Alert notification channel and policies per stage (apply-alerts.sh)
 #   5. Deploy service account       10. Prints the three GitHub repository variables
 set -euo pipefail
 
@@ -27,14 +27,11 @@ POOL=github
 PROVIDER=remontamarketplace
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Keep in step with infra/lib/stages.ts (the test suite checks the names there).
-STAGES=(staging prod)
-service_for() { case "$1" in staging) echo remonta-api-staging ;; prod) echo remonta-api ;; esac; }
-alerts_for() { case "$1" in staging) echo "instance-down outbox-dead-letter" ;; prod) echo "instance-down outbox-dead-letter 5xx-ratio latency-p95 request-failed will-not-start" ;; esac; }
+# The stage tables and helpers shared with apply-alerts.sh (lib.sh is kept in step with
+# infra/lib/stages.ts; the test suite checks the names there).
+# shellcheck source=lib.sh
+source "$here/lib.sh"
 SECRETS=(AUTH_DATABASE_URL RECAPTCHA_SECRET_KEY RESEND_API_KEY IP_HASH_SECRET BLOB_READ_WRITE_TOKEN N8N_REGISTRATION_WEBHOOK_URL)
-
-say() { printf '\n== %s\n' "$*"; }
-exists() { "$@" >/dev/null 2>&1; }
 
 gcloud config set project "$PROJECT" >/dev/null
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
@@ -96,23 +93,9 @@ metric remonta-api-will-not-start "apps/api refused to start (configuration or c
 say "8. Log retention 90 days (project _Default bucket)"
 gcloud logging buckets update _Default --location=global --retention-days=90 >/dev/null
 
-say "9. Alerts to $EMAIL"
-CHANNEL=$(gcloud beta monitoring channels list --filter="type=\"email\" AND labels.email_address=\"$EMAIL\"" --format='value(name)' | head -n1)
-if [ -z "$CHANNEL" ]; then
-  CHANNEL=$(gcloud beta monitoring channels create --display-name="Remonta api alerts" --type=email --channel-labels="email_address=$EMAIL" --format='value(name)')
-fi
+say "9. Alerts to $EMAIL (monitoring/*.json applied by apply-alerts.sh: created, updated or unchanged)"
 for STAGE in "${STAGES[@]}"; do
-  SVC=$(service_for "$STAGE")
-  for P in $(alerts_for "$STAGE"); do
-    NAME="$SVC $P"
-    if [ -z "$(gcloud alpha monitoring policies list --filter="displayName=\"$NAME\"" --format='value(name)')" ]; then
-      sed "s/__SERVICE__/$SVC/g; s/__STAGE__/$STAGE/g; s#__CHANNEL__#$CHANNEL#g; s/__PROJECT_ID__/$PROJECT/g" "$here/monitoring/$P.json" |
-        gcloud alpha monitoring policies create --policy-from-file=- >/dev/null
-      echo "   created: $NAME"
-    else
-      echo "   exists:  $NAME"
-    fi
-  done
+  bash "$here/apply-alerts.sh" "$STAGE" --project "$PROJECT" --email "$EMAIL"
 done
 
 say "10. GitHub repository VARIABLES (Settings -> Secrets and variables -> Actions -> Variables)"
