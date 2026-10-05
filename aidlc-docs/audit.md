@@ -2790,3 +2790,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > approved
 
 **AI action (2026-10-05, U3 NFR Requirements generated):** Plan approved (Q1-Q5 A). Wrote `aidlc-docs/construction/photo-gcs/nfr-requirements/nfr-requirements.md` (U3-PERF-01..05, U3-SCAL-01..03, U3-AVAIL-01..06, U3-SEC-01..09, U3-REL-01..04, U3-MAINT-01..05, U3-USE-01..04, each traced; compliance tables, RESILIENCY-14 deferred to NFR Design) and `tech-stack-decisions.md` (T1-T15 with alternatives: Cloud Storage, the official client, V4 POST policy, IAM signBlob, sharp, the outbox with a bulkhead of 2, XHR behind the engine port, the sniffer in `packages/schemas`, fake-gcs-server, offline policy tests with a throwaway key, the form POST verified on staging, fast-check, log metrics, write-side audit logs, configuration; versions policy; container notes; what is not adopted). Plan checklist complete. Approval prompt presented; awaiting the user.
+
+**User input (verbatim, 2026-10-05):**
+> continue to next stage
+
+**AI action (2026-10-05, U3 NFR Requirements approved; NFR Design started):** Read the NFR Design rules and the api's `Bulkhead`. Wrote `aidlc-docs/construction/plans/photo-gcs-nfr-design-plan.md` with two questions pre-filled: Q1 the RESILIENCY-14 resiliency testing approach (B proposed: failure-injection tests in CI against the fake server, one staging drill per release revoking the bucket role, the DR runbook extended); Q2 no circuit breaker on the bucket client in this unit (A). Fixed points: timeouts, retry ownership, bulkhead behaviour when full, fail-closed, signing credential handling. Awaiting the user.
