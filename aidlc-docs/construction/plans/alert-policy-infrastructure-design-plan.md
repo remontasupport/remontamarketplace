@@ -67,10 +67,10 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the two answers; resolve ambiguity in a clarification file
-- [ ] 2. `aidlc-docs/construction/alert-policy/infrastructure-design/infrastructure-design.md`: the policy's
+- [x] 1. Confirm the two answers; resolve ambiguity in a clarification file
+- [x] 2. `aidlc-docs/construction/alert-policy/infrastructure-design/infrastructure-design.md`: the policy's
   conditions, thresholds, durations, missing-data behaviour and documentation text; the apply step's behaviour;
   IAM needed (the operator's own account, as for bootstrap)
-- [ ] 3. `deployment-architecture.md`: where the policy lives, how it is applied per stage, how it is verified and
+- [x] 3. `deployment-architecture.md`: where the policy lives, how it is applied per stage, how it is verified and
   rolled back (re-apply the previous JSON)
-- [ ] 4. Present for approval
+- [x] 4. Present for approval

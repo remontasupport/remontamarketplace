@@ -4,7 +4,7 @@
 - **Project**: Sign-up photo on Google Cloud Storage -- direct browser upload, server verification, background processing, HEIC no longer accepted, latency alert corrected (branch `aidlc/signup-photo-gcs`)
 - **Project Type**: Brownfield -- the Remonta monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Start Date**: 2026-10-05
-- **Current Stage**: CONSTRUCTION -- U1 `alert-policy` Infrastructure Design, plan awaiting approval (scope: sign-up only, user 2026-10-05).
+- **Current Stage**: CONSTRUCTION -- U1 `alert-policy` Infrastructure Design artifacts awaiting approval (scope: sign-up only, user 2026-10-05).
   Decision (chat, 2026-10-05): "Option A" -- a Google Cloud Storage bucket in Sydney with api-issued upload tickets;
   old photos stay in Vercel Blob (store region `syd1`). Requirements approved; 18 stories approved. Evidence and
   code map: `inception/requirements/signup-photo-inventory.md`.
@@ -110,7 +110,7 @@
 - [ ] Units Generation -- SKIP (units fixed in the execution plan: U1 `alert-policy`, U3 `photo-gcs` in PRs 3a/3b/3c)
 
 ### 🟢 CONSTRUCTION PHASE
-- [~] U1 `alert-policy`: Infrastructure Design plan written 2026-10-05 (`construction/plans/alert-policy-infrastructure-design-plan.md`), awaiting approval; then Code Generation, Build and Test
+- [~] U1 `alert-policy`: Infrastructure Design artifacts written 2026-10-05 (`construction/alert-policy/infrastructure-design/`), awaiting approval; then Code Generation, Build and Test
 - [ ] U3 `photo-gcs`: Functional Design, NFR Requirements, NFR Design, Infrastructure Design, Code Generation (one plan, three PRs), Build and Test per PR
 - [ ] Build and Test (per PR: gates, CI, preview checklist, merge, staging, promotion)
 
