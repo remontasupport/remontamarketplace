@@ -2877,3 +2877,23 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > I think one year is very long, I thinks 30 minutes will work
 
 **AI action (2026-10-05):** Changed the processed copies' cache lifetime to 30 minutes (`PHOTO_CACHE_S = 30 * 60`, no "immutable"), in `photo-process.ts`, the unit test and the api reference; noted Blob's 60 s minimum and the trade-off (a few extra reads a day; a withdrawn photo disappears within 30 minutes). Api gate 284 passed. Commit `922c374` pushed (branch: 5 commits). Working copy returned to the code branch for the user's bootstrap re-run.
+
+**User input (verbatim, 2026-10-05):**
+> can you explain in simple terms the cache? we used to this fix
+
+**AI action (2026-10-05):** Explained the cache in plain terms (browser and edge keep a downloaded photo for the lifetime) and that it is not part of the latency fix: it only came up because the api now writes the copies and must state a value; the old path used Vercel's long default.
+
+**User input (verbatim, 2026-10-05):**
+> how about instead of caching it to the browser, we use redis to cache it
+
+**AI action (2026-10-05):** Advised against: Redis holds small data, not files; it would put the app in the path of every image view with two extra hops and per-request cost, while the edge and browser already cache files next to the viewer at no cost.
+
+**User input (verbatim, 2026-10-05):**
+> I think 30 minutes is very long, can we make it 3 minutes, what if the worker's uploads an image? so it will take effect after 3 minutes?
+
+**AI action (2026-10-05):** Clarified: a replacement photo appears at once whatever the lifetime, because every upload has its own unique address and the profile points at the new one; the lifetime only affects how long a deleted photo might linger on devices that had it; 3 minutes would add traffic for no gain. Recommended keeping 30.
+
+**User input (verbatim, 2026-10-05):**
+> ok leave it at 30 minutes
+
+**AI action (2026-10-05):** Decision recorded: 30 minutes stays (`PHOTO_CACHE_S`, commit `922c374`). No code change. Next: the user re-runs bootstrap and opens the PR.
