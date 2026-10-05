@@ -2927,3 +2927,8 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > continue
 
 **AI action (2026-10-05, PR 3b Code Generation, parts G-I):** Branch `feat/photo-gcs-wizard` from `main` `fbc6705`, three commits (`7bf30e5` engine, `3dd7ee8` app, `0d5e478` docs), pushed. Engine: the photo kind names ticket and confirm entries; `stagePhoto` with the `Uploader` port per R6; `uploadToApi` deleted; a modelled-api suite and a fast-check property (at most 3 transfers per ticket, 2 tickets). App: `xhrUploader` (fake-XHR tested), `readHeader`, the hook's HEIC stop and abort controller, progress state, `PhotoUpload` optional props with unchanged defaults, the definition switched. Docs updated. Gates: engine 58 passed; app type/lint baselines unchanged, 86 passed; turbo build ok; frozen lockfile ok. Not done and recorded: H8 (moot under option 2), H9's hook/component tests (Node-only vitest). Summary `photo-gcs-3b-summary.md`; checklist template `preview-checklist-3b.md`. Next, on the user: open the PR, run the §6.2 preview checklist with a phone, merge, production check.
+
+**User input (verbatim, 2026-10-05):**
+> Merged
+
+**AI action (2026-10-05, PR 3b Build and Test, production):** Verified by refs: `origin/main` `177a2c2` = "Merge pull request #38", contains `0d5e478`. Live sign-up page 200 with the wizard; its chunks contain the ticket path, the progress bar and the HEIC log (production serves the direct upload). `remonta-api` health 200, ticket entry answers; `remonta-api-staging` health 200 after the merge's deploy-api run. The preview checklist's results were not reported before the merge; the production phone run (P1-P2) remains the user's. Summary, checklist, plan (I2) and state updated. The cut-over window for PR 3c starts today.

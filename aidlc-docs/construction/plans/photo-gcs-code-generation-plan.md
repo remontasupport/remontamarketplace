@@ -214,7 +214,7 @@ by a production promotion; 3b by the app's own production deploy.
 
 - [x] **I1** `pnpm --filter @remonta/form-engine run quality`, `@remonta/app run quality` (baselines not grown),
   `npx turbo run build`.
-- [~] **I2** (summary written, pushed, PR link given 2026-10-05; the checklist, merge and production check pending on the user) Summary `photo-gcs-3b-summary.md`; push; PR; the preview checklist (requirements §6.2, phone in hand)
+- [x] **I2** (PR #38 merged 2026-10-05 as `177a2c2`; production serves the new wizard, apis healthy; the phone run on production is the user's, rows P1-P2 of the checklist) Summary `photo-gcs-3b-summary.md`; push; PR; the preview checklist (requirements §6.2, phone in hand)
   recorded in `aidlc-docs/construction/photo-gcs/code/preview-checklist-3b.md`; merge; production check.
 
 ---

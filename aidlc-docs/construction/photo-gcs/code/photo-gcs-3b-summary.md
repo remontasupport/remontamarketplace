@@ -2,8 +2,7 @@
 
 **Branch** `feat/photo-gcs-wizard` from `main` `fbc6705` (3a merged and promoted), three commits
 `7bf30e5` (engine), `3dd7ee8` (app), `0d5e478` (docs), pushed 2026-10-05.
-**PR**: https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fphoto-gcs-wizard?expand=1
-(20 files, +663 / -56). Plan: `../../plans/photo-gcs-code-generation-plan.md`, parts G-I.
+**PR #38**: https://github.com/remontasupport/remontamarketplace/pull/38 (20 files, +663 / -56), **merged 2026-10-05** as `177a2c2` ("Merge pull request"). Plan: `../../plans/photo-gcs-code-generation-plan.md`, parts G-I.
 
 ## What changed
 
@@ -59,6 +58,18 @@ runs). Record each line in `preview-checklist-3b.md`.
 Then merge with "Merge pull request" (Vercel deploys the app; production's api already serves the entries), and on
 production: one internal sign-up from a phone; the processed copy appears; the Cloud Run request log shows ticket and
 confirm under 300 ms; no photo route above 1.5 s.
+
+## Production verification (2026-10-05, after the merge)
+
+Verified by refs: `origin/main` is `177a2c2` and contains `0d5e478`. The live sign-up page
+(`app.remontaservices.com.au/registration/worker`) answers 200 with the wizard, and its script chunks
+(`app/registration/worker/page-a32a7a28….js` and the shared `8069-….js`) contain the ticket path, the progress
+bar and the HEIC log: production serves the direct upload. `remonta-api` health 200 and the ticket entry answers
+(400 to an empty body); `remonta-api-staging` health 200 after the merge's `deploy-api` run (the merge touched
+`packages/` and the lockfile; the api's own code is unchanged). The user reported the merge without the preview
+checklist's results; the phone sign-up on production (P1, P2 in `preview-checklist-3b.md`) is the user's to run and
+record. The multipart entry is now idle: the cut-over window for PR 3c starts today (R9.3: three days of purge
+summaries with no Blob-prefixed unclaimed rows).
 
 ## Rollback
 

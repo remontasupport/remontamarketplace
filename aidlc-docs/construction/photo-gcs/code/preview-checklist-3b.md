@@ -1,7 +1,7 @@
 # Preview checklist -- PR 3b (the wizard switch), requirements §6.2
 
 Preview: the Vercel preview of `feat/photo-gcs-wizard` (calls the staging api, revision with image `fbc6705`).
-Test address: `clent.b@remontaservices.com.au` (user, 2026-10-05). Fill in as each line is run.
+Test address: `clent.b@remontaservices.com.au` (user, 2026-10-05). Fill in as each line is run. **PR #38 was merged 2026-10-05 before results were reported here**; the production rows below still need a phone run.
 
 | # | Check | Result | When | Notes |
 |---|---|---|---|---|
