@@ -7,6 +7,7 @@
 // offline (gcs-policy.test.ts) and the browser's form POST on staging.
 import { randomUUID } from 'node:crypto'
 import { Storage } from '@google-cloud/storage'
+import { PHOTO_MAX_BYTES } from '@remonta/api-contract'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { GcsPhotoStore } from '../../src/modules/registration/adapters/gcs-photo-store'
 import { photoUploadedHandler } from '../../src/modules/registration/application/photo-process'
@@ -41,9 +42,13 @@ describe.skipIf(!localDb || !endpoint)('the direct photo upload against the fake
     await h?.close()
   })
 
-  /** The browser: a ticket, then the bytes under the ticket's key (the fake accepts a plain save). */
+  /**
+   * The browser: a ticket, then the bytes under the ticket's key. The declared size is
+   * capped at the limit: a browser may declare one size and send another, and the fake
+   * server enforces no policy, so an oversize object lands and confirm must catch it.
+   */
   async function uploadAsBrowser(data: Buffer, contentType = 'image/jpeg') {
-    const ticket = await h.t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo-tickets', payload: { contentType, sizeBytes: data.byteLength } })
+    const ticket = await h.t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo-tickets', payload: { contentType, sizeBytes: Math.min(data.byteLength, PHOTO_MAX_BYTES) } })
     expect(ticket.statusCode).toBe(201)
     const { photoUploadId, upload } = ticket.json() as { photoUploadId: string; upload: { fields: Record<string, string> } }
     expect(upload.fields.key).toBe(stagingKey(photoUploadId))
