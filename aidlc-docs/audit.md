@@ -2942,3 +2942,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > continue
 
 **AI action (2026-10-05, PR 3b production evidence; PR 3c Code Generation):** Cloud Logging on `remonta-api`: three ticket/confirm pairs through the live wizard at 08:57Z (tickets 345-424 ms, confirms 159-284 ms, CORS preflights 204) and `photo-process outcome=processed` at 08:58:00Z for upload `118fa0a1…` (profile `cmuv0oju40001s6014vmje0bp`): the direct upload works end to end on production; rows P1-P2 of the 3b checklist filled from the logs. Then PR 3c generated ahead of the cut-over window on `feat/photo-gcs-cleanup` from `177a2c2`: the multipart entry removed from the contract (openapi regenerated), `stage-photo.ts` → `photo-claim.ts`, no store branch in the sign-up transaction, `LocalDiskPhotoStore` and the image-type re-export gone, the purge on the bucket only (foreign keys skipped and counted), the harness and the PostGIS suite staging through ticket/confirm, docs. Option 2 amendment applied: Blob adapter, dependency and token stay; J3 cancelled. Gates: api-contract 35, api 276 passed / 128 skipped (PostGIS and fake-bucket suites not run: Docker not responding; CI proves them), form-engine 58, app tsc at the 144 baseline, api build ok. Three commits (`574be0a`, `7740497`, `686a6c6`), pushed. Summary `photo-gcs-3c-summary.md`. Rule stated to the user: not to merge before 2026-10-08 and three clean purge summaries.
+
+**User input (verbatim, 2026-10-05):**
+> why I wont merge it now?
+
+**AI action (2026-10-05):** Explained: PR 3c's purge keeps the bucket only, so multipart-era unclaimed rows (abandoned sign-ups before the switch) and their Blob files would never be purged if 3c reached production before they drained; cost small (orphaned rows and files); a merge deploys staging only, the promotion is the step to hold. Offered a read-only count of such rows in production.
+
+**User input (verbatim, 2026-10-05):**
+> I am sure that all who have signup today has submitted an image, no need tow ait for 10/08, can merge now
+
+**AI action (2026-10-05):** User decision recorded: PR 3c may be merged now (the cut-over window waived). Noted once that completed sign-ups are not the concern, abandoned ones are; cost accepted. The read-only count of Blob-era unclaimed rows in production was refused by the session's policy (production reads), so it was not run. Next: the user opens the PR; CI (API Quality proves the rewritten PostGIS suites); merge; staging checks; promotion.
