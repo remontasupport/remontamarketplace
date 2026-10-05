@@ -73,13 +73,13 @@ D) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the three answers; resolve any ambiguity in a clarification file
-- [ ] 2. `aidlc-docs/construction/photo-gcs/functional-design/domain-entities.md`: the upload row, its states,
+- [x] 1. Confirm the three answers; resolve any ambiguity in a clarification file
+- [x] 2. `aidlc-docs/construction/photo-gcs/functional-design/domain-entities.md`: the upload row, its states,
   keys and URLs; the outbox event; what the profile holds
-- [ ] 3. `business-rules.md`: ticket rules, confirm decision table, claim rules, processing rules, purge rules,
+- [x] 3. `business-rules.md`: ticket rules, confirm decision table, claim rules, processing rules, purge rules,
   the error map (api status -> engine message -> field state), the retry budget
-- [ ] 4. `business-logic-model.md`: the algorithms step by step (ticket, confirm, claim, process, purge,
+- [x] 4. `business-logic-model.md`: the algorithms step by step (ticket, confirm, claim, process, purge,
   `stagePhoto`), idempotence arguments, and the PBT-01 "Testable Properties" section per component
-- [ ] 5. `frontend-components.md`: the wizard's photo field, the uploader hook, progress state, the HEIC path,
+- [x] 5. `frontend-components.md`: the wizard's photo field, the uploader hook, progress state, the HEIC path,
   the shared component's new props, the engine's `Uploader` port
-- [ ] 6. Present for approval
+- [x] 6. Present for approval
