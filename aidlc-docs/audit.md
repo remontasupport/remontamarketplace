@@ -2972,3 +2972,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > promoted to prod
 
 **AI action (2026-10-05, PR 3c Build and Test, production):** Verified: `remonta-api` runs image `0dbed468…`, revision `remonta-api-00005-j74`, "apps/api listening" 09:41:07Z, no errors in the log; health 200 (0.56 s); the multipart route answers 404; ticket and confirm answer 400 to an empty body; CORS preflight from the app origin 204; the live sign-up page 200. Summary, plan (J5) and state updated: U3's three PRs are live. Remaining for the cycle: U1's observation (no alert email 2026-10-06), the one-week latency check, then closing the cycle.
+
+**User input (verbatim, 2026-10-05):**
+> is the ai dlc done?
+
+**AI action (2026-10-05):** Answered: every unit is live; the cycle's two time-based observations (no alert email 2026-10-06; a week of clean latency logs) and the formal close (archive, state, the docs branch merged into `main`) remain. Offered to close now with the observations as follow-ups.
+
+**User input (verbatim, 2026-10-05):**
+> close it now and open the docs PR
+
+**AI action (2026-10-05, cycle close):** Decision recorded: the cycle *Sign-up photo on Google Cloud Storage* is closed 2026-10-05 with the two observations as follow-ups 10 and 11. `aidlc-docs/inception/` and `aidlc-docs/construction/` moved to `aidlc-docs/archive/signup-photo-gcs/` (the state file at close kept beside them as `aidlc-state-at-close.md`); `aidlc-state.md` rewritten: no cycle open, the cycle in the previous-cycles table, the live facts (bucket + tickets + Blob clean copies, the alert policy, six secrets, gate numbers), follow-ups 10-13 added. `main` merged into the docs branch so the PR carries only `aidlc-docs/`; pushed; the compare link given to the user.
