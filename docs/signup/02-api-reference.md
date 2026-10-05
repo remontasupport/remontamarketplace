@@ -230,6 +230,16 @@ ticket nobody uses leaves at most a staging object the bucket's lifecycle rule r
 
 Errors: 400 (type or size), 429, 503 (storage or signing unavailable; `Retry-After: 2`).
 
+**What the wizard does with it** (`packages/form-engine/src/photo-upload.ts`, `stagePhoto`; the browser
+transport is `apps/app/src/features/forms/adapters/xhrUploader.ts`): the cropped photo is shrunk on the
+device, its first bytes are read, a HEIC container is refused there with a message (nothing is sent), and
+`contentType` is what the bytes say. The transfer shows a progress bar. On a dropped transfer or a 409 from
+confirm it retries the **same ticket** up to 2 more times with back-off; when storage refuses the policy
+(403) or the ticket has expired it asks for **one fresh ticket**; after that budget (at most 3 transfers
+per ticket, 2 tickets) the field shows "Your photo could not be uploaded. Please try again or choose
+another photo." A new pick or leaving the page aborts the transfer at once. The api calls themselves
+get the engine's usual retry (`Retry-After`, offline pause).
+
 #### 4.6b `POST /v1/registrations/worker/photo-confirmations` — confirm
 
 Body (JSON, strict): `{ "photoUploadId": "uuid" }`.
@@ -255,7 +265,8 @@ photo (seconds). Undecodable bytes are stored as uploaded in Blob instead
 
 #### 4.6c `POST /v1/registrations/worker/photo` — stage through the api (kept for one release)
 
-The pre-U3 path, unchanged until the wizard uses 4.6a/b and the clean-up PR removes it. Body:
+The pre-U3 path. The wizard has used 4.6a/b since PR 3b; this entry stays, unchanged, only until the
+clean-up PR (3c) removes it, so a wizard rollback by Vercel promote still has a backend. Body:
 `multipart/form-data` with exactly one file field `photo` (max 5 MB; declared type JPEG, PNG, WebP or
 HEIC, **and** the bytes must match). **201** `{ "photoUploadId": "uuid" }`. The file is stored in Vercel
 Blob as `workers/registration/<uuid>.<ext>` and a row inserted at once. Errors: 400, 413, 415, 429, 503

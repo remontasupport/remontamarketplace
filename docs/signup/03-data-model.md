@@ -154,7 +154,7 @@ fills the counts from `verification_requirements` later.
 
 ### 2.8 `registration_photo_uploads`
 
-Inserted by the photo confirm (4.6b) — or, until the wizard switch, by the multipart upload (4.6c) —
+Inserted by the photo confirm (4.6b) — or by the multipart upload (4.6c), which nothing calls since the wizard switch —
 and claimed by the submit (4.7). No column was added for the direct upload (U3): a row exists only once
 the object was checked; which store holds the object is the key's prefix.
 
