@@ -98,10 +98,10 @@ D) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the five answers; resolve ambiguity in a clarification file
-- [ ] 2. `aidlc-docs/construction/photo-gcs/nfr-requirements/nfr-requirements.md`: scalability, performance,
+- [x] 1. Confirm the five answers; resolve ambiguity in a clarification file
+- [x] 2. `aidlc-docs/construction/photo-gcs/nfr-requirements/nfr-requirements.md`: scalability, performance,
   availability, security, reliability, maintainability and usability requirements for the unit, each traced to a
   rule or story, with the extension compliance tables
-- [ ] 3. `tech-stack-decisions.md`: the libraries, versions, the signing method, the test strategy, the fake
+- [x] 3. `tech-stack-decisions.md`: the libraries, versions, the signing method, the test strategy, the fake
   server, the bulkhead, logging and metrics, with alternatives considered
-- [ ] 4. Present for approval
+- [x] 4. Present for approval
