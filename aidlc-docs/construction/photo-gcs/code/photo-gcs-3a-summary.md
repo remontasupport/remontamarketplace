@@ -76,3 +76,5 @@ bootstrap (`--public-access-prevention=inherited`, `--labels` on create) were fi
 **Before the PR:** the user re-runs `bash infra/cloudrun/bootstrap.sh remonta-api-510206` so step 11
 enforces public access prevention and removes the two managed folders (expected: `exists: gs://...` for both,
 no WARNING line, the audit and metric lines). Then open the PR (4 commits, 53 files).
+
+**Amendment 2026-10-05, commit `922c374`:** the copies written to Blob carry `cacheControlMaxAge` of 30 minutes (user decision), not one year; constant `PHOTO_CACHE_S` in `photo-process.ts`.

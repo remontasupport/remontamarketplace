@@ -2867,3 +2867,13 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > go with option 2
 
 **AI action (2026-10-05, PR 3a amended for option 2):** On feat/photo-gcs-api: photo-process.ts writes the clean copy, thumbnail and as-is fallback to Vercel Blob (BlobPhotoStore.put gains cacheControlMaxAge; one-year immutable cache), reads and deletes the original from the bucket, "already done" is the profile URL containing the upload's key; the Blob token is required (config.ts); the multipart path loses its 503 guard; main.ts wires the Blob store into processing; bootstrap step 11 enforces public access prevention on update, removes the earlier managed folder, makes no public grant; tests repointed (processing output on the Blob double, bucket left empty; config token required); docs (02 section 4.6, 03 section 2.8, 05 events, infra README) and .env.example (which an earlier substitution had silently left unchanged) updated. Gates: api 284 passed / 128 skipped, infra 37. Commit dd9ff21 pushed (branch: 4 commits, 53 files, +2263/-128). Design records amended (notes appended). Next: the user re-runs bootstrap (step 11 now enforces prevention and deletes the folders), then the PR.
+
+**User input (verbatim, 2026-10-05):**
+> one-year immutable cache, what does that mean?
+
+**AI action (2026-10-05):** Explained the Cache-Control setting on the stored copies (browsers and the edge keep a copy for the period; "immutable" skips revalidation; safe because addresses are unique per upload; a withdrawn photo could linger in caches until expiry, as with today's Blob default).
+
+**User input (verbatim, 2026-10-05):**
+> I think one year is very long, I thinks 30 minutes will work
+
+**AI action (2026-10-05):** Changed the processed copies' cache lifetime to 30 minutes (`PHOTO_CACHE_S = 30 * 60`, no "immutable"), in `photo-process.ts`, the unit test and the api reference; noted Blob's 60 s minimum and the trade-off (a few extra reads a day; a withdrawn photo disappears within 30 minutes). Api gate 284 passed. Commit `922c374` pushed (branch: 5 commits). Working copy returned to the code branch for the user's bootstrap re-run.
