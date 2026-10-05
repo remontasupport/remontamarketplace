@@ -275,10 +275,10 @@ describe('processPhoto (R4): reads the bucket, writes the clean copies to Blob',
   })
 })
 
-describe('purge over two stores (R5, model-based)', () => {
-  it('deletes exactly the unclaimed rows older than 24 h, object first, from the store the key names; skips a store with no adapter', async () => {
+describe('purge (R5, model-based): the bucket only', () => {
+  it('deletes exactly the unclaimed bucket rows older than 24 h, object first; a row with a foreign key (the removed multipart entry) is skipped and counted', async () => {
     await fc.assert(
-      fc.asyncProperty(fc.array(purgeRow, { maxLength: 12 }), fc.boolean(), async (rows, blobConfigured) => {
+      fc.asyncProperty(fc.array(purgeRow, { maxLength: 12 }), async (rows) => {
         const now = new Date('2026-10-05T12:00:00Z')
         const gcs = new InMemoryPhotoStore()
         const blob = new InMemoryBlobStore()
@@ -300,16 +300,16 @@ describe('purge over two stores (R5, model-based)', () => {
             },
           },
         } as unknown as Db
-        const result = await purgeUnclaimedPhotosJob(db, { gcs, blob: blobConfigured ? blob : undefined }).run({ watermark: null, now, signal: new AbortController().signal })
+        const result = await purgeUnclaimedPhotosJob(db, { gcs }).run({ watermark: null, now, signal: new AbortController().signal })
         for (const r of rows) {
           // The job's window is strict: createdAt < now - 24 h, so exactly 24 h is not yet stale.
           const stale = !r.claimed && r.hoursAgo > 24
-          const purgeable = stale && (r.store === 'gcs' || blobConfigured)
+          const purgeable = stale && r.store === 'gcs'
           expect(table.has(r.id), `${r.store} ${r.hoursAgo}h claimed=${r.claimed}`).toBe(!purgeable)
           const objectThere = r.store === 'gcs' ? gcs.objects.has(`staging/${r.id}`) : blob.objects.has(`workers/registration/${r.id}.jpg`)
           expect(objectThere).toBe(!purgeable)
         }
-        const expectedSkipped = rows.filter((r) => !r.claimed && r.hoursAgo > 24 && r.store === 'vercel-blob' && !blobConfigured).length
+        const expectedSkipped = rows.filter((r) => !r.claimed && r.hoursAgo > 24 && r.store === 'vercel-blob').length
         expect(result.summary).toMatchObject({ skippedUnknownStore: expectedSkipped, failed: 0 })
       }),
       { numRuns: 40 },

@@ -40,7 +40,7 @@ Every error, from every endpoint, has one shape (`packages/api-contract/src/erro
 | 404 | `NOT_FOUND` | Unknown path |
 | 409 | `CONFLICT` | Not used by sign-up |
 | 413 | `PAYLOAD_TOO_LARGE` | Body over the endpoint's limit; photo over 5 MB |
-| 415 | `UNSUPPORTED_MEDIA_TYPE` | Photo not multipart, wrong declared type, or bytes that are not an image |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | Photo bytes that are not a JPEG, PNG or WebP, or not the type the ticket was bound to (4.6b) |
 | 429 | `RATE_LIMITED` | A rate limit was hit (see §3) |
 | 500 | `INTERNAL` | Unexpected failure; also the email provider refusing a send |
 | 503 | `UNAVAILABLE` | Overloaded (load shedding), database down, reCAPTCHA or email provider unreachable |
@@ -75,7 +75,6 @@ previews); production will allow `https://app.remontaservices.com.au` only.
 | 4.5 | POST | `/v1/registrations/worker/email-codes/verify` | Check the code | — | 30/h / 5000/h | — | 1 KB |
 | 4.6a | POST | `/v1/registrations/worker/photo-tickets` | A ticket to upload the photo straight to storage | — | 10/h / 300/h | — | 1 KB |
 | 4.6b | POST | `/v1/registrations/worker/photo-confirmations` | Confirm the uploaded photo | — | 30/h / 1000/h | — | 1 KB |
-| 4.6c | POST | `/v1/registrations/worker/photo` | Stage the profile photo through the api (kept until the wizard uses 4.6a/b) | — | 10/h / 300/h | — | 5 MB |
 | 4.7 | POST | `/v1/registrations/worker` | Create the account | `worker_register` | 5/h / 500/h | — | 16 KB |
 | — | GET | `/v1/health` | Liveness (Cloud Run probe) | — | 60/min | — | 1 KB |
 
@@ -263,14 +262,7 @@ then set to the Blob URL and the staging object deleted from the bucket. Until t
 photo (seconds). Undecodable bytes are stored as uploaded in Blob instead
 ([05 §2](05-events-and-emails.md#2-outbox-events)).
 
-#### 4.6c `POST /v1/registrations/worker/photo` — stage through the api (kept for one release)
-
-The pre-U3 path. The wizard has used 4.6a/b since PR 3b; this entry stays, unchanged, only until the
-clean-up PR (3c) removes it, so a wizard rollback by Vercel promote still has a backend. Body:
-`multipart/form-data` with exactly one file field `photo` (max 5 MB; declared type JPEG, PNG, WebP or
-HEIC, **and** the bytes must match). **201** `{ "photoUploadId": "uuid" }`. The file is stored in Vercel
-Blob as `workers/registration/<uuid>.<ext>` and a row inserted at once. Errors: 400, 413, 415, 429, 503
-(no Blob token configured).
+**History.** The pre-U3 entry `POST /v1/registrations/worker/photo` (multipart through the api, the file to Vercel Blob as `workers/registration/<uuid>.<ext>`) was removed in PR 3c after the cut-over window; rows it wrote carry that key prefix and are never touched by the purge.
 
 ### 4.7 `POST /v1/registrations/worker` — create the account
 

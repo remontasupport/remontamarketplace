@@ -11,7 +11,7 @@ import { Prisma, type Db } from '../../../platform/persistence/db'
 import { StoreUnavailable, type PhotoStore } from '../adapters/photo-store'
 import { publicUrl, stagingKey } from '../domain/photo-upload'
 import { PHOTO_STORE_UNAVAILABLE } from './photo-ticket'
-import { hashIp } from './stage-photo'
+import { hashIp } from './photo-claim'
 
 export interface PhotoConfirmDeps {
   db: Db

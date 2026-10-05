@@ -35,7 +35,7 @@ this folder disagree, the code wins; fix this folder in the same PR.
 | Services check against the catalogue | `apps/api/src/modules/registration/application/resolve-services.ts` |
 | Email lookup (case-insensitive, one place) | `apps/api/src/modules/registration/persistence/users.ts` |
 | Photo ticket, confirm, processing (direct upload, U3) | `apps/api/src/modules/registration/application/photo-ticket.ts`, `photo-confirm.ts`, `photo-process.ts`; keys and windows in `domain/photo-upload.ts`; the bucket adapter `adapters/gcs-photo-store.ts` |
-| Photo staging through the api (kept for one release), claim | `apps/api/src/modules/registration/application/stage-photo.ts` |
+| Photo claim in the sign-up transaction (R4) | `apps/api/src/modules/registration/application/photo-claim.ts` |
 | Photo purge | `apps/api/src/modules/registration/jobs/purge-photos.ts` |
 | Email availability | `apps/api/src/modules/registration/application/email-availability.ts` |
 | Email codes | `apps/api/src/modules/registration/application/email-code.ts`, `domain/email-code.ts` |

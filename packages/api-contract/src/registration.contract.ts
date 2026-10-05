@@ -97,28 +97,6 @@ export const registrationContract = defineContract('registration', {
     }),
   },
 
-  uploadRegistrationPhoto: {
-    method: 'POST',
-    path: '/v1/registrations/worker/photo',
-    summary: 'Stage a profile photo for a sign-up. Returns an upload id, never a URL.',
-    body: {
-      kind: 'multipart',
-      files: {
-        photo: { maxBytes: PHOTO_MAX_BYTES, mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'] },
-      },
-    },
-    responses: { 201: z.strictObject({ photoUploadId: z.uuid() }) },
-    meta: meta({
-      access: 'public',
-      bot: 'none',
-      rateLimit: [
-        { per: 'ip', limit: 10, window: '1h' },
-        { per: 'global', limit: 300, window: '1h' },
-      ],
-      maxBodyKb: 5120,
-    }),
-  },
-
   checkEmailAvailability: {
     method: 'POST',
     path: '/v1/registrations/worker/email-availability',

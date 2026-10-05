@@ -47,7 +47,6 @@ async function main() {
       hasher,
       breaches: new PwnedPasswordsChecker(http),
       localities: new LocalityDirectory(db),
-      store: blobStore,
       bucket,
       publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL,
       ipHashSecret: config.IP_HASH_SECRET,
@@ -82,7 +81,7 @@ async function main() {
   dispatcher.start(config.OUTBOX_POLL_MS)
   const jobs: Job[] = [
     onboardingReconcilerJob(db, log, { everyMs: config.RECONCILER_INTERVAL_MS }),
-    purgeUnclaimedPhotosJob(db, { gcs: bucket, blob: blobStore }),
+    purgeUnclaimedPhotosJob(db, { gcs: bucket }),
     outboxRetentionJob(db),
     {
       name: 'rate-limit-purge',

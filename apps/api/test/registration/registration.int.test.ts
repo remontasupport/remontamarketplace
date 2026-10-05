@@ -3,9 +3,6 @@
 // only for the CAPTCHA, the rate limiter and the breached-password service.
 // Runs only when TEST_DATABASE_URL points at localhost.
 import { randomUUID } from 'node:crypto'
-import { mkdtemp, readdir, rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { contracts, platformContract, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { CONSENT_WORDING_VERSION, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
@@ -15,7 +12,6 @@ import bcrypt from 'bcryptjs'
 import fc from 'fast-check'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { LocalityDirectory } from '../../src/modules/localities/locality-directory'
-import { LocalDiskPhotoStore } from '../../src/modules/registration/adapters/photo-store'
 import type { BreachCheck } from '../../src/modules/registration/adapters/pwned-passwords'
 import { EMAIL_CODE_MESSAGES } from '../../src/modules/registration/application/email-code'
 import { EMAIL_NOT_VERIFIED } from '../../src/modules/registration/application/register-worker'
@@ -25,7 +21,7 @@ import type { Email } from '../../src/platform/email/mailer'
 import { PermanentFailure } from '../../src/platform/errors'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { WorkerPoolHasher } from '../../src/platform/security/password-hasher'
-import { multipart, testApp, unreachableHandlers, type TestApp } from '../helpers'
+import { testApp, unreachableHandlers, type TestApp } from '../helpers'
 import { InMemoryPhotoStore } from './fakes'
 
 const url = process.env.TEST_DATABASE_URL
@@ -39,7 +35,7 @@ const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 
 describe.skipIf(!local)('registration on PostGIS', () => {
   let db: Db
   let t: TestApp
-  let photos: string
+  const bucket = new InMemoryPhotoStore()
   let hasher: WorkerPoolHasher
   let hashCalls = 0
   let breach: BreachCheck = { status: 'clear' }
@@ -51,7 +47,6 @@ describe.skipIf(!local)('registration on PostGIS', () => {
 
   beforeAll(async () => {
     db = createDb(url!)
-    photos = await mkdtemp(join(tmpdir(), 'photos-'))
     hasher = new WorkerPoolHasher({ threads: 2, cost: 4 })
     await cleanup()
     await db.category.create({ data: { id: 'test-support', name: 'Test Support Work', subcategories: { create: [{ id: 'test-personal-care', name: 'Test Personal Care' }] } } })
@@ -69,8 +64,7 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       hasher: counting,
       breaches: { check: async () => breach },
       localities: new LocalityDirectory(db),
-      store: new LocalDiskPhotoStore(photos),
-      bucket: new InMemoryPhotoStore(),
+      bucket,
       publicBaseUrl: 'http://bucket.test/photos',
       ipHashSecret: 'test-secret-'.repeat(4),
       mailer: {
@@ -95,7 +89,6 @@ describe.skipIf(!local)('registration on PostGIS', () => {
     await cleanup()
     await hasher?.close()
     await db?.$disconnect()
-    await rm(photos, { recursive: true, force: true })
   })
 
   async function cleanup() {
@@ -104,20 +97,26 @@ describe.skipIf(!local)('registration on PostGIS', () => {
     await db.$executeRaw`DELETE FROM outbox_events WHERE payload->>'userId' = ANY(${userIds}::text[])`
     await db.auditLog.deleteMany({ where: { userId: { in: userIds } } })
     await db.user.deleteMany({ where: { id: { in: userIds } } })
-    await db.registrationPhotoUpload.deleteMany({ where: { blobKey: { startsWith: 'workers/registration/' }, ipHash: { not: '' }, url: { startsWith: 'local-photo://' } } })
+    await db.$executeRaw`DELETE FROM outbox_events WHERE type = 'PhotoUploaded' AND payload->>'photoUploadId' IN (SELECT id::text FROM registration_photo_uploads WHERE url LIKE 'http://bucket.test/photos/%')`
+    await db.registrationPhotoUpload.deleteMany({ where: { url: { startsWith: 'http://bucket.test/photos/' } } })
     await db.subcategory.deleteMany({ where: { id: { startsWith: 'test-' } } })
     await db.category.deleteMany({ where: { id: { startsWith: 'test-' } } })
     await db.auLocality.deleteMany({ where: { localityPid: 'test-retired' } })
   }
 
-  async function uploadPhoto(data: Buffer = JPEG, type = 'image/jpeg') {
-    const res = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo', ...multipart([{ name: 'photo', filename: 'me.jpg', type, data }]) })
-    return res
+  /** The direct upload as the browser does it: a ticket, the object under the ticket's key, confirm. */
+  async function stagePhoto(data: Buffer = JPEG, contentType = 'image/jpeg') {
+    const ticket = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo-tickets', payload: { contentType, sizeBytes: data.byteLength } })
+    expect(ticket.statusCode).toBe(201)
+    const { photoUploadId, upload } = ticket.json() as { photoUploadId: string; upload: { fields: Record<string, string> } }
+    bucket.putAsBrowser(upload.fields.key!, data, contentType)
+    const confirm = await t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/photo-confirmations', payload: { photoUploadId } })
+    return { photoUploadId, confirm }
   }
   async function stagedPhotoId() {
-    const res = await uploadPhoto()
-    expect(res.statusCode).toBe(201)
-    return res.json().photoUploadId as string
+    const { photoUploadId, confirm } = await stagePhoto()
+    expect(confirm.statusCode).toBe(200)
+    return photoUploadId
   }
   const email = () => `worker-${randomUUID().slice(0, 8)}@${DOMAIN}`
   const requestCode = (email: string) => t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker/email-codes', payload: { email, captchaToken: 'test-token' } })
@@ -154,22 +153,23 @@ describe.skipIf(!local)('registration on PostGIS', () => {
   }
   const register = (payload: object) => t.fastify.inject({ method: 'POST', url: '/v1/registrations/worker', payload })
 
-  describe('photo upload', () => {
-    it('stages the photo under a server-generated name and returns only an id', async () => {
-      const res = await uploadPhoto()
-      expect(res.statusCode).toBe(201)
-      expect(Object.keys(res.json())).toEqual(['photoUploadId'])
-      const row = await db.registrationPhotoUpload.findUniqueOrThrow({ where: { id: res.json().photoUploadId } })
-      expect(row.blobKey).toMatch(/^workers\/registration\/[0-9a-f-]{36}\.jpg$/)
+  describe('photo ticket and confirm', () => {
+    it("confirms the uploaded object into a row under the ticket's key and returns only the id", async () => {
+      const { photoUploadId, confirm } = await stagePhoto()
+      expect(confirm.statusCode).toBe(200)
+      expect(confirm.json()).toEqual({ photoUploadId })
+      const row = await db.registrationPhotoUpload.findUniqueOrThrow({ where: { id: photoUploadId } })
+      expect(row.blobKey).toBe(`staging/${photoUploadId}`)
       expect(row).toMatchObject({ contentType: 'image/jpeg', sizeBytes: JPEG.length, claimedAt: null })
       expect(row.ipHash).toMatch(/^[0-9a-f]{64}$/) // never the raw IP
-      expect((await readdir(join(photos, 'workers/registration'))).length).toBeGreaterThan(0)
     })
 
-    it('refuses a file whose bytes are not an image, whatever it claims to be', async () => {
-      const res = await uploadPhoto(Buffer.from('<html><script>alert(1)</script>'), 'image/jpeg')
-      expect(res.statusCode).toBe(415)
-      expect(res.json().error.fields).toEqual({ photo: ['Please upload a JPEG, PNG, WebP or HEIC photo'] })
+    it('refuses an object whose bytes are not an image, whatever the ticket declared: no row, the object deleted', async () => {
+      const { photoUploadId, confirm } = await stagePhoto(Buffer.from('<html><script>alert(1)</script>'), 'image/jpeg')
+      expect(confirm.statusCode).toBe(415)
+      expect(confirm.json().error.fields).toEqual({ photo: ["Please upload a JPEG, PNG or WebP photo."] })
+      expect(await db.registrationPhotoUpload.count({ where: { id: photoUploadId } })).toBe(0)
+      expect(bucket.objects.has(`staging/${photoUploadId}`)).toBe(false)
     })
   })
 
@@ -335,7 +335,7 @@ describe.skipIf(!local)('registration on PostGIS', () => {
         zohoLeadId: '5725767000012345678',
       })
       expect(p.consentProfileShareAt).toBeInstanceOf(Date)
-      expect(p.photos).toMatch(/^local-photo:\/\/workers\/registration\//)
+      expect(p.photos).toBeNull() // the clean copy arrives through the PhotoUploaded event (seconds)
 
       const services = await db.workerService.findMany({ where: { workerProfileId: p.id }, orderBy: { categoryId: 'asc' } })
       expect(services.map((s) => [s.categoryId, s.categoryName, s.subcategoryIds, s.subcategoryNames])).toEqual([
