@@ -40,6 +40,9 @@ success; merged `36b25e6` 2026-10-08 ~07:37Z). Plan: `../../plans/admin-search-c
 
 ## After the merge
 
-Production: the dashboard keeps working (it has not called these routes since PR 3); `GET /api/admin/contractors`
-answers 404. The state file's follow-up 1 shrinks to the client search and the public list readers plus the dual
+Production, 07:39Z (the build live ~2 min after the merge): `GET /api/admin/contractors`, `/api/admin/users`,
+`/api/admin/filters` -> 404; `/api/auth/api-token` -> 401 without a session; prod api health 200, no `auth: rejected`
+line in 30 min. `/api/admin/contractors/inactive` now answers 500: the kept dynamic route `contractors/[id]` catches
+`inactive` as an id and its auth failure is a 500 (that route's existing behaviour, as for `.../x/status`); nothing
+calls it. The dashboard keeps working (it has not called these routes since PR 3). The state file's follow-up 1 shrinks to the client search and the public list readers plus the dual
 write and the column drop.

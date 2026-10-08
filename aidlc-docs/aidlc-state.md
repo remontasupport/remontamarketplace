@@ -9,12 +9,11 @@
 - **Current Stage**: **CONSTRUCTION complete; cycle close pending (paused by the user 2026-10-08 ~07:40Z).**
   All four PRs are merged: #41 `c95435c` (U1 api-identity), #42 `b09a9c1` (U2 admin api), #43 `64508be` (U2 the app
   switch), #44 `36b25e6` (U2 clean-up). The api image `b09a9c1` is on prod `remonta-api-00006-tj5` (promoted 06:49Z);
-  the app is on `main` = `36b25e6` through Vercel. The production check of PR 4 (old paths 404, dashboard unaffected)
-  was in flight when the user paused; its result is in `audit.md` (the last entries).
+  the app is on `main` = `36b25e6` through Vercel. The production check of PR 4 passed at 07:39Z (old paths 404, token route 401, prod api healthy, no rejection;
+  `pr4-summary.md` "After the merge").
 
   **To resume ("continue the AI-DLC"):**
-  1. Read `audit.md` from the entry "PR 4 merged" on: confirm the production check landed (old `/api/admin/*` paths
-     404, `/api/auth/api-token` 401 without a session, prod api health 200, no `auth: rejected` lines).
+  1. Read `audit.md` from the entry "PR 4 merged" on (the production check is recorded there and in `pr4-summary.md`).
   2. Ask the user for the current `remonta-app` production deployment id (Vercel -> Deployments) and re-record the
      rollback row in CLAUDE.md (follow-up 3; the `remontamarketplace` row too if it changed).
   3. Cycle close: move this cycle's record under `aidlc-docs/archive/admin-search-api/` (inception, construction,
