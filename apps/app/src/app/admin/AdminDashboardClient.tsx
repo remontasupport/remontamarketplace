@@ -1,299 +1,69 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+// The admin worker search (U2 admin-search, PR 3): the dashboard reads through
+// apps/api (`adminApi`, a bearer token minted by this app) instead of the old
+// Next.js route. The suburb is one of ours (an au_localities id from the
+// autocomplete), "Within" is a radius from its centre computed by PostGIS, every
+// other filter combines with it, and workers with no mapped suburb are counted
+// and listable. Repeats within a minute come from the browser's private cache and
+// the api's memo; the refresh button and every admin action reload past both.
+// Rules: construction/admin-search/functional-design/business-rules.md R11.
+
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
+import type { WorkerRow, WorkerSearchResponse } from '@remonta/api-contract'
 import { useCategories } from '@/hooks/queries/useCategories'
 import WorkerAvatar from '@/components/ui/WorkerAvatar'
+import { adminApi, type ApiOutcome } from '@/lib/api/admin'
+import {
+  DEFAULT_FILTERS,
+  EXPERIENCE_OPTIONS,
+  THERAPEUTIC_CATEGORY_ID,
+  WITHIN_OPTIONS_KM,
+  canonicalOf,
+  filtersFromURL,
+  toQuery,
+  urlFromFilters,
+  type AdminFilters,
+} from '@/features/admin-search/query'
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-interface Contractor {
-  id: string
-  userId: string
-  firstName: string
-  lastName: string
-  email: string | null
-  mobile: string | null
-  gender: string | null
-  age: number | null
-  languages: string[]
-  services: string[]
-  city: string | null
-  state: string | null
-  postalCode: string | null
-  latitude: number | null
-  longitude: number | null
-  experience: string | null
-  introduction: string | null
-  photos: string | null
-  createdAt: string
-  updatedAt: string
-  distance?: number // Only present when distance filtering is active
-  isActive: boolean
+type Contractor = WorkerRow
+
+/** What /api/suburbs answers (lib/suburbs): the id is an au_localities id, null for a Google fallback. */
+interface SuburbMatch {
+  id: number | null
+  name: string
+  postcode: string
+  state: { abbreviation: string }
 }
 
-interface PaginatedResponse {
-  success: boolean
-  data: Contractor[]
-  pagination: {
-    total: number
-    page: number
-    pageSize: number
-    totalPages: number
-    hasNext: boolean
-    hasPrev: boolean
-  }
-}
+/** The panel's draft until "Apply Filters" (E7 pendingFilters). */
+type PendingFilters = Pick<
+  AdminFilters,
+  'locality' | 'withinKm' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith'
+>
 
-interface ContractorsFilters {
-  page: number
-  pageSize: number
-  search: string
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
+const pendingOf = (f: AdminFilters): PendingFilters => ({
+  locality: f.locality,
+  withinKm: f.withinKm,
+  typeOfSupport: f.typeOfSupport,
+  gender: f.gender,
+  hasVehicle: f.hasVehicle,
+  workerType: f.workerType,
+  languages: f.languages,
+  age: f.age,
+  therapeuticSubcategories: f.therapeuticSubcategories,
+  experienceWith: f.experienceWith,
+})
 
-  // Advanced filters
-  location: string
-  typeOfSupport: string
-  gender: string
-  hasVehicle: string
-  workerType: string
-  languages: string[]
-  age: string
-  within: string
+const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
 
-  // Therapeutic subcategories filter (NEW)
-  therapeuticSubcategories: string[]
-
-  // Document filters (NEW)
-  documentCategories: string[]
-  documentStatuses: string[]
-  requirementTypes: string[]
-
-  // Experience filter (NEW)
-  experienceWith: string[]
-}
-
-// ============================================================================
-// DEFAULT FILTERS (module-level — stable reference for prefetching)
-// ============================================================================
-
-const DEFAULT_FILTERS: ContractorsFilters = {
-  page: 1,
-  pageSize: 6,
-  search: '',
-  sortBy: 'createdAt',
-  sortOrder: 'desc',
-  location: '',
-  typeOfSupport: 'all',
-  gender: 'all',
-  hasVehicle: 'all',
-  workerType: 'all',
-  languages: [],
-  age: 'all',
-  within: 'none',
-  therapeuticSubcategories: [],
-  documentCategories: [],
-  documentStatuses: [],
-  requirementTypes: [],
-  experienceWith: [],
-}
-
-// ============================================================================
-// API FUNCTION
-// ============================================================================
-
-async function fetchContractors(filters: ContractorsFilters): Promise<PaginatedResponse> {
-  const params = new URLSearchParams({
-    page: filters.page.toString(),
-    pageSize: filters.pageSize.toString(),
-    sortBy: filters.sortBy,
-    sortOrder: filters.sortOrder,
-  })
-
-  // Filter groups by default value type
-  const stringFilters = ['search', 'location'] as const
-  const allDefaultFilters = ['typeOfSupport', 'gender', 'hasVehicle', 'workerType', 'age'] as const
-  const noneDefaultFilters = ['within'] as const
-  const arrayFilters = ['languages', 'therapeuticSubcategories', 'documentCategories', 'documentStatuses', 'requirementTypes', 'experienceWith'] as const
-
-  // String filters (truthy check only)
-  stringFilters.forEach(key => {
-    const value = filters[key]
-    if (value) params.append(key, value)
-  })
-
-  // String filters with 'all' as default
-  allDefaultFilters.forEach(key => {
-    const value = filters[key]
-    if (value && value !== 'all') params.append(key, value)
-  })
-
-  // String filters with 'none' as default
-  noneDefaultFilters.forEach(key => {
-    const value = filters[key]
-    if (value && value !== 'none') params.append(key, value)
-  })
-
-  // Array filters (join with comma)
-  arrayFilters.forEach(key => {
-    const value = filters[key]
-    if (value && value.length > 0) params.append(key, value.join(','))
-  })
-
-  const response = await fetch(`/api/admin/contractors?${params.toString()}`)
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch contractors')
-  }
-
-  return response.json()
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Parse URL search params into filter state
- * Reads query parameters and converts them to the correct types
- */
-function parseFiltersFromURL(searchParams: URLSearchParams): Partial<ContractorsFilters> {
-  const filters: Partial<ContractorsFilters> = {}
-
-  // Integer filters with default fallback
-  const intFilters = [
-    { key: 'page', fallback: 1 },
-    { key: 'pageSize', fallback: 20 },
-  ] as const
-
-  intFilters.forEach(({ key, fallback }) => {
-    const value = searchParams.get(key)
-    if (value) (filters as Record<string, number>)[key] = parseInt(value, 10) || fallback
-  })
-
-  // Simple string filters (direct assignment)
-  const stringFilters = [
-    'search', 'sortBy', 'location', 'typeOfSupport',
-    'gender', 'hasVehicle', 'workerType', 'age', 'within'
-  ] as const
-
-  stringFilters.forEach(key => {
-    const value = searchParams.get(key)
-    if (value) (filters as Record<string, string>)[key] = value
-  })
-
-  // Validated sortOrder (must be 'asc' or 'desc')
-  const sortOrder = searchParams.get('sortOrder')
-  if (sortOrder === 'asc' || sortOrder === 'desc') {
-    filters.sortOrder = sortOrder
-  }
-
-  // Array filters (comma-separated)
-  const arrayFilters = [
-    'languages', 'therapeuticSubcategories',
-    'documentCategories', 'documentStatuses', 'requirementTypes', 'experienceWith'
-  ] as const
-
-  arrayFilters.forEach(key => {
-    const value = searchParams.get(key)
-    if (value) (filters as Record<string, string[]>)[key] = value.split(',').filter(Boolean)
-  })
-
-  return filters
-}
-
-/**
- * Build URL query string from filter state
- * Only includes non-default values to keep URL clean
- */
-function buildURLFromFilters(filters: ContractorsFilters): string {
-  const params = new URLSearchParams()
-
-  // Integer filters with default values to skip
-  const intFilters = [
-    { key: 'page', defaultValue: 1 },
-    { key: 'pageSize', defaultValue: 20 },
-  ] as const
-
-  intFilters.forEach(({ key, defaultValue }) => {
-    const value = filters[key]
-    if (value && value !== defaultValue) {
-      params.set(key, value.toString())
-    }
-  })
-
-  // String filters with no default (truthy check only)
-  const stringFilters = ['search', 'location'] as const
-
-  stringFilters.forEach(key => {
-    const value = filters[key]
-    if (value) params.set(key, value)
-  })
-
-  // String filters with specific default values to skip
-  const stringFiltersWithDefaults = [
-    { key: 'sortBy', defaultValue: 'createdAt' },
-    { key: 'sortOrder', defaultValue: 'desc' },
-    { key: 'typeOfSupport', defaultValue: 'all' },
-    { key: 'gender', defaultValue: 'all' },
-    { key: 'hasVehicle', defaultValue: 'all' },
-    { key: 'workerType', defaultValue: 'all' },
-    { key: 'age', defaultValue: 'all' },
-    { key: 'within', defaultValue: 'none' },
-  ] as const
-
-  stringFiltersWithDefaults.forEach(({ key, defaultValue }) => {
-    const value = filters[key]
-    if (value && value !== defaultValue) {
-      params.set(key, value)
-    }
-  })
-
-  // Array filters (join with comma)
-  const arrayFilters = [
-    'languages', 'therapeuticSubcategories',
-    'documentCategories', 'documentStatuses', 'requirementTypes', 'experienceWith'
-  ] as const
-
-  arrayFilters.forEach(key => {
-    const value = filters[key]
-    if (value && value.length > 0) {
-      params.set(key, value.join(','))
-    }
-  })
-
-  const queryString = params.toString()
-  return queryString ? `?${queryString}` : ''
-}
-
-/**
- * Convert distance in kilometers to travel time
- * Uses average driving speed in urban/suburban areas (40 km/h)
- * @param distanceKm - Distance in kilometers
- * @returns Formatted time string (e.g., "3 mins. away", "1 hr. 15 mins. away")
- */
-function formatTravelTime(distanceKm: number): string {
-  const AVERAGE_SPEED_KMH = 40; // Average urban driving speed
-  const hours = distanceKm / AVERAGE_SPEED_KMH;
-  const totalMinutes = Math.round(hours * 60);
-
-  if (totalMinutes < 1) {
-    return "< 1 min. away";
-  } else if (totalMinutes < 60) {
-    return `${totalMinutes} mins. away`;
-  } else {
-    const hrs = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    if (mins === 0) {
-      return `${hrs} hr${hrs > 1 ? 's' : ''}. away`;
-    }
-    return `${hrs} hr${hrs > 1 ? 's' : ''}. ${mins} mins. away`;
-  }
-}
+const QUERY_KEY = 'admin-workers'
 
 // ============================================================================
 // COMPONENT
@@ -304,84 +74,33 @@ export default function AdminDashboard() {
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
 
-  // Mutation for toggling worker status
-  const toggleStatusMutation = useMutation({
-    mutationFn: async ({ contractorId, isActive }: { contractorId: string; isActive: boolean }) => {
-      console.log('[Toggle Status] Sending request:', { contractorId, isActive })
-      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive })
-      })
-      const data = await response.json()
-      console.log('[Toggle Status] Response:', data)
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update status')
-      }
-      return data
-    },
-    onSuccess: (data) => {
-      console.log('[Toggle Status] Success:', data)
-      // Invalidate and refetch contractors list
-      queryClient.invalidateQueries({ queryKey: ['contractors'] })
-    },
-    onError: (error) => {
-      console.error('[Toggle Status] Error:', error)
-      alert('Failed to update worker status: ' + error.message)
-    }
-  })
-
   // Fetch categories from database
   const { data: categories, isLoading: isCategoriesLoading } = useCategories()
 
-  // State for filters (unified state) - Initialize from URL params if available
-  const [filters, setFilters] = useState<ContractorsFilters>(() => {
-    const urlFilters = parseFiltersFromURL(searchParams)
-    return { ...DEFAULT_FILTERS, ...urlFilters }
-  })
+  // State for filters (unified state) - Initialize from URL params (R11.2)
+  const [filters, setFilters] = useState<AdminFilters>(() => filtersFromURL(new URLSearchParams(searchParams.toString())))
 
   // Initialize search input from URL as well
   const [searchInput, setSearchInput] = useState(() => searchParams.get('search') || '')
 
-  // Document filter options (fetched from API)
-  const [filterOptions, setFilterOptions] = useState<any>(null)
-  const [isLoadingFilters, setIsLoadingFilters] = useState(true)
-
-  // Pending advanced filters (not applied until Search button is clicked)
-  const [pendingFilters, setPendingFilters] = useState({
-    location: filters.location,
-    typeOfSupport: filters.typeOfSupport,
-    gender: filters.gender,
-    hasVehicle: filters.hasVehicle,
-    workerType: filters.workerType,
-    languages: filters.languages,
-    age: filters.age,
-    within: filters.within,
-    therapeuticSubcategories: filters.therapeuticSubcategories,
-    experienceWith: [] as string[],
-  })
-
-  // Pending document filters (not applied yet)
-  const [pendingDocFilters, setPendingDocFilters] = useState({
-    documentCategories: [] as string[],
-    documentStatuses: [] as string[],
-    requirementTypes: [] as string[],
-  })
+  // Pending advanced filters (not applied until "Apply Filters" is clicked)
+  const [pendingFilters, setPendingFilters] = useState<PendingFilters>(() => pendingOf(filters))
 
   // Contractor modal state (isModalOpen derived from selectedContractor !== null)
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null)
   const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
 
-  // Inactive workers modal state (grouped)
+  // Inactive (suspended) workers modal state (grouped)
   const [inactiveWorkersState, setInactiveWorkersState] = useState({
     isOpen: false,
     workers: [] as Contractor[],
+    total: 0,
     isLoading: false,
   })
 
-  // Suburb autocomplete states
-  const [suburbSearch, setSuburbSearch] = useState('')
-  const [suburbs, setSuburbs] = useState<any[]>([])
+  // Suburb autocomplete states; the picked suburb lives in pendingFilters.locality (R11.3)
+  const [suburbSearch, setSuburbSearch] = useState(() => filters.locality?.label ?? '')
+  const [suburbs, setSuburbs] = useState<SuburbMatch[]>([])
   const [isLoadingSuburbs, setIsLoadingSuburbs] = useState(false)
   const [showSuburbDropdown, setShowSuburbDropdown] = useState(false)
   const suburbDropdownRef = useRef<HTMLDivElement>(null)
@@ -420,25 +139,6 @@ export default function AdminDashboard() {
     sub.name.toLowerCase().includes(therapeuticSubcategorySearch.toLowerCase())
   )
 
-  // Fetch document filter options on mount
-  useEffect(() => {
-    const fetchFilterOptions = async () => {
-      try {
-        const response = await fetch('/api/admin/filters')
-        const result = await response.json()
-        if (result.success) {
-          setFilterOptions(result.data)
-        }
-      } catch (error) {
-       
-      } finally {
-        setIsLoadingFilters(false)
-      }
-    }
-
-    fetchFilterOptions()
-  }, [])
-
   // Close all dropdowns when clicking outside (combined handler)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -462,7 +162,7 @@ export default function AdminDashboard() {
   // Fetch therapeutic subcategories when Therapeutic Supports is selected
   useEffect(() => {
     const fetchTherapeuticSubcategories = async () => {
-      if (pendingFilters.typeOfSupport !== 'Therapeutic Supports') {
+      if (pendingFilters.typeOfSupport !== THERAPEUTIC_CATEGORY_ID) {
         setTherapeuticSubcategories([])
         return
       }
@@ -486,7 +186,7 @@ export default function AdminDashboard() {
     fetchTherapeuticSubcategories()
   }, [pendingFilters.typeOfSupport])
 
-  // Fetch suburbs from API
+  // Fetch suburbs from API (our own list; a row without an id is a Google fallback and cannot be searched from)
   useEffect(() => {
     const fetchSuburbs = async () => {
       // Don't fetch if user just selected an item
@@ -507,14 +207,13 @@ export default function AdminDashboard() {
         const data = await response.json()
 
         if (Array.isArray(data) && data.length > 0) {
-          setSuburbs(data)
+          setSuburbs(data as SuburbMatch[])
           setShowSuburbDropdown(true)
         } else {
           setSuburbs([])
           setShowSuburbDropdown(false)
         }
-      } catch (error) {
-      
+      } catch {
         setSuburbs([])
         setShowSuburbDropdown(false)
       } finally {
@@ -526,9 +225,9 @@ export default function AdminDashboard() {
     return () => clearTimeout(timeoutId)
   }, [suburbSearch])
 
-  // Sync filters to URL whenever they change
+  // Sync filters to the URL whenever they change: the canonical query plus the suburb label (R11.2)
   useEffect(() => {
-    const newURL = buildURLFromFilters(filters)
+    const newURL = urlFromFilters(filters)
     const currentPath = window.location.pathname
     const newFullURL = currentPath + newURL
 
@@ -538,21 +237,69 @@ export default function AdminDashboard() {
     }
   }, [filters, router])
 
-  // Prefetch the default (no-filter) state on mount so "Clear Filters" is instant
-  useEffect(() => {
-    queryClient.prefetchQuery({
-      queryKey: ['contractors', DEFAULT_FILTERS],
-      queryFn: () => fetchContractors(DEFAULT_FILTERS),
-      staleTime: 60000,
-    })
-  }, [queryClient])
-
-  // Fetch contractors using TanStack Query
-  const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ['contractors', filters],
-    queryFn: () => fetchContractors(filters),
+  // The search itself: one canonical key per set of filters; `reload` after a refresh or an admin action (R11.5, R11.7)
+  const reloadRef = useRef(false)
+  const canonical = canonicalOf(filters)
+  const { data: outcome, isLoading, isFetching, refetch, dataUpdatedAt } = useQuery<ApiOutcome<WorkerSearchResponse>>({
+    queryKey: [QUERY_KEY, canonical],
+    queryFn: async () => {
+      const reload = reloadRef.current
+      reloadRef.current = false
+      return adminApi.searchWorkers(toQuery(filters), { cache: reload ? 'reload' : 'default' })
+    },
     placeholderData: keepPreviousData,
-    staleTime: 60000, // Match Redis response cache TTL (60s)
+    staleTime: 60000, // the api's private cache and memo horizon (60 s)
+  })
+
+  // The last successful response stays on screen through any other outcome (R11.6)
+  const [results, setResults] = useState<WorkerSearchResponse | null>(null)
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null)
+  useEffect(() => {
+    if (outcome?.kind === 'ok') {
+      setResults(outcome.body)
+      setFetchedAt(dataUpdatedAt)
+    }
+  }, [outcome, dataUpdatedAt])
+
+  const reload = useCallback(() => {
+    reloadRef.current = true
+    void refetch()
+  }, [refetch])
+
+  // U1's outcome contract: sign in again, wait out a limit automatically, or keep the last results with a notice
+  useEffect(() => {
+    if (outcome?.kind === 'unauthenticated') {
+      const here = window.location.pathname + window.location.search
+      router.push(`/login?callbackUrl=${encodeURIComponent(here)}`)
+    }
+    if (outcome?.kind === 'rateLimited') {
+      const t = setTimeout(() => void refetch(), Math.min(outcome.retryAfterSeconds, 60) * 1000)
+      return () => clearTimeout(t)
+    }
+  }, [outcome, router, refetch])
+
+  // Mutation for toggling worker status; the list is reloaded past both caches afterwards (R11.7)
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ contractorId, isActive }: { contractorId: string; isActive: boolean }) => {
+      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive })
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update status')
+      }
+      return data
+    },
+    onSuccess: () => {
+      reloadRef.current = true
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
+    },
+    onError: (error) => {
+      console.error('[Toggle Status] Error:', error)
+      alert('Failed to update worker status: ' + error.message)
+    }
   })
 
   // ========================================
@@ -568,30 +315,61 @@ export default function AdminDashboard() {
     setFilters(prev => ({ ...prev, page: newPage }))
   }
 
-  const handleSort = (sortBy: string) => {
+  const applyFilters = () => {
     setFilters(prev => ({
       ...prev,
-      sortBy,
-      sortOrder: prev.sortBy === sortBy && prev.sortOrder === 'asc' ? 'desc' : 'asc',
+      ...pendingFilters,
+      // a distance sort only makes sense with a suburb (R11.3)
+      sortBy: prev.sortBy === 'distance' && !pendingFilters.locality ? undefined : prev.sortBy,
       page: 1,
     }))
   }
 
+  const clearFilters = () => {
+    setFilters({ ...DEFAULT_FILTERS })
+    setPendingFilters(pendingOf(DEFAULT_FILTERS))
+    setSearchInput('')
+    setSuburbSearch('')
+    setLanguageSearch('')
+    setTherapeuticSubcategorySearch('')
+  }
+
+  const pickSuburb = (suburb: SuburbMatch) => {
+    if (suburb.id === null) return
+    const label = suburbLabel(suburb)
+    isSuburbSelectedRef.current = true
+    setShowSuburbDropdown(false)
+    setSuburbs([])
+    setPendingFilters(prev => ({ ...prev, locality: { id: suburb.id as number, label } }))
+    setSuburbSearch(label)
+  }
+
+  const changeSuburbText = (value: string) => {
+    setSuburbSearch(value)
+    // A cleared or edited box means no suburb until one is picked again; "Within" resets with it (R11.3)
+    setPendingFilters(prev => (prev.locality ? { ...prev, locality: undefined, withinKm: undefined } : prev))
+  }
+
+  const showUnmapped = () => {
+    setFilters(prev => ({ ...prev, unplaced: true, page: 1, sortBy: prev.sortBy === 'distance' ? undefined : prev.sortBy }))
+  }
+
+  const backToSearch = () => {
+    setFilters(prev => ({ ...prev, unplaced: false, page: 1 }))
+  }
+
   const fetchInactiveWorkers = async () => {
     setInactiveWorkersState(prev => ({ ...prev, isLoading: true }))
-    try {
-      const response = await fetch('/api/admin/contractors/inactive')
-      const result = await response.json()
-      if (result.success) {
-        setInactiveWorkersState({ isOpen: true, workers: result.data, isLoading: false })
-      } else {
-        setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
-        alert('Failed to fetch inactive workers: ' + result.error)
-      }
-    } catch (error) {
-      console.error('Error fetching inactive workers:', error)
+    const result = await adminApi.listSuspendedWorkers({ page: 1, pageSize: 100 }, { cache: 'reload' })
+    if (result.kind === 'ok') {
+      setInactiveWorkersState({ isOpen: true, workers: result.body.data, total: result.body.pagination.total, isLoading: false })
+    } else {
       setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
-      alert('Failed to fetch inactive workers')
+      if (result.kind === 'unauthenticated') {
+        router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`)
+      } else {
+        alert('Failed to fetch inactive workers: ' + noticeText(result))
+      }
     }
   }
 
@@ -607,10 +385,12 @@ export default function AdminDashboard() {
         // Remove from inactive list
         setInactiveWorkersState(prev => ({
           ...prev,
-          workers: prev.workers.filter(w => w.id !== contractorId)
+          workers: prev.workers.filter(w => w.id !== contractorId),
+          total: Math.max(0, prev.total - 1),
         }))
-        // Refresh main list
-        queryClient.invalidateQueries({ queryKey: ['contractors'] })
+        // Refresh main list past the caches (R11.7)
+        reloadRef.current = true
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       } else {
         alert('Failed to reactivate worker: ' + result.error)
       }
@@ -625,15 +405,15 @@ export default function AdminDashboard() {
   // ========================================
 
   const renderPagination = () => {
-    if (!data?.pagination) return null
+    if (!results?.pagination) return null
 
-    const { page, totalPages, hasNext, hasPrev } = data.pagination
+    const { page, totalPages, hasNext, hasPrev } = results.pagination
 
     // Generate page numbers to display (max 5)
     const pageNumbers: number[] = []
     const maxPagesToShow = 5
     let startPage = Math.max(1, page - Math.floor(maxPagesToShow / 2))
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
 
     if (endPage - startPage + 1 < maxPagesToShow) {
       startPage = Math.max(1, endPage - maxPagesToShow + 1)
@@ -700,6 +480,10 @@ export default function AdminDashboard() {
     )
   }
 
+  const notice = outcome && outcome.kind !== 'ok' && outcome.kind !== 'unauthenticated' ? outcome : null
+  const localityInUse = results?.appliedFilters.locality
+  const withinDisabled = !pendingFilters.locality || filters.unplaced
+
   // ========================================
   // RENDER
   // ========================================
@@ -712,59 +496,30 @@ export default function AdminDashboard() {
           <div className="p-6">
             <div className="flex items-center justify-end gap-2 mb-4">
               <button
-                onClick={() => {
-                  setFilters(DEFAULT_FILTERS)
-                  setPendingFilters({
-                    location: '',
-                    typeOfSupport: 'all',
-                    gender: 'all',
-                    hasVehicle: 'all',
-                    workerType: 'all',
-                    languages: [],
-                    age: 'all',
-                    within: 'none',
-                    therapeuticSubcategories: [],
-                    experienceWith: [],
-                  })
-                  setPendingDocFilters({
-                    documentCategories: [],
-                    documentStatuses: [],
-                    requirementTypes: [],
-                  })
-                  setSearchInput('')
-                  setSuburbSearch('')
-                  setLanguageSearch('')
-                  setTherapeuticSubcategorySearch('')
-                }}
+                onClick={clearFilters}
                 className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
               >
                 Clear Filters
               </button>
               <button
-                onClick={() => {
-                  const finalLocation = suburbSearch.trim() || pendingFilters.location
-                  setFilters(prev => ({
-                    ...prev,
-                    location: finalLocation,
-                    typeOfSupport: pendingFilters.typeOfSupport,
-                    gender: pendingFilters.gender,
-                    hasVehicle: pendingFilters.hasVehicle,
-                    workerType: pendingFilters.workerType,
-                    languages: pendingFilters.languages,
-                    age: pendingFilters.age,
-                    within: pendingFilters.within,
-                    therapeuticSubcategories: pendingFilters.therapeuticSubcategories,
-                    experienceWith: pendingFilters.experienceWith,
-                    page: 1
-                  }))
-                }}
+                onClick={applyFilters}
+                data-testid="admin-search-apply-button"
                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
               >
                 Apply Filters
               </button>
             </div>
 
-            {/* Suburb or postcode */}
+            {filters.unplaced && (
+              <div className="mb-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+                Showing workers with no mapped suburb. The suburb and distance filters are off in this list.{' '}
+                <button type="button" onClick={backToSearch} className="font-medium underline hover:text-amber-900">
+                  Back to search
+                </button>
+              </div>
+            )}
+
+            {/* Suburb (one of ours: the autocomplete's id is what the api measures from) */}
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 Suburb
@@ -773,12 +528,14 @@ export default function AdminDashboard() {
                 <input
                   type="text"
                   value={suburbSearch}
-                  onChange={(e) => setSuburbSearch(e.target.value)}
+                  onChange={(e) => changeSuburbText(e.target.value)}
                   onFocus={() => {
                     if (suburbs.length > 0) setShowSuburbDropdown(true)
                   }}
-                  placeholder="e.g. Queensland, NSW"
-                  className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  disabled={filters.unplaced}
+                  data-testid="admin-search-suburb-input"
+                  placeholder="e.g. Parramatta, 2150"
+                  className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-400"
                 />
                 {isLoadingSuburbs && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -789,49 +546,51 @@ export default function AdminDashboard() {
                 {/* Suburb Dropdown */}
                 {showSuburbDropdown && suburbs.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {suburbs.map((suburb: any, index: number) => (
+                    {suburbs.map((suburb, index) => (
                       <button
                         key={`${suburb.name}-${suburb.postcode}-${index}`}
                         type="button"
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors border-b last:border-b-0 text-sm"
-                        onClick={() => {
-                          const selectedValue = `${suburb.name}, ${suburb.state.abbreviation} ${suburb.postcode}`
-                          isSuburbSelectedRef.current = true
-                          setShowSuburbDropdown(false)
-                          setSuburbs([])
-                          setPendingFilters(prev => ({ ...prev, location: selectedValue }))
-                          setSuburbSearch(selectedValue)
-                        }}
+                        disabled={suburb.id === null}
+                        title={suburb.id === null ? 'Not in our suburb list: it cannot be searched from' : undefined}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors border-b last:border-b-0 text-sm disabled:text-gray-400 disabled:hover:bg-white"
+                        onClick={() => pickSuburb(suburb)}
                       >
-                        <span className="text-gray-900 font-medium">
-                          {suburb.name}, {suburb.state.abbreviation} {suburb.postcode}
+                        <span className={suburb.id === null ? 'text-gray-400' : 'text-gray-900 font-medium'}>
+                          {suburbLabel(suburb)}
                         </span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
+              {pendingFilters.locality && (
+                <p className="mt-1 text-xs text-gray-500">Measuring from the centre of {pendingFilters.locality.label}.</p>
+              )}
             </div>
 
-            {/* Within (Distance) */}
+            {/* Within (Distance): only with a suburb (R11.3) */}
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-1 block">
                 Within
               </label>
               <select
-                value={pendingFilters.within}
-                onChange={(e) => setPendingFilters(prev => ({ ...prev, within: e.target.value }))}
-                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                value={pendingFilters.withinKm ?? 'none'}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, withinKm: e.target.value === 'none' ? undefined : Number(e.target.value) }))}
+                disabled={withinDisabled}
+                data-testid="admin-search-within-select"
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white disabled:bg-gray-100 disabled:text-gray-400"
               >
                 <option value="none">Any distance</option>
-                <option value="5">5 km</option>
-                <option value="10">10 km</option>
-                <option value="20">20 km</option>
-                <option value="50">50 km</option>
+                {WITHIN_OPTIONS_KM.map((km) => (
+                  <option key={km} value={km}>{km} km</option>
+                ))}
               </select>
+              {withinDisabled && !filters.unplaced && (
+                <p className="mt-1 text-xs text-gray-500">Pick a suburb to filter by distance.</p>
+              )}
             </div>
 
-            {/* Type of Support */}
+            {/* Type of Support (sends the category id) */}
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Type of support
@@ -847,18 +606,19 @@ export default function AdminDashboard() {
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                          pendingFilters.typeOfSupport === category.name
+                          pendingFilters.typeOfSupport === category.id
                             ? 'bg-gray-900 border-gray-900'
                             : 'border-gray-300 group-hover:border-gray-400'
                         }`}
                         onClick={() => {
                           setPendingFilters(prev => ({
                             ...prev,
-                            typeOfSupport: prev.typeOfSupport === category.name ? 'all' : category.name
+                            typeOfSupport: prev.typeOfSupport === category.id ? undefined : category.id,
+                            therapeuticSubcategories: prev.typeOfSupport === category.id || category.id !== THERAPEUTIC_CATEGORY_ID ? [] : prev.therapeuticSubcategories,
                           }))
                         }}
                       >
-                        {pendingFilters.typeOfSupport === category.name && (
+                        {pendingFilters.typeOfSupport === category.id && (
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
@@ -871,19 +631,13 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Experience With */}
+            {/* Experience With (display names; the query carries CareDomain values) */}
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-2 block">
                 Experience with
               </label>
               <div className="flex flex-wrap gap-2">
-                {[
-                  'Aged Care',
-                  'Chronic medical conditions',
-                  'Disability',
-                  'Mental health',
-                  'Working with Children'
-                ].map((item) => (
+                {EXPERIENCE_OPTIONS.map(({ label: item }) => (
                   <button
                     key={item}
                     type="button"
@@ -912,7 +666,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Therapeutic Subcategories (conditional) */}
-            {pendingFilters.typeOfSupport === 'Therapeutic Supports' && (
+            {pendingFilters.typeOfSupport === THERAPEUTIC_CATEGORY_ID && (
               <div className="mb-4">
                 <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Therapeutic Subcategories
@@ -1015,7 +769,7 @@ export default function AdminDashboard() {
               </label>
               <select
                 value={pendingFilters.gender}
-                onChange={(e) => setPendingFilters(prev => ({ ...prev, gender: e.target.value }))}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, gender: e.target.value as AdminFilters['gender'] }))}
                 className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
                 <option value="all">All</option>
@@ -1031,7 +785,7 @@ export default function AdminDashboard() {
               </label>
               <select
                 value={pendingFilters.age}
-                onChange={(e) => setPendingFilters(prev => ({ ...prev, age: e.target.value }))}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, age: e.target.value as AdminFilters['age'] }))}
                 className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
                 <option value="all">All</option>
@@ -1138,7 +892,7 @@ export default function AdminDashboard() {
               </label>
               <select
                 value={pendingFilters.hasVehicle}
-                onChange={(e) => setPendingFilters(prev => ({ ...prev, hasVehicle: e.target.value }))}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, hasVehicle: e.target.value as AdminFilters['hasVehicle'] }))}
                 className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
                 <option value="all">All</option>
@@ -1154,7 +908,7 @@ export default function AdminDashboard() {
               </label>
               <select
                 value={pendingFilters.workerType}
-                onChange={(e) => setPendingFilters(prev => ({ ...prev, workerType: e.target.value }))}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, workerType: e.target.value as AdminFilters['workerType'] }))}
                 className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
                 <option value="all">All</option>
@@ -1188,6 +942,7 @@ export default function AdminDashboard() {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                maxLength={100}
                 placeholder="Search by name or mobile..."
                 className="flex-1 rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
@@ -1200,8 +955,8 @@ export default function AdminDashboard() {
             </form>
           </div>
 
-          {/* Loading State */}
-          {isLoading && (
+          {/* Loading State (first load only; later fetches keep the last results on screen) */}
+          {isLoading && !results && (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
@@ -1210,39 +965,82 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Error State */}
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error loading contractors</h3>
-                  <p className="mt-2 text-sm text-red-700">{error.message}</p>
+          {/* Notice (U1's outcome contract): the last results stay below it */}
+          {notice && (
+            <div
+              data-testid="admin-search-notice"
+              className={`rounded-md p-4 mb-4 ${notice.kind === 'rateLimited' ? 'bg-amber-50' : 'bg-red-50'}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className={`text-sm font-medium ${notice.kind === 'rateLimited' ? 'text-amber-800' : 'text-red-800'}`}>
+                    {noticeTitle(notice)}
+                  </h3>
+                  <p className={`mt-1 text-sm ${notice.kind === 'rateLimited' ? 'text-amber-700' : 'text-red-700'}`}>{noticeText(notice)}</p>
                 </div>
+                {(notice.kind === 'unavailable' || notice.kind === 'failed') && (
+                  <button
+                    type="button"
+                    onClick={reload}
+                    className="shrink-0 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  >
+                    Try again
+                  </button>
+                )}
               </div>
             </div>
           )}
 
           {/* Contractor Cards */}
-          {!isLoading && !error && data && (
+          {results && (
             <div>
               {/* Loading overlay while fetching */}
               {isFetching && (
                 <div className="h-1 bg-indigo-600 animate-pulse rounded mb-4"></div>
               )}
 
-              {/* Results Count */}
-              <p className="text-lg font-semibold text-gray-900 mb-4">
-                {data.pagination.total} contractors found
-              </p>
+              {/* Results Count, freshness, the unmapped line (R11.4, R11.5) */}
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-lg font-semibold text-gray-900">
+                  {results.pagination.total} contractors found
+                  {localityInUse && !filters.unplaced && (
+                    <span className="ml-2 text-sm font-normal text-gray-500">
+                      {results.appliedFilters.withinKm ? `within ${results.appliedFilters.withinKm} km of` : 'nearest first from'} {localityInUse.label}
+                    </span>
+                  )}
+                  {filters.unplaced && <span className="ml-2 text-sm font-normal text-gray-500">with no mapped suburb</span>}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Results may be up to a minute old
+                  {fetchedAt ? ` · fetched ${new Date(fetchedAt).toLocaleTimeString()}` : ''}
+                  <button
+                    type="button"
+                    onClick={reload}
+                    disabled={isFetching}
+                    data-testid="admin-search-refresh-button"
+                    className="ml-2 font-medium text-indigo-600 hover:underline disabled:opacity-50"
+                  >
+                    Refresh
+                  </button>
+                </p>
+              </div>
+              {!filters.unplaced && results.unplacedCount > 0 && (
+                <p className="mb-4 text-sm text-gray-600">
+                  {results.unplacedCount} active {results.unplacedCount === 1 ? 'worker has' : 'workers have'} no mapped suburb and cannot appear in a distance search.{' '}
+                  <button type="button" onClick={showUnmapped} data-testid="admin-search-unmapped-link" className="font-medium text-indigo-600 hover:underline">
+                    Show them
+                  </button>
+                </p>
+              )}
 
               {/* Cards List */}
-              {data.data.length === 0 ? (
+              {results.data.length === 0 ? (
                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                   <p className="text-gray-500">No contractors found</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {data.data.map((contractor) => (
+                  {results.data.map((contractor) => (
                     <div
                       key={contractor.id}
                       className={`bg-white rounded-lg border-2 border-amber-400 p-4 hover:shadow-md transition-shadow ${!contractor.isActive ? 'opacity-50' : ''}`}
@@ -1314,26 +1112,29 @@ export default function AdminDashboard() {
 
                           {/* Details Row */}
                           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                            {/* Distance */}
-                            {contractor.distance && (
-                              <span className="inline-flex items-center gap-1">
+                            {/* Distance from the suburb centre (R6.4) */}
+                            {contractor.distanceKm !== undefined && (
+                              <span className="inline-flex items-center gap-1" title="Distance between the two suburb centres">
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                {formatTravelTime(contractor.distance)}
+                                {contractor.distanceKm} km from the suburb centre
                               </span>
                             )}
 
-                            {/* Location */}
-                            {(contractor.city || contractor.state) && (
+                            {/* Location: the mapped home suburb, else the legacy text */}
+                            {(contractor.location || contractor.city || contractor.state) && (
                               <span className="inline-flex items-center gap-1">
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                 </svg>
-                                {contractor.city && contractor.state
-                                  ? `${contractor.city}, ${contractor.state}`
-                                  : contractor.city || contractor.state}
+                                {contractor.location
+                                  ? contractor.location.localityLabel
+                                  : contractor.city && contractor.state
+                                    ? `${contractor.city}, ${contractor.state}`
+                                    : contractor.city || contractor.state}
+                                {!contractor.location && <span className="text-gray-400">(no mapped suburb)</span>}
                               </span>
                             )}
 
@@ -1476,7 +1277,7 @@ export default function AdminDashboard() {
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Inactive Workers ({inactiveWorkersState.workers.length})
+                  Inactive Workers ({inactiveWorkersState.total})
                 </h3>
                 <button
                   onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
@@ -1525,6 +1326,9 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                     ))}
+                    {inactiveWorkersState.total > inactiveWorkersState.workers.length && (
+                      <p className="text-center text-xs text-gray-500">Showing the first {inactiveWorkersState.workers.length} of {inactiveWorkersState.total}.</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -1534,4 +1338,40 @@ export default function AdminDashboard() {
       )}
     </div>
   )
+}
+
+// ============================================================================
+// NOTICES (U1's outcome contract, frontend-components.md)
+// ============================================================================
+
+function noticeTitle(o: Exclude<ApiOutcome<unknown>, { kind: 'ok' }>): string {
+  switch (o.kind) {
+    case 'forbidden':
+      return 'Your account cannot use the admin search'
+    case 'rateLimited':
+      return 'Too many searches'
+    case 'unavailable':
+      return 'The search is temporarily unavailable'
+    case 'unauthenticated':
+      return 'Please sign in again'
+    default:
+      return 'The search could not be completed'
+  }
+}
+
+function noticeText(o: Exclude<ApiOutcome<unknown>, { kind: 'ok' }>): string {
+  switch (o.kind) {
+    case 'forbidden':
+      return 'This happens while impersonating a user or after a role change. The last results are kept.'
+    case 'rateLimited':
+      return `Retrying automatically in ${o.retryAfterSeconds} seconds. The last results are kept.`
+    case 'unavailable':
+      return 'Please try again in a moment. The last results are kept.'
+    case 'unauthenticated':
+      return 'Your session has ended.'
+    default: {
+      const fields = o.fields ? Object.entries(o.fields).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ') : ''
+      return `${fields || 'Something went wrong'}${o.requestId ? ` (request ${o.requestId})` : ''}.`
+    }
+  }
 }
