@@ -3298,3 +3298,13 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08, U2 Code Generation Part 1, in parallel with PR 1's Build and Test):** Read the binder and handler types (the memo is attached through `PipelineDeps.memo` keyed by entry id, no change to `defineHandlers`), the contract's define/checks/client, the registration handler set, the db helper, the integration harness pattern. Wrote `construction/plans/admin-search-code-generation-plan.md`: PR 2 (Parts A contract incl. `privateCacheSeconds`, `canonical.ts` and the admin area; B the pipeline cache step, `ResponseMemo`, the 57014 mapping; C the admin module -- query domain, filter registry, the statement, the services, the handlers, `main.ts`; D unit and gated integration tests incl. the seeded fixture and G1-G10; E the parity/timing script and the 45 cases; F docs and summary), PR 3 (G the app's token side = U1 Part E; H the admin client; I the screens with data-testids; J tests and the preview checklist; K docs), PR 4 (L deletions; M docs and the state's follow-up 1); story coverage. State file updated.
 
 **Approval prompt (2026-10-08):** "Please review `aidlc-docs/construction/plans/admin-search-code-generation-plan.md`; approve to generate PR 2 once PR 1 is merged, or request changes."
+
+**User input (verbatim, 2026-10-08):**
+> Merged
+
+**AI action (2026-10-08, PR 1 Build and Test):** Verifying by refs (`origin/main` contains `30410ce`), the `deploy-api` run on `main` and the staging service's revisions; then the staging checklist. The U2 plan's approval gate stays open (not answered by "Merged").
+
+**User input (verbatim, 2026-10-08):**
+> what's next?
+
+**AI action (2026-10-08, PR 1 Build and Test, staging):** Verified by refs: `origin/main` = `c95435c` = "Merge pull request #41", contains `30410ce`. The PR head's 14 checks all succeeded (API Quality on Node 20 and 22 with PostGIS, Infra, App x2, Web x2, Supply chain, CodeQL x2, Semgrep, Vercel preview). `deploy-api` run 37730295784 succeeded 05:07:31Z; staging revision `remonta-api-staging-00015-sgw` ready; "apps/api listening" at 05:07:14Z with no error and no refusal line (the secret resolved). Staging health 200 (0.34 s); `/v1/service-categories` 200; `/v1/localities?q=parra` 200 with ids. Production unchanged: `remonta-api-00005-j74`, health 200. The tampered-token proof is deferred to PR 2's checklist (no role-restricted entry exists yet; CI's attribution test covers it). Verification record completed; state updated. Promotion waits for PR 2. Next: the user's approval of the U2 code generation plan.

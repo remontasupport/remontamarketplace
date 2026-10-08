@@ -1,6 +1,6 @@
 # PR 1 verification record -- api-identity, api side + infra
 
-Branch `feat/api-identity`, 5 commits (`0a8dcae`, `bd177af`, `385b46b`, `4077adc`, `30410ce`). Opened by the user
+Branch `feat/api-identity`, 5 commits (`0a8dcae`, `bd177af`, `385b46b`, `4077adc`, `30410ce`). PR #41, merged `c95435c` 2026-10-08 05:01Z. Opened by the user
 from the compare link (no `gh` on this machine).
 
 ## Operator steps (before merge)
@@ -15,22 +15,22 @@ from the compare link (no `gh` on this machine).
 
 | Check | Result |
 |---|---|
-| API Quality (Node 20, 22; PostGIS + fake GCS) | pending |
-| Infra Quality | pending |
-| App Quality, Web Quality | pending (no app/web source change; the lockfile and CLAUDE.md changed) |
-| Package boundaries, Supply chain, CodeQL, Semgrep | pending |
-| Vercel previews | pending |
+| API Quality (Node 20, 22; PostGIS + fake GCS) | success, success (head `30410ce`) |
+| Infra Quality | success |
+| App Quality (20, 22), Web Quality (20, 22) | success x4 (no app/web source change) |
+| Supply chain, CodeQL (javascript-typescript, actions), Semgrep (+ `--test`) | success |
+| Vercel previews | built ("Vercel Preview Comments" success) |
 
 ## Merge and staging
 
 | Step | Result |
 |---|---|
-| Merged (merge commit) | pending |
-| `deploy-api` -> staging revision | pending |
-| health 200; `apps/api listening`; no `will not start` | pending |
-| a sign-up on a preview works (public entries unchanged) | pending |
-| tampered token -> 401 + `bad-signature` line (needs PR 2's entries; until then CI's attribution test is the proof) | pending |
-| production unchanged | pending |
+| Merged (merge commit) | #41 -> `c95435c`, 2026-10-08 05:01Z |
+| `deploy-api` -> staging revision | run 37730295784 success 05:07:31Z; `remonta-api-staging-00015-sgw` ready |
+| health 200; `apps/api listening`; no `will not start` | 200 in 0.34 s; "apps/api listening" 05:07:14Z on 00015; no ERROR line, no refusal (the secret resolved) |
+| public entries unchanged | `GET /v1/service-categories` 200; `GET /v1/localities?q=parra` 200 with ids; the sign-up form itself (captcha-gated) is exercised by the user on a preview when convenient; nothing on its path changed |
+| tampered token -> 401 + `bad-signature` line | deferred to PR 2's checklist (no role-restricted entry exists yet); CI's `attribution.test.ts` is the proof today |
+| production unchanged | `remonta-api` still `00005-j74`, health 200 |
 
 ## Promotion
 

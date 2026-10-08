@@ -1,6 +1,6 @@
 # PR 1 -- api-identity, api side + infra (generated 2026-10-08)
 
-Branch `feat/api-identity` from `main` `949cf2b`. PR: #PR_NUMBER. Plan: `../../plans/api-identity-code-generation-plan.md`
+Branch `feat/api-identity` from `main` `949cf2b`. PR: #41, merged 2026-10-08 05:01Z as `c95435c`. Plan: `../../plans/api-identity-code-generation-plan.md`
 (Parts 0, A, B, C, D ticked; Part E, the app side, is generated with PR 3).
 
 ## Files
