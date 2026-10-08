@@ -1,6 +1,6 @@
 // What the stage table commits to, checked on the rendered Knative documents (D14, D15):
 // CPU always allocated and at least one instance (the background work), probes on the
-// contract's probe entry, exactly the six secrets per stage and nothing secret in the
+// contract's probe entry, exactly the eight secrets per stage and nothing secret in the
 // plain environment, staging's wildcards and prod's exact origins, and the committed
 // YAML equal to the render (drift).
 import { readFileSync } from 'node:fs'
@@ -62,7 +62,7 @@ describe.each(stages)('service definition: %s', (stage) => {
     expect(tpl.spec.containerConcurrency).toBe(80)
   })
 
-  it(`references exactly the six ${cfg.serviceName}-* secrets, and nothing secret as plain environment`, () => {
+  it(`references exactly the eight ${cfg.serviceName}-* secrets (the api token pair included), and nothing secret as plain environment`, () => {
     const secretRefs = container.env.filter((e) => 'valueFrom' in e) as { name: string; valueFrom: { secretKeyRef: { name: string; key: string } } }[]
     expect(secretRefs.map((e) => e.name).sort()).toEqual([...SECRET_NAMES].sort())
     for (const e of secretRefs) {

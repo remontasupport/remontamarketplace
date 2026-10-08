@@ -89,6 +89,30 @@ describe('the stage table in cloudrun/lib.sh', () => {
     expect([...alerts.prod!].sort()).toEqual(files)
     expect(alerts.staging).toEqual(['instance-down', 'outbox-dead-letter'])
     expect(alerts.prod).toContain('latency-p95')
+    expect(alerts.prod).toContain('auth-failed')
+    expect(alerts.staging).not.toContain('auth-failed')
+  })
+})
+
+describe('auth-failed (U1 api-identity)', () => {
+  const p = policy('auth-failed')
+  const [c] = p.conditions
+
+  it('counts the rejected-token log metric over 5-minute windows and fires above 20, on production only', () => {
+    expect(p.conditions).toHaveLength(1)
+    expect(c!.conditionThreshold.filter).toContain('logging.googleapis.com/user/remonta-api-auth-failed')
+    expect(c!.conditionThreshold.aggregations[0]).toMatchObject({ alignmentPeriod: '300s', perSeriesAligner: 'ALIGN_SUM', crossSeriesReducer: 'REDUCE_SUM' })
+    expect(c!.conditionThreshold.comparison).toBe('COMPARISON_GT')
+    expect(c!.conditionThreshold.thresholdValue).toBe(20)
+    expect(c!.conditionThreshold.duration).toBe('0s')
+    expect(p.severity).toBe('ERROR')
+    expect(p.alertStrategy.autoClose).toBe('1800s')
+  })
+
+  it('tells the reader the first thing to check: the secret pairing between Vercel and Secret Manager', () => {
+    expect(p.documentation.content).toContain('API_TOKEN_SECRET')
+    expect(p.documentation.content).toContain('bad-signature')
+    expect(p.documentation.content).toContain('apply-alerts.sh')
   })
 })
 

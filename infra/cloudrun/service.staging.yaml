@@ -102,6 +102,16 @@ spec:
                 secretKeyRef:
                   name: remonta-api-staging-N8N_REGISTRATION_WEBHOOK_URL
                   key: latest
+            - name: API_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: remonta-api-staging-API_TOKEN_SECRET
+                  key: latest
+            - name: API_TOKEN_SECRET_PREVIOUS
+              valueFrom:
+                secretKeyRef:
+                  name: remonta-api-staging-API_TOKEN_SECRET_PREVIOUS
+                  key: latest
           resources:
             limits:
               cpu: "1"

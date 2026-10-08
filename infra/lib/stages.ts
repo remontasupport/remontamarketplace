@@ -20,7 +20,13 @@ export const HEALTH_PATH = '/v1/health'
 export const ALERT_EMAIL = 'support@remontaservices.com.au'
 export const APP_ORIGIN = 'https://app.remontaservices.com.au'
 
-/** The six values held in Secret Manager as `remonta-api-<stage>-<NAME>` (infrastructure-design §6, D17). */
+/**
+ * The eight values held in Secret Manager as `<service>-<NAME>` (infrastructure-design §6, D17).
+ * The api token pair (U1 api-identity, 2026-10-08): API_TOKEN_SECRET must equal the app's
+ * `API_TOKEN_SECRET` for the same stage (Vercel Preview <-> staging, Production <-> prod);
+ * API_TOKEN_SECRET_PREVIOUS holds the old value during a rotation and a throwaway random
+ * value otherwise (bootstrap seeds it), so a rotation never touches this table or the YAML.
+ */
 export const SECRET_NAMES = [
   'AUTH_DATABASE_URL',
   'RECAPTCHA_SECRET_KEY',
@@ -28,6 +34,8 @@ export const SECRET_NAMES = [
   'IP_HASH_SECRET',
   'BLOB_READ_WRITE_TOKEN',
   'N8N_REGISTRATION_WEBHOOK_URL',
+  'API_TOKEN_SECRET',
+  'API_TOKEN_SECRET_PREVIOUS',
 ] as const
 export type SecretName = (typeof SECRET_NAMES)[number]
 

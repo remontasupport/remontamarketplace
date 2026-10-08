@@ -32,7 +32,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # infra/lib/stages.ts; the test suite checks the names there).
 # shellcheck source=lib.sh
 source "$here/lib.sh"
-SECRETS=(AUTH_DATABASE_URL RECAPTCHA_SECRET_KEY RESEND_API_KEY IP_HASH_SECRET BLOB_READ_WRITE_TOKEN N8N_REGISTRATION_WEBHOOK_URL)
+SECRETS=(AUTH_DATABASE_URL RECAPTCHA_SECRET_KEY RESEND_API_KEY IP_HASH_SECRET BLOB_READ_WRITE_TOKEN N8N_REGISTRATION_WEBHOOK_URL API_TOKEN_SECRET API_TOKEN_SECRET_PREVIOUS)
 
 gcloud config set project "$PROJECT" >/dev/null
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
@@ -62,6 +62,13 @@ for STAGE in "${STAGES[@]}"; do
       gcloud secrets create "$S" --replication-policy=user-managed --locations="$REGION" --labels="remonta-stage=$STAGE"
     gcloud secrets add-iam-policy-binding "$S" --member="serviceAccount:$RUN_SA" --role=roles/secretmanager.secretAccessor >/dev/null
   done
+
+  # The api token's previous secret (U1): always mounted, so it must hold a value. A random
+  # value nobody keeps is as good as no key; a rotation replaces it with the old current
+  # value (infra/README.md). Seeded once; never overwritten here.
+  say "4b. Seed $SVC-API_TOKEN_SECRET_PREVIOUS with a throwaway value (only if it has none)"
+  exists gcloud secrets versions describe latest --secret="$SVC-API_TOKEN_SECRET_PREVIOUS" ||
+    openssl rand -base64 32 | gcloud secrets versions add "$SVC-API_TOKEN_SECRET_PREVIOUS" --data-file=- >/dev/null
 done
 
 say "5. Deploy service account $DEPLOY_SA (Cloud Run admin, registry writer, may act as the runtime accounts)"
@@ -90,6 +97,7 @@ metric() { exists gcloud logging metrics describe "$1" || gcloud logging metrics
 metric remonta-api-outbox-dead-letter "an outbox event exhausted its retries" 'resource.type="cloud_run_revision" AND jsonPayload.alert="outbox-dead-letter"'
 metric remonta-api-request-failed "a 500 from apps/api" 'resource.type="cloud_run_revision" AND jsonPayload.msg="request failed"'
 metric remonta-api-will-not-start "apps/api refused to start (configuration or contract problem)" 'resource.type="cloud_run_revision" AND "apps/api will not start"'
+metric remonta-api-auth-failed "an api token was rejected (U1: missing, malformed, bad-signature, expired, ...)" 'resource.type="cloud_run_revision" AND jsonPayload.auth="rejected" AND jsonPayload.reason:*'
 
 say "8. Log retention 90 days (project _Default bucket)"
 gcloud logging buckets update _Default --location=global --retention-days=90 >/dev/null
