@@ -145,7 +145,7 @@ describe.each(entries)('$id', ({ entry: e }) => {
   if (e.method === 'GET') {
     it('400 for unknown query parameters', async () => {
       t.rateLimiter.mode = 'allow'
-      expectErrorShape(await send(e, { query: '?q=abc&notAParam=1' }), 400)
+      expectErrorShape(await send(e, { query: '?q=abc&notAParam=1', headers: signedInAdmin }), 400)
     })
   }
 })
@@ -153,7 +153,7 @@ describe.each(entries)('$id', ({ entry: e }) => {
 describe('outside the contracts', () => {
   it('an undeclared route is a 404 in the error shape', async () => {
     t.rateLimiter.mode = 'allow'
-    const res = await t.fastify.inject({ method: 'GET', url: '/v1/admin/users' })
+    const res = await t.fastify.inject({ method: 'GET', url: '/v1/admin/nothing-here' })
     expectErrorShape(res, 404)
   })
   it('an undeclared method on a declared path is a 404', async () => {
