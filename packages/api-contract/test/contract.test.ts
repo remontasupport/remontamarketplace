@@ -1,7 +1,7 @@
 import * as z from 'zod'
 import { describe, expect, it } from 'vitest'
 import publicEndpoints from '../public-endpoints.json'
-import { checkContracts, contracts, defineContract, meta, registrationContract, type PublicEndpoint } from '../src/index'
+import { adminContract, checkContracts, contracts, defineContract, meta, registrationContract, type PublicEndpoint } from '../src/index'
 
 const allow = publicEndpoints as PublicEndpoint[]
 
@@ -51,6 +51,18 @@ describe('the contracts as committed', () => {
     // Documents and anything else stay out of the response.
     const extra = e.responses[200].safeParse({ categories: [{ id: 'x', name: 'X', requiresQualification: false, subcategories: [], documents: {} }] })
     expect(extra.success).toBe(false)
+  })
+
+  it('declare the three admin lists behind the ADMIN role, per-user limited, privately cacheable for a minute (U2)', () => {
+    expect(Object.keys(adminContract.entries).sort()).toEqual(['listSuspendedWorkers', 'listUsers', 'searchWorkers'])
+    for (const e of Object.values(adminContract.entries)) {
+      expect(e.method).toBe('GET')
+      expect(e.meta.access).toEqual({ roles: ['ADMIN'] })
+      expect(e.meta.privateCacheSeconds).toBe(60)
+      expect((e.meta as { cacheSeconds?: number }).cacheSeconds).toBeUndefined()
+      expect(e.meta.rateLimit.map((r) => r.per).sort()).toEqual(['ip', 'user'])
+    }
+    expect(adminContract.entries.searchWorkers.meta.rateLimit).toEqual([{ per: 'user', limit: 120, window: '1m' }, { per: 'ip', limit: 300, window: '1m' }])
   })
 
   it('put a CAPTCHA and an audit action on the sign-up itself', () => {
@@ -131,6 +143,11 @@ describe('checkContracts rejects', () => {
       /exceeds maxBodyKb/,
     ],
   ]
+  cases.push(
+    ['a private cache on a public entry', [[defineContract('test', { a: { method: 'GET', path: '/v1/a', summary: '', responses: res, meta: { ...ok, privateCacheSeconds: 60 } } })], allowFor('GET /v1/a')], /needs a role-restricted GET/],
+    ['a private cache on a POST', [[defineContract('test', { a: { method: 'POST', path: '/v1/a', summary: '', body: { kind: 'json', schema: z.strictObject({}) }, responses: res, meta: { ...roles, privateCacheSeconds: 60 } } })], []], /needs a role-restricted GET/],
+    ['both caches on one entry', [[defineContract('test', { a: { method: 'GET', path: '/v1/a', summary: '', responses: res, meta: { ...roles, cacheSeconds: 60, privateCacheSeconds: 60 } } })], []], /never together/],
+  )
   cases.push([
     'a probe on an entry with input',
     [[defineContract('test', { a: { method: 'POST', path: '/v1/a', summary: '', body: { kind: 'json', schema: z.strictObject({}) }, responses: res, meta: { ...roles, probe: true } } })], []],
@@ -149,6 +166,7 @@ describe('meta() rejects at load time', () => {
     ['a per-user limit on a public entry', { access: 'public', bot: 'none', rateLimit: [{ per: 'user', limit: 1, window: '1m' }], maxBodyKb: 1 }],
     ['a zero limit', { access: 'public', bot: 'none', rateLimit: [{ per: 'ip', limit: 0, window: '1m' }], maxBodyKb: 1 }],
     ['an unknown key', { access: 'public', bot: 'none', rateLimit: [{ per: 'ip', limit: 1, window: '1m' }], maxBodyKb: 1, skipAuth: true }],
+    ['a private cache of zero seconds', { access: { roles: ['ADMIN'] }, bot: 'none', rateLimit: [{ per: 'ip', limit: 1, window: '1m' }], maxBodyKb: 1, privateCacheSeconds: 0 }],
   ])('%s', (_label, m) => {
     expect(() => meta(m as never)).toThrow(/invalid contract metadata/)
   })

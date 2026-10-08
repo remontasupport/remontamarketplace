@@ -34,6 +34,12 @@ export interface Meta {
   /** Cache-Control max-age for a public, non-personal GET. */
   cacheSeconds?: number
   /**
+   * `Cache-Control: private, max-age=N` + ETag/304 on a role-restricted GET (U2, D15):
+   * the browser keeps the answer for its signed-in user, no shared cache may. Never
+   * together with cacheSeconds; never on a public entry (checks.ts).
+   */
+  privateCacheSeconds?: number
+  /**
    * An infrastructure probe (a cheap GET with no input and no personal data): never
    * load-shed, so a health check keeps answering during a burst instead of getting
    * the task replaced by its load balancer; and served over plain HTTP, because the
@@ -61,6 +67,7 @@ const metaSchema = z.strictObject({
   maxBodyKb: z.number().int().positive().max(10240),
   audit: z.string().regex(/^[A-Z][A-Z_]+$/).optional(),
   cacheSeconds: z.number().int().positive().max(86400).optional(),
+  privateCacheSeconds: z.number().int().positive().max(3600).optional(),
   probe: z.literal(true).optional(),
 })
 
