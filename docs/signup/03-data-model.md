@@ -111,6 +111,11 @@ Unique on (`workerProfileId`, `categoryId`). Rows are in the order the worker ch
 Hand-written constraints: one `HOME` row per worker (`worker_locations_one_home_per_worker`, partial
 unique index); `travelRadiusKm` between 1 and 500 and only on `HOME`; latitude/longitude range checks.
 
+Read by: the admin worker search (`apps/api`, `GET /v1/admin/workers`, `docs/admin/README.md`): `point` against
+the picked suburb's centre with `ST_DWithin`/`ST_Distance` on the GiST index `worker_locations_point_idx`, the
+`localityId` for the home suburb label, `precision` and `travelRadiusKm` in the row. A worker without a `HOME` row
+is "unmapped" there: counted, listable, never in a distance search.
+
 ### 2.5 `worker_onboarding` — the onboarding marker
 
 | Column | Type | Value |

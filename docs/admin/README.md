@@ -114,9 +114,11 @@ Each 200 carries `Cache-Control: private, max-age=60`, `Vary: Authorization` and
 answers an identical request within a minute from its own cache (no request at all); afterwards it revalidates
 with `If-None-Match` and gets a 304 when nothing changed. The api also keeps a per-instance memo of search bodies
 for 60 seconds, keyed by the canonical query (never by the caller), so another admin asking the same question runs
-no statement. `Cache-Control: no-cache` on a request bypasses both (the dashboard's refresh button and its reload
-after an admin action send it). Errors are never cached. The canonical query (sorted keys, sorted comma-joined
-arrays, defaults applied) is `canonicalQueryOf` in `packages/api-contract`; the page builds its URLs with it.
+no statement. `Cache-Control: no-cache` on a request bypasses both: the dashboard's refresh button and its reload
+after an admin action fetch with the browser's `reload` cache mode, which skips the browser cache and makes the
+browser add that header itself (so the api's CORS allow-list needs no extra request header). Errors are never
+cached. The canonical query (sorted keys, sorted comma-joined arrays, defaults applied) is `canonicalQueryOf` in
+`packages/api-contract`; the page builds its URLs with it.
 
 ## 4. Parity and timing
 
@@ -124,5 +126,31 @@ arrays, defaults applied) is `canonicalQueryOf` in `packages/api-contract`; the 
 --new=<staging api url> --token=<admin jwt> [--time]` replays `apps/api/scripts/parity-cases.json` (45 cases)
 through today's route and the new entry and compares id sets and totals; suburb cases resolve their id through
 `GET /v1/localities` and are expected to differ (the old route geocoded the label with Google, capped "any distance"
-at 500 km and read legacy coordinates). `--time` repeats each case ten times with `no-cache` and prints p50/p95; the
-target is p95 under 500 ms.
+at 500 km and read legacy coordinates). `--time` repeats each case ten times with `no-cache` and prints p50/p95,
+paced at one call per 550 ms (`--pace=`) to stay under the entry's per-admin limit; the target is p95 under 500 ms
+measured at the api (Cloud Run's request log carries the server-side latency; a client far from Sydney adds its
+own round trip).
+
+`apps/api/scripts/staging-admin-check.ts` is the staging checklist in one command (`node --import tsx
+scripts/staging-admin-check.ts` from `apps/api`, with gcloud signed in): it reads the staging secrets, mints an
+admin and a worker token, and prints PASS/FAIL per row (the 401/403/200 trio, a tampered token, the private cache
+headers and 304, the radius cases, `EXPLAIN (ANALYZE, BUFFERS)` of the 50 km case, the twelve-request drill,
+production unchanged, then the timing replay). It prints results only, never a secret or a token.
+
+## 5. The app side (`apps/app`)
+
+| Piece | Where | What it does |
+|---|---|---|
+| the token route | `src/app/api/auth/api-token/route.ts` -> `src/lib/api/mint.ts` | section 1: session, the account re-read (`withRetry`; a database error is 503 with `Retry-After`, never 401), the strict limiter (30/min per subject), `SignJWT` with `kid: current`, `no-store` |
+| the token source | `src/lib/api/token.ts` (`createTokenSource`) | one per page load, in memory only; renews when under 60 s remain; one in-flight fetch shared by concurrent callers; a 401 clears it and surfaces `Unauthenticated`; a 429 waits `Retry-After` (10 s cap) once, a 5xx or network failure waits 1 s once, then `Unavailable` |
+| the admin client | `src/lib/api/admin.ts` (`adminApi`, `createAdminApi`) | the bearer header; one retry on a 401 with a fresh token; outcomes `ok`, `unauthenticated`, `forbidden`, `rateLimited(retryAfterSeconds)`, `unavailable`, `failed(status, requestId, fields)`; canonical URLs (one URL per set of filters, so the browser cache and the api memo agree); `cache: 'reload'` for the refresh button and after an admin action |
+| the filter state | `src/features/admin-search/query.ts` | display -> canonical (`toQuery`: `male` -> `Male`, a category id, the "Experience with" labels -> `CareDomain`), the URL state (`urlFromFilters`, `filtersFromURL`: the canonical query plus `localityLabel` for display) |
+| the dashboard | `src/app/admin/AdminDashboardClient.tsx` | the suburb box keeps `{id, label}` from `/api/suburbs` (a row without an id, a Google fallback, cannot be picked); "Within" is enabled only with a suburb and resets when it clears; "N active workers have no mapped suburb" with a link to list them; "Results may be up to a minute old" with Refresh; the distance shown as kilometres from the suburb centre; every outcome has a notice and the last results stay on screen; `unauthenticated` sends the admin to `/login?callbackUrl=`; the status toggle and Reactivate reload past both caches |
+| the user picker | `src/app/admin/impersonate/page.tsx` | `adminApi.listUsers`: a search of at least two characters, the role filter narrowing it (a role alone no longer lists; the entry requires a search) |
+
+What a screen must do with each outcome is fixed by `construction/api-identity/functional-design/frontend-components.md`
+(`aidlc-docs`): redirect on `unauthenticated`; keep the last results and show a notice otherwise; retry a
+`rateLimited` automatically after its wait.
+
+The old Next.js routes (`/api/admin/contractors`, `/api/admin/users`, `/api/admin/contractors/inactive`,
+`/api/admin/filters`) are no longer called by any screen and are deleted in the clean-up PR that follows.
