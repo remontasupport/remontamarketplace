@@ -3372,3 +3372,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08 06:21Z):** staging redeployed by the user: `remonta-api-staging-00017-h7x` (same image digest `c9af51b0…`, created 06:19:25Z) serving 100%; health 200; "apps/api listening" 06:19:32Z; no ERROR line; `/v1/admin/workers` 401 without a token. Final checklist run requested.
 
 **User input (2026-10-08):** "Done, redeployed staging, check again"
+
+**User input (2026-10-08, staging checklist run 5 on `00017`, pasted, truncated after 12 timing rows):** "token secret as stored: 44 chars (44 without whitespace…)" · 19/20 PASS; the one FAIL `/v1/admin/users?search=a` -> 400 · ADMIN 200 total 1765 unplaced 69 · workers and suspended lists `private, max-age=60`, ETag, 304 · Parramatta 10 km 87 rows within/sorted, 50 km 336, any 1696 · EXPLAIN 6 ms warm on the GiST index · S9: 12 x 200, recovery 200 · prod unchanged · timing p50 ~290 ms per case from the client.
+
+**AI action:** the users-list 400 is the contract (search needs 2+ characters); the runner now sends `search=an`. Server-side latency from Cloud Logging on `00017`: edge p50 56 / p95 100 ms (n=159), handler p50 39 / p95 69 ms (n=148): NFR-01 met; the client numbers are the Manila-Sydney path (health alone 460-640 ms). Verification record filled. Remaining: the users-list caching row, the full timing table, S12 (traffic to `00015-sgw` then back, by the user: the permission layer refuses traffic changes), then promotion.
