@@ -152,7 +152,7 @@ GCP_PROJECT_ID=$PROJECT
 GCP_WORKLOAD_IDENTITY_PROVIDER=projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$POOL/providers/$PROVIDER
 GCP_DEPLOY_SERVICE_ACCOUNT=$DEPLOY_SA
 
-Next (per stage, before its first deploy): add the six secret values --
+Next (per stage, before its first deploy): add the secret values (the token pair included) --
   for each of ${SECRETS[*]}:
     printf '%s' '<value>' | gcloud secrets versions add remonta-api-staging-<NAME> --data-file=-
 Then merge to main: deploy-api deploys STAGING. Production is a promotion (workflow_dispatch).
