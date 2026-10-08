@@ -3416,3 +3416,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08 07:37Z):** app build without the old routes: success; `feat/admin-search-cleanup` pushed (head `ce37ec7`). The PR 3 merge's automatic deploy-api run (07:20:43Z, success) put staging on `remonta-api-staging-00018-672` (same api code plus the scripts), health 200. The user opens PR 4 from the compare link.
 
 **User input (2026-10-08):** "so are you saying that the legacy api has been removed now? and we are using the new backend api which is a nest and deployed to cloud?"
+
+**User input (2026-10-08):** "whats the pr link again"
