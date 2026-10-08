@@ -12,6 +12,9 @@ import type { OutboxHandler } from './platform/outbox/outbox'
 import { LoadShedder } from './platform/load/load-shedder'
 import { createDb } from './platform/persistence/db'
 import { PostgresRateLimiter } from './platform/rate-limit/rate-limiter'
+import { adminHandlers } from './modules/admin/admin.handlers'
+import { ResponseMemo } from './platform/cache/response-memo'
+import { systemClock } from './platform/clock'
 import { LocalityDirectory } from './modules/localities/locality-directory'
 import { platformHandlers } from './modules/platform/platform.handlers'
 import { GcsPhotoStore } from './modules/registration/adapters/gcs-photo-store'
@@ -42,6 +45,8 @@ async function main() {
   const blobStore = new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN)
   const handlerSets = [
     platformHandlers(db),
+    // The admin lists (U2): behind the api token; the search is memoised per instance.
+    adminHandlers({ db, clock: systemClock }),
     registrationHandlers({
       db,
       hasher,
@@ -80,6 +85,7 @@ async function main() {
         minScore: config.RECAPTCHA_MIN_SCORE,
       }),
       authenticator,
+      memo: { store: new ResponseMemo({ clock: systemClock }), entries: new Set(['admin.searchWorkers']) },
     },
   })
   const log = app.getHttpAdapter().getInstance().log
