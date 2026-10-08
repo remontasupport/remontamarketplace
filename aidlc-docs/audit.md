@@ -3370,3 +3370,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08):** "wait, is code for the API done already?"
 
 **AI action (2026-10-08 06:21Z):** staging redeployed by the user: `remonta-api-staging-00017-h7x` (same image digest `c9af51b0…`, created 06:19:25Z) serving 100%; health 200; "apps/api listening" 06:19:32Z; no ERROR line; `/v1/admin/workers` 401 without a token. Final checklist run requested.
+
+**User input (2026-10-08):** "Done, redeployed staging, check again"
