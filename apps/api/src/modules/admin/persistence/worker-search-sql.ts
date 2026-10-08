@@ -80,7 +80,7 @@ export function searchStatement(q: SearchQuery, localityId: number | undefined):
            (SELECT array_agg(DISTINCT ws."categoryName") FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS "serviceNames",
            (SELECT array_agg(DISTINCT ws."categoryId") FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS "serviceIds",
            al.suburb AS "homeSuburb", al.state AS "homeState", al.postcode AS "homePostcode",
-           wl.precision::text AS precision, wl."travelRadiusKm",
+           wl."precision"::text AS "precision", wl."travelRadiusKm",
            ${distance} AS distance_m,
            COUNT(*) OVER()::int AS total
     ${FROM}

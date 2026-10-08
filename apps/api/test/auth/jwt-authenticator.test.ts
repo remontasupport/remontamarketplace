@@ -145,13 +145,14 @@ describe('properties', () => {
     )
   })
 
-  it('P3: a token is accepted iff now is within [iat - skew, exp + skew]', async () => {
+  it('P3: a token is accepted iff now is before exp + skew (no nbf: an early clock is accepted)', async () => {
     await fc.assert(
       fc.asyncProperty(fc.integer({ min: -600, max: 600 }), async (offsetS) => {
         const token = await mint({ iat: nowS, exp: nowS + API_TOKEN_TTL_S })
         const h = harness({ now: new Date((nowS + offsetS) * 1000) })
         const accepted = (await h.run(`Bearer ${token}`)) !== null
-        const expected = offsetS <= API_TOKEN_TTL_S + 30
+        // jose expires a token when exp <= now - tolerance: the edge itself is expired.
+        const expected = offsetS < API_TOKEN_TTL_S + 30
         expect(accepted).toBe(expected)
       }),
       { numRuns: 100 },
