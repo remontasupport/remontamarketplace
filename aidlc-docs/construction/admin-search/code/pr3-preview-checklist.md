@@ -4,7 +4,11 @@ Integration scenario 3 (`../../build-and-test/integration-test-instructions.md`)
 (Preview scope: `NEXT_PUBLIC_API_URL` = staging, `API_TOKEN_SECRET` = staging's value, version 2, clean) against
 staging `remonta-api-staging` running PRs 1 and 2 (`00017-h7x`). Production is checked unchanged at the same time.
 
-Branch `feat/admin-search-app`. PR #PR3_NUMBER.
+Branch `feat/admin-search-app`. PR #43, CI 14/14 success on `e07abdc`; merged `64508be` 2026-10-08 ~07:20Z.
+
+**Deviation:** the user merged before the preview rows below were run ("merged" reported and verified by refs). The
+rows stay as the record of what was not proven on a preview; the production checks (scenario 5) are the proof
+that exists. The two "before the merge" rows were not done either.
 
 ## Before the merge
 

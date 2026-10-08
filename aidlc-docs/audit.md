@@ -3400,3 +3400,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08, PR 3 generated):** branch `feat/admin-search-app` from `b09a9c1`; 5 commits pushed (`522bf54` scripts, `d32fd0b` token route + source, `ca80386` admin client + filter mappings, `d381e42` the two screens, `e07abdc` docs). Local gates: app quality green (118 passed, 32 new), app build success; the regenerated Prisma clients discarded. Decisions H1-H12 in `construction/admin-search/code/pr3-summary.md`; the preview checklist drafted. Plan Parts G-K and U1 Part E ticked. The user opens the PR from the compare link.
 
 **AI action (2026-10-08):** `@remonta/api` quality on the two script files: lint, strict tsc, 366 passed / 142 skipped (gated). PR 3 ready for the user to open.
+
+**User input (2026-10-08, PR 3):** "merged"
+
+**AI action (2026-10-08 07:21Z, PR 3 merged):** checked by refs: `main` = `64508be` (merge of PR #43, head `e07abdc`); CI 14/14 success on the head. The preview checklist was not run before the merge (deviation recorded in `pr3-preview-checklist.md`); the Vercel rollback id was not re-recorded. At 07:21Z production still served the previous app build (`/api/auth/api-token` answered NextAuth's 400); a watcher waits for the new build (401, no-store) and for the deploy-api run on `64508be`. Prod api: health 200, no rejections, no admin lines in the last 15 min.

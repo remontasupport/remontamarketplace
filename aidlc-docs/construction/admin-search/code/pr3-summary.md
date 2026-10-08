@@ -3,7 +3,7 @@
 Branch `feat/admin-search-app` from `main` `b09a9c1` (PR 2 merged, PRs 1 and 2 promoted to prod `remonta-api-00006-tj5`).
 Commits: `522bf54` the api scripts (the staging checklist runner, the paced replay), `d32fd0b` the token route and
 the token source (U1 Part E), `ca80386` the admin client and the filter mappings (Parts H, J1), `d381e42` the two
-screens (Part I), `e07abdc` docs (Part K). PR: #PR3_NUMBER (opened by the user from the compare link). Plan:
+screens (Part I), `e07abdc` docs (Part K). PR: #43 (opened by the user from the compare link; CI 14/14 success; merged `64508be` without the preview checklist). Plan:
 `../../plans/admin-search-code-generation-plan.md` (Parts G-K ticked; `api-identity` Part E ticked).
 
 ## Files
@@ -53,7 +53,7 @@ screens (Part I), `e07abdc` docs (Part K). PR: #PR3_NUMBER (opened by the user f
 |---|---|
 | `@remonta/app` quality | type-check baseline, lint baseline, 118 passed / 12 skipped (32 new) |
 | `turbo run build --filter=@remonta/app` | success (1m24s); the regenerated Prisma clients discarded |
-| `@remonta/api` quality (the two script files) | see the audit (run after the push) |
+| `@remonta/api` quality (the two script files) | lint, strict tsc, 366 passed / 142 skipped |
 
 ## Behaviour changes an admin will notice
 
