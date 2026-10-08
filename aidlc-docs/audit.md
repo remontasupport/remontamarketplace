@@ -3382,3 +3382,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action:** the 429 is the search entry's per-admin limit (120/min) against a replay firing ~200/min: recorded as the limit proven, not a fault. `parity-admin-search.ts` --time now paces calls (`--pace=550` ms default). Verification record updated. Two uncommitted script files on the working tree (`staging-admin-check.ts` new, `parity-admin-search.ts` paced) go into PR 3. Next: S12 (the user routes staging traffic to `00015-sgw` and back), then promotion.
 
 **User input (2026-10-08):** "where should I ran that?"
+
+**User input (2026-10-08, S12):** ran `gcloud run services update-traffic … --to-revisions remonta-api-staging-00017-h7x=100` (the way-back command) -> "Traffic: 100% remonta-api-staging-00017-h7x".
