@@ -199,11 +199,11 @@ Three PRs, each on its own code branch from `main`, in this order, each merged b
 
 ## PR 4 -- clean-up (`feat/admin-search-cleanup`)
 
-- [ ] **L1** delete `apps/app/src/app/api/admin/contractors/route.ts`, `api/admin/filters/route.ts`,
+- [x] **L1** delete `apps/app/src/app/api/admin/contractors/route.ts`, `api/admin/filters/route.ts`,
   `api/admin/users/route.ts`, `api/admin/contractors/inactive/route.ts`, `src/lib/worker-search.ts`; remove the
   `admin:contractors:v1` cache-key use; `pnpm --filter @remonta/app run quality` (the lint baseline may shrink, never
   grow); Semgrep/CodeQL unaffected.
-- [ ] **M1** `docs/admin/README.md` (the old routes gone), the state file's follow-up 1 (the admin reader moved; the
+- [x] **M1** `docs/admin/README.md` (the old routes gone), the state file's follow-up 1 (the admin reader moved; the
   client and public readers remain; the dual write stays), `pr4-summary.md`.
 
 ## Story coverage

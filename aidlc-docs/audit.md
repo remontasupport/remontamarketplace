@@ -3410,3 +3410,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08 07:25Z, PR 3 live):** production serves the new build since 07:23Z (`/api/auth/api-token` -> 401 `no-store`); the first attributed `admin.searchWorkers` on prod at 07:25:05Z, no rejection: the Production secret pairs. Scenario 5 rows filled; the suburb search on the live dashboard asked of the user.
 
 **AI action (2026-10-08 07:27Z):** prod request log: the user's searches at 07:25Z (plain 47-66 ms handler, 81-116 ms edge; suburb `localityId=9386` 137 ms / 178 ms; preflights 204 in ~2 ms); no rejection. State updated; PR 4 (clean-up) started.
+
+**AI action (2026-10-08 07:33Z, PR 4 generated):** branch `feat/admin-search-cleanup` from `64508be`; `bfe795e` deletes the four old admin routes and `lib/worker-search.ts` (no importer; the Redis key use went with the contractors route) and tightens both baselines (-2 typescript, -15 eslint, all in the deleted files); `ce37ec7` docs. App quality green (142/471 findings all known; 118 tests). Build running; push after it. `pr4-summary.md` written; plan Parts L-M ticked; state follow-up 1 narrowed.
