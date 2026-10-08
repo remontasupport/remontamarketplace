@@ -3412,3 +3412,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08 07:27Z):** prod request log: the user's searches at 07:25Z (plain 47-66 ms handler, 81-116 ms edge; suburb `localityId=9386` 137 ms / 178 ms; preflights 204 in ~2 ms); no rejection. State updated; PR 4 (clean-up) started.
 
 **AI action (2026-10-08 07:33Z, PR 4 generated):** branch `feat/admin-search-cleanup` from `64508be`; `bfe795e` deletes the four old admin routes and `lib/worker-search.ts` (no importer; the Redis key use went with the contractors route) and tightens both baselines (-2 typescript, -15 eslint, all in the deleted files); `ce37ec7` docs. App quality green (142/471 findings all known; 118 tests). Build running; push after it. `pr4-summary.md` written; plan Parts L-M ticked; state follow-up 1 narrowed.
+
+**AI action (2026-10-08 07:37Z):** app build without the old routes: success; `feat/admin-search-cleanup` pushed (head `ce37ec7`). The PR 3 merge's automatic deploy-api run (07:20:43Z, success) put staging on `remonta-api-staging-00018-672` (same api code plus the scripts), health 200. The user opens PR 4 from the compare link.

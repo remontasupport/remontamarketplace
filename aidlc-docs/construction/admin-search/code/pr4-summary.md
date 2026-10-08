@@ -36,7 +36,7 @@ link). Plan: `../../plans/admin-search-code-generation-plan.md` (Parts L-M ticke
 | Gate | Result |
 |---|---|
 | `@remonta/app` quality | typescript 142 findings all known, eslint 471 all known; 118 passed / 12 skipped |
-| `turbo run build --filter=@remonta/app` | see the audit |
+| `turbo run build --filter=@remonta/app` | success; the regenerated Prisma clients discarded |
 
 ## After the merge
 
