@@ -3336,3 +3336,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, PR 2 #42):** "Merged now, check again"
 
 **AI action (2026-10-08 05:56Z, PR 2 #42, second "Merged" checked by refs):** still not merged. `main` = `c95435c`; `d943f96` reachable only from `feat/admin-search-api`; the PR page's state badge reads "Open"; no merge-queue branch exists. Reported back with the three things to look at on the PR page.
+
+**User input (2026-10-08, PR 2 #42):** "Confirmed merge, check again"
+
+**AI action (2026-10-08 06:05Z, PR 2 merged and on staging):** `main` = `b09a9c1` (checked by refs). deploy-api run 37734997370 success 06:03Z; staging revision `remonta-api-staging-00016-8xb` at 100%, health 200, "apps/api listening", no ERROR line; `/v1/admin/workers` and `/v1/admin/users` answer 401 without a token; prod still `00005-j74`, health 200, admin path 404. The permission layer refused the assistant's read of the staging secrets (token secret, database URL), so the token-bearing checks, the EXPLAIN, the S9 drill and the timing replay are packaged as `apps/api/scripts/staging-admin-check.ts` (uncommitted for now) for the user to run; it prints results only.
