@@ -26,13 +26,13 @@ Branch `feat/admin-search-api`, 6 commits (`b31bccf`, `ddacf3c`, `e3909dd`, `874
 | parity: `parity:admin-search` against a preview's old route and staging | not run: needs a preview session cookie; the user declined to supply one in this run (the timing replay ran instead). Open until PR 3's preview, where the same comparison can be made from the screen |
 | timing: `--time` p95 under 500 ms | from the user's machine (Manila -> Sydney; `/v1/health` alone 460-640 ms): p50 ~290 ms, p95 300-600 ms per case. Server side, from the logs on `00017` (30 min, n=159 admin requests): Cloud Run edge p50 56 ms, p95 100 ms, max 383 ms; the search handler itself (`admin search` lines, n=148) p50 39 ms, p95 69 ms. NFR-01 met at the api; the client figure is the network path. Run 6: the replay (450 back-to-back calls, ~200/min) was cut off at case 13-15 by the per-admin limit (429 `RATE_LIMITED`, 120/min): the limit works as declared; the replay is now paced at 550 ms (`--pace`) |
 | S9 pool-exhaustion drill: 12 concurrent distinct searches -> some 503 with `Retry-After`; recovery | 12 concurrent searches (pool 5): all 200, slowest 627 ms from the client, recovery 200. No shedding was needed at this load; the 503 path remains proven by the unit tests (`errors.test.ts`) |
-| S12 rollback rehearsal on staging: promote the previous image; the entries answer 404; re-deploy | pending |
-| production unchanged (`remonta-api-00005-j74`) | pending |
+| S12 rollback rehearsal on staging: promote the previous image; the entries answer 404; re-deploy | 06:44Z: traffic 100% to `00015-sgw` (PR 1 image) by the user (`gcloud run services update-traffic`); health 200 x3, `/v1/admin/workers` and `/v1/admin/users` 404 x3, `/v1/localities` 200 x3. 06:46Z: traffic 100% back to `00017-h7x`; health 200, both entries 401 again. Seconds each way, no rebuild |
+| production unchanged (`remonta-api-00005-j74`) | throughout (last check 06:46Z): `remonta-api-00005-j74` serving, health 200, `/v1/admin/workers` 404 |
 
 ## Promotion (PRs 1 and 2 as one image)
 
 | Step | Result |
 |---|---|
-| `deploy-api` dispatch, stage=prod, imageTag=<the merge sha> | pending |
+| `deploy-api` dispatch, stage=prod, imageTag=`b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a` | pending (the user dispatches; the staging checklist above is complete, parity-against-the-old-route excepted) |
 | prod health 200; `GET /v1/admin/workers` without a token -> 401 | pending |
 | `auth-failed` alert silent | pending |

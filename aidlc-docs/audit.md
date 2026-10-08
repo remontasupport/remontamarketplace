@@ -3388,3 +3388,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, S12):** "Routed"
 
 **AI action (2026-10-08 06:44Z, S12 first half):** traffic 100% on `remonta-api-staging-00015-sgw` (the PR 1 image); three probes: health 200 (0.27-0.44 s), `/v1/admin/workers` and `/v1/admin/users` 404, `/v1/localities` 200. A rollback hides the entries and leaves the public path serving. Waiting for the route back to `00017-h7x`.
+
+**User input (2026-10-08, S12):** "Routed back"
+
+**AI action (2026-10-08 06:47Z, S12 complete; PR 2 staging checklist closed):** traffic back on `00017-h7x`; health 200, both admin entries 401; prod `00005-j74` unchanged (health 200, admin path 404). Verification record and state updated. Promotion of PRs 1 and 2 handed to the user: deploy-api dispatch stage=prod, imageTag=`b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a`. Follow-up 17 (new): the rotation runbook must say to add a secret version without a trailing newline; follow-up 18: the checklist runner and the paced replay to be committed with PR 3.
