@@ -45,6 +45,14 @@ const envSchema = z.object({
 
   /** Keys the IP hash stored with staged photos, so raw IPs are never stored. */
   IP_HASH_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
+  /**
+   * Verifies the api tokens apps/app mints (U1 api-identity). The SAME value as the app's
+   * API_TOKEN_SECRET for this stage (Vercel Preview <-> staging, Production <-> prod);
+   * a mismatch shows as `bad-signature` rejections.
+   */
+  API_TOKEN_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
+  /** The previous value during a rotation (infra/README.md); always mounted on Cloud Run, optional locally. */
+  API_TOKEN_SECRET_PREVIOUS: z.string().min(32, 'shorter than 32 characters').optional(),
   /** The Cloud Storage bucket sign-up photos are uploaded to (U3). One per stage; infra/lib/stages.ts. */
   PHOTO_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]$/, 'must be a bucket name'),
   /** `https://storage.googleapis.com/<bucket>` in production; the fake server's URL for tests. */

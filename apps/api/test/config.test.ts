@@ -9,6 +9,7 @@ const complete = {
   RESEND_API_KEY: 're_SECRETsecret',
   N8N_REGISTRATION_WEBHOOK_URL: 'https://n8n.example.test/webhook/a',
   IP_HASH_SECRET: 'x'.repeat(32),
+  API_TOKEN_SECRET: 'y'.repeat(32),
   EMAIL_FROM: 'Remonta <noreply@remontaservices.com.au>',
   APP_BASE_URL: 'https://app.remontaservices.com.au',
   PHOTO_BUCKET: 'remonta-api-photos-staging',
@@ -35,7 +36,7 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...complete, NODE_ENV: 'production' }).requireHttps).toBe(true)
   })
 
-  it.each(['AUTH_DATABASE_URL', 'CORS_ORIGINS', 'RECAPTCHA_SECRET_KEY', 'RECAPTCHA_ALLOWED_HOSTNAMES', 'RESEND_API_KEY', 'IP_HASH_SECRET', 'PHOTO_BUCKET', 'PHOTO_PUBLIC_BASE_URL'])(
+  it.each(['AUTH_DATABASE_URL', 'CORS_ORIGINS', 'RECAPTCHA_SECRET_KEY', 'RECAPTCHA_ALLOWED_HOSTNAMES', 'RESEND_API_KEY', 'IP_HASH_SECRET', 'API_TOKEN_SECRET', 'PHOTO_BUCKET', 'PHOTO_PUBLIC_BASE_URL'])(
     'refuses to start without %s -- and a blank value counts as missing',
     (key) => {
       expect(problems({ ...complete, [key]: undefined }).join()).toContain(key)
@@ -79,6 +80,12 @@ describe('loadConfig', () => {
     expect([local.GCS_API_ENDPOINT, local.GCS_TIMEOUT_MS, local.PHOTO_PROCESS_CONCURRENCY]).toEqual(['http://localhost:4443', 5000, 2])
     // A fake storage server never reaches production.
     expect(problems({ ...complete, NODE_ENV: 'production', GCS_API_ENDPOINT: 'http://localhost:4443' }).join()).toContain('GCS_API_ENDPOINT')
+  })
+
+  it('the api token secret is required; the previous one is optional, but never short (U1)', () => {
+    expect(problems({ ...complete, API_TOKEN_SECRET: 'short' }).join()).toContain('API_TOKEN_SECRET')
+    expect(problems({ ...complete, API_TOKEN_SECRET_PREVIOUS: 'z'.repeat(32) })).toEqual([])
+    expect(problems({ ...complete, API_TOKEN_SECRET_PREVIOUS: 'short' }).join()).toContain('API_TOKEN_SECRET_PREVIOUS')
   })
 
   it('never echoes a value in its errors (P6)', () => {

@@ -4,7 +4,7 @@ import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { contracts, type PublicEndpoint } from '@remonta/api-contract'
 import { createApp } from './app'
 import { loadConfig } from './config/config'
-import { DenyAllAuthenticator } from './platform/auth/authenticator'
+import { JwtAuthenticator } from './platform/auth/jwt-authenticator'
 import { RecaptchaV3Verifier } from './platform/captcha/captcha'
 import { SafeHttpClient } from './platform/http/safe-http-client'
 import { OutboxDispatcher } from './platform/outbox/dispatcher'
@@ -59,6 +59,13 @@ async function main() {
   const outboxHandlers: Map<string, OutboxHandler> = notificationHandlers({ db, mailer, appBaseUrl: config.APP_BASE_URL })
 
   const shedder = new LoadShedder({ maxInFlight: config.MAX_IN_FLIGHT, maxEventLoopDelayMs: config.MAX_EVENT_LOOP_DELAY_MS })
+  // The api token verifier (U1): the secret pair from Secret Manager; the logger exists
+  // only after createApp, hence the getter.
+  const utf8 = (s: string) => new TextEncoder().encode(s)
+  const authenticator = new JwtAuthenticator({
+    secrets: { current: utf8(config.API_TOKEN_SECRET), previous: config.API_TOKEN_SECRET_PREVIOUS ? utf8(config.API_TOKEN_SECRET_PREVIOUS) : undefined },
+    log: () => app.getHttpAdapter().getInstance().log,
+  })
   const app = await createApp({
     config,
     shedder,
@@ -72,7 +79,7 @@ async function main() {
         allowedHostnames: config.RECAPTCHA_ALLOWED_HOSTNAMES,
         minScore: config.RECAPTCHA_MIN_SCORE,
       }),
-      authenticator: new DenyAllAuthenticator(),
+      authenticator,
     },
   })
   const log = app.getHttpAdapter().getInstance().log
