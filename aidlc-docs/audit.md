@@ -3340,3 +3340,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, PR 2 #42):** "Confirmed merge, check again"
 
 **AI action (2026-10-08 06:05Z, PR 2 merged and on staging):** `main` = `b09a9c1` (checked by refs). deploy-api run 37734997370 success 06:03Z; staging revision `remonta-api-staging-00016-8xb` at 100%, health 200, "apps/api listening", no ERROR line; `/v1/admin/workers` and `/v1/admin/users` answer 401 without a token; prod still `00005-j74`, health 200, admin path 404. The permission layer refused the assistant's read of the staging secrets (token secret, database URL), so the token-bearing checks, the EXPLAIN, the S9 drill and the timing replay are packaged as `apps/api/scripts/staging-admin-check.ts` (uncommitted for now) for the user to run; it prints results only.
+
+**User input (2026-10-08, staging checklist run 1):** `! cd apps/api; node --import tsx scripts/staging-admin-check.ts` -> "staging-admin-check failed: Invalid `prisma.$queryRaw()` invocation: Can't reach database server at `localhost:55432`" (plus a DEP0190 warning about `shell: true`).
+
+**AI action:** cause: the script let `AUTH_DATABASE_URL` from the user's shell (the local Docker database) win over Secret Manager. Fixed: the staging values now come from gcloud unless `STAGING_API_TOKEN_SECRET` / `STAGING_AUTH_DATABASE_URL` are set explicitly; gcloud is invoked without `shell: true`.
