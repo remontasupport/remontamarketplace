@@ -219,6 +219,9 @@ importers:
       html-to-image:
         specifier: ^1.11.13
         version: 1.11.13
+      jose:
+        specifier: ^6.2.12
+        version: 6.2.12
       jspdf:
         specifier: ^3.0.4
         version: 3.0.4
