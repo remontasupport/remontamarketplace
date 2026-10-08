@@ -50,6 +50,9 @@ importers:
       fastify:
         specifier: 5.11.3
         version: 5.11.3
+      jose:
+        specifier: ^6.2.12
+        version: 6.2.12
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -574,6 +577,9 @@ importers:
       eslint:
         specifier: ^9
         version: 9.39.5(jiti@2.7.0)
+      fast-check:
+        specifier: ^4.9.0
+        version: 4.9.0
       tsx:
         specifier: ^4.23.13
         version: 4.23.13
