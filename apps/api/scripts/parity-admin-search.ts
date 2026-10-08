@@ -9,7 +9,8 @@
 // the sorted id sets and the totals. Without a suburb a difference fails the run; with a
 // suburb a difference is listed for explanation (the known losses L1-L5, L7 of the
 // inventory) and fails the run unless the case carries `expectDifference: true`.
-// --time repeats each case 10 times against the new entry and prints p50/p95 (ms).
+// --time repeats each case 10 times against the new entry and prints p50/p95 (ms), paced under the
+// entry's per-admin limit (120 per minute: one call every --pace=550 ms by default).
 import { readFile } from 'node:fs/promises'
 import { adminContract, canonicalQueryOf, createClient, registrationContract, type WorkerSearchQuery } from '@remonta/api-contract'
 
@@ -42,6 +43,8 @@ const newBase = flag('new')
 const token = flag('token')
 const casesPath = flag('cases') ?? new URL('./parity-cases.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')
 const timeMode = process.argv.includes('--time')
+const paceMs = Number(flag('pace') ?? 550)
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 if (!newBase || !token) {
   console.error('usage: parity-admin-search --new=<api base> --token=<jwt> [--old=<app base> --cookie=<cookie>] [--cases=<file>] [--time]')
@@ -86,7 +89,12 @@ for (const c of cases) {
   const canonical = canonicalQueryOf(adminContract.entries.searchWorkers, c.new)
   if (timeMode) {
     const times: number[] = []
-    for (let i = 0; i < 10; i++) times.push((await callNew(c)).ms)
+    for (let i = 0; i < 10; i++) {
+      const started = performance.now()
+      times.push((await callNew(c)).ms)
+      const rest = paceMs - (performance.now() - started)
+      if (rest > 0) await sleep(rest)
+    }
     allMs.push(...times)
     console.log(`${c.name.padEnd(40)} p50 ${pct(times, 50).toFixed(0).padStart(5)} ms  p95 ${pct(times, 95).toFixed(0).padStart(5)} ms   ?${canonical}`)
     continue

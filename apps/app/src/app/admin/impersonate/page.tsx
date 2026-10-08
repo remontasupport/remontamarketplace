@@ -3,61 +3,54 @@
 /**
  * Admin Impersonation Page
  *
- * Allows admins to search for and impersonate users for customer support
+ * Allows admins to search for and impersonate users for customer support.
+ * The user list is read from apps/api (`adminApi.listUsers`, U2 admin-search PR 3):
+ * a search of at least two characters, optionally narrowed by role.
  */
 
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { UserListResponse } from '@remonta/api-contract'
 import { ImpersonationButton } from '@/components/admin/ImpersonationButton'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { adminApi, type ApiOutcome } from '@/lib/api/admin'
 
-interface User {
-  id: string
-  email: string
-  role: string
-  status: string
-  createdAt: string
-  firstName?: string
-  lastName?: string
-  mobile?: string
-}
-
-async function searchUsers(query: string, role?: string): Promise<User[]> {
-  const params = new URLSearchParams()
-  if (query) params.append('search', query)
-  if (role && role !== 'all') params.append('role', role)
-
-  const response = await fetch(`/api/admin/users?${params.toString()}`)
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch users')
-  }
-
-  const data = await response.json()
-  return data.users || []
-}
+type User = UserListResponse['users'][number]
+type RoleFilter = 'all' | 'WORKER' | 'CLIENT' | 'COORDINATOR' | 'ADMIN'
 
 export default function ImpersonatePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState('all')
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
   // Debounce search - use useEffect instead of useState
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery)
+      setDebouncedQuery(searchQuery.trim())
     }, 300)
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['users', debouncedQuery, roleFilter],
-    queryFn: () => searchUsers(debouncedQuery, roleFilter),
-    enabled: debouncedQuery.length >= 2 || roleFilter !== 'all',
+  const canSearch = debouncedQuery.length >= 2
+
+  const { data: outcome, isLoading } = useQuery<ApiOutcome<UserListResponse>>({
+    queryKey: ['admin-users', debouncedQuery, roleFilter],
+    queryFn: () => adminApi.listUsers({ search: debouncedQuery, ...(roleFilter === 'all' ? {} : { role: roleFilter }) }),
+    enabled: canSearch,
+    staleTime: 60000,
   })
+
+  useEffect(() => {
+    if (outcome?.kind === 'unauthenticated') {
+      router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`)
+    }
+  }, [outcome, router])
+
+  const users: User[] | undefined = outcome?.kind === 'ok' ? outcome.body.users : undefined
+  const problem = outcome && outcome.kind !== 'ok' && outcome.kind !== 'unauthenticated' ? outcome : null
 
   // Redirect non-admins
   if (session && session.user.role !== 'ADMIN') {
@@ -99,6 +92,7 @@ export default function ImpersonatePage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  maxLength={100}
                   placeholder="Search by name or email (min 2 characters)..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
@@ -125,7 +119,7 @@ export default function ImpersonatePage() {
               </label>
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+                onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="all">All Roles</option>
@@ -171,7 +165,7 @@ export default function ImpersonatePage() {
         {/* Results */}
         <div className="bg-white rounded-lg shadow">
           {/* Loading State */}
-          {isLoading && (
+          {isLoading && canSearch && (
             <div className="p-12 text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
               <p className="mt-2 text-sm text-gray-600">Searching users...</p>
@@ -179,7 +173,7 @@ export default function ImpersonatePage() {
           )}
 
           {/* No Query */}
-          {!isLoading && !debouncedQuery && roleFilter === 'all' && (
+          {!canSearch && (
             <div className="p-12 text-center">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"
@@ -196,13 +190,26 @@ export default function ImpersonatePage() {
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900">Search for users</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Enter a name or email (min 2 characters) or select a role filter to begin
+                Enter a name or email (min 2 characters); the role filter narrows the matches
               </p>
             </div>
           )}
 
+          {/* A problem other than a sign-in */}
+          {problem && (
+            <div className="p-6 text-center text-sm text-red-700 bg-red-50 rounded-t-lg">
+              {problem.kind === 'forbidden'
+                ? 'Your account cannot use the user list (impersonation or a role change).'
+                : problem.kind === 'rateLimited'
+                  ? `Too many searches; try again in ${problem.retryAfterSeconds} seconds.`
+                  : problem.kind === 'unavailable'
+                    ? 'The user list is temporarily unavailable; please try again in a moment.'
+                    : `The user list could not be loaded${problem.requestId ? ` (request ${problem.requestId})` : ''}.`}
+            </div>
+          )}
+
           {/* No Results */}
-          {!isLoading && (debouncedQuery.length >= 2 || roleFilter !== 'all') && (!users || users.length === 0) && (
+          {!isLoading && canSearch && users && users.length === 0 && (
             <div className="p-12 text-center">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"

@@ -151,7 +151,9 @@ Secrets:   Secret Manager remonta-api[-staging]-<NAME>   (add a version, then re
            the api token pair API_TOKEN_SECRET[_PREVIOUS] must match Vercel's API_TOKEN_SECRET per scope (Preview<->staging, Production<->prod); infra/README.md
 Alerts:    Cloud Monitoring policies "<service> <name>" → support@remontaservices.com.au   (change one: edit infra/cloudrun/monitoring/<name>.json, merge, then `bash infra/cloudrun/apply-alerts.sh prod`; --dry-run shows the diff)
 Pause:     gcloud run services update remonta-api-staging --region australia-southeast1 --min-instances=0 --cpu-throttling
-Reach:     the app calls the api named by NEXT_PUBLIC_API_URL (Vercel scope: Preview → staging, Production → prod)
+Reach:     the app calls the api named by NEXT_PUBLIC_API_URL (Vercel scope: Preview → staging, Production → prod);
+           the worker sign-up publicly, the admin lists (worker search, user picker, suspended list) with a bearer
+           token the app mints at GET /api/auth/api-token from the session (docs/admin/README.md)
 ```
 
 Rules that have earned their place:
