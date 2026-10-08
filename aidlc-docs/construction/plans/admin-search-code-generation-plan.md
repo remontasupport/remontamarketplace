@@ -157,44 +157,44 @@ Three PRs, each on its own code branch from `main`, in this order, each merged b
 
 ### Part G -- the token side (U1 Part E)
 
-- [ ] **G1 `apps/app/package.json`**: `"jose": "^6.2.12"` (the lockfile gains the importer entry only, as PR 1).
-- [ ] **G2 new `src/app/api/auth/api-token/route.ts`**: L1/R2 (session; the account read through `withRetry`; 503
+- [x] **G1 `apps/app/package.json`**: `"jose": "^6.2.12"` (the lockfile gains the importer entry only, as PR 1).
+- [x] **G2 new `src/app/api/auth/api-token/route.ts`**: L1/R2 (session; the account read through `withRetry`; 503
   on a db error; 401 inactive/role-changed; `checkServerActionRateLimit(userId, strictApiRateLimit)` fail-open with a
   warn; `SignJWT` with `kid: 'current'`, claims from `@remonta/api-contract`; `no-store`); `API_TOKEN_SECRET` read from
   the env (32+ bytes; a clear 500 + log if missing).
-- [ ] **G3 new `src/lib/api/token.ts`**: `createTokenSource` (L4, R5.1-R5.5), `Unauthenticated`, `Unavailable`.
-- [ ] **G4 tests**: `api-token.route.test.ts` (fake session/db/limiter: each branch, the claims shape, `no-store`),
+- [x] **G3 new `src/lib/api/token.ts`**: `createTokenSource` (L4, R5.1-R5.5), `Unauthenticated`, `Unavailable`.
+- [x] **G4 tests**: `api-token.route.test.ts` (fake session/db/limiter: each branch, the claims shape, `no-store`),
   `token.test.ts` (P5 model-based; the retry table).
 
 ### Part H -- the admin client
 
-- [ ] **H1 new `src/lib/api/admin.ts`**: `adminApi` (L5/R5.6: the bearer header, one 401 retry, outcomes; canonical
+- [x] **H1 new `src/lib/api/admin.ts`**: `adminApi` (L5/R5.6: the bearer header, one 401 retry, outcomes; canonical
   URLs by passing the parsed query through `serializeCanonical` so the URL the browser caches equals the memo key;
   `cache: 'default' | 'reload'`); `apiToken` exported for other screens later.
-- [ ] **H2 tests**: `admin.test.ts` (the 401 retry once; outcome mapping; `reload` sends `cache-control: no-cache`).
+- [x] **H2 tests**: `admin.test.ts` (the 401 retry once; outcome mapping; `reload` sends `cache-control: no-cache`).
 
 ### Part I -- the screens
 
-- [ ] **I1 `AdminDashboardClient.tsx`**: R11.1-R11.8 and the frontend design: the suburb pick keeps `{id, label}`;
+- [x] **I1 `AdminDashboardClient.tsx`**: R11.1-R11.8 and the frontend design: the suburb pick keeps `{id, label}`;
   "Within" gated; URL state (`localityId`, `localityLabel`, `withinKm`, `unplaced`, canonical filters); `toQuery`
   (display -> canonical; `category.id`; the `CareDomain` map); `fetchContractors` replaced by `adminApi.searchWorkers`;
   the distance column with its hint; the unmapped line and `unplaced` mode; the freshness line and refresh;
   notices per outcome (U1's contract); post-action reload; the document-filter state and the options fetch
   removed; `data-testid` on the new controls (`admin-search-suburb-input`, `admin-search-within-select`,
   `admin-search-apply-button`, `admin-search-refresh-button`, `admin-search-unmapped-link`, `admin-search-notice`).
-- [ ] **I2 `impersonate/page.tsx`**: `adminApi.listUsers`; the suspended panel: `adminApi.listSuspendedWorkers`.
-- [ ] **I3** `pnpm --filter @remonta/app run quality` green (baselines must not grow).
+- [x] **I2 `impersonate/page.tsx`**: `adminApi.listUsers`; the suspended panel: `adminApi.listSuspendedWorkers`.
+- [x] **I3** `pnpm --filter @remonta/app run quality` green (baselines must not grow).
 
 ### Part J -- tests and checklist
 
-- [ ] **J1** `features`-level tests for `toQuery` (display -> canonical) and the URL state round trip through
+- [x] **J1** `features`-level tests for `toQuery` (display -> canonical) and the URL state round trip through
   `canonicalQueryOf` (G6 on the app side).
-- [ ] **J2** `aidlc-docs/construction/admin-search/code/pr3-preview-checklist.md`: the preview checklist (integration
+- [x] **J2** `aidlc-docs/construction/admin-search/code/pr3-preview-checklist.md`: the preview checklist (integration
   scenario 3) with its rows; the Vercel rollback id re-recorded in CLAUDE.md before the merge (follow-up 3).
 
 ### Part K -- docs
 
-- [ ] **K1** CLAUDE.md "Reach" line (the admin lists are called on the api); `docs/signup/03-data-model.md` note
+- [x] **K1** CLAUDE.md "Reach" line (the admin lists are called on the api); `docs/signup/03-data-model.md` note
   (who reads `worker_locations`: the admin search); `docs/admin/README.md` (the app side); `pr3-summary.md`.
 
 ## PR 4 -- clean-up (`feat/admin-search-cleanup`)

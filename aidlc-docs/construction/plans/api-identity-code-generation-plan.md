@@ -140,13 +140,13 @@ code branch **`feat/api-identity` from `main`**, and the app side (Part E) insid
 
 ### Part E -- the app side (generated with PR 3; listed here for the unit's completeness)
 
-- [ ] **E1 `apps/app/package.json`**: `"jose": "^6"`.
-- [ ] **E2 new `apps/app/src/app/api/auth/api-token/route.ts`**: per L1 and R2 (session, account read through
+- [x] **E `apps/app/package.json`**: `"jose": "^6"`.
+- [x] **E new `apps/app/src/app/api/auth/api-token/route.ts`**: per L1 and R2 (session, account read through
   `withRetry`, 503 on a db error, 401 on inactive/role-changed, `checkServerActionRateLimit(userId,
   strictApiRateLimit)` failing open with a warn, `SignJWT` with `kid: 'current'`, `no-store`).
-- [ ] **E3 new `apps/app/src/lib/api/token.ts`**: `createTokenSource` per L4 and R5.
-- [ ] **E4 `apps/app/src/lib/api/admin.ts`**: the auth wrapper part (L5) -- the entries themselves are U2's.
-- [ ] **E5 tests**: the route (fake session/db/limiter: each branch), the token source (P5 model-based, the retry
+- [x] **E new `apps/app/src/lib/api/token.ts`**: `createTokenSource` per L4 and R5.
+- [x] **E `apps/app/src/lib/api/admin.ts`**: the auth wrapper part (L5) -- the entries themselves are U2's.
+- [x] **E tests**: the route (fake session/db/limiter: each branch), the token source (P5 model-based, the retry
   table), the wrapper's single 401 retry.
 - [ ] **E6** Vercel: `API_TOKEN_SECRET` set in Production and Preview before PR 3's preview is checked (operator).
 
