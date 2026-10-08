@@ -3368,3 +3368,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08 06:16Z):** both secrets have version 2 (staging 06:14:15Z, prod 06:14:20Z). The assistant's staging redeploy (`gcloud run services replace` of the rendered `service.staging.yaml` with image tag `b09a9c1`) was refused by the permission layer (shared resource); the user redeploys through Actions -> deploy-api -> Run workflow (stage=staging, imageTag=b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a). A read-only watcher waits for the next ready revision.
 
 **User input (2026-10-08):** "wait, is code for the API done already?"
+
+**AI action (2026-10-08 06:21Z):** staging redeployed by the user: `remonta-api-staging-00017-h7x` (same image digest `c9af51b0…`, created 06:19:25Z) serving 100%; health 200; "apps/api listening" 06:19:32Z; no ERROR line; `/v1/admin/workers` 401 without a token. Final checklist run requested.
