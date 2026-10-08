@@ -3408,3 +3408,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08):** "is the code live already?"
 
 **AI action (2026-10-08 07:25Z, PR 3 live):** production serves the new build since 07:23Z (`/api/auth/api-token` -> 401 `no-store`); the first attributed `admin.searchWorkers` on prod at 07:25:05Z, no rejection: the Production secret pairs. Scenario 5 rows filled; the suburb search on the live dashboard asked of the user.
+
+**AI action (2026-10-08 07:27Z):** prod request log: the user's searches at 07:25Z (plain 47-66 ms handler, 81-116 ms edge; suburb `localityId=9386` 137 ms / 178 ms; preflights 204 in ~2 ms); no rejection. State updated; PR 4 (clean-up) started.
