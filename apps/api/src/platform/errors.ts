@@ -54,8 +54,13 @@ export function statusOf(err: unknown): ErrorStatus {
   return 500
 }
 
-/** The pool had no free connection in time (P2024), or the database is unreachable. */
+/**
+ * The pool had no free connection in time (P2024), the database is unreachable, or a
+ * statement was cancelled by its statement_timeout (Postgres 57014, surfaced by Prisma
+ * as a raw-query error; U2 admin-search). All three are "try again shortly", not a bug.
+ */
 export function isOverloadedDatabase(err: unknown): boolean {
-  const e = err as { code?: unknown; name?: unknown } | null
+  const e = err as { code?: unknown; name?: unknown; meta?: { code?: unknown }; message?: unknown } | null
+  if (e?.meta?.code === '57014' || /statement timeout/i.test(String(e?.message ?? ''))) return true
   return e?.code === 'P2024' || e?.name === 'PrismaClientInitializationError'
 }

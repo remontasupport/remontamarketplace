@@ -12,12 +12,15 @@
 //   8  handler
 //   9  output shaping: the response must match its contract schema
 //   10 audit enforcement
+//   10b private caching (privateCacheSeconds): ETag, 304, and the response memo (U2)
 //   11 error mapping                                            (error handler, app.ts)
-import type { EntryDef, RateLimitRule } from '@remonta/api-contract'
+import { createHash } from 'node:crypto'
+import { serializeCanonical, type EntryDef, type RateLimitRule } from '@remonta/api-contract'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type * as z from 'zod'
 import { RequestAudit } from '../audit'
 import type { Authenticator, Principal } from '../auth/authenticator'
+import type { ResponseMemo } from '../cache/response-memo'
 import type { CaptchaVerifier } from '../captcha/captcha'
 import { ApiError } from '../errors'
 import type { RateLimiter } from '../rate-limit/rate-limiter'
@@ -27,6 +30,8 @@ export interface PipelineDeps {
   rateLimiter: RateLimiter
   captcha: CaptchaVerifier
   authenticator: Authenticator
+  /** The response memo and the entry ids (`area.name`) that use it (U2, D16). */
+  memo?: { store: ResponseMemo; entries: ReadonlySet<string> }
 }
 
 export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<EntryDef>, deps: PipelineDeps) {
@@ -71,23 +76,52 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
     if (entry.body?.kind === 'json') body = parse(entry.body.schema, request.body, 'body')
     else if (entry.body?.kind === 'multipart') files = await readFiles(request, entry.body.files)
 
-    // 8. Handler.
-    const audit = new RequestAudit({ ip: request.ip, userAgent: request.headers['user-agent'], requestId: request.id })
-    const ctx: HandlerContext = { requestId: request.id, ip: request.ip, principal, rawBody: request.body, log: request.log, audit }
-    const result = await handler({ params, query, body, files } as never, ctx)
+    // 7b. The memo (U2, R8.3): the same valid question within the window is answered
+    //     from memory. `Cache-Control: no-cache` on the request bypasses the lookup; the
+    //     fresh answer then replaces the entry. Only valid queries reach here.
+    const memo = deps.memo && deps.memo.entries.has(id) ? deps.memo.store : undefined
+    const memoKey = memo ? `${id}|${serializeCanonical((query ?? {}) as Record<string, unknown>)}` : undefined
+    const bypass = /(^|[\s,])(no-cache|max-age=0)([\s,]|$)/i.test(String(request.headers['cache-control'] ?? ''))
+    let status: number
+    let data: unknown
+    const hit = memo && memoKey && !bypass ? memo.get(memoKey) : undefined
+    if (hit !== undefined) {
+      request.log.info({ entry: id, memo: 'hit' }, 'memo hit')
+      status = 200
+      data = hit
+    } else {
+      // 8. Handler.
+      const audit = new RequestAudit({ ip: request.ip, userAgent: request.headers['user-agent'], requestId: request.id })
+      const ctx: HandlerContext = { requestId: request.id, ip: request.ip, principal, rawBody: request.body, log: request.log, audit }
+      const result = await handler({ params, query, body, files } as never, ctx)
 
-    // 9. Output shaping. A status the contract does not declare, or a body that does
-    //    not match its schema (including an extra field), is a server bug: 500, logged.
-    const schema = entry.responses[result.status as keyof EntryDef['responses']]
-    if (!schema) throw new Error(`${id}: handler returned undeclared status ${result.status}`)
-    const out = schema.safeParse(result.body)
-    if (!out.success) throw new Error(`${id}: response does not match the contract: ${out.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`)
+      // 9. Output shaping. A status the contract does not declare, or a body that does
+      //    not match its schema (including an extra field), is a server bug: 500, logged.
+      const schema = entry.responses[result.status as keyof EntryDef['responses']]
+      if (!schema) throw new Error(`${id}: handler returned undeclared status ${result.status}`)
+      const out = schema.safeParse(result.body)
+      if (!out.success) throw new Error(`${id}: response does not match the contract: ${out.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`)
 
-    // 10. Audit enforcement.
-    if (m.audit && !audit.satisfies(m.audit)) throw new Error(`${id}: succeeded without recording or skipping audit ${m.audit}`)
+      // 10. Audit enforcement.
+      if (m.audit && !audit.satisfies(m.audit)) throw new Error(`${id}: succeeded without recording or skipping audit ${m.audit}`)
+
+      status = result.status
+      data = out.data
+      if (memo && memoKey && status === 200) memo.set(memoKey, data)
+    }
 
     if (m.cacheSeconds) reply.header('cache-control', `public, max-age=${m.cacheSeconds}`)
-    return reply.status(result.status).send(out.data)
+
+    // 10b. Private caching (U2, R8.1, R8.2): the browser keeps the answer for its
+    //      signed-in user; a matching If-None-Match gets 304 with no body. Only on 200.
+    if (m.privateCacheSeconds && status === 200) {
+      const etag = `"sha256-${createHash('sha256').update(JSON.stringify(data)).digest('base64url')}"`
+      reply.header('etag', etag)
+      reply.header('cache-control', `private, max-age=${m.privateCacheSeconds}`)
+      reply.header('vary', 'Authorization')
+      if (request.headers['if-none-match'] === etag) return reply.status(304).send()
+    }
+    return reply.status(status).send(data)
   }
 }
 

@@ -47,6 +47,10 @@ export function checkContracts(contracts: readonly Contract[], publicAllowList: 
     if (e.meta.cacheSeconds && (e.method !== 'GET' || e.meta.access !== 'public')) {
       problems.push(`${id}: only public GETs may be cached`)
     }
+    if (e.meta.privateCacheSeconds !== undefined) {
+      if (e.method !== 'GET' || e.meta.access === 'public') problems.push(`${id}: privateCacheSeconds needs a role-restricted GET (a public entry uses cacheSeconds)`)
+      if (e.meta.cacheSeconds) problems.push(`${id}: cacheSeconds and privateCacheSeconds never together`)
+    }
     if (Object.keys(e.responses).length === 0) problems.push(`${id}: no success response`)
     if (e.meta.probe && (e.method !== 'GET' || e.body || e.query || e.pathParams)) {
       problems.push(`${id}: only a GET with no input may be a probe`)

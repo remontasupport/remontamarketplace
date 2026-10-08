@@ -2,7 +2,7 @@
 // over HTTP: the real pipeline, handlers, transaction and hasher (cost 4); fakes
 // for the CAPTCHA, the rate limiter, the breached-password service and the mailer.
 import { randomUUID } from 'node:crypto'
-import { contracts, platformContract, type PublicEndpoint } from '@remonta/api-contract'
+import { adminContract, contracts, platformContract, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { CONSENT_WORDING_VERSION } from '@remonta/schemas/schema/workerRegistrationSchema'
 import { expect } from 'vitest'
@@ -83,7 +83,8 @@ export async function registrationHarness(domain: string, options: HarnessOption
   })
   const t = await testApp({
     contracts,
-    handlerSets: [unreachableHandlers(platformContract), handlers],
+    // Every served contract needs handlers (the binder refuses to boot otherwise); the admin area (U2) is not under test here.
+    handlerSets: [unreachableHandlers(platformContract), unreachableHandlers(adminContract), handlers],
     publicEndpoints: publicEndpoints as PublicEndpoint[],
   })
 
