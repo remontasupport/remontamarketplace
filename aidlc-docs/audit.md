@@ -3332,3 +3332,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, PR 2 #42):** "Merged"
 
 **AI action (2026-10-08, PR 2 #42, "Merged" checked by refs):** not merged. `git ls-remote origin main` = `c95435c` (PR 1's merge commit); `refs/pull/42/head` = `d943f96`; the REST view said `merged: false, merged_at: null` before the anonymous rate limit was hit. Reported back; waiting for the real merge.
+
+**User input (2026-10-08, PR 2 #42):** "Merged now, check again"
+
+**AI action (2026-10-08 05:56Z, PR 2 #42, second "Merged" checked by refs):** still not merged. `main` = `c95435c`; `d943f96` reachable only from `feat/admin-search-api`; the PR page's state badge reads "Open"; no merge-queue branch exists. Reported back with the three things to look at on the PR page.
