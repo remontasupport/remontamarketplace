@@ -149,9 +149,9 @@ Three PRs, each on its own code branch from `main`, in this order, each merged b
 
 - [x] **F1 `docs/admin/README.md`** section 2: the three entries (parameters with canonical values, responses,
   errors, limits, the caches and `no-cache`, the parity procedure).
-- [ ] **F2 `aidlc-docs/construction/admin-search/code/pr2-summary.md`** and `pr2-verification.md` (staging checklist
+- [x] **F2 `aidlc-docs/construction/admin-search/code/pr2-summary.md`** and `pr2-verification.md` (staging checklist
   rows: the three entries with a token, `EXPLAIN ANALYZE`, parity, timing, S9, S12, then the joint promotion).
-- [ ] **F3** `npx turbo run build`; Prisma-noise check; commits per part; push; the compare link for the user.
+- [x] **F3** `npx turbo run build`; Prisma-noise check; commits per part; push; the compare link for the user.
 
 ## PR 3 -- the app switch (`feat/admin-search-app`)
 
