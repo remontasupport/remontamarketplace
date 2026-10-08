@@ -3348,3 +3348,13 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, staging checklist run 2):** `! node --import tsx scripts/staging-admin-check.ts` -> "staging-admin-check failed: spawnSync gcloud.cmd EINVAL".
 
 **AI action:** Node on Windows no longer spawns a `.cmd` without a shell (the 2024 fix). The script now runs one fixed command string through `execSync`; the secret name is validated against `^[A-Z_]+$` before it is interpolated.
+
+**User input (2026-10-08, staging checklist run 3, pasted output):**
+
+```
+(see the run-3 summary line below)
+```
+
+7/19 checks passed: health 200; no token 401; tampered 401; EXPLAIN (ANALYZE, BUFFERS) 116 ms with `worker_locations_point_idx` (GiST) driving the 50 km case; prod unchanged. Every minted token (ADMIN and WORKER) answered 401, so the twelve token-bearing checks and the timing replay failed.
+
+**AI action (2026-10-08 06:12Z, run 3 diagnosis):** Cloud Logging on `remonta-api-staging-00016-8xb`, last 30 min: 25 `auth: rejected` lines, every one `reason=bad-signature` (3 `missing` from the no-token calls). The binding is right: the revision reads `remonta-api-staging-API_TOKEN_SECRET` version `latest`; the secret has one enabled version (04:44:37Z); `main.ts` signs with the value as stored (`utf8(config.API_TOKEN_SECRET)`, no trim). The script trimmed the value, so a stored trailing newline (an `echo` without `-n`, or a PowerShell pipe) would explain every rejection. The script now reports the stored value's shape (lengths and trailing characters, never bytes), probes a token signed with the raw bytes, and continues with whichever the api accepts, flagging the mismatch as a FAIL to fix before promotion (Vercel holds the trimmed value).
