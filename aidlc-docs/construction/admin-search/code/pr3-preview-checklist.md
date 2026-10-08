@@ -46,5 +46,5 @@ that exists. The two "before the merge" rows were not done either.
 
 | Step | Result |
 |---|---|
-| production dashboard: an admin search with and without a suburb through `remonta-api` (network tab) | pending |
-| `auth-failed` policy silent | pending |
+| production dashboard: an admin search with and without a suburb through `remonta-api` (network tab) | the new build live 07:23Z (`/api/auth/api-token` 401 `no-store` without a session, where the old build answered NextAuth's 400). 07:25:05Z: the first `admin.searchWorkers` line on prod, attributed to an admin user id, no rejection: the Vercel Production secret pairs with prod's clean secret. The suburb search is the user's check (asked) |
+| `auth-failed` policy silent | no `auth: rejected` line on prod in the 10 min after the build went live (07:25Z check) |

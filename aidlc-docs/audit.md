@@ -3404,3 +3404,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, PR 3):** "merged"
 
 **AI action (2026-10-08 07:21Z, PR 3 merged):** checked by refs: `main` = `64508be` (merge of PR #43, head `e07abdc`); CI 14/14 success on the head. The preview checklist was not run before the merge (deviation recorded in `pr3-preview-checklist.md`); the Vercel rollback id was not re-recorded. At 07:21Z production still served the previous app build (`/api/auth/api-token` answered NextAuth's 400); a watcher waits for the new build (401, no-store) and for the deploy-api run on `64508be`. Prod api: health 200, no rejections, no admin lines in the last 15 min.
+
+**User input (2026-10-08):** "is the code live already?"
+
+**AI action (2026-10-08 07:25Z, PR 3 live):** production serves the new build since 07:23Z (`/api/auth/api-token` -> 401 `no-store`); the first attributed `admin.searchWorkers` on prod at 07:25:05Z, no rejection: the Production secret pairs. Scenario 5 rows filled; the suburb search on the live dashboard asked of the user.
