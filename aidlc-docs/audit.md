@@ -3418,3 +3418,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08):** "so are you saying that the legacy api has been removed now? and we are using the new backend api which is a nest and deployed to cloud?"
 
 **User input (2026-10-08):** "whats the pr link again"
+
+**User input (2026-10-08):** "merged. now can you save the state for this dlc? so I can continue when I go back"
+
+**AI action (2026-10-08 07:38Z, PR 4 merged):** checked by refs: `main` = `36b25e6` (merge of PR #44, head `ce37ec7`), CI 9/9 success. A watcher waits for production to serve the build (the deleted paths 404). State saved as a resume point (the close steps listed under "To resume"); the user is pausing.

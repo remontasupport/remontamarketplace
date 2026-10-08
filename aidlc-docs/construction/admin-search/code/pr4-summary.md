@@ -1,8 +1,8 @@
 # PR 4 -- admin-search, clean-up (generated 2026-10-08)
 
 Branch `feat/admin-search-cleanup` from `main` `64508be` (PR 3 merged and live). Commits: `bfe795e` the deletions
-with the tightened baselines (Part L), `ce37ec7` docs (Part M). PR: #PR4_NUMBER (opened by the user from the compare
-link). Plan: `../../plans/admin-search-code-generation-plan.md` (Parts L-M ticked).
+with the tightened baselines (Part L), `ce37ec7` docs (Part M). PR: #44 (opened by the user from the compare link; CI 9/9
+success; merged `36b25e6` 2026-10-08 ~07:37Z). Plan: `../../plans/admin-search-code-generation-plan.md` (Parts L-M ticked).
 
 ## Files
 

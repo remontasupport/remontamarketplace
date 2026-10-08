@@ -6,12 +6,23 @@
 - **Current Cycle**: *Admin worker search on `apps/api`* (started 2026-10-08; branch `aidlc/admin-search-api` from
   `main` `949cf2b`). Goal (user, 2026-10-08): a new api backend for the admin dashboard's search endpoints, with the
   radius computed accurately on the new schema (`worker_locations` + `au_localities` + PostGIS).
-- **Current Stage**: **CONSTRUCTION -- PR 4 (U2 clean-up, Parts L-M) generated 2026-10-08: 2 commits on
-  `feat/admin-search-cleanup` (`bfe795e` the deletions + tightened baselines, `ce37ec7` docs); pushed once the local
-  build passes; the user opens the PR from the compare link. After its merge: the production check (404 on the old
-  paths, the dashboard unaffected), then the cycle close (archive, docs PR from `aidlc/admin-search-api`). Still
-  open from PR 3: the Vercel rollback id to re-record (asked). PRs 1-3 are live (api `remonta-api-00006-tj5`; app
-  `64508be`).**
+- **Current Stage**: **CONSTRUCTION complete; cycle close pending (paused by the user 2026-10-08 ~07:40Z).**
+  All four PRs are merged: #41 `c95435c` (U1 api-identity), #42 `b09a9c1` (U2 admin api), #43 `64508be` (U2 the app
+  switch), #44 `36b25e6` (U2 clean-up). The api image `b09a9c1` is on prod `remonta-api-00006-tj5` (promoted 06:49Z);
+  the app is on `main` = `36b25e6` through Vercel. The production check of PR 4 (old paths 404, dashboard unaffected)
+  was in flight when the user paused; its result is in `audit.md` (the last entries).
+
+  **To resume ("continue the AI-DLC"):**
+  1. Read `audit.md` from the entry "PR 4 merged" on: confirm the production check landed (old `/api/admin/*` paths
+     404, `/api/auth/api-token` 401 without a session, prod api health 200, no `auth: rejected` lines).
+  2. Ask the user for the current `remonta-app` production deployment id (Vercel -> Deployments) and re-record the
+     rollback row in CLAUDE.md (follow-up 3; the `remontamarketplace` row too if it changed).
+  3. Cycle close: move this cycle's record under `aidlc-docs/archive/admin-search-api/` (inception, construction,
+     plans, the four summaries and the two verification records), write the archive README (what shipped, the
+     deviations: PR 3 merged without its preview checklist; the secret stored with a line ending and fixed as
+     version 2 on both stages), carry the open follow-ups (below) into a fresh `aidlc-state.md`, append the closing
+     audit entry, and open the docs PR from `aidlc/admin-search-api` (compare link with `%2F`) for the user to merge.
+  4. Open follow-ups from this cycle, numbered below: 1 (narrowed), 3, 14-18.**
 
 ## Previous cycles (archived, read-only)
 
@@ -124,6 +135,12 @@
     on one `verification_requirements` row).
 13. **Dashboard uploads** (`/api/upload/worker-photo` and the shared `PhotoUpload` defaults, HEIC accepted there):
     out of scope by the user's 2026-10-05 decision; the same ticket/confirm pattern can be applied later.
+17. **Secret versions without a trailing newline**: the rotation runbook in `infra/README.md` and the bootstrap
+    message must say to add `API_TOKEN_SECRET` versions with `printf '%s'` / `--data-file=-` and no newline; both
+    stages' version 1 carried a line ending (2026-10-08) and every token was refused until version 2.
+18. **The checklist runner and the paced replay** (`apps/api/scripts/staging-admin-check.ts`,
+    `parity-admin-search.ts --pace`) are committed (PR 3); consider wiring the runner into the release notes as the
+    standard post-deploy check for the admin entries.
 
 ## Workspace State
 - **Existing Code**: Yes
@@ -160,7 +177,7 @@
 - [ ] Units Generation -- SKIP (U1 `api-identity`, U2 `admin-search` fixed in the plan)
 ### CONSTRUCTION (per unit)
 - [ ] U1 `api-identity`: design complete; Code Generation plan approved 2026-10-08; PR 1 = #41 merged `c95435c`, verified on staging and promoted to prod with PR 2 2026-10-08; Part E with PR 3, NFR Design, Infrastructure Design, Code Generation (PR 1 + app part of PR 3), Build and Test
-- [ ] U2 `admin-search`: plan approved 2026-10-08; PR 2 = #42 merged `b09a9c1`, verified on staging and promoted to prod 2026-10-08 (`remonta-api-00006-tj5`); PR 3 = #43 merged `64508be` and live 2026-10-08; PR 4 generated (review pending), NFR Design, Code Generation (PR 2 + app part of PR 3 + PR 4), Build and Test
+- [ ] U2 `admin-search`: plan approved 2026-10-08; PR 2 = #42 merged `b09a9c1`, verified on staging and promoted to prod 2026-10-08 (`remonta-api-00006-tj5`); PR 3 = #43 merged `64508be` and live 2026-10-08; PR 4 = #44 merged `36b25e6`, NFR Design, Code Generation (PR 2 + app part of PR 3 + PR 4), Build and Test
 
 The closed cycle's full stage record is in `aidlc-docs/archive/signup-photo-gcs/` (inception:
 requirements, 18 stories, execution plan, application design; construction: U1 infrastructure design and code, U3
