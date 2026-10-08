@@ -3380,3 +3380,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, staging checklist run 6, `--skip-drill | tail -55`, pasted twice):** 18/19 PASS (users list caching now passing); timing replay stopped at "language english" / "therapeutic supports" with 429 `RATE_LIMITED`; per-case p50 ~290-330 ms, p95 ~320-560 ms from the client; EXPLAIN 8.7 / 5.6 ms.
 
 **AI action:** the 429 is the search entry's per-admin limit (120/min) against a replay firing ~200/min: recorded as the limit proven, not a fault. `parity-admin-search.ts` --time now paces calls (`--pace=550` ms default). Verification record updated. Two uncommitted script files on the working tree (`staging-admin-check.ts` new, `parity-admin-search.ts` paced) go into PR 3. Next: S12 (the user routes staging traffic to `00015-sgw` and back), then promotion.
+
+**User input (2026-10-08):** "where should I ran that?"
