@@ -1,17 +1,11 @@
-3	src/app/admin/AdminDashboardClient.tsx::@typescript-eslint/no-explicit-any
-1	src/app/admin/AdminDashboardClient.tsx::prefer-const
 2	src/app/admin/compliance/[id]/page.tsx::react/no-unescaped-entities
 6	src/app/admin/contractors/[id]/page.tsx::react/no-unescaped-entities
 5	src/app/admin/contractors/[id]/profile/page.tsx::@typescript-eslint/no-explicit-any
 2	src/app/admin/impersonate/page.tsx::react/no-unescaped-entities
 2	src/app/api/admin/contractors/[id]/pdf/route.ts::@typescript-eslint/no-explicit-any
-9	src/app/api/admin/contractors/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/admin/fix-qualifications/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/admin/impersonate/route.ts::@typescript-eslint/no-explicit-any
-2	src/app/api/admin/users/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/admin/verification/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/auth/check-email/route.ts::@typescript-eslint/no-explicit-any
-2	src/app/api/auth/register-async/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/auth/register/client/route.ts::@typescript-eslint/no-explicit-any
 3	src/app/api/auth/register/coordinator/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/auth/send-otp/route.ts::@typescript-eslint/no-explicit-any
@@ -134,12 +128,6 @@
 1	src/config/mandatoryRequirementsSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/config/servicesSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
-2	src/features/forms/legacy/worker/LegacyWorkerRegistration.tsx::@typescript-eslint/no-explicit-any
-2	src/features/forms/legacy/worker/Step1Location.tsx::@typescript-eslint/no-explicit-any
-2	src/features/forms/legacy/worker/Step1PersonalInfo.tsx::@typescript-eslint/no-explicit-any
-2	src/features/forms/legacy/worker/Step3Services.tsx::@typescript-eslint/no-explicit-any
-3	src/features/forms/legacy/worker/Step7Photos.tsx::@typescript-eslint/no-explicit-any
-1	src/features/forms/legacy/worker/Step7Verification.tsx::react/no-unescaped-entities
 2	src/hooks/queries/useComplianceDocuments.ts::@typescript-eslint/no-explicit-any
 4	src/hooks/queries/useServiceDocuments.ts::@typescript-eslint/no-explicit-any
 1	src/hooks/queries/useServiceSubcategories.ts::@typescript-eslint/no-require-imports
@@ -151,8 +139,6 @@
 1	src/lib/logger.ts::@typescript-eslint/no-explicit-any
 2	src/lib/password.ts::@typescript-eslint/no-require-imports
 11	src/lib/profileData.ts::@typescript-eslint/no-explicit-any
-2	src/lib/worker-search.ts::@typescript-eslint/no-explicit-any
-4	src/lib/workers/workerRegistrationProcessor.ts::@typescript-eslint/no-explicit-any
 1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
 13	src/services/worker/additionalInfo.service.ts::@typescript-eslint/no-explicit-any
 4	src/services/worker/availability.service.ts::@typescript-eslint/no-explicit-any
@@ -164,7 +150,6 @@
 20	src/services/worker/setupProgress.service.ts::@typescript-eslint/no-explicit-any
 11	src/services/worker/workerServices.service.ts::@typescript-eslint/no-explicit-any
 2	src/store/onboardingStore.ts::@typescript-eslint/no-explicit-any
-1	src/utils/apiRetry.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicComplianceSteps.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicTrainingSteps.ts::@typescript-eslint/no-explicit-any
 1	src/utils/phoneVerificationUtils.ts::prefer-const
