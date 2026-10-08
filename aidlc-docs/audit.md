@@ -2982,3 +2982,282 @@ Plain `http://` to the production URL: 302 to https from Google Frontend -- the 
 > close it now and open the docs PR
 
 **AI action (2026-10-05, cycle close):** Decision recorded: the cycle *Sign-up photo on Google Cloud Storage* is closed 2026-10-05 with the two observations as follow-ups 10 and 11. `aidlc-docs/inception/` and `aidlc-docs/construction/` moved to `aidlc-docs/archive/signup-photo-gcs/` (the state file at close kept beside them as `aidlc-state-at-close.md`); `aidlc-state.md` rewritten: no cycle open, the cycle in the previous-cycles table, the live facts (bucket + tickets + Blob clean copies, the alert policy, six secrets, gate numbers), follow-ups 10-13 added. `main` merged into the docs branch so the PR carries only `aidlc-docs/`; pushed; the compare link given to the user.
+
+---
+## Cycle: (goal pending) -- started 2026-10-08
+
+**User input (verbatim, 2026-10-08):**
+> Start AI DLC
+
+**AI action (2026-10-08, Workspace Detection):** `aidlc-docs/aidlc-state.md` exists and says "No cycle open" (the photo cycle closed 2026-10-05, archived under `archive/signup-photo-gcs/`; its docs PR #40 is merged, `origin/main` = `949cf2b`, working tree clean on `main`). So this is the start of a new cycle, not a resume. Brownfield: pnpm + Turborepo monorepo, TypeScript, `apps/{app,web,api}`, `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`; unchanged from the state file. Reverse engineering artifacts: none under `aidlc-docs/inception/`; the archived S1 analysis (2026-09-25) is stale for the api, contract, form-engine and infra; as in the last three cycles the decision (full pass vs targeted inventory) is deferred until the goal is known. The input names no goal, so the cycle's branch (`aidlc/<name>`) is not created yet. Wrote `aidlc-docs/inception/cycle-start-questions.md` (one question: the goal, with the open follow-ups 1, 2, 5, 13 and a housekeeping bundle as options, plus Other). Noted the two observations now due: follow-up 10 (no alert email on 2026-10-06) and 11 (a week of clean latency logs, by 2026-10-12). State file: stage set to INCEPTION -- Workspace Detection complete, goal pending. Gate: awaiting the user's answer.
+
+**User input (verbatim, 2026-10-08):**
+> answered
+
+**Answer in `cycle-start-questions.md` (verbatim, 2026-10-08):** Q1 = F (Other):
+> Let us create a new API backend for the admin dashboard, specifically the search API's. With the new schema and structure of the database, analyze how can we return accurate results especially on the radius
+
+**AI action (2026-10-08, cycle opened -- Workspace Detection, inventory, Requirements Analysis step 6):** Branch `aidlc/admin-search-api` created from `main` (`949cf2b`). Reverse Engineering replaced by a targeted inventory of the admin search path, read from the code (nothing changed, no production read): `aidlc-docs/inception/requirements/admin-search-inventory.md`. Findings: the screen calls `GET /api/admin/contractors` (855 lines: filter registry; a two-pass distance path) and `GET /api/admin/filters`; the radius today = Google geocode of the picked suburb's LABEL (Redis-cached), a silent fall-back to no distance filter on a miss, "Any distance" = a hidden 500 km cap, bounding box on the legacy `worker_profiles.latitude/longitude`, Haversine and pagination in JavaScript, workers without coordinates silently absent, free text ("Queensland") accepted; worker coordinates are of mixed provenance (legacy Google geocodes of typed text vs S1 locality centroids; 70 workers unplaced); the worker's `travelRadiusKm` (50 default) is read by nothing. The new schema (`worker_locations` HOME rows with a GiST-indexed geography point, `au_localities` centroids) allows one indexed PostGIS query with the picked locality's own point as the search point. The api side: every non-public entry is denied today (`DenyAllAuthenticator`, "slice 2 Identity"); the NextAuth cookie never reaches the api's `run.app` origin, so an admin endpoint needs a short-lived signed token (S1's FR-ID-02) or a proxying route. Wrote `aidlc-docs/inception/requirements/requirement-verification-questions.md` (Q1 reverse engineering; Q2 endpoint scope; Q3 authentication; Q4 radius semantics incl. the travel radius; Q5 the search point by locality id; Q6 "any distance"; Q7 unplaced workers; Q8 cut-over; Q9 the other readers; Q10-12 the extension opt-ins). State file updated. Gate: awaiting the user's answers.
+
+**User input (verbatim, 2026-10-08):**
+> ANSWERED
+
+**Answers in `requirement-verification-questions.md` (2026-10-08):** Q1 = B (full reverse-engineering pass over `apps/api`, `packages/api-contract`, `packages/form-engine`, `infra/`); Q2 = B (search + filters + users + inactive); Q3 = A (short-lived signed token, FR-ID-02); Q4 = A (proximity from `worker_locations`, PostGIS); Q5 = Other, verbatim:
+> i STILL WANT A FREE TEXT BUT WILL USE OUR WORKER LOCATIONS
+Q6 = A (no hidden cap); Q7 = A (unplaced excluded and counted); Q8 = A (page switches in its own PR, route deleted later); Q9 = A (admin only); Q10 = A (Security blocking); Q11 = A (Resiliency blocking, S1 targets); Q12 = A (PBT full).
+
+**AI action (2026-10-08):** Q5 read as: the admin keeps typing freely, and the text is resolved against our own `au_localities` (no Google), the workers coming from `worker_locations`. Ambiguity: what the api does when the text matches several localities (e.g. "Richmond" exists in five states) or none; written to `aidlc-docs/inception/requirements/requirement-clarification-questions.md`. Q1 = B: Reverse Engineering started over the four areas (the S1 archive's 2026-09-25 analysis stays for `apps/app`, `apps/web`, `packages/{schemas,config,db}`); artifacts go to `aidlc-docs/inception/reverse-engineering/`; its approval gate and the clarification are presented together.
+
+**AI action (2026-10-08, Reverse Engineering complete):** Four read-only sub-agent passes (api platform; api modules and scripts; api-contract + form-engine; infra + workflows) cross-checked by the session (CORS `allowedHeaders` includes `authorization`; `openapi.ts` declares a bearer `session` scheme; `DenyAllAuthenticator` is the only authenticator; no PostGIS SQL exists in `apps/api`). Wrote the nine artifacts to `aidlc-docs/inception/reverse-engineering/`: business-overview, architecture (component and sequence diagrams incl. the pipeline and today's admin search), code-structure (file inventory with line counts, cycle-affected files marked), api-documentation (every contract entry with its meta; the four `apps/app` admin routes to replace; internal APIs; the data models the search reads; the NextAuth session shape), component-inventory, technology-stack, dependencies (internal graph, boundaries P-1/2/6/7, external table), code-quality-assessment (15 debt items, 4 marked as bearing on this cycle), timestamp. State file updated. Gate: awaiting approval of the artifacts and the Q5 clarification answers.
+
+**User input (verbatim, 2026-10-08):**
+> answered
+
+**Answers in `requirement-clarification-questions.md` (2026-10-08):** CQ1 (several matches), verbatim:
+> My fault, use the new localities we have
+CQ2 (no match): left blank.
+
+**AI action (2026-10-08):** Read CQ1 as withdrawing the free-text requirement: the admin picks a suburb from our `au_localities` autocomplete and the api receives the locality id (Q5 option A as recommended); CQ2 is then moot, which matches it being left blank. No further clarification needed. The reverse-engineering artifacts were not objected to; treated as approved with the invitation to request changes kept open. Proceeding to Requirements Analysis step 7 (`requirements.md`); the three extension rule files loaded first (Q10-Q12 = A).
+
+**AI action (2026-10-08, Requirements Analysis step 7):** The three extension rule files loaded (Q10-Q12 = A); extension configuration recorded in the state file. Wrote `aidlc-docs/inception/requirements/requirements.md`: intent analysis (migration + enhancement, complex); 11 decisions (D1-D11); functional requirements FR-ID-01..06 (token minting in apps/app with a dedicated secret, verification in the api, roles, the client adapter, per-user limits and logging, the documented revocation lag), FR-ADM-01..08 (the `admin` contract area with four entries, the strict query, the filters ported 1:1, the response with `distanceKm`, `unplacedCount` and `location{label, precision, travelRadiusKm}`), FR-GEO-01..07 (the locality's own point, ST_DWithin/ST_Distance on geography, one parameterised statement using the GiST index, no radius = all placed workers, unplaced excluded and counted, stable sort, precision visible), FR-UI-01..05 (locality id in the page, the contract client, error notices, the later deletion of four routes and `lib/worker-search.ts`), FR-PLT-01..05 (secret in the stage table, an auth-failure alert, CI, docs, follow-up 1 updated); 14 NFRs; the S1 resiliency decisions carried forward; a five-step verification protocol with the parity script; compliance tables (Security: all compliant or N/A, SECURITY-12 compliant for the token with the pre-existing absence of MFA for admins in apps/app recorded as a follow-up and flagged, not introduced by this cycle; Resiliency: compliant, RESILIENCY-14 deferred to NFR Design; PBT: candidates listed, framework compliant); 5 open items for design. State file updated. Gate: awaiting the user's review of the requirements.
+
+**User input (verbatim, 2026-10-08):**
+> Before I approve, I still want to use the dropdown "Within" where in the admin can select an option and then it returns all the workers that are covered to the selected distance
+
+**AI action (2026-10-08):** Confirmed that this is already what the requirements specify: the "Within" dropdown stays with its options (5, 10, 20, 50 km; FR-ADM-02, FR-UI-01) and the search returns every worker whose HOME point lies within the selected distance of the picked suburb, nearest first with the distance shown (FR-GEO-02, D4). The only UI change is that the dropdown needs a suburb to measure from, so it is disabled until one is picked (FR-UI-01); "Any distance" keeps its entry (FR-GEO-04). Pointed out the one alternative reading (workers whose own travel radius covers the suburb, Q4 B) in case that was meant. No document change.
+
+**User input (verbatim, 2026-10-08):**
+> approve
+
+**AI action (2026-10-08):** Requirements approved (proximity semantics confirmed). Requirements Analysis closed; Workflow Planning started.
+
+**AI action (2026-10-08, Workflow Planning):** Wrote `aidlc-docs/inception/plans/execution-plan.md`: transformation scope (the api's first authenticated path + four admin endpoints migrated, the search rebuilt on PostGIS; no migration), impact assessment, component relationships with change types, risk Medium-High (mitigations: additive api PRs promoted before the app switches, the parity script, fail-closed pipeline, promote rollbacks), the workflow diagram, two units fixed (U1 `api-identity`, U2 `admin-search`), the stage decisions (User Stories EXECUTE concise; Application Design EXECUTE concise; Units Generation SKIP; Functional Design, NFR Requirements and NFR Design EXECUTE for both units; Infrastructure Design U1 only; Code Generation and Build and Test per PR), the four-PR package change sequence under the staging-then-promote constraint, timeline and success criteria. State file updated. Gate: "Ready to proceed with this plan?" -- awaiting the user's approval.
+
+## Workflow Planning - Approval
+**Timestamp**: 2026-10-08
+**AI Prompt**: "Ready to proceed with this plan?"
+**User Response**: "approve and continue"
+**Status**: Approved
+**Context**: Workflow plan created with 8 stages to execute (User Stories, Application Design, per-unit Functional Design, NFR Requirements, NFR Design, Infrastructure Design for U1, Code Generation, Build and Test); Units Generation skipped. Next: User Stories.
+
+---
+
+**AI action (2026-10-08, User Stories Part 1):** Assessment written (`inception/plans/user-stories-assessment.md`: execute, user-facing admin screen + a permission mechanism). Story plan written (`inception/plans/story-generation-plan.md`): Q1 format (A proposed: the previous cycles' format with PBT lines), Q2 personas (A proposed: reuse P2 Administrator, S1 `apps/app`, S4 `apps/api` by reference; add V1 "matching a participant", V2 "tidying the list", S5 Operator), Q3 breakdown (A proposed: journey-based, epics E1 find workers near a suburb, E2 stay signed in to the api, E3 the other admin lists, E4 the api behind the search, E5 cut over without a gap; about 16-18 stories); execution checklist. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the three answers in `aidlc-docs/inception/plans/story-generation-plan.md` (leave them to accept the proposals, or change the letters) and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> approved
+
+**AI action (2026-10-08, User Stories Part 1 approval):** Story plan approved with the three proposals unchanged (Q1 A, Q2 A, Q3 A). Part 2 (generation) started: personas, then stories.
+
+**AI action (2026-10-08, User Stories Part 2):** Wrote `inception/user-stories/personas.md` (P2 Administrator, S1 `apps/app`, S4 `apps/api` by reference; V1 "matching a participant", V2 "tidying the list", S5 Operator added; persona-to-story map) and `inception/user-stories/stories.md`: 18 stories in 5 epics -- E1 Find workers near a suburb (US-AS-01..07: suburb by id, within X km nearest first with the Haversine oracle property, any distance uncapped, what the distance measures, unmapped workers counted and listable, every other filter unchanged with the parity property, stable paging), E2 Stay signed in to the api (US-AS-08..11: the invisible token, sign-in on 401, impersonation refused, api trouble as a notice), E3 The other admin lists (US-AS-12..13), E4 The api behind the search (US-AS-14..17: verify every token with round-trip and corruption properties, one statement with the GiST index and a timeout, parity with the old route, log/limit/alert), E5 Cut over without a gap (US-AS-18). Five shared rules; traceability table to every FR, NFR and the verification protocol. Story plan checklist all ticked. State file updated.
+
+**Approval prompt (2026-10-08):** "Please examine the user stories and personas at `aidlc-docs/inception/user-stories/stories.md` and `personas.md`; request changes or approve to proceed to Application Design."
+
+**User input (verbatim, 2026-10-08):**
+> actually, can we redesign the requirements, I want to include all the other filters for this changes. For example, If the admin selects a Gender, it filters all the profiles who are in that gender with the location. Before you code, do you recommend the current db and schema structure for this feature? also do we need an api for each filter? for example, api for gender, api for languages and so on. Design it as accurate as it should be
+
+**AI action (2026-10-08, redesign request, analysis only):** Answered in chat. (1) Combined filters are already in scope (FR-ADM-03; US-AS-02 "within 10 km AND speaks Mandarin AND has a vehicle"); the requirements will state the composition rule explicitly per filter. (2) One search entry taking every filter as a query parameter, not one api per filter: the result is one intersection, ranked and paged in the database; per-filter apis would force the client to intersect and page sets itself. Four entries total stand. (3) Schema assessment from `packages/db/prisma/schema.prisma`: right for location (`worker_locations` + `au_localities`, GiST), services (`worker_services` by `categoryId`, indexed; the route filters by `categoryName` through a kebab-to-Title map, the id is the better key), experience (`worker_experience.domain` enum, indexed), documents (`verification_requirements`, indexed on category, status, type); weak but workable: `gender`/`hasVehicle` free strings, `dateOfBirth` a string with the `age` fallback, worker type inside the `abn` JSON (no index), languages in two columns. Semantic finding: the three document filters are independent EXISTS clauses today ("Police check" + "Pending" can match different documents). Sorting by city/state should read the HOME locality once the search moves. Two decisions written to `inception/requirements/requirement-redesign-questions.md` (Q1 same-document semantics vs today's; Q2 no schema change / additive indexes / normalise now). Recommendation: Q1 A, Q2 A. The stories gate stays open until the requirements are amended.
+
+**User input (verbatim, 2026-10-08):**
+> answered
+
+**Answers in `requirement-redesign-questions.md` (2026-10-08):** Q1, verbatim:
+> I don't see any document filter in the admin dashboard, can you explain this?
+Q2 = a (no schema change in this cycle; normalisations as follow-ups).
+
+**AI action (2026-10-08):** Verified from `AdminDashboardClient.tsx`: the document filters (`documentCategories`, `documentStatuses`, `requirementTypes`) are in the page's state, URL parsing and "Clear Filters", but no control renders them and "Apply" never sets them; `/api/admin/filters` is fetched on every load into `filterOptions`, which nothing reads. Explained to the user; Q1 (document-filter semantics) is moot unless they are built. Added Q3 to `requirement-redesign-questions.md`: drop the document filters and the options entry (recommended), build them properly with controls, or keep them URL-only. Q2 = A recorded (no schema change; follow-ups). Awaiting Q3.
+
+**User input (verbatim, 2026-10-08):**
+> A
+
+**AI action (2026-10-08, requirements and stories amended):** Q3 = A. `requirements.md` amendment appended: D12 (one query, every filter; no api per filter), D13 (no schema change; follow-up 15), D14 (document filters and the options entry dropped; follow-up 16); FR-ADM-01 three entries; FR-ADM-03 replaced by the per-filter table (parameter, columns read, semantics, AND with the location; type of support by `categoryId`; sort by city/state from the HOME locality); FR-ADM-05 withdrawn; FR-UI-02/05 and NFR-02 amended. `stories.md`: US-AS-06 rewritten (the gender + suburb + 10 km criterion, every filter AND, the document parameters rejected as unknown), US-AS-12 withdrawn, US-AS-18 extended (PR 3 removes the dead fetch; PR 4 deletes four routes), total 17, traceability updated; `personas.md` map updated; `execution-plan.md` amended (three entries). State file: stage text and follow-ups 14 (MFA), 15 (normalisations), 16 (document-filter screen). Gate: approval of the amended requirements and stories together.
+
+**Approval prompt (2026-10-08):** "Please review the amendment at the end of `aidlc-docs/inception/requirements/requirements.md` and the amended `aidlc-docs/inception/user-stories/stories.md`; request changes, or approve both to proceed to Application Design."
+
+**User input (verbatim, 2026-10-08):**
+> APPROVE AND CONTINUE, BEFORE PROCEEDING, WE ARE CREATING A NEW API BACKEND AND REPLACE THE NEXT.JS API RIGHT?
+
+**AI action (2026-10-08):** Amended requirements and stories approved. Answered: yes for the admin search -- the four Next.js route handlers (`/api/admin/contractors`, `/filters`, `/users`, `/contractors/inactive`) are replaced by three contract entries on the backend `apps/api` (the existing NestJS/Fastify service on Cloud Run that already serves the worker sign-up, not a second service), and the Next.js routes are deleted in PR 4 once production runs on the api; the other Next.js routes (worker detail, PDF, status, compliance, reports, the client and public searches, the AI-search webhook) stay in `apps/app` for now, each a candidate for a later cycle on the same pattern. User Stories closed; Application Design started.
+
+**AI action (2026-10-08, Application Design step 2-6):** Wrote `inception/plans/application-design-plan.md`: Q1 the search statement built from typed `Prisma.sql` fragments per filter in one round trip (A proposed) vs two round trips; Q2 `jose` on both sides with the claims schema in `packages/api-contract/src/auth.ts` (A proposed) vs a hand-written HMAC token; Q3 paths `/v1/admin/workers`, `/v1/admin/users`, `/v1/admin/workers/suspended` with comma-separated arrays as the page sends today (A proposed) vs repeated parameters; Q4 `withinKm` any integer 1-500 (A proposed) vs the four dropdown values. Stated decisions: one `modules/admin` module with handlers, application services, the registry as data, the SQL file and a pure query domain; `jwt-authenticator.ts` on the existing port; the app's token route and `lib/api/{token,admin}.ts`; locality resolved by Prisma and the point built in SQL; city/state sort from the HOME locality; the parity script under `apps/api/scripts`; the auth-failure alert on a new log metric; limit values and the alert threshold deferred to NFR Requirements. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the four answers in `aidlc-docs/inception/plans/application-design-plan.md` (leave them to accept the proposals, or change the letters) and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> "approved" or "done"
+
+**AI action (2026-10-08, Application Design approval):** Plan approved with the four proposals unchanged (Q1 A, Q2 A, Q3 A, Q4 A). Noted a slip in the chat summary ("/v1/admin/workers/suburb-list"); the plan's path is `/v1/admin/workers/suspended`. Generating the design artifacts.
+
+**AI action (2026-10-08, Application Design step 10):** Wrote `inception/application-design/`: `components.md` (C1 claims schema in api-contract; C2 the three-entry admin contract; C3 `JwtAuthenticator`; C4 the secret; C5 pure `search-query.ts`; C6 the filter registry as data; C7 the one statement with `ST_DWithin`/`ST_Distance`, `COUNT(*) OVER()`, the unplaced count and a statement timeout; C8 the search service; C9 the two lists; C10 handlers + the pipeline's attributed log; C11 the app's token route; C12 the in-memory token source; C13 the admin client with one 401 retry and typed outcomes; C14 the screens; C15 the secret in the stage table and the auth-failure alert; C16 the parity script), `component-methods.md` (signatures), `services.md` (S1 mint, S2 verify, S3 search, S4/S5 lists, S6 call from the screen, S7 cut-over per PR), `component-dependency.md` (matrix, boundaries, communication patterns, three data flows), `application-design.md` (consolidated; decisions deferred to construction; compliance: no new finding). Noted: `jose` is transitive today, both apps will declare it. Plan checklist ticked; state file updated.
+
+**Approval prompt (2026-10-08):** "Please examine the application design artifacts at `aidlc-docs/inception/application-design/`; request changes, or approve to proceed to the CONSTRUCTION phase (U1 `api-identity` Functional Design)."
+
+**User input (verbatim, 2026-10-08):**
+> before we proceed. The system design should be like this "As much as possible, I don't want the admin to call the api every requests,or query every request, if the most common filter is called, I want the return to be instant, this will help us reduce the api cost and will help the return to be fast"
+>
+> Design that system
+
+**AI action (2026-10-08, instant-search design, no code):** Proposed a three-layer design in `inception/requirements/requirement-instant-search-questions.md`: (1) a slim snapshot of every active worker (about 2,000 rows, about 150 KB gzipped) loaded once into the admin's browser behind the token, with every filter, radius, sort and page computed locally (zero requests); (2) an in-memory worker directory in the api, the pattern `LocalityDirectory` already uses for the suburbs, refreshed by a 30 s watermark check and a reload only on change, serving the snapshot with an ETag (304 when unchanged) and the server-side search entry without any database call; (3) revalidation on focus, every 2 minutes and after an admin action, with an "updated N s ago" indicator. The database is queried once per change, not per search. What changes against the approved design: the radius becomes a geodesic distance from the same centroids computed in the browser and the directory (under 0.3 % from PostGIS, which stays the oracle in tests); FR-GEO-02/03 and NFR-01 to be amended; the token, the locality source, the registry, the parity script and the PR order stand. Four questions: Q1 where instant comes from (snapshot + directory recommended; directory only; caches only), Q2 freshness (about a minute recommended), Q3 snapshot content (list columns + filter attributes recommended), Q4 keep the server-side search entry served from the directory (recommended). Gate: awaiting the answers; then the requirements, stories and application design are amended and re-presented.
+
+**User input (verbatim, 2026-10-08):**
+> answered
+
+**Answers in `requirement-instant-search-questions.md` (2026-10-08):** Q1 = c (caches only), Q2 = a (about a minute), Q3 = a, Q4 = a.
+
+**AI action (2026-10-08, amendments for instant repeats):** Q3 and Q4 name the snapshot and the directory that exist only under Q1 A; read, under C, as "response rows carry the list's columns and filter attributes" and "the search entry is kept"; recorded, to be objected to at the approval. Amended `requirements.md` (D15 private HTTP caching with ETag/304 via a new `privateCacheSeconds` meta field; D16 a bounded per-instance response memo keyed by the normalised query, bypassed by `no-cache`; D17 canonical URLs and a freshness line; FR-CACHE-01..04; NFR-15..17; the PostGIS search, the token, the registry and the PR order unchanged), `stories.md` (US-AS-19 the same search again is instant; US-AS-20 serve repeats from memory; 19 stories), `application-design/components.md` (C17 contract field, C18 pipeline cache step + `ResponseMemo`; C13/C14 amended), `services.md` (S3, S6), `component-dependency.md`, `application-design.md`, `execution-plan.md` (all in U2: PR 2 api side, PR 3 app side). State file updated.
+
+**Approval prompt (2026-10-08):** "Please review the three amendments dated 2026-10-08 at the end of `requirements.md`, `stories.md` and `application-design/application-design.md`; request changes, or approve to proceed to the CONSTRUCTION phase (U1 `api-identity` Functional Design)."
+
+**User input (verbatim, 2026-10-08):**
+> approve and continue
+
+**AI action (2026-10-08):** Amended requirements, stories and application design approved (the Q3/Q4 reading under Q1 C stands). INCEPTION closed. CONSTRUCTION started with U1 `api-identity` Functional Design.
+
+**AI action (2026-10-08, U1 Functional Design steps 2-4):** Wrote `construction/plans/api-identity-functional-design-plan.md`: Q1 token lifetime (5 min proposed; 10; 2), Q2 the minter reads the account's status and role before minting (proposed) vs session only, Q3 impersonation = subject the impersonated user with role theirs and `act` the admin (proposed) vs refuse to mint; stated decisions: the claim set without personal data, HS256 pinned, the verification order and the eight rejection reasons, no replay store (jti logged), the client's renewal and retry rules, the token route's `no-store` and per-user limit, the attributed child logger, the rejection warn line. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the three answers in `aidlc-docs/construction/plans/api-identity-functional-design-plan.md` (leave them to accept the proposals, or change the letters) and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> approved
+
+**AI action (2026-10-08, U1 Functional Design approval):** Plan approved with the proposals unchanged (Q1 A 5 minutes, Q2 A read the account before minting, Q3 A impersonation as subject + `act`). Generating the four artifacts.
+
+**AI action (2026-10-08, U1 Functional Design step 6):** Wrote `construction/api-identity/functional-design/`: `business-logic-model.md` (L1 mint with the account read, L2 verify with the ordered rejection reasons, L3 the pipeline's child logger, L4 the token source, L5 the auth wrapper; sequences for a normal request, a suspension mid-session, impersonation, a rejected token), `business-rules.md` (R1 the token, R2 minting, R3 verification with the logged reason per rule, R4 the pipeline, R5 the client, R6 the stated lags; properties P1-P7 for PBT-01 and the example tests to pin), `domain-entities.md` (claims, principal, token-source state, the account read; nothing persisted), `frontend-components.md` (the plumbing and the outcome contract U2's screens honour). Plan checklist ticked; state file updated.
+
+**Approval prompt (2026-10-08):** "Please examine the functional design artifacts at `aidlc-docs/construction/api-identity/functional-design/`; request changes, or approve to proceed to U1 NFR Requirements."
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U1 Functional Design approved. U1 NFR Requirements started.
+
+**AI action (2026-10-08, U1 NFR Requirements steps 2-4):** Wrote `construction/plans/api-identity-nfr-requirements-plan.md`: Q1 limits on the admin entries (120/min per user + 300/min per IP on the search, 60/120 on the lists; proposed) vs 60/120 everywhere; Q2 the auth-failure alert (> 20 rejections in 5 min, prod, ERROR, auto-close 30 min; proposed) vs > 5; Q3 rotation with two accepted secrets and a `kid` (proposed) vs a hard cut; Q4 Cloud Logging saved queries (proposed) vs a dashboard. Stated: `jose` 6 on both apps, the claims in api-contract, the app's strict Upstash limiter on the token route, the Postgres limiter for per-user keys, pino child bindings and the metric filter, the interop test, the performance targets. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the four answers in `aidlc-docs/construction/plans/api-identity-nfr-requirements-plan.md` and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> approved
+
+**AI action (2026-10-08, U1 NFR Requirements approval):** Plan approved with the proposals unchanged (Q1-Q4 A). Generating the two artifacts.
+
+**AI action (2026-10-08, U1 NFR Requirements step 6):** Wrote `construction/api-identity/nfr-requirements/nfr-requirements.md` (U1-PERF-01..04, SCAL-01..04 with the limits 120/300 and 60/120 and the scraping ceiling stated, AVAIL-01..06 incl. the two-secret rotation and the boot refusal, SEC-01..10 incl. the stated lag and the recorded MFA gap, REL-01..04 with the alert policy values and the saved queries, MAINT-01..04; Security, Resiliency and PBT compliance tables, RESILIENCY-14 deferred to NFR Design) and `tech-stack-decisions.md` (T1-T12: JWT HS256 5 min, `jose` 6 on both apps, claims in api-contract, a Next.js route minting from the session and the account row, the verifier on the existing port, the secret pair with `kid`, in-memory transport, existing limiters, pino bindings, log-metric alert, interop tests, the injectable clock; versions; configuration; the rotation runbook). Plan ticked; state updated.
+
+**Approval prompt (2026-10-08):** "Please examine the NFR requirements at `aidlc-docs/construction/api-identity/nfr-requirements/`; request changes, or approve to proceed to U1 NFR Design."
+
+**User input (verbatim, 2026-10-08):**
+> I didn't read a cache on the tech stack, are we not using it?
+
+**AI action (2026-10-08):** Answered: the caches are used, but they belong to U2 `admin-search` (D15-D17; PR 2 api side, PR 3 page side), not to U1, which is the identity token only; U1's one cache is the in-memory token source (T7), and tokens themselves are `no-store`. Added a "Not in this unit: the caches" note to U1's `tech-stack-decisions.md` so the split is explicit. No other change.
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U1 NFR Requirements approved. U1 NFR Design started.
+
+**AI action (2026-10-08, U1 NFR Design steps 2-4):** Read `apps/app/src/lib/ratelimit.ts`: `applyRateLimit` fails open on an Upstash error and keys by client IP; `checkServerActionRateLimit` keys by an identifier. Wrote `construction/plans/api-identity-nfr-design-plan.md`: Q1 RESILIENCY-14 (B proposed: CI failure-injection cases -- wrong secret, expired token, token route 401/429/5xx/network, suspension between mints, previous-secret acceptance, skew edges -- plus a staging drill running the rotation runbook and a five-minute wrong-secret drill with the alert; the DR runbook gains the secret); Q2 the token route under an Upstash failure (A proposed: fail open like every app route, logged, the api's fail-closed limits remain the gate) vs fail closed. Fixed patterns stated per category: pure in-process verification with no retry or breaker, the one indexed read through `withRetry` answering 503 on failure, stateless scaling, the secret pre-imported once, defence in depth, no new logical components beyond the secret pair, the metric and the policy. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the two answers in `aidlc-docs/construction/plans/api-identity-nfr-design-plan.md` and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> Done
+
+**AI action (2026-10-08, U1 NFR Design approval):** Plan approved with the proposals unchanged (Q1 B light testing plan, Q2 A fail open). Generating the two artifacts.
+
+**AI action (2026-10-08, U1 NFR Design step 6):** Wrote `construction/api-identity/nfr-design/nfr-design-patterns.md` (P1 pure in-process verification; P2 one bounded read at mint answering 503 on a database error; P3 fail open on the app's limiter, fail closed on the api's; P4 five layers of defence; P5 short-lived stateless credentials with the stated lag; P6 two-key rotation by `kid`; P7 secret hygiene; P8 lazy renewal and bounded client retries; P9 observability without personal data; P10 impersonation preserved; resiliency scenarios S1-S8 in CI, S9-S10 staging drills, S11 the DR runbook) and `logical-components.md` (contract, api, app, infrastructure components with their NFR responsibilities and reuse; the deliberately absent pieces). Plan ticked; state updated.
+
+**Approval prompt (2026-10-08):** "Please examine the NFR design at `aidlc-docs/construction/api-identity/nfr-design/`; request changes, or approve to proceed to U1 Infrastructure Design."
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U1 NFR Design approved. U1 Infrastructure Design started.
+
+**AI action (2026-10-08, U1 Infrastructure Design steps 2-4):** Read the infra mechanics (`SECRET_NAMES` mounted as `latest` by `render.ts`; `bootstrap.sh` creates empty secrets and log metrics; `request-failed.json` as the log-metric policy template; `cloudrun.test.ts` asserts exactly the six secrets; `lib.sh` `alerts_for`). Wrote `construction/plans/api-identity-infrastructure-design-plan.md`: Q1 provisioning of the previous secret (A proposed: two secrets per stage always mounted, the previous seeded with a random value nobody keeps; B one secret with a version alias, Cloud Run support to verify); Q2 who sets the values (A proposed: the operator by hand before PR 1's promotion with `openssl rand`, `gcloud secrets versions add` and the Vercel Production/Preview scopes; B bootstrap generates and prints). Fixed mappings per category: no new environment, compute, storage, messaging or networking; the metric `remonta-api-auth-failed` and the `auth-failed.json` policy (> 20 per 5 min, prod, ERROR, auto-close 30 min); tests and gates updated. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the two answers in `aidlc-docs/construction/plans/api-identity-infrastructure-design-plan.md` and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> approved
+
+**AI action (2026-10-08, U1 Infrastructure Design approval):** Plan approved with the proposals unchanged (Q1 A two secrets always mounted, Q2 A operator-set values). Generating the two artifacts.
+
+**AI action (2026-10-08, U1 Infrastructure Design step 6):** Wrote `construction/api-identity/infrastructure-design/infrastructure-design.md` (the logical-to-infrastructure mapping: Secret Manager pair per stage mounted as `latest`, the Vercel variable per scope, the metric `remonta-api-auth-failed` and the prod-only policy; secret definitions and who writes them; the file-by-file `infra/` changes incl. `SECRET_NAMES` to eight, bootstrap seeding the previous secret idempotently, `lib.sh`, the tests, the README; the full `auth-failed.json`; least privilege; compliance) and `deployment-architecture.md` (the topology with the pairing rule Preview<->staging, Production<->prod; the six-step PR 1 sequence with proofs; the Vercel side at PR 3; rollback; the rotation runbook; operations notes and the saved queries). Plan ticked; state updated.
+
+**Approval prompt (2026-10-08):** "Please examine the infrastructure design at `aidlc-docs/construction/api-identity/infrastructure-design/`; request changes, or approve to complete U1's design and proceed to U2 `admin-search` Functional Design."
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U1 Infrastructure Design approved; U1's design is complete. U2 `admin-search` Functional Design started.
+
+**AI action (2026-10-08, U2 Functional Design steps 2-4):** Read the screen's exact filter values (`gender` lowercase, `hasVehicle` Yes/No, `workerType` Employee/Contractor, `age` 20-30/31-45/46-60/60+, `typeOfSupport` = the category NAME, experience display names, a page-side language list, sort fields; the suburb id null only on the pre-S1 Google fallback, never in production) and the pipeline's response step (header set after the schema check). Wrote `construction/plans/admin-search-functional-design-plan.md`: Q1 canonical values in the contract with the page mapping (category id, `CareDomain` values, Title Case gender; proposed) vs today's display values; Q2 statement timeout 5 s (proposed) vs 3 s; Q3 a hand-written 45-case parity matrix in the repo (proposed) vs a smoke set. Stated: the statement shape (joins, scalar-subquery search point, `ST_DWithin`/`ST_Distance`, window count, `EXISTS` per relation filter, ties by id), age kept as today for parity, languages with the fallback as one `OR`, sorting incl. city/state from the HOME locality, the row shape, `appliedFilters`, the cache step (`privateCacheSeconds`, strong ETag, 304, the memo keyed by entry + canonical query), the two lists, the page changes, the parity script. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the three answers in `aidlc-docs/construction/plans/admin-search-functional-design-plan.md` and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> approved
+
+**AI action (2026-10-08, U2 Functional Design approval):** Plan approved with the proposals unchanged (Q1 A canonical values, Q2 A 5 s timeout, Q3 A the 45-case matrix). Generating the four artifacts.
+
+**AI action (2026-10-08, U2 Functional Design step 6):** Wrote `construction/admin-search/functional-design/`: `business-logic-model.md` (L1 the search service, L2 one transaction with the 5 s timeout and two statements, L3 the SQL with joins, scalar-subquery point, `ST_DWithin`/`ST_Distance`, window count, L4 pure normalisation with today's age rule, L5 row shaping, L6 the pipeline cache step with ETag/304 and the memo, L7 the two lists, L8 the page's flow; a sequence diagram), `business-rules.md` (R1 the strict query and defaults, R2 the locality, R3 one parameterised fragment per filter, R4 the location term and the unplaced count, R5 sorting/paging/timeout, R6 the row, R7 `appliedFilters`, R8 the caches incl. the contract check and the shared canonical-query function, R9/R10 the lists, R11 the page; properties G1-G10 and the example tests), `domain-entities.md` (E1-E7; nothing persisted), `frontend-components.md` (hierarchy, state, flows, validation, integration points, URL examples). Plan ticked; state updated.
+
+**Approval prompt (2026-10-08):** "Please examine the functional design artifacts at `aidlc-docs/construction/admin-search/functional-design/`; request changes, or approve to proceed to U2 NFR Requirements."
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U2 Functional Design approved. U2 NFR Requirements started.
+
+**AI action (2026-10-08, U2 NFR Requirements steps 2-4):** Wrote `construction/plans/admin-search-nfr-requirements-plan.md`: Q1 how NFR-01 is measured (A proposed: `EXPLAIN ANALYZE` of the slowest geo case plus a `--time` mode of the parity script replaying every case 10 times with `no-cache`; B the load harness); Q2 the connection pool (A proposed: keep 5, the 503 degraded mode is designed; B raise prod to 10); Q3 CI geo properties (A proposed: a seeded 300-worker fixture with `fast-check` over the query space and a TypeScript oracle; B inserts per run). Stated: `isOverloadedDatabase` grows to Postgres 57014 so a statement timeout is 503 not 500; no new indexes (D13) with the existing ones named; memo memory bound; no compression planned; `private` keeps shared caches out; where each property test lives; parity as a checklist step; the handler's info line. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the three answers in `aidlc-docs/construction/plans/admin-search-nfr-requirements-plan.md` and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> approved
+
+**AI action (2026-10-08, U2 NFR Requirements approval):** Plan approved with the proposals unchanged (Q1-Q3 A). Generating the two artifacts.
+
+**AI action (2026-10-08, U2 NFR Requirements step 6):** Wrote `construction/admin-search/nfr-requirements/nfr-requirements.md` (U2-PERF-01..05 incl. the measured 500 ms and the recorded `EXPLAIN`; SCAL-01..05 with the pool kept at 5 and every input capped; AVAIL-01..06 incl. 57014 -> 503, degraded mode, additive caches, bounded staleness; SEC-01..06 incl. private-only caching and what never leaves the service; REL-01..03; MAINT-01..05 incl. the seeded-fixture property strategy; compliance tables, RESILIENCY-14 deferred) and `tech-stack-decisions.md` (T1-T15: PostGIS geography in one statement, `Prisma.sql` fragments, a scalar-subquery point, a bounded transaction, the error mapping, private HTTP caching with a strong ETag and the new contract field, the in-process LRU memo, one canonical-query function, Node crypto, Prisma for the lists, fast-check with a Haversine oracle, the parity script with a timing mode, the contract client on the page, the suburb route unchanged, no new configuration; no new runtime dependency). Plan ticked; state updated.
+
+**Approval prompt (2026-10-08):** "Please examine the NFR requirements at `aidlc-docs/construction/admin-search/nfr-requirements/`; request changes, or approve to proceed to U2 NFR Design."
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U2 NFR Requirements approved. U2 NFR Design started.
+
+**AI action (2026-10-08, U2 NFR Design steps 2-4):** Wrote `construction/plans/admin-search-nfr-design-plan.md`: Q1 RESILIENCY-14 (B proposed: CI injections -- statement timeout via `pg_sleep`, pool exhaustion via a fake `P2024`, unknown locality, memo disabled, the stale-entry model, the `no-cache` bypass, the page's outcomes -- plus a staging drill of 12 concurrent searches to exhaust the pool and a suspend-then-see-it check across two browsers); Q2 cross-instance memo staleness (A proposed: accept the 60 s bound; B Postgres NOTIFY broadcast). Fixed patterns stated per category: bounded statement with both timeout codes mapped to 503, no retry in the api, no breaker, additive switchable caches, bounded inputs and memo, index-backed predicate with one round trip for page and total, private caching keyed without the caller, no new logical components beyond the in-process memo and cache step. State file updated.
+
+**Approval prompt (2026-10-08):** "Please confirm the two answers in `aidlc-docs/construction/plans/admin-search-nfr-design-plan.md` and say 'approved' or 'done'."
+
+**User input (verbatim, 2026-10-08):**
+> answered
+
+**Answers in `admin-search-nfr-design-plan.md` (2026-10-08):** Q1 = a (use the existing DR testing / game day / chaos practice -- the option asks for its reference; none given); Q2 = A (accept per-instance memo staleness).
+
+**AI action (2026-10-08):** Q1 names an existing practice without a reference, and no such practice is recorded in the repository (the two previous cycles chose the proposed light plan). Wrote `construction/plans/admin-search-nfr-design-clarification.md` asking for the reference, or whether B was meant. Gate: awaiting the clarification.
+
+**User input (verbatim, 2026-10-08):**
+> choose B instead
+
+**AI action (2026-10-08, U2 NFR Design approval):** Q1 = B (the proposed light testing plan), recorded in the clarification file and the plan; Q2 = A. Generating the two artifacts.
+
+**AI action (2026-10-08, U2 NFR Design step 6):** Wrote `construction/admin-search/nfr-design/nfr-design-patterns.md` (P1 one bounded statement in one short transaction with both timeout codes mapped to 503; P2 no retry in the api, retries owned by the page, no breaker; P3 index-backed predicate with page and total in one round trip; P4 two additive switchable caches; P5 time-bounded visible staleness; P6 bounded inputs and work; P7 private by construction; P8 one canonical form for URLs, memo key and ETag; P9 degraded mode on the page; P10 observability; scenarios S1-S8 in CI, S9-S12 staging drills incl. a rollback rehearsal) and `logical-components.md` (contract, api, app, scripts and tests with their NFR responsibilities; the deliberately absent pieces). Plan ticked; state updated.
+
+**Approval prompt (2026-10-08):** "Please examine the NFR design at `aidlc-docs/construction/admin-search/nfr-design/`; request changes, or approve to complete both units' designs and proceed to Code Generation (PR 1, identity api side)."
+
+**User input (verbatim, 2026-10-08):**
+> continue to next stage
+
+**AI action (2026-10-08):** U2 NFR Design approved; both units' designs are complete. Code Generation started: U1 `api-identity`, PR 1 (api side + infra), Part 1 planning.
+
+**AI action (2026-10-08, U1 Code Generation Part 1):** Read the files PR 1 modifies (`main.ts`, `config.ts`, the pipeline's auth step, `test/helpers.ts`, `route-security.test.ts`, the contract index, `stages.ts`, `bootstrap.sh`, `lib.sh`, the infra tests, `infra/README.md`, the logging and error helpers). Wrote `construction/plans/api-identity-code-generation-plan.md`: Part 0 commit the cycle's docs on `aidlc/admin-search-api` and cut `feat/api-identity` from `main`; Part A the contract's `auth.ts` with its test; Part B `jose` 6, the extended `Principal`, `jwt-authenticator.ts`, the config pair, the pipeline's child logger and warn line (the logging shape decided in the plan: the authenticator logs the reason, the pipeline logs the entry), `main.ts` wiring with a lazy logger, `.env.example`, `testApp` taking an authenticator, the authenticator test (every reason, the previous secret, properties P1-P3/P7) and an attribution test; Part C the stage table to eight secrets, render, bootstrap seeding the previous secret and the metric, `lib.sh`, `auth-failed.json`, the two tests, the README runbooks; Part D `docs/admin/README.md`, a CLAUDE.md line, the PR summary, build, commit, push, PR; Part E the app side listed for PR 3. Story coverage table. State file updated.
+
+**Approval prompt (2026-10-08):** "Please review `aidlc-docs/construction/plans/api-identity-code-generation-plan.md`; approve to start generating PR 1, or request changes."
+
+**User input (verbatim, 2026-10-08):**
+> approve and continue
+
+**AI action (2026-10-08, U1 Code Generation Part 2):** Plan approved. Starting Part 0: committing the cycle's documents on `aidlc/admin-search-api`, then cutting `feat/api-identity` from `main`.

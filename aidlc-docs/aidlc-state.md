@@ -3,10 +3,14 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Stage**: **No cycle open.** The last cycle, *Sign-up photo on Google Cloud Storage* (2026-10-05), is closed
-  and archived under `aidlc-docs/archive/signup-photo-gcs/`; its two time-based observations are follow-ups 10 and 11
-  below (user decision 2026-10-05: close now, observe later). To start the next cycle: open a branch `aidlc/<name>`,
-  say "continue the AI-DLC" and name the goal; the Workspace Detection step reads this file first.
+- **Current Cycle**: *Admin worker search on `apps/api`* (started 2026-10-08; branch `aidlc/admin-search-api` from
+  `main` `949cf2b`). Goal (user, 2026-10-08): a new api backend for the admin dashboard's search endpoints, with the
+  radius computed accurately on the new schema (`worker_locations` + `au_localities` + PostGIS).
+- **Current Stage**: **CONSTRUCTION -- U1 `api-identity` Code Generation, Part 1 planning (2026-10-08): awaiting
+  approval of `aidlc-docs/construction/plans/api-identity-code-generation-plan.md`** (PR 1 on `feat/api-identity`:
+  Parts 0 branches, A contract, B api, C infra, D docs and summary; Part E the app side, generated with PR 3). Both
+  units' designs approved 2026-10-08. Note: the AI-DLC documents of this cycle are not yet committed (Part 0.1
+  commits them on `aidlc/admin-search-api`).
 
 ## Previous cycles (archived, read-only)
 
@@ -105,6 +109,16 @@
 12. **Photo-era leftovers**: the two staged test rows the 3a checks left in production (purged after 24 h by the job);
     the multipart-era unclaimed rows, if any, now skipped by the purge (`skippedUnknownStore` in the daily summary);
     the production test sign-up of 2026-10-05 08:57Z (profile `cmuv0oju40001s6014vmje0bp`) if it is not a real worker.
+14. **MFA for admin accounts** does not exist in `apps/app` (SECURITY-12; recorded 2026-10-08 at the admin-search
+    cycle's requirements; belongs to the identity slice).
+15. **Profile column normalisation** (recorded 2026-10-08, Q2 A): `worker_profiles.gender` and `hasVehicle` as typed
+    values, `dateOfBirth` as a date (today text with the integer `age` fallback), the worker type out of the `abn`
+    JSON, one language list instead of `worker_profiles.languages` + `worker_additional_info.languages`. Each is
+    written by `apps/app` onboarding and read by the searches: an onboarding cycle with backfills.
+16. **A document-filter screen for the admin search** (recorded 2026-10-08, Q3 A): the old route's URL-only
+    `documentCategories`/`documentStatuses`/`requirementTypes` and the never-displayed options endpoint are dropped;
+    if wanted, design the controls and an entry together, with same-document semantics (category, status and type
+    on one `verification_requirements` row).
 13. **Dashboard uploads** (`/api/upload/worker-photo` and the shared `PhotoUpload` defaults, HEIC accepted there):
     out of scope by the user's 2026-10-05 decision; the same ticket/confirm pattern can be applied later.
 
@@ -125,15 +139,27 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (as last decided, 2026-10-05; re-decide at the next Requirements Analysis)
+## Extension Configuration (decided 2026-10-08 for this cycle)
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | Yes, blocking | Requirements Analysis, 2026-10-05 (Q9 A) |
-| Resiliency Baseline | Yes, blocking; S1's targets carried forward (SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region) | Requirements Analysis, 2026-10-05 (Q10 A) |
-| Property-Based Testing | Yes, full | Requirements Analysis, 2026-10-05 (Q11 A) |
+| Security Baseline | Yes, blocking | Requirements Analysis, 2026-10-08 (Q10 A) |
+| Resiliency Baseline | Yes, blocking; S1's targets carried forward (SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region) | Requirements Analysis, 2026-10-08 (Q11 A) |
+| Property-Based Testing | Yes, full | Requirements Analysis, 2026-10-08 (Q12 A) |
 
 ## Stage Progress
-No cycle open. The closed cycle's full stage record is in `aidlc-docs/archive/signup-photo-gcs/` (inception:
+### INCEPTION
+- [x] Workspace Detection (2026-10-08): brownfield, unchanged; branch `aidlc/admin-search-api`
+- [x] Reverse Engineering (2026-10-08, Q1 = B): `inception/reverse-engineering/` (9 artifacts) + the targeted inventory
+- [x] Requirements Analysis (2026-10-08): 12 answers + CQ1 (free text withdrawn); approved 2026-10-08
+- [x] Workflow Planning (2026-10-08): `inception/plans/execution-plan.md`; approved 2026-10-08
+- [x] User Stories (2026-10-08): 17 stories + personas; approved 2026-10-08 (with the requirements amendment)
+- [x] Application Design (2026-10-08): approved 2026-10-08, incl. the instant-repeats amendment (caches, Q1 C)
+- [ ] Units Generation -- SKIP (U1 `api-identity`, U2 `admin-search` fixed in the plan)
+### CONSTRUCTION (per unit)
+- [ ] U1 `api-identity`: design complete (approved 2026-10-08); Code Generation plan pending approval; PR 1 then the app part in PR 3, NFR Design, Infrastructure Design, Code Generation (PR 1 + app part of PR 3), Build and Test
+- [ ] U2 `admin-search`: Functional Design (approved 2026-10-08), NFR Requirements (approved 2026-10-08), NFR Design (approved 2026-10-08) -- design complete, NFR Design, Code Generation (PR 2 + app part of PR 3 + PR 4), Build and Test
+
+The closed cycle's full stage record is in `aidlc-docs/archive/signup-photo-gcs/` (inception:
 requirements, 18 stories, execution plan, application design; construction: U1 infrastructure design and code, U3
 functional design, NFR requirements and design, infrastructure design, code generation plan with every step ticked,
 the three PR summaries and the 3b preview checklist).
