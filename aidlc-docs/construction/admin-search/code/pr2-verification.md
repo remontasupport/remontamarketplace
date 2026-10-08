@@ -1,14 +1,14 @@
 # PR 2 verification record -- admin-search, api side
 
-Branch `feat/admin-search-api`, 4 commits (`b31bccf`, `ddacf3c`, `e3909dd`, `874327d`). PR #PR2_NUMBER.
+Branch `feat/admin-search-api`, 6 commits (`b31bccf`, `ddacf3c`, `e3909dd`, `874327d`, `5de0629`, `d943f96`). PR #42.
 
 ## CI on the PR
 
 | Check | Result |
 |---|---|
-| API Quality (Node 20, 22; PostGIS + fake GCS): the 14 new gated tests run here | pending |
-| Infra Quality, App Quality, Web Quality | pending |
-| Supply chain, CodeQL, Semgrep | pending |
+| API Quality (Node 20, 22; PostGIS + fake GCS): the 14 new gated tests run here | failed on `874327d` and `5de0629` (the registration harnesses did not bind the admin area: BootError in the gated suites); **success on `d943f96`** 05:49Z |
+| Infra Quality, App Quality, Web Quality | success |
+| Supply chain, CodeQL, Semgrep | success (13 checks; failures: none) |
 
 ## Merge and staging
 

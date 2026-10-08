@@ -1,8 +1,9 @@
 # PR 2 -- admin-search, api side (generated 2026-10-08)
 
 Branch `feat/admin-search-api` from `main` `c95435c` (PR 1 merged). Commits: `b31bccf` contract, `ddacf3c` platform
-cache, `e3909dd` the admin module, `874327d` the parity script and docs. PR: #PR2_NUMBER (opened by the user from
-the compare link). Plan: `../../plans/admin-search-code-generation-plan.md` (Parts A-F ticked).
+cache, `e3909dd` the admin module, `874327d` the parity script and docs. PR: #42 (opened by the user from the compare link); two
+more commits after CI: `5de0629` (the token test's expiry edge; the quoted `precision` alias), `d943f96` (the
+registration harnesses bind the admin area). Plan: `../../plans/admin-search-code-generation-plan.md` (Parts A-F ticked).
 
 ## Files
 
@@ -42,6 +43,7 @@ the compare link). Plan: `../../plans/admin-search-code-generation-plan.md` (Par
 | G8 | The route-security enumeration now sends the admin principal on GET-query cases | until this PR every GET was public; the pipeline's order (auth before validation) is unchanged |
 | G9 | Parity suburb cases resolve their id through the public `GET /v1/localities` | the cases file stays database-independent |
 | G10 | Docker Desktop answered an error on this machine; the gated suites (14 new tests) were not run locally | CI's `API Quality` job with PostGIS and the suburb list is the proof; recorded as a deviation from step D6 |
+| G11 | Any harness that serves `contracts` must bind every area (`unreachableHandlers(adminContract)` in the registration harnesses) | the binder refuses to boot with an unbound entry; the first two CI runs failed on exactly that, invisible without PostGIS |
 
 ## Gates (local, 2026-10-08)
 
