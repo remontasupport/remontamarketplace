@@ -3344,3 +3344,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, staging checklist run 1):** `! cd apps/api; node --import tsx scripts/staging-admin-check.ts` -> "staging-admin-check failed: Invalid `prisma.$queryRaw()` invocation: Can't reach database server at `localhost:55432`" (plus a DEP0190 warning about `shell: true`).
 
 **AI action:** cause: the script let `AUTH_DATABASE_URL` from the user's shell (the local Docker database) win over Secret Manager. Fixed: the staging values now come from gcloud unless `STAGING_API_TOKEN_SECRET` / `STAGING_AUTH_DATABASE_URL` are set explicitly; gcloud is invoked without `shell: true`.
+
+**User input (2026-10-08, staging checklist run 2):** `! node --import tsx scripts/staging-admin-check.ts` -> "staging-admin-check failed: spawnSync gcloud.cmd EINVAL".
+
+**AI action:** Node on Windows no longer spawns a `.cmd` without a shell (the 2024 fix). The script now runs one fixed command string through `execSync`; the secret name is validated against `^[A-Z_]+$` before it is interpolated.
