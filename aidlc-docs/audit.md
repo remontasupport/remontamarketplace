@@ -3328,3 +3328,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08, PR 2 #42 CI failure, cause found):** CI failed again on `5de0629`. Without the log, reasoned from the code: `test/registration/harness.ts` and `registration.int.test.ts` build the test app with every contract (`contracts`, which now includes `adminContract`) but handler sets for only the platform and registration areas; `planBindings` refuses to boot ("admin.searchWorkers: no handler"), so every gated registration test fails in CI and nothing shows locally without PostGIS. Fixed by binding the admin area with `unreachableHandlers(adminContract)` in both; pushed as a sixth commit. Recorded as decision G11 for the summary: any harness that serves `contracts` must bind every area. A watcher follows CI on the PR's head.
 
 **AI action (2026-10-08, PR 2 #42 CI green):** On `d943f96` both API Quality jobs succeeded (05:49Z); 13 checks; failures: none. Verification record and summary updated (G11). Next, the user merges #42 with "Merge pull request"; then the staging checklist.
+
+**User input (2026-10-08, PR 2 #42):** "Merged"
+
+**AI action (2026-10-08, PR 2 #42, "Merged" checked by refs):** not merged. `git ls-remote origin main` = `c95435c` (PR 1's merge commit); `refs/pull/42/head` = `d943f96`; the REST view said `merged: false, merged_at: null` before the anonymous rate limit was hit. Reported back; waiting for the real merge.
