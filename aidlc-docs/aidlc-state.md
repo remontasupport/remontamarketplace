@@ -10,8 +10,8 @@
   verified on staging (`remonta-api-staging-00017-h7x`; `construction/admin-search/code/pr2-verification.md`: every
   row done except parity against the old route, deferred to PR 3's preview). Found on the way: both stages'
   `API_TOKEN_SECRET` had been stored with a line ending; clean version 2 added 06:14Z, staging redeployed.
-  Awaiting the joint promotion of PRs 1 and 2: Actions -> deploy-api -> stage=prod, imageTag=`b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a`;
-  then prod health 200, admin entry 401, auth-failed alert silent. Then PR 3 (the app switch, Parts G-K of the U2
+  PRs 1 and 2 promoted to prod 06:49Z (`remonta-api-00006-tj5`, image `b09a9c1`): health 200, admin entries 401, public
+  entries 200, auth-failed silent. Next: PR 3 (the app switch, Parts G-K of the U2
   plan; carries the two uncommitted script files `apps/api/scripts/staging-admin-check.ts` and the paced
   `parity-admin-search.ts`). PR 1 = #41, merged and verified on staging.**
 
@@ -159,8 +159,8 @@
 - [x] Application Design (2026-10-08): approved 2026-10-08, incl. the instant-repeats amendment (caches, Q1 C)
 - [ ] Units Generation -- SKIP (U1 `api-identity`, U2 `admin-search` fixed in the plan)
 ### CONSTRUCTION (per unit)
-- [ ] U1 `api-identity`: design complete; Code Generation plan approved 2026-10-08; PR 1 = #41 merged `c95435c` and verified on staging 2026-10-08 (promotion with PR 2); Part E with PR 3, NFR Design, Infrastructure Design, Code Generation (PR 1 + app part of PR 3), Build and Test
-- [ ] U2 `admin-search`: plan approved 2026-10-08; PR 2 = #42 merged `b09a9c1` and verified on staging 2026-10-08 (promotion pending); PR 3, PR 4 to follow, NFR Design, Code Generation (PR 2 + app part of PR 3 + PR 4), Build and Test
+- [ ] U1 `api-identity`: design complete; Code Generation plan approved 2026-10-08; PR 1 = #41 merged `c95435c`, verified on staging and promoted to prod with PR 2 2026-10-08; Part E with PR 3, NFR Design, Infrastructure Design, Code Generation (PR 1 + app part of PR 3), Build and Test
+- [ ] U2 `admin-search`: plan approved 2026-10-08; PR 2 = #42 merged `b09a9c1`, verified on staging and promoted to prod 2026-10-08 (`remonta-api-00006-tj5`); PR 3, PR 4 to follow, NFR Design, Code Generation (PR 2 + app part of PR 3 + PR 4), Build and Test
 
 The closed cycle's full stage record is in `aidlc-docs/archive/signup-photo-gcs/` (inception:
 requirements, 18 stories, execution plan, application design; construction: U1 infrastructure design and code, U3

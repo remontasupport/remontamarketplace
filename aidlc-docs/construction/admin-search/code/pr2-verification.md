@@ -33,6 +33,6 @@ Branch `feat/admin-search-api`, 6 commits (`b31bccf`, `ddacf3c`, `e3909dd`, `874
 
 | Step | Result |
 |---|---|
-| `deploy-api` dispatch, stage=prod, imageTag=`b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a` | pending (the user dispatches; the staging checklist above is complete, parity-against-the-old-route excepted) |
-| prod health 200; `GET /v1/admin/workers` without a token -> 401 | pending |
-| `auth-failed` alert silent | pending |
+| `deploy-api` dispatch, stage=prod, imageTag=`b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a` | dispatched by the user; `remonta-api-00006-tj5` created 06:49:23Z, 100% traffic, image digest `c9af51b0…` (the same digest staging `00016`/`00017` ran) |
+| prod health 200; `GET /v1/admin/workers` without a token -> 401 | 06:50Z: health 200 (0.40 s) x2; `/v1/admin/workers` and `/v1/admin/users` 401; `/v1/localities` and `/v1/service-categories` 200; "apps/api listening" 06:49:28Z; no ERROR line |
+| `auth-failed` alert silent | rejections on prod in the last 30 min:       4 ;      4 missing; (the probes' own `missing`; threshold >20 per 5 min); no incident |
