@@ -153,4 +153,6 @@ What a screen must do with each outcome is fixed by `construction/api-identity/f
 `rateLimited` automatically after its wait.
 
 The old Next.js routes (`/api/admin/contractors`, `/api/admin/users`, `/api/admin/contractors/inactive`,
-`/api/admin/filters`) are no longer called by any screen and are deleted in the clean-up PR that follows.
+`/api/admin/filters`) and `src/lib/worker-search.ts` were deleted once no screen called them (the clean-up PR);
+the Redis response cache they kept (`admin:contractors:v1:*`) went with them. The per-contractor routes
+(`/api/admin/contractors/[id]`, `.../status`) remain: the dashboard's status toggle and Reactivate still use them.
