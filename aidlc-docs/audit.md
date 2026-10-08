@@ -3366,3 +3366,5 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-08, secret fix):** "Done, both versions created"
 
 **AI action (2026-10-08 06:16Z):** both secrets have version 2 (staging 06:14:15Z, prod 06:14:20Z). The assistant's staging redeploy (`gcloud run services replace` of the rendered `service.staging.yaml` with image tag `b09a9c1`) was refused by the permission layer (shared resource); the user redeploys through Actions -> deploy-api -> Run workflow (stage=staging, imageTag=b09a9c1dedd3558b4eda08d72f8bfa8e0334aa3a). A read-only watcher waits for the next ready revision.
+
+**User input (2026-10-08):** "wait, is code for the API done already?"
