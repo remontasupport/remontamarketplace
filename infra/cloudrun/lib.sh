@@ -6,7 +6,7 @@
 
 STAGES=(staging prod)
 service_for() { case "$1" in staging) echo remonta-api-staging ;; prod) echo remonta-api ;; esac; }
-alerts_for() { case "$1" in staging) echo "instance-down outbox-dead-letter" ;; prod) echo "instance-down outbox-dead-letter 5xx-ratio latency-p95 request-failed will-not-start" ;; esac; }
+alerts_for() { case "$1" in staging) echo "instance-down outbox-dead-letter" ;; prod) echo "instance-down outbox-dead-letter 5xx-ratio latency-p95 request-failed will-not-start auth-failed" ;; esac; }
 
 say() { printf '\n== %s\n' "$*"; }
 exists() { "$@" >/dev/null 2>&1; }

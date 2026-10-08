@@ -1,0 +1,25 @@
+{
+  "displayName": "__SERVICE__ auth-failed",
+  "documentation": {
+    "content": "More than 20 rejected api tokens at __SERVICE__ (__STAGE__) in 5 minutes. Each has a warn line {auth: 'rejected', reason} with reqId. Reasons: missing, malformed, bad-signature, expired, not-yet-valid, bad-issuer, bad-audience, bad-claims. A burst of `bad-signature` after a deploy means the app and the api hold different API_TOKEN_SECRET values (Vercel vs Secret Manager; finish the rotation runbook in infra/README.md). A burst of `expired` from one userId is a stale admin tab. Many IPs with mixed reasons is a scan: the per-IP limits hold; read the reqIds. Query: resource.type=\"cloud_run_revision\" AND jsonPayload.auth=\"rejected\". Change this policy by editing cloudrun/monitoring/auth-failed.json and running apply-alerts.sh.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "rejected tokens in 5 minutes > 20",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"__SERVICE__\" AND metric.type = \"logging.googleapis.com/user/remonta-api-auth-failed\"",
+        "aggregations": [{ "alignmentPeriod": "300s", "perSeriesAligner": "ALIGN_SUM", "crossSeriesReducer": "REDUCE_SUM", "groupByFields": ["resource.labels.service_name"] }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 20,
+        "duration": "0s",
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "notificationChannels": ["__CHANNEL__"],
+  "alertStrategy": { "autoClose": "1800s" },
+  "severity": "ERROR",
+  "userLabels": { "remonta-stage": "__STAGE__", "remonta-service": "api" }
+}

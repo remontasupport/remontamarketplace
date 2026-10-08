@@ -13,6 +13,7 @@ import { platformContract } from './platform.contract'
 import { registrationContract } from './registration.contract'
 
 export * from './define'
+export * from './auth'
 export * from './meta'
 export * from './errors'
 export * from './checks'

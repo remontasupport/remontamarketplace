@@ -2,29 +2,12 @@
 // contract entry, the pipeline refuses what it must, before the handler runs.
 // Real contracts are all public in S1, so a synthetic signed-in contract covers
 // 401/403; it runs through exactly the same binder and pipeline.
-import { contracts, defineContract, errorResponseSchema, meta, platformContract, type Contract, type EntryDef, type PublicEndpoint } from '@remonta/api-contract'
+import { contracts, errorResponseSchema, platformContract, type Contract, type EntryDef, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import * as z from 'zod'
 import type { HandlerSet } from '../src/platform/contract/handlers'
+import { privateContract } from './fixtures/private-contract'
 import { multipart, testApp, unreachableHandlers, type TestApp } from './helpers'
-
-const privateContract = defineContract('testPrivate', {
-  adminThing: {
-    method: 'POST',
-    path: '/v1/test/admin-thing/:thingId',
-    summary: 'test only',
-    pathParams: z.strictObject({ thingId: z.string().max(10) }),
-    body: { kind: 'json', schema: z.strictObject({ name: z.string().max(20) }) },
-    responses: { 200: z.strictObject({ ok: z.literal(true) }) },
-    meta: meta({
-      access: { roles: ['ADMIN'] },
-      bot: 'none',
-      rateLimit: [{ per: 'ip', limit: 10, window: '1m' }, { per: 'user', limit: 5, window: '1m' }],
-      maxBodyKb: 1,
-    }),
-  },
-})
 
 const all: readonly Contract[] = [...contracts, privateContract]
 const entries = all.flatMap((c) => Object.entries(c.entries).map(([name, entry]) => ({ id: `${c.area}.${name}`, entry: entry as EntryDef })))

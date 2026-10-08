@@ -50,6 +50,8 @@ export async function testApp(opts: {
   publicEndpoints?: readonly PublicEndpoint[]
   config?: Partial<AppOptions['config']>
   shedder?: AppOptions['shedder']
+  /** Default: the header-based fake. Pass the real JwtAuthenticator to test it through the pipeline. */
+  authenticator?: Authenticator
 }): Promise<TestApp> {
   const rateLimiter = new FakeRateLimiter()
   const captcha = new FakeCaptcha()
@@ -58,7 +60,7 @@ export async function testApp(opts: {
     contracts: opts.contracts,
     handlerSets: opts.handlerSets,
     publicEndpoints: opts.publicEndpoints ?? [],
-    deps: { rateLimiter, captcha, authenticator: new FakeAuthenticator() },
+    deps: { rateLimiter, captcha, authenticator: opts.authenticator ?? new FakeAuthenticator() },
     shedder: opts.shedder,
   })
   return { fastify: app.getHttpAdapter().getInstance() as unknown as FastifyInstance, rateLimiter, captcha, close: () => app.close() }

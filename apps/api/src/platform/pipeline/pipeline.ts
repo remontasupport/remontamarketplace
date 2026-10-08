@@ -47,11 +47,18 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
       }
     }
 
-    // 5. Authentication, then 6. policy.
+    // 5. Authentication, then 6. policy. The authenticator logs the reason of a refusal
+    //    (the auth-failure metric counts its line); this line adds the entry.
     let principal: Principal | null = null
     if (m.access !== 'public') {
       principal = await deps.authenticator.authenticate(request.headers)
-      if (!principal) throw new ApiError(401)
+      if (!principal) {
+        request.log.warn({ entry: id, auth: 'rejected' }, 'auth rejected')
+        throw new ApiError(401)
+      }
+      // Every later line of this request names who asked (R4.1): the 403 below, the
+      // handler's lines, the response line. Ids only, never a name or an email.
+      request.log = request.log.child({ userId: principal.userId, ...(principal.impersonatorId ? { impersonatorId: principal.impersonatorId } : {}) })
       if (!m.access.roles.includes(principal.role)) throw new ApiError(403, `role ${principal.role} not in ${m.access.roles.join(',')}`)
       await enforceLimits(id, m.rateLimit.filter((r) => r.per === 'user'), request, principal, deps.rateLimiter)
     }
