@@ -6,13 +6,12 @@
 - **Current Cycle**: *Admin worker search on `apps/api`* (started 2026-10-08; branch `aidlc/admin-search-api` from
   `main` `949cf2b`). Goal (user, 2026-10-08): a new api backend for the admin dashboard's search endpoints, with the
   radius computed accurately on the new schema (`worker_locations` + `au_localities` + PostGIS).
-- **Current Stage**: **CONSTRUCTION -- U1 `api-identity` Code Generation, PR 1 generated (2026-10-08): four commits on
-  `feat/api-identity` (`0a8dcae` contract, `bd177af` api, `385b46b` infra, `4077adc` docs), pushed; the PR is opened
-  by the user from the compare link (no `gh` on this machine); summary in
-  `construction/api-identity/code/pr1-summary.md`. Awaiting the user's review of the generated code.** Then: the
-  operator steps before merge (bootstrap, the two secret values, Vercel scopes), CI, merge, the staging checklist
-  (Build and Test); Part E (the app side) is generated with PR 3. Next unit: U2 `admin-search` code generation plan
-  (PR 2). Docs branch `aidlc/admin-search-api` is checked out as a second worktree in the session scratchpad.
+- **Current Stage**: **CONSTRUCTION -- U1 `api-identity` PR 1 in Build and Test (2026-10-08).** Code generated (5
+  commits on `feat/api-identity`, last `30410ce`), operator steps done (bootstrap; both `API_TOKEN_SECRET` values;
+  Vercel Preview/Production). Pending: the user opens the PR from the compare link; CI; merge; the staging checklist
+  (`construction/api-identity/code/pr1-verification.md`). Cycle-level instructions in
+  `construction/build-and-test/`. Next in parallel: U2 `admin-search` code generation plan (PR 2). Docs branch
+  `aidlc/admin-search-api` is a second worktree in the session scratchpad.
 
 ## Previous cycles (archived, read-only)
 
@@ -158,7 +157,7 @@
 - [x] Application Design (2026-10-08): approved 2026-10-08, incl. the instant-repeats amendment (caches, Q1 C)
 - [ ] Units Generation -- SKIP (U1 `api-identity`, U2 `admin-search` fixed in the plan)
 ### CONSTRUCTION (per unit)
-- [ ] U1 `api-identity`: design complete; Code Generation plan approved 2026-10-08; PR 1 generated and pushed (review pending); Part E with PR 3; Build and Test pending, NFR Design, Infrastructure Design, Code Generation (PR 1 + app part of PR 3), Build and Test
+- [ ] U1 `api-identity`: design complete; Code Generation plan approved 2026-10-08; PR 1 generated, pushed, operator steps done (2026-10-08); Build and Test in progress (PR open/CI/merge/staging pending); Part E with PR 3, NFR Design, Infrastructure Design, Code Generation (PR 1 + app part of PR 3), Build and Test
 - [ ] U2 `admin-search`: Functional Design (approved 2026-10-08), NFR Requirements (approved 2026-10-08), NFR Design (approved 2026-10-08) -- design complete, NFR Design, Code Generation (PR 2 + app part of PR 3 + PR 4), Build and Test
 
 The closed cycle's full stage record is in `aidlc-docs/archive/signup-photo-gcs/` (inception:
