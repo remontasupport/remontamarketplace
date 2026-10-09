@@ -7,9 +7,8 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: INCEPTION -- Workflow Planning complete (`inception/plans/execution-plan.md`), awaiting approval;
-  next Application Design (concise), then CONSTRUCTION per unit U1 `worker-area`, U2 `edit-profile`,
-  U3 `services-documents`, U4 `dashboard-jobs` (10 PRs).
+- **Current Stage**: INCEPTION -- Application Design, planning: `inception/plans/application-design-plan.md` (seven
+  pre-filled questions) awaits confirmation; then the four design artifacts; then CONSTRUCTION U1.
 
 ## Previous cycles (archived, read-only)
 
@@ -148,9 +147,11 @@
   with one change: ABN only, no TFN (requirements amendment D17 / FR-PI-07; US-WP-05 rewritten)
 - [x] Workflow Planning (2026-10-09): `plans/execution-plan.md` -- risk High; four units fixed (U1 worker-area +
   capacity gate, U2 edit-profile, U3 services-documents, U4 dashboard-jobs); 10 PRs, api promoted before each app PR,
-  a clean-up PR per unit after production verification -- **awaiting approval**
-- [ ] Application Design -- EXECUTE (concise): entry list, module layout, completion port, upload generalisation,
-  `documentUrl` scheme, form-engine replace semantics and field kinds, the sidebar declaration, the client data layer
+  a clean-up PR per unit after production verification -- approved 2026-10-09
+- [ ] Application Design -- EXECUTE (concise): `plans/application-design-plan.md` written (Q1 entry per section; Q2 a
+  `storageKey` column + an admin link entry; Q3 a `section` mode and new kinds in the engine; Q4 completion as a domain
+  function with today's function as the oracle; Q5 uploads lifted to `platform/storage` with a kind table; Q6 one profile
+  query and a typed client; Q7 the sidebar as a typed array) -- awaiting confirmation
 - [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
