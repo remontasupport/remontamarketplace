@@ -45,7 +45,7 @@ moves the worker in the client search).
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A (given in chat, 2026-10-09: "ALL answers are A")
 
 ### Clarification Question 3
 Can a worker change their **service area** (the sign-up suburb and the travel radius) from the dashboard?
@@ -59,7 +59,7 @@ follow-up).
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A (given in chat, 2026-10-09: "ALL answers are A")
 
 ## Ambiguity 2: impersonation (Q10, "We can ignore this for now")
 
@@ -71,7 +71,7 @@ the worker can. Nothing is built; the api's pipeline already records `impersonat
 
 B) Something else (please describe after [Answer]: tag below).
 
-[Answer]: 
+[Answer]: A (given in chat, 2026-10-09: "ALL answers are A")
 
 ## Ambiguity 3: the sidebar (Q11, "Dashboard, Edit Profile (move the Personal Info to edit profile) Edit Services, then Mandatory and so on")
 
@@ -88,7 +88,7 @@ details) is reached by clicking the "Edit Profile" heading itself.
 
 C) Other: write the sub-items in order after the [Answer]: tag.
 
-[Answer]: 
+[Answer]: A (given in chat, 2026-10-09: "ALL answers are A")
 
 ### Clarification Question 6
 "Then Mandatory and so on": after Dashboard, Edit Profile, Edit Services, the rest keeps today's order: Mandatory,
@@ -98,7 +98,7 @@ A) Yes.
 
 B) No: write the order after the [Answer]: tag.
 
-[Answer]: 
+[Answer]: A (given in chat, 2026-10-09: "ALL answers are A")
 
 ## Noted, not asked
 

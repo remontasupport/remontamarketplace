@@ -3543,3 +3543,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > ahh, yeah letter A
 
 **AI action (2026-10-09):** CQ1 = A (a private home address) written into `requirement-clarification-questions.md` on the user's behalf from the chat answer. CQ2-CQ6 still empty; awaiting them.
+
+**User input (verbatim, 2026-10-09):**
+> ALL answers are A
+
+**Answers in `requirement-clarification-questions.md` (2026-10-09):** CQ1 = A (private home address: worker and admins, never clients, never a search input); CQ2 = A (street line + suburb from `au_localities`, stored on the profile, no geocoding, legacy columns untouched); CQ3 = A (the service area editable from Edit Profile through `placeHome`, dual-writing the legacy columns); CQ4 = A (no impersonation rule); CQ5 = A (the Edit Profile dropdown: the five Personal Info steps, then the present sections); CQ6 = A (the rest of the sidebar in today's order). CQ2-6 written into the file from the chat answer. Requirements Analysis proceeds.
