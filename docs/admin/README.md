@@ -89,6 +89,7 @@ parameters are refused (400). Limits: 120 per minute per admin, 300 per minute p
 | `age` | `20-30`, `31-45`, `46-60`, `60+` | today's year-granular date-of-birth rule with the integer age fallback |
 | `languages` | comma-separated names | any of; the additional-info list first, else the profile's |
 | `experienceWith` | comma-separated `DISABILITY`, `AGED_CARE`, `WORKING_WITH_CHILDREN`, `MENTAL_HEALTH`, `CHRONIC_MEDICAL` | **all** of |
+| `experienceAreas` | comma-separated `DOMAIN:Area` pairs from the shared vocabulary (`packages/schemas/src/data/experienceAreas.ts`, the labels the edit-profile page offers and `worker_experience.specificAreas` stores), e.g. `AGED_CARE:Dementia` | within a domain **any** of its areas on that worker's domain row; across domains **all** of. Each pair's domain must also be in `experienceWith`, else 400 `fields.experienceAreas` |
 
 Every filter combines with the others and with the suburb by AND. Only active accounts are listed.
 

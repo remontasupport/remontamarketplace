@@ -4,10 +4,14 @@
     "target": "ES2022",
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "files": [
     "src/schema/workerRegistrationSchema.ts",
-    "src/schema/workerRegistrationSchema.test.ts"
+    "src/schema/workerRegistrationSchema.test.ts",
+    "src/data/experienceAreas.ts",
+    "src/data/experienceAreas.test.ts"
   ]
 }
