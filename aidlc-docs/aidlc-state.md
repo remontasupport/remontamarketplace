@@ -3,10 +3,13 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none. The admin-search cycle closed 2026-10-09 (`aidlc-docs/archive/admin-search-api/`).
-- **Current Stage**: between cycles. "continue the AI-DLC" starts a new cycle: a targeted inventory of the area, then
-  INCEPTION (requirements, plans, stories, application design), then CONSTRUCTION per unit, on a branch `aidlc/<cycle>`
-  for the record and `feat/...` branches for the code.
+- **Current Cycle**: worker-profile-api -- started 2026-10-09. Goal (user, verbatim in `audit.md`): migrate every legacy
+  api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
+  many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
+  structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
+- **Current Stage**: INCEPTION -- Requirements Analysis. The targeted inventory is written
+  (`aidlc-docs/inception/requirements/worker-profile-inventory.md` + `worker-profile-routes.md`); the 17 requirement
+  verification questions await the user's answers (`requirement-verification-questions.md`).
 
 ## Previous cycles (archived, read-only)
 
@@ -62,6 +65,10 @@
 - **Quality gates (2026-10-09):** schemas 63 tests; api-contract 49; api 368 unit (+143 database-gated, CI); app
   142 type / 471 lint known / 119 tests; form-engine 58; infra 37. CodeQL and Semgrep on every PR.
 - **Rollback deployments** re-recorded in CLAUDE.md on 2026-10-09 (the deployment pages of the `main` `48a8a7e` builds).
+- **Driving minutes on the worker card** (PR #49 `e8889fa`, merged to `main` `c51d430` on 2026-10-09, outside a cycle):
+  the admin search card reads "about N min drive from the suburb centre", estimated in the app from the straight-line km
+  the api returns (`apps/app/src/features/admin-search/travel.ts`); the sort is unchanged. Its production verification
+  is not recorded in the audit; CLAUDE.md's rollback rows still name the `48a8a7e` builds.
 
 ## Follow-ups left open (candidates for the next cycle or housekeeping)
 
@@ -123,4 +130,20 @@
 | Property-Based Testing | Yes, full | admin-search cycle, 2026-10-08 |
 
 ## Stage Progress
-No cycle in progress.
+
+### INCEPTION
+- [x] Workspace Detection (2026-10-09): `aidlc-state.md` said no cycle open; `main` = `c51d430` (PR #49), clean tree;
+  brownfield, unchanged layout; no reverse-engineering artifacts under `aidlc-docs/inception/` (the admin-search
+  archive's 2026-10-08 pass is the latest; the decision full pass vs targeted inventory is deferred until the goal is known)
+- [x] Goal named (`inception/cycle-start-questions.md`, 2026-10-09: Other, verbatim in the audit) -> branch `aidlc/worker-profile-api`
+- [x] Targeted inventory (2026-10-09): `inception/requirements/worker-profile-inventory.md` (the dashboard's 13 pages
+  and their data paths; the sidebar's current order; the api structure and concurrency model; the capacity arithmetic)
+  and `worker-profile-routes.md` (33 route files, one row each). Key fact: the dashboard's writes are 53 server actions
+  (6,962 lines) on Prisma, not routes; no worker entry exists in the api
+- [ ] Requirements Analysis: `requirement-verification-questions.md` written (17 questions) -- awaiting answers
+- [ ] Requirements Analysis
+- [ ] User Stories / Application Design / Units (as the goal needs)
+- [ ] Workflow Planning
+
+### CONSTRUCTION
+Not started.
