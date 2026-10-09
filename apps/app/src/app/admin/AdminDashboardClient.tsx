@@ -29,6 +29,7 @@ import {
   urlFromFilters,
   type AdminFilters,
 } from '@/features/admin-search/query'
+import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/travel'
 
 // ============================================================================
 // TYPES
@@ -1162,14 +1163,14 @@ export default function AdminDashboard() {
 
                           {/* Details Row */}
                           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                            {/* Distance from the suburb centre (R6.4) */}
+                            {/* Estimated driving time from the suburb centre (user 2026-10-09: minutes, not km); the km stay in the tooltip */}
                             {contractor.distanceKm !== undefined && (
-                              <span className="inline-flex items-center gap-1" title="Distance between the two suburb centres">
+                              <span className="inline-flex items-center gap-1" title={`Estimated driving time from the suburb centre (${contractor.distanceKm} km in a straight line between the two suburb centres)`}>
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                {contractor.distanceKm} km from the suburb centre
+                                {formatDrive(estimatedDriveMinutes(contractor.distanceKm))} from the suburb centre
                               </span>
                             )}
 
