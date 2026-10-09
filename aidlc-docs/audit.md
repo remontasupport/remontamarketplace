@@ -3633,3 +3633,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > approved
 
 **AI action (2026-10-09, U1 NFR Design -- artifacts):** Plan approved (Q1 B, Q2 A, Q3 A). Wrote `aidlc-docs/construction/worker-area/nfr-design/nfr-design-patterns.md` (P1 one bounded transaction; P2 shedding on two reachable signals; P3 limiter fails closed, probes exempt; P4 recent-success health with a 30 s window and a 2 s fallback query; P5 pool exhaustion as 503 with `reason`; P6 body-hash ETag, memo excluded; P7 ownership first; P8 masking and redaction at the boundary; P9 pure domain with oracles and shared arbitraries; P10 the guarded load generator; P11 scaling by table values, no instance-local correctness; P12 observe with the existing seven policies and `reason` on 503s; P13 the resiliency test plan -- six CI injections and two staging drills; P14 the re-runnable backfill) and `logical-components.md` (the component table with configuration, failure mode and observer; sequences for a normal read, a shed, pool exhaustion and a dead database; the cross-check; the note that the 5xx-ratio policy counts 503s). Plan checklist all [x]. Gate: awaiting approval.
+
+**User input (verbatim, 2026-10-09):**
+> continue to Next Stage
+
+**AI action (2026-10-09):** U1 NFR design approved (commit `c5a1d5c`). Infrastructure Design (U1) started.
