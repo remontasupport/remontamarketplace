@@ -3626,3 +3626,5 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > continue to Next Stage
 
 **AI action (2026-10-09):** U1 NFR requirements approved (commit `fb634f5`). NFR Design (U1) started.
+
+**AI action (2026-10-09, U1 NFR Design -- plan):** Wrote `aidlc-docs/construction/plans/worker-area-nfr-design-plan.md`: Q1 RESILIENCY-14 (B: CI failure-injection tests -- pool of 1, forced statement timeout, limiter table dropped, shedder at 2, a 304 under a changed body; the load test's burst as the staging drill watched for liveness restarts, plus an event-loop-signal drill at 50 ms; the DR runbook line); Q2 the liveness probe under pool pressure (A: recent-success health -- 200 without a query when a statement succeeded within 30 s, else SELECT 1 with a 2 s timeout; vs a reserved connection; vs keep and observe); Q3 the ETag (A: body hash after the read, exact, revisited if the read dominates; vs a profile_version column bumped by every write). Checklist of 5 steps. Gate: awaiting confirmation.
