@@ -3456,3 +3456,15 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-09):** "I see. can we just test this to preview in vercel?"
 
 **AI action (2026-10-09):** yes: the deploy workflow builds images only on a push to `main` and a dispatch only promotes an existing one, so the order is PR A merged (staging gets the api) -> PR B opened (its Vercel preview against staging is the end-to-end test, and shows whether the local client-side error reproduces) -> promote -> PR B merged. Compare links and the staging checks handed to the user.
+
+**User input (2026-10-09):** "I merged and confirmed the PR A, is that ok?"
+
+**AI action (2026-10-09):** checked by refs: `main` = `024596f` (merge of PR #46, head `fe499c3`); deploy-api run 37873854900 green (quality, build and push, "Deploy staging" with its health check; promote skipped); staging health 200. The admin entry checks the token before the query, so the parameter itself is proven by the preview.
+
+**User input (2026-10-09):** "when I opened, there is no new preview being created"
+
+**AI action (2026-10-09):** PR #47 opened on `c76aee4`; Vercel had built that commit at 02:02Z on the branch push, before the PR existed, so the PR attached the existing build (both Vercel statuses success, "Vercel Preview Comments" success). The deployment link handed over.
+
+**User input (2026-10-09):** "I think preview is ok now. What to do next?"
+
+**AI action (2026-10-09):** the preview accepted by the user against the staging api (PR A's code). Next: promote image `024596f5ba2ba5b796eb88002b011a4bdc289a38` to prod by dispatch, verify, then merge PR #47 and verify production; then the rollback ids and the record.
