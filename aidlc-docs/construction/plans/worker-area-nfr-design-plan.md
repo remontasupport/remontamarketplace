@@ -71,16 +71,16 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the three answers; resolve any ambiguity in a clarification file
-- [ ] 2. `nfr-design-patterns.md`: the patterns with the requirement each satisfies -- one bounded transaction
+- [x] 1. Confirm the three answers; resolve any ambiguity in a clarification file
+- [x] 2. `nfr-design-patterns.md`: the patterns with the requirement each satisfies -- one bounded transaction
   (read), shedding before work (two signals, both reachable), limiter fail-closed and probe exemption, pool
   exhaustion as 503, recent-success health, private caching with a strong ETag, ownership resolved first and
   cheaply, masking and redaction at the boundary, pure completion with oracles, load generation as a tool with
   guards, horizontal scaling by table values, no instance-local correctness, logging and the existing alerts, the
   resiliency test plan (Q1), and the backfill as a re-runnable job
-- [ ] 3. `logical-components.md`: each component (shedder, limiter, pool, cache step, health path, the worker
+- [x] 3. `logical-components.md`: each component (shedder, limiter, pool, cache step, health path, the worker
   module's read path, the completion domain, the load generator, the backfill script, the stages table, logging and
   alerts) with its configuration values, its failure mode and what observes it; a sequence of the read under normal,
   shed and pool-exhausted conditions
-- [ ] 4. Cross-check against U1-AVL-02/03, U1-PRF-02/03, U1-SCL-03/04, U1-REL-01
-- [ ] 5. Present for approval
+- [x] 4. Cross-check against U1-AVL-02/03, U1-PRF-02/03, U1-SCL-03/04, U1-REL-01
+- [x] 5. Present for approval
