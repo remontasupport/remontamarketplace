@@ -120,18 +120,18 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the six answers; resolve any ambiguity in a clarification file
-- [ ] 2. `business-rules.md`: R1 ownership (token → profile; 404 rules; impersonation), R2 the profile read (shape,
+- [x] 1. Confirm the six answers; resolve any ambiguity in a clarification file
+- [x] 2. `business-rules.md`: R1 ownership (token → profile; 404 rules; impersonation), R2 the profile read (shape,
   masking, caching), R3 completion (the four flags rule by rule with the Q1 corrections marked; `profileCompleted`;
   the percent per Q2; the services table per Q3), R4 requirements grouping (Q4), R5 displayRole (Q5), R6 the probe
   exemption (Q6), R7 the load script's contract (inputs, outputs, what it must never do)
-- [ ] 3. `business-logic-model.md`: L1 `profileIdOf`, L2 `getProfile` (the one transaction and its statements),
+- [x] 3. `business-logic-model.md`: L1 `profileIdOf`, L2 `getProfile` (the one transaction and its statements),
   L3 `completionOf` (step by step), L4 `persistCompletion`, L5 the requirements grouping, L6 the pipeline's probe
   branch, L7 the load script's loop; the property list for PBT-01 (ownership invariant; completion oracle; percent
   monotonic in filled sections; read idempotent; ETag stable for an unchanged profile)
-- [ ] 4. `domain-entities.md`: `Profile` (the read's body, field by field with sources), `Completion`,
+- [x] 4. `domain-entities.md`: `Profile` (the read's body, field by field with sources), `Completion`,
   `RequirementItem`, `ServiceRequirement` (the table), the worker-side `Principal` use; no new table in U1
-- [ ] 5. `frontend-components.md`: none in U1 (no app change in PR 1); a note that the sidebar's needs are met by the
+- [x] 5. `frontend-components.md`: none in U1 (no app change in PR 1); a note that the sidebar's needs are met by the
   read's shape (checked against `Sidebar.tsx`'s props)
-- [ ] 6. Cross-check against US-WP-26, 27, 28, 30, 31, 32 and requirements section 6's staging checklist items
-- [ ] 7. Present for approval
+- [x] 6. Cross-check against US-WP-26, 27, 28, 30, 31, 32 and requirements section 6's staging checklist items
+- [x] 7. Present for approval
