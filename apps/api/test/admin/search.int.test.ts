@@ -128,6 +128,20 @@ describe.skipIf(!local)('admin worker search on PostGIS', () => {
       const sub = await allPages({ ...mine, therapeuticSubcategories: 'admin-search.test-sub-a' })
       expect(new Set(sub.rows.map((r) => r.id))).toEqual(new Set(mineActive().filter((w) => w.therapeuticSubcategoryIds.includes('admin-search.test-sub-a')).map((w) => w.id)))
     })
+    it('experience areas: any of the areas within a domain, all of the domains (R3.11); a pair without its domain is 400', async () => {
+      const areas = await allPages({ ...mine, experienceWith: 'AGED_CARE,DISABILITY', experienceAreas: 'AGED_CARE:Dementia,AGED_CARE:Stroke Recovery,DISABILITY:Autism' })
+      const expected = mineActive().filter((w) => {
+        const aged = w.specificAreas.AGED_CARE ?? []
+        const dis = w.specificAreas.DISABILITY ?? []
+        return w.domains.includes('AGED_CARE') && w.domains.includes('DISABILITY') && (aged.includes('Dementia') || aged.includes('Stroke Recovery')) && dis.includes('Autism')
+      })
+      expect(expected.length, 'the fixture has such workers').toBeGreaterThan(0)
+      expect(new Set(areas.rows.map((r) => r.id))).toEqual(new Set(expected.map((w) => w.id)))
+      expect(areas.rows.length).toBeLessThan((await allPages({ ...mine, experienceWith: 'AGED_CARE,DISABILITY' })).rows.length)
+      const bad = await h.search({ ...mine, experienceWith: 'DISABILITY', experienceAreas: 'AGED_CARE:Dementia' })
+      expect(bad.statusCode).toBe(400)
+      expect((bad.json() as { error: { fields?: Record<string, string[]> } }).error.fields).toEqual({ experienceAreas: ['Choose the experience type first'] })
+    })
     it('the name search in both word orders, and mobile', async () => {
       const a = await allPages({ ...mine, search: 'Test Terson' })
       const b = await allPages({ ...mine, search: 'Terson Test' })

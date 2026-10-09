@@ -3,6 +3,7 @@
 // read. Pure; the invariants that the contract cannot express are checked here and
 // answer 400 with the field named.
 import type { AppliedFilters, WorkerSearchQueryParsed } from '@remonta/api-contract'
+import { splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
 import { ApiError } from '../../../platform/errors'
 
 export type SortField = 'createdAt' | 'firstName' | 'lastName' | 'city' | 'state' | 'distance'
@@ -41,6 +42,10 @@ export interface SearchQuery {
   languages: string[]
   therapeuticSubcategories: string[]
   experienceWith: CareDomain[]
+  /** The canonical `DOMAIN:Area` pairs, echoed in appliedFilters. */
+  experienceAreas: string[]
+  /** The same pairs grouped: the areas (any of) per domain (all of) the statement reads (R3.11). */
+  experienceAreasByDomain: Partial<Record<CareDomain, string[]>>
 }
 
 export interface LocalityRef {
@@ -65,6 +70,18 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
 
   const search = raw.search?.trim().replace(/\s+/g, ' ') || undefined
   const languages = (raw.languages ?? []).map(titleCase)
+  const experienceWith = (raw.experienceWith ?? []) as CareDomain[]
+
+  // R3.11: an area narrows a domain that is being searched; a pair whose domain is
+  // not in experienceWith is refused rather than implied, so one meaning has one URL.
+  const experienceAreas = raw.experienceAreas ?? []
+  const experienceAreasByDomain: Partial<Record<CareDomain, string[]>> = {}
+  for (const pair of experienceAreas) {
+    const split = splitExperienceAreaPair(pair)
+    if (!split) throw new ApiError(400, `experienceAreas pair ${pair}`, { experienceAreas: ['Unknown experience area'] })
+    if (!experienceWith.includes(split.domain)) throw new ApiError(400, `experienceAreas ${pair} without its domain in experienceWith`, { experienceAreas: ['Choose the experience type first'] })
+    ;(experienceAreasByDomain[split.domain] ??= []).push(split.area)
+  }
 
   return {
     page: raw.page,
@@ -83,7 +100,9 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     ...(raw.age !== undefined ? { age: birthWindowOf(raw.age, now) } : {}),
     languages,
     therapeuticSubcategories: raw.therapeuticSubcategories ?? [],
-    experienceWith: (raw.experienceWith ?? []) as CareDomain[],
+    experienceWith,
+    experienceAreas,
+    experienceAreasByDomain,
   }
 }
 
@@ -134,5 +153,6 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(q.languages.length ? { languages: q.languages } : {}),
     ...(q.therapeuticSubcategories.length ? { therapeuticSubcategories: q.therapeuticSubcategories } : {}),
     ...(q.experienceWith.length ? { experienceWith: q.experienceWith } : {}),
+    ...(q.experienceAreas.length ? { experienceAreas: q.experienceAreas } : {}),
   }
 }

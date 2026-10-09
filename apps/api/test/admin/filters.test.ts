@@ -52,6 +52,16 @@ describe('each filter contributes its fragment with bound parameters', () => {
     expect(e.split('EXISTS (SELECT 1 FROM worker_experience').length - 1).toBe(2)
   })
 
+  it('experience areas: per domain, any of its areas on that domain row, domains ANDed (R3.11)', () => {
+    const a = text(whereOf(q({ experienceWith: 'AGED_CARE,DISABILITY', experienceAreas: 'DISABILITY:Autism,AGED_CARE:Stroke Recovery,AGED_CARE:Dementia' })))
+    expect(a).toContain('we.domain = <"AGED_CARE">::"CareDomain" AND we."specificAreas" && <["Dementia","Stroke Recovery"]>::text[]')
+    expect(a).toContain('we.domain = <"DISABILITY">::"CareDomain" AND we."specificAreas" && <["Autism"]>::text[]')
+    // The R3.9 condition for each domain (2) plus one area condition per domain with areas (2).
+    expect(a.split('EXISTS (SELECT 1 FROM worker_experience').length - 1).toBe(4)
+    const one = text(whereOf(q({ experienceWith: 'AGED_CARE,DISABILITY', experienceAreas: 'AGED_CARE:Dementia' })))
+    expect(one.split('"specificAreas" &&').length - 1).toBe(1)
+  })
+
   it('always the active condition, alone when nothing else applies (R3.10)', () => {
     expect(text(whereOf(q({})))).toBe(`u.status = 'ACTIVE'`)
   })
@@ -69,12 +79,15 @@ describe('G4: composition', () => {
       age: fc.constant('20-30'),
       languages: fc.constant('English'),
       experienceWith: fc.constantFrom('AGED_CARE', 'AGED_CARE,MENTAL_HEALTH'),
+      experienceAreas: fc.constantFrom('AGED_CARE:Dementia', 'AGED_CARE:Dementia,AGED_CARE:Stroke Recovery'),
     },
     { requiredKeys: [] },
   )
   it('one fragment per active filter, ANDed, every value bound, none dropped', () => {
     fc.assert(
-      fc.property(arb, (raw) => {
+      fc.property(arb, (raw0) => {
+        // An area needs its domain searched (R3.11); every experienceWith option above carries AGED_CARE.
+        const raw = raw0.experienceAreas && !raw0.experienceWith ? { ...raw0, experienceWith: 'AGED_CARE' } : raw0
         const query = q(raw)
         const names = activeFilters(query)
         expect(names.sort()).toEqual(Object.keys(raw).sort())
@@ -86,7 +99,8 @@ describe('G4: composition', () => {
         const bound = whereOf(query).values.map((v) => (typeof v === 'string' ? v : JSON.stringify(v)))
         for (const [k, v] of Object.entries(raw)) {
           if (k === 'workerType' || k === 'age') continue // mapped (JSON code; the date window), covered above
-          for (const piece of v.split(',')) expect(bound.some((b) => b.includes(piece)), `${k}=${piece} bound`).toBe(true)
+          // An area pair is bound as its domain and, inside an array, its area.
+          for (const piece of v.split(',').flatMap((p) => (k === 'experienceAreas' ? p.split(':') : [p]))) expect(bound.some((b) => b.includes(piece)), `${k}=${piece} bound`).toBe(true)
         }
       }),
       { numRuns: 120 },

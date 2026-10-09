@@ -1352,6 +1352,59 @@
                 ]
               }
             }
+          },
+          {
+            "name": "experienceAreas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "maxItems": 39,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "AGED_CARE:Dementia",
+                  "AGED_CARE:Parkinson's Disease",
+                  "AGED_CARE:Alzheimer's Disease",
+                  "AGED_CARE:Stroke Recovery",
+                  "CHRONIC_MEDICAL:Arthritis",
+                  "CHRONIC_MEDICAL:COPD or Respiratory Illness",
+                  "CHRONIC_MEDICAL:Asthma",
+                  "CHRONIC_MEDICAL:Diabetes",
+                  "CHRONIC_MEDICAL:Cardiovascular Disease",
+                  "DISABILITY:Acquired Brain Injury",
+                  "DISABILITY:Autism",
+                  "DISABILITY:Cerebral Palsy",
+                  "DISABILITY:Cystic Fibrosis",
+                  "DISABILITY:Down Syndrome",
+                  "DISABILITY:Epilepsy",
+                  "DISABILITY:Hearing Impairment",
+                  "DISABILITY:Intellectual Disabilities",
+                  "DISABILITY:Motor Neuron Disease",
+                  "DISABILITY:Muscular Dystrophy",
+                  "DISABILITY:Physical Disabilities",
+                  "DISABILITY:Spina Bifida",
+                  "DISABILITY:Spinal Cord Injury",
+                  "DISABILITY:Vision Impairment",
+                  "MENTAL_HEALTH:Anxiety",
+                  "MENTAL_HEALTH:Bipolar Disorder",
+                  "MENTAL_HEALTH:Depression",
+                  "MENTAL_HEALTH:Eating Disorders",
+                  "MENTAL_HEALTH:Hoarding",
+                  "MENTAL_HEALTH:Obsessive-Compulsive Disorder (OCD)",
+                  "MENTAL_HEALTH:Post-traumatic Stress Disorder (PTSD)",
+                  "MENTAL_HEALTH:Schizophrenia",
+                  "MENTAL_HEALTH:Substance Abuse & Addiction",
+                  "WORKING_WITH_CHILDREN:Children with Disabilities",
+                  "WORKING_WITH_CHILDREN:Children with Behavioral Challenges",
+                  "WORKING_WITH_CHILDREN:Children with Learning Difficulties",
+                  "WORKING_WITH_CHILDREN:Children with Autism",
+                  "WORKING_WITH_CHILDREN:Children with ADHD",
+                  "WORKING_WITH_CHILDREN:Children with Developmental Delays",
+                  "WORKING_WITH_CHILDREN:Siblings of Children with Disabilities"
+                ]
+              }
+            }
           }
         ],
         "responses": {
@@ -1647,6 +1700,12 @@
                           }
                         },
                         "experienceWith": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "experienceAreas": {
                           "type": "array",
                           "items": {
                             "type": "string"

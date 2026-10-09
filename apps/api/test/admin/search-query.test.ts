@@ -46,6 +46,22 @@ describe('normaliseQuery', () => {
     expect(() => normaliseQuery(parse({ sortBy: 'distance' }), NOW)).toThrow(/sortBy=distance/)
   })
 
+  it('experience areas: grouped by domain, each domain required in experienceWith, the field named (R3.11)', () => {
+    const q = normaliseQuery(parse({ experienceWith: 'AGED_CARE,DISABILITY', experienceAreas: 'AGED_CARE:Dementia,DISABILITY:Autism,AGED_CARE:Stroke Recovery' }), NOW)
+    expect(q.experienceAreas).toEqual(['AGED_CARE:Dementia', 'AGED_CARE:Stroke Recovery', 'DISABILITY:Autism'])
+    expect(q.experienceAreasByDomain).toEqual({ AGED_CARE: ['Dementia', 'Stroke Recovery'], DISABILITY: ['Autism'] })
+    expect(appliedFiltersOf(q).experienceAreas).toEqual(q.experienceAreas)
+    expect(appliedFiltersOf(normaliseQuery(parse({}), NOW)).experienceAreas).toBeUndefined()
+    try {
+      normaliseQuery(parse({ experienceWith: 'DISABILITY', experienceAreas: 'AGED_CARE:Dementia' }), NOW)
+      expect.unreachable('a pair whose domain is not searched')
+    } catch (e) {
+      expect((e as ApiError).status).toBe(400)
+      expect((e as ApiError).fields).toEqual({ experienceAreas: ['Choose the experience type first'] })
+    }
+    expect(() => normaliseQuery(parse({ experienceAreas: 'AGED_CARE:Dementia' }), NOW)).toThrow(ApiError)
+  })
+
   it('the unmapped list ignores the location and never fails for it (R1.4)', () => {
     const q = normaliseQuery(parse({ unplaced: 'true', localityId: '12', withinKm: '10' }), NOW)
     expect(q.unplaced).toBe(true)
@@ -76,6 +92,7 @@ describe('normaliseQuery', () => {
         age: fc.constantFrom('20-30', '31-45', '46-60', '60+'),
         languages: fc.constantFrom('English', 'English,Mandarin'),
         experienceWith: fc.constantFrom('AGED_CARE', 'AGED_CARE,DISABILITY'),
+        experienceAreas: fc.constantFrom('AGED_CARE:Dementia', 'AGED_CARE:Stroke Recovery,AGED_CARE:Dementia'),
         unplaced: fc.constantFrom('true', 'false'),
       },
       { requiredKeys: [] },
@@ -84,7 +101,10 @@ describe('normaliseQuery', () => {
       fc.property(arb, (raw) => {
         const input: Record<string, string> = { ...raw }
         if (input.withinKm && !input.localityId) delete input.withinKm
+        if (input.experienceAreas && !input.experienceWith) input.experienceWith = 'AGED_CARE'
         const q = normaliseQuery(parse(input), NOW)
+        expect(q.experienceAreas).toEqual(input.experienceAreas ? [...new Set(input.experienceAreas.split(','))].sort() : [])
+        expect(appliedFiltersOf(q).experienceAreas).toEqual(q.experienceAreas.length ? q.experienceAreas : undefined)
         const applied = appliedFiltersOf(q, q.localityId !== undefined ? { id: q.localityId, label: 'X' } : undefined)
         for (const k of ['search', 'gender', 'hasVehicle', 'workerType'] as const) {
           if (input[k] !== undefined) expect(applied[k]).toBe(k === 'search' ? input[k]!.trim().replace(/\s+/g, ' ') : input[k])

@@ -92,6 +92,23 @@ export const FILTERS: readonly FilterSpec[] = [
         ' AND ',
       ),
   },
+  {
+    // R3.11: the domain's row carries any of the chosen specific areas; one such
+    // condition per domain, all of them. The domain's own EXISTS (R3.9) stays: the
+    // query guarantees the domain is searched, and this spec knows nothing of that one.
+    name: 'experienceAreas',
+    applies: (q) => q.experienceAreas.length > 0,
+    sql: (q) =>
+      Prisma.join(
+        Object.entries(q.experienceAreasByDomain)
+          .sort(([a], [b]) => (a < b ? -1 : 1))
+          .map(
+            ([d, areas]) =>
+              Prisma.sql`EXISTS (SELECT 1 FROM worker_experience we WHERE we."workerProfileId" = p.id AND we.domain = ${d}::"CareDomain" AND we."specificAreas" && ${areas}::text[])`,
+          ),
+        ' AND ',
+      ),
+  },
 ]
 
 /** R3.10: the base condition every list shares. */

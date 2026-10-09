@@ -3,6 +3,7 @@
 // services, experience, additional info and HOME rows at real au_localities points,
 // a share of them unplaced; deterministic from a seed; isolated by an email domain and
 // deleted by close(). Needs TEST_DATABASE_URL on localhost and the suburb list loaded.
+import { experienceAreasOf } from '@remonta/schemas/data/experienceAreas'
 import { expect } from 'vitest'
 import { adminHandlers } from '../../src/modules/admin/admin.handlers'
 import { createDb, type Db } from '../../src/platform/persistence/db'
@@ -23,6 +24,8 @@ export interface SeededWorker {
   serviceIds: string[]
   therapeuticSubcategoryIds: string[]
   domains: string[]
+  /** The specific areas ticked under each of `domains` (some rows have none). */
+  specificAreas: Record<string, string[]>
   status: 'ACTIVE' | 'SUSPENDED'
   home: { localityId: number; latitude: number; longitude: number } | null
 }
@@ -117,6 +120,12 @@ export async function adminHarness(domain: string, opts: { workers?: number; see
     const therapeutic = rand() < 0.3
     const therapeuticSubcategoryIds = therapeutic ? [rand() < 0.5 ? `${prefix}sub-a` : `${prefix}sub-b`] : []
     const domains = DOMAINS.filter(() => rand() < 0.3)
+    // Under each domain, up to three of its areas (the profile page's limit), or none.
+    const specificAreas: Record<string, string[]> = {}
+    for (const d of domains) {
+      const picked = experienceAreasOf(d).filter(() => rand() < 0.4).slice(0, 3)
+      if (picked.length) specificAreas[d] = picked
+    }
     const status: 'ACTIVE' | 'SUSPENDED' = rand() < 0.1 ? 'SUSPENDED' : 'ACTIVE'
     const placed = rand() < 0.7
     const loc = placed ? localities[Math.floor(rand() * localities.length)]! : null
@@ -150,7 +159,7 @@ export async function adminHarness(domain: string, opts: { workers?: number; see
                 ...(therapeutic ? [{ categoryId: 'therapeutic-supports', categoryName: 'Therapeutic Supports', subcategoryIds: therapeuticSubcategoryIds }] : []),
               ],
             },
-            careExperience: { create: domains.map((domain) => ({ domain: domain as never })) },
+            careExperience: { create: domains.map((domain) => ({ domain: domain as never, specificAreas: specificAreas[domain] ?? [] })) },
             ...(infoLanguages.length ? { workerAdditionalInfo: { create: { languages: infoLanguages } } } : {}),
             ...(loc ? { locations: { create: [{ kind: 'HOME', localityId: loc.id, latitude: loc.latitude, longitude: loc.longitude, travelRadiusKm: 50, precision: 'LOCALITY', source: 'BACKFILL' }] } } : {}),
           },
@@ -158,7 +167,7 @@ export async function adminHarness(domain: string, opts: { workers?: number; see
       },
       select: { id: true, workerProfile: { select: { id: true } } },
     })
-    workers.push({ id: user.workerProfile!.id, userId: user.id, firstName, lastName, gender, hasVehicle, workerType, dateOfBirth, age, languages, infoLanguages, serviceIds, therapeuticSubcategoryIds, domains, status, home: loc ? { localityId: loc.id, latitude: loc.latitude, longitude: loc.longitude } : null })
+    workers.push({ id: user.workerProfile!.id, userId: user.id, firstName, lastName, gender, hasVehicle, workerType, dateOfBirth, age, languages, infoLanguages, serviceIds, therapeuticSubcategoryIds, domains, specificAreas, status, home: loc ? { localityId: loc.id, latitude: loc.latitude, longitude: loc.longitude } : null })
   }
 
   const t = await testApp({ contracts: [(await import('@remonta/api-contract')).adminContract], handlerSets: [adminHandlers({ db, clock: () => new Date() })] })

@@ -5,6 +5,7 @@
 // sentinels. Repeats are served by the browser's private cache and the api's memo
 // (privateCacheSeconds, D15/D16). Adding an endpoint = one entry here + one handler in
 // apps/api's admin module.
+import { EXPERIENCE_AREA_PAIRS } from '@remonta/schemas/data/experienceAreas'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta, ROLES } from './meta'
@@ -56,6 +57,13 @@ export const workerSearchQuerySchema = z.strictObject({
   languages: csv(z.string().max(40)).optional(),
   therapeuticSubcategories: csv(z.string().max(60)).optional(),
   experienceWith: csv(z.enum(CARE_DOMAINS)).optional(),
+  /**
+   * `DOMAIN:Area` pairs from packages/schemas' experience vocabulary (the labels
+   * `worker_experience.specificAreas` stores): within a domain any of, across domains
+   * all of. Each pair's domain must also be in `experienceWith` (the api answers 400
+   * otherwise), so one meaning has one URL.
+   */
+  experienceAreas: csv(z.enum(EXPERIENCE_AREA_PAIRS as [string, ...string[]]), EXPERIENCE_AREA_PAIRS.length).optional(),
 })
 export type WorkerSearchQuery = z.input<typeof workerSearchQuerySchema>
 export type WorkerSearchQueryParsed = z.output<typeof workerSearchQuerySchema>
@@ -122,6 +130,7 @@ export const appliedFiltersSchema = z.strictObject({
   languages: z.array(z.string()).optional(),
   therapeuticSubcategories: z.array(z.string()).optional(),
   experienceWith: z.array(z.string()).optional(),
+  experienceAreas: z.array(z.string()).optional(),
 })
 export type AppliedFilters = z.output<typeof appliedFiltersSchema>
 

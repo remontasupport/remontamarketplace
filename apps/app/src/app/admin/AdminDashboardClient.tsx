@@ -22,6 +22,8 @@ import {
   THERAPEUTIC_CATEGORY_ID,
   WITHIN_OPTIONS_KM,
   canonicalOf,
+  domainOf,
+  experienceAreasOfLabel,
   filtersFromURL,
   toQuery,
   urlFromFilters,
@@ -45,7 +47,7 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith'
+  'locality' | 'withinKm' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas'
 >
 
 const pendingOf = (f: AdminFilters): PendingFilters => ({
@@ -59,6 +61,7 @@ const pendingOf = (f: AdminFilters): PendingFilters => ({
   age: f.age,
   therapeuticSubcategories: f.therapeuticSubcategories,
   experienceWith: f.experienceWith,
+  experienceAreas: f.experienceAreas,
 })
 
 const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
@@ -645,11 +648,16 @@ export default function AdminDashboard() {
                       setPendingFilters(prev => {
                         const current = prev.experienceWith || []
                         const isSelected = current.includes(item)
+                        // Deselecting a domain hides its areas section and forgets its areas (R3.11).
+                        const domain = domainOf(item)
+                        const experienceAreas = { ...prev.experienceAreas }
+                        if (isSelected && domain) delete experienceAreas[domain]
                         return {
                           ...prev,
                           experienceWith: isSelected
                             ? current.filter(i => i !== item)
-                            : [...current, item]
+                            : [...current, item],
+                          experienceAreas,
                         }
                       })
                     }}
@@ -663,6 +671,48 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
+
+              {/* One section per selected domain: its specific areas (worker_experience.specificAreas), any of */}
+              {EXPERIENCE_OPTIONS.filter(({ label }) => (pendingFilters.experienceWith || []).includes(label)).map(({ label, domain }) => {
+                const areas = experienceAreasOfLabel(label)
+                const chosen = pendingFilters.experienceAreas[domain] || []
+                return (
+                  <div key={domain} className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`experience-areas-${domain}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">{label}: specific areas</span>
+                      <span className="text-xs text-gray-500">{chosen.length === 0 ? 'Any area' : `Any of ${chosen.length}`}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {areas.map((area) => {
+                        const isSelected = chosen.includes(area)
+                        return (
+                          <button
+                            key={area}
+                            type="button"
+                            onClick={() => {
+                              setPendingFilters(prev => {
+                                const current = prev.experienceAreas[domain] || []
+                                const next = current.includes(area) ? current.filter(a => a !== area) : [...current, area]
+                                const experienceAreas = { ...prev.experienceAreas }
+                                if (next.length) experienceAreas[domain] = next
+                                else delete experienceAreas[domain]
+                                return { ...prev, experienceAreas }
+                              })
+                            }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                              isSelected
+                                ? 'border-indigo-600 bg-indigo-600 text-white'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            {area}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             {/* Therapeutic Subcategories (conditional) */}
