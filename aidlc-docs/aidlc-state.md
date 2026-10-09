@@ -8,7 +8,10 @@
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
 - **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Code Generation Part 1: `construction/plans/worker-area-code-
-  generation-plan.md` (Parts 0-G, about 30 steps, PR 1 on `feat/worker-area`) awaits approval; then Part 2 generation.
+  generation-plan.md` (Parts 0-G, about 30 steps, PR 1 on `feat/worker-area`) awaits the user's approval; then Part 2
+  generation. **Session saved 2026-10-09**: the whole record is on branch `aidlc/worker-profile-api` (pushed); no code
+  branch exists yet; `main` is untouched. To resume: check out `aidlc/worker-profile-api`, read this file, present the
+  code generation plan for approval, then execute Part 0 onwards.
 
 ## Previous cycles (archived, read-only)
 
