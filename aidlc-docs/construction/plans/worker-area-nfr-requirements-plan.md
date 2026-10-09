@@ -107,15 +107,15 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the six answers; resolve any ambiguity in a clarification file
-- [ ] 2. `nfr-requirements.md`: scalability (the arithmetic, the per-instance expectation, the table), performance
+- [x] 1. Confirm the six answers; resolve any ambiguity in a clarification file
+- [x] 2. `nfr-requirements.md`: scalability (the arithmetic, the per-instance expectation, the table), performance
   (the thresholds per entry, statement timeouts, caching behaviour, the one-read-per-page budget), availability (the
   S1 targets applied; what shedding and pool exhaustion look like; degraded mode), security (ownership, masking,
   redaction, limits, the token's lifetime), reliability (what is logged per request; which existing alerts cover the
   worker entries; the dead-letter path for U4), maintainability (module layout, file-size rule, the oracle tests, the
   backfill script), usability (the sidebar's one read; 304s), each with a verification criterion
-- [ ] 3. `tech-stack-decisions.md`: autocannon; Prisma `$transaction` with `SET LOCAL statement_timeout`; the
+- [x] 3. `tech-stack-decisions.md`: autocannon; Prisma `$transaction` with `SET LOCAL statement_timeout`; the
   `privateCacheSeconds` mechanism reused; `fast-check` generators for profiles and catalogue rows; no new runtime
   dependency; the stages table values
-- [ ] 4. Cross-check against NFR-01..07, 11, 12 and US-WP-30
-- [ ] 5. Present for approval
+- [x] 4. Cross-check against NFR-01..07, 11, 12 and US-WP-30
+- [x] 5. Present for approval
