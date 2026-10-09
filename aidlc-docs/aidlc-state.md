@@ -157,7 +157,7 @@
 - [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
-- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (plan approved 2026-10-09, Q1-Q6 A; artifacts written, **awaiting approval**) · NFR Design · Infrastructure Design · Code Generation (PR 1) · Build and Test
+- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (approved 2026-10-09) · NFR Design · Infrastructure Design · Code Generation (PR 1) · Build and Test
 - [ ] U2 `edit-profile`: Functional Design (full) · Code Generation (PRs 2-4) · Build and Test
 - [ ] U3 `services-documents`: Functional Design (full) · NFR Requirements · NFR Design · Code Generation (PRs 5-7) · Build and Test
 - [ ] U4 `dashboard-jobs`: Functional Design (short) · Infrastructure Design · Code Generation (PRs 8-10) · Build and Test

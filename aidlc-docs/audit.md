@@ -3621,3 +3621,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > approved
 
 **AI action (2026-10-09, U1 NFR Requirements -- artifacts):** Plan approved (Q1-Q6 A). Wrote `aidlc-docs/construction/worker-area/nfr-requirements/nfr-requirements.md` (scalability U1-SCL-01..05: the 25/125 req/s target, one instance carries the sustained rate, the prod table 10 × 80 / MAX_IN_FLIGHT 64 / pool 5, no instance-local correctness, the Neon verification recorded by the operator; performance U1-PRF-01..05: one transaction incl. profileIdOf and ≤ 8 statements, private caching, the load thresholds, completion O(rows), timeouts; availability U1-AVL-01..05: S1 targets, clean shedding, pool exhaustion → 503 and the probe's priority, probes exempt, rollback; security U1-SEC-01..08: ownership, masking and redaction, strict output, the limit values, private caching, log content, the load and backfill scripts' guards; reliability U1-REL-01..03: the existing alerts suffice, two saved queries, the load report kept; maintainability U1-MNT-01..04: layout, the oracles' home, DenyAll deleted / OpenAPI 304+503 / Semgrep Prisma.raw, docs/worker; usability; the cross-check to the cycle NFRs) and `tech-stack-decisions.md` (T1 autocannon + a tsx driver; T2 interactive transaction with SET LOCAL; T3 Prisma nested select, no raw SQL; T4 privateCacheSeconds, memo excluded; T5 pure completion + oracles + fast-check arbitraries; T6 the services table constant; T7 the backfill script; T8 the stages table; T9 fast-check; T10 no new runtime dependency). Plan checklist all [x]. Gate: awaiting approval.
+
+**User input (verbatim, 2026-10-09):**
+> continue to Next Stage
+
+**AI action (2026-10-09):** U1 NFR requirements approved (commit `fb634f5`). NFR Design (U1) started.
