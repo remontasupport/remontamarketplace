@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
 import { AGE_RANGES } from '@remonta/api-contract'
-import { canonicalOf, DEFAULT_FILTERS, EXPERIENCE_OPTIONS, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { canonicalOf, DEFAULT_FILTERS, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
 
 describe('toQuery (R11.1)', () => {
   it('maps display values to canonical ones and omits all/none', () => {
@@ -16,6 +16,7 @@ describe('toQuery (R11.1)', () => {
       age: '60+',
       typeOfSupport: 'support-worker',
       experienceWith: ['Aged Care', 'Mental health'],
+      experienceAreas: { AGED_CARE: ['Dementia', 'Stroke Recovery'], DISABILITY: ['Autism'] },
       languages: ['Spanish'],
       search: '  Test Terson  ',
       locality: { id: 5410, label: 'Parramatta NSW 2150' },
@@ -34,8 +35,21 @@ describe('toQuery (R11.1)', () => {
       age: '60+',
       languages: ['Spanish'],
       experienceWith: ['AGED_CARE', 'MENTAL_HEALTH'],
+      experienceAreas: ['AGED_CARE:Dementia', 'AGED_CARE:Stroke Recovery'], // Disability is not searched: its areas stay home (R3.11)
     })
     expect(toQuery(DEFAULT_FILTERS)).toEqual({ page: 1, pageSize: 6 })
+  })
+
+  it('experience areas: only the vocabulary of a searched domain is sent; the URL restores them under their domain', () => {
+    expect(toQuery({ ...DEFAULT_FILTERS, experienceWith: ['Aged Care'], experienceAreas: { AGED_CARE: ['Autism', 'Dementia'] } }).experienceAreas).toEqual(['AGED_CARE:Dementia'])
+    expect(toQuery({ ...DEFAULT_FILTERS, experienceAreas: { AGED_CARE: ['Dementia'] } })).toEqual({ page: 1, pageSize: 6 })
+    expect(experienceAreasOfLabel('Aged Care')).toContain('Dementia')
+    expect(experienceAreasOfLabel('nope')).toEqual([])
+    const back = filtersFromURL(new URLSearchParams('experienceWith=AGED_CARE&experienceAreas=AGED_CARE%3ADementia%2CAGED_CARE%3AStroke+Recovery'))
+    expect(back.experienceWith).toEqual(['Aged Care'])
+    expect(back.experienceAreas).toEqual({ AGED_CARE: ['Dementia', 'Stroke Recovery'] })
+    // A URL with an area but not its domain is what the contract would refuse: the state drops the area.
+    expect(filtersFromURL(new URLSearchParams('experienceAreas=AGED_CARE%3ADementia')).experienceAreas).toEqual({})
   })
 
   it('unplaced drops the locality and the radius (R1.4); a distance sort needs a locality (R11.3)', () => {
@@ -82,6 +96,13 @@ describe('the URL state (R11.2)', () => {
       languages: fc.uniqueArray(fc.constantFrom('English', 'Spanish', 'Arabic', 'Hindi'), { maxLength: 3 }),
       therapeuticSubcategories: fc.uniqueArray(fc.constantFrom('sub-a', 'sub-b', 'sub-c'), { maxLength: 2 }),
       experienceWith: fc.uniqueArray(fc.constantFrom(...EXPERIENCE_OPTIONS.map((o) => o.label)), { maxLength: 3 }),
+      experienceAreas: fc.record(
+        {
+          AGED_CARE: fc.uniqueArray(fc.constantFrom('Dementia', 'Stroke Recovery', "Parkinson's Disease"), { maxLength: 3 }),
+          DISABILITY: fc.uniqueArray(fc.constantFrom('Autism', 'Epilepsy'), { maxLength: 2 }),
+        },
+        { requiredKeys: [] },
+      ),
     })
     .map((f) => ({ ...f, pageSize: 6 }))
 

@@ -11,6 +11,7 @@ import {
 } from "@/services/worker/experience.service";
 import { getNextSection } from "@/utils/profileSectionNavigation";
 import { notifyProfileUpdated } from "@/utils/profileSections";
+import { EXPERIENCE_AREAS_BY_SLUG, EXPERIENCE_DOMAINS } from "@remonta/schemas/data/experienceAreas";
 
 interface ExperienceArea {
   id: string;
@@ -28,66 +29,12 @@ interface ExperienceData {
   [key: string]: ExperienceArea;
 }
 
-// Define specific areas for each experience type
-const SPECIFIC_AREAS: { [key: string]: string[] } = {
-  "aged-care": [
-    "Dementia",
-    "Parkinson's Disease",
-    "Alzheimer's Disease",
-    "Stroke Recovery",
-  ],
-  "chronic-medical": [
-    "Arthritis",
-    "COPD or Respiratory Illness",
-    "Asthma",
-    "Diabetes",
-    "Cardiovascular Disease",
-  ],
-  disability: [
-    "Acquired Brain Injury",
-    "Autism",
-    "Cerebral Palsy",
-    "Cystic Fibrosis",
-    "Down Syndrome",
-    "Epilepsy",
-    "Hearing Impairment",
-    "Intellectual Disabilities",
-    "Motor Neuron Disease",
-    "Muscular Dystrophy",
-    "Physical Disabilities",
-    "Spina Bifida",
-    "Spinal Cord Injury",
-    "Vision Impairment",
-  ],
-  "mental-health": [
-    "Anxiety",
-    "Bipolar Disorder",
-    "Depression",
-    "Eating Disorders",
-    "Hoarding",
-    "Obsessive-Compulsive Disorder (OCD)",
-    "Post-traumatic Stress Disorder (PTSD)",
-    "Schizophrenia",
-    "Substance Abuse & Addiction",
-  ],
-  "working-with-children": [
-    "Children with Disabilities",
-    "Children with Behavioral Challenges",
-    "Children with Learning Difficulties",
-    "Children with Autism",
-    "Children with ADHD",
-    "Children with Developmental Delays",
-    "Siblings of Children with Disabilities",
-  ],
-};
+// The specific areas under each experience type come from the shared vocabulary
+// (packages/schemas): the admin search filters worker_experience.specificAreas by
+// the same labels, so a label changed here alone would stop matching.
+const SPECIFIC_AREAS: { [key: string]: readonly string[] } = EXPERIENCE_AREAS_BY_SLUG;
 
-export const EXPERIENCE_AREAS = [
-  { id: "aged-care", label: "Aged Care" },
-  { id: "chronic-medical", label: "Chronic medical conditions" },
-  { id: "disability", label: "Disability" },
-  { id: "mental-health", label: "Mental health" },
-  { id: "working-with-children", label: "Working with Children" },
-];
+export const EXPERIENCE_AREAS = EXPERIENCE_DOMAINS.map((d) => ({ id: d.slug, label: d.label }));
 
 export default function ExperienceSection() {
   const router = useRouter();
