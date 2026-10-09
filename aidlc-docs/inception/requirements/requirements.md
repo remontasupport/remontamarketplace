@@ -63,7 +63,7 @@ engine/infra), `requirement-verification-questions.md` (Q1-Q17) and `requirement
 | FR-PI-04 | **Home address** (D8): `streetLine` (1-120 characters) + `localityId` (an existing `au_localities` row; the suburb, state and postcode are derived, never typed). Two new columns on `worker_profiles` (`homeStreetLine`, `homeLocalityId` with a foreign key, `Restrict`), one migration; returned to the worker and on the admin worker page; **never** in the client search, the public list, the share page or the search cards; **never** written to `location/city/state/postalCode/latitude/longitude` | Must |
 | FR-PI-05 | **Service area** (D8): `localityId` + `travelRadiusKm` (1-500) through `placeHome` with `source = 'ONBOARDING'` (an existing enum value: the worker placed themselves after sign-up), updating the HOME row in place and dual-writing the legacy columns as the sign-up does; the api's reconciler never moves a row the worker set. An unplaced worker who saves this becomes placed | Must |
 | FR-PI-06 | **Other personal info**: date of birth (ISO date, 16-100 years), gender (an enumerated list), has vehicle (yes/no), languages (from one shared list) -- stored as today's columns with today's values so the admin filters keep working (follow-up 13's normalisation is not this cycle) | Must |
-| FR-PI-07 | **ABN / TFN**: the engagement type and number as the `abn` JSON holds them today (same shape), validated (ABN 11 digits with the checksum; TFN never stored in full if it is not today -- to confirm at design from the current JSON) | Must |
+| FR-PI-07 | **ABN only** (amendment 2026-10-09): every worker is engaged as a contractor with an ABN; the form offers no TFN. The ABN is 11 digits with the ATO checksum; stored in the `abn` JSON with today's shape (`workerEngagementType: {type: 'abn', value, signed, ...}`) so the contract page and the admin's worker-type filter keep working. Existing `type: 'tfn'` records are left as data (not migrated, not deleted); a worker on TFN who opens the step sees the ABN form and must enter an ABN to save; the TFN contract route and template stay readable for existing signed contracts and are not offered to anyone. No TFN is ever written again | Must |
 | FR-PI-08 | The Personal Info steps are form definitions; the old server actions `updateWorkerName/Photo/AdditionalPhotos/swapMainPhoto/Bio/Address/PersonalInfo/ABN` and the `update-step` route are deleted in the clean-up PR; the emergency-contact step (7) is deleted (it never worked) | Must |
 
 ### 3.3 Edit profile sections (FR-EP)
@@ -236,3 +236,11 @@ NextAuth account operations, not profile; they stay as actions unless design fin
 | OI-5 | The form-engine field kinds the sections need beyond the sign-up's (time ranges, month/year, ordered lists, masked bank fields, a locality picker reused) and the engine's PUT semantics (today it POSTs a registration) |
 | OI-6 | The unit cut: U1 identity-free worker area + profile read + Personal Info + Edit profile + the sidebar; U2 services; U3 documents and uploads (closes D1); U4 home page, jobs, the CRM handler; U5 capacity (stages table, load test, probe exemption) -- proposed, decided at Units Generation |
 | OI-7 | Whether the load test belongs to the preview checklist of every unit or only to those that add entries (FR-PLT-02 says the latter) |
+
+## Amendment 2026-10-09 (ABN only)
+
+Source: the user's approval of the stories: "Approved, but there is no TFN for now, the company decided to require
+ABN only". **D17 -- ABN only.** The engagement step offers one type, contractor with an ABN (FR-PI-07 rewritten).
+Existing TFN records stay as data and keep their signed contract; the admin's worker-type filter keeps both values
+for history; US-WP-05 rewritten. Assumption stated, to correct if wrong: "require" means the only option, not that
+the ABN becomes a new condition of profile completion beyond today's rule.

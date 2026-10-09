@@ -76,14 +76,16 @@ As a worker, I want to set my date of birth, gender, whether I have a vehicle an
 - **Given** a date of birth under 16 or over 100 years ago, **then** the field shows the rule.
 - **Given** I save, **then** the admin search still finds me by gender, vehicle and age band exactly as before (the stored values are today's).
 
-### US-WP-05 -- ABN or TFN
-**Persona:** P1 Worker (W1) · **Priority:** M · **Reqs:** FR-PI-07
+### US-WP-05 -- My ABN
+**Persona:** P1 Worker (W1) · **Priority:** M · **Reqs:** FR-PI-07, D17
 
-As a worker, I want to record how I am engaged (contractor with an ABN, or employee with a TFN), so that my contract page and the admin's worker-type filter are right.
+As a worker, I want to record my ABN, so that my contractor agreement and the admin's worker-type filter are right.
 
-- **Given** I choose contractor and type an ABN, **then** an ABN that fails the checksum is refused at the field; a valid one is saved in the `abn` JSON with today's shape.
-- **Given** I choose employee, **then** the TFN handling is exactly today's (what is stored and how, confirmed at design, OI: FR-PI-07) and the contract page for that type opens.
-- **Given** I save, **then** the admin search's worker-type filter still finds me.
+- **Given** the ABN step, **then** it offers one thing: an 11-digit ABN; there is no TFN choice.
+- **Given** an ABN that fails the ATO checksum, **then** the field says so and nothing is sent; a valid one is saved in the `abn` JSON with today's shape (`type: 'abn'`) and the contractor agreement page opens.
+- **Given** I was recorded with a TFN before this change, **then** my signed contract stays readable, the step shows the ABN form, and I must enter an ABN to save; no TFN is written again.
+- **Given** I save, **then** the admin search's worker-type filter finds me as a contractor.
+- **PBT:** a generated valid ABN round-trips; every 11-digit string that fails the checksum is refused (invariant).
 
 ### US-WP-06 -- Keep what I typed
 **Persona:** P1 Worker (W1), S1 `apps/app` · **Priority:** M · **Reqs:** D5, NFR-07, FR-EP-05
@@ -401,7 +403,7 @@ As the operator, I want each page group to switch in its own PR with a promote-o
 | FR-PI-01..03 | US-WP-01, 02, 03 |
 | FR-PI-04 | US-WP-08, 11 |
 | FR-PI-05 | US-WP-09, 10 |
-| FR-PI-06, 07 | US-WP-04, 05 |
+| FR-PI-06, 07 (D17) | US-WP-04, 05 |
 | FR-PI-08 | US-WP-01..05, 33 |
 | FR-EP-01..05 | US-WP-12, 13, 14, 15, 16 |
 | FR-EP-06 | US-WP-15, 33 |
