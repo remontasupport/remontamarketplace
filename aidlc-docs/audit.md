@@ -3424,3 +3424,63 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **AI action (2026-10-08 07:38Z, PR 4 merged):** checked by refs: `main` = `36b25e6` (merge of PR #44, head `ce37ec7`), CI 9/9 success. A watcher waits for production to serve the build (the deleted paths 404). State saved as a resume point (the close steps listed under "To resume"); the user is pausing.
 
 **AI action (2026-10-08 07:40Z, PR 4 on production):** the build live at 07:39Z: `/api/admin/contractors`, `/api/admin/users`, `/api/admin/filters` -> 404; `/api/auth/api-token` -> 401; `/api/admin/contractors/inactive` -> 500 (the kept `[id]` route catches it; its existing auth-failure behaviour); prod api health 200, no rejection in 30 min. State saved; memory notes written (environment traps; the cycle's resume point). The docs branch `aidlc/admin-search-api` is 38 commits ahead of `main`, touches `aidlc-docs/` only, merges cleanly: the docs PR compare link handed to the user. Paused here at the user's request; the cycle close (archive, fresh state, closing entry) is step 3 of "To resume".
+
+## 2026-10-09 — Admin search: experience sub-areas (analysis before code)
+
+**User input (2026-10-09):** "Hey claude. I migrated the legacy api on the query feature on the admin dashboard to the new backend api, can you check what is pending and if it was successful? Also if it is successful, I want to know what table is now being used to all of the filters"
+
+**AI action (2026-10-09):** checked by refs: PRs #41-#45 merged, `main` = `c590a1d`; the admin search reads `worker_profiles`, `users`, `worker_locations` (HOME) + `au_localities` (PostGIS), `worker_additional_info`, and per filter `worker_services` and `worker_experience`. Pending: the cycle close (archive, fresh state), the rollback ids (follow-up 3), follow-ups 17-18.
+
+**User input (2026-10-09):** "Perfect. I want to add more feature to the search, specifically on the Experience with section. As you can see on the database in the worker_experience table, there is a column specific Areas there that saves the areas the worker has experience with. Now in the admin dashboard, I want to add a sub category, if the Aged Care is selected, the admin can select the sub category under the aged care and so on. I believe the subcategory is in the worker's profile under the edit profile page. Analyze first this feature before you code"
+
+**AI action (2026-10-09, analysis, no code):** read `worker_experience` (one row per worker and `CareDomain`; `specificAreas text[]`, up to 3 display strings; `otherAreas text[]`, same vocabulary, "areas you know about"), its only writer (`services/worker/experience.service.ts` -> `lib/w1/rebuildExperience`; the api sign-up never writes it), the vocabulary (`SPECIFIC_AREAS` hard-coded in `components/profile-building/sections/ExperienceSection.tsx`, 39 labels across the five domains, no shared copy), the current filter (`experienceWith`, all-of, one `EXISTS` per domain in `apps/api/.../admin/application/filters.ts`) and the dashboard's precedent for a dependent control (the therapeutic sub-categories panel). A read-only count of the stored values on production was refused by the permission layer; the query is handed to the user. Decisions put to the user: match `specificAreas` only or also `otherAreas`; the query shape (one `experienceAreas` parameter of `DOMAIN:Area` pairs, parent required); the vocabulary moved to `packages/schemas` as the single source; whether the result row should show the matched areas. Analysis in the chat; no code written.
+
+**User input (2026-10-09):** "No, this is the flow, if the admin selected the Aged Care, a section will be visible with the options under to aged care which can be found in the worker_experience.specificAreas, and when Disability is being selected, the items under that will only be the visible and so on"
+
+**AI action (2026-10-09):** flow confirmed: the "Experience with" buttons stay multi-select; each selected domain reveals its own section listing only that domain's `specificAreas` labels; deselecting a domain hides and clears its section. Defaults taken: `specificAreas` only; one `experienceAreas` parameter of `DOMAIN:Area` pairs with the parent domain required; the result row unchanged. Construction starts: PR A (schemas vocabulary, contract field, api filter, tests, docs) then PR B (the dashboard), merged only after PR A's image is promoted to prod.
+
+**AI action (2026-10-09, experience sub-areas built):** PR A `feat/admin-search-experience-areas-api` (`fe499c3`) and PR B `feat/admin-search-experience-areas-app` (`1be0a46`, stacked on A) pushed; every local gate green (schemas, api-contract, api unit, app, the app build); the api's database tests are left to CI (no local PostGIS). Record: `construction/admin-search/code/experience-areas-summary.md` (what, semantics, the merge order: A -> staging check -> promote -> B). The production vocabulary check is handed to the user as a read-only query.
+
+**User input (2026-10-09):** "can I test it first locally?"
+
+**AI action (2026-10-09):** a local PostGIS is impossible on this machine today: WSL answers "Class not registered" (`Wsl/CallMsi/Install/REGDB_E_CLASSNOTREG`), so Docker Desktop's Linux engine returns 500; repairing WSL is an admin action for the user. The practical local test is the new api and app code on this machine against the staging copy (`REHEARSAL_DATABASE_URL` in `apps/api/.env`: the `rehearse-w1` branch, host `ep-wandering-shadow`, not production). The api is built (`dist/main.js` on `feat/admin-search-experience-areas-app`); the run commands are handed to the user with one local token secret shared by both sides and dummy photo settings. The stored-values check ran on that copy: 38 distinct `specificAreas` values, all in the vocabulary, no strays (`experience-areas-summary.md` updated).
+
+**User input (2026-10-09):** "what is the script to run the server"
+
+**AI action (2026-10-09):** `scripts/local/run-api.sh`, `run-app.sh` and the shared `rehearsal-env.sh` committed on `feat/admin-search-experience-areas-app` (`c76aee4`): the new code locally against the staging copy, one token secret for both sides, a refusal if the URL names a production host.
+
+**User input (2026-10-09):** "there is an error Application error: a client-side exception has occurred while loading localhost (see the browser console for more information)."
+
+**AI action (2026-10-09):** not reproduced: the dev server compiles the dashboard chunk with the new code and no missing module; every route answers; a headless Chromium load of `/admin/manage` (Playwright in the scratchpad) redirects to `/login` with no exception. The crash needs a signed-in session the AI cannot create; the console text was asked for, with the offer of a throwaway admin on the staging copy.
+
+**User input (2026-10-09):** "I see. can we just test this to preview in vercel?"
+
+**AI action (2026-10-09):** yes: the deploy workflow builds images only on a push to `main` and a dispatch only promotes an existing one, so the order is PR A merged (staging gets the api) -> PR B opened (its Vercel preview against staging is the end-to-end test, and shows whether the local client-side error reproduces) -> promote -> PR B merged. Compare links and the staging checks handed to the user.
+
+**User input (2026-10-09):** "I merged and confirmed the PR A, is that ok?"
+
+**AI action (2026-10-09):** checked by refs: `main` = `024596f` (merge of PR #46, head `fe499c3`); deploy-api run 37873854900 green (quality, build and push, "Deploy staging" with its health check; promote skipped); staging health 200. The admin entry checks the token before the query, so the parameter itself is proven by the preview.
+
+**User input (2026-10-09):** "when I opened, there is no new preview being created"
+
+**AI action (2026-10-09):** PR #47 opened on `c76aee4`; Vercel had built that commit at 02:02Z on the branch push, before the PR existed, so the PR attached the existing build (both Vercel statuses success, "Vercel Preview Comments" success). The deployment link handed over.
+
+**User input (2026-10-09):** "I think preview is ok now. What to do next?"
+
+**AI action (2026-10-09):** the preview accepted by the user against the staging api (PR A's code). Next: promote image `024596f5ba2ba5b796eb88002b011a4bdc289a38` to prod by dispatch, verify, then merge PR #47 and verify production; then the rollback ids and the record.
+
+**User input (2026-10-09):** "It works! Now I noticed this 69 active workers have no mapped suburb and cannot appear in a distance search, what it does mean? and how can we resolve the 69 workers issues?"
+
+**AI action (2026-10-09):** production confirmed by refs: `main` = `48a8a7e` (PR #47 merged); prod dispatch of `024596f` success 02:41Z; the user reports the feature working on production. The 69 are the S1 backfill's leftovers (70 on 2026-10-02: 59-60 ambiguous, 10-11 unmatched; `legacy-match.ts` never guesses). A dry run of `backfill:locations` on the staging copy (nothing written) lists them: metro or region names with a suburb's postcode (Sydney, Melbourne, Perth, Gold Coast, Sunshine Coast, Toowoomba, Launceston...), misspelt suburbs (Parramtta, Willeton, Boonie brook, Gosnell), street addresses without a suburb, four empty, four overseas (Islamabad, Fiji, Lagos). Options explained: the worker fixes the address (the reconciler places within 5 min); an admin "set suburb" control (does not exist); an approved review list applied by a one-off script; no auto-guess. No code written.
+
+**User input (2026-10-09):** "One example is Christine L. that is in Hervey Bay, QLD (no mapped suburb)"
+
+**AI action (2026-10-09):** on the suburb table "Hervey Bay" is not a locality: G-NAF lists its 24 suburbs on postcode 4655 (Pialba, Urangan, Torquay, Scarness, Point Vernon, Kawungan, Urraween, Eli Waters, ...) and no row named Hervey Bay, so "Hervey Bay, QLD 4655" is ambiguous (24 candidates) and the no-guess rule leaves it unplaced. The worker is not on the 2026-09-28 staging copy (joined or changed address later). The options restated: the worker picks her suburb (placed by the reconciler within 5 min), or an admin set-suburb control (new unit), or a reviewed one-off. Noted as a gap: the suburb autocomplete offers no city-level names such as Hervey Bay. No code written.
+
+**User input (2026-10-09):** "Can I edit their location directly to the database?"
+
+**AI action (2026-10-09):** answered yes with the exact shape: one `worker_locations` row per worker (`kind` HOME, unique partial index), `localityId` + `latitude`/`longitude` copied from `au_localities` (the `point` column is GENERATED from them), `precision` LOCALITY, `source` ADMIN (an existing enum value), `travelRadiusKm` 50 (HOME requires one, 1..500), `updatedAt` set; and the legacy `worker_profiles` columns updated as `placeHome` does ("Suburb, STATE postcode", city, state, postalCode, latitude, longitude) so the reconciler, which only reads those columns, does not later move the row and the city sort stays right. An INSERT-with-subquery template handed over, for a handful of workers; the admin control remains the durable fix. No code written.
+
+**User input (2026-10-09):** "I think the DLC is done now, can we close it already"
+
+**AI action (2026-10-09, cycle close):** the admin-search cycle closed. The record moved to `aidlc-docs/archive/admin-search-api/` (inception, construction incl. the experience-areas summary, plans, `aidlc-state-at-close.md`, a README with what shipped: PRs #41-#47, and the deviations). A fresh `aidlc-state.md`: no current cycle; what is live (the admin api, the sub-areas, the 69 unplaced, staging and the local scripts, this machine's WSL state); 20 follow-ups carried, the admin set-suburb control and city-name help recommended as the next cycle. CLAUDE.md's rollback rows re-recorded from the `main` `48a8a7e` deployments' pages (the short URL ids are not readable from GitHub; the deployment pages promote the same way). Docs branch `aidlc/admin-search-experience-areas` (main merged in) pushed; the compare link handed to the user to open and merge the docs PR.

@@ -177,8 +177,8 @@ Promote the last known-good deployment in Vercel. Seconds, no rebuild.
 
 | Project | Deployment |
 |---|---|
-| `remonta-app` | `izjuyh7pl` |
-| `remontamarketplace` | `8843hlhft` |
+| `remonta-app` | `2ewmXaYfTHuo6fBcNpNoKS13yBhY` — https://vercel.com/remontas-projects/remonta-app/2ewmXaYfTHuo6fBcNpNoKS13yBhY (the `main` `48a8a7e` build, verified live 2026-10-09) |
+| `remontamarketplace` | `5y5Ffr8mtJgmE2pg12GviLo4Rz72` — https://vercel.com/remontas-projects/remontamarketplace/5y5Ffr8mtJgmE2pg12GviLo4Rz72 (the same merge, 2026-10-09) |
 
 Re-record these before any unit that changes deployment settings. **Promote a
 deployment; do not redeploy a commit** — a rebuild can fail, an existing build cannot.
