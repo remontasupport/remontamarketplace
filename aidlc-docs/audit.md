@@ -3595,3 +3595,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > approved
 
 **AI action (2026-10-09):** Application design approved (commit `cd87609`). INCEPTION complete. CONSTRUCTION starts with U1 `worker-area`: Functional Design (short), then NFR Requirements, NFR Design, Infrastructure Design, Code Generation (PR 1), Build and Test.
+
+**User input (verbatim, 2026-10-09):**
+> continue
+
+**AI action (2026-10-09, U1 Functional Design -- step 1):** A read-only extraction of today's completion-status rules (`setupProgress.service.ts`, the profile preview's percentage, `displayRole`, the requirement groups) is running; the U1 functional-design plan and its questions follow from it.
