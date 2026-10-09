@@ -7,9 +7,8 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: INCEPTION -- Requirements Analysis. The targeted inventory is written
-  (`aidlc-docs/inception/requirements/worker-profile-inventory.md` + `worker-profile-routes.md`); the 17 verification questions
-  are answered; 6 clarification questions await answers (`requirement-clarification-questions.md`).
+- **Current Stage**: INCEPTION -- Requirements Analysis complete, awaiting approval of
+  `aidlc-docs/inception/requirements/requirements.md`; next User Stories, then Workflow Planning.
 
 ## Previous cycles (archived, read-only)
 
@@ -122,12 +121,12 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (decided per cycle; the last cycle's values, to be re-asked)
+## Extension Configuration (decided per cycle)
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | Yes, blocking | admin-search cycle, 2026-10-08 |
-| Resiliency Baseline | Yes, blocking; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region | admin-search cycle, 2026-10-08 |
-| Property-Based Testing | Yes, full | admin-search cycle, 2026-10-08 |
+| Security Baseline | Yes, blocking | worker-profile-api cycle, Requirements Analysis 2026-10-09 (Q15 a) |
+| Resiliency Baseline | Yes, blocking; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region; capacity gate 10,000 active workers/hour | worker-profile-api cycle, 2026-10-09 (Q16 a, Q6 A) |
+| Property-Based Testing | Yes, full | worker-profile-api cycle, 2026-10-09 (Q17 a) |
 
 ## Stage Progress
 
@@ -140,13 +139,9 @@
   and their data paths; the sidebar's current order; the api structure and concurrency model; the capacity arithmetic)
   and `worker-profile-routes.md` (33 route files, one row each). Key fact: the dashboard's writes are 53 server actions
   (6,962 lines) on Prisma, not routes; no worker entry exists in the api
-- [ ] Requirements Analysis: `requirement-verification-questions.md` answered 2026-10-09 (Q1 B no hotfix; Q2 A; Q3 A both
-  pages first; Q4 A api only; Q5 A form engine; Q6 A 10,000 active/hour + staging load test; Q7 A horizontal; Q8 Other:
-  a second, home address; Q9 A uploads to GCS tickets; Q10 "ignore for now"; Q11 Other: Dashboard, Edit Profile with
-  Personal Info inside, Edit Services, then as today; Q12-14 A; Q15-17 A). `requirement-clarification-questions.md`
-  written (6 questions: the home address's purpose, storage and the service area's editability; the impersonation
-  reading; the Edit Profile sub-items and the rest of the order) -- awaiting answers
-- [ ] Requirements Analysis
+- [x] Requirements Analysis (2026-10-09): 17 verification + 6 clarification questions answered (all recorded in the
+  audit); `inception/requirements/requirements.md` written (D1-D16, FR-WRK/PI/EP/SVC/DOC/UPL/HOME/JOB/NAV/PLT, NFR-01..14,
+  the extension compliance tables, 7 open items) -- **awaiting the user's review and approval**
 - [ ] User Stories / Application Design / Units (as the goal needs)
 - [ ] Workflow Planning
 
