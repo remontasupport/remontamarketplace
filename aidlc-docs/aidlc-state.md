@@ -7,8 +7,9 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, NFR Design generated (`construction/worker-area/nfr-design/`:
-  patterns P1-P14, logical components with sequences), awaiting approval; next Infrastructure Design (U1).
+- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Infrastructure Design: `construction/plans/worker-area-
+  infrastructure-design-plan.md` (three pre-filled questions: where the load test runs, the ceiling and a budget, the
+  drill override) awaits confirmation. NFR Design approved 2026-10-09.
 
 ## Previous cycles (archived, read-only)
 
@@ -156,7 +157,7 @@
 - [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
-- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (approved 2026-10-09) · NFR Design (approved 2026-10-09) · Infrastructure Design · Code Generation (PR 1) · Build and Test
+- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (approved 2026-10-09) · NFR Design (approved 2026-10-09) · Infrastructure Design (plan written, awaiting confirmation) · Code Generation (PR 1) · Build and Test
 - [ ] U2 `edit-profile`: Functional Design (full) · Code Generation (PRs 2-4) · Build and Test
 - [ ] U3 `services-documents`: Functional Design (full) · NFR Requirements · NFR Design · Code Generation (PRs 5-7) · Build and Test
 - [ ] U4 `dashboard-jobs`: Functional Design (short) · Infrastructure Design · Code Generation (PRs 8-10) · Build and Test
