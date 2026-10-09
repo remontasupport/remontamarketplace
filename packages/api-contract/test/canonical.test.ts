@@ -1,5 +1,6 @@
 // canonical.ts (U2, R8.5, property G6): one spelling per query, whatever the order of
 // keys and array items; and the csv parsing of the admin search query (R1.5).
+import { EXPERIENCE_AREA_PAIRS } from '@remonta/schemas/data/experienceAreas'
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { adminContract, AGE_RANGES, CARE_DOMAINS, canonicalQueryOf, serializeCanonical, workerSearchQuerySchema } from '../src/index'
@@ -23,6 +24,15 @@ describe('the admin search query', () => {
     expect(q.experienceWith).toEqual(['AGED_CARE', 'DISABILITY'])
     expect(workerSearchQuerySchema.safeParse({ languages: Array.from({ length: 21 }, (_, i) => `l${i}`).join(',') }).success).toBe(false)
     expect(workerSearchQuerySchema.safeParse({ experienceWith: 'Aged Care' }).success).toBe(false)
+  })
+
+  it('experience areas travel as DOMAIN:Area pairs from the shared vocabulary, sorted; anything else is refused', () => {
+    const q = workerSearchQuerySchema.parse({ experienceWith: 'AGED_CARE', experienceAreas: "AGED_CARE:Stroke Recovery,AGED_CARE:Dementia, AGED_CARE:Dementia" })
+    expect(q.experienceAreas).toEqual(['AGED_CARE:Dementia', 'AGED_CARE:Stroke Recovery'])
+    expect(workerSearchQuerySchema.safeParse({ experienceAreas: 'AGED_CARE:Autism' }).success).toBe(false) // Autism is a Disability area
+    expect(workerSearchQuerySchema.safeParse({ experienceAreas: 'Dementia' }).success).toBe(false)
+    expect(workerSearchQuerySchema.safeParse({ experienceAreas: 'aged_care:Dementia' }).success).toBe(false)
+    expect(workerSearchQuerySchema.safeParse({ experienceAreas: EXPERIENCE_AREA_PAIRS.join(',') }).success).toBe(true) // every area at once is allowed
   })
 
   it('coerces the numbers and the flag a URL carries, applies the defaults, and is strict (R1.1)', () => {
