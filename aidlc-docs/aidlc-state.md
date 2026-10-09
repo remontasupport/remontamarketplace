@@ -7,8 +7,8 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: INCEPTION -- Requirements Analysis complete, awaiting approval of
-  `aidlc-docs/inception/requirements/requirements.md`; next User Stories, then Workflow Planning.
+- **Current Stage**: INCEPTION -- User Stories, planning: `inception/plans/story-generation-plan.md` (three pre-filled
+  questions) awaits the user's confirmation; then the stories and personas; then Workflow Planning.
 
 ## Previous cycles (archived, read-only)
 
@@ -141,8 +141,10 @@
   (6,962 lines) on Prisma, not routes; no worker entry exists in the api
 - [x] Requirements Analysis (2026-10-09): 17 verification + 6 clarification questions answered (all recorded in the
   audit); `inception/requirements/requirements.md` written (D1-D16, FR-WRK/PI/EP/SVC/DOC/UPL/HOME/JOB/NAV/PLT, NFR-01..14,
-  the extension compliance tables, 7 open items) -- **awaiting the user's review and approval**
-- [ ] User Stories / Application Design / Units (as the goal needs)
+  the extension compliance tables, 7 open items) -- **approved 2026-10-09**
+- [ ] User Stories: assessment written (`plans/user-stories-assessment.md`: execute); `plans/story-generation-plan.md`
+  written (Q1 format, Q2 personas, Q3 journey-based with a system epic, all pre-filled A) -- awaiting confirmation
+- [ ] Application Design / Units (as the goal needs)
 - [ ] Workflow Planning
 
 ### CONSTRUCTION
