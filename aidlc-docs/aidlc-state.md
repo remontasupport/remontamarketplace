@@ -8,8 +8,8 @@
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
 - **Current Stage**: INCEPTION -- Requirements Analysis. The targeted inventory is written
-  (`aidlc-docs/inception/requirements/worker-profile-inventory.md` + `worker-profile-routes.md`); the 17 requirement
-  verification questions await the user's answers (`requirement-verification-questions.md`).
+  (`aidlc-docs/inception/requirements/worker-profile-inventory.md` + `worker-profile-routes.md`); the 17 verification questions
+  are answered; 6 clarification questions await answers (`requirement-clarification-questions.md`).
 
 ## Previous cycles (archived, read-only)
 
@@ -140,7 +140,12 @@
   and their data paths; the sidebar's current order; the api structure and concurrency model; the capacity arithmetic)
   and `worker-profile-routes.md` (33 route files, one row each). Key fact: the dashboard's writes are 53 server actions
   (6,962 lines) on Prisma, not routes; no worker entry exists in the api
-- [ ] Requirements Analysis: `requirement-verification-questions.md` written (17 questions) -- awaiting answers
+- [ ] Requirements Analysis: `requirement-verification-questions.md` answered 2026-10-09 (Q1 B no hotfix; Q2 A; Q3 A both
+  pages first; Q4 A api only; Q5 A form engine; Q6 A 10,000 active/hour + staging load test; Q7 A horizontal; Q8 Other:
+  a second, home address; Q9 A uploads to GCS tickets; Q10 "ignore for now"; Q11 Other: Dashboard, Edit Profile with
+  Personal Info inside, Edit Services, then as today; Q12-14 A; Q15-17 A). `requirement-clarification-questions.md`
+  written (6 questions: the home address's purpose, storage and the service area's editability; the impersonation
+  reading; the Edit Profile sub-items and the rest of the order) -- awaiting answers
 - [ ] Requirements Analysis
 - [ ] User Stories / Application Design / Units (as the goal needs)
 - [ ] Workflow Planning

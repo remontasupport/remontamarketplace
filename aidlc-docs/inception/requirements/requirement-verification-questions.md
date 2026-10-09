@@ -17,7 +17,7 @@ B) No: fix it inside the cycle when those routes are replaced.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: B
 
 ## Question 2
 The archived reverse-engineering pass (2026-10-08) covers `apps/api`, the contract, the form engine and infra, and
@@ -31,7 +31,7 @@ B) Run a full reverse-engineering pass over the worker dashboard code first (the
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 3
 Which page is the "Edit Profile" the first unit builds?
@@ -48,7 +48,7 @@ the 11 additional-details sections, four tables). Personal Info is the second un
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 4
 Where does the worker profile's logic live after the migration?
@@ -63,7 +63,7 @@ in a later cycle.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 5
 How should the edited pages be built in the app?
@@ -77,7 +77,7 @@ no form-engine conversion in this cycle.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 6
 What does "10,000+ users at the same time" mean as a target the design must meet and a test must prove?
@@ -96,7 +96,7 @@ per page) and record the measured ceiling from a staging load test for a later d
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 7
 By "worker servers" (your words, "not sure for the term"), which of these did you mean? Note: the api's instances are
@@ -113,7 +113,7 @@ C) Both A and B.
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 8
 The address edit today takes free text, geocodes it with Google and writes the legacy `worker_profiles` location
@@ -130,7 +130,7 @@ one locality (the reconciler's rule).
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: I think for this, we can make the workers input as their home address, so there will be two addresses to their profile now, one is the service area address which coming from the sign up, and this one would be their home address.
 
 ## Question 9
 Documents and photos are on Vercel Blob through app routes and actions (the sign-up photo alone uses the Cloud
@@ -144,7 +144,7 @@ follow-up 11); only the metadata writes (the `verification_requirements` rows) m
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 10
 An admin impersonating a worker reaches the api with a token whose `act` claim names the admin. On the new worker
@@ -157,7 +157,7 @@ B) Reads only under impersonation; writes return 403 so an admin can look but no
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: We can ignore this for now
 
 ## Question 11
 The sidebar reorder. The current order is: Edit profile, Edit services, Dashboard, Personal Info, Mandatory,
@@ -172,7 +172,7 @@ My Jobs, Account (today's order with Dashboard moved to the top).
 
 C) Other: write the exact order after the [Answer]: tag (and say whether Edit services folds into My Services).
 
-[Answer]: 
+[Answer]: Dashboard, Edit Profile (move the Personal Info to edit profile) Edit Services, then Mandatory and so on
 
 ## Question 12
 Cut-over per page. The admin search moved as: the api entry merged and promoted first, the app switched in its own
@@ -185,7 +185,7 @@ B) Page and entry in one PR behind a per-page switch (an environment variable), 
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 13
 The routes shared with other callers (`/api/suburbs`, `/api/categories`, `/api/upload/worker-photo`, `/api/share/*`,
@@ -198,7 +198,7 @@ B) Move the shared routes' other callers too, so the routes can be deleted in th
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 14
 The browser calls a hard-coded n8n webhook after a job application (`ApplyModal.tsx:13`), the only CRM notification
@@ -211,7 +211,7 @@ B) Leave the browser call as it is in this cycle.
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 15
 Security Baseline extension (the last cycle: enabled, blocking)?
@@ -225,7 +225,7 @@ C) Disabled.
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 16
 Resiliency Baseline extension (the last cycle: enabled, blocking; SLA 99.9 %, RTO <= 30 min, RPO <= 5 min, single
@@ -239,7 +239,7 @@ C) Disabled.
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 17
 Property-Based Testing extension (the last cycle: enabled, full)?
@@ -252,4 +252,4 @@ C) Disabled.
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
