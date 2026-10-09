@@ -142,20 +142,20 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the seven answers above; resolve any ambiguity in a clarification file
-- [ ] 2. Write `aidlc-docs/inception/application-design/components.md`: the contract area (entries by unit), the
+- [x] 1. Confirm the seven answers above; resolve any ambiguity in a clarification file
+- [x] 2. Write `aidlc-docs/inception/application-design/components.md`: the contract area (entries by unit), the
   api's worker module (handlers, application services, domain, persistence), `platform/storage` and the uploads
   service (Q5), the completion domain (Q4), the outbox CRM handler, the health exemption; the form engine's section
   mode and kinds (Q3); the app's client, profile query, section definitions, sidebar declaration (Q6, Q7), the
   admin document link (Q2); the migration (home address + `storageKey`)
-- [ ] 3. Write `component-methods.md`: signatures and input/output types per component (business rules deferred
+- [x] 3. Write `component-methods.md`: signatures and input/output types per component (business rules deferred
   to Functional Design)
-- [ ] 4. Write `services.md`: the orchestration per use case (profile read, a section write, the service-area
+- [x] 4. Write `services.md`: the orchestration per use case (profile read, a section write, the service-area
   write via `placeHome`, photo and document upload, a job application and its CRM event, the admin link)
-- [ ] 5. Write `component-dependency.md`: the dependency matrix, communication patterns, the data flows (a section
+- [x] 5. Write `component-dependency.md`: the dependency matrix, communication patterns, the data flows (a section
   save; an upload; an application), the unit and PR mapping
-- [ ] 6. Write `application-design.md` consolidating the four
-- [ ] 7. Validate: every FR maps to a component; every story's actor finds its component; P-6/P-7 boundaries
+- [x] 6. Write `application-design.md` consolidating the four
+- [x] 7. Validate: every FR maps to a component; every story's actor finds its component; P-6/P-7 boundaries
   respected (the engine stays DOM-free; the contract Zod-only); no component spans two units' PRs without a stated
   seam
-- [ ] 8. Present for approval
+- [x] 8. Present for approval
