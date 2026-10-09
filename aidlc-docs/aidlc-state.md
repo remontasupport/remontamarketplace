@@ -7,8 +7,8 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: INCEPTION -- User Stories, planning: `inception/plans/story-generation-plan.md` (three pre-filled
-  questions) awaits the user's confirmation; then the stories and personas; then Workflow Planning.
+- **Current Stage**: INCEPTION -- User Stories generated (`inception/user-stories/stories.md`, 33 stories in 8 epics;
+  `personas.md`), awaiting the user's approval; then Workflow Planning.
 
 ## Previous cycles (archived, read-only)
 
@@ -142,8 +142,9 @@
 - [x] Requirements Analysis (2026-10-09): 17 verification + 6 clarification questions answered (all recorded in the
   audit); `inception/requirements/requirements.md` written (D1-D16, FR-WRK/PI/EP/SVC/DOC/UPL/HOME/JOB/NAV/PLT, NFR-01..14,
   the extension compliance tables, 7 open items) -- **approved 2026-10-09**
-- [ ] User Stories: assessment written (`plans/user-stories-assessment.md`: execute); `plans/story-generation-plan.md`
-  written (Q1 format, Q2 personas, Q3 journey-based with a system epic, all pre-filled A) -- awaiting confirmation
+- [ ] User Stories: assessment (execute); plan approved 2026-10-09 (Q1-Q3 A); `user-stories/personas.md` (P1/P2/S1/S4/S5
+  by reference + W1/W2/W3) and `user-stories/stories.md` (33 stories, E1-E8, FR map, verification map) written --
+  **awaiting approval**
 - [ ] Application Design / Units (as the goal needs)
 - [ ] Workflow Planning
 

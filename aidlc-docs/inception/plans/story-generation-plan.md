@@ -66,31 +66,31 @@ D) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the three answers above; resolve any ambiguity in a clarification file
-- [ ] 2. Write `aidlc-docs/inception/user-stories/personas.md` per Q2
-- [ ] 3. Write `aidlc-docs/inception/user-stories/stories.md` per Q1 and Q3:
-  - [ ] 3a. E1 worker stories: name, photo (main, additional, make main), bio, personal info, ABN/TFN; a draft kept
+- [x] 1. Confirm the three answers above; resolve any ambiguity in a clarification file
+- [x] 2. Write `aidlc-docs/inception/user-stories/personas.md` per Q2
+- [x] 3. Write `aidlc-docs/inception/user-stories/stories.md` per Q1 and Q3:
+  - [x] 3a. E1 worker stories: name, photo (main, additional, make main), bio, personal info, ABN/TFN; a draft kept
     on the device; a save retried after 503/429; the api unreachable; the emergency-contact step gone
-  - [ ] 3b. E2 worker and administrator stories: the home address (street + suburb from the list; private); the
+  - [x] 3b. E2 worker and administrator stories: the home address (street + suburb from the list; private); the
     service area (suburb + radius) through placement, the legacy columns following; an unplaced worker placing
     themselves; the admin sees the home address and finds the worker at the new suburb; the client search unchanged
-  - [ ] 3c. E3 worker stories: preferred hours (no overlap), experience per domain with the shared areas, work
+  - [x] 3c. E3 worker stories: preferred hours (no overlap), experience per domain with the shared areas, work
     history and education as ordered lists, the additional-details groups, the bank account written in full and
     read masked
-  - [ ] 3d. E4 worker and administrator stories: edit services against the catalogue; the documents a service
+  - [x] 3d. E4 worker and administrator stories: edit services against the catalogue; the documents a service
     needs; upload by ticket and confirm; a disallowed type refused; delete; the admin review unchanged; the old
     public-cache routes gone with this epic
-  - [ ] 3e. E5 worker stories: the home page from one read; the jobs list; apply (idempotent) and withdraw; the
+  - [x] 3e. E5 worker stories: the home page from one read; the jobs list; apply (idempotent) and withdraw; the
     office notified through n8n without the browser
-  - [ ] 3f. E6 worker stories: the sidebar order; the Edit Profile dropdown; the completion badge; every link
+  - [x] 3f. E6 worker stories: the sidebar order; the Edit Profile dropdown; the completion badge; every link
     resolves
-  - [ ] 3g. E7 system stories: ownership by token (404 for others' rows, 403 for other roles, 401 without a token);
+  - [x] 3g. E7 system stories: ownership by token (404 for others' rows, 403 for other roles, 401 without a token);
     one statement per page; whole-section replace round-trips; completion status computed in the api with today's
     meaning; ticket/confirm/purge; the outbox handler with retries and dead letters; per-user limits and shedding;
     the load test at the stated rate and at 3×
-  - [ ] 3h. E8 operator stories: secrets and the stages table; the staging checklist incl. the load test; promotion;
+  - [x] 3h. E8 operator stories: secrets and the stages table; the staging checklist incl. the load test; promotion;
     the page PR; the clean-up PR; rollback at each step; docs in the same PRs
-  - [ ] 3i. Map every FR of requirements section 3 to at least one story; name the PBT property where one applies
-  - [ ] 3j. INVEST check: each story independently testable on staging or in CI, small enough for one unit's plan
-- [ ] 4. Cross-check the stories against the verification protocol in requirements section 6 (every item traceable)
-- [ ] 5. Present for approval
+  - [x] 3i. Map every FR of requirements section 3 to at least one story; name the PBT property where one applies
+  - [x] 3j. INVEST check: each story independently testable on staging or in CI, small enough for one unit's plan
+- [x] 4. Cross-check the stories against the verification protocol in requirements section 6 (every item traceable)
+- [x] 5. Present for approval
