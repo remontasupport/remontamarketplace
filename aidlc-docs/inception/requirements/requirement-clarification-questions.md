@@ -28,7 +28,7 @@ B) Also the search point: searches should measure from the home address rather t
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A (given in chat, 2026-10-09: "ahh, yeah letter A")
 
 ### Clarification Question 2
 How is the home address captured and stored?

@@ -3538,3 +3538,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > I am not sure with the the private home, can you explain that
 
 **AI action (2026-10-09):** Explained CQ1: "private" = visible to the worker and admins (profile, contracts, compliance), never to clients (no public profile, share link or search card), and never a search input; the searches keep measuring from the sign-up service-area suburb. B would make the street address the search point for every worker (geocoding, and a precision that lets a small-radius search infer where a worker lives). A keeps "where I work" and "where I live" apart as the user's answer described; C with "shown to clients" offered if client visibility is wanted.
+
+**User input (verbatim, 2026-10-09):**
+> ahh, yeah letter A
+
+**AI action (2026-10-09):** CQ1 = A (a private home address) written into `requirement-clarification-questions.md` on the user's behalf from the chat answer. CQ2-CQ6 still empty; awaiting them.
