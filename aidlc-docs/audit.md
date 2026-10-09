@@ -3645,3 +3645,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > approved
 
 **AI action (2026-10-09, U1 Infrastructure Design -- artifacts):** Plan approved (Q1-Q3 A). Wrote `aidlc-docs/construction/worker-area/infrastructure-design/infrastructure-design.md` (§1 the stages table diff -- prod maxInstances 10, MAX_IN_FLIGHT 64 -- with the test and render changes and the rollback; §2 the Neon verification procedure and the README section it feeds; §3 the A$300 billing budget by console; §4 the load-test runbook with the command, guards, phases and the report's home; §5 the burst and event-loop drills with the restore by redeploy; §6 the backfill runbook staging then prod; §7 nothing else provisioned; §8 cross-check) and `deployment-architecture.md` (the picture; PR 1's eight-step deployment sequence with evidence per step; environments and secrets untouched; no shared-infrastructure file). Plan checklist all [x]. Gate: awaiting approval.
+
+**User input (verbatim, 2026-10-09):**
+> continue to Next Stage
+
+**AI action (2026-10-09):** U1 infrastructure design approved (commit `8a56b64`). Code Generation (U1, PR 1) started: Part 1 planning.
