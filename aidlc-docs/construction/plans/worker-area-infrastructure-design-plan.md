@@ -82,13 +82,13 @@ C) Other (please describe after [Answer]: tag below)
 
 ## Execution checklist
 
-- [ ] 1. Confirm the three answers; resolve any ambiguity in a clarification file
-- [ ] 2. `infrastructure-design.md`: the stages table diff, the test changes, the Neon verification procedure and
+- [x] 1. Confirm the three answers; resolve any ambiguity in a clarification file
+- [x] 2. `infrastructure-design.md`: the stages table diff, the test changes, the Neon verification procedure and
   where its values are recorded, the budget step, the load-test runbook (environment, command, thresholds, where the
   report goes), the drills' runbook (g, h) with the restore step, the backfill runbook (staging then prod), the
   rollback of each
-- [ ] 3. `deployment-architecture.md`: the picture (operator machine → staging; Cloud Run staging/prod; Neon pooled;
+- [x] 3. `deployment-architecture.md`: the picture (operator machine → staging; Cloud Run staging/prod; Neon pooled;
   the promotion path) and PR 1's deployment sequence (merge → staging deploy → Neon check → backfill dry run and
   apply on staging → load test → drills → promote → backfill on prod → re-record rollback ids)
-- [ ] 4. Cross-check against U1-SCL-03/05, U1-PRF-03, U1-REL-03, US-WP-30/32
-- [ ] 5. Present for approval
+- [x] 4. Cross-check against U1-SCL-03/05, U1-PRF-03, U1-REL-03, US-WP-30/32
+- [x] 5. Present for approval
