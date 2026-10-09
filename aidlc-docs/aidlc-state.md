@@ -7,7 +7,9 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: INCEPTION -- Workflow Planning (the stories approved 2026-10-09 with the ABN-only amendment D17).
+- **Current Stage**: INCEPTION -- Workflow Planning complete (`inception/plans/execution-plan.md`), awaiting approval;
+  next Application Design (concise), then CONSTRUCTION per unit U1 `worker-area`, U2 `edit-profile`,
+  U3 `services-documents`, U4 `dashboard-jobs` (10 PRs).
 
 ## Previous cycles (archived, read-only)
 
@@ -144,9 +146,20 @@
 - [ ] User Stories: assessment (execute); plan approved 2026-10-09 (Q1-Q3 A); `user-stories/personas.md` (P1/P2/S1/S4/S5
   by reference + W1/W2/W3) and `user-stories/stories.md` (33 stories, E1-E8, FR map, verification map) -- **approved 2026-10-09**
   with one change: ABN only, no TFN (requirements amendment D17 / FR-PI-07; US-WP-05 rewritten)
-- [ ] Workflow Planning: in progress
-- [ ] Application Design / Units (as the goal needs)
-- [ ] Workflow Planning
+- [x] Workflow Planning (2026-10-09): `plans/execution-plan.md` -- risk High; four units fixed (U1 worker-area +
+  capacity gate, U2 edit-profile, U3 services-documents, U4 dashboard-jobs); 10 PRs, api promoted before each app PR,
+  a clean-up PR per unit after production verification -- **awaiting approval**
+- [ ] Application Design -- EXECUTE (concise): entry list, module layout, completion port, upload generalisation,
+  `documentUrl` scheme, form-engine replace semantics and field kinds, the sidebar declaration, the client data layer
+- [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
-### CONSTRUCTION
-Not started.
+### CONSTRUCTION (per unit; stages per the execution plan)
+- [ ] U1 `worker-area`: Functional Design (short) · NFR Requirements · NFR Design · Infrastructure Design · Code Generation (PR 1) · Build and Test
+- [ ] U2 `edit-profile`: Functional Design (full) · Code Generation (PRs 2-4) · Build and Test
+- [ ] U3 `services-documents`: Functional Design (full) · NFR Requirements · NFR Design · Code Generation (PRs 5-7) · Build and Test
+- [ ] U4 `dashboard-jobs`: Functional Design (short) · Infrastructure Design · Code Generation (PRs 8-10) · Build and Test
+
+## Execution Plan Summary
+- **Stages to execute**: Application Design (concise); per unit as listed above; Code Generation and Build and Test always
+- **Stages to skip**: Units Generation (units fixed in the plan); NFR Requirements/Design for U2 and U4 (inherit U1's and
+  U3's); Infrastructure Design for U2 (a migration only) and U3 (the sign-up bucket reused)
