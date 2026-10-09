@@ -7,8 +7,8 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: INCEPTION -- Application Design generated (`inception/application-design/`: components C1-C25,
-  methods, services S1-S8, dependencies, consolidated), awaiting approval; then CONSTRUCTION U1 `worker-area`.
+- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Functional Design (short). INCEPTION closed 2026-10-09 (the
+  application design approved).
 
 ## Previous cycles (archived, read-only)
 
@@ -152,7 +152,7 @@
   `storageKey` column + an admin link entry; Q3 a `section` mode and new kinds in the engine; Q4 completion as a domain
   function with today's function as the oracle; Q5 uploads lifted to `platform/storage` with a kind table; Q6 one profile
   query and a typed client; Q7 the sidebar as a typed array) -- plan approved 2026-10-09 ("No2, let us proceed with
-  the plan", read as: no change to documents' store; all seven as proposed); artifacts written -- **awaiting approval**
+  the plan", read as: no change to documents' store; all seven as proposed); artifacts written -- **approved 2026-10-09**
 - [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
