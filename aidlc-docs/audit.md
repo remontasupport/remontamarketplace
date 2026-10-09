@@ -3444,3 +3444,15 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-09):** "can I test it first locally?"
 
 **AI action (2026-10-09):** a local PostGIS is impossible on this machine today: WSL answers "Class not registered" (`Wsl/CallMsi/Install/REGDB_E_CLASSNOTREG`), so Docker Desktop's Linux engine returns 500; repairing WSL is an admin action for the user. The practical local test is the new api and app code on this machine against the staging copy (`REHEARSAL_DATABASE_URL` in `apps/api/.env`: the `rehearse-w1` branch, host `ep-wandering-shadow`, not production). The api is built (`dist/main.js` on `feat/admin-search-experience-areas-app`); the run commands are handed to the user with one local token secret shared by both sides and dummy photo settings. The stored-values check ran on that copy: 38 distinct `specificAreas` values, all in the vocabulary, no strays (`experience-areas-summary.md` updated).
+
+**User input (2026-10-09):** "what is the script to run the server"
+
+**AI action (2026-10-09):** `scripts/local/run-api.sh`, `run-app.sh` and the shared `rehearsal-env.sh` committed on `feat/admin-search-experience-areas-app` (`c76aee4`): the new code locally against the staging copy, one token secret for both sides, a refusal if the URL names a production host.
+
+**User input (2026-10-09):** "there is an error Application error: a client-side exception has occurred while loading localhost (see the browser console for more information)."
+
+**AI action (2026-10-09):** not reproduced: the dev server compiles the dashboard chunk with the new code and no missing module; every route answers; a headless Chromium load of `/admin/manage` (Playwright in the scratchpad) redirects to `/login` with no exception. The crash needs a signed-in session the AI cannot create; the console text was asked for, with the offer of a throwaway admin on the staging copy.
+
+**User input (2026-10-09):** "I see. can we just test this to preview in vercel?"
+
+**AI action (2026-10-09):** yes: the deploy workflow builds images only on a push to `main` and a dispatch only promotes an existing one, so the order is PR A merged (staging gets the api) -> PR B opened (its Vercel preview against staging is the end-to-end test, and shows whether the local client-side error reproduces) -> promote -> PR B merged. Compare links and the staging checks handed to the user.
