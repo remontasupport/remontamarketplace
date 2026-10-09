@@ -3484,3 +3484,17 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-09):** "I think the DLC is done now, can we close it already"
 
 **AI action (2026-10-09, cycle close):** the admin-search cycle closed. The record moved to `aidlc-docs/archive/admin-search-api/` (inception, construction incl. the experience-areas summary, plans, `aidlc-state-at-close.md`, a README with what shipped: PRs #41-#47, and the deviations). A fresh `aidlc-state.md`: no current cycle; what is live (the admin api, the sub-areas, the 69 unplaced, staging and the local scripts, this machine's WSL state); 20 follow-ups carried, the admin set-suburb control and city-name help recommended as the next cycle. CLAUDE.md's rollback rows re-recorded from the `main` `48a8a7e` deployments' pages (the short URL ids are not readable from GitHub; the deployment pages promote the same way). Docs branch `aidlc/admin-search-experience-areas` (main merged in) pushed; the compare link handed to the user to open and merge the docs PR.
+
+## 2026-10-09 — Change outside a cycle: driving minutes on the worker card
+
+**User input (2026-10-09):** "Now I want to fix something in the admin dashboard, after the location search there is this note in the workers cards \"1.3 km from the suburb centre\" instead of km, I want it to be minutes of travel"
+
+**AI action (2026-10-09):** two routes explained: A, an estimate from the straight-line km the api already returns (no service, no key, one app PR); B, routed driving time from Google's Routes API with a cache table per suburb pair (a new secret, a billed service, a migration, two PRs).
+
+**User input (2026-10-09):** "If B are we going to create a new table?"
+
+**AI action (2026-10-09):** yes: one cache table (from/to locality ids, mode, seconds, meters, computedAt) because the instances restart and do not share memory; the migration ships like the S1 tables; no backfill.
+
+**User input (2026-10-09):** "If A, there is no table? I just want to convert the km to estimated travel time only"
+
+**AI action (2026-10-09):** route A built on `feat/admin-search-drive-minutes`: `apps/app/src/features/admin-search/travel.ts` (straight-line km × 1.3 road factor; banded speeds applied segment by segment: 28 km/h to 3 road km, 35 to 10, 45 to 30, 60 to 80, 80 beyond; +3 min; rounded to 5, minimum 5; monotonic by property test), the card reads "about N min drive from the suburb centre" with the straight-line km in the tooltip; the sort unchanged; `docs/admin/README.md` row.
