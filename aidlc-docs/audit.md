@@ -3468,3 +3468,7 @@ Q2 = a (no schema change in this cycle; normalisations as follow-ups).
 **User input (2026-10-09):** "I think preview is ok now. What to do next?"
 
 **AI action (2026-10-09):** the preview accepted by the user against the staging api (PR A's code). Next: promote image `024596f5ba2ba5b796eb88002b011a4bdc289a38` to prod by dispatch, verify, then merge PR #47 and verify production; then the rollback ids and the record.
+
+**User input (2026-10-09):** "It works! Now I noticed this 69 active workers have no mapped suburb and cannot appear in a distance search, what it does mean? and how can we resolve the 69 workers issues?"
+
+**AI action (2026-10-09):** production confirmed by refs: `main` = `48a8a7e` (PR #47 merged); prod dispatch of `024596f` success 02:41Z; the user reports the feature working on production. The 69 are the S1 backfill's leftovers (70 on 2026-10-02: 59-60 ambiguous, 10-11 unmatched; `legacy-match.ts` never guesses). A dry run of `backfill:locations` on the staging copy (nothing written) lists them: metro or region names with a suburb's postcode (Sydney, Melbourne, Perth, Gold Coast, Sunshine Coast, Toowoomba, Launceston...), misspelt suburbs (Parramtta, Willeton, Boonie brook, Gosnell), street addresses without a suburb, four empty, four overseas (Islamabad, Fiji, Lagos). Options explained: the worker fixes the address (the reconciler places within 5 min); an admin "set suburb" control (does not exist); an approved review list applied by a one-off script; no auto-guess. No code written.
