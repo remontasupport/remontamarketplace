@@ -24,9 +24,11 @@ client (the known trap); discarded, not committed.
 - One meaning, one URL: an area without its domain in `experienceWith` is refused (400), never implied; the page
   never produces such a query.
 - The vocabulary is the page's list, by label. A stored value that is not in the list (possible: the rows were
-  migrated from the old JSON) cannot be selected and does not match. **Check on production before relying on it**
-  (read-only; the permission layer refused the AI's run):
-  `SELECT domain, a AS area, COUNT(*) FROM worker_experience, unnest("specificAreas") a GROUP BY 1,2 ORDER BY 1,3 DESC;`
+  migrated from the old JSON) cannot be selected and does not match. **Checked 2026-10-09 on the staging copy**
+  (`rehearse-w1`, a copy of production, host `ep-wandering-shadow`): 38 distinct stored values across the five
+  domains, every one in the list, no strays; "Spina Bifida" is the only listed area nobody has ticked. The permission
+  layer refused the same read on production; the copy is recent, so a stray value there is unlikely. The query,
+  read-only: `SELECT domain, a AS area, COUNT(*) FROM worker_experience, unnest("specificAreas") a GROUP BY 1,2 ORDER BY 1,3 DESC;`
 
 ## Order of operations (the rule: nothing live changes before the api is on prod)
 
