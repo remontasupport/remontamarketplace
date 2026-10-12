@@ -3805,3 +3805,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > Yes it is passing now
 
 **AI action (2026-10-12, PR 2 CI):** Round 1 (`8a66496`): `openapi.json` stale (regenerated before the PROFILE_UPDATE switch); Semgrep run-shell-injection on the promote job's new migrate step (`${{ inputs.stage }}` in `run:`; now through `env:`); CodeQL unanchored regex on the Blob URL check (now `isBlobUrl` by parsed host, with a look-alike-host test). U1's completion property flaked once on its fix-kind coverage assertion (600 random inputs; 60,000-input hunt found no real disagreement): coverage moved to a fixed-seed 5,000 sample. Round 2 (`1da4dbb`), first database run of the new suite: everything passed but two test expectations (list idempotency compared new row ids; an ETag test that changed nothing). Round 3: the completion test asserted a write where persistCompletion correctly writes nothing (all-false flags, U1 P7); now asserts stored flags == computed flags on both workers. `8379b47`: every check green. Gate: the user merges PR 2.
+
+**User input (verbatim, 2026-10-12):**
+> merged, continue
