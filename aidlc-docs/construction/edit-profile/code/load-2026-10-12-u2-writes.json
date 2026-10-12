@@ -1,0 +1,153 @@
+{
+  "startedAt": "2026-10-12T05:21:13.972Z",
+  "baseUrl": "https://remonta-api-staging-154148201608.australia-southeast1.run.app",
+  "workers": 200,
+  "options": {
+    "baseUrl": "https://remonta-api-staging-154148201608.australia-southeast1.run.app",
+    "workers": 200,
+    "rate": 25,
+    "minutes": 10,
+    "burst": 5,
+    "warmupSeconds": 60,
+    "report": "C:/Users/floil/AppData/Local/Temp/claude/C--Users-floil-OneDrive-Documents-Projects-Remonta-remontamarketplace/1a9be61d-b06a-449c-a453-d97dd8fc9ca3/scratchpad/load-u2.json",
+    "readsOnly": false
+  },
+  "mix": "70/30 read/write (PUT availability, idempotent)",
+  "phases": {
+    "warmup": {
+      "requests": 773,
+      "latency": {
+        "p50": 162,
+        "p95": 453,
+        "p99": 638
+      },
+      "admittedLatency": {
+        "p95": 431
+      },
+      "status": {
+        "200": 614,
+        "304": 159
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    },
+    "sustained": {
+      "requests": 14502,
+      "latency": {
+        "p50": 188,
+        "p95": 970,
+        "p99": 1223
+      },
+      "admittedLatency": {
+        "p95": 551
+      },
+      "status": {
+        "200": 9474,
+        "304": 5028
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    },
+    "burst": {
+      "requests": 1671,
+      "latency": {
+        "p50": 1122,
+        "p95": 3562,
+        "p99": 3799
+      },
+      "admittedLatency": {
+        "p95": 3969
+      },
+      "status": {
+        "200": 1085,
+        "304": 586
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    },
+    "recovery": {
+      "requests": 1399,
+      "latency": {
+        "p50": 205,
+        "p95": 1889,
+        "p99": 2549
+      },
+      "admittedLatency": {
+        "p95": 595
+      },
+      "status": {
+        "200": 902,
+        "304": 497
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    }
+  },
+  "thresholds": [
+    {
+      "phase": "sustained",
+      "rule": "p95 <= 300 ms",
+      "actual": "970 ms",
+      "pass": false
+    },
+    {
+      "phase": "sustained",
+      "rule": "p99 <= 800 ms",
+      "actual": "1223 ms",
+      "pass": false
+    },
+    {
+      "phase": "sustained",
+      "rule": "no 429",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no 503 / 5xx",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no errors or timeouts",
+      "actual": "0 errors, 0 timeouts",
+      "pass": true
+    },
+    {
+      "phase": "burst",
+      "rule": "no 5xx other than 503",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "burst",
+      "rule": "p95 of admitted <= 1000 ms",
+      "actual": "3969 ms",
+      "pass": false
+    },
+    {
+      "phase": "burst",
+      "rule": "no errors or timeouts",
+      "actual": "0 errors, 0 timeouts",
+      "pass": true
+    },
+    {
+      "phase": "recovery",
+      "rule": "no 503 after 30 s",
+      "actual": "none",
+      "pass": true
+    },
+    {
+      "phase": "recovery",
+      "rule": "no 5xx other than 503",
+      "actual": "0",
+      "pass": true
+    }
+  ],
+  "pass": false
+}
