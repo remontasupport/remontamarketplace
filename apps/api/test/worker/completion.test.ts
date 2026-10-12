@@ -58,12 +58,42 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
       for (const k of fixes) counts.set(k, (counts.get(k) ?? 0) + 1)
     }
     // Both partitions are large: the equality is tested on many plain inputs, the fixes on many fixed ones.
-    expect(plain).toBeGreaterThan(500)
+    // 494 plain on this sample since the R3.6 detector also sees SERVICE_QUALIFICATION rows named after a training (2026-10-12).
+    expect(plain).toBeGreaterThan(400)
     expect(5000 - plain).toBeGreaterThan(500)
     for (const k of ['whitespace', 'link-optional-or-conditional', 'abn-counts', 'status-compliance', 'trainings-status', 'no-offerings', 'service-title-case', 'service-status'] as FixCase[]) {
       expect(counts.get(k) ?? 0, k).toBeGreaterThan(5)
     }
   })
+})
+
+// CI 2026-10-12 (seed -647976850): a SERVICE_QUALIFICATION row keyed `<Service>:<training id>`, PENDING with no file,
+// beside a SUBMITTED training row. Today's function counts it as a training row and needs its url (false); the fix
+// counts the submitted training (true). The partition must call this an R3.6 case, not a plain one.
+it('R3.6 regression: a pending service-qualification row named after a training is a [fix] case, and the training counts', () => {
+  const input = fc.sample(completionInput, { numRuns: 1, seed: 1 })[0]!
+  const training = 'medication-training'
+  const shaped: CompletionInput = {
+    ...input,
+    services: [{ categoryId: 'cleaning-services', categoryName: 'Cleaning Services', subcategoryIds: ['dietitian'], subcategoryNames: ['Dietitian'] }],
+    requirements: [
+      { requirementType: training, status: 'SUBMITTED', documentCategory: null, documentUrl: 'https://blob.test/d.pdf' },
+      { requirementType: `Personal Trainer:${training}`, status: 'PENDING', documentCategory: 'SERVICE_QUALIFICATION', documentUrl: null },
+    ],
+    catalogue: {
+      categories: [
+        {
+          id: 'cleaning-services',
+          name: 'Cleaning Services',
+          documents: [{ document: { id: training, name: 'Medication Training', category: 'TRAINING' }, documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null }],
+          subcategories: [{ id: 'dietitian', name: 'Dietitian', additionalDocuments: [] }],
+        },
+      ],
+    },
+  } as CompletionInput
+  expect(fixCasesOf(shaped)).toContain('trainings-status')
+  expect(trainingsOf(shaped)).toBe(true)
+  expect((completionOracle(shaped) as { trainings: boolean }).trainings).toBe(false)
 })
 
 describe('P3: the percentage (R3.10)', () => {
