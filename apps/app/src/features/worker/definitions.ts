@@ -85,7 +85,7 @@ const personalInfoPage = (name: string, title: string, shown: keyof typeof PERSO
 
 export const dateOfBirthSection = personalInfoPage("date-of-birth", "Date of birth", "dateOfBirth");
 export const genderSection = personalInfoPage("gender", "Gender", "gender");
-export const vehicleSection = personalInfoPage("vehicle", "Vehicle", "hasVehicle", "Some jobs need you to drive to the client or take them out.");
+export const vehicleSection = personalInfoPage("vehicle", "Vehicle access", "hasVehicle", "Some jobs need you to drive to the client or take them out.");
 
 export const abnSection = defineSection({
   ...READ,
