@@ -19,7 +19,15 @@ interface SectionFieldBase {
   neverSaved?: boolean;
   /** Shown only while this boolean value is false, e.g. an end date while not "currently working". */
   hiddenWhen?: string;
+  /**
+   * Never shown: seeded from the read and sent back as it was, so a page can edit one field of a write that
+   * takes several (the date of birth on its own page, the gender and vehicle answer carried along).
+   */
+  carried?: boolean;
 }
+
+/** The fields a page shows (everything but the carried ones). */
+export const shownFields = (fields: readonly SectionFieldDef[]) => fields.filter((f) => !f.carried);
 
 export interface SelectOption {
   value: string;

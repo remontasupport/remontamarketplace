@@ -21,6 +21,8 @@ export interface MenuLink {
   label: string;
   href: string;
   done?: boolean;
+  /** A sub-group's links (Other Personal Info); its own href is its first link. */
+  children?: MenuLink[];
 }
 
 /** R8.1: D11's order, with Edit Services and My Services merged into one Services group (user, 2026-10-12). */
@@ -41,33 +43,52 @@ export const sectionHref = (slug: string) => `${PROFILE_BASE}/${slug}`;
 const filled = (a: readonly unknown[] | undefined | null) => !!a && a.length > 0;
 const info = (p: Profile) => p.sections.additionalInfo;
 
+/** My Profile's one sub-group (user, 2026-10-12): the additional-details sections under one heading. */
+export const OTHER_PERSONAL_INFO = { id: "other-personal-info", label: "Other Personal Info" } as const;
+
 /**
- * R8.2: Edit Profile's children in order, each with its done state from the read. Work
- * history and education keep the places they had in the old profile-building menu.
+ * R8.2 as rearranged by the user (2026-10-12): My Profile's sections in order, each with its done state from the
+ * read. The personal-info write is three pages (date of birth, gender, vehicle); the additional-details sections
+ * sit in the Other Personal Info sub-group. The photo, preferred hours and bank account keep a place (user choice).
  */
-export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean }[] = [
-  { slug: "name", label: "Your name", done: (p) => !!p.names.firstName && !!p.names.lastName },
-  { slug: "photo", label: "Profile photo", done: (p) => !!p.photos.main },
-  { slug: "bio", label: "Your bio", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
+export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: typeof OTHER_PERSONAL_INFO.id }[] = [
+  { slug: "name", label: "Name", done: (p) => !!p.names.firstName && !!p.names.lastName },
+  { slug: "photo", label: "Profile Photo", done: (p) => !!p.photos.main },
+  { slug: "bio", label: "Bio", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
   { slug: "address", label: "Address", done: (p) => !!p.homeAddress && !!p.serviceArea },
-  { slug: "personal-info", label: "Other personal info", done: (p) => !!p.personalInfo.dateOfBirth && !!p.personalInfo.gender && !!p.personalInfo.hasVehicle },
-  { slug: "preferred-hours", label: "Preferred hours", done: (p) => filled(p.sections.availability) },
+  { slug: "date-of-birth", label: "Date of Birth", done: (p) => !!p.personalInfo.dateOfBirth },
+  { slug: "gender", label: "Gender", done: (p) => !!p.personalInfo.gender },
+  { slug: "vehicle", label: "Vehicle", done: (p) => !!p.personalInfo.hasVehicle },
+  { slug: "languages", label: "Language", done: (p) => filled(info(p)?.languages) },
   { slug: "experience", label: "Experience", done: (p) => filled(p.sections.experience) },
-  { slug: "work-history", label: "Work history", done: (p) => filled(p.sections.jobHistory) },
-  { slug: "education", label: "Education and training", done: (p) => filled(p.sections.education) },
-  { slug: "good-to-know", label: "Good to know", done: (p) => info(p)?.lgbtqiaSupport !== null && info(p)?.lgbtqiaSupport !== undefined },
-  { slug: "languages", label: "Languages", done: (p) => filled(info(p)?.languages) },
-  { slug: "cultural-background", label: "Cultural background", done: (p) => filled(info(p)?.culturalBackground) },
-  { slug: "religion", label: "Religion", done: (p) => filled(info(p)?.religion) },
-  { slug: "interests", label: "Interests", done: (p) => filled(info(p)?.interests) },
-  { slug: "about-me", label: "About me", done: (p) => filled(info(p)?.uniqueService) && !!info(p)?.funFact },
-  { slug: "preferences", label: "Preferences", done: (p) => filled(info(p)?.workPreferences) },
-  { slug: "personality", label: "Personality", done: (p) => !!info(p)?.personality },
-  { slug: "bank-account", label: "Bank account", done: (p) => !!p.sections.bankAccount },
+  { slug: "work-history", label: "Work History", done: (p) => filled(p.sections.jobHistory) },
+  { slug: "education", label: "Education", done: (p) => filled(p.sections.education) },
+  { slug: "preferred-hours", label: "Preferred Hours", done: (p) => filled(p.sections.availability) },
+  { slug: "good-to-know", label: "Good to Know", group: "other-personal-info", done: (p) => info(p)?.lgbtqiaSupport !== null && info(p)?.lgbtqiaSupport !== undefined },
+  { slug: "cultural-background", label: "Cultural Background", group: "other-personal-info", done: (p) => filled(info(p)?.culturalBackground) },
+  { slug: "religion", label: "Religion", group: "other-personal-info", done: (p) => filled(info(p)?.religion) },
+  { slug: "interests", label: "Interests", group: "other-personal-info", done: (p) => filled(info(p)?.interests) },
+  { slug: "about-me", label: "About Me", group: "other-personal-info", done: (p) => filled(info(p)?.uniqueService) && !!info(p)?.funFact },
+  { slug: "preferences", label: "Preferences", group: "other-personal-info", done: (p) => filled(info(p)?.workPreferences) },
+  { slug: "personality", label: "Personality", group: "other-personal-info", done: (p) => !!info(p)?.personality },
+  { slug: "bank-account", label: "Bank Account", done: (p) => !!p.sections.bankAccount },
 ];
 
+/** My Profile's links: a group's sections fold into one entry with `children` (done when all of them are). */
 export function editProfileChildren(profile: Profile | undefined): MenuLink[] {
-  return EDIT_PROFILE_CHILDREN.map((c) => ({ id: c.slug, label: c.label, href: sectionHref(c.slug), done: profile ? c.done(profile) : undefined }));
+  const out: MenuLink[] = [];
+  for (const c of EDIT_PROFILE_CHILDREN) {
+    const link: MenuLink = { id: c.slug, label: c.label, href: sectionHref(c.slug), done: profile ? c.done(profile) : undefined };
+    if (!c.group) {
+      out.push(link);
+      continue;
+    }
+    let g = out.find((l) => l.id === c.group);
+    if (!g) out.push((g = { id: OTHER_PERSONAL_INFO.id, label: OTHER_PERSONAL_INFO.label, href: link.href, children: [] }));
+    g.children!.push(link);
+    g.done = profile ? g.children!.every((x) => x.done) : undefined;
+  }
+  return out;
 }
 
 /** R8.3: the percent while below 80, and the reminder dot while the worker has no service area (Q10). */

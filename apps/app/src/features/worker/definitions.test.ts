@@ -11,7 +11,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { sectionBody, sectionBodySchema, seedSection, validateSection } from "@remonta/form-engine";
 import { CULTURAL_BACKGROUNDS, LANGUAGES, RELIGIONS, WORK_PREFERENCES } from "@remonta/schemas/data/profileOptions";
 import { describe, expect, it } from "vitest";
-import { bankAccountSection, educationSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
+import { bankAccountSection, dateOfBirthSection, educationSection, genderSection, vehicleSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
 
 const profile: Profile = profileSchema.parse({
   id: "wp_1",
@@ -75,6 +75,15 @@ describe("the section definitions", () => {
     expect(body.entries[0]).toEqual({ jobTitle: "Carer", company: "Co", startMonth: "March", startYear: 2020, endMonth: null, endYear: null, currentlyWorking: true });
     expect((sectionBody(educationSection, seedSection(educationSection, profile)) as { entries: { endYear: unknown }[] }).entries[0]!.endYear).toBe(2018);
     expect(sectionBody(nameSection, seedSection(nameSection, profile))).toEqual({ firstName: "Mary", middleName: null, lastName: "O'Connor" });
+  });
+
+  it("date of birth, gender and vehicle each change only their own answer and send the other two as stored", () => {
+    const stored = { dateOfBirth: "1990-01-01", gender: "Female", hasVehicle: "Yes" };
+    const edit = (def: typeof genderSection, field: string, v: string) => sectionBody(def, { ...seedSection(def, profile), [field]: v });
+    expect(edit(dateOfBirthSection, "dateOfBirth", "1991-02-02")).toEqual({ ...stored, dateOfBirth: "1991-02-02" });
+    expect(edit(genderSection, "gender", "Male")).toEqual({ ...stored, gender: "Male" });
+    expect(edit(vehicleSection, "hasVehicle", "No")).toEqual({ ...stored, hasVehicle: "No" });
+    expect(genderSection.fields.filter((f) => !f.carried).map((f) => f.name)).toEqual(["gender"]);
   });
 
   it("a TFN record seeds an empty ABN form (D17)", () => {

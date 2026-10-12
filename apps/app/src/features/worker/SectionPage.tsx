@@ -147,6 +147,12 @@ function SaveBar({ save, onSave, disabled }: { save: SaveState; onSave: () => vo
   );
 }
 
+/** A carried field is shown while the read has no value for it, or it has an error: a hidden field must never block a save. */
+function needsShowing(f: SectionFieldDef, picked: unknown, errors: Record<string, string[]>): boolean {
+  const stored = picked && typeof picked === "object" ? (picked as Record<string, unknown>)[f.name] : undefined;
+  return stored === null || stored === undefined || stored === "" || !!errorFor(errors, f.name);
+}
+
 export function Notice({ tone, children }: { tone: "info" | "warn"; children: React.ReactNode }) {
   return (
     <div className={`flex items-start gap-2 rounded-lg border px-4 py-3 text-sm font-poppins ${tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-indigo-200 bg-indigo-50 text-indigo-800"}`}>
@@ -197,9 +203,11 @@ export default function SectionPage({ def, embedded = false }: { def: SectionDef
               </button>
             </Notice>
           )}
-          {def.fields.map((f) => (
-            <FieldSlot key={f.name} field={f} path={f.name} row={values} errors={errors} setValue={setValue} picked={pickPath(profile, def.pick)} />
-          ))}
+          {def.fields
+            .filter((f) => !f.carried || needsShowing(f, pickPath(profile, def.pick), errors))
+            .map((f) => (
+              <FieldSlot key={f.name} field={f} path={f.name} row={values} errors={errors} setValue={setValue} picked={pickPath(profile, def.pick)} />
+            ))}
           {errors._?.[0] && <p className="text-red-500 text-sm font-poppins">{errors._[0]}</p>}
           <SaveBar save={save} onSave={() => void submit()} disabled={!values} />
         </form>

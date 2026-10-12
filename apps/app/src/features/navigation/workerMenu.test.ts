@@ -42,16 +42,20 @@ describe("WORKER_MENU", () => {
     expect(WORKER_MENU.every((m) => !!m.href !== !!m.children)).toBe(true);
   });
 
-  it("R8.2: Edit Profile's children in order, each a profile page", () => {
+  it("R8.2 as rearranged (2026-10-12): My Profile's order, the Other Personal Info sub-group, each a profile page", () => {
     const links = editProfileChildren(base);
     expect(links.map((l) => l.label)).toEqual([
-      "Your name", "Profile photo", "Your bio", "Address", "Other personal info", "Preferred hours", "Experience", "Work history", "Education and training",
-      "Good to know", "Languages", "Cultural background", "Religion", "Interests", "About me", "Preferences", "Personality", "Bank account",
+      "Name", "Profile Photo", "Bio", "Address", "Date of Birth", "Gender", "Vehicle", "Language", "Experience", "Work History", "Education",
+      "Preferred Hours", "Other Personal Info", "Bank Account",
     ]);
+    const group = links.find((l) => l.id === "other-personal-info")!;
+    expect(group.children!.map((l) => l.label)).toEqual(["Good to Know", "Cultural Background", "Religion", "Interests", "About Me", "Preferences", "Personality"]);
+    expect(group.done).toBe(false);
     expect(pageExists("/dashboard/worker/profile/[section]")).toBe(true);
     expect(pageExists("/dashboard/worker/profile")).toBe(true);
-    for (const l of links) expect(isProfilePage(profileSlug(l.href) ?? ""), l.href).toBe(true);
+    for (const l of links.flatMap((x) => x.children ?? [x])) expect(isProfilePage(profileSlug(l.href) ?? ""), l.href).toBe(true);
     expect(isProfilePage("nope")).toBe(false);
+    expect(isProfilePage("personal-info")).toBe(false);
   });
 
   it("done states follow the read", () => {

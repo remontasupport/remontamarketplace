@@ -52,6 +52,42 @@ const ICONS: Record<MenuIcon, React.ComponentType<{ className?: string }>> = {
   account: Cog6ToothIcon,
 }
 
+function ChildLink({ link, active, onNavigate }: { link: MenuLink; active: boolean; onNavigate: () => void }) {
+  return (
+    <Link href={link.href} className={`nav-dropdown-item ${active ? 'active' : ''}`} onClick={onNavigate}>
+      {link.done ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-600 shrink-0" aria-label="Done" /> : <span className="nav-dropdown-bullet" />}
+      <span>{link.label}</span>
+    </Link>
+  )
+}
+
+/** A sub-group inside a group (My Profile's Other Personal Info): open while one of its pages is showing. */
+function SubGroup({ link, pathname, onNavigate }: { link: MenuLink; pathname: string; onNavigate: () => void }) {
+  const inside = link.children!.some((c) => c.href === pathname)
+  const [open, setOpen] = useState(inside)
+  useEffect(() => {
+    if (inside) setOpen(true)
+  }, [inside])
+  return (
+    <li>
+      <button type="button" onClick={() => setOpen((o) => !o)} className={`nav-dropdown-item w-full ${inside ? 'active' : ''}`} aria-expanded={open}>
+        {link.done ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-600 shrink-0" aria-label="Done" /> : <span className="nav-dropdown-bullet" />}
+        <span className="flex-1 text-left">{link.label}</span>
+        {open ? <ChevronUpIcon className="w-3.5 h-3.5" /> : <ChevronDownIcon className="w-3.5 h-3.5" />}
+      </button>
+      {open && (
+        <ul className="pl-4">
+          {link.children!.map((c) => (
+            <li key={c.href}>
+              <ChildLink link={c} active={pathname === c.href} onNavigate={onNavigate} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
+
 interface SidebarProps {
   isMobileOpen?: boolean
   onClose?: () => void
@@ -157,7 +193,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
           }
           const links = item.children ? children[item.children] : []
           const isOpen = !!open[item.id]
-          const active = links?.some((l) => pathname === l.href) ?? false
+          const active = links?.some((l) => pathname === l.href || !!l.children?.some((c) => pathname === c.href)) ?? false
           const isEditProfile = item.children === 'editProfile'
           return (
             <div key={item.id} className="nav-section">
@@ -178,14 +214,15 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
                         <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
                       </li>
                     ))
-                  : links.map((l) => (
-                      <li key={l.href}>
-                        <Link href={l.href} className={`nav-dropdown-item ${pathname === l.href ? 'active' : ''}`} onClick={close}>
-                          {l.done ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-600 shrink-0" aria-label="Done" /> : <span className="nav-dropdown-bullet" />}
-                          <span>{l.label}</span>
-                        </Link>
-                      </li>
-                    ))}
+                  : links.map((l) =>
+                      l.children ? (
+                        <SubGroup key={l.id} link={l} pathname={pathname} onNavigate={close} />
+                      ) : (
+                        <li key={l.href}>
+                          <ChildLink link={l} active={pathname === l.href} onNavigate={close} />
+                        </li>
+                      ),
+                    )}
               </ul>
             </div>
           )

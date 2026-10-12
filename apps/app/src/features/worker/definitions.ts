@@ -64,18 +64,28 @@ export const bioSection = defineSection({
   fields: [{ name: "bio", kind: "textarea", label: "About you", rows: 8, maxLength: 2000 }],
 });
 
-export const personalInfoSection = defineSection({
-  ...READ,
-  name: "personal-info",
-  title: "Other personal info",
-  pick: "personalInfo",
-  writeEntry: "putPersonalInfo",
-  fields: [
-    { name: "dateOfBirth", kind: "date", label: "Date of birth" },
-    { name: "gender", kind: "select", label: "Gender", options: GENDERS },
-    { name: "hasVehicle", kind: "select", label: "Do you have access to a vehicle?", options: VEHICLE_ANSWERS },
-  ],
-});
+// The personal-info write takes all three answers; each has its own page (user, 2026-10-12) and carries the other
+// two along unchanged. A carried answer still empty is shown on the page, so a new worker can always save.
+const PERSONAL_INFO = {
+  dateOfBirth: { name: "dateOfBirth", kind: "date", label: "Date of birth" },
+  gender: { name: "gender", kind: "select", label: "Gender", options: GENDERS },
+  hasVehicle: { name: "hasVehicle", kind: "select", label: "Do you have access to a vehicle?", options: VEHICLE_ANSWERS },
+} as const satisfies Record<string, SectionFieldDef>;
+
+const personalInfoPage = (name: string, title: string, shown: keyof typeof PERSONAL_INFO, description?: string) =>
+  defineSection({
+    ...READ,
+    name,
+    title,
+    description,
+    pick: "personalInfo",
+    writeEntry: "putPersonalInfo",
+    fields: (Object.keys(PERSONAL_INFO) as (keyof typeof PERSONAL_INFO)[]).map((k) => (k === shown ? PERSONAL_INFO[k] : { ...PERSONAL_INFO[k], carried: true })),
+  });
+
+export const dateOfBirthSection = personalInfoPage("date-of-birth", "Date of birth", "dateOfBirth");
+export const genderSection = personalInfoPage("gender", "Gender", "gender");
+export const vehicleSection = personalInfoPage("vehicle", "Vehicle", "hasVehicle", "Some jobs need you to drive to the client or take them out.");
 
 export const abnSection = defineSection({
   ...READ,
@@ -253,7 +263,9 @@ export const SECTIONS: readonly SectionDefinition[] = [
   bioSection,
   homeAddressSection,
   serviceAreaSection,
-  personalInfoSection,
+  dateOfBirthSection,
+  genderSection,
+  vehicleSection,
   abnSection,
   hoursSection,
   experienceSection,

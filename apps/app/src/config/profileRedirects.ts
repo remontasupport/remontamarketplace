@@ -10,7 +10,7 @@ export const PROFILE_REDIRECTS: readonly (readonly [string, string, string, stri
   ['/dashboard/worker/account/setup', 'step', 'photo', 'photo'],
   ['/dashboard/worker/account/setup', 'step', 'bio', 'bio'],
   ['/dashboard/worker/account/setup', 'step', 'address', 'address'],
-  ['/dashboard/worker/account/setup', 'step', 'personal-info', 'personal-info'],
+  ['/dashboard/worker/account/setup', 'step', 'personal-info', 'date-of-birth'],
   ['/dashboard/worker/profile-building', 'section', 'preferred-hours', 'preferred-hours'],
   ['/dashboard/worker/profile-building', 'section', 'experience', 'experience'],
   ['/dashboard/worker/profile-building', 'section', 'bank-account', 'bank-account'],
