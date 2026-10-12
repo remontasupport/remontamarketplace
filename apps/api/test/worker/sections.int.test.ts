@@ -5,6 +5,7 @@ import { EXAMPLE_ABN } from '@remonta/schemas/validations/abn'
 import pino from 'pino'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { claimIntoSlot } from '../../src/modules/worker/application/photos'
+import { parseStoredFlags } from '../../src/modules/worker/domain/persist-completion'
 import { onboardingReconcilerJob } from '../../src/modules/onboarding/reconciler'
 import { writeTransaction } from '../../src/platform/persistence/db'
 import { workerHarness, type WorkerHarness } from './harness'
@@ -118,8 +119,18 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     const etag = (await h.get(h.b.userId)).headers['etag']
     await put('/v1/worker/profile/name', { firstName: 'Benjamin', middleName: null, lastName: 'Nguyen' }, () => h.b.userId) // a real change (the harness seeds Ben)
     expect((await h.get(h.b.userId)).headers['etag']).not.toBe(etag)
-    const stored = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { setupProgress: true } })
-    expect(stored.setupProgress).not.toBeNull()
+    // The invariant: after a write, the stored flags equal the flags the read computes. persistCompletion writes only
+    // on a change (U1 P7), so the bare worker (all false before and after) keeps a null setupProgress -- still equal.
+    // The filled worker's flags differ from its never-written null, so its write must land.
+    await put('/v1/worker/profile/bio', { bio: 'A bio long enough to count toward the profile badge, written in one go.' })
+    for (const w of [h.a, h.b]) {
+      const stored = await h.db.workerProfile.findUniqueOrThrow({ where: { id: w.profileId }, select: { setupProgress: true, profileCompleted: true } })
+      const c = (await profile(() => w.userId)).completion
+      expect(parseStoredFlags(stored.setupProgress), w.userId).toEqual({ accountDetails: c.accountDetails, compliance: c.compliance, trainings: c.trainings, services: c.services })
+      expect(stored.profileCompleted).toBe(c.profileCompleted)
+    }
+    const a = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { setupProgress: true } })
+    expect(a.setupProgress).not.toBeNull()
   })
 
   it('P9: a WORKER with no profile is 404 on every write; nothing is written', async () => {
