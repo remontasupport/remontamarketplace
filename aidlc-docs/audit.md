@@ -3701,3 +3701,10 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > merged, continue
 
 **AI action (2026-10-12):** PR #51 merged (`main` = `e9449f1`, 01:58Z); `deploy-api` run 38193968295 watched. The staging apply (the batched backfill, `--apply`) died after 355 s with Prisma **P2028** "Unable to start a transaction in the given time": an interactive transaction waits only Prisma's default `maxWait` of 2 s for a pool connection, which a cold Neon connection from this machine can exceed -- and `errors.ts` maps P2024 (the pool wait) to 503 but not P2028, so under pool pressure in production the same failure would be a 500. Fix branch next: P2028 -> 503 `reason: pool`; `maxWait` aligned with the pool wait (5 s) in `unitOfWork` and `readTransaction`; then the apply re-run (idempotent).
+
+**AI action (2026-10-12):** `fix/transaction-max-wait` (`18b6aa2`): `errors.ts` maps P2028 to 503 `reason: pool` beside P2024; `TRANSACTION_MAX_WAIT_MS = 5000` on `unitOfWork` and `readTransaction` (Prisma's default 2 s); a test case. The staging apply re-run with it (02:01Z). PR #51's deploy (run 38193968295) green: staging has the exemption support.
+
+**User input (verbatim, 2026-10-12):**
+> merged
+
+**AI action (2026-10-12):** PR #52 merged (`main` = `b9ff6f4`, 02:04Z); its `deploy-api` run 38194346889 watched. The per-IP override on staging waits for that deploy (a `services replace` would drop a value set earlier); then load test run 2 and the drills.
