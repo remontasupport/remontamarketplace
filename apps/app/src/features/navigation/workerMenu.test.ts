@@ -42,12 +42,14 @@ describe("WORKER_MENU", () => {
     expect(WORKER_MENU.every((m) => !!m.href !== !!m.children)).toBe(true);
   });
 
-  it("R8.2 as rearranged (2026-10-12): My Profile's order, the Other Personal Info sub-group, each a profile page", () => {
+  it("R8.2 as rearranged (2026-10-12): My Profile's order, the two sub-groups, each a profile page", () => {
     const links = editProfileChildren(base);
     expect(links.map((l) => l.label)).toEqual([
-      "Name", "Profile Photo", "Bio", "Address", "Date of Birth", "Gender", "Vehicle", "Language", "Experience", "Work History", "Education",
-      "Preferred Hours", "Other Personal Info", "Bank Account",
+      "Personal Information", "Experience", "Work History", "Education", "Preferred Hours", "Other Personal Info", "Bank Account",
     ]);
+    const personal = links.find((l) => l.id === "personal-information")!;
+    expect(personal.children!.map((l) => l.label)).toEqual(["Name", "Profile Photo", "Bio", "Address", "Date of Birth", "Gender", "Vehicle", "Language"]);
+    expect(personal.href).toBe("/dashboard/worker/profile/name");
     const group = links.find((l) => l.id === "other-personal-info")!;
     expect(group.children!.map((l) => l.label)).toEqual(["Good to Know", "Cultural Background", "Religion", "Interests", "About Me", "Preferences", "Personality"]);
     expect(group.done).toBe(false);
@@ -59,7 +61,7 @@ describe("WORKER_MENU", () => {
   });
 
   it("done states follow the read", () => {
-    const done = (p: Profile) => Object.fromEntries(editProfileChildren(p).map((l) => [l.id, l.done]));
+    const done = (p: Profile) => Object.fromEntries(editProfileChildren(p).flatMap((l) => l.children ?? [l]).map((l) => [l.id, l.done]));
     expect(done(base)).toMatchObject({ name: true, photo: false, bio: false, address: false, "bank-account": false });
     const filled = { ...base, bio: "x".repeat(50), photos: { main: "https://x.test/a.jpg", additional: [] } };
     expect(done(filled)).toMatchObject({ photo: true, bio: true });

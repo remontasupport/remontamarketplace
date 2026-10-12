@@ -21,7 +21,7 @@ export interface MenuLink {
   label: string;
   href: string;
   done?: boolean;
-  /** A sub-group's links (Other Personal Info); its own href is its first link. */
+  /** A sub-group's links (Personal Information, Other Personal Info); its own href is its first link. */
   children?: MenuLink[];
 }
 
@@ -43,23 +43,27 @@ export const sectionHref = (slug: string) => `${PROFILE_BASE}/${slug}`;
 const filled = (a: readonly unknown[] | undefined | null) => !!a && a.length > 0;
 const info = (p: Profile) => p.sections.additionalInfo;
 
-/** My Profile's one sub-group (user, 2026-10-12): the additional-details sections under one heading. */
-export const OTHER_PERSONAL_INFO = { id: "other-personal-info", label: "Other Personal Info" } as const;
+/** My Profile's sub-groups (user, 2026-10-12): the personal sections, and the additional-details sections. */
+export const PROFILE_GROUPS = {
+  "personal-information": "Personal Information",
+  "other-personal-info": "Other Personal Info",
+} as const;
+export type ProfileGroup = keyof typeof PROFILE_GROUPS;
 
 /**
  * R8.2 as rearranged by the user (2026-10-12): My Profile's sections in order, each with its done state from the
- * read. The personal-info write is three pages (date of birth, gender, vehicle); the additional-details sections
- * sit in the Other Personal Info sub-group. The photo, preferred hours and bank account keep a place (user choice).
+ * read. Name to Language sit in the Personal Information sub-group (the personal-info write is three pages: date of
+ * birth, gender, vehicle); the additional-details sections sit in the Other Personal Info sub-group. The photo, preferred hours and bank account keep a place (user choice).
  */
-export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: typeof OTHER_PERSONAL_INFO.id }[] = [
-  { slug: "name", label: "Name", done: (p) => !!p.names.firstName && !!p.names.lastName },
-  { slug: "photo", label: "Profile Photo", done: (p) => !!p.photos.main },
-  { slug: "bio", label: "Bio", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
-  { slug: "address", label: "Address", done: (p) => !!p.homeAddress && !!p.serviceArea },
-  { slug: "date-of-birth", label: "Date of Birth", done: (p) => !!p.personalInfo.dateOfBirth },
-  { slug: "gender", label: "Gender", done: (p) => !!p.personalInfo.gender },
-  { slug: "vehicle", label: "Vehicle", done: (p) => !!p.personalInfo.hasVehicle },
-  { slug: "languages", label: "Language", done: (p) => filled(info(p)?.languages) },
+export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup }[] = [
+  { slug: "name", label: "Name", group: "personal-information", done: (p) => !!p.names.firstName && !!p.names.lastName },
+  { slug: "photo", label: "Profile Photo", group: "personal-information", done: (p) => !!p.photos.main },
+  { slug: "bio", label: "Bio", group: "personal-information", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
+  { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress && !!p.serviceArea },
+  { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth },
+  { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender },
+  { slug: "vehicle", label: "Vehicle", group: "personal-information", done: (p) => !!p.personalInfo.hasVehicle },
+  { slug: "languages", label: "Language", group: "personal-information", done: (p) => filled(info(p)?.languages) },
   { slug: "experience", label: "Experience", done: (p) => filled(p.sections.experience) },
   { slug: "work-history", label: "Work History", done: (p) => filled(p.sections.jobHistory) },
   { slug: "education", label: "Education", done: (p) => filled(p.sections.education) },
@@ -84,7 +88,7 @@ export function editProfileChildren(profile: Profile | undefined): MenuLink[] {
       continue;
     }
     let g = out.find((l) => l.id === c.group);
-    if (!g) out.push((g = { id: OTHER_PERSONAL_INFO.id, label: OTHER_PERSONAL_INFO.label, href: link.href, children: [] }));
+    if (!g) out.push((g = { id: c.group, label: PROFILE_GROUPS[c.group], href: link.href, children: [] }));
     g.children!.push(link);
     g.done = profile ? g.children!.every((x) => x.done) : undefined;
   }
