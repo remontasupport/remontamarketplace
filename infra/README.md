@@ -106,3 +106,57 @@ the previous revision and the deploy job fails — by design.
 
 One always-on 1 vCPU / 512 MiB instance ≈ A$80–100 a month; prod at 1 GiB slightly more; a second
 environment doubles it. Requests, registry storage and logs at this traffic are a few dollars.
+
+**Scaling to ten (worker-profile-api U1, 2026-10-12).** Prod's `maxInstances` is 10 (`lib/stages.ts`):
+10,000 workers an hour is about 25 requests a second sustained and 125 in a burst; one instance carries
+the sustained rate, the other nine are headroom that only a sustained overload would keep busy. Ten
+instances all month would be about ten times the always-on figure (≈ A$900–1,000); the 5xx-ratio alert
+reports a sustained overload long before that. **Budget (console, once):** Cloud Billing → Budgets →
+scope the project `remonta-api-510206`, A$300 a month, thresholds 50 %, 90 % and 100 % of actual spend,
+email `support@remontaservices.com.au`. Budgets are not in the table; record the date it was created here.
+
+## Database connections (U1 worker-area)
+
+At full scale the api holds `maxInstances × DB_POOL_SIZE` = 10 × 5 = **50** pooled connections on prod (5
+on staging), plus whatever `apps/app`'s own Prisma pool holds (`connection_limit` in its database URL). Both
+must fit Neon's pooler. Verified by the operator in the Neon console before PR 1 merges (infrastructure
+design §2); fill the placeholders in and keep them current:
+
+| | Production | `rehearse-w1` (staging) |
+|---|---|---|
+| Pooled host (`-pooler`) in the latest `AUTH_DATABASE_URL` secret version | _to record_ | _to record_ |
+| `?pgbouncer=true` present | _to record_ | _to record_ |
+| Compute size (CU) and autoscaling range | _to record_ | _to record_ |
+| Neon `max_connections` for that size | _to record_ | _to record_ |
+| Pooler limit (`default_pool_size`) vs 50 + the app's pool | _to record_ | _to record_ |
+| Verified on | _date_ | _date_ |
+
+A pool wait past `DB_POOL_TIMEOUT_S` is a 503 (`reason: pool`) and a statement past its timeout a 503
+(`reason: timeout`), both with `Retry-After`; the health check keeps answering 200 while any transaction
+committed in the last 30 s (`docs/worker/README.md` §6).
+
+## Drills (U1 worker-area)
+
+Both on **staging only**, both recorded in the cycle's construction notes
+(`aidlc-docs/construction/worker-area/code/`). The load test itself: `docs/worker/README.md` §7.
+
+**Burst.** Run the load test with `--burst 5` and, in a second terminal, watch the service:
+
+```
+gcloud run revisions list --service remonta-api-staging --region australia-southeast1 --limit 3
+gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="remonta-api-staging" AND (textPayload:"liveness" OR severity>=ERROR)' --freshness=15m --limit 50
+```
+
+Expected: no liveness failure, no restart; the report's 503 share for the burst phase is noted.
+
+**Event-loop signal.** Lower the shedder's threshold on the live staging service, run five minutes at the
+sustained rate, then restore the rendered configuration by redeploying the same image (the override is not
+in the table, so a redeploy removes it):
+
+```
+gcloud run services update remonta-api-staging --region australia-southeast1 --update-env-vars MAX_EVENT_LOOP_DELAY_MS=50
+pnpm --filter @remonta/api load:worker -- --base-url <staging url> --rate 25 --minutes 5 --burst 1 --report <file>
+# restore: Actions → deploy-api → Run workflow → stage=staging, imageTag=<the same sha>
+```
+
+Expected: 503 lines with `reason: "shed"` during the run and none after the restore; health 200 throughout.
