@@ -2,7 +2,7 @@
 // argument parsing, the request mix and the threshold evaluation. No network.
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { chooseRequest, evaluate, formatRows, guardTargets, parseArgs, type PhaseStats } from '../../scripts/load-worker'
+import { chooseRequest, evaluate, formatRows, guardTargets, parseArgs, staleTokens, TOKEN_REFRESH_AFTER_MS, type PhaseStats } from '../../scripts/load-worker'
 
 describe('guardTargets (R7.1)', () => {
   const staging = 'https://remonta-api-staging-154148201608.australia-southeast1.run.app'
@@ -69,5 +69,19 @@ describe('evaluate (U1-PRF-03, NFR requirements Q2)', () => {
     expect(fails({ sustained: phase(), burst: phase({ admittedLatency: { p95: 1001 } }) })).toEqual(['burst: p95 of admitted <= 1000 ms'])
     expect(fails({ sustained: phase(), burst: phase(), recovery: phase({ lastUnavailableAtS: 31 }) })).toEqual(['recovery: no 503 after 30 s'])
     expect(fails({ sustained: phase(), burst: phase(), recovery: phase({ status: { 200: 1, 502: 1 } }) })).toEqual(['recovery: no 5xx other than 503'])
+  })
+})
+
+describe('staleTokens (R7.2: five-minute tokens, refreshed after four, inside a phase too)', () => {
+  it('returns exactly the workers past the refresh age', () => {
+    const now = 1_000_000_000
+    const workers = [
+      { id: 'fresh', mintedAt: now - 1000 },
+      { id: 'edge', mintedAt: now - TOKEN_REFRESH_AFTER_MS },
+      { id: 'stale', mintedAt: now - TOKEN_REFRESH_AFTER_MS - 1 },
+      { id: 'old', mintedAt: now - 600_000 },
+    ]
+    expect(staleTokens(workers, now).map((w) => w.id)).toEqual(['stale', 'old'])
+    expect(TOKEN_REFRESH_AFTER_MS).toBeLessThan(300_000)
   })
 })
