@@ -3842,3 +3842,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > actually, can you place both the My Services inside and Edit Services items to Services
 
 **AI action (2026-10-12):** Sidebar (deviation from D11/R8.1, user decision): the two service items merged into one **Services** group after My Profile: "Edit Services" (`/dashboard/worker/services/manage`) first, then one setup step per chosen service (hrefs unchanged). Menu now: Dashboard, My Profile, Services, Mandatory, Trainings, Additional Credentials, My Jobs, Account. `workerMenu.test.ts` asserts the order, the first child and that both service pages open the group; the duplicate-label question is resolved.
+
+**User input (verbatim, 2026-10-12):**
+> ther is an error  in Feat/edit profile app- #57, can you check
+
+**AI action (2026-10-12, PR #57 CI on `f5fbcd0`):** Two failures. (1) API Quality Node 22: the U1 completion property found a counterexample (seed -647976850): trainings api true, oracle false, for a PENDING `Personal Trainer:medication-training` SERVICE_QUALIFICATION row with no file beside a SUBMITTED training row. Not an api bug: R3.6 [fix] (count by status) gives true; the test's fix-case detector skipped SERVICE_QUALIFICATION rows before its training check. Fixed in the detector, the case added as a regression test, 30,000 random runs agree, the plain-partition floor on the fixed sample lowered 500 -> 400 (494). api gate locally 564 passed / 167 database-gated skipped. (2) Vercel `remontamarketplace` preview failed on `f5fbcd0` only (green on `2965ec3` and `c0f6c25`; the commit touched only apps/app and docs; the web build passes locally): treated as transient, re-triggered by the push. No log access (the Vercel CLI is not signed in here).
