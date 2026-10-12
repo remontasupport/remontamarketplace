@@ -64,12 +64,12 @@ query does. `CategoryDocument.documentType` has `OPTIONAL` rows (e.g. `qualifica
 3. **Statement count (U1-PRF-01 "≤ 8")**: Prisma's nested selects issue one statement per relation (not per
    row): **17** on CI's first run for a worker with services (the profile, its nine relations, the catalogue and
    its five); the test holds the bound at 20 and proves it does not grow with the rows. Collapsing them needs
-   Prisma's  preview or raw SQL, both excluded for U1 by decision (T3); revisit if the load report
+   Prisma's `relationJoins` preview or raw SQL, both excluded for U1 by decision (T3); revisit if the load report
    shows the read dominating.
-3b. **The statement timeout is set with **, a bound parameter in a
-   tagged template, instead of the design's  through  of a constant: the new Semgrep rule
-   flagged the template form in  on PR #50's first run (a  with a non-literal argument is exactly
-   what it rejects), and the admin search's identical line was converted too, so no  remains in the
+3b. **The statement timeout is set with `set_config('statement_timeout', $1, true)`**, a bound parameter in a
+   tagged template, instead of the design's `SET LOCAL` through `Prisma.raw` of a constant: the new Semgrep rule
+   flagged the template form in `db.ts` on PR #50's first run (a `Prisma.raw` with a non-literal argument is exactly
+   what it rejects), and the admin search's identical line was converted too, so no `Prisma.raw` remains in the
    service. Same semantics (a transaction-local setting).
 4. **`platformHandlers` takes `{db, clock, lastSuccessAt?}`** (was `(db)`) for the fake clock in the tests.
 5. **The catalogue query keeps today's quirk**: with no sub-category chosen, every sub-category of the matched
