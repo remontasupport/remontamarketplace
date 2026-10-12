@@ -113,7 +113,7 @@ the sustained rate, the other nine are headroom that only a sustained overload w
 instances all month would be about ten times the always-on figure (≈ A$900–1,000); the 5xx-ratio alert
 reports a sustained overload long before that. **Budget (console, once):** Cloud Billing → Budgets →
 scope the project `remonta-api-510206`, A$300 a month, thresholds 50 %, 90 % and 100 % of actual spend,
-email `support@remontaservices.com.au`. Budgets are not in the table; record the date it was created here.
+email `support@remontaservices.com.au`. Budgets are not in the table. **Created 2026-10-12** by the billing owner (the `support@` account cannot see the billing account).
 
 ## Database connections (U1 worker-area)
 
