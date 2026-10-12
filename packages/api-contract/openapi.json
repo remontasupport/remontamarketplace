@@ -50,6 +50,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "x-remonta-security": {
@@ -151,6 +161,16 @@
           },
           "500": {
             "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -288,6 +308,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "x-remonta-security": {
@@ -387,6 +417,16 @@
           },
           "500": {
             "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -648,6 +688,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "x-remonta-security": {
@@ -805,6 +855,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "x-remonta-security": {
@@ -906,6 +966,16 @@
           },
           "500": {
             "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -1735,6 +1805,9 @@
               }
             }
           },
+          "304": {
+            "description": "Not Modified: the If-None-Match header matched the current ETag; no body."
+          },
           "400": {
             "description": "INVALID_REQUEST",
             "content": {
@@ -1777,6 +1850,16 @@
           },
           "500": {
             "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -1906,6 +1989,9 @@
               }
             }
           },
+          "304": {
+            "description": "Not Modified: the If-None-Match header matched the current ETag; no body."
+          },
           "400": {
             "description": "INVALID_REQUEST",
             "content": {
@@ -1948,6 +2034,16 @@
           },
           "500": {
             "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
             "content": {
               "application/json": {
                 "schema": {
@@ -2233,6 +2329,9 @@
               }
             }
           },
+          "304": {
+            "description": "Not Modified: the If-None-Match header matched the current ETag; no body."
+          },
           "400": {
             "description": "INVALID_REQUEST",
             "content": {
@@ -2282,6 +2381,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         },
         "x-remonta-security": {
@@ -2300,6 +2409,1009 @@
             {
               "per": "ip",
               "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "privateCacheSeconds": 60
+        }
+      }
+    },
+    "/v1/worker/profile": {
+      "get": {
+        "operationId": "worker.getProfile",
+        "summary": "The signed-in worker's own profile in one read: columns, sections, services, the completion flags and the requirement groups; privately cacheable for a minute with ETag/304.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "names": {
+                      "type": "object",
+                      "properties": {
+                        "firstName": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "middleName": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "lastName": {
+                          "type": "string",
+                          "maxLength": 100
+                        }
+                      },
+                      "required": [
+                        "firstName",
+                        "middleName",
+                        "lastName"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "mobile": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "photos": {
+                      "type": "object",
+                      "properties": {
+                        "main": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 2048
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "additional": {
+                          "maxItems": 10,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 2048
+                          }
+                        }
+                      },
+                      "required": [
+                        "main",
+                        "additional"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "bio": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "personalInfo": {
+                      "type": "object",
+                      "properties": {
+                        "dateOfBirth": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "age": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "gender": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "hasVehicle": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "Yes",
+                                "No"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "languages": {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 40
+                          }
+                        }
+                      },
+                      "required": [
+                        "dateOfBirth",
+                        "age",
+                        "gender",
+                        "hasVehicle",
+                        "languages"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "abn": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "abn",
+                                "tfn"
+                              ]
+                            },
+                            "value": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "signed": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "value",
+                            "signed"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "homeAddress": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "streetLine": {
+                              "type": "string",
+                              "maxLength": 200
+                            },
+                            "localityId": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "suburb": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "state": {
+                              "type": "string",
+                              "maxLength": 10
+                            },
+                            "postcode": {
+                              "type": "string",
+                              "maxLength": 10
+                            }
+                          },
+                          "required": [
+                            "streetLine",
+                            "localityId",
+                            "suburb",
+                            "state",
+                            "postcode"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "serviceArea": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "localityId": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "label": {
+                              "type": "string",
+                              "maxLength": 120
+                            },
+                            "travelRadiusKm": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "precision": {
+                              "type": "string",
+                              "enum": [
+                                "LOCALITY",
+                                "ADDRESS"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "localityId",
+                            "label",
+                            "travelRadiusKm",
+                            "precision"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "displayRole": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "verificationStatus": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_STARTED",
+                        "IN_PROGRESS",
+                        "PENDING_REVIEW",
+                        "APPROVED",
+                        "REJECTED"
+                      ]
+                    },
+                    "isPublished": {
+                      "type": "boolean"
+                    },
+                    "completion": {
+                      "type": "object",
+                      "properties": {
+                        "accountDetails": {
+                          "type": "boolean"
+                        },
+                        "compliance": {
+                          "type": "boolean"
+                        },
+                        "trainings": {
+                          "type": "boolean"
+                        },
+                        "services": {
+                          "type": "boolean"
+                        },
+                        "profileCompleted": {
+                          "type": "boolean"
+                        },
+                        "percent": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      },
+                      "required": [
+                        "accountDetails",
+                        "compliance",
+                        "trainings",
+                        "services",
+                        "profileCompleted",
+                        "percent"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "requirements": {
+                      "type": "object",
+                      "properties": {
+                        "mandatory": {
+                          "maxItems": 100,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 80
+                              },
+                              "name": {
+                                "type": "string",
+                                "maxLength": 120
+                              },
+                              "requirementType": {
+                                "type": "string",
+                                "maxLength": 80
+                              },
+                              "documentType": {
+                                "type": "string",
+                                "enum": [
+                                  "REQUIRED",
+                                  "OPTIONAL"
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "missing",
+                                  "submitted",
+                                  "approved",
+                                  "rejected",
+                                  "expired"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "requirementType",
+                              "documentType",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "trainings": {
+                          "maxItems": 100,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 80
+                              },
+                              "name": {
+                                "type": "string",
+                                "maxLength": 120
+                              },
+                              "requirementType": {
+                                "type": "string",
+                                "maxLength": 80
+                              },
+                              "documentType": {
+                                "type": "string",
+                                "enum": [
+                                  "REQUIRED",
+                                  "OPTIONAL"
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "missing",
+                                  "submitted",
+                                  "approved",
+                                  "rejected",
+                                  "expired"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "requirementType",
+                              "documentType",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "mandatory",
+                        "trainings"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "services": {
+                      "maxItems": 50,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "categoryId": {
+                            "type": "string",
+                            "maxLength": 80
+                          },
+                          "categoryName": {
+                            "type": "string",
+                            "maxLength": 120
+                          },
+                          "subcategoryIds": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 80
+                            }
+                          },
+                          "subcategoryNames": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 120
+                            }
+                          }
+                        },
+                        "required": [
+                          "categoryId",
+                          "categoryName",
+                          "subcategoryIds",
+                          "subcategoryNames"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "sections": {
+                      "type": "object",
+                      "properties": {
+                        "availability": {
+                          "maxItems": 100,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "day": {
+                                "type": "string",
+                                "enum": [
+                                  "MONDAY",
+                                  "TUESDAY",
+                                  "WEDNESDAY",
+                                  "THURSDAY",
+                                  "FRIDAY",
+                                  "SATURDAY",
+                                  "SUNDAY"
+                                ]
+                              },
+                              "startMinute": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1440
+                              },
+                              "endMinute": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1440
+                              }
+                            },
+                            "required": [
+                              "day",
+                              "startMinute",
+                              "endMinute"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "experience": {
+                          "maxItems": 10,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "domain": {
+                                "type": "string",
+                                "enum": [
+                                  "DISABILITY",
+                                  "AGED_CARE",
+                                  "WORKING_WITH_CHILDREN",
+                                  "MENTAL_HEALTH",
+                                  "CHRONIC_MEDICAL"
+                                ]
+                              },
+                              "isProfessional": {
+                                "type": "boolean"
+                              },
+                              "isPersonal": {
+                                "type": "boolean"
+                              },
+                              "specificAreas": {
+                                "maxItems": 50,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 120
+                                }
+                              },
+                              "otherAreas": {
+                                "maxItems": 50,
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "maxLength": 120
+                                }
+                              },
+                              "description": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 2000
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "domain",
+                              "isProfessional",
+                              "isPersonal",
+                              "specificAreas",
+                              "otherAreas",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "jobHistory": {
+                          "maxItems": 100,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 40
+                              },
+                              "jobTitle": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "company": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "startMonth": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "startYear": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "endMonth": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "endYear": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "currentlyWorking": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "jobTitle",
+                              "company",
+                              "startMonth",
+                              "startYear",
+                              "endMonth",
+                              "endYear",
+                              "currentlyWorking"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "education": {
+                          "maxItems": 100,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 40
+                              },
+                              "institution": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "qualification": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "startMonth": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "startYear": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "endMonth": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "endYear": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "currentlyStudying": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "institution",
+                              "qualification",
+                              "startMonth",
+                              "startYear",
+                              "endMonth",
+                              "endYear",
+                              "currentlyStudying"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalInfo": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "languages": {
+                                  "maxItems": 50,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 40
+                                  }
+                                },
+                                "culturalBackground": {
+                                  "maxItems": 50,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 80
+                                  }
+                                },
+                                "religion": {
+                                  "maxItems": 50,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 80
+                                  }
+                                },
+                                "interests": {
+                                  "maxItems": 50,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 80
+                                  }
+                                },
+                                "workPreferences": {
+                                  "maxItems": 50,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 80
+                                  }
+                                },
+                                "lgbtqiaSupport": {
+                                  "type": [
+                                    "boolean",
+                                    "null"
+                                  ]
+                                },
+                                "nonSmoker": {
+                                  "type": [
+                                    "boolean",
+                                    "null"
+                                  ]
+                                },
+                                "petFriendly": {
+                                  "type": [
+                                    "boolean",
+                                    "null"
+                                  ]
+                                },
+                                "personality": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "maxLength": 2000
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "uniqueService": {
+                                  "maxItems": 50,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "maxLength": 200
+                                  }
+                                },
+                                "funFact": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "maxLength": 1000
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "languages",
+                                "culturalBackground",
+                                "religion",
+                                "interests",
+                                "workPreferences",
+                                "lgbtqiaSupport",
+                                "nonSmoker",
+                                "petFriendly",
+                                "personality",
+                                "uniqueService",
+                                "funFact"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "bankAccount": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "accountName": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "bankName": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "bsbLast3": {
+                                  "type": "string",
+                                  "pattern": "^\\d{3}$"
+                                },
+                                "accountNumberLast3": {
+                                  "type": "string",
+                                  "pattern": "^\\d{3}$"
+                                }
+                              },
+                              "required": [
+                                "accountName",
+                                "bankName",
+                                "bsbLast3",
+                                "accountNumberLast3"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "availability",
+                        "experience",
+                        "jobHistory",
+                        "education",
+                        "additionalInfo",
+                        "bankAccount"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "names",
+                    "mobile",
+                    "photos",
+                    "bio",
+                    "personalInfo",
+                    "abn",
+                    "homeAddress",
+                    "serviceArea",
+                    "displayRole",
+                    "verificationStatus",
+                    "isPublished",
+                    "completion",
+                    "requirements",
+                    "services",
+                    "sections",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified: the If-None-Match header matched the current ETag; no body."
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 120,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 300,
               "window": "1m"
             }
           ],
