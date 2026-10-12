@@ -6,7 +6,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
 import { PROFILE_REDIRECTS, profileRedirects } from "@/config/profileRedirects";
 import { isProfilePage } from "@/features/worker/definitions";
-import { applyReadiness, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, WORKER_MENU } from "./workerMenu";
+import { applyReadiness, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, servicesChildren, WORKER_MENU } from "./workerMenu";
 
 const APP = join(__dirname, "../../app");
 const pageExists = (href: string) => existsSync(join(APP, ...href.split("/").filter(Boolean), "page.tsx"));
@@ -34,7 +34,7 @@ const base: Profile = profileSchema.parse({
 
 describe("WORKER_MENU", () => {
   it("R8.1: D11's order", () => {
-    expect(WORKER_MENU.map((m) => m.label)).toEqual(["Dashboard", "My Profile", "My Services", "Mandatory", "Trainings", "My Services", "Additional Credentials", "My Jobs", "Account"]);
+    expect(WORKER_MENU.map((m) => m.label)).toEqual(["Dashboard", "My Profile", "Services", "Mandatory", "Trainings", "Additional Credentials", "My Jobs", "Account"]);
   });
 
   it("R8.5: every static href is a page file", () => {
@@ -73,6 +73,13 @@ describe("WORKER_MENU", () => {
     expect(requirementsForSteps(base)).toEqual({ requirements: { baseCompliance: [{ id: "police-check", name: "Police check" }], trainings: [] } });
     expect(groupOfPath("/dashboard/worker/profile/bio")).toBe("edit-profile");
     expect(groupOfPath("/dashboard/worker/requirements/setup")).toBe("mandatory");
+  });
+
+  it("Services: Edit Services first (a page), then the setup steps; both service pages open the group", () => {
+    expect(servicesChildren([{ id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" }]).map((l) => l.label)).toEqual(["Edit Services", "Nursing"]);
+    expect(pageExists(EDIT_SERVICES_LINK.href)).toBe(true);
+    expect(groupOfPath("/dashboard/worker/services/manage")).toBe("services");
+    expect(groupOfPath("/dashboard/worker/services/setup")).toBe("services");
   });
 
   it("the job-apply check names what is missing", () => {

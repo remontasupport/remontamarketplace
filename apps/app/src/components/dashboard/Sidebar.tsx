@@ -21,18 +21,19 @@ import {
   HandRaisedIcon,
   HomeIcon,
   PencilIcon,
-  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline'
 import { generateServicesSetupSteps, getServicesStepUrl } from '@/config/servicesSetupSteps'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
 import type { WorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import {
+  EDIT_SERVICES_LINK,
   editProfileBadge,
   editProfileChildren,
   groupOfPath,
   requirementsForSteps,
   serviceNamesOf,
+  servicesChildren,
   WORKER_MENU,
   type ChildrenSource,
   type MenuIcon,
@@ -43,7 +44,6 @@ import { useWorkerProfile } from '@/features/worker/profile'
 const ICONS: Record<MenuIcon, React.ComponentType<{ className?: string }>> = {
   dashboard: HomeIcon,
   editProfile: PencilIcon,
-  editServices: WrenchScrewdriverIcon,
   mandatory: ClipboardDocumentCheckIcon,
   trainings: AcademicCapIcon,
   myServices: HandRaisedIcon,
@@ -70,14 +70,14 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
 
   // R8.2-R8.4: every group's children from the one read; null while it loads (a skeleton).
   const children = useMemo<Record<ChildrenSource, MenuLink[] | null>>(() => {
-    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), mandatory: null, trainings: null, myServices: null }
+    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: [EDIT_SERVICES_LINK], mandatory: null, trainings: null }
     const reqs = requirementsForSteps(profile) as unknown as WorkerRequirements | undefined
     const names = serviceNamesOf(profile)
     return {
       editProfile: editProfileChildren(profile),
       mandatory: generateComplianceSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getComplianceStepUrl(s.slug) })),
       trainings: generateTrainingSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getTrainingStepUrl(s.slug) })),
-      myServices: (names.length ? generateServicesSetupSteps(names) : []).map((s) => ({ id: s.slug, label: s.title, href: getServicesStepUrl(s.slug) })),
+      services: servicesChildren((names.length ? generateServicesSetupSteps(names) : []).map((s) => ({ id: s.slug, label: s.title, href: getServicesStepUrl(s.slug) }))),
     }
   }, [profile, isLoading])
   const badge = editProfileBadge(profile)

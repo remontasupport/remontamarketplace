@@ -4,9 +4,9 @@
 // order and the links are tested without rendering.
 import type { Profile } from "@remonta/api-contract";
 
-export type MenuIcon = "dashboard" | "editProfile" | "editServices" | "mandatory" | "trainings" | "myServices" | "credentials" | "jobs" | "account";
+export type MenuIcon = "dashboard" | "editProfile" | "mandatory" | "trainings" | "myServices" | "credentials" | "jobs" | "account";
 /** Where a group's children come from (R8.4): the Edit Profile sections, or the profile read's lists. */
-export type ChildrenSource = "editProfile" | "mandatory" | "trainings" | "myServices";
+export type ChildrenSource = "editProfile" | "services" | "mandatory" | "trainings";
 
 export interface MenuItem {
   id: string;
@@ -23,14 +23,13 @@ export interface MenuLink {
   done?: boolean;
 }
 
-/** R8.1: D11's order. */
+/** R8.1: D11's order, with Edit Services and My Services merged into one Services group (user, 2026-10-12). */
 export const WORKER_MENU: readonly MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "dashboard", href: "/dashboard/worker" },
   { id: "edit-profile", label: "My Profile", icon: "editProfile", children: "editProfile" },
-  { id: "edit-services", label: "My Services", icon: "editServices", href: "/dashboard/worker/services/manage" },
+  { id: "services", label: "Services", icon: "myServices", children: "services" },
   { id: "mandatory", label: "Mandatory", icon: "mandatory", children: "mandatory" },
   { id: "trainings", label: "Trainings", icon: "trainings", children: "trainings" },
-  { id: "my-services", label: "My Services", icon: "myServices", children: "myServices" },
   { id: "additional-credentials", label: "Additional Credentials", icon: "credentials", href: "/dashboard/worker/additional-documents" },
   { id: "my-jobs", label: "My Jobs", icon: "jobs", href: "/dashboard/worker/my-jobs" },
   { id: "account", label: "Account", icon: "account", href: "/dashboard/worker/account" },
@@ -88,6 +87,12 @@ export function requirementsForSteps(profile: Profile | undefined) {
   return { requirements: { baseCompliance: profile.requirements.mandatory.map(asDoc), trainings: profile.requirements.trainings.map(asDoc) } };
 }
 
+/** The Services group's first child: choosing services (the old "Edit Services" item). */
+export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "Edit Services", href: "/dashboard/worker/services/manage" };
+
+/** The Services group: Edit Services, then one setup step per chosen service (hrefs unchanged until U3). */
+export const servicesChildren = (steps: readonly MenuLink[]): MenuLink[] => [EDIT_SERVICES_LINK, ...steps];
+
 /** The service names the services steps are generated from. */
 export const serviceNamesOf = (profile: Profile | undefined) => profile?.services.map((s) => s.categoryName) ?? [];
 
@@ -96,7 +101,7 @@ export function groupOfPath(path: string): string | null {
   if (path.startsWith(PROFILE_BASE)) return "edit-profile";
   if (path.includes("/requirements/")) return "mandatory";
   if (path.includes("/trainings/")) return "trainings";
-  if (path.includes("/services/setup")) return "my-services";
+  if (path.includes("/services/")) return "services";
   return null;
 }
 
