@@ -15,6 +15,8 @@ const GENERIC: Record<ErrorStatus, string> = {
   503: 'The service is temporarily unavailable. Try again shortly.',
 }
 
+export type UnavailableReason = 'shed' | 'pool' | 'timeout' | 'limiter' | 'captcha' | 'db'
+
 export class ApiError extends Error {
   constructor(
     readonly status: ErrorStatus,
@@ -22,6 +24,8 @@ export class ApiError extends Error {
     readonly cause_: string = GENERIC[status],
     readonly fields?: Record<string, string[]>,
     readonly headers?: Record<string, string>,
+    /** Why a 503 was given (U1 worker-area, P12): shed | pool | timeout | limiter | captcha | db. Logged, never returned. */
+    readonly reason?: UnavailableReason,
   ) {
     super(cause_)
     this.name = 'ApiError'
@@ -60,7 +64,20 @@ export function statusOf(err: unknown): ErrorStatus {
  * as a raw-query error; U2 admin-search). All three are "try again shortly", not a bug.
  */
 export function isOverloadedDatabase(err: unknown): boolean {
+  return databaseReason(err) !== undefined
+}
+
+/** Which of the three it was, for the 503's log line (P12); undefined for anything else. */
+export function databaseReason(err: unknown): UnavailableReason | undefined {
   const e = err as { code?: unknown; name?: unknown; meta?: { code?: unknown }; message?: unknown } | null
-  if (e?.meta?.code === '57014' || /statement timeout/i.test(String(e?.message ?? ''))) return true
-  return e?.code === 'P2024' || e?.name === 'PrismaClientInitializationError'
+  if (e?.meta?.code === '57014' || /statement timeout/i.test(String(e?.message ?? ''))) return 'timeout'
+  if (e?.code === 'P2024') return 'pool'
+  if (e?.name === 'PrismaClientInitializationError') return 'db'
+  return undefined
+}
+
+/** The reason to log beside a 503, whichever layer produced it. */
+export function unavailableReason(err: unknown): UnavailableReason | undefined {
+  if (err instanceof ApiError) return err.status === 503 ? err.reason : undefined
+  return databaseReason(err)
 }

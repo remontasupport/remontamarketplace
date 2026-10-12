@@ -23,8 +23,51 @@ export function createDb(url: string, pool: { poolSize: number; poolTimeoutS: nu
  * One unit of work: the handler's writes, its audit record and its outbox events
  * commit together or not at all (NFR-ARCH-03).
  */
-export function unitOfWork<T>(db: Db, work: (tx: Tx) => Promise<T>): Promise<T> {
-  return db.$transaction(work, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 })
+export async function unitOfWork<T>(db: Db, work: (tx: Tx) => Promise<T>): Promise<T> {
+  const result = await db.$transaction(work, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 })
+  recordDbSuccess()
+  return result
+}
+
+/**
+ * A bounded read (U1 worker-area, NFR pattern P1): ReadCommitted, a statement timeout
+ * set as the transaction's first statement, at most 5 s on one connection. The
+ * timeout is a clamped integer constant from the caller, never input; a statement it
+ * cancels surfaces as Postgres 57014, which errors.ts maps to 503 + Retry-After.
+ */
+export async function readTransaction<T>(db: Db, statementTimeoutMs: number, work: (tx: Tx) => Promise<T>): Promise<T> {
+  const timeout = Math.max(100, Math.min(60_000, Math.trunc(statementTimeoutMs)))
+  const result = await db.$transaction(
+    async (tx) => {
+      // SET takes no bind parameter; the value is a bounded integer constant (see above).
+      await tx.$executeRaw(Prisma.raw(`SET LOCAL statement_timeout = ${timeout}`))
+      return work(tx)
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 },
+  )
+  recordDbSuccess()
+  return result
+}
+
+// ---- Recent-success health (U1 worker-area, NFR pattern P4) -------------------------
+// The instant a transaction last committed through this module. The health handler
+// answers without a query while this is recent: a busy instance whose pool is
+// saturated by real work is alive; one whose database is gone goes stale and fails.
+
+let lastSuccessAt: number | null = null
+
+export function recordDbSuccess(now: number = Date.now()): void {
+  lastSuccessAt = now
+}
+
+/** Milliseconds since the epoch of the last committed transaction, or null since boot. */
+export function lastDbSuccessAt(): number | null {
+  return lastSuccessAt
+}
+
+/** Tests only: back to the boot state. */
+export function resetDbSuccess(): void {
+  lastSuccessAt = null
 }
 
 export { Prisma }

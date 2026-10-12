@@ -38,8 +38,10 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
   const m = entry.meta
 
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    // 3. Rate limit, before anything costly. Per-user rules wait for step 5.
-    await enforceLimits(id, m.rateLimit.filter((r) => r.per !== 'user'), request, null, deps.rateLimiter)
+    // 3. Rate limit, before anything costly. Per-user rules wait for step 5. A probe
+    //    (the health check) never pays the limiter (U1 worker-area R6.1): its liveness
+    //    path has no database dependency of its own.
+    if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per !== 'user'), request, null, deps.rateLimiter)
 
     // 4. Bot check. The token is read from the raw body before validation, so an
     //    automated request is turned away without its payload being examined.
@@ -48,7 +50,7 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
       const outcome = await deps.captcha.verify(token, m.bot.captcha.action, request.ip)
       if (!outcome.ok) {
         request.log.warn({ entry: id, captcha: outcome.reason, detail: outcome.detail }, 'captcha refused')
-        throw new ApiError(outcome.reason === 'unavailable' ? 503 : 403, `captcha ${outcome.reason}`)
+        throw new ApiError(outcome.reason === 'unavailable' ? 503 : 403, `captcha ${outcome.reason}`, undefined, undefined, outcome.reason === 'unavailable' ? 'captcha' : undefined)
       }
     }
 
@@ -65,7 +67,7 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
       // handler's lines, the response line. Ids only, never a name or an email.
       request.log = request.log.child({ userId: principal.userId, ...(principal.impersonatorId ? { impersonatorId: principal.impersonatorId } : {}) })
       if (!m.access.roles.includes(principal.role)) throw new ApiError(403, `role ${principal.role} not in ${m.access.roles.join(',')}`)
-      await enforceLimits(id, m.rateLimit.filter((r) => r.per === 'user'), request, principal, deps.rateLimiter)
+      if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per === 'user'), request, principal, deps.rateLimiter)
     }
 
     // 7. Input validation.
@@ -133,8 +135,8 @@ async function enforceLimits(id: string, rules: readonly RateLimitRule[], reques
       decision = await limiter.hit(`${id}:${r.per}:${who}:${r.limit}/${r.window}`, r.limit, r.window)
     } catch (err) {
       // Fails closed: without the counter we cannot know the caller is within limits.
-      request.log.error({ err, entry: id }, 'rate limiter unavailable')
-      throw new ApiError(503, 'rate limiter unavailable')
+      request.log.error({ err, entry: id, reason: 'limiter' }, 'rate limiter unavailable')
+      throw new ApiError(503, 'rate limiter unavailable', undefined, undefined, 'limiter')
     }
     if (!decision.allowed) throw new ApiError(429, `rate limit ${r.per} ${r.limit}/${r.window}`, undefined, { 'retry-after': String(decision.retryAfter) })
   }
