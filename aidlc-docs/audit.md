@@ -3765,3 +3765,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > can I test it on the preview?
+
+**User input (verbatim, 2026-10-12):**
+> continue
+
+**AI action (2026-10-12):** The U1 clean-up PR started on `chore/u1-cleanup` from `main`: CLAUDE.md (the api rollback row, "the full sha" in the Promote line, the gate counts), `docs/worker/README.md` §7 (the production URL from Secret Manager, the guard, server-side latency, the full sha), `infra/README.md` (the pool design note), and the checklist runner committed as `apps/api/scripts/worker-check.ts` (`check:worker`, `--stage=prod`).
