@@ -118,6 +118,8 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+      - name: Apply pending migrations to the staging database (expand-only; before the new code runs)
+        run: .github/scripts/api-migrate.sh staging "${{ vars.GCP_PROJECT_ID }}"
       - name: Apply the rendered service definition with this image
         run: |
           sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ github.sha }}/g; s/__DEPLOY_ID__/${{ github.run_id }}-${{ github.run_attempt }}/g" infra/cloudrun/service.staging.yaml \
@@ -141,6 +143,8 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
       - name: The image must already exist (no build on a promotion)
         run: gcloud artifacts docker images describe "${{ env.IMAGE }}:${{ inputs.imageTag }}" --project "${{ vars.GCP_PROJECT_ID }}" --format='value(image_summary.digest)'
+      - name: Apply pending migrations to the ${{ inputs.stage }} database (expand-only; before the new code runs)
+        run: .github/scripts/api-migrate.sh ${{ inputs.stage }} "${{ vars.GCP_PROJECT_ID }}"
       - name: Apply the rendered service definition with that image
         run: |
           sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ inputs.imageTag }}/g; s/__DEPLOY_ID__/${{ github.run_id }}-${{ github.run_attempt }}/g" "infra/cloudrun/service.${{ inputs.stage }}.yaml" \

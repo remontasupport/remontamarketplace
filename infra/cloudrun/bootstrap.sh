@@ -79,6 +79,10 @@ gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$DEPL
 for STAGE in "${STAGES[@]}"; do
   gcloud iam service-accounts add-iam-policy-binding "$(service_for "$STAGE")-run@$PROJECT.iam.gserviceaccount.com" \
     --member="serviceAccount:$DEPLOY_SA" --role=roles/iam.serviceAccountUser >/dev/null
+  # The deploy workflow runs `prisma migrate deploy` against the stage's database before it
+  # replaces the service (worker-profile-api U2): the deploy account reads that one secret.
+  gcloud secrets add-iam-policy-binding "$(service_for "$STAGE")-AUTH_DATABASE_URL" \
+    --member="serviceAccount:$DEPLOY_SA" --role=roles/secretmanager.secretAccessor >/dev/null
 done
 
 say "6. Workload Identity Federation: GitHub Actions on $GITHUB_REPO main may act as $DEPLOY_SA"
