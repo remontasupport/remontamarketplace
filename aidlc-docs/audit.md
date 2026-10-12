@@ -3866,3 +3866,10 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > Missing items: "Keep them (Recommended)" · Vehicle: "Its own item after Gender (Recommended)" · Grouping: "A sub-group that opens (Recommended)"
 
 **AI action (2026-10-12):** My Profile rearranged on `feat/edit-profile-app` (deviation from R8.2, user decision): Name, Profile Photo, Bio, Address, Date of Birth, Gender, Vehicle, Language, Experience, Work History, Education, Preferred Hours, Other Personal Info (sub-group of the seven additional-details sections), Bank Account. The personal-info write (`putPersonalInfo`, all three answers) became three pages; form-engine gained `carried` fields (seeded from the read, sent back unchanged; shown while empty or in error so no page can block a save). Old `?step=personal-info` redirects to `date-of-birth`. Gates: form-engine 74, app 191 passed (baselines unchanged), build green.
+
+## 2026-10-12: U2 PR 3, preview link and the Personal Information sub-group
+**User input**: "what's the new preview link?"
+**AI response**: the remonta-app preview of a09505a, https://remonta-c7ix9nw5c-remontas-projects.vercel.app (both Vercel previews and all 13 checks green).
+
+**User input**: "bEFORE i MERGED, can we store the Name, Profile Photo, Bio, Address, Date of Birth, Gender, and Language to another parent name \"Personal Information\""
+**AI response**: commit 65c2130 on feat/edit-profile-app: My Profile's sub-groups are declared once (`PROFILE_GROUPS` in workerMenu.ts); Name, Profile Photo, Bio, Address, Date of Birth, Gender, Vehicle and Language form "Personal Information", then Experience, Work History, Education, Preferred Hours, Other Personal Info, Bank Account. Vehicle (not named in the request) stays between Gender and Language, so inside the group. The sidebar and the index render any sub-group already; menu test updated (9 pass), typecheck at the 139 baseline, docs/worker/README.md updated.
