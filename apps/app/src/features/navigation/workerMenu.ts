@@ -26,8 +26,8 @@ export interface MenuLink {
 /** R8.1: D11's order. */
 export const WORKER_MENU: readonly MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "dashboard", href: "/dashboard/worker" },
-  { id: "edit-profile", label: "Edit Profile", icon: "editProfile", children: "editProfile" },
-  { id: "edit-services", label: "Edit Services", icon: "editServices", href: "/dashboard/worker/services/manage" },
+  { id: "edit-profile", label: "My Profile", icon: "editProfile", children: "editProfile" },
+  { id: "edit-services", label: "My Services", icon: "editServices", href: "/dashboard/worker/services/manage" },
   { id: "mandatory", label: "Mandatory", icon: "mandatory", children: "mandatory" },
   { id: "trainings", label: "Trainings", icon: "trainings", children: "trainings" },
   { id: "my-services", label: "My Services", icon: "myServices", children: "myServices" },

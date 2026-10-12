@@ -34,7 +34,7 @@ const base: Profile = profileSchema.parse({
 
 describe("WORKER_MENU", () => {
   it("R8.1: D11's order", () => {
-    expect(WORKER_MENU.map((m) => m.label)).toEqual(["Dashboard", "Edit Profile", "Edit Services", "Mandatory", "Trainings", "My Services", "Additional Credentials", "My Jobs", "Account"]);
+    expect(WORKER_MENU.map((m) => m.label)).toEqual(["Dashboard", "My Profile", "My Services", "Mandatory", "Trainings", "My Services", "Additional Credentials", "My Jobs", "Account"]);
   });
 
   it("R8.5: every static href is a page file", () => {
