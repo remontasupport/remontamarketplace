@@ -161,6 +161,8 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
 `worker_services`, `verification_requirements` (`requirementType`, `status`, `documentCategory`, `documentUrl`),
 `worker_availability`, `worker_experience`, `worker_job_history`, `worker_education`, `worker_additional_info`,
 `worker_locations` (kind `HOME`) + `au_localities`, and the catalogue `Category` → `CategoryDocument` → `Document`
-and `Subcategory` → `SubcategoryDocument` → `Document`. One transaction issues one statement per relation (about a
-dozen), none per row; a test holds the count. The old Next.js routes and server actions keep working until each
-unit moves them.
+and `Subcategory` → `SubcategoryDocument` → `Document`. One transaction issues one statement per relation (17 for
+a worker with services: the profile, its nine relations, the catalogue and its five), none per row; a test holds
+the count at 20 at most. The statement timeout is set with `set_config('statement_timeout', $1, true)`, a bound
+parameter, so no raw SQL is built from a value anywhere in the service. The old Next.js routes and server actions
+keep working until each unit moves them.

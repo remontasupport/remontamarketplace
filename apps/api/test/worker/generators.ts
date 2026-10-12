@@ -272,7 +272,9 @@ export function fixCasesOf(input: CompletionInput): FixCase[] {
     // R3.5: a row today never checked (composite, contract, code of conduct) is checked now: it can fail the check, or be the one row that makes the check non-empty.
     const newlyChecked = r.requirementType.includes(':') || base === 'contract-of-agreement' || base === 'code-of-conduct'
     if (newlyChecked && (!ok || !oracleChecksSomething)) hits.add('status-compliance')
-    if (trainingTypes.has(base) && ok !== !!r.documentUrl) hits.add('trainings-status')
+    // R3.6: today every training row -- a PENDING duplicate included -- must carry a url, and a row counts by
+    // url not status; the fix counts by status alone, so any training row that is not (counting with a url) may differ.
+    if (trainingTypes.has(base) && (!ok || !r.documentUrl)) hits.add('trainings-status')
   }
   if (input.services.some((s) => s.subcategoryNames.length === 0)) hits.add('no-offerings')
   return [...hits]

@@ -41,8 +41,9 @@ export async function readTransaction<T>(db: Db, statementTimeoutMs: number, wor
   const timeout = Math.max(100, Math.min(60_000, Math.trunc(statementTimeoutMs)))
   const result = await db.$transaction(
     async (tx) => {
-      // SET takes no bind parameter; the value is a bounded integer constant (see above).
-      await tx.$executeRaw(Prisma.raw(`SET LOCAL statement_timeout = ${timeout}`))
+      // set_config(..., true) is SET LOCAL with a bind parameter (SET itself takes none), so the
+      // statement stays a tagged template: no Prisma.raw anywhere in the service (Semgrep rule).
+      await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
       return work(tx)
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 },
