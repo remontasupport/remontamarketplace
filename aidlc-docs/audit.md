@@ -3747,3 +3747,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > sucessed
+
+**AI action (2026-10-12, the promotion verified):** `deploy-api` dispatch run 38198491729 (03:07Z, imageTag the full sha) green: prod revision **`remonta-api-00008-dq4`** on image `b9ff6f4156923c89ae49ec0af59056e7cda71762`, maxScale 10, `MAX_IN_FLIGHT` 64, no `RATE_LIMIT_EXEMPT_IPS`; health 200; the worker route live behind auth. The 14 api checks against **production** with a production worker's token (read-only): ALL PASS (the body of a placed worker with three services; cache headers; 304; 401/403/404/400; the admin search 200; staging health 200). The production backfill: `apps/api/.env` points at the local database, not production (the runbook assumed otherwise; corrected in the notes), so the production URL comes from Secret Manager (`remonta-api-AUTH_DATABASE_URL`); the guard also requires `--allow-production` for a dry run (by design: any run on that host); the dry run is in progress.
+
+**User input (verbatim, 2026-10-12):**
+> continue
