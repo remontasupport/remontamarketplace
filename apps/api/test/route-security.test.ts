@@ -12,7 +12,16 @@ import { multipart, testApp, unreachableHandlers, type TestApp } from './helpers
 const all: readonly Contract[] = [...contracts, privateContract]
 const entries = all.flatMap((c) => Object.entries(c.entries).map(([name, entry]) => ({ id: `${c.area}.${name}`, entry: entry as EntryDef })))
 
-const url = (e: EntryDef, query = '') => e.path.replace(/:[a-zA-Z0-9]+/g, 'x1') + query
+/** The value url() puts in each path parameter. */
+const pathValues = (e: EntryDef): Record<string, string> =>
+  Object.fromEntries(Object.entries((e.pathParams?.shape ?? {}) as Record<string, { options?: readonly string[] }>).map(([k, v]) => [k, v.options?.[0] ?? 'x1']))
+
+/** A path with a valid value per parameter: an enumeration's first option (e.g. the additional-info group, U2), else 'x1'. */
+const url = (e: EntryDef, query = '') =>
+  e.path.replace(/:([a-zA-Z0-9]+)/g, (_m, name: string) => {
+    const param = (e.pathParams?.shape as Record<string, { options?: readonly string[] }> | undefined)?.[name]
+    return param?.options?.[0] ?? 'x1'
+  }) + query
 const VALID_TOKEN = { captchaToken: 'test-token' }
 
 let t: TestApp
@@ -128,7 +137,8 @@ describe.each(entries)('$id', ({ entry: e }) => {
     it('400 for unknown fields', async () => {
       t.rateLimiter.mode = 'allow'
       t.captcha.outcome = { ok: true, score: 0.9 }
-      const body = expectErrorShape(await send(e, { body: { ...VALID_TOKEN, notAField: 1 }, headers: signedInAdmin }), 400)
+      // A discriminated body (U2's additional-info groups) needs its discriminator to reach the unknown-key check; the path's values supply it.
+      const body = expectErrorShape(await send(e, { body: { ...VALID_TOKEN, ...pathValues(e), notAField: 1 }, headers: signedInAdmin }), 400)
       expect(JSON.stringify(body.error.fields)).toMatch(/Unrecognized key/)
     })
   }

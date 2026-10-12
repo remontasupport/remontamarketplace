@@ -43,7 +43,7 @@ describe('the entries (E2)', () => {
     expect(names).toHaveLength(17)
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
-      expect(e.meta.audit, name).toMatch(/^WORKER_[A-Z_]+$/)
+      expect(e.meta.audit, name).toBe('PROFILE_UPDATE')
       expect(e.meta.rateLimit.map((r) => r.per).sort(), name).toEqual(['ip', 'user'])
       expect(e.meta.maxBodyKb, name).toBeLessThanOrEqual(16)
       expect((e.meta as { privateCacheSeconds?: number }).privateCacheSeconds, name).toBeUndefined()

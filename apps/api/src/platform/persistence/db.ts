@@ -63,6 +63,18 @@ export async function readTransaction<T>(db: Db, statementTimeoutMs: number, wor
   return result
 }
 
+/**
+ * A section write (worker-profile-api U2, R1.2): unitOfWork with the statement timeout set
+ * first, as readTransaction does for reads. 5 s per statement, 10 s for the transaction.
+ */
+export async function writeTransaction<T>(db: Db, work: (tx: Tx) => Promise<T>, statementTimeoutMs = 5000): Promise<T> {
+  const timeout = Math.max(100, Math.min(60_000, Math.trunc(statementTimeoutMs)))
+  return unitOfWork(db, async (tx) => {
+    await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
+    return work(tx)
+  })
+}
+
 // ---- Recent-success health (U1 worker-area, NFR pattern P4) -------------------------
 // The instant a transaction last committed through this module. The health handler
 // answers without a query while this is recent: a busy instance whose pool is

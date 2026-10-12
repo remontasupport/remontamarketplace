@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import type { FastifyServerOptions } from 'fastify'
 
 // bankAccount, streetLine, storageKey, signedUrl: the worker profile's secrets (U1 worker-area, U1-SEC-02).
-const SENSITIVE = ['password', 'email', 'mobile', 'photo', 'token', 'captchaToken', 'authorization', 'cookie', 'firstName', 'lastName', 'bsb', 'accountNumber', 'bankAccount', 'streetLine', 'storageKey', 'signedUrl']
+const SENSITIVE = ['password', 'email', 'mobile', 'photo', 'token', 'captchaToken', 'authorization', 'cookie', 'firstName', 'lastName', 'bsb', 'accountNumber', 'bankAccount', 'streetLine', 'storageKey', 'signedUrl', 'abn']
 
 export const REDACT_PATHS = [
   ...SENSITIVE.flatMap((k) => [k, `*.${k}`, `*.*.${k}`]),

@@ -49,7 +49,7 @@ async function main() {
     // The admin lists (U2): behind the api token; the search is memoised per instance.
     adminHandlers({ db, clock: systemClock }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
-    workerHandlers({ db, clock: systemClock }),
+    workerHandlers({ db, clock: systemClock, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
     registrationHandlers({
       db,
       hasher,

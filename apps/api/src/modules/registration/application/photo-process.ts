@@ -40,14 +40,14 @@ export interface PhotoProcessDeps {
 export type ProcessOutcome = 'processed' | 'fallback' | 'already'
 
 export async function processPhoto(photoUploadId: string, workerProfileId: string, deps: PhotoProcessDeps, signal: AbortSignal): Promise<ProcessOutcome> {
-  const row = await deps.db.registrationPhotoUpload.findUnique({ where: { id: photoUploadId }, select: { blobKey: true, contentType: true } })
+  const row = await deps.db.registrationPhotoUpload.findUnique({ where: { id: photoUploadId }, select: { blobKey: true, contentType: true, url: true } })
   if (!row) throw new PermanentFailure(`photo ${photoUploadId}: no such upload`)
-  const profile = await deps.db.workerProfile.findUnique({ where: { id: workerProfileId }, select: { photos: true } })
+  const profile = await deps.db.workerProfile.findUnique({ where: { id: workerProfileId }, select: { photos: true, additionalPhotos: true } })
   if (!profile) throw new PermanentFailure(`photo ${photoUploadId}: profile ${workerProfileId} no longer exists`)
 
   // R4.1: done already (a re-run after a crash between the profile update and the delete).
   // Blob's host is not known here, so the test is the key, which is unique to this upload.
-  if (profile.photos?.includes(`/${profilePrefix(workerProfileId, photoUploadId)}`)) {
+  if (profile.photos?.includes(`/${profilePrefix(workerProfileId, photoUploadId)}`) || profile.additionalPhotos?.includes(`/${profilePrefix(workerProfileId, photoUploadId)}`)) {
     await deps.bucket.delete(row.blobKey).catch(() => {})
     return 'already'
   }
@@ -79,7 +79,7 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
     // R4.8: undecodable. Store the upload as it is under the profile; no thumbnail.
     const type = row.contentType as ImageType
     const url = await deps.blob.put(asIsKey(workerProfileId, photoUploadId, type), original, type, { cacheControlMaxAge: PHOTO_CACHE_S })
-    await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: { photos: url } })
+    await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: repoint(profile, row.url, url) })
     await deps.bucket.delete(row.blobKey).catch(() => {})
     deps.log.warn({ photoUploadId, workerProfileId, err: err instanceof Error ? err.message : String(err), bytesIn: original.byteLength, outcome: 'fallback' }, 'photo-processing-fallback')
     return 'fallback'
@@ -88,10 +88,25 @@ export async function processPhoto(photoUploadId: string, workerProfileId: strin
 
   const processedUrl = await deps.blob.put(processedKey(workerProfileId, photoUploadId), main, 'image/jpeg', { cacheControlMaxAge: PHOTO_CACHE_S })
   await deps.blob.put(thumbnailKey(workerProfileId, photoUploadId), thumb, 'image/jpeg', { cacheControlMaxAge: PHOTO_CACHE_S })
-  await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: { photos: processedUrl } })
+  await deps.db.workerProfile.update({ where: { id: workerProfileId }, data: repoint(profile, row.url, processedUrl) })
   await deps.bucket.delete(row.blobKey).catch((err: unknown) => deps.log.warn({ photoUploadId, err: err instanceof Error ? err.message : String(err) }, 'photo-process staging delete failed'))
   deps.log.info({ photoUploadId, workerProfileId, decodeMs, encodeMs: Date.now() - started - decodeMs, bytesIn: original.byteLength, bytesOut: main.byteLength, outcome: 'processed' }, 'photo-process')
   return 'processed'
+}
+
+/**
+ * Where the clean copy goes (worker-profile-api U2, R4.2): the additional slot that holds the
+ * staged URL, else the main photo -- the sign-up's case (its row starts with photos null).
+ */
+export function repoint(profile: { photos: string | null; additionalPhotos: string | null }, stagedUrl: string, finalUrl: string): { photos: string } | { additionalPhotos: string } {
+  let additional: unknown = null
+  try {
+    additional = profile.additionalPhotos ? JSON.parse(profile.additionalPhotos) : null
+  } catch {
+    additional = null
+  }
+  if (Array.isArray(additional) && additional.includes(stagedUrl)) return { additionalPhotos: JSON.stringify(additional.map((u) => (u === stagedUrl ? finalUrl : u))) }
+  return { photos: finalUrl }
 }
 
 export function photoUploadedHandler(deps: PhotoProcessDeps): OutboxHandler {

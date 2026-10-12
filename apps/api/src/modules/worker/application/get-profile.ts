@@ -81,7 +81,8 @@ export function shapeProfile(rows: ProfileRows): Profile {
     },
     // D17: the number only for an ABN engagement; a TFN is never reported.
     abn: abn ? { type: abn.type, value: abn.type === 'abn' ? abn.value : null, signed: abn.signed } : null,
-    homeAddress: null, // R2.4: U2's columns
+    // U2 (R3): the private home address; null until the worker saves one.
+    homeAddress: p.homeStreetLine && p.homeLocality ? { streetLine: p.homeStreetLine, localityId: p.homeLocality.id, suburb: p.homeLocality.suburb, state: p.homeLocality.state, postcode: p.homeLocality.postcode } : null,
     serviceArea: home ? { localityId: home.localityId, label: localityLabel(home.locality, ', '), travelRadiusKm: home.travelRadiusKm ?? 0, precision: home.precision } : null,
     displayRole: displayRoleOf(p.workerServices),
     verificationStatus: p.verificationStatus.slice(0, 40),

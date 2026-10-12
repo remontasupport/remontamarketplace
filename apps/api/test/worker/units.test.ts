@@ -103,6 +103,8 @@ export function sampleRows(patch: Partial<ProfileRows['profile']> = {}): Profile
       jobHistoryEntries: [{ id: 'j1', jobTitle: 'Carer', company: 'Co', startMonth: 'January', startYear: 2020, endMonth: null, endYear: null, currentlyWorking: true }],
       educationEntries: [],
       workerAdditionalInfo: { languages: ['English', 'Hindi'], culturalBackground: [], religion: [], interests: ['music'], workPreferences: [], lgbtqiaSupport: true, nonSmoker: null, petFriendly: false, personality: 'calm', uniqueService: [], funFact: null, bankAccount: { accountName: 'M', bankName: 'CBA', bsb: '062000', accountNumber: '55512399' } },
+      homeStreetLine: null,
+      homeLocality: null,
       locations: [{ localityId: 42, travelRadiusKm: 50, precision: 'LOCALITY', locality: { suburb: 'Parramatta', state: 'NSW', postcode: '2150' } }],
       ...patch,
     },
