@@ -71,7 +71,8 @@ export function isOverloadedDatabase(err: unknown): boolean {
 export function databaseReason(err: unknown): UnavailableReason | undefined {
   const e = err as { code?: unknown; name?: unknown; meta?: { code?: unknown }; message?: unknown } | null
   if (e?.meta?.code === '57014' || /statement timeout/i.test(String(e?.message ?? ''))) return 'timeout'
-  if (e?.code === 'P2024') return 'pool'
+  // P2024: no free connection within pool_timeout; P2028: an interactive transaction could not start within maxWait. Both are the pool.
+  if (e?.code === 'P2024' || e?.code === 'P2028') return 'pool'
   if (e?.name === 'PrismaClientInitializationError') return 'db'
   return undefined
 }
