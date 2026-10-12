@@ -3684,3 +3684,15 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > merged, continue
+
+**AI action (2026-10-12, Build and Test -- the staging checklist, part 1):** `main` = `eba2d42` (PR #50 merged 01:31Z); `deploy-api` run 38192197213 green; staging revision `remonta-api-staging-00020-5vt`. The api checks (a one-off script in the session, `construction/worker-area/code/pr1-staging-checklist.md` §1): **14/14 PASS** -- health, the worker read 200 in the contract shape, masked bank account, cache headers, 304 on If-None-Match with the same ETag, 401/403/404/400, the admin search unchanged, production unchanged (its health 200, the worker route 404 there). The backfill from this machine: one transaction per worker is a round trip per statement to Sydney (~2 h for 1,790); stopped; **`fix/backfill-completion-batched`** reads a page per transaction (a property test proves the in-memory catalogue selection equals the per-worker query; a 15 s / 90 s deadline for the page) -- the dry run then took 129 s: 414 would change, 148 become profileCompleted, 135 move NOT_STARTED -> IN_PROGRESS, 0 failed (`backfill-staging-dry.json`); the apply on the staging copy started 01:55Z. The load test, run 1 (`load-2026-10-12-run1-ip-limited.json`): zero 5xx, zero errors, no restart, but the per-IP rule (300/min) refused 11,899 of 14,899 sustained requests (one machine, one IP) and 1,800 × 401 came from five-minute tokens re-minted only between phases.
+
+**User input (2026-10-12, AskUserQuestion "How should the load test get past the per-IP limit on staging?"):**
+> Staging-only exempt IP list (Recommended)
+
+**AI action (2026-10-12):** On the same branch: `RATE_LIMIT_EXEMPT_IPS` (config, a list of IPs; the pipeline skips the per-IP rules for them, per-user and global rules unchanged; a warn line at boot; absent from both stage tables, asserted by the infra test; config and pipeline tests), the load script refreshes stale tokens every 10 s inside a phase (`staleTokens`, tested), `infra/README.md` "Drills" gains the override and restore commands, `docs/worker/README.md` §7 points to it. Gates: api 437 passed / 152 skipped, infra 40. Pushed (`a960683`, 3 commits).
+
+**User input (verbatim, 2026-10-12):**
+> continue
+
+**AI action (2026-10-12):** PR #51 is open on `fix/backfill-completion-batched`; its checks are being watched. Next: merge -> staging redeploy -> set the exemption on staging -> load test run 2 and the two drills -> restore -> the Neon values and the budget (operator) -> promotion -> production backfill.
