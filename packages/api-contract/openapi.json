@@ -3413,6 +3413,3769 @@
           "privateCacheSeconds": 60
         }
       }
+    },
+    "/v1/worker/profile/name": {
+      "put": {
+        "operationId": "worker.putName",
+        "summary": "Replace the first, middle and last name.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[\\p{L}][\\p{L}\\p{M} '-]*$"
+                  },
+                  "middleName": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "pattern": "^[\\p{L}][\\p{L}\\p{M} '-]*$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[\\p{L}][\\p{L}\\p{M} '-]*$"
+                  }
+                },
+                "required": [
+                  "firstName",
+                  "middleName",
+                  "lastName"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "firstName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100,
+                      "pattern": "^[\\p{L}][\\p{L}\\p{M} '-]*$"
+                    },
+                    "middleName": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "pattern": "^[\\p{L}][\\p{L}\\p{M} '-]*$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lastName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100,
+                      "pattern": "^[\\p{L}][\\p{L}\\p{M} '-]*$"
+                    }
+                  },
+                  "required": [
+                    "firstName",
+                    "middleName",
+                    "lastName"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_NAME_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/profile/bio": {
+      "put": {
+        "operationId": "worker.putBio",
+        "summary": "Replace the bio (1-2,000 characters).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bio": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000,
+                    "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                  }
+                },
+                "required": [
+                  "bio"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bio": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000,
+                      "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                    }
+                  },
+                  "required": [
+                    "bio"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_BIO_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/profile/personal-info": {
+      "put": {
+        "operationId": "worker.putPersonalInfo",
+        "summary": "Replace the date of birth, gender and vehicle answer.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dateOfBirth": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "Male",
+                      "Female"
+                    ]
+                  },
+                  "hasVehicle": {
+                    "type": "string",
+                    "enum": [
+                      "Yes",
+                      "No"
+                    ]
+                  }
+                },
+                "required": [
+                  "dateOfBirth",
+                  "gender",
+                  "hasVehicle"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dateOfBirth": {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "gender": {
+                      "type": "string",
+                      "enum": [
+                        "Male",
+                        "Female"
+                      ]
+                    },
+                    "hasVehicle": {
+                      "type": "string",
+                      "enum": [
+                        "Yes",
+                        "No"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "dateOfBirth",
+                    "gender",
+                    "hasVehicle"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_PERSONAL_INFO_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/profile/abn": {
+      "put": {
+        "operationId": "worker.putAbn",
+        "summary": "Record the ABN (11 digits, ATO checksum); a TFN record is replaced (D17).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "abn": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "abn"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "abn"
+                    },
+                    "value": {
+                      "type": "string",
+                      "pattern": "^\\d{11}$"
+                    },
+                    "signed": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value",
+                    "signed"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_ABN_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/profile/home-address": {
+      "put": {
+        "operationId": "worker.putHomeAddress",
+        "summary": "Replace the private home address: a street line and a suburb of ours. Never a client-facing value.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "streetLine": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                    "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                  },
+                  "localityId": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "streetLine",
+                  "localityId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "streetLine": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "localityId": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "suburb": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "state": {
+                      "type": "string",
+                      "maxLength": 10
+                    },
+                    "postcode": {
+                      "type": "string",
+                      "maxLength": 10
+                    }
+                  },
+                  "required": [
+                    "streetLine",
+                    "localityId",
+                    "suburb",
+                    "state",
+                    "postcode"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_HOME_ADDRESS_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/profile/service-area": {
+      "put": {
+        "operationId": "worker.putServiceArea",
+        "summary": "Move the service area: the suburb clients find the worker at, and the travel radius.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "localityId": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "travelRadiusKm": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500
+                  }
+                },
+                "required": [
+                  "localityId",
+                  "travelRadiusKm"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "localityId": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 120
+                    },
+                    "travelRadiusKm": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "precision": {
+                      "type": "string",
+                      "enum": [
+                        "LOCALITY",
+                        "ADDRESS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "localityId",
+                    "label",
+                    "travelRadiusKm",
+                    "precision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_SERVICE_AREA_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/photos/tickets": {
+      "post": {
+        "operationId": "worker.createPhotoTicket",
+        "summary": "A ticket to upload one photo straight to the bucket (the sign-up's rules).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5242880
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "sizeBytes"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photoUploadId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "upload": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "method": {
+                          "type": "string",
+                          "const": "POST"
+                        },
+                        "fields": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "fileField": {
+                          "type": "string",
+                          "const": "file"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "method",
+                        "fields",
+                        "fileField"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "photoUploadId",
+                    "upload",
+                    "expiresAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 10,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "audit": "WORKER_PHOTO_TICKET"
+        }
+      }
+    },
+    "/v1/worker/photos": {
+      "post": {
+        "operationId": "worker.confirmPhoto",
+        "summary": "Confirm an uploaded photo into the main or an additional slot; the clean copy follows by outbox.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "slot": {
+                    "type": "string",
+                    "enum": [
+                      "main",
+                      "additional"
+                    ]
+                  }
+                },
+                "required": [
+                  "uploadId",
+                  "slot"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "audit": "WORKER_PHOTO_ADDED"
+        }
+      }
+    },
+    "/v1/worker/photos/main": {
+      "post": {
+        "operationId": "worker.makeMainPhoto",
+        "summary": "Swap an additional photo (by its URL) with the main one.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_PHOTO_MAIN"
+        }
+      }
+    },
+    "/v1/worker/photos/remove": {
+      "post": {
+        "operationId": "worker.removePhoto",
+        "summary": "Remove a photo by its URL (the main only when no additional photo is left).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_PHOTO_REMOVED"
+        }
+      }
+    },
+    "/v1/worker/availability": {
+      "put": {
+        "operationId": "worker.putAvailability",
+        "summary": "Replace the week's preferred hours (no overlaps, at most 4 slots a day).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "slots": {
+                    "maxItems": 28,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "day": {
+                          "type": "string",
+                          "enum": [
+                            "MONDAY",
+                            "TUESDAY",
+                            "WEDNESDAY",
+                            "THURSDAY",
+                            "FRIDAY",
+                            "SATURDAY",
+                            "SUNDAY"
+                          ]
+                        },
+                        "startMinute": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1440
+                        },
+                        "endMinute": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1440
+                        }
+                      },
+                      "required": [
+                        "day",
+                        "startMinute",
+                        "endMinute"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "slots"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slots": {
+                      "maxItems": 28,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "day": {
+                            "type": "string",
+                            "enum": [
+                              "MONDAY",
+                              "TUESDAY",
+                              "WEDNESDAY",
+                              "THURSDAY",
+                              "FRIDAY",
+                              "SATURDAY",
+                              "SUNDAY"
+                            ]
+                          },
+                          "startMinute": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1440
+                          },
+                          "endMinute": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1440
+                          }
+                        },
+                        "required": [
+                          "day",
+                          "startMinute",
+                          "endMinute"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "slots"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 16,
+          "audit": "WORKER_AVAILABILITY_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/experience": {
+      "put": {
+        "operationId": "worker.putExperience",
+        "summary": "Replace the experience per care area.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "domains": {
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "domain": {
+                          "type": "string",
+                          "enum": [
+                            "DISABILITY",
+                            "AGED_CARE",
+                            "WORKING_WITH_CHILDREN",
+                            "MENTAL_HEALTH",
+                            "CHRONIC_MEDICAL"
+                          ]
+                        },
+                        "isProfessional": {
+                          "type": "boolean"
+                        },
+                        "isPersonal": {
+                          "type": "boolean"
+                        },
+                        "specificAreas": {
+                          "minItems": 0,
+                          "maxItems": 3,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 120
+                          }
+                        },
+                        "otherAreas": {
+                          "minItems": 0,
+                          "maxItems": 10,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          }
+                        },
+                        "description": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1000
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "domain",
+                        "isProfessional",
+                        "isPersonal",
+                        "specificAreas",
+                        "otherAreas",
+                        "description"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "domains"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "domains": {
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "domain": {
+                            "type": "string",
+                            "enum": [
+                              "DISABILITY",
+                              "AGED_CARE",
+                              "WORKING_WITH_CHILDREN",
+                              "MENTAL_HEALTH",
+                              "CHRONIC_MEDICAL"
+                            ]
+                          },
+                          "isProfessional": {
+                            "type": "boolean"
+                          },
+                          "isPersonal": {
+                            "type": "boolean"
+                          },
+                          "specificAreas": {
+                            "minItems": 0,
+                            "maxItems": 3,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 120
+                            }
+                          },
+                          "otherAreas": {
+                            "minItems": 0,
+                            "maxItems": 10,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            }
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1000
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "domain",
+                          "isProfessional",
+                          "isPersonal",
+                          "specificAreas",
+                          "otherAreas",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "domains"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 16,
+          "audit": "WORKER_EXPERIENCE_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/job-history": {
+      "put": {
+        "operationId": "worker.putJobHistory",
+        "summary": "Replace the ordered work history.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entries": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "jobTitle": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "company": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "startMonth": {
+                          "type": "string",
+                          "enum": [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December"
+                          ]
+                        },
+                        "startYear": {
+                          "type": "integer",
+                          "minimum": 1950,
+                          "maximum": 2100
+                        },
+                        "endMonth": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "January",
+                                "February",
+                                "March",
+                                "April",
+                                "May",
+                                "June",
+                                "July",
+                                "August",
+                                "September",
+                                "October",
+                                "November",
+                                "December"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "endYear": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1950,
+                              "maximum": 2100
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "currentlyWorking": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "jobTitle",
+                        "company",
+                        "startMonth",
+                        "startYear",
+                        "endMonth",
+                        "endYear",
+                        "currentlyWorking"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "entries"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "jobTitle": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "company": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "startMonth": {
+                            "type": "string",
+                            "enum": [
+                              "January",
+                              "February",
+                              "March",
+                              "April",
+                              "May",
+                              "June",
+                              "July",
+                              "August",
+                              "September",
+                              "October",
+                              "November",
+                              "December"
+                            ]
+                          },
+                          "startYear": {
+                            "type": "integer",
+                            "minimum": 1950,
+                            "maximum": 2100
+                          },
+                          "endMonth": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "January",
+                                  "February",
+                                  "March",
+                                  "April",
+                                  "May",
+                                  "June",
+                                  "July",
+                                  "August",
+                                  "September",
+                                  "October",
+                                  "November",
+                                  "December"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "endYear": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1950,
+                                "maximum": 2100
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "currentlyWorking": {
+                            "type": "boolean"
+                          },
+                          "id": {
+                            "type": "string",
+                            "maxLength": 40
+                          }
+                        },
+                        "required": [
+                          "jobTitle",
+                          "company",
+                          "startMonth",
+                          "startYear",
+                          "endMonth",
+                          "endYear",
+                          "currentlyWorking",
+                          "id"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "entries"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 16,
+          "audit": "WORKER_JOB_HISTORY_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/education": {
+      "put": {
+        "operationId": "worker.putEducation",
+        "summary": "Replace the ordered education list.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entries": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "institution": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "qualification": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "startMonth": {
+                          "type": "string",
+                          "enum": [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December"
+                          ]
+                        },
+                        "startYear": {
+                          "type": "integer",
+                          "minimum": 1950,
+                          "maximum": 2100
+                        },
+                        "endMonth": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "January",
+                                "February",
+                                "March",
+                                "April",
+                                "May",
+                                "June",
+                                "July",
+                                "August",
+                                "September",
+                                "October",
+                                "November",
+                                "December"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "endYear": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 1950,
+                              "maximum": 2100
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "currentlyStudying": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "institution",
+                        "qualification",
+                        "startMonth",
+                        "startYear",
+                        "endMonth",
+                        "endYear",
+                        "currentlyStudying"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "entries"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "institution": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "qualification": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "startMonth": {
+                            "type": "string",
+                            "enum": [
+                              "January",
+                              "February",
+                              "March",
+                              "April",
+                              "May",
+                              "June",
+                              "July",
+                              "August",
+                              "September",
+                              "October",
+                              "November",
+                              "December"
+                            ]
+                          },
+                          "startYear": {
+                            "type": "integer",
+                            "minimum": 1950,
+                            "maximum": 2100
+                          },
+                          "endMonth": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "January",
+                                  "February",
+                                  "March",
+                                  "April",
+                                  "May",
+                                  "June",
+                                  "July",
+                                  "August",
+                                  "September",
+                                  "October",
+                                  "November",
+                                  "December"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "endYear": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 1950,
+                                "maximum": 2100
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "currentlyStudying": {
+                            "type": "boolean"
+                          },
+                          "id": {
+                            "type": "string",
+                            "maxLength": 40
+                          }
+                        },
+                        "required": [
+                          "institution",
+                          "qualification",
+                          "startMonth",
+                          "startYear",
+                          "endMonth",
+                          "endYear",
+                          "currentlyStudying",
+                          "id"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "entries"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 16,
+          "audit": "WORKER_EDUCATION_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/additional-info/{group}": {
+      "put": {
+        "operationId": "worker.putAdditionalInfo",
+        "summary": "Replace one additional-details group; the others are untouched.",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "good-to-know",
+                "languages",
+                "cultural-background",
+                "religion",
+                "interests",
+                "about-me",
+                "preferences",
+                "personality"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "good-to-know"
+                      },
+                      "lgbtqiaSupport": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "lgbtqiaSupport"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "languages"
+                      },
+                      "languages": {
+                        "minItems": 0,
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "English",
+                                "Arabic",
+                                "Cantonese",
+                                "Croatian",
+                                "French",
+                                "German",
+                                "Greek",
+                                "Hebrew",
+                                "Hindi",
+                                "Hungarian",
+                                "Indonesian",
+                                "Italian",
+                                "Japanese",
+                                "Korean",
+                                "Macedonian",
+                                "Maltese",
+                                "Mandarin",
+                                "Nepali",
+                                "Netherlandic (Dutch)",
+                                "Persian",
+                                "Polish",
+                                "Portugese",
+                                "Russian",
+                                "Samoan",
+                                "Serbian",
+                                "Sinhalese",
+                                "Spanish",
+                                "Tagalog (Filipino)",
+                                "Tamil",
+                                "Turkish",
+                                "Vietnamese",
+                                "Auslan (Australian sign language)"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 40
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "languages"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "cultural-background"
+                      },
+                      "culturalBackground": {
+                        "minItems": 0,
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "Australian",
+                            "Other Oceanian",
+                            "North American",
+                            "Australian Aboriginal",
+                            "Western European",
+                            "South American",
+                            "Australian South East Islan...",
+                            "Northern European",
+                            "Central American",
+                            "Torres Strait Islander",
+                            "Southern & Eastern European",
+                            "Carribean Islander",
+                            "New Zealander",
+                            "Middle Eastern",
+                            "South African",
+                            "Maori",
+                            "Jewish",
+                            "Other African",
+                            "Polynesian",
+                            "Asian",
+                            "Other"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "culturalBackground"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "religion"
+                      },
+                      "religion": {
+                        "minItems": 0,
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "Anglican",
+                            "Hindu",
+                            "Russian Orthodox",
+                            "Buddhist",
+                            "Islamic",
+                            "Sikh",
+                            "Catholic",
+                            "Jewish",
+                            "Spiritual",
+                            "Christian - other",
+                            "None",
+                            "Uniting Church",
+                            "Greek Orthodox",
+                            "Presbyterian",
+                            "Other"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "religion"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "interests"
+                      },
+                      "interests": {
+                        "minItems": 0,
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "Cooking",
+                                "Movies",
+                                "Pets",
+                                "Sports",
+                                "Gardening",
+                                "Music",
+                                "Photography / Art",
+                                "Travel",
+                                "Indoor Games / Puzzles",
+                                "Cultural Festivities",
+                                "Reading"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 60
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "interests"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "about-me"
+                      },
+                      "uniqueService": {
+                        "minItems": 1,
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "Camping & overnight trips",
+                            "Bushwalking & nature outings",
+                            "Beach days & water-based activities",
+                            "Fishing trips",
+                            "National park excursions",
+                            "Adventure parks / low-risk outdoor challenges",
+                            "Yoga (gentle, chair-based, or adaptive)",
+                            "Fitness training (NDIS-appropriate, non-clinical)",
+                            "Walking programs",
+                            "Stretching & mobility sessions",
+                            "Mindfulness & meditation",
+                            "Breathwork & relaxation techniques",
+                            "Concerts & live music events",
+                            "Sporting events (NRL, AFL, soccer, etc.)",
+                            "Movies & cinema outings",
+                            "Community festivals & markets",
+                            "Comedy shows or theatre",
+                            "Museum & gallery visits",
+                            "Art & painting sessions",
+                            "Music practice or jam sessions",
+                            "Photography outings",
+                            "Cooking & meal prep as a hobby",
+                            "Gardening projects",
+                            "DIY / basic handyman activities (where appropriate)",
+                            "Public transport training",
+                            "Confidence building & social skills",
+                            "Money handling & budgeting practice",
+                            "Routine building & planning",
+                            "Communication support in community settings",
+                            "Support with hobbies and personal goals",
+                            "ASD-experienced support workers",
+                            "Mental health lived-experience workers",
+                            "Youth mentoring",
+                            "Male-only support",
+                            "Female-only support",
+                            "Cultural or language-specific supports",
+                            "LGBTQIA+ inclusive supports",
+                            "Gym buddy / workout partner",
+                            "Running or cycling partner",
+                            "Sports coaching (casual, non-therapeutic)",
+                            "Meal planning & healthy lifestyle coaching",
+                            "Support with social anxiety in public spaces"
+                          ]
+                        }
+                      },
+                      "funFact": {
+                        "type": "string",
+                        "minLength": 50,
+                        "maxLength": 1000,
+                        "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "uniqueService",
+                      "funFact"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "preferences"
+                      },
+                      "workPreferences": {
+                        "minItems": 0,
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "Female",
+                            "Male",
+                            "Non-smoker",
+                            "No pets",
+                            "No preferences"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "workPreferences"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "personality"
+                      },
+                      "personality": {
+                        "type": "string",
+                        "enum": [
+                          "Outgoing and engaging",
+                          "Calm and relaxed"
+                        ]
+                      },
+                      "nonSmoker": {
+                        "type": "boolean"
+                      },
+                      "petFriendly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "personality",
+                      "nonSmoker",
+                      "petFriendly"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "good-to-know"
+                        },
+                        "lgbtqiaSupport": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "lgbtqiaSupport"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "languages"
+                        },
+                        "languages": {
+                          "minItems": 0,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "English",
+                                  "Arabic",
+                                  "Cantonese",
+                                  "Croatian",
+                                  "French",
+                                  "German",
+                                  "Greek",
+                                  "Hebrew",
+                                  "Hindi",
+                                  "Hungarian",
+                                  "Indonesian",
+                                  "Italian",
+                                  "Japanese",
+                                  "Korean",
+                                  "Macedonian",
+                                  "Maltese",
+                                  "Mandarin",
+                                  "Nepali",
+                                  "Netherlandic (Dutch)",
+                                  "Persian",
+                                  "Polish",
+                                  "Portugese",
+                                  "Russian",
+                                  "Samoan",
+                                  "Serbian",
+                                  "Sinhalese",
+                                  "Spanish",
+                                  "Tagalog (Filipino)",
+                                  "Tamil",
+                                  "Turkish",
+                                  "Vietnamese",
+                                  "Auslan (Australian sign language)"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 40
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "languages"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "cultural-background"
+                        },
+                        "culturalBackground": {
+                          "minItems": 0,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "Australian",
+                              "Other Oceanian",
+                              "North American",
+                              "Australian Aboriginal",
+                              "Western European",
+                              "South American",
+                              "Australian South East Islan...",
+                              "Northern European",
+                              "Central American",
+                              "Torres Strait Islander",
+                              "Southern & Eastern European",
+                              "Carribean Islander",
+                              "New Zealander",
+                              "Middle Eastern",
+                              "South African",
+                              "Maori",
+                              "Jewish",
+                              "Other African",
+                              "Polynesian",
+                              "Asian",
+                              "Other"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "culturalBackground"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "religion"
+                        },
+                        "religion": {
+                          "minItems": 0,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "Anglican",
+                              "Hindu",
+                              "Russian Orthodox",
+                              "Buddhist",
+                              "Islamic",
+                              "Sikh",
+                              "Catholic",
+                              "Jewish",
+                              "Spiritual",
+                              "Christian - other",
+                              "None",
+                              "Uniting Church",
+                              "Greek Orthodox",
+                              "Presbyterian",
+                              "Other"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "religion"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "interests"
+                        },
+                        "interests": {
+                          "minItems": 0,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "Cooking",
+                                  "Movies",
+                                  "Pets",
+                                  "Sports",
+                                  "Gardening",
+                                  "Music",
+                                  "Photography / Art",
+                                  "Travel",
+                                  "Indoor Games / Puzzles",
+                                  "Cultural Festivities",
+                                  "Reading"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 60
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "interests"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "about-me"
+                        },
+                        "uniqueService": {
+                          "minItems": 1,
+                          "maxItems": 10,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "Camping & overnight trips",
+                              "Bushwalking & nature outings",
+                              "Beach days & water-based activities",
+                              "Fishing trips",
+                              "National park excursions",
+                              "Adventure parks / low-risk outdoor challenges",
+                              "Yoga (gentle, chair-based, or adaptive)",
+                              "Fitness training (NDIS-appropriate, non-clinical)",
+                              "Walking programs",
+                              "Stretching & mobility sessions",
+                              "Mindfulness & meditation",
+                              "Breathwork & relaxation techniques",
+                              "Concerts & live music events",
+                              "Sporting events (NRL, AFL, soccer, etc.)",
+                              "Movies & cinema outings",
+                              "Community festivals & markets",
+                              "Comedy shows or theatre",
+                              "Museum & gallery visits",
+                              "Art & painting sessions",
+                              "Music practice or jam sessions",
+                              "Photography outings",
+                              "Cooking & meal prep as a hobby",
+                              "Gardening projects",
+                              "DIY / basic handyman activities (where appropriate)",
+                              "Public transport training",
+                              "Confidence building & social skills",
+                              "Money handling & budgeting practice",
+                              "Routine building & planning",
+                              "Communication support in community settings",
+                              "Support with hobbies and personal goals",
+                              "ASD-experienced support workers",
+                              "Mental health lived-experience workers",
+                              "Youth mentoring",
+                              "Male-only support",
+                              "Female-only support",
+                              "Cultural or language-specific supports",
+                              "LGBTQIA+ inclusive supports",
+                              "Gym buddy / workout partner",
+                              "Running or cycling partner",
+                              "Sports coaching (casual, non-therapeutic)",
+                              "Meal planning & healthy lifestyle coaching",
+                              "Support with social anxiety in public spaces"
+                            ]
+                          }
+                        },
+                        "funFact": {
+                          "type": "string",
+                          "minLength": 50,
+                          "maxLength": 1000,
+                          "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "uniqueService",
+                        "funFact"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "preferences"
+                        },
+                        "workPreferences": {
+                          "minItems": 0,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "Female",
+                              "Male",
+                              "Non-smoker",
+                              "No pets",
+                              "No preferences"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "workPreferences"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "personality"
+                        },
+                        "personality": {
+                          "type": "string",
+                          "enum": [
+                            "Outgoing and engaging",
+                            "Calm and relaxed"
+                          ]
+                        },
+                        "nonSmoker": {
+                          "type": "boolean"
+                        },
+                        "petFriendly": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "personality",
+                        "nonSmoker",
+                        "petFriendly"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 16,
+          "audit": "WORKER_ADDITIONAL_INFO_CHANGED"
+        }
+      }
+    },
+    "/v1/worker/bank-account": {
+      "put": {
+        "operationId": "worker.putBankAccount",
+        "summary": "Replace the bank account (all four fields); every read returns it masked.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "bankName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "bsb": {
+                    "type": "string"
+                  },
+                  "accountNumber": {
+                    "type": "string",
+                    "pattern": "^\\d{6,10}$"
+                  }
+                },
+                "required": [
+                  "accountName",
+                  "bankName",
+                  "bsb",
+                  "accountNumber"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accountName": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "bankName": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "bsbLast3": {
+                      "type": "string",
+                      "pattern": "^\\d{3}$"
+                    },
+                    "accountNumberLast3": {
+                      "type": "string",
+                      "pattern": "^\\d{3}$"
+                    }
+                  },
+                  "required": [
+                    "accountName",
+                    "bankName",
+                    "bsbLast3",
+                    "accountNumberLast3"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "WORKER_BANK_ACCOUNT_CHANGED"
+        }
+      }
     }
   },
   "components": {

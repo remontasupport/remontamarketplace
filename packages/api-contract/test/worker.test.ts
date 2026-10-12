@@ -25,8 +25,8 @@ describe('the worker contract', () => {
     expect(checkContracts(contracts, publicEndpoints as PublicEndpoint[])).toEqual([])
   })
 
-  it('declares getProfile only in U1: a WORKER-only GET, both limits, privately cacheable, no memo-style public cache (R8.1, R8.2)', () => {
-    expect(Object.keys(workerContract.entries)).toEqual(['getProfile'])
+  it('getProfile: a WORKER-only GET, both limits, privately cacheable, no memo-style public cache (R8.1, R8.2)', () => {
+    expect(Object.keys(workerContract.entries)[0]).toBe('getProfile')
     const e = workerContract.entries.getProfile as EntryDef
     expect([e.method, e.path]).toEqual(['GET', '/v1/worker/profile'])
     expect(e.meta.access).toEqual({ roles: ['WORKER'] })

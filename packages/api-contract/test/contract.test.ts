@@ -171,3 +171,18 @@ describe('meta() rejects at load time', () => {
     expect(() => meta(m as never)).toThrow(/invalid contract metadata/)
   })
 })
+
+// A discriminated body (U2's additional-info groups) is a union of strict objects: accepted as strict; a loose member fails it.
+describe('checkContracts on a union body', () => {
+  const strictUnion = z.discriminatedUnion('kind', [z.strictObject({ kind: z.literal('a'), x: z.string() }), z.strictObject({ kind: z.literal('b'), y: z.number() })])
+  const looseUnion = z.discriminatedUnion('kind', [z.strictObject({ kind: z.literal('a'), x: z.string() }), z.looseObject({ kind: z.literal('b'), y: z.number() })])
+  const entry = (schema: z.ZodType) => defineContract('test', { a: { method: 'POST', path: '/v1/a', summary: '', body: { kind: 'json', schema }, responses: { 200: schema }, meta: roles } })
+  it('accepts a union whose every member is strict', () => {
+    expect(checkContracts([entry(strictUnion)], [])).toEqual([])
+  })
+  it('rejects a union with a loose member, as a body and as a response', () => {
+    const problems = checkContracts([entry(looseUnion)], []).join('\n')
+    expect(problems).toMatch(/strict object \(P9\)/)
+    expect(problems).toMatch(/must not pass unknown fields through \(P10\)/)
+  })
+})

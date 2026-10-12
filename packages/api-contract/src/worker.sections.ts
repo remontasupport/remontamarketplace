@@ -1,0 +1,227 @@
+// The bodies of the worker's section writes (worker-profile-api U2, domain-entities E3;
+// rules R2-R7 of the edit-profile functional design). Every body is a strict object with
+// every string trimmed and bounded and every list value an enumeration from
+// @remonta/schemas (languages and interests also accept a worker's own label, as the
+// pages do today). The refinements here ARE the rules apps/api applies (the form engine
+// picks them up from the contract, so a page refuses before sending); the api re-runs
+// them on the normalised body.
+import { CARE_DOMAINS } from './admin.contract'
+import { experienceAreasOf } from '@remonta/schemas/data/experienceAreas'
+import {
+  ADDITIONAL_INFO_GROUPS,
+  CULTURAL_BACKGROUNDS,
+  DAYS,
+  GENDERS,
+  INTERESTS,
+  LANGUAGES,
+  MONTHS,
+  monthIndex,
+  PERSONALITIES,
+  RELIGIONS,
+  UNIQUE_SERVICES,
+  VEHICLE_ANSWERS,
+  WORK_PREFERENCES,
+} from '@remonta/schemas/data/profileOptions'
+import { abnChecksum, normaliseAbn } from '@remonta/schemas/validations/abn'
+import * as z from 'zod'
+
+// ---- Primitives ---------------------------------------------------------------------
+
+const trimmed = (min: number, max: number) => z.string().trim().min(min).max(max)
+/** A person's name part: letters of any script, marks, spaces, hyphens, apostrophes (R2.1). */
+const namePart = trimmed(1, 100).regex(/^[\p{L}][\p{L}\p{M} '-]*$/u, 'Letters, spaces, hyphens and apostrophes only')
+/** Plain text: no control characters other than a newline (R2.2). */
+const plainText = (min: number, max: number) => trimmed(min, max).regex(/^[^\p{Cc}]*$|^[^\p{Cc}\n]*(\n[^\p{Cc}\n]*)*$/u, 'Plain text only')
+/** An optional string: empty becomes null (R2.14). */
+const optionalText = (max: number) => z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? null : v), trimmed(1, max).nullable())
+const positiveInt = z.number().int().positive()
+/** A listed value or a worker's own label (R7.1: languages and interests). */
+const listedOrOwn = <T extends readonly [string, ...string[]]>(list: T, maxLen: number) => z.union([z.enum(list), trimmed(1, maxLen)])
+const uniqueList = <S extends z.ZodType<string>>(item: S, max: number, min = 0) =>
+  z.array(item).min(min).max(max).refine((a) => new Set(a).size === a.length, { message: 'No repeats' })
+
+export const CURRENT_YEAR_MAX = 2100
+
+// ---- Column sections (R2.1-R2.3, R5) ------------------------------------------------------
+
+export const nameSchema = z.strictObject({ firstName: namePart, middleName: namePart.nullable(), lastName: namePart })
+export type NameBody = z.output<typeof nameSchema>
+
+export const bioSchema = z.strictObject({ bio: plainText(1, 2000) })
+export type BioBody = z.output<typeof bioSchema>
+
+/** A calendar date as YYYY-MM-DD; the age window (16-100) is checked against the api's clock (R2.3). */
+export const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD')
+  .refine((s) => {
+    const d = new Date(`${s}T00:00:00Z`)
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s
+  }, 'Not a real date')
+
+/** Whole years between a date of birth and a day, as a person counts them. */
+export function ageOn(dateOfBirth: string, on: Date): number {
+  const [y, m, d] = dateOfBirth.split('-').map(Number) as [number, number, number]
+  let age = on.getUTCFullYear() - y
+  if (on.getUTCMonth() + 1 < m || (on.getUTCMonth() + 1 === m && on.getUTCDate() < d)) age--
+  return age
+}
+export const AGE_MIN = 16
+export const AGE_MAX = 100
+
+export const personalInfoSchema = z.strictObject({
+  dateOfBirth: isoDateSchema.refine((s) => {
+    const a = ageOn(s, new Date())
+    return a >= AGE_MIN && a <= AGE_MAX
+  }, `Between ${AGE_MIN} and ${AGE_MAX} years old`),
+  gender: z.enum(GENDERS),
+  hasVehicle: z.enum(VEHICLE_ANSWERS),
+})
+export type PersonalInfoBody = z.output<typeof personalInfoSchema>
+
+/** R5.1: spaces allowed while typing; stored as the eleven digits. */
+export const abnBodySchema = z.strictObject({
+  abn: z
+    .string()
+    .transform(normaliseAbn)
+    .pipe(z.string().regex(/^\d{11}$/, 'An ABN has 11 digits').refine(abnChecksum, 'That is not a valid ABN')),
+})
+export type AbnBody = z.output<typeof abnBodySchema>
+export const abnViewSchema = z.strictObject({ type: z.literal('abn'), value: z.string().regex(/^\d{11}$/), signed: z.boolean() })
+export type AbnView = z.output<typeof abnViewSchema>
+
+// ---- The two addresses (R3) ------------------------------------------------------------------
+
+export const homeAddressInputSchema = z.strictObject({ streetLine: plainText(1, 120).refine((s) => !s.includes('\n'), 'One line'), localityId: positiveInt })
+export type HomeAddressInput = z.output<typeof homeAddressInputSchema>
+// The stored shape (`homeAddressSchema`, with suburb/state/postcode) lives in worker.contract.ts beside the read.
+
+export const TRAVEL_RADIUS_MAX_KM = 500
+export const serviceAreaInputSchema = z.strictObject({ localityId: positiveInt, travelRadiusKm: z.number().int().min(1).max(TRAVEL_RADIUS_MAX_KM) })
+export type ServiceAreaInput = z.output<typeof serviceAreaInputSchema>
+
+// ---- Photos (R4) -------------------------------------------------------------------------------
+
+export const PHOTO_SLOTS = ['main', 'additional'] as const
+export const MAX_ADDITIONAL_PHOTOS = 2
+export const photosSchema = z.strictObject({ main: z.string().max(2048).nullable(), additional: z.array(z.string().max(2048)).max(MAX_ADDITIONAL_PHOTOS) })
+export type Photos = z.output<typeof photosSchema>
+export const confirmPhotoSchema = z.strictObject({ uploadId: z.uuid(), slot: z.enum(PHOTO_SLOTS) })
+export const photoUrlSchema = z.strictObject({ url: z.url().max(2048) })
+
+// ---- Preferred hours (R2.7) -----------------------------------------------------------------------
+
+export const MAX_SLOTS_PER_DAY = 4
+export const MINUTES_IN_DAY = 1440
+const slotSchema = z.strictObject({ day: z.enum(DAYS), startMinute: z.number().int().min(0).max(MINUTES_IN_DAY), endMinute: z.number().int().min(0).max(MINUTES_IN_DAY) })
+export type Slot = z.output<typeof slotSchema>
+
+/** The week's slots sorted by day order then start: the stored order (R2.7). */
+export function sortSlots<S extends Slot>(slots: readonly S[]): S[] {
+  const day = (d: string) => (DAYS as readonly string[]).indexOf(d)
+  return [...slots].sort((a, b) => day(a.day) - day(b.day) || a.startMinute - b.startMinute)
+}
+
+/** R2.7 as issues on the offending slot: start < end, at most 4 a day, no overlap (end ≤ next start). */
+export function slotIssues(slots: readonly Slot[]): { index: number; message: string }[] {
+  const issues: { index: number; message: string }[] = []
+  slots.forEach((s, i) => {
+    if (s.startMinute >= s.endMinute) issues.push({ index: i, message: 'End must be after start' })
+  })
+  const byDay = new Map<string, { s: Slot; i: number }[]>()
+  slots.forEach((s, i) => byDay.set(s.day, [...(byDay.get(s.day) ?? []), { s, i }]))
+  for (const list of byDay.values()) {
+    list.sort((a, b) => a.s.startMinute - b.s.startMinute)
+    if (list.length > MAX_SLOTS_PER_DAY) issues.push({ index: list[MAX_SLOTS_PER_DAY]!.i, message: `At most ${MAX_SLOTS_PER_DAY} slots a day` })
+    for (let k = 1; k < list.length; k++) if (list[k]!.s.startMinute < list[k - 1]!.s.endMinute) issues.push({ index: list[k]!.i, message: 'Overlaps another slot that day' })
+  }
+  return issues
+}
+
+export const availabilitySchema = z.strictObject({ slots: z.array(slotSchema).max(DAYS.length * MAX_SLOTS_PER_DAY) }).superRefine((b, ctx) => {
+  for (const issue of slotIssues(b.slots)) ctx.addIssue({ code: 'custom', path: ['slots', issue.index, 'startMinute'], message: issue.message })
+})
+export type AvailabilityBody = z.output<typeof availabilitySchema>
+
+// ---- Experience (R2.8) ------------------------------------------------------------------------------
+
+export const MAX_SPECIFIC_AREAS = 3
+const domainSchema = z
+  .strictObject({
+    domain: z.enum(CARE_DOMAINS),
+    isProfessional: z.boolean(),
+    isPersonal: z.boolean(),
+    specificAreas: uniqueList(z.string().max(120), MAX_SPECIFIC_AREAS),
+    otherAreas: uniqueList(trimmed(1, 60), 10),
+    description: optionalText(1000),
+  })
+  .superRefine((d, ctx) => {
+    if (!d.isProfessional && !d.isPersonal) ctx.addIssue({ code: 'custom', path: ['isProfessional'], message: 'Professional, personal, or both' })
+    const allowed = experienceAreasOf(d.domain)
+    d.specificAreas.forEach((a, i) => {
+      if (!allowed.includes(a)) ctx.addIssue({ code: 'custom', path: ['specificAreas', i], message: 'Not one of this area\'s options' })
+    })
+  })
+export const experienceSchema = z.strictObject({ domains: z.array(domainSchema).max(CARE_DOMAINS.length) }).refine((b) => new Set(b.domains.map((d) => d.domain)).size === b.domains.length, { message: 'One entry per area', path: ['domains'] })
+export type ExperienceBody = z.output<typeof experienceSchema>
+
+// ---- Work history and education (R2.9, R2.10) ------------------------------------------------------------
+
+export const YEAR_MIN = 1950
+const yearSchema = z.number().int().min(YEAR_MIN).max(CURRENT_YEAR_MAX)
+const monthSchema = z.enum(MONTHS)
+
+/** R2.9: "currently" means no end; otherwise both end fields, not before the start. */
+function dateIssues(e: { startMonth: string; startYear: number; endMonth: string | null; endYear: number | null }, currently: boolean, ctx: z.RefinementCtx, endField: string): void {
+  if (currently) {
+    if (e.endMonth !== null || e.endYear !== null) ctx.addIssue({ code: 'custom', path: ['endMonth'], message: `No end date while ${endField}` })
+    return
+  }
+  if (e.endMonth === null || e.endYear === null) {
+    ctx.addIssue({ code: 'custom', path: ['endMonth'], message: 'An end date, or tick the box' })
+    return
+  }
+  if (e.endYear < e.startYear || (e.endYear === e.startYear && monthIndex(e.endMonth) < monthIndex(e.startMonth))) ctx.addIssue({ code: 'custom', path: ['endMonth'], message: 'The end is before the start' })
+  if (e.endYear > new Date().getUTCFullYear()) ctx.addIssue({ code: 'custom', path: ['endYear'], message: 'In the future' })
+}
+
+const jobBase = z.strictObject({ jobTitle: trimmed(1, 100), company: trimmed(1, 100), startMonth: monthSchema, startYear: yearSchema, endMonth: monthSchema.nullable(), endYear: yearSchema.nullable(), currentlyWorking: z.boolean() })
+const jobSchema = jobBase.superRefine((e, ctx) => dateIssues(e, e.currentlyWorking, ctx, 'currently working'))
+export const MAX_LIST_ENTRIES = 20
+export const jobHistorySchema = z.strictObject({ entries: z.array(jobSchema).max(MAX_LIST_ENTRIES) })
+export type JobHistoryBody = z.output<typeof jobHistorySchema>
+export const jobHistoryViewSchema = z.strictObject({ entries: z.array(jobBase.extend({ id: z.string().max(40) })).max(MAX_LIST_ENTRIES) })
+
+const courseBase = z.strictObject({ institution: trimmed(1, 100), qualification: trimmed(1, 100), startMonth: monthSchema, startYear: yearSchema, endMonth: monthSchema.nullable(), endYear: yearSchema.nullable(), currentlyStudying: z.boolean() })
+const courseSchema = courseBase.superRefine((e, ctx) => dateIssues(e, e.currentlyStudying, ctx, 'currently studying'))
+export const educationSchema = z.strictObject({ entries: z.array(courseSchema).max(MAX_LIST_ENTRIES) })
+export type EducationBody = z.output<typeof educationSchema>
+export const educationViewSchema = z.strictObject({ entries: z.array(courseBase.extend({ id: z.string().max(40) })).max(MAX_LIST_ENTRIES) })
+
+// ---- Additional info (R7.2) ---------------------------------------------------------------------------------
+
+export const additionalInfoGroupSchema = z.enum(ADDITIONAL_INFO_GROUPS)
+export const goodToKnowSchema = z.strictObject({ group: z.literal('good-to-know'), lgbtqiaSupport: z.boolean() })
+export const languagesSchema = z.strictObject({ group: z.literal('languages'), languages: uniqueList(listedOrOwn(LANGUAGES, 40), 20) })
+export const culturalBackgroundSchema = z.strictObject({ group: z.literal('cultural-background'), culturalBackground: uniqueList(z.enum(CULTURAL_BACKGROUNDS), 20) })
+export const religionSchema = z.strictObject({ group: z.literal('religion'), religion: uniqueList(z.enum(RELIGIONS), 20) })
+export const interestsSchema = z.strictObject({ group: z.literal('interests'), interests: uniqueList(listedOrOwn(INTERESTS, 60), 20) })
+export const aboutMeSchema = z.strictObject({ group: z.literal('about-me'), uniqueService: uniqueList(z.enum(UNIQUE_SERVICES), 10, 1), funFact: plainText(50, 1000) })
+export const preferencesSchema = z.strictObject({ group: z.literal('preferences'), workPreferences: uniqueList(z.enum(WORK_PREFERENCES), 20) })
+export const personalitySchema = z.strictObject({ group: z.literal('personality'), personality: z.enum(PERSONALITIES), nonSmoker: z.boolean(), petFriendly: z.boolean() })
+export const additionalInfoBodySchema = z.discriminatedUnion('group', [goodToKnowSchema, languagesSchema, culturalBackgroundSchema, religionSchema, interestsSchema, aboutMeSchema, preferencesSchema, personalitySchema])
+export type AdditionalInfoBody = z.output<typeof additionalInfoBodySchema>
+export const additionalInfoParamsSchema = z.strictObject({ group: additionalInfoGroupSchema })
+
+// ---- Bank account (R6) ----------------------------------------------------------------------------------------
+
+export const bankAccountSchema = z.strictObject({
+  accountName: trimmed(1, 100),
+  bankName: trimmed(1, 100),
+  bsb: z
+    .string()
+    .transform((s) => s.replace(/^(\d{3})-(\d{3})$/, '$1$2').trim())
+    .pipe(z.string().regex(/^\d{6}$/, 'A BSB has 6 digits')),
+  accountNumber: z.string().trim().regex(/^\d{6,10}$/, '6 to 10 digits'),
+})
+export type BankAccountBody = z.output<typeof bankAccountSchema>
