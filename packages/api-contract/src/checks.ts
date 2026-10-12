@@ -82,6 +82,20 @@ export function checkContracts(contracts: readonly Contract[], publicAllowList: 
 }
 
 function rejectsUnknownFields(schema: z.ZodType, io: 'input' | 'output'): boolean {
-  const js = z.toJSONSchema(schema, { io, unrepresentable: 'any' }) as { type?: string; additionalProperties?: unknown }
-  return js.type === 'object' && js.additionalProperties === false
+  return strictObjectJson(z.toJSONSchema(schema, { io, unrepresentable: 'any' }))
+}
+
+interface JsonSchemaLike {
+  type?: string
+  additionalProperties?: unknown
+  anyOf?: unknown[]
+  oneOf?: unknown[]
+}
+
+/** A strict object, or a union (a discriminated body such as the additional-info groups, U2) whose every member is one. */
+function strictObjectJson(js: unknown): boolean {
+  const s = js as JsonSchemaLike
+  if (s.type === 'object') return s.additionalProperties === false
+  const members = s.anyOf ?? s.oneOf
+  return Array.isArray(members) && members.length > 0 && members.every(strictObjectJson)
 }

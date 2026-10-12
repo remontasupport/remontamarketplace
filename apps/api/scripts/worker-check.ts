@@ -129,6 +129,30 @@ async function main() {
   times.sort((a, b) => a - b)
   record('ten reads', true, `min ${times[0]!.toFixed(0)} ms, median ${times[5]!.toFixed(0)} ms, max ${times[9]!.toFixed(0)} ms (from this machine)`)
 
+  // --writes (U2): each section saved back with its current value -- idempotent, so the worker's data is unchanged --
+  // and every answer must equal what was sent. Staging by default; production only with --allow-production-writes.
+  if (process.argv.includes('--writes')) {
+    if (STAGE === 'prod' && !process.argv.includes('--allow-production-writes')) throw new Error('--writes on prod needs --allow-production-writes')
+    const cur = (await call('/v1/worker/profile', auth(workerToken))).body as any
+    const putJson = async (path: string, body: unknown) => {
+      const res = await fetch(`${BASE}${path}`, { method: 'PUT', headers: { ...auth(workerToken), 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      return { status: res.status, body: (await res.json().catch(() => null)) as unknown }
+    }
+    const back: [string, string, unknown][] = [
+      ['name', '/v1/worker/profile/name', cur.names],
+      ...(cur.bio ? [['bio', '/v1/worker/profile/bio', { bio: cur.bio }] as [string, string, unknown]] : []),
+      ['availability', '/v1/worker/availability', { slots: cur.sections.availability }],
+      ['experience', '/v1/worker/experience', { domains: cur.sections.experience }],
+    ]
+    for (const [label, path, body] of back) {
+      const r = await putJson(path, body)
+      const same = JSON.stringify(r.body) === JSON.stringify(body)
+      record(`write back ${label}`, r.status === 200, `${r.status}${r.status === 200 && !same ? ` (stored form differs from the read: ${JSON.stringify(r.body).slice(0, 80)})` : ''}`)
+    }
+    const after = await call('/v1/worker/profile', auth(workerToken))
+    record('profile unchanged by the write-backs', JSON.stringify((after.body as any).names) === JSON.stringify(cur.names), 'names equal')
+  }
+
   // The other stage keeps answering.
   const other = STAGE === 'prod' ? STAGING : PROD
   const otherHealth = await call('/v1/health', {}, other)

@@ -6,7 +6,7 @@
 // the same selection today's app functions make (completion-today.md), so the
 // completion rules see the rows they were written against. Prisma nested selects;
 // no raw SQL beyond the literal SET LOCAL (T3). One connection, at most 5 s.
-import { Prisma, readTransaction, type Db } from '../../../platform/persistence/db'
+import { Prisma, readTransaction, type Db, type Tx } from '../../../platform/persistence/db'
 
 /** R2.1: the statement timeout of the read, a constant (never input). */
 export const PROFILE_READ_STATEMENT_TIMEOUT_MS = 5000
@@ -37,6 +37,8 @@ const PROFILE_SELECT = {
   verificationStatus: true,
   isPublished: true,
   updatedAt: true,
+  homeStreetLine: true,
+  homeLocality: { select: { id: true, suburb: true, state: true, postcode: true } },
   workerServices: { select: { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true, createdAt: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
   verificationRequirements: { select: { id: true, requirementType: true, requirementName: true, status: true, documentCategory: true, documentUrl: true, expiresAt: true } },
   availability: { select: { dayOfWeek: true, startMinute: true, endMinute: true }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
@@ -89,7 +91,12 @@ export function catalogueFilter(services: readonly { categoryId: string; categor
  * `recordDbSuccess` on commit through readTransaction (P4).
  */
 export async function readProfileRows(db: Db, userId: string): Promise<ProfileRows | null> {
-  return readTransaction(db, PROFILE_READ_STATEMENT_TIMEOUT_MS, async (tx) => {
+  return readTransaction(db, PROFILE_READ_STATEMENT_TIMEOUT_MS, (tx) => readProfileRowsTx(tx, userId))
+}
+
+/** The same rows inside a caller's transaction (a section write recomputing completion, U2 L1). */
+export async function readProfileRowsTx(tx: Tx, userId: string): Promise<ProfileRows | null> {
+  {
     const profile = await tx.workerProfile.findUnique({ where: { userId }, select: PROFILE_SELECT })
     if (!profile) return null
     if (profile.workerServices.length === 0) return { profile, catalogue: [] }
@@ -104,7 +111,7 @@ export async function readProfileRows(db: Db, userId: string): Promise<ProfileRo
       orderBy: { id: 'asc' },
     })
     return { profile, catalogue }
-  })
+  }
 }
 
 /**

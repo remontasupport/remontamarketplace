@@ -15,10 +15,38 @@ import * as z from 'zod'
 import { CARE_DOMAINS } from './admin.contract'
 import { defineContract } from './define'
 import { meta } from './meta'
+import { photoTicketRequestSchema, photoTicketResponseSchema } from './registration.contract'
+import {
+  abnBodySchema,
+  abnViewSchema,
+  additionalInfoBodySchema,
+  additionalInfoParamsSchema,
+  availabilitySchema,
+  bankAccountSchema,
+  bioSchema,
+  confirmPhotoSchema,
+  educationSchema,
+  educationViewSchema,
+  experienceSchema,
+  homeAddressInputSchema,
+  jobHistorySchema,
+  jobHistoryViewSchema,
+  nameSchema,
+  personalInfoSchema,
+  photosSchema,
+  photoUrlSchema,
+  serviceAreaInputSchema,
+} from './worker.sections'
 
 export const WORKER_READ_LIMITS = { user: 120, ip: 300 } as const
 export const WORKER_WRITE_LIMITS = { user: 60, ip: 120 } as const
 export const WORKER_PRIVATE_CACHE_SECONDS = 60
+/**
+ * The audit action of every section write (U2): the database's AuditAction enum value. The section
+ * and the profile id travel in the audit row's metadata, so one enum value serves every write
+ * without a migration per section.
+ */
+export const PROFILE_UPDATE = 'PROFILE_UPDATE'
 
 /** A role-restricted GET for the worker's own data: per-user and per-IP limits, privately cacheable (R8.1). */
 export const workerRead = (opts: { privateCacheSeconds?: number } = {}) =>
@@ -35,14 +63,17 @@ export const workerRead = (opts: { privateCacheSeconds?: number } = {}) =>
     privateCacheSeconds: opts.privateCacheSeconds ?? WORKER_PRIVATE_CACHE_SECONDS,
   })
 
-/** A write to the worker's own data: tighter limits, a body limit and a mandatory audit action (R8.1). */
-export const workerWrite = (audit: string, opts: { maxBodyKb?: number } = {}) => {
+/**
+ * A write to the worker's own data: tighter limits, a body limit and a mandatory audit
+ * action (R8.1). `limit` lowers the per-user rule for one entry (the photo ticket, U2).
+ */
+export const workerWrite = (audit: string, opts: { maxBodyKb?: number; limit?: number } = {}) => {
   if (typeof audit !== 'string' || !audit) throw new Error('workerWrite: an audit action is required on every worker write (R8.1)')
   return meta({
     access: { roles: ['WORKER'] },
     bot: 'none',
     rateLimit: [
-      { per: 'user', limit: WORKER_WRITE_LIMITS.user, window: '1m' },
+      { per: 'user', limit: opts.limit ?? WORKER_WRITE_LIMITS.user, window: '1m' },
       { per: 'ip', limit: WORKER_WRITE_LIMITS.ip, window: '1m' },
     ],
     maxBodyKb: opts.maxBodyKb ?? 16,
@@ -110,6 +141,7 @@ export const homeAddressSchema = z.strictObject({
   state: str(10),
   postcode: str(10),
 })
+export type HomeAddress = z.output<typeof homeAddressSchema>
 
 export const workerServiceSchema = z.strictObject({
   categoryId: str(80),
@@ -217,4 +249,26 @@ export const workerContract = defineContract('worker', {
     responses: { 200: profileSchema },
     meta: workerRead(),
   },
+
+  // ---- U2 edit-profile: whole-section writes (R1), each returning the section as stored.
+  putName: { method: 'PUT', path: '/v1/worker/profile/name', summary: 'Replace the first, middle and last name.', body: json(nameSchema), responses: { 200: nameSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putBio: { method: 'PUT', path: '/v1/worker/profile/bio', summary: 'Replace the bio (1-2,000 characters).', body: json(bioSchema), responses: { 200: bioSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putPersonalInfo: { method: 'PUT', path: '/v1/worker/profile/personal-info', summary: 'Replace the date of birth, gender and vehicle answer.', body: json(personalInfoSchema), responses: { 200: personalInfoSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putAbn: { method: 'PUT', path: '/v1/worker/profile/abn', summary: 'Record the ABN (11 digits, ATO checksum); a TFN record is replaced (D17).', body: json(abnBodySchema), responses: { 200: abnViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putHomeAddress: { method: 'PUT', path: '/v1/worker/profile/home-address', summary: 'Replace the private home address: a street line and a suburb of ours. Never a client-facing value.', body: json(homeAddressInputSchema), responses: { 200: homeAddressSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putServiceArea: { method: 'PUT', path: '/v1/worker/profile/service-area', summary: 'Move the service area: the suburb clients find the worker at, and the travel radius.', body: json(serviceAreaInputSchema), responses: { 200: serviceAreaSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  createPhotoTicket: { method: 'POST', path: '/v1/worker/photos/tickets', summary: 'A ticket to upload one photo straight to the bucket (the sign-up\'s rules).', body: json(photoTicketRequestSchema), responses: { 201: photoTicketResponseSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1, limit: 10 }) },
+  confirmPhoto: { method: 'POST', path: '/v1/worker/photos', summary: 'Confirm an uploaded photo into the main or an additional slot; the clean copy follows by outbox.', body: json(confirmPhotoSchema), responses: { 201: photosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  makeMainPhoto: { method: 'POST', path: '/v1/worker/photos/main', summary: 'Swap an additional photo (by its URL) with the main one.', body: json(photoUrlSchema), responses: { 200: photosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  removePhoto: { method: 'POST', path: '/v1/worker/photos/remove', summary: 'Remove a photo by its URL (the main only when no additional photo is left).', body: json(photoUrlSchema), responses: { 200: photosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putAvailability: { method: 'PUT', path: '/v1/worker/availability', summary: 'Replace the week\'s preferred hours (no overlaps, at most 4 slots a day).', body: json(availabilitySchema), responses: { 200: availabilitySchema }, meta: workerWrite(PROFILE_UPDATE) },
+  putExperience: { method: 'PUT', path: '/v1/worker/experience', summary: 'Replace the experience per care area.', body: json(experienceSchema), responses: { 200: experienceSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  putJobHistory: { method: 'PUT', path: '/v1/worker/job-history', summary: 'Replace the ordered work history.', body: json(jobHistorySchema), responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  putEducation: { method: 'PUT', path: '/v1/worker/education', summary: 'Replace the ordered education list.', body: json(educationSchema), responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  putAdditionalInfo: { method: 'PUT', path: '/v1/worker/additional-info/:group', summary: 'Replace one additional-details group; the others are untouched.', pathParams: additionalInfoParamsSchema, body: json(additionalInfoBodySchema), responses: { 200: additionalInfoBodySchema }, meta: workerWrite(PROFILE_UPDATE) },
+  putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 })
+
+function json<S extends z.ZodType>(schema: S): { kind: 'json'; schema: S } {
+  return { kind: 'json', schema }
+}

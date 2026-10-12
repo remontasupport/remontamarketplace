@@ -26,6 +26,7 @@ export * from './openapi'
 export * from './platform.contract'
 export * from './registration.contract'
 export * from './worker.contract'
+export * from './worker.sections'
 
 /** Every area's contract. apps/api must bind all of them. */
 export const contracts: readonly Contract[] = [platformContract, registrationContract, adminContract, workerContract]
