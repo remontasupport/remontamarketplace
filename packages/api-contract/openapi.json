@@ -2702,13 +2702,7 @@
                     },
                     "verificationStatus": {
                       "type": "string",
-                      "enum": [
-                        "NOT_STARTED",
-                        "IN_PROGRESS",
-                        "PENDING_REVIEW",
-                        "APPROVED",
-                        "REJECTED"
-                      ]
+                      "maxLength": 40
                     },
                     "isPublished": {
                       "type": "boolean"

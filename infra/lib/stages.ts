@@ -104,7 +104,11 @@ export const STAGES: Readonly<Record<Stage, StageConfig>> = {
     stage: 'prod',
     serviceName: 'remonta-api',
     minInstances: 1,
-    maxInstances: 4,
+    // Ten (worker-profile-api U1, U1-SCL-03): 10,000 workers an hour is ~25 req/s sustained and
+    // 125 req/s in a burst; one instance carries the sustained rate, the rest is headroom.
+    // Ten instances all month would be about ten times the always-on cost (README, Cost);
+    // the A$300 billing budget and the 5xx-ratio alert report a sustained overload first.
+    maxInstances: 10,
     cpu: '1',
     memory: '1Gi',
     concurrency: 80,
@@ -116,7 +120,9 @@ export const STAGES: Readonly<Record<Stage, StageConfig>> = {
       RECAPTCHA_ALLOWED_HOSTNAMES: 'app.remontaservices.com.au',
       PHOTO_BUCKET: 'remonta-api-photos',
       PHOTO_PUBLIC_BASE_URL: 'https://storage.googleapis.com/remonta-api-photos',
-      MAX_IN_FLIGHT: '128',
+      // Below the instance's concurrency (80) so the in-flight signal can fire before Cloud
+      // Run queues (U1-SCL-03, NFR pattern P2); the same value as staging.
+      MAX_IN_FLIGHT: '64',
     },
   },
 }

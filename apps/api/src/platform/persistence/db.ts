@@ -12,11 +12,13 @@ export type Tx = Prisma.TransactionClient
  * poolTimeoutS for one -- then fails with P2024, which the error mapping turns into
  * a 503 with Retry-After instead of a request that hangs.
  */
-export function createDb(url: string, pool: { poolSize: number; poolTimeoutS: number } = { poolSize: 10, poolTimeoutS: 5 }): Db {
+export function createDb(url: string, pool: { poolSize: number; poolTimeoutS: number } = { poolSize: 10, poolTimeoutS: 5 }, opts: { queryEvents?: boolean } = {}): Db {
   const u = new URL(url)
   u.searchParams.set('connection_limit', String(pool.poolSize))
   u.searchParams.set('pool_timeout', String(pool.poolTimeoutS))
-  return new PrismaClient({ datasourceUrl: u.toString(), log: [{ level: 'warn', emit: 'event' }, { level: 'error', emit: 'event' }] })
+  // queryEvents (tests only): every statement as a 'query' event, so a test can count them (U1-PRF-01).
+  const log: Prisma.LogDefinition[] = [{ level: 'warn', emit: 'event' }, { level: 'error', emit: 'event' }, ...(opts.queryEvents ? [{ level: 'query' as const, emit: 'event' as const }] : [])]
+  return new PrismaClient({ datasourceUrl: u.toString(), log })
 }
 
 /**

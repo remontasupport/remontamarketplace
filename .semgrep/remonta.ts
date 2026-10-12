@@ -32,6 +32,11 @@ async function query(db: any, email: string) {
   await db.$executeRawUnsafe("DELETE FROM outbox_events");
   // ok: remonta-api-no-unsafe-raw-sql
   await db.$queryRaw`SELECT id FROM users WHERE lower(email) = lower(${email})`;
+  const x = 5000;
+  // ruleid: remonta-api-no-unsafe-raw-sql
+  await db.$executeRaw(Prisma.raw(`SET LOCAL statement_timeout = ${x}`));
+  // ok: remonta-api-no-unsafe-raw-sql
+  await db.$executeRaw(Prisma.raw("SET LOCAL statement_timeout = 5000"));
 }
 
 // ---- remonta-web-no-database-import ---------------------------------------------

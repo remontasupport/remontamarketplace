@@ -29,6 +29,8 @@ export interface AppOptions {
   /** Step 5b. Omitted: no shedding (tests that are not about load). */
   shedder?: LoadShedder
   logLevel?: string
+  /** Tests only: where the JSON log lines go, so a suite can assert on them. */
+  logStream?: NodeJS.WritableStream
 }
 
 @Module({})
@@ -59,7 +61,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 export async function createApp(opts: AppOptions): Promise<NestFastifyApplication> {
   const adapter = new ContractOnlyAdapter({
-    logger: loggerOptions(opts.logLevel ?? (opts.config.NODE_ENV === 'test' ? 'silent' : 'info')),
+    logger: { ...(loggerOptions(opts.logLevel ?? (opts.config.NODE_ENV === 'test' ? 'silent' : 'info')) as object), ...(opts.logStream ? { stream: opts.logStream } : {}) },
     genReqId,
     requestIdHeader: false, // genReqId validates x-request-id itself
     trustProxy: opts.config.TRUST_PROXY || false,

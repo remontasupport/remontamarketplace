@@ -124,16 +124,21 @@ export function nonEmpty(s: string | null | undefined): boolean {
   return typeof s === 'string' && s.trim().length > 0
 }
 
-/** The engagement JSON: a signed ABN engagement counts as "a valid ABN" (R3.4 [fix], R3.10, D17). */
-export function abnOf(json: unknown): { type: 'abn' | 'tfn'; signed: boolean } | null {
-  const t = (json as { workerEngagementType?: { type?: unknown; signed?: unknown } } | null)?.workerEngagementType
+/**
+ * The engagement JSON, `{ workerEngagementType: { type, signed?, value? } }` as the app writes
+ * it (signed: true) and as a few legacy rows carry it (value: the 11-digit number).
+ */
+export function abnOf(json: unknown): { type: 'abn' | 'tfn'; signed: boolean; value: string | null } | null {
+  const t = (json as { workerEngagementType?: { type?: unknown; signed?: unknown; value?: unknown } } | null)?.workerEngagementType
   if (!t || (t.type !== 'abn' && t.type !== 'tfn')) return null
-  return { type: t.type, signed: t.signed === true }
+  const value = typeof t.value === 'string' && t.value.trim() !== '' ? t.value.trim().slice(0, 20) : null
+  return { type: t.type, signed: t.signed === true, value }
 }
 
+/** "A valid ABN in the abn JSON" (R3.4 [fix], R3.10, D17): an ABN engagement that is signed or carries an 11-digit number. */
 export function hasValidAbn(json: unknown): boolean {
   const a = abnOf(json)
-  return a !== null && a.type === 'abn' && a.signed
+  return a !== null && a.type === 'abn' && (a.signed || /^\d{11}$/.test(a.value?.replace(/\s/g, '') ?? ''))
 }
 
 /**

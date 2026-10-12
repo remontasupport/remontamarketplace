@@ -16,7 +16,9 @@
     "load:harness": "tsx load/harness.ts",
     "backfill:locations": "node --env-file=.env --import tsx scripts/backfill-worker-locations.ts",
     "backfill:onboarding": "node --env-file=.env --import tsx scripts/backfill-worker-onboarding.ts",
-    "parity:admin-search": "tsx scripts/parity-admin-search.ts"
+    "parity:admin-search": "tsx scripts/parity-admin-search.ts",
+    "load:worker": "tsx scripts/load-worker.ts",
+    "backfill:completion": "node --env-file=.env --import tsx scripts/backfill-completion.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
@@ -40,8 +42,10 @@
   "devDependencies": {
     "@remonta/config": "workspace:*",
     "@swc/core": "^1.13.5",
+    "@types/autocannon": "7.12.7",
     "@types/node": "^20",
     "@typescript-eslint/parser": "^8",
+    "autocannon": "8.0.0",
     "eslint": "^9",
     "fast-check": "^4.9.0",
     "pino": "^10.3.1",

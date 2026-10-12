@@ -2,7 +2,7 @@
 // contract entry, the pipeline refuses what it must, before the handler runs.
 // Real contracts are all public in S1, so a synthetic signed-in contract covers
 // 401/403; it runs through exactly the same binder and pipeline.
-import { contracts, errorResponseSchema, platformContract, type Contract, type EntryDef, type PublicEndpoint } from '@remonta/api-contract'
+import { contracts, errorResponseSchema, platformContract, ROLES, type Contract, type EntryDef, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { HandlerSet } from '../src/platform/contract/handlers'
@@ -42,7 +42,10 @@ function expectErrorShape(res: Awaited<ReturnType<typeof send>>, status: number)
 }
 
 describe.each(entries)('$id', ({ entry: e }) => {
-  const signedInAdmin: Record<string, string> = e.meta.access === 'public' ? {} : { 'x-test-principal': 'u1:ADMIN' }
+  // A caller the entry admits (its first role) and one it refuses (any role it does not list).
+  const allowedRole = e.meta.access === 'public' ? undefined : e.meta.access.roles[0]
+  const refusedRole = e.meta.access === 'public' ? undefined : ROLES.find((r) => !(e.meta.access as { roles: readonly string[] }).roles.includes(r))
+  const signedInAdmin: Record<string, string> = allowedRole ? { 'x-test-principal': `u1:${allowedRole}` } : {}
 
   it('carries the security headers and a request id', async () => {
     t.rateLimiter.mode = 'deny'
@@ -53,26 +56,39 @@ describe.each(entries)('$id', ({ entry: e }) => {
     expect(res.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/)
   })
 
-  it('429 with Retry-After when the rate limit is reached', async () => {
-    t.rateLimiter.mode = 'deny'
-    const res = await send(e, { headers: signedInAdmin })
-    expectErrorShape(res, 429)
-    expect(res.headers['retry-after']).toBe('42')
-  })
+  if (e.meta.probe) {
+    // R6.1 / P6 (U1 worker-area): a probe never pays the limiter, whatever state the limiter is in.
+    it('never calls the rate limiter, even when the limiter is down', async () => {
+      for (const mode of ['deny', 'down'] as const) {
+        t.rateLimiter.mode = mode
+        const before = t.rateLimiter.keys.length
+        const res = await send(e)
+        expect(res.statusCode).not.toBe(429)
+        expect(t.rateLimiter.keys.length).toBe(before)
+      }
+    })
+  } else {
+    it('429 with Retry-After when the rate limit is reached', async () => {
+      t.rateLimiter.mode = 'deny'
+      const res = await send(e, { headers: signedInAdmin })
+      expectErrorShape(res, 429)
+      expect(res.headers['retry-after']).toBe('42')
+    })
 
-  it('503 when the rate limiter is unavailable (fails closed)', async () => {
-    t.rateLimiter.mode = 'down'
-    expectErrorShape(await send(e, { headers: signedInAdmin }), 503)
-  })
+    it('503 when the rate limiter is unavailable (fails closed)', async () => {
+      t.rateLimiter.mode = 'down'
+      expectErrorShape(await send(e, { headers: signedInAdmin }), 503)
+    })
+  }
 
   if (e.meta.access !== 'public') {
     it('401 for an anonymous caller', async () => {
       t.rateLimiter.mode = 'allow'
       expectErrorShape(await send(e, { body: {} }), 401)
     })
-    it('403 for a caller with the wrong role', async () => {
+    it(`403 for a caller with the wrong role (${refusedRole})`, async () => {
       t.rateLimiter.mode = 'allow'
-      expectErrorShape(await send(e, { body: {}, headers: { 'x-test-principal': 'u2:WORKER' } }), 403)
+      expectErrorShape(await send(e, { body: {}, headers: { 'x-test-principal': `u2:${refusedRole}` } }), 403)
     })
   } else {
     it('never asks a public caller to sign in', async () => {

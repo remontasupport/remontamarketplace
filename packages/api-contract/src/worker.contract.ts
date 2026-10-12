@@ -58,6 +58,7 @@ const isoDate = z.iso.datetime({ offset: true })
 const nullableInt = z.number().int().nullable()
 
 export const DAYS_OF_WEEK = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
+/** The values the app writes. The column is free text and one legacy row reads "Verified", so the field is a bounded string. */
 export const VERIFICATION_STATUSES = ['NOT_STARTED', 'IN_PROGRESS', 'PENDING_REVIEW', 'APPROVED', 'REJECTED'] as const
 export const REQUIREMENT_ITEM_STATUSES = ['missing', 'submitted', 'approved', 'rejected', 'expired'] as const
 export type RequirementItemStatus = (typeof REQUIREMENT_ITEM_STATUSES)[number]
@@ -183,14 +184,15 @@ export const profileSchema = z.strictObject({
     languages: z.array(str(40)).max(50),
   }),
   /**
-   * D17: the engagement JSON. `type` is `abn` for every new write; a stored `tfn` is
+   * D17: the engagement JSON. `type` is `abn` for every new write; `value` is the stored
+   * number when there is one (a few rows carry it) and null otherwise; a stored `tfn` is
    * reported with `value: null` so the UI can say "contract on file" without a number.
    */
   abn: z.strictObject({ type: z.enum(['abn', 'tfn']), value: str(20).nullable(), signed: z.boolean() }).nullable(),
   homeAddress: homeAddressSchema.nullable(),
   serviceArea: serviceAreaSchema.nullable(),
   displayRole: str(200),
-  verificationStatus: z.enum(VERIFICATION_STATUSES),
+  verificationStatus: str(40),
   isPublished: z.boolean(),
   completion: completionSchema,
   requirements: z.strictObject({ mandatory: z.array(requirementItemSchema).max(100), trainings: z.array(requirementItemSchema).max(100) }),

@@ -37,8 +37,6 @@ export function parseAdditionalPhotos(stored: string | null): string[] {
   }
 }
 
-const VERIFICATION_STATUSES = new Set(['NOT_STARTED', 'IN_PROGRESS', 'PENDING_REVIEW', 'APPROVED', 'REJECTED'])
-
 /** E5 from the read's rows. Exported for the backfill (P14), which runs the same computation. */
 export function completionInputOf(rows: ProfileRows): CompletionInput {
   const p = rows.profile
@@ -68,7 +66,6 @@ export function shapeProfile(rows: ProfileRows): Profile {
   const info = p.workerAdditionalInfo
   const abn = abnOf(p.abn)
   const hasVehicle = p.hasVehicle?.trim().toLowerCase()
-  if (!VERIFICATION_STATUSES.has(p.verificationStatus)) throw new Error(`worker profile ${p.id}: unknown verificationStatus`)
   return {
     id: p.id,
     names: { firstName: p.firstName, middleName: p.middleName, lastName: p.lastName },
@@ -82,12 +79,12 @@ export function shapeProfile(rows: ProfileRows): Profile {
       hasVehicle: hasVehicle === 'yes' ? 'Yes' : hasVehicle === 'no' ? 'No' : null,
       languages: p.languages,
     },
-    // D17: no number is stored with the engagement today; `value` is null for both kinds.
-    abn: abn ? { type: abn.type, value: null, signed: abn.signed } : null,
+    // D17: the number only for an ABN engagement; a TFN is never reported.
+    abn: abn ? { type: abn.type, value: abn.type === 'abn' ? abn.value : null, signed: abn.signed } : null,
     homeAddress: null, // R2.4: U2's columns
     serviceArea: home ? { localityId: home.localityId, label: localityLabel(home.locality, ', '), travelRadiusKm: home.travelRadiusKm ?? 0, precision: home.precision } : null,
     displayRole: displayRoleOf(p.workerServices),
-    verificationStatus: p.verificationStatus as Profile['verificationStatus'],
+    verificationStatus: p.verificationStatus.slice(0, 40),
     isPublished: p.isPublished,
     completion,
     requirements,
