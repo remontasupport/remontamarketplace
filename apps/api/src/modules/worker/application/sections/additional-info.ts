@@ -21,9 +21,6 @@ export const GROUP_COLUMNS: Readonly<Record<Group, readonly string[]>> = {
   personality: ['personality', 'nonSmoker', 'petFriendly'],
 }
 
-/** The groups the completion percent reads (U1 R3.10: languages, personality); the others never change a flag. */
-export const GROUPS_WITH_COMPLETION: ReadonlySet<Group> = new Set(['languages', 'personality'])
-
 /** The body's columns for its group (pure, tested). */
 export function columnsOf(body: AdditionalInfoBody): Record<string, unknown> {
   const { group, ...rest } = body

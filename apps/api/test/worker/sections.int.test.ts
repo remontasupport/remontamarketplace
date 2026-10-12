@@ -123,6 +123,12 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     // on a change (U1 P7), so the bare worker (all false before and after) keeps a null setupProgress -- still equal.
     // The filled worker's flags differ from its never-written null, so its write must land.
     await put('/v1/worker/profile/bio', { bio: 'A bio long enough to count toward the profile badge, written in one go.' })
+    // The writes that skip the recompute (only the percentage moves, and it is never stored) must leave the
+    // stored flags equal to the computed ones too.
+    await put('/v1/worker/availability', { slots: [{ day: 'FRIDAY', startMinute: 600, endMinute: 660 }] })
+    await put('/v1/worker/education', { entries: [] })
+    await put('/v1/worker/additional-info/languages', { group: 'languages', languages: ['English'] })
+    await put('/v1/worker/bank-account', { accountName: 'M', bankName: 'CBA', bsb: '062000', accountNumber: '12345678' }, () => h.b.userId)
     for (const w of [h.a, h.b]) {
       const stored = await h.db.workerProfile.findUniqueOrThrow({ where: { id: w.profileId }, select: { setupProgress: true, profileCompleted: true } })
       const c = (await profile(() => w.userId)).completion
