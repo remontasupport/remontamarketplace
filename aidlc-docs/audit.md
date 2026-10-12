@@ -3731,3 +3731,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > what this billing do again?
 
 **AI action (2026-10-12):** Explained the budget's purpose (an email guard against a sustained overload keeping ten instances busy, decided in the U1 infrastructure design Q2 A); no change.
+
+**User input (verbatim, 2026-10-12):**
+> done, budget created
+
+**AI action (2026-10-12):** The A$300 monthly budget on project `remonta-api-510206` recorded as created by the user on 2026-10-12 (console; thresholds 50/90/100 % of actual spend, email to support@). Noted in `infra/README.md`'s cost section on `docs/drills-ipv6`.
