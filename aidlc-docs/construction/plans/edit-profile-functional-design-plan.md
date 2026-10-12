@@ -149,23 +149,23 @@ B. Touch the home page in U2 as well.
 
 ## Plan
 
-- [ ] 1. Business rules (`business-rules.md`): R1 the section write (replace, one transaction, idempotent,
+- [x] 1. Business rules (`business-rules.md`): R1 the section write (replace, one transaction, idempotent,
   completion persisted where a flag can change: name, bio, personal info, ABN, service area, photo); R2 per
   section the field rules of Q1-Q9 and the error mapping to `fields`; R3 the two addresses (home: the columns, the
   locality check, never the legacy columns; service area: `placeHome` with `ONBOARDING`, the HOME row upserted,
   the legacy columns, the reconciler never moves it); R4 photos (Q7); R5 the ABN (Q8); R6 the bank account (Q9);
   R7 the option lists (Q3); R8 the sidebar order and badge (D11); R9 the engine's section mode (seed, pick, draft,
   retries, field errors).
-- [ ] 2. Business logic model (`business-logic-model.md`): L1 `replaceSection`; L2 each `put*` step by step; L3
+- [x] 2. Business logic model (`business-logic-model.md`): L1 `replaceSection`; L2 each `put*` step by step; L3
   `putHomeAddress` / `putServiceArea`; L4 the photo flows (ticket → confirm → attach; make main; remove); L5 the
   ABN checksum; L6 `seedSection`/`sectionBody`; L7 the client's save flow (`useSection` → write → `reload()`); the
   properties for PBT-01 (round-trip per section, idempotency, no overlap, the masked invariant, the home-address
   invariant on client paths, the group-isolation invariant, the sidebar order).
-- [ ] 3. Domain entities (`domain-entities.md`): the 15 bodies with every field, type, bound and source column; the
+- [x] 3. Domain entities (`domain-entities.md`): the 15 bodies with every field, type, bound and source column; the
   migration (two columns, the FK, the index); the `group` enum; the photo slots; the option lists' names.
-- [ ] 4. Frontend components (`frontend-components.md`): the section definitions (one per entry, fields and kinds),
+- [x] 4. Frontend components (`frontend-components.md`): the section definitions (one per entry, fields and kinds),
   the new kinds (`select`, `multiSelect`, `date`, `monthYear`, `number`, `textarea`, `timeRanges`, `orderedList`,
   `maskedSecret`, `abn`, `photoSlots`), `SectionPage`, `useWorkerProfile`/`useSection`, `WORKER_MENU` with D11's
   order and `children(profile)`, the admin page's home-address block and masked bank account, the pages that
   switch in PR 3 and what PR 4 deletes.
-- [ ] 5. Completion message and approval.
+- [x] 5. Completion message and approval.
