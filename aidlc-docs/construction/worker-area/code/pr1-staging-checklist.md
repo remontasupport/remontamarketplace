@@ -88,11 +88,63 @@ So the sustained and burst numbers above are the **limiter's** load test (11,899
 from here, no errors), not the read path's. Run 2 with the exemption deployed is the measurement the design asks
 for; it needs the fix PR merged and `RATE_LIMIT_EXEMPT_IPS=<this machine's IP>` set on staging first.
 
-## 4. Still to do for PR 1's promotion
+## 4. The apply on staging, and PRs #51 and #52
 
-- Merge the fix PR (`fix/backfill-completion-batched`: batched backfill, the exemption, the token refresh);
-  staging redeploys.
-- Set the exemption on staging; run 2 of the load test (`--rate 25 --minutes 10 --burst 5`); the burst drill
-  (revision events) and the event-loop drill (`MAX_EVENT_LOOP_DELAY_MS=50`); restore by redeploy.
-- The Neon values in `infra/README.md` and the A$300 budget (console, operator).
-- Promote the image; the production backfill (`--allow-production --apply`).
+**Apply** (02:00Z, 512 s; `backfill-staging-apply.json`): 1,790 examined, **240 changed**, 0 failed, 8 moved to
+IN_PROGRESS (an earlier apply had already written 174 before dying: 414 in all, as the dry run said). That earlier
+death was Prisma **P2028** "Unable to start a transaction in the given time": an interactive transaction waits only
+Prisma's default 2 s for a pool connection, and `errors.ts` mapped P2024 but not P2028 to 503 -- under pool
+pressure in production the same would have been a 500. **PR #52** (`fix/transaction-max-wait`, merged 02:04Z,
+`b9ff6f4`): P2028 -> 503 `reason: pool`; `maxWait` 5 s on both transaction helpers. **Second apply** from the
+merged `main`: 1,790 examined, **0 changed**, 0 failed -- idempotent.
+
+**PR #51** (`fix/backfill-completion-batched`, merged 01:58Z, `e9449f1`): the batched backfill, the exemption,
+the token refresh. Both PRs green on CI (App/Web Quality skipped by path filter).
+
+## 5. The load test, run 2 (02:14Z-02:27Z, `load-2026-10-12-run2.json`), with the exemption
+
+`RATE_LIMIT_EXEMPT_IPS` set on staging for this machine (revision `00023-rdg`, the boot warning logged). The
+first attempt still got 429s: Cloud Run sees this machine's **IPv6** address (`httpRequest.remoteIp`), not the
+IPv4 one `api.ipify.org` returns -- both listed (revision `00024-f88`), run restarted. Server-side figures are the
+api's own `responseTime` per request from Cloud Logging; the script's figures include this machine's ~250 ms
+round trip to Sydney (and its "p95" is autocannon's p97.5).
+
+| Phase | Requests | Status | Server-side p50 / p95 / p99 | Script: p50 / p99 all, p95 admitted |
+|---|---|---|---|---|
+| sustained 25/s, 10 min | 14,873 | 9,693 × 200, 5,180 × 304, **0 × 429, 0 × 5xx**, 0 errors | 77 / 150-230 / 400-760 ms per minute (311 / 859 over the phase incl. the minute the burst starts in) | 138 / 789 ms; 380 ms |
+| burst 125/s requested, 60 s | 3,325 served (~55/s reached the server) | 0 × 429, **0 × 503**, 0 errors | 465 / 983 / 1,658 ms | 573 / 7,330 ms; 1,791 ms |
+| recovery 25/s, 60 s | 1,493 | 0 refused | 82 / 211 / 754 ms | 146 / 781 ms; 438 ms |
+
+Thresholds (U1-PRF-03): sustained p99 ≤ 800 ms PASS, no 429 PASS, no 5xx PASS, no errors PASS; the script's
+"sustained p95 ≤ 300 ms" row reads FAIL at 560 ms **from here**, while every server-side minute is well under
+300 ms -- the threshold was written for a generator in Australia (infrastructure design Q1 A). Burst: no 5xx PASS,
+no errors PASS; "p95 of admitted ≤ 1 s" FAIL at 1,791 ms from here (983 ms server-side). Recovery: PASS.
+
+**Finding (design note, not a blocker):** one staging instance serves about **55 reads a second**; above that
+latency climbs (the 5-connection pool is the bottleneck: a read holds a connection ~80 ms) and nothing is shed,
+because in-flight stays far below `MAX_IN_FLIGHT` 64 and the event loop stays quiet. The 125 req/s burst needs
+three instances; prod scales to ten. The shedder protects the process, the pool protects the database; the load
+report shows the second one is the one that fills first.
+
+## 6. The drills (P13 g, h)
+
+**(g) Burst** = run 2's burst phase, watched: revisions `00024-f88` only (no new revision, no restart), no
+`severity>=ERROR`, no liveness/probe line, **one** instance id throughout, zero 503. PASS.
+
+**(h) Event-loop signal** (`MAX_EVENT_LOOP_DELAY_MS=50` on staging, revision `00025-tdd`; 5 min at 25 req/s,
+02:30Z-02:35Z; `load-2026-10-12-eventloop-drill.json`): 7,424 requests, 4,988 × 200, 2,411 × 304, **25 × 503
+with `reason: shed`** in one cluster at 02:33Z, 25 back-offs honoured, 0 errors; the next minute clean (979 × 200,
+507 × 304). The signal fires and the service recovers on its own. PASS.
+
+**Restore** (02:36Z): `MAX_EVENT_LOOP_DELAY_MS=200`, `RATE_LIMIT_EXEMPT_IPS` removed (revision `00026-xb5`);
+health 200; the live environment equals `service.staging.yaml` exactly (checked variable by variable). The
+runbook lessons (list the IPv6 address; the gcloud restore) are on `docs/drills-ipv6`.
+
+## 7. Still to do for PR 1's promotion (operator)
+
+- The Neon values in `infra/README.md` "Database connections" (console) and the A$300 budget (console).
+- Promote: Actions → deploy-api → Run workflow → stage=prod, imageTag=`b9ff6f4` (the image that passed everything
+  above, with PRs #51 and #52 in it).
+- Right after: the production backfill, dry run then `--allow-production --apply` (from `apps/api/.env`'s
+  production URL; about two minutes each with the batched read); then the production checks of §1 against the
+  prod URL with a production worker token.

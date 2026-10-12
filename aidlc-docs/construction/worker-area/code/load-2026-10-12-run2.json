@@ -1,0 +1,152 @@
+{
+  "startedAt": "2026-10-12T02:13:45.875Z",
+  "baseUrl": "https://remonta-api-staging-154148201608.australia-southeast1.run.app",
+  "workers": 200,
+  "options": {
+    "baseUrl": "https://remonta-api-staging-154148201608.australia-southeast1.run.app",
+    "workers": 200,
+    "rate": 25,
+    "minutes": 10,
+    "burst": 5,
+    "warmupSeconds": 60,
+    "report": "C:/Users/floil/AppData/Local/Temp/claude/C--Users-floil-OneDrive-Documents-Projects-Remonta-remontamarketplace/1a9be61d-b06a-449c-a453-d97dd8fc9ca3/scratchpad/load-2026-10-12-run2.json"
+  },
+  "mix": "reads-only (U1)",
+  "phases": {
+    "warmup": {
+      "requests": 780,
+      "latency": {
+        "p50": 130,
+        "p95": 424,
+        "p99": 577
+      },
+      "admittedLatency": {
+        "p95": 334
+      },
+      "status": {
+        "200": 577,
+        "304": 203
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    },
+    "sustained": {
+      "requests": 14873,
+      "latency": {
+        "p50": 138,
+        "p95": 560,
+        "p99": 789
+      },
+      "admittedLatency": {
+        "p95": 380
+      },
+      "status": {
+        "200": 9693,
+        "304": 5180
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    },
+    "burst": {
+      "requests": 3301,
+      "latency": {
+        "p50": 573,
+        "p95": 6434,
+        "p99": 7330
+      },
+      "admittedLatency": {
+        "p95": 1791
+      },
+      "status": {
+        "200": 2087,
+        "304": 1214
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    },
+    "recovery": {
+      "requests": 1493,
+      "latency": {
+        "p50": 146,
+        "p95": 584,
+        "p99": 781
+      },
+      "admittedLatency": {
+        "p95": 438
+      },
+      "status": {
+        "200": 967,
+        "304": 526
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": null
+    }
+  },
+  "thresholds": [
+    {
+      "phase": "sustained",
+      "rule": "p95 <= 300 ms",
+      "actual": "560 ms",
+      "pass": false
+    },
+    {
+      "phase": "sustained",
+      "rule": "p99 <= 800 ms",
+      "actual": "789 ms",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no 429",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no 503 / 5xx",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no errors or timeouts",
+      "actual": "0 errors, 0 timeouts",
+      "pass": true
+    },
+    {
+      "phase": "burst",
+      "rule": "no 5xx other than 503",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "burst",
+      "rule": "p95 of admitted <= 1000 ms",
+      "actual": "1791 ms",
+      "pass": false
+    },
+    {
+      "phase": "burst",
+      "rule": "no errors or timeouts",
+      "actual": "0 errors, 0 timeouts",
+      "pass": true
+    },
+    {
+      "phase": "recovery",
+      "rule": "no 503 after 30 s",
+      "actual": "none",
+      "pass": true
+    },
+    {
+      "phase": "recovery",
+      "rule": "no 5xx other than 503",
+      "actual": "0",
+      "pass": true
+    }
+  ],
+  "pass": false
+}

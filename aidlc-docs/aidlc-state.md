@@ -7,14 +7,15 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Code Generation **done** (2026-10-12): PR 1's code is on
-  **`feat/worker-area`** (pushed, `2e8ecd5`, 4 commits, 52 files; summary and deviations in
-  `construction/worker-area/code/U1-summary.md`). **Build and Test in progress**: **PR #50** is open (https://github.com/remontasupport/remontamarketplace/pull/50); its first CI run failed on the Semgrep code-scanning check and two database-gated findings, fixed in  (audit 2026-10-12). Then: CI green on ; the compare URL was
-  `https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fworker-area?expand=1` (expect 4 commits,
-  52 files); CI proves the database-gated suites and `semgrep --test`; after the merge deploys staging, the checklist in
-  `docs/worker/README.md` §7 (health, a worker token, the read 200/304, the backfill dry run and `--apply` on staging,
-  the load test with its report committed under `construction/worker-area/code/`, the two drills, the Neon values in
-  `infra/README.md`, the A$300 budget), then the promotion and the production backfill. `main` is untouched so far.
+- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, **Build and Test, staging done** (2026-10-12): PRs #50, #51
+  and #52 merged (`main` = `b9ff6f4`); the staging checklist is complete -- 14 api checks, the backfill applied
+  and idempotent on the staging copy, load test run 2 and both drills, all in
+  `construction/worker-area/code/pr1-staging-checklist.md`; staging restored to the table (revision `00026-xb5`).
+  **Next (operator):** the Neon values in `infra/README.md`, the A$300 budget, then **promote `b9ff6f4`**
+  (Actions -> deploy-api -> Run workflow -> stage=prod), then the production backfill (dry run, then
+  `--allow-production --apply`) and the production checks; then the U1 clean-up PR and U2. A pending docs PR,
+  `docs/drills-ipv6`, carries the runbook lessons. History of this stage is in the audit (2026-10-12): PR #50's
+  first CI run, the two fix PRs, the IPv6 exemption, the P2028 finding.
 
 ## Previous cycles (archived, read-only)
 

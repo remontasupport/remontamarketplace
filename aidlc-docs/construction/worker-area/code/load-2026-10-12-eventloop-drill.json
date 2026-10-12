@@ -1,0 +1,69 @@
+{
+  "startedAt": "2026-10-12T02:30:07.311Z",
+  "baseUrl": "https://remonta-api-staging-154148201608.australia-southeast1.run.app",
+  "workers": 200,
+  "options": {
+    "baseUrl": "https://remonta-api-staging-154148201608.australia-southeast1.run.app",
+    "workers": 200,
+    "rate": 25,
+    "minutes": 5,
+    "burst": 1,
+    "warmupSeconds": 0,
+    "report": "C:/Users/floil/AppData/Local/Temp/claude/C--Users-floil-OneDrive-Documents-Projects-Remonta-remontamarketplace/1a9be61d-b06a-449c-a453-d97dd8fc9ca3/scratchpad/load-2026-10-12-eventloop.json"
+  },
+  "mix": "reads-only (U1)",
+  "phases": {
+    "sustained": {
+      "requests": 7424,
+      "latency": {
+        "p50": 143,
+        "p95": 567,
+        "p99": 793
+      },
+      "admittedLatency": {
+        "p95": 392
+      },
+      "status": {
+        "200": 4988,
+        "304": 2411,
+        "503": 25
+      },
+      "errors": 0,
+      "timeouts": 0,
+      "lastUnavailableAtS": 231.257
+    }
+  },
+  "thresholds": [
+    {
+      "phase": "sustained",
+      "rule": "p95 <= 300 ms",
+      "actual": "567 ms",
+      "pass": false
+    },
+    {
+      "phase": "sustained",
+      "rule": "p99 <= 800 ms",
+      "actual": "793 ms",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no 429",
+      "actual": "0",
+      "pass": true
+    },
+    {
+      "phase": "sustained",
+      "rule": "no 503 / 5xx",
+      "actual": "25",
+      "pass": false
+    },
+    {
+      "phase": "sustained",
+      "rule": "no errors or timeouts",
+      "actual": "0 errors, 0 timeouts",
+      "pass": true
+    }
+  ],
+  "pass": false
+}
