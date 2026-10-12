@@ -22,7 +22,6 @@ import { getServiceDocumentRequirements } from './oracles/service-requirements-o
 describe('P2: completionOf against today\'s function (R3.12)', () => {
   it('agrees with the oracle on every generated profile outside the [fix] cases, and both partitions are large', () => {
     const seen = { plain: 0, fixed: 0 }
-    const kinds = new Map<FixCase, number>()
     fc.assert(
       fc.property(completionInput, (input) => {
         const fixes = fixCasesOf(input)
@@ -34,7 +33,6 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
           expect(flagsOf(got)).toEqual(expected)
         } else {
           seen.fixed++
-          for (const k of fixes) kinds.set(k, (kinds.get(k) ?? 0) + 1)
           // The three flags the no-offerings early return threw away still agree when that is the only difference.
           if (fixes.length === 1 && fixes[0] === 'no-offerings') {
             const variant = completionOracle({ ...input, services: input.services.map((s) => (s.subcategoryNames.length ? s : { ...s, subcategoryNames: ['x'], subcategoryIds: ['x'] })) })
@@ -49,8 +47,15 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
     )
     expect(seen.plain).toBeGreaterThan(50)
     expect(seen.fixed).toBeGreaterThan(50)
+  })
+
+  // Coverage of the partition (R3.12: every [fix] kind must be exercised) is measured on a fixed-seed sample large
+  // enough for the rarest kind, so it is deterministic; the equality above stays random on every run.
+  it('the generator exercises every [fix] kind (fixed seed, 5,000 inputs)', () => {
+    const counts = new Map<FixCase, number>()
+    for (const input of fc.sample(completionInput, { numRuns: 5000, seed: 20261012 })) for (const k of fixCasesOf(input)) counts.set(k, (counts.get(k) ?? 0) + 1)
     for (const k of ['whitespace', 'link-optional-or-conditional', 'abn-counts', 'status-compliance', 'trainings-status', 'no-offerings', 'service-title-case', 'service-status'] as FixCase[]) {
-      expect(kinds.get(k) ?? 0, k).toBeGreaterThan(0)
+      expect(counts.get(k) ?? 0, k).toBeGreaterThan(5)
     }
   })
 })

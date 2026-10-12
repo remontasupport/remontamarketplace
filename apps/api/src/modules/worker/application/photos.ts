@@ -85,9 +85,19 @@ export async function removeOne(tx: Tx, profileId: string, url: string): Promise
   return next
 }
 
+/** An https URL on Vercel Blob's public host (`<store>.public.blob.vercel-storage.com`), by its parsed host, never a substring. */
+export function isBlobUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && u.hostname.endsWith('.public.blob.vercel-storage.com')
+  } catch {
+    return false
+  }
+}
+
 /** After commit, best-effort (R4.4): a processed Blob copy and its thumbnail; a staged bucket object is the purge job's. */
 export async function deleteStoredPhoto(blob: { delete(urlOrKey: string): Promise<void> }, url: string, log: { warn(o: object, m: string): void }): Promise<void> {
-  if (!/\.blob\.vercel-storage\.com\//.test(url)) return
+  if (!isBlobUrl(url)) return
   const targets = [url, ...(url.endsWith('.jpg') ? [url.replace(/\.jpg$/, '-256.jpg')] : [])]
   for (const t of targets) await blob.delete(t).catch((err: unknown) => log.warn({ err: err instanceof Error ? err.message : String(err) }, 'photo delete failed'))
 }

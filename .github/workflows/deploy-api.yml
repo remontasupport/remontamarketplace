@@ -143,8 +143,13 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
       - name: The image must already exist (no build on a promotion)
         run: gcloud artifacts docker images describe "${{ env.IMAGE }}:${{ inputs.imageTag }}" --project "${{ vars.GCP_PROJECT_ID }}" --format='value(image_summary.digest)'
-      - name: Apply pending migrations to the ${{ inputs.stage }} database (expand-only; before the new code runs)
-        run: .github/scripts/api-migrate.sh ${{ inputs.stage }} "${{ vars.GCP_PROJECT_ID }}"
+      - name: Apply pending migrations to the stage's database (expand-only; before the new code runs)
+        # The stage arrives through env, never interpolated into the script (Semgrep run-shell-injection);
+        # api-migrate.sh accepts only "staging" or "prod".
+        env:
+          STAGE: ${{ inputs.stage }}
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: .github/scripts/api-migrate.sh "$STAGE" "$PROJECT_ID"
       - name: Apply the rendered service definition with that image
         run: |
           sed "s/__PROJECT_ID__/${{ vars.GCP_PROJECT_ID }}/g; s/__IMAGE_TAG__/${{ inputs.imageTag }}/g; s/__DEPLOY_ID__/${{ github.run_id }}-${{ github.run_attempt }}/g" "infra/cloudrun/service.${{ inputs.stage }}.yaml" \

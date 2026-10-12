@@ -3596,7 +3596,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_NAME_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -3740,7 +3740,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_BIO_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -3912,7 +3912,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_PERSONAL_INFO_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -4060,7 +4060,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_ABN_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -4229,7 +4229,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_HOME_ADDRESS_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -4396,7 +4396,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_SERVICE_AREA_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -4587,7 +4587,7 @@
             }
           ],
           "maxBodyKb": 1,
-          "audit": "WORKER_PHOTO_TICKET"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -4752,7 +4752,7 @@
             }
           ],
           "maxBodyKb": 1,
-          "audit": "WORKER_PHOTO_ADDED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -4909,7 +4909,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_PHOTO_MAIN"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -5066,7 +5066,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_PHOTO_REMOVED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -5272,7 +5272,7 @@
             }
           ],
           "maxBodyKb": 16,
-          "audit": "WORKER_AVAILABILITY_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -5534,7 +5534,7 @@
             }
           ],
           "maxBodyKb": 16,
-          "audit": "WORKER_EXPERIENCE_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -5851,7 +5851,7 @@
             }
           ],
           "maxBodyKb": 16,
-          "audit": "WORKER_JOB_HISTORY_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -6168,7 +6168,7 @@
             }
           ],
           "maxBodyKb": 16,
-          "audit": "WORKER_EDUCATION_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -7002,7 +7002,7 @@
             }
           ],
           "maxBodyKb": 16,
-          "audit": "WORKER_ADDITIONAL_INFO_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     },
@@ -7173,7 +7173,7 @@
             }
           ],
           "maxBodyKb": 4,
-          "audit": "WORKER_BANK_ACCOUNT_CHANGED"
+          "audit": "PROFILE_UPDATE"
         }
       }
     }

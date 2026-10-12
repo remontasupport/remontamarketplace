@@ -7,7 +7,7 @@ import fc from 'fast-check'
 import { afterEach, describe, expect, it } from 'vitest'
 import { repoint } from '../../src/modules/registration/application/photo-process'
 import { platformHandlers } from '../../src/modules/platform/platform.handlers'
-import { deleteStoredPhoto, placePhoto, swapMain, withoutPhoto } from '../../src/modules/worker/application/photos'
+import { deleteStoredPhoto, isBlobUrl, placePhoto, swapMain, withoutPhoto } from '../../src/modules/worker/application/photos'
 import { columnsOf, GROUP_COLUMNS, toStoredBankAccount } from '../../src/modules/worker/application/sections/additional-info'
 import { maskBankAccount } from '../../src/modules/worker/domain/bank-account'
 import { workerHandlers } from '../../src/modules/worker/worker.handlers'
@@ -54,6 +54,14 @@ describe('photo slots (R4)', () => {
       }),
     )
   })
+  it('recognises Blob URLs by their parsed host only (CodeQL: no unanchored match)', () => {
+    expect(isBlobUrl(A)).toBe(true)
+    expect(isBlobUrl('https://evil.example/x.public.blob.vercel-storage.com/a.jpg')).toBe(false)
+    expect(isBlobUrl('https://x.public.blob.vercel-storage.com.evil.example/a.jpg')).toBe(false)
+    expect(isBlobUrl('http://x.public.blob.vercel-storage.com/a.jpg')).toBe(false)
+    expect(isBlobUrl('not a url')).toBe(false)
+  })
+
   it('deletes a processed Blob copy and its thumbnail, never a bucket object', async () => {
     const deleted: string[] = []
     const blob = { delete: async (u: string) => void deleted.push(u) }
