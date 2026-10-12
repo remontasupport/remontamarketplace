@@ -109,6 +109,8 @@ describe('the stages differ only where the design says', () => {
     expect([STAGES.staging.minInstances, STAGES.staging.maxInstances]).toEqual([1, 1])
     expect([STAGES.prod.minInstances, STAGES.prod.maxInstances]).toEqual([1, 10])
     for (const s of Object.values(STAGES)) expect(Number(s.environment.MAX_IN_FLIGHT)).toBeLessThan(s.concurrency)
+    // The per-IP exemption (a load-test override on staging, set by hand for a run) is never in a table.
+    for (const s of Object.values(STAGES)) expect(s.environment).not.toHaveProperty('RATE_LIMIT_EXEMPT_IPS')
     expect(STAGES.staging.alerts).toBe('minimal')
     expect(STAGES.prod.alerts).toBe('full')
   })

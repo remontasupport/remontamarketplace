@@ -94,3 +94,13 @@ describe('loadConfig', () => {
     expect(msg).not.toMatch(/SEKRET|TOPSECRET/)
   })
 })
+
+describe('RATE_LIMIT_EXEMPT_IPS (U1 worker-area, staging drills only)', () => {
+  it('is empty by default, parses a list of IPs, and refuses anything that is not an IP', () => {
+    expect(loadConfig(complete).rateLimitExemptIps.size).toBe(0)
+    const set = loadConfig({ ...complete, RATE_LIMIT_EXEMPT_IPS: '203.0.113.7, 2001:db8::1' }).rateLimitExemptIps
+    expect([...set]).toEqual(['203.0.113.7', '2001:db8::1'])
+    expect(() => loadConfig({ ...complete, RATE_LIMIT_EXEMPT_IPS: 'office' })).toThrow(ConfigError)
+    expect(() => loadConfig({ ...complete, RATE_LIMIT_EXEMPT_IPS: '*' })).toThrow(/RATE_LIMIT_EXEMPT_IPS/)
+  })
+})

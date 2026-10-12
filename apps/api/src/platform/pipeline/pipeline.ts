@@ -32,6 +32,11 @@ export interface PipelineDeps {
   authenticator: Authenticator
   /** The response memo and the entry ids (`area.name`) that use it (U2, D16). */
   memo?: { store: ResponseMemo; entries: ReadonlySet<string> }
+  /**
+   * Client IPs the per-IP rules do not count (config RATE_LIMIT_EXEMPT_IPS: a staging drill's load
+   * generator, U1 worker-area). Per-user and global rules still apply; empty in production.
+   */
+  exemptIps?: ReadonlySet<string>
 }
 
 export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<EntryDef>, deps: PipelineDeps) {
@@ -41,7 +46,7 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
     // 3. Rate limit, before anything costly. Per-user rules wait for step 5. A probe
     //    (the health check) never pays the limiter (U1 worker-area R6.1): its liveness
     //    path has no database dependency of its own.
-    if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per !== 'user'), request, null, deps.rateLimiter)
+    if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per !== 'user'), request, null, deps)
 
     // 4. Bot check. The token is read from the raw body before validation, so an
     //    automated request is turned away without its payload being examined.
@@ -67,7 +72,7 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
       // handler's lines, the response line. Ids only, never a name or an email.
       request.log = request.log.child({ userId: principal.userId, ...(principal.impersonatorId ? { impersonatorId: principal.impersonatorId } : {}) })
       if (!m.access.roles.includes(principal.role)) throw new ApiError(403, `role ${principal.role} not in ${m.access.roles.join(',')}`)
-      if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per === 'user'), request, principal, deps.rateLimiter)
+      if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per === 'user'), request, principal, deps)
     }
 
     // 7. Input validation.
@@ -127,12 +132,14 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
   }
 }
 
-async function enforceLimits(id: string, rules: readonly RateLimitRule[], request: FastifyRequest, principal: Principal | null, limiter: RateLimiter) {
+async function enforceLimits(id: string, rules: readonly RateLimitRule[], request: FastifyRequest, principal: Principal | null, deps: Pick<PipelineDeps, 'rateLimiter' | 'exemptIps'>) {
   for (const r of rules) {
+    // An exempt IP (a staging drill's load generator) skips the per-IP rules only; its per-user and global rules run as for anyone.
+    if (r.per === 'ip' && deps.exemptIps?.has(request.ip)) continue
     const who = r.per === 'ip' ? request.ip : r.per === 'user' ? (principal?.userId ?? 'anonymous') : '*'
     let decision
     try {
-      decision = await limiter.hit(`${id}:${r.per}:${who}:${r.limit}/${r.window}`, r.limit, r.window)
+      decision = await deps.rateLimiter.hit(`${id}:${r.per}:${who}:${r.limit}/${r.window}`, r.limit, r.window)
     } catch (err) {
       // Fails closed: without the counter we cannot know the caller is within limits.
       request.log.error({ err, entry: id, reason: 'limiter' }, 'rate limiter unavailable')

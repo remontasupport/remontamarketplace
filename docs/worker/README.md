@@ -141,7 +141,8 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
 - **Load test** (`apps/api/scripts/load-worker.ts`, `pnpm --filter @remonta/api load:worker -- --base-url <staging url>
   --workers 200 --rate 25 --minutes 10 --burst 5 --report <file>`): staging only (the base URL host must contain
   `staging`, the database host must not be production's; exit 2 otherwise); reads `STAGING_API_TOKEN_SECRET` and
-  `STAGING_AUTH_DATABASE_URL`; a 60 s warm-up, the sustained phase, a 60 s burst at rate × burst, a 60 s
+  `STAGING_AUTH_DATABASE_URL`; the generator's IP must first be listed in staging's `RATE_LIMIT_EXEMPT_IPS`
+  (`infra/README.md`, "Drills": the 300/min per-IP rule would otherwise refuse most of the run); a 60 s warm-up, the sustained phase, a 60 s burst at rate × burst, a 60 s
   recovery; 70 % reads (half conditional), the 30 % write share becomes section writes in U2 (reads only in U1,
   stated in the report); per-worker back-off on 429/503 honouring `Retry-After`; the thresholds table
   (sustained: p95 ≤ 300 ms, p99 ≤ 800 ms, no 429/5xx; burst: 503 allowed, no other 5xx, p95 of admitted ≤ 1 s;

@@ -1,6 +1,7 @@
 // The environment, parsed once at boot (S1-design 2.7). A missing or malformed
 // value stops the service -- the opposite of today's fail-open CAPTCHA. Errors name
 // the variable and the problem, never the value (P6).
+import { isIP } from 'node:net'
 import { availableParallelism } from 'node:os'
 import * as z from 'zod'
 import { isExactOrigin, isHostPattern, isOriginPattern } from './hosts'
@@ -74,6 +75,14 @@ const envSchema = z.object({
   MAX_IN_FLIGHT: z.coerce.number().int().min(1).max(10000).default(256),
   /** Event-loop delay (p99, ms) above which new requests get a fast 503. */
   MAX_EVENT_LOOP_DELAY_MS: z.coerce.number().int().min(10).max(10000).default(200),
+  /**
+   * IPs the per-IP rate-limit rules do not count (U1 worker-area, the load test): the single
+   * machine a load test runs from would otherwise be refused by the 300/min rule before the
+   * read runs. Empty by default and absent from both stages' tables (infra/lib/stages.ts); set on
+   * STAGING ONLY by a temporary `gcloud run services update --update-env-vars` for a run and
+   * removed by redeploying the rendered configuration. Per-user rules still apply. Boot logs a warning.
+   */
+  RATE_LIMIT_EXEMPT_IPS: list.pipe(z.array(z.string().refine((ip) => isIP(ip) !== 0, 'must be an IPv4 or IPv6 address'))).optional(),
   /** Database connections this instance may hold. Neon caps the total across instances. */
   DB_POOL_SIZE: z.coerce.number().int().min(1).max(100).default(10),
   /** Seconds a query waits for a free connection before failing with 503. */
@@ -90,6 +99,8 @@ export type Env = z.output<typeof envSchema>
 
 export interface Config extends Env {
   requireHttps: boolean
+  /** RATE_LIMIT_EXEMPT_IPS as a set; empty unless the variable is set (staging drills only). */
+  rateLimitExemptIps: ReadonlySet<string>
   /** Hosts SafeHttpClient may call. Nothing else is reachable (P5). */
   outboundHosts: string[]
 }
@@ -115,6 +126,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
   return {
     ...e,
     requireHttps: e.REQUIRE_HTTPS ? e.REQUIRE_HTTPS === 'true' : e.NODE_ENV === 'production',
+    rateLimitExemptIps: new Set(e.RATE_LIMIT_EXEMPT_IPS ?? []),
     outboundHosts: [
       'www.google.com', // reCAPTCHA siteverify
       'api.resend.com',

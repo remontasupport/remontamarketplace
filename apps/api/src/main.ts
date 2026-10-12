@@ -89,9 +89,12 @@ async function main() {
       }),
       authenticator,
       memo: { store: new ResponseMemo({ clock: systemClock }), entries: new Set(['admin.searchWorkers']) },
+      exemptIps: config.rateLimitExemptIps,
     },
   })
   const log = app.getHttpAdapter().getInstance().log
+  // Staging drills only (RATE_LIMIT_EXEMPT_IPS): said loudly at boot, never silently in place.
+  if (config.rateLimitExemptIps.size > 0) log.warn({ exemptIps: config.rateLimitExemptIps.size }, 'per-IP rate limits are skipped for RATE_LIMIT_EXEMPT_IPS (a load-test override; redeploy to remove)')
   outboxHandlers.set(PHOTO_UPLOADED, photoUploadedHandler({ db, bucket, blob: blobStore, log, concurrency: config.PHOTO_PROCESS_CONCURRENCY }))
   const dispatcher = new OutboxDispatcher(db, outboxHandlers, log)
   dispatcher.start(config.OUTBOX_POLL_MS)

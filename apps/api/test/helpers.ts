@@ -60,6 +60,8 @@ export async function testApp(opts: {
   memo?: AppOptions['deps']['memo']
   /** Capture the log lines (parsed JSON) instead of silencing them. */
   logs?: Record<string, unknown>[]
+  /** IPs the per-IP rules skip (RATE_LIMIT_EXEMPT_IPS). */
+  exemptIps?: ReadonlySet<string>
 }): Promise<TestApp> {
   const rateLimiter = new FakeRateLimiter()
   const captcha = new FakeCaptcha()
@@ -68,7 +70,7 @@ export async function testApp(opts: {
     contracts: opts.contracts,
     handlerSets: opts.handlerSets,
     publicEndpoints: opts.publicEndpoints ?? [],
-    deps: { rateLimiter, captcha, authenticator: opts.authenticator ?? new FakeAuthenticator(), memo: opts.memo },
+    deps: { rateLimiter, captcha, authenticator: opts.authenticator ?? new FakeAuthenticator(), memo: opts.memo, exemptIps: opts.exemptIps },
     shedder: opts.shedder,
     ...(opts.logs
       ? {

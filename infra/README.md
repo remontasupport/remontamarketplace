@@ -140,6 +140,22 @@ committed in the last 30 s (`docs/worker/README.md` §6).
 Both on **staging only**, both recorded in the cycle's construction notes
 (`aidlc-docs/construction/worker-area/code/`). The load test itself: `docs/worker/README.md` §7.
 
+**Before any load test: exempt the load generator's IP from the per-IP limits.** The worker read allows
+300 requests a minute per IP; a 25 req/s run from one machine would be refused four times out of five
+before the read runs (seen on the first run, 2026-10-12: 1,500 sent, 300 admitted, 1,200 × 429 a minute).
+`RATE_LIMIT_EXEMPT_IPS` (apps/api config) lists the IPs whose per-IP rules are skipped; it is in no stage's
+table and is set on **staging only**, by hand, for the run, then removed by redeploying the rendered
+configuration. The api logs a warning at boot while it is set. Per-user rules still apply, so the test
+needs as many workers as `rate × 60 / 120` (200 workers carry 25 req/s with margin).
+
+```
+# this machine's public IP, as Cloud Run sees it
+curl -s https://api.ipify.org
+gcloud run services update remonta-api-staging --region australia-southeast1 --update-env-vars RATE_LIMIT_EXEMPT_IPS=<that ip>
+# ... the run(s) ...
+# restore: Actions → deploy-api → Run workflow → stage=staging, imageTag=<the same sha>
+```
+
 **Burst.** Run the load test with `--burst 5` and, in a second terminal, watch the service:
 
 ```

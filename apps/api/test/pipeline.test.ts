@@ -5,6 +5,7 @@ import * as z from 'zod'
 import { BootError, planBindings, verifyRoutes } from '../src/platform/contract/binder'
 import { defineHandlers, type HandlerSet } from '../src/platform/contract/handlers'
 import { ApiError } from '../src/platform/errors'
+import { privateContract } from './fixtures/private-contract'
 import { testApp, unreachableHandlers } from './helpers'
 
 const allow = (...routes: string[]): PublicEndpoint[] => routes.map((route) => ({ route, reason: 'test entry, reviewed' }))
@@ -160,5 +161,30 @@ describe('the service refuses to boot', () => {
 
   it('and createApp itself refuses before listening', async () => {
     await expect(testApp({ contracts, handlerSets: [unreachableHandlers(platformContract)], publicEndpoints: publicEndpoints as PublicEndpoint[] })).rejects.toThrow(BootError)
+  })
+})
+
+describe('RATE_LIMIT_EXEMPT_IPS (U1 worker-area, the load test on staging)', () => {
+  it('skips the per-IP rules for an exempt IP only; per-user rules and other IPs are counted as before', async () => {
+    const t = await testApp({ contracts: [privateContract], handlerSets: [unreachableHandlers(privateContract)], exemptIps: new Set(['127.0.0.1']) })
+    t.rateLimiter.mode = 'deny'
+    // The exempt IP passes the ip rule and reaches the per-user rule, which refuses it.
+    const res = await t.fastify.inject({ method: 'POST', url: '/v1/test/admin-thing/x1', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { name: 'a' } })
+    expect(res.statusCode).toBe(429)
+    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:user:u1:5/1m'])
+    // Another IP is counted on the ip rule first.
+    t.rateLimiter.keys.length = 0
+    const other = await t.fastify.inject({ method: 'POST', url: '/v1/test/admin-thing/x1', remoteAddress: '10.0.0.9', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { name: 'a' } })
+    expect(other.statusCode).toBe(429)
+    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:ip:10.0.0.9:10/1m'])
+    await t.close()
+  })
+
+  it('without the set, every rule is counted (the default)', async () => {
+    const t = await testApp({ contracts: [privateContract], handlerSets: [unreachableHandlers(privateContract)] })
+    t.rateLimiter.mode = 'deny'
+    await t.fastify.inject({ method: 'POST', url: '/v1/test/admin-thing/x1', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { name: 'a' } })
+    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:ip:127.0.0.1:10/1m'])
+    await t.close()
   })
 })
