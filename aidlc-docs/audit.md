@@ -3711,3 +3711,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > continue
+
+**User input (verbatim, 2026-10-12):**
+> continue
+
+**AI action (2026-10-12, Build and Test -- part 2):** The staging apply re-run with the maxWait fix completed in 512 s: 1,790 examined, 240 changed (the interrupted run had written 174: 414 in all, as the dry run said), 0 failed; a second `--apply` from the merged `main`: **0 changed, 1,790 unchanged** (idempotent; `backfill-staging-apply.json`). PR #52's deploy (run 38194346889) green. The override set on staging: `RATE_LIMIT_EXEMPT_IPS` -> revision `00023-rdg`, boot warning logged. Load test run 2 still got 429s in its first minutes: Cloud Run sees this machine's **IPv6** address (`httpRequest.remoteIp`), while the IPv4 lookup had been exempted -- lesson for the runbook: read the address from the staging log or `api64.ipify.org`. Both addresses exempted (revision `00024-f88`), run 2 restarted at 02:14Z: the first full minute shows 725 × 200 + 458 × 304, no 429.
