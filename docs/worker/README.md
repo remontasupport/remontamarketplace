@@ -44,7 +44,7 @@ Response: the `Profile` object (`profileSchema`, strict: nothing unlisted leaves
 | `bio` | `introduction` | |
 | `personalInfo { dateOfBirth, age, gender, hasVehicle, languages }` | columns | `hasVehicle` is `Yes`, `No` or null |
 | `abn { type, value, signed }` or null | the `abn` JSON (`workerEngagementType`) | `type` is `abn` or `tfn`; `value` only for an ABN that stored its number (a few legacy rows); a TFN never reports a number |
-| `homeAddress` | U2's columns | **null in U1** |
+| `homeAddress` or null | `homeStreetLine` + `homeLocalityId` (the suburb joined) | the private home address (U2); returned to its owner and the admin page only |
 | `serviceArea { localityId, label, travelRadiusKm, precision }` or null | the HOME `worker_locations` row + `au_localities` | `label` is "Suburb, ST postcode"; null when the worker is unplaced |
 | `displayRole` | `worker_services` | the first service by creation; a therapeutic one shows its sub-categories joined by " / "; none: "Support Worker" |
 | `verificationStatus` | column | `NOT_STARTED`, `IN_PROGRESS`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`; the column is free text and one legacy row reads `Verified`, so the field is a string |
@@ -58,6 +58,34 @@ Response: the `Profile` object (`profileSchema`, strict: nothing unlisted leaves
 | `sections.additionalInfo` or null | `worker_additional_info` | languages, cultural background, religion, interests, work preferences, the three booleans, personality, unique service, fun fact |
 | `sections.bankAccount` or null | `worker_additional_info.bankAccount` | **masked**: `{ accountName, bankName, bsbLast3, accountNumberLast3 }`; the stored BSB and account number never leave |
 | `updatedAt` | column | the ETag is of the body, not of this |
+
+### The section writes (U2 edit-profile)
+
+Every write replaces a whole section (PUT semantics: the body is the section's full new value), runs in one
+transaction with a 5 s statement timeout, is idempotent, and answers the section as stored. Limits 60 / 120 per
+minute (the photo ticket 10 per minute per worker). Errors: 400 with `fields` naming the path
+(`slots.3.startMinute`, `domains.0.specificAreas.1`, `localityId`, `abn`), 401, 403, 404 (a WORKER account with no
+profile; a photo upload that is not the caller's), 429, 503. Each write records one `PROFILE_UPDATE` audit row with
+the section and the profile id (never a value; the impersonator when there is one), and the writes that can change a
+completion flag recompute and persist it in the same transaction. After a save the client reloads the profile read.
+
+| Entry | Body | Rules |
+|---|---|---|
+| `PUT /v1/worker/profile/name` | `{firstName, middleName | null, lastName}` | 1-100 characters, letters of any script, spaces, hyphens, apostrophes |
+| `PUT /v1/worker/profile/bio` | `{bio}` | 1-2,000 characters, plain text (newlines allowed) |
+| `PUT /v1/worker/profile/personal-info` | `{dateOfBirth, gender, hasVehicle}` | a real `YYYY-MM-DD` date, 16-100 years old on the api's clock; `Male`/`Female`; `Yes`/`No`. `age` is not written. Languages are the Languages group |
+| `PUT /v1/worker/profile/abn` | `{abn}` | 11 digits (spaces allowed) passing the ATO checksum; stored `{workerEngagementType: {type: 'abn', value, signed}}`, `signed` kept from an ABN record, false after a TFN one (D17) |
+| `PUT /v1/worker/profile/home-address` | `{streetLine, localityId}` | one line of 1-120 characters; a current suburb of ours. Writes `homeStreetLine`/`homeLocalityId` only: never the legacy location columns, never `worker_locations`; never in a client-facing response |
+| `PUT /v1/worker/profile/service-area` | `{localityId, travelRadiusKm}` | a current suburb; 1-500 km. Upserts the HOME `worker_locations` row (`source ONBOARDING`) and writes the legacy columns as the sign-up does, so the admin and client searches follow; an unplaced worker becomes placed |
+| `POST /v1/worker/photos/tickets` | `{contentType, sizeBytes}` | the sign-up's ticket (JPEG/PNG/WebP, 5 MB) |
+| `POST /v1/worker/photos` | `{uploadId, slot: 'main' | 'additional'}` | the sign-up's confirm (the object inspected), then the upload claimed by this profile into the slot (at most 2 additional; with no main photo the upload becomes the main); `PhotoUploaded` makes the clean copy and repoints that slot. 201 with `{main, additional}` |
+| `POST /v1/worker/photos/main` | `{url}` | an additional photo swaps with the main |
+| `POST /v1/worker/photos/remove` | `{url}` | an additional photo, or the main when it is the last; the processed Blob copy and its thumbnail are deleted after the commit |
+| `PUT /v1/worker/availability` | `{slots: [{day, startMinute, endMinute}]}` | minutes 0-1440, start < end, at most 4 a day, no overlap; stored in week order |
+| `PUT /v1/worker/experience` | `{domains: [...]}` | one entry per care area, professional or personal or both, at most 3 specific areas from that area's list, 10 other areas |
+| `PUT /v1/worker/job-history`, `/education` | `{entries: [...]}` | 0-20 entries, month names, years 1950-now, "currently" means no end date, otherwise the end not before the start; the order kept |
+| `PUT /v1/worker/additional-info/:group` | `{group, ...}` | eight groups (`good-to-know`, `languages`, `cultural-background`, `religion`, `interests`, `about-me`, `preferences`, `personality`); the path and the body's `group` agree; values from `packages/schemas/src/data/profileOptions.ts` (languages and interests also accept a worker's own label); a group write changes only its own columns |
+| `PUT /v1/worker/bank-account` | `{accountName, bankName, bsb, accountNumber}` | all four; BSB 6 digits (one dash allowed), number 6-10 digits; stored as today's JSON; the answer and every read are masked to the last three digits |
 
 ## 3. Caching
 
