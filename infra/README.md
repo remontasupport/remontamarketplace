@@ -124,11 +124,12 @@ design §2); fill the placeholders in and keep them current:
 
 | | Production | `rehearse-w1` (staging) |
 |---|---|---|
-| Pooled host (`-pooler`) in the latest `AUTH_DATABASE_URL` secret version | _to record_ | _to record_ |
-| `?pgbouncer=true` present | _to record_ | _to record_ |
+| Pooled host (`-pooler`) in the latest `AUTH_DATABASE_URL` secret version | `ep-delicate-recipe-a7mbt4ef-pooler` (2026-10-12) | `ep-wandering-shadow-a7pxwb8o-pooler` (2026-10-12) |
+| `?pgbouncer=true` present | yes (2026-10-12) | yes: added as secret version 2 on 2026-10-12 (it was missing), revision `00027-sn2` reads it |
 | Compute size (CU) and autoscaling range | _to record_ | _to record_ |
 | Neon `max_connections` for that size | _to record_ | _to record_ |
 | Pooler limit (`default_pool_size`) vs 50 + the app's pool | _to record_ | _to record_ |
+| The app's pool on the same database | `apps/app/.env`'s `AUTH_DATABASE_URL` points at the same pooled host with no `connection_limit`: Prisma's default per serverless instance (2 × CPUs + 1), one pool per warm Vercel function | n/a |
 | Verified on | _date_ | _date_ |
 
 A pool wait past `DB_POOL_TIMEOUT_S` is a 503 (`reason: pool`) and a statement past its timeout a 503
@@ -149,11 +150,14 @@ configuration. The api logs a warning at boot while it is set. Per-user rules st
 needs as many workers as `rate × 60 / 120` (200 workers carry 25 req/s with margin).
 
 ```
-# this machine's public IP, as Cloud Run sees it
-curl -s https://api.ipify.org
-gcloud run services update remonta-api-staging --region australia-southeast1 --update-env-vars RATE_LIMIT_EXEMPT_IPS=<that ip>
+# this machine's addresses as Cloud Run sees them -- usually the IPv6 one (httpRequest.remoteIp in the staging log); list both
+curl -s https://api.ipify.org; echo; curl -s -6 https://api64.ipify.org; echo
+# ^;^ makes ";" the list separator for gcloud so the commas in the value survive
+gcloud run services update remonta-api-staging --region australia-southeast1 --update-env-vars "^;^RATE_LIMIT_EXEMPT_IPS=<ipv4>,<ipv6>"
 # ... the run(s) ...
-# restore: Actions → deploy-api → Run workflow → stage=staging, imageTag=<the same sha>
+# restore the table's values (or redeploy the same image, which replaces the whole definition):
+gcloud run services update remonta-api-staging --region australia-southeast1 --update-env-vars MAX_EVENT_LOOP_DELAY_MS=200 --remove-env-vars RATE_LIMIT_EXEMPT_IPS
+# then check the live environment equals infra/cloudrun/service.staging.yaml variable by variable
 ```
 
 **Burst.** Run the load test with `--burst 5` and, in a second terminal, watch the service:
