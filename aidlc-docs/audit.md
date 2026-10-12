@@ -3837,3 +3837,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > I want to make some changes, instead of Edit Profile, make it My Profile, and Edit Services to My Services
 
 **AI action (2026-10-12):** Sidebar labels changed on `feat/edit-profile-app` (deviation from D11/R8.1 labels, user decision): "Edit Profile" -> "My Profile", "Edit Services" -> "My Services"; order, links and ids unchanged; `workerMenu.test.ts` updated. Flagged: the existing "My Services" group (the per-service setup steps) now shares its label with the renamed item; awaiting the user's choice of a name for one of them.
+
+**User input (verbatim, 2026-10-12):**
+> actually, can you place both the My Services inside and Edit Services items to Services
+
+**AI action (2026-10-12):** Sidebar (deviation from D11/R8.1, user decision): the two service items merged into one **Services** group after My Profile: "Edit Services" (`/dashboard/worker/services/manage`) first, then one setup step per chosen service (hrefs unchanged). Menu now: Dashboard, My Profile, Services, Mandatory, Trainings, Additional Credentials, My Jobs, Account. `workerMenu.test.ts` asserts the order, the first child and that both service pages open the group; the duplicate-label question is resolved.
