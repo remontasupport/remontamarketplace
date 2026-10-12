@@ -3815,3 +3815,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > Promote now, fix in PR 3 (Recommended)
 
 **AI action (2026-10-12):** Recorded: promote `67fef1d97abea84593b03661617c2ba5a82c2ac9` now; PR 3 carries the slimmer completion recompute (only for sections that can change a flag, from a read limited to what the flags need) and the load test re-run before the pages go live. Gate: the user dispatches the promotion.
+
+**User input (verbatim, 2026-10-12):**
+> promoted, continue
