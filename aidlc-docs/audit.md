@@ -3708,3 +3708,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > merged
 
 **AI action (2026-10-12):** PR #52 merged (`main` = `b9ff6f4`, 02:04Z); its `deploy-api` run 38194346889 watched. The per-IP override on staging waits for that deploy (a `services replace` would drop a value set earlier); then load test run 2 and the drills.
+
+**User input (verbatim, 2026-10-12):**
+> continue
