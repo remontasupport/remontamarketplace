@@ -142,6 +142,21 @@ export function pickPath(body: unknown, path: string): unknown {
   return path.split(".").reduce<unknown>((v, k) => (v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined), body);
 }
 
+/** A copy of `values` with the value at a dot path replaced; numeric segments index arrays. The input is not changed. */
+export function setPath<T extends Record<string, unknown>>(values: T, path: string, v: unknown): T {
+  const [head, ...rest] = path.split(".");
+  const key = head!;
+  const copy = (Array.isArray(values) ? [...values] : { ...values }) as Record<string, unknown>;
+  if (rest.length === 0) {
+    copy[key] = v;
+  } else {
+    const child = copy[key];
+    const base = child && typeof child === "object" ? child : /^\d+$/.test(rest[0]!) ? [] : {};
+    copy[key] = setPath(base as Record<string, unknown>, rest.join("."), v);
+  }
+  return copy as T;
+}
+
 // ---- Seed, body, validation ---------------------------------------------------------------
 
 function emptyOf(f: SectionFieldDef): unknown {
@@ -162,9 +177,22 @@ function emptyOf(f: SectionFieldDef): unknown {
   }
 }
 
+/** Each field's empty value: a new row of a list section (the "Add" button). */
+export function emptyValuesOf(fields: readonly SectionFieldDef[]): SectionValues {
+  return Object.fromEntries(fields.map((f) => [f.name, emptyOf(f)]));
+}
+
 /** R9.2: the section's values from the read body; missing or null parts take each kind's empty value. */
 export function seedSection(def: SectionDefinition, readBody: unknown): SectionValues {
-  const picked = pickPath(readBody, def.pick);
+  return seedFromSaved(def, pickPath(readBody, def.pick));
+}
+
+/**
+ * R9.5: the values from the section as a write returned it. A write answers with its body's
+ * shape (`{ bio }`, `{ slots }`, `{ group, languages }`), which maps by field name; a section
+ * with its own `seed` answers with the read's shape (a name, an address, the masked account).
+ */
+export function seedFromSaved(def: SectionDefinition, picked: unknown): SectionValues {
   if (def.seed) return { ...Object.fromEntries(def.fields.map((f) => [f.name, emptyOf(f)])), ...def.seed(picked) };
   // A picked list or a primitive fills the section's single field; an object maps by name.
   const source: Record<string, unknown> =

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { profileRedirects } from "./src/config/profileRedirects";
 
 const nextConfig: NextConfig = {
   // ---------------------------------------------------------------------------
@@ -87,6 +88,10 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     // Cache optimized images for 30 days on Vercel CDN
     minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
+  // U2: the old Edit Profile URLs (account setup steps, profile-building sections) to the new pages.
+  async redirects() {
+    return profileRedirects();
   },
   async headers() {
     return [

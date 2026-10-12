@@ -3,7 +3,7 @@
 // token once on 401, and maps the server's field errors.
 import { workerContract } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
-import { defineSection, errorFor, saveSection, sectionBody, seedSection, validateSection } from "../src/section";
+import { defineSection, emptyValuesOf, errorFor, saveSection, sectionBody, seedFromSaved, seedSection, setPath, validateSection } from "../src/section";
 
 const base = { contract: workerContract, readEntry: "getProfile", writeEntry: "putName", pick: "names" } as const;
 const nameFields = [
@@ -44,6 +44,29 @@ describe("seed, body, validation", () => {
     const religion = defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putAdditionalInfo", pick: "sections.additionalInfo", constants: { group: "religion" }, pathParams: { group: "religion" }, fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] });
     expect(sectionBody(religion, { religion: ["Buddhist"] })).toEqual({ group: "religion", religion: ["Buddhist"] });
     expect(validateSection(religion, { religion: ["Martian"] })).toHaveProperty("religion.0");
+  });
+});
+
+describe("seedFromSaved", () => {
+  it("a write's answer seeds the same values as the read it replaces", () => {
+    const name = defineSection({ ...base, name: "name", title: "Name", fields: [...nameFields] });
+    expect(seedFromSaved(name, { firstName: "Mary", middleName: null, lastName: "Lee" })).toEqual(seedSection(name, { names: { firstName: "Mary", middleName: null, lastName: "Lee" } }));
+    const bio = defineSection({ ...base, name: "bio", title: "Bio", writeEntry: "putBio", pick: "bio", fields: [{ name: "bio", kind: "textarea", label: "x" }] });
+    expect(seedFromSaved(bio, { bio: "Ten years" })).toEqual(seedSection(bio, { bio: "Ten years" }));
+    const religion = defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putAdditionalInfo", pick: "sections.additionalInfo", constants: { group: "religion" }, pathParams: { group: "religion" }, fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] });
+    expect(seedFromSaved(religion, { group: "religion", religion: ["Buddhist"] })).toEqual({ religion: ["Buddhist"] });
+  });
+});
+
+describe("setPath", () => {
+  it("replaces a nested value, indexes arrays, and leaves the input unchanged", () => {
+    const before = { names: { firstName: "A" }, entries: [{ year: "2020" }, { year: "2021" }] };
+    const after = setPath(before, "entries.1.year", "2022");
+    expect(after.entries).toEqual([{ year: "2020" }, { year: "2022" }]);
+    expect(Array.isArray(after.entries)).toBe(true);
+    expect(before.entries[1]!.year).toBe("2021");
+    expect(setPath(before, "names.firstName", "B").names).toEqual({ firstName: "B" });
+    expect(setPath({}, "sections.availability", [])).toEqual({ sections: { availability: [] } });
   });
 });
 
@@ -89,5 +112,11 @@ describe("saveSection", () => {
     expect(await saveSection(name, values, { apiBaseUrl: "https://api.test", token: token(), fetch: bad, retry: fast })).toEqual({ ok: false, kind: "invalid", fields: { lastName: ["Too long"] } });
     const denied = (async () => json(401, { error: { code: "UNAUTHENTICATED", message: "x", requestId: "r" } })) as unknown as typeof globalThis.fetch;
     expect(await saveSection(name, values, { apiBaseUrl: "https://api.test", token: token(), fetch: denied, retry: fast })).toEqual({ ok: false, kind: "unauthenticated" });
+  });
+});
+
+describe("emptyValuesOf", () => {
+  it("gives each kind its empty value", () => {
+    expect(emptyValuesOf([{ name: "a", kind: "text", label: "a" }, { name: "b", kind: "multiSelect", label: "b", options: [] }, { name: "c", kind: "checkbox", label: "c" }, { name: "d", kind: "select", label: "d", options: [], nullable: true }])).toEqual({ a: "", b: [], c: false, d: null });
   });
 });

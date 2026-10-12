@@ -41,8 +41,6 @@
 1	src/components/dashboard/client/request-service/sections/DiagnosesSection.tsx::TS7006
 1	src/components/dashboard/JobsSection.tsx::TS2741
 1	src/components/dashboard/NewsSlider.tsx::TS2345
-1	src/components/dashboard/Sidebar.tsx::TS2322
-2	src/components/dashboard/Sidebar.tsx::TS2339
 6	src/components/pdf/WorkerProfilePDF.tsx::TS2304
 12	src/components/pdf/WorkerProfilePDF.tsx::TS2339
 2	src/components/pdf/WorkerProfilePDF.tsx::TS7006

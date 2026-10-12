@@ -273,3 +273,9 @@ export const SECTIONS: readonly SectionDefinition[] = [
 export const sectionBySlug = (slug: string): SectionDefinition | undefined => SECTIONS.find((s) => s.name === slug);
 
 export { DAYS };
+
+/** The pages that are not one definition: the photo flow, and the address page's two forms. */
+export const SPECIAL_PAGES = ["photo", "address"] as const;
+
+/** Every slug `/dashboard/worker/profile/<slug>` serves; anything else is a 404. */
+export const isProfilePage = (slug: string): boolean => (SPECIAL_PAGES as readonly string[]).includes(slug) || !!sectionBySlug(slug);

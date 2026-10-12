@@ -71,7 +71,6 @@
 2	src/components/dashboard/client/request-service/sections/PreviewSection.tsx::react/no-unescaped-entities
 2	src/components/dashboard/client/request-service/sections/WhenSection.tsx::react/no-unescaped-entities
 1	src/components/dashboard/ProfileCompletionReminder.tsx::react/no-unescaped-entities
-1	src/components/dashboard/Sidebar.tsx::@typescript-eslint/no-explicit-any
 2	src/components/forms/clientRegistration/Step5AccountSetup.tsx::@typescript-eslint/no-explicit-any
 1	src/components/forms/fields/PhotoUpload.tsx::@typescript-eslint/no-explicit-any
 6	src/components/pdf/WorkerProfilePDF.tsx::react/no-unescaped-entities

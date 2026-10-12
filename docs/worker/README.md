@@ -213,3 +213,19 @@ a worker with services: the profile, its nine relations, the catalogue and its f
 the count at 20 at most. The statement timeout is set with `set_config('statement_timeout', $1, true)`, a bound
 parameter, so no raw SQL is built from a value anywhere in the service. The old Next.js routes and server actions
 keep working until each unit moves them.
+
+## 9. The Edit Profile pages (`apps/app`, U2)
+
+| Piece | Where | What it does |
+|---|---|---|
+| the client | `src/features/worker/api.ts` (`workerApi`) | the profile read and the four photo entries through `createClient(workerContract)`: the page's token source, the bearer header, one retry on a 401 with a fresh token, the shared outcomes of `src/lib/api/outcome.ts` (the admin client's) |
+| the profile read | `src/features/worker/profile.ts` (`useWorkerProfile`) | one React Query key `['worker', 'profile']` shared by the sidebar and every page; fresh for 60 s (the api's private cache), refetched on focus (a photo's clean copy); `reload()` reads past the browser cache after a save |
+| the definitions | `src/features/worker/definitions.ts` | one `defineSection` per write entry: where it seeds from in the read (`pick`), the write entry, its fields by kind; the import-time checks of `@remonta/form-engine`'s section mode |
+| a section's state | `src/features/worker/useSection.ts` | seed from the read, or this tab's draft (`section:<name>`, the bank account's fields never kept); the write entry's own schema as validation; `saveSection` (one PUT, back-off honouring `Retry-After`, the offline pause, one token refresh); after a save the section as the api answered it, the draft cleared, the read reloaded |
+| the screens | `SectionPage.tsx` (one slot per kind), `PhotoSection.tsx` (shrink, ticket, direct upload, confirm, make main, remove), `ProfileShell.tsx` (the frame and the job-apply banner), `ProfileIndex.tsx` | presentational field components in `src/components/ui/form-wizard/sectionFields.tsx` |
+| the routes | `/dashboard/worker/profile` (the index) and `/dashboard/worker/profile/<section>` | a server page checks the slug (`isProfilePage`) and passes only it; a client wrapper imports the definition. `address` holds two forms (home address, service area) and the "clients cannot find you" reminder while no service area is set |
+| the old URLs | `src/config/profileRedirects.ts`, wired in `next.config.ts` | `/dashboard/worker/account/setup?step=` and `/dashboard/worker/profile-building?section=` redirect (307, the query kept) to the new slugs; the old pages go in the clean-up PR |
+| the sidebar | `src/features/navigation/workerMenu.ts` rendered by `src/components/dashboard/Sidebar.tsx` | `WORKER_MENU` in D11's order; Edit Profile's children with their done state, the percent badge below 80 % and the unplaced dot; Mandatory, Trainings and My Services from the read's groups (their hrefs unchanged); the test checks the order and that every link is a page |
+
+Saving a section never recomputes the percentage (it is computed on every read); only the name, bio, personal
+info, ABN, photo and service-area writes recompute the stored flags, because only they can change one.
