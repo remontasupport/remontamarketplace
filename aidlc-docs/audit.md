@@ -3696,3 +3696,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > continue
 
 **AI action (2026-10-12):** PR #51 is open on `fix/backfill-completion-batched`; its checks are being watched. Next: merge -> staging redeploy -> set the exemption on staging -> load test run 2 and the two drills -> restore -> the Neon values and the budget (operator) -> promotion -> production backfill.
+
+**User input (verbatim, 2026-10-12):**
+> merged, continue
+
+**AI action (2026-10-12):** PR #51 merged (`main` = `e9449f1`, 01:58Z); `deploy-api` run 38193968295 watched. The staging apply (the batched backfill, `--apply`) died after 355 s with Prisma **P2028** "Unable to start a transaction in the given time": an interactive transaction waits only Prisma's default `maxWait` of 2 s for a pool connection, which a cold Neon connection from this machine can exceed -- and `errors.ts` maps P2024 (the pool wait) to 503 but not P2028, so under pool pressure in production the same failure would be a 500. Fix branch next: P2028 -> 503 `reason: pool`; `maxWait` aligned with the pool wait (5 s) in `unitOfWork` and `readTransaction`; then the apply re-run (idempotent).
