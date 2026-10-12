@@ -41,7 +41,9 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     const first = await put(path, body)
     expect(first.statusCode, first.body).toBe(200)
     const second = await put(path, body)
-    expect(second.json()).toEqual(first.json())
+    // Equal answers; a list replace gives its rows new ids each time (PR2-summary deviation 6), so ids are left out.
+    const noIds = (b: any) => (b.entries ? { entries: b.entries.map(({ id: _id, ...e }: any) => e) } : b)
+    expect(noIds(second.json())).toEqual(noIds(first.json()))
     const read = view(await profile())
     if (path.endsWith('availability')) expect(read).toEqual({ slots: [{ day: 'MONDAY', startMinute: 540, endMinute: 600 }, { day: 'TUESDAY', startMinute: 600, endMinute: 720 }] }) // stored in week order
     else expect(read).toEqual(first.json().entries ? { entries: first.json().entries.map(({ id: _id, ...e }: any) => e) } : first.json())
@@ -114,7 +116,7 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
 
   it('completion is persisted by the writes that can change it, and the read\'s ETag moves', async () => {
     const etag = (await h.get(h.b.userId)).headers['etag']
-    await put('/v1/worker/profile/name', { firstName: 'Ben', middleName: null, lastName: 'Nguyen' }, () => h.b.userId)
+    await put('/v1/worker/profile/name', { firstName: 'Benjamin', middleName: null, lastName: 'Nguyen' }, () => h.b.userId) // a real change (the harness seeds Ben)
     expect((await h.get(h.b.userId)).headers['etag']).not.toBe(etag)
     const stored = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { setupProgress: true } })
     expect(stored.setupProgress).not.toBeNull()
