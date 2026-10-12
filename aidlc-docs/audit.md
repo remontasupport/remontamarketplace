@@ -3818,3 +3818,5 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > promoted, continue
+
+**AI action (2026-10-12, U2 PR 2 in production):** `deploy-api` dispatch run 38208873378 (05:39Z) green: the promote job migrated production first (`_prisma_migrations` newest = `20261012120000_u2_worker_home_address`, finished 05:40:19Z; `worker_profiles.homeStreetLine`/`homeLocalityId` present), then deployed revision `remonta-api-00009-gct` on image `67fef1d97abea84593b03661617c2ba5a82c2ac9`. The 14 read-only production checks: ALL PASS; the new write routes answer 401 without a token. Nothing in the app calls the writes yet (PR 3). Rollback: revision `00008-dq4` / image `b9ff6f4…` (the migration is expand-only; nothing to reverse). Next: PR 3 (form engine + pages), carrying the slimmer completion recompute and the load-test re-run (user decision); `chore/load-test-writes` folds into PR 3.
