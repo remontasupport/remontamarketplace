@@ -13,6 +13,7 @@ import { LoadShedder } from './platform/load/load-shedder'
 import { createDb } from './platform/persistence/db'
 import { PostgresRateLimiter } from './platform/rate-limit/rate-limiter'
 import { adminHandlers } from './modules/admin/admin.handlers'
+import { workerHandlers } from './modules/worker/worker.handlers'
 import { ResponseMemo } from './platform/cache/response-memo'
 import { systemClock } from './platform/clock'
 import { LocalityDirectory } from './modules/localities/locality-directory'
@@ -44,9 +45,11 @@ async function main() {
   const bucket = new GcsPhotoStore({ bucket: config.PHOTO_BUCKET, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, apiEndpoint: config.GCS_API_ENDPOINT, timeoutMs: config.GCS_TIMEOUT_MS })
   const blobStore = new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN)
   const handlerSets = [
-    platformHandlers(db),
+    platformHandlers({ db, clock: systemClock }),
     // The admin lists (U2): behind the api token; the search is memoised per instance.
     adminHandlers({ db, clock: systemClock }),
+    // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
+    workerHandlers({ db, clock: systemClock }),
     registrationHandlers({
       db,
       hasher,

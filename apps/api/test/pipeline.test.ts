@@ -117,6 +117,19 @@ describe('steps 8-11 once a request is through', () => {
   })
 })
 
+describe('a probe entry (U1 worker-area R6, P6)', () => {
+  it('never calls the rate limiter, whatever its state, and still answers', async () => {
+    const health = defineHandlers(platformContract, { health: async () => ({ status: 200, body: { status: 'ok' } }) })
+    const t = await testApp({ contracts: [platformContract], handlerSets: [health as unknown as HandlerSet], publicEndpoints: allow('GET /v1/health') })
+    for (const mode of ['allow', 'deny', 'down'] as const) {
+      t.rateLimiter.mode = mode
+      expect((await t.fastify.inject({ method: 'GET', url: '/v1/health' })).statusCode).toBe(200)
+    }
+    expect(t.rateLimiter.keys).toEqual([])
+    await t.close()
+  })
+})
+
 describe('the service refuses to boot', () => {
   it('when a contract entry has no handler -- exactly today, until step 7 binds registration', () => {
     const run = () =>

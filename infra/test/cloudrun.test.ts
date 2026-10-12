@@ -102,12 +102,13 @@ describe('the stages differ only where the design says', () => {
   })
   it('everything else in the environment is shared', () => {
     const differing = Object.keys(STAGES.prod.environment).filter((k) => STAGES.prod.environment[k] !== STAGES.staging.environment[k])
-    expect(differing.sort()).toEqual(['CORS_ORIGINS', 'MAX_IN_FLIGHT', 'PHOTO_BUCKET', 'PHOTO_PUBLIC_BASE_URL', 'RECAPTCHA_ALLOWED_HOSTNAMES'])
+    expect(differing.sort()).toEqual(['CORS_ORIGINS', 'PHOTO_BUCKET', 'PHOTO_PUBLIC_BASE_URL', 'RECAPTCHA_ALLOWED_HOSTNAMES'])
     expect(Object.keys(STAGES.prod.environment).sort()).toEqual(Object.keys(STAGES.staging.environment).sort())
   })
-  it('staging is one small instance; prod scales to four', () => {
+  it('staging is one small instance; prod scales to ten, both shedding below their concurrency (U1 worker-area)', () => {
     expect([STAGES.staging.minInstances, STAGES.staging.maxInstances]).toEqual([1, 1])
-    expect([STAGES.prod.minInstances, STAGES.prod.maxInstances]).toEqual([1, 4])
+    expect([STAGES.prod.minInstances, STAGES.prod.maxInstances]).toEqual([1, 10])
+    for (const s of Object.values(STAGES)) expect(Number(s.environment.MAX_IN_FLIGHT)).toBeLessThan(s.concurrency)
     expect(STAGES.staging.alerts).toBe('minimal')
     expect(STAGES.prod.alerts).toBe('full')
   })

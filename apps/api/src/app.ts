@@ -15,7 +15,7 @@ import type { Config } from './config/config'
 import { originAllowed } from './config/hosts'
 import { bindContracts, recordRoutes, verifyRoutes } from './platform/contract/binder'
 import type { HandlerSet } from './platform/contract/handlers'
-import { ApiError, errorBody, statusOf } from './platform/errors'
+import { ApiError, errorBody, statusOf, unavailableReason } from './platform/errors'
 import { genReqId, loggerOptions } from './platform/logging'
 import type { LoadShedder } from './platform/load/load-shedder'
 import type { PipelineDeps } from './platform/pipeline/pipeline'
@@ -29,6 +29,8 @@ export interface AppOptions {
   /** Step 5b. Omitted: no shedding (tests that are not about load). */
   shedder?: LoadShedder
   logLevel?: string
+  /** Tests only: where the JSON log lines go, so a suite can assert on them. */
+  logStream?: NodeJS.WritableStream
 }
 
 @Module({})
@@ -59,7 +61,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 export async function createApp(opts: AppOptions): Promise<NestFastifyApplication> {
   const adapter = new ContractOnlyAdapter({
-    logger: loggerOptions(opts.logLevel ?? (opts.config.NODE_ENV === 'test' ? 'silent' : 'info')),
+    logger: { ...(loggerOptions(opts.logLevel ?? (opts.config.NODE_ENV === 'test' ? 'silent' : 'info')) as object), ...(opts.logStream ? { stream: opts.logStream } : {}) },
     genReqId,
     requestIdHeader: false, // genReqId validates x-request-id itself
     trustProxy: opts.config.TRUST_PROXY || false,
@@ -88,7 +90,7 @@ export async function createApp(opts: AppOptions): Promise<NestFastifyApplicatio
     // Load shedding comes before any work, including the HTTPS check.
     if (opts.shedder && !probe) {
       const d = opts.shedder.tryAdmit()
-      if (!d.admit) throw new ApiError(503, `shed: ${d.reason}`, undefined, { 'retry-after': String(d.retryAfter) })
+      if (!d.admit) throw new ApiError(503, `shed: ${d.reason}`, undefined, { 'retry-after': String(d.retryAfter) }, 'shed')
       admitted.add(request)
     }
     if (opts.config.requireHttps) {
@@ -111,7 +113,9 @@ export async function createApp(opts: AppOptions): Promise<NestFastifyApplicatio
   // 11. Error mapping: one shape, generic messages, request id; causes to the log.
   fastify.setErrorHandler((err: FastifyError | ApiError | Error, request, reply) => {
     const status = statusOf(err)
-    if (status >= 500) request.log.error({ err }, 'request failed')
+    // Every 503 names its reason (shed | pool | timeout | limiter | captcha | db) so one saved query can split them (U1 worker-area, P12).
+    const reason = status === 503 ? unavailableReason(err) : undefined
+    if (status >= 500) request.log.error({ err, ...(reason ? { reason } : {}) }, 'request failed')
     else request.log.info({ status, cause: err instanceof ApiError ? err.cause_ : err.message }, 'request refused')
     if (err instanceof ApiError && err.headers) reply.headers(err.headers)
     else if (status === 503) reply.header('retry-after', '2')

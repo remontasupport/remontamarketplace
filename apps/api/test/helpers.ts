@@ -1,5 +1,6 @@
 // Test harness: the real app (createApp) with fakes for the ports.
 import type { Contract, PublicEndpoint, RateWindow, Role } from '@remonta/api-contract'
+import { Writable } from 'node:stream'
 import type { FastifyInstance } from 'fastify'
 import { createApp, type AppOptions } from '../src/app'
 import type { Authenticator, Principal } from '../src/platform/auth/authenticator'
@@ -37,6 +38,9 @@ export class FakeAuthenticator implements Authenticator {
   }
 }
 
+/** The header FakeAuthenticator reads for a WORKER principal (the worker area, U1). */
+export const workerToken = (userId: string): Record<string, string> => ({ 'x-test-principal': `${userId}:WORKER` })
+
 export interface TestApp {
   fastify: FastifyInstance
   rateLimiter: FakeRateLimiter
@@ -54,6 +58,8 @@ export async function testApp(opts: {
   authenticator?: Authenticator
   /** The response memo and the entries bound to it (U2). */
   memo?: AppOptions['deps']['memo']
+  /** Capture the log lines (parsed JSON) instead of silencing them. */
+  logs?: Record<string, unknown>[]
 }): Promise<TestApp> {
   const rateLimiter = new FakeRateLimiter()
   const captcha = new FakeCaptcha()
@@ -64,6 +70,17 @@ export async function testApp(opts: {
     publicEndpoints: opts.publicEndpoints ?? [],
     deps: { rateLimiter, captcha, authenticator: opts.authenticator ?? new FakeAuthenticator(), memo: opts.memo },
     shedder: opts.shedder,
+    ...(opts.logs
+      ? {
+          logLevel: 'info',
+          logStream: new Writable({
+            write(chunk, _enc, cb) {
+              for (const line of String(chunk).split('\n')) if (line.trim()) opts.logs!.push(JSON.parse(line) as Record<string, unknown>)
+              cb()
+            },
+          }),
+        }
+      : {}),
   })
   return { fastify: app.getHttpAdapter().getInstance() as unknown as FastifyInstance, rateLimiter, captcha, close: () => app.close() }
 }

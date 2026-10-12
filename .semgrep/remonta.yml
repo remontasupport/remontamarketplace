@@ -64,9 +64,15 @@ rules:
       include:
         - apps/api/src
         - apps/app/src
-    pattern-either:
-      - pattern: $DB.$queryRawUnsafe(...)
-      - pattern: $DB.$executeRawUnsafe(...)
+    patterns:
+      - pattern-either:
+          - pattern: $DB.$queryRawUnsafe(...)
+          - pattern: $DB.$executeRawUnsafe(...)
+          # Prisma.raw() builds an unparameterised fragment. The one accepted shape is a
+          # string literal (e.g. a constant SET LOCAL statement_timeout); anything built
+          # from a variable or a template is flagged (U1 worker-area, U1-MNT-03).
+          - pattern: Prisma.raw($X)
+      - pattern-not: Prisma.raw("...")
     metadata:
       category: security
       cwe: "CWE-89: SQL Injection"

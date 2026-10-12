@@ -24,7 +24,9 @@ function errorStatuses(e: EntryDef): ErrorStatus[] {
   if (e.body) s.push(413)
   if (e.body?.kind === 'multipart') s.push(415)
   s.push(429, 500)
-  if (e.meta.bot !== 'none') s.push(503) // CAPTCHA provider unreachable: fails closed
+  // 503 on every entry (U1 worker-area, U1-MNT-03): load shedding, a full pool, a statement
+  // timeout, the limiter unreachable; and the CAPTCHA provider unreachable where there is one.
+  s.push(503)
   return s
 }
 
@@ -62,6 +64,8 @@ function operation(id: string, e: EntryDef): Json {
   for (const [status, schema] of Object.entries(e.responses)) {
     if (schema) responses[status] = { description: 'Success', content: { 'application/json': { schema: schemaOf(schema, 'output') } } }
   }
+  // A privately cached GET answers 304 with no body to a matching If-None-Match (pipeline step 10b).
+  if (e.meta.privateCacheSeconds) responses['304'] = { description: 'Not Modified: the If-None-Match header matched the current ETag; no body.' }
   for (const s of errorStatuses(e)) {
     responses[String(s)] = { description: ERROR_CODES[s], content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
   }

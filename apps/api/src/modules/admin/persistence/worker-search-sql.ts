@@ -111,8 +111,9 @@ export async function runSearch(db: Db, q: SearchQuery, localityId: number | und
   const timeout = Math.max(100, Math.min(60_000, Math.trunc(opts.statementTimeoutMs ?? STATEMENT_TIMEOUT_MS)))
   return db.$transaction(
     async (tx) => {
-      // SET takes no bind parameter; the value is a bounded integer constant, never input.
-      await tx.$executeRaw(Prisma.raw(`SET LOCAL statement_timeout = ${timeout}`))
+      // set_config(..., true) is SET LOCAL with a bind parameter (SET itself takes none): a tagged
+      // template, no Prisma.raw (the Semgrep rule flags any non-literal one; U1 worker-area).
+      await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
       const rows = await tx.$queryRaw<RawWorkerRow[]>(searchStatement(q, localityId))
       const [unplaced] = await tx.$queryRaw<{ count: number }[]>(unplacedCountStatement(q))
       let total = rows[0]?.total ?? 0
