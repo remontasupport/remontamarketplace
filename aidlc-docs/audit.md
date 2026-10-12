@@ -3791,3 +3791,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > approved
 
 **AI action (2026-10-12):** U2 code generation plan approved with option A (the deploy workflow gains a `prisma migrate deploy` step per stage). Executing PR 2 from Part 0.
+
+**User input (verbatim, 2026-10-12):**
+> can we continue the ai dlc,
+
+**AI action (2026-10-12, U2 Code Generation -- PR 2 generated):** `feat/edit-profile-api` from `main` `1d11963` (U1 clean-up merged), pushed `8a66496`, 4 commits, 37 files. Parts A (the home-address migration with down.sql), B (the option lists, the ABN rule with its property), C (the section schemas, 16 entries, `workerWrite` limit, the strictness check for unions with a reject test), D (replaceSection, the sections, the addresses, photos, the handlers, the read returns the home address, the photo handler repoints its slot, `--writes`), E (docs) done; option A's migrate step in `deploy-api.yml` + `.github/scripts/api-migrate.sh`, bootstrap's grant. Deviations: one `PROFILE_UPDATE` audit action with the section in metadata (the action is a DB enum); an additional photo with no main becomes the main (found by a property test); photo ownership by first claim; the reconciler follows the legacy columns, not `source`. Privacy checked now: client-facing reads select named columns. Gates: schemas 80, db 50, api-contract 78, api 561 passed / 167 database-gated skipped, app unchanged baselines, build 3/3. The grant of the two database secrets to the deploy account was refused by the permission layer: the user must run it before merging (PR2-summary.md). Gate: the user grants, opens PR 2, CI.
