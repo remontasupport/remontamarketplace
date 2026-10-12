@@ -147,15 +147,32 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
   stated in the report); per-worker back-off on 429/503 honouring `Retry-After`; the thresholds table
   (sustained: p95 ≤ 300 ms, p99 ≤ 800 ms, no 429/5xx; burst: 503 allowed, no other 5xx, p95 of admitted ≤ 1 s;
   recovery: no 503 after 30 s); exit 0 only when every row passes; the JSON report goes to
-  `aidlc-docs/construction/worker-area/code/`. Runbook: `infra/README.md`, "Drills".
+  `aidlc-docs/construction/worker-area/code/`. Runbook: `infra/README.md`, "Drills". The script's latencies
+  include the round trip from the machine it runs on (about 250 ms from outside Australia) and its "p95" is
+  autocannon's p97.5; the api's own figures come from Cloud Logging (`jsonPayload.responseTime` on the
+  "request completed" lines), which is what the thresholds were written for.
 - **Drills**: the burst phase on one staging instance with revision events watched (no liveness restart
   expected), and five minutes at the sustained rate with `MAX_EVENT_LOOP_DELAY_MS=50` set on staging by hand then
-  restored by redeploying the same image. Never on prod.
+  restored (the table's values back, or the same image redeployed with its full sha). Never on prod. Run on
+  2026-10-12: no restart; the event-loop signal shed 25 requests and recovered within the minute.
+- **What one instance carries** (run 2, 2026-10-12): about 55 reads a second; above that latency climbs because
+  the 5-connection pool fills (a read holds a connection ~80 ms) while in-flight stays far below
+  `MAX_IN_FLIGHT` and the event loop stays quiet -- the pool is the first limit, the shedder the second. The
+  125 req/s burst needs three instances; prod scales to ten.
 - **Backfill** (`pnpm --filter @remonta/api backfill:completion [-- --apply --allow-production --report=<file>]`):
   every profile through the rules of §4 (a page of workers per transaction, so a run from a machine far from
-  the database takes seconds per page rather than seconds per worker), then `persistCompletion`; dry run by default; idempotent; reads
-  `STAGING_AUTH_DATABASE_URL` when set, else `apps/api/.env`; a production host needs `--allow-production`. Run
-  on staging before PR 1's promotion and on prod right after, as checklist lines.
+  the database takes seconds per page rather than seconds per worker), then `persistCompletion`; dry run by
+  default; idempotent. The database: `STAGING_AUTH_DATABASE_URL` when set, else `DIRECT_DATABASE_URL` /
+  `AUTH_DATABASE_URL` from the shell or `apps/api/.env` (which points at the LOCAL database on a developer
+  machine, so for production export the URL from Secret Manager:
+  `DIRECT_DATABASE_URL="$(gcloud secrets versions access latest --secret=remonta-api-AUTH_DATABASE_URL)"`).
+  Any run on a production host, dry or not, needs `--allow-production`. Run on staging before a promotion and
+  on prod right after, as checklist lines; the 2026-10-12 runs (1,790 and 1,843 profiles, 414 and 422 changed,
+  a second apply changing nothing on both) are in the cycle's construction notes.
+- **The checklist runner** (`pnpm --filter @remonta/api check:worker [-- --stage=prod]`): the 14 api checks of
+  PR 1's verification against staging (default) or production -- health, a worker's read in the contract shape,
+  masked bank data, the cache headers and 304, 401/403/404/400, the admin search, the other stage's health --
+  with tokens minted from the stage's secrets in Secret Manager; read-only; prints results, never a token.
 
 ## 8. Reading the tables
 

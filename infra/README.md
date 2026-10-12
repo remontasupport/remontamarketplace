@@ -134,7 +134,10 @@ design §2); fill the placeholders in and keep them current:
 
 A pool wait past `DB_POOL_TIMEOUT_S` is a 503 (`reason: pool`) and a statement past its timeout a 503
 (`reason: timeout`), both with `Retry-After`; the health check keeps answering 200 while any transaction
-committed in the last 30 s (`docs/worker/README.md` §6).
+committed in the last 30 s (`docs/worker/README.md` §6). Measured 2026-10-12 on one staging instance: about
+55 profile reads a second before the pool becomes the limit (latency climbs; nothing is shed, because
+in-flight and the event loop stay far below their thresholds). Capacity therefore scales with instances × pool,
+and the Neon pooler limit above is the number that caps it.
 
 ## Drills (U1 worker-area)
 
