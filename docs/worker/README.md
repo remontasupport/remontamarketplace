@@ -151,7 +151,8 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
   expected), and five minutes at the sustained rate with `MAX_EVENT_LOOP_DELAY_MS=50` set on staging by hand then
   restored by redeploying the same image. Never on prod.
 - **Backfill** (`pnpm --filter @remonta/api backfill:completion [-- --apply --allow-production --report=<file>]`):
-  every profile through the rules of §4, then `persistCompletion`; dry run by default; idempotent; reads
+  every profile through the rules of §4 (a page of workers per transaction, so a run from a machine far from
+  the database takes seconds per page rather than seconds per worker), then `persistCompletion`; dry run by default; idempotent; reads
   `STAGING_AUTH_DATABASE_URL` when set, else `apps/api/.env`; a production host needs `--allow-production`. Run
   on staging before PR 1's promotion and on prod right after, as checklist lines.
 

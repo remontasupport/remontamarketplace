@@ -4,7 +4,7 @@
 import { profileSchema, type Profile } from '@remonta/api-contract'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { persistCompletion } from '../../src/modules/worker/domain/persist-completion'
-import { readProfileRows } from '../../src/modules/worker/persistence/profile-read'
+import { readProfileRows, readProfileRowsPage, type ProfileRows } from '../../src/modules/worker/persistence/profile-read'
 import { statusOf } from '../../src/platform/errors'
 import { createDb, lastDbSuccessAt, Prisma, readTransaction, unitOfWork } from '../../src/platform/persistence/db'
 import { workerHarness, type WorkerHarness } from './harness'
@@ -111,6 +111,24 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
     h.queries.length = 0
     await h.get(h.a.userId)
     expect(h.queries.filter((q) => !isPlumbing(q)).length).toBe(statements.length)
+  })
+
+  it('the page read (the backfill) returns the same rows as the single read, one transaction per page', async () => {
+    const singles = await Promise.all([h.a.userId, h.b.userId].map((u) => readProfileRows(h.db, u)))
+    h.queries.length = 0
+    const pages: ProfileRows[] = []
+    let after = ''
+    for (;;) {
+      const page = await readProfileRowsPage(h.db, after, 50)
+      if (page.length === 0) break
+      pages.push(...page)
+      after = page[page.length - 1]!.profile.id
+    }
+    const mine = pages.filter((r) => [h.a.profileId, h.b.profileId].includes(r.profile.id))
+    expect(mine.map((r) => r.profile.id).sort()).toEqual([h.a.profileId, h.b.profileId].sort())
+    for (const s of singles) expect(mine.find((r) => r.profile.id === s!.profile.id)).toEqual(s)
+    // One transaction per page (plus the final empty page), whatever the row count.
+    expect(h.queries.filter((q) => /^BEGIN/i.test(q)).length).toBe(Math.ceil(pages.length / 50) + 1)
   })
 
   it('P7: persistCompletion writes once, moves NOT_STARTED to IN_PROGRESS, and is a no-op the second time', async () => {

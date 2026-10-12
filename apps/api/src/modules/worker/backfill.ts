@@ -7,7 +7,7 @@ import { unitOfWork } from '../../platform/persistence/db'
 import { completionInputOf } from './application/get-profile'
 import { completionOf, flagsOf, type CompletionFlags } from './domain/completion'
 import { parseStoredFlags, persistCompletion, sameFlags } from './domain/persist-completion'
-import { readProfileRows } from './persistence/profile-read'
+import { readProfileRowsPage } from './persistence/profile-read'
 
 export interface CompletionBackfillReport {
   apply: boolean
@@ -49,13 +49,13 @@ export async function backfillCompletion(db: Db, opts: CompletionBackfillOptions
   const batch = opts.batch ?? 200
   let after = ''
   for (;;) {
-    const page = await db.workerProfile.findMany({ where: { id: { gt: after } }, select: { id: true, userId: true, setupProgress: true, profileCompleted: true, verificationStatus: true }, orderBy: { id: 'asc' }, take: batch })
+    // One transaction per page (a statement per relation for the whole page), not one per worker.
+    const page = await readProfileRowsPage(db, after, batch)
     if (page.length === 0) break
-    for (const p of page) {
+    for (const rows of page) {
+      const p = rows.profile
       report.examined++
       try {
-        const rows = await readProfileRows(db, p.userId)
-        if (!rows) continue // deleted between the page and the read
         const completion = completionOf(completionInputOf(rows))
         const from = parseStoredFlags(p.setupProgress)
         const to = flagsOf(completion)
@@ -79,7 +79,7 @@ export async function backfillCompletion(db: Db, opts: CompletionBackfillOptions
       }
     }
     opts.onProgress?.(report.examined)
-    after = page[page.length - 1]!.id
+    after = page[page.length - 1]!.profile.id
   }
   return report
 }
