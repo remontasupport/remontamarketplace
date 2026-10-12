@@ -9,7 +9,7 @@
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
 - **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Code Generation **done** (2026-10-12): PR 1's code is on
   **`feat/worker-area`** (pushed, `2e8ecd5`, 4 commits, 52 files; summary and deviations in
-  `construction/worker-area/code/U1-summary.md`). **Next: Build and Test** -- the user opens the PR from
+  `construction/worker-area/code/U1-summary.md`). **Build and Test in progress**: **PR #50** is open (https://github.com/remontasupport/remontamarketplace/pull/50); its first CI run failed on the Semgrep code-scanning check and two database-gated findings, fixed in  (audit 2026-10-12). Then: CI green on ; the compare URL was
   `https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fworker-area?expand=1` (expect 4 commits,
   52 files); CI proves the database-gated suites and `semgrep --test`; after the merge deploys staging, the checklist in
   `docs/worker/README.md` §7 (health, a worker token, the read 200/304, the backfill dry run and `--apply` on staging,

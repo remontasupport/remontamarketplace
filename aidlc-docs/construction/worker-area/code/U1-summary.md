@@ -62,9 +62,15 @@ query does. `CategoryDocument.documentType` has `OPTIONAL` rows (e.g. `qualifica
 2. **"A valid ABN in the `abn` JSON"** (R3.4, R3.10) is read as *an ABN engagement that is signed, or that
    stores an 11-digit number*: nothing else is stored today. `abn.value` is reported when stored.
 3. **Statement count (U1-PRF-01 "≤ 8")**: Prisma's nested selects issue one statement per relation (not per
-   row), about a dozen for this read; the test holds the bound at 16 and proves it does not grow with the rows.
-   Collapsing them needs Prisma's `relationJoins` preview or raw SQL, both excluded for U1 by decision (T3);
-   revisit if the load report shows the read dominating.
+   row): **17** on CI's first run for a worker with services (the profile, its nine relations, the catalogue and
+   its five); the test holds the bound at 20 and proves it does not grow with the rows. Collapsing them needs
+   Prisma's  preview or raw SQL, both excluded for U1 by decision (T3); revisit if the load report
+   shows the read dominating.
+3b. **The statement timeout is set with **, a bound parameter in a
+   tagged template, instead of the design's  through  of a constant: the new Semgrep rule
+   flagged the template form in  on PR #50's first run (a  with a non-literal argument is exactly
+   what it rejects), and the admin search's identical line was converted too, so no  remains in the
+   service. Same semantics (a transaction-local setting).
 4. **`platformHandlers` takes `{db, clock, lastSuccessAt?}`** (was `(db)`) for the fake clock in the tests.
 5. **The catalogue query keeps today's quirk**: with no sub-category chosen, every sub-category of the matched
    categories is read (as the app does). Said in the code; U3 owns the catalogue question (Q3).
@@ -83,7 +89,7 @@ query does. `CategoryDocument.documentType` has `OPTIONAL` rows (e.g. `qualifica
 | `@remonta/infra` quality | 40 tests, `render:check` green |
 | `@remonta/form-engine`, `@remonta/schemas` | 58 / 63 tests |
 | `npx turbo run build` | 3 successful (the regenerated app/web Prisma clients reverted, not committed) |
-| Semgrep `--test` | not installed locally; the Semgrep workflow on the PR proves the new `ruleid:`/`ok:` lines |
+| Semgrep `--test` | not installed locally; the Semgrep workflow on the PR proves the new `ruleid:`/`ok:` lines (green on PR #50; the code-scanning check then flagged `db.ts`, fixed by 3b) |
 
 ## What Build and Test must do (PR 1)
 
