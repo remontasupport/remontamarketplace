@@ -3760,3 +3760,5 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > continue
+
+**AI action (2026-10-12, U1 Build and Test complete):** The production backfill apply (03:16Z-03:38Z, 1,288 s): 1,843 examined, **422 written**, 0 failed, 135 moved NOT_STARTED -> IN_PROGRESS, 154 profileCompleted (`backfill-prod-apply.json`); the second apply: **0 changed, 1,843 unchanged** (idempotent). With the promotion (revision `remonta-api-00008-dq4`, image `b9ff6f4…`) and the 14 production checks, **PR 1 / U1 `worker-area` is live in production**. The checklist write-up (`construction/worker-area/code/pr1-staging-checklist.md` §1-8) carries every number. The Neon compute/pooler rows stay `_to record_` (the pooler flag is verified on both stages; the rest needs the console) -- carried as a follow-up. Next: the U1 clean-up PR (CLAUDE.md rollback rows and the full-sha wording, the runbook corrections, the design note), then U2 `edit-profile` Functional Design.

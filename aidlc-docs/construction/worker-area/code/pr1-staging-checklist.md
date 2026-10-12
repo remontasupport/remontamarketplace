@@ -148,3 +148,27 @@ runbook lessons (list the IPv6 address; the gcloud restore) are on `docs/drills-
 - Right after: the production backfill, dry run then `--allow-production --apply` (from `apps/api/.env`'s
   production URL; about two minutes each with the batched read); then the production checks of §1 against the
   prod URL with a production worker token.
+
+## 8. Production (2026-10-12, 03:07Z-03:38Z)
+
+- **Promotion**: the first dispatch (03:04Z) failed at the image guard because the session had given the short
+  sha (images are tagged with the full 40-character sha); nothing was applied. The second dispatch
+  (run 38198491729, 03:07Z, imageTag `b9ff6f4156923c89ae49ec0af59056e7cda71762`) green: prod revision
+  **`remonta-api-00008-dq4`**, maxScale 10, `MAX_IN_FLIGHT` 64, no exemption; health 200; the worker route live
+  behind auth. Rollback, if ever needed: revision `remonta-api-00007-j7w` / image `024596f…` (deploy-api dispatch
+  with that sha, or Cloud Run → Revisions → route traffic).
+- **The 14 api checks against production** (a production worker's token, read-only): ALL PASS -- a placed worker
+  with three services in the contract shape, masked bank data, cache headers, 304, 401/403/404/400, the admin
+  search 200, staging health 200.
+- **The backfill on production** (the URL from Secret Manager; `apps/api/.env` points at the local database, so
+  the runbook's "from .env" was wrong -- corrected here; the guard needs `--allow-production` for any run on
+  that host): dry run 231 s, 1,842 examined, 422 would change, 0 failed (`backfill-prod-dry.json`); **apply**
+  1,288 s, 1,843 examined, **422 written**, 0 failed, 135 moved NOT_STARTED -> IN_PROGRESS, 154 now
+  `profileCompleted` (`backfill-prod-apply.json`); **second apply: 0 changed, 1,843 unchanged** -- idempotent.
+  Nothing outside the worker dashboard reads these flags; the dashboard computes its own until U2.
+
+**PR 1 (U1 worker-area) is live.** Left for the U1 clean-up PR: CLAUDE.md's rollback rows (api revision
+`00008-dq4`, image `b9ff6f4…`; the app unchanged), "the full sha" in the Promote line and in
+`docs/worker/README.md` §7, the backfill runbook's URL source, the IPv6 note (merged via #53/#54), the Neon rows
+still `_to record_` (deferred by the user, the pooler flag verified on both stages), and the design note on the
+pool being the first limit (55 reads/s per instance).

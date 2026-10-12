@@ -7,15 +7,12 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, **Build and Test, staging done** (2026-10-12): PRs #50, #51
-  and #52 merged (`main` = `b9ff6f4`); the staging checklist is complete -- 14 api checks, the backfill applied
-  and idempotent on the staging copy, load test run 2 and both drills, all in
-  `construction/worker-area/code/pr1-staging-checklist.md`; staging restored to the table (revision `00026-xb5`).
-  **Next (operator):** the Neon values in `infra/README.md`, the A$300 budget, then **promote `b9ff6f4`**
-  (Actions -> deploy-api -> Run workflow -> stage=prod), then the production backfill (dry run, then
-  `--allow-production --apply`) and the production checks; then the U1 clean-up PR and U2. A pending docs PR,
-  `docs/drills-ipv6`, carries the runbook lessons. History of this stage is in the audit (2026-10-12): PR #50's
-  first CI run, the two fix PRs, the IPv6 exemption, the P2028 finding.
+- **Current Stage**: CONSTRUCTION -- U1 `worker-area` **live in production** (2026-10-12 03:38Z): PRs #50-#54 merged
+  (`main` = `5b2057d`); prod api revision `remonta-api-00008-dq4` on image `b9ff6f4…` (maxScale 10); the 14 api checks
+  pass on staging and production; the completion backfill applied on both (prod: 422 written, idempotent). Write-up:
+  `construction/worker-area/code/pr1-staging-checklist.md` §1-8. **Next:** the U1 clean-up PR (CLAUDE.md rollback rows
+  and "the full sha" wording, the runbook corrections, the pool design note), then **U2 `edit-profile`** Functional
+  Design (full). Deferred: the Neon compute/pooler rows in `infra/README.md` (the pooler flag is verified).
 
 ## Previous cycles (archived, read-only)
 
@@ -163,7 +160,7 @@
 - [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
-- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (approved 2026-10-09) · NFR Design (approved 2026-10-09) · Infrastructure Design (approved 2026-10-09) · Code Generation (plan approved 2026-10-12; **executed 2026-10-12** on `feat/worker-area`, pushed; `code/U1-summary.md`) · **Build and Test (next: PR 1 open, CI, staging checklist, promotion)**
+- [x] U1 `worker-area`: Functional Design · NFR Requirements · NFR Design · Infrastructure Design (all approved 2026-10-09) · Code Generation (2026-10-12, PRs #50-#52) · Build and Test (2026-10-12: staging checklist, promotion `b9ff6f4`, production checks and backfill) -- **live**; clean-up PR pending
 - [ ] U2 `edit-profile`: Functional Design (full) · Code Generation (PRs 2-4) · Build and Test
 - [ ] U3 `services-documents`: Functional Design (full) · NFR Requirements · NFR Design · Code Generation (PRs 5-7) · Build and Test
 - [ ] U4 `dashboard-jobs`: Functional Design (short) · Infrastructure Design · Code Generation (PRs 8-10) · Build and Test
