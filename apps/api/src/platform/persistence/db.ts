@@ -4,6 +4,14 @@
 import { Prisma, PrismaClient } from '#db'
 
 export type Db = PrismaClient
+
+/**
+ * How long an interactive transaction waits for a pool connection before P2028. Prisma's
+ * default is 2 s, which a cold Neon connection can exceed (seen from the backfill, 2026-10-12);
+ * aligned with the pool wait (DB_POOL_TIMEOUT_S, 5 s on both stages). errors.ts maps P2028 and
+ * P2024 alike to 503 + Retry-After (reason: pool).
+ */
+export const TRANSACTION_MAX_WAIT_MS = 5_000
 /** A transaction handle: what a unit of work passes to writers. */
 export type Tx = Prisma.TransactionClient
 
@@ -26,7 +34,7 @@ export function createDb(url: string, pool: { poolSize: number; poolTimeoutS: nu
  * commit together or not at all (NFR-ARCH-03).
  */
 export async function unitOfWork<T>(db: Db, work: (tx: Tx) => Promise<T>): Promise<T> {
-  const result = await db.$transaction(work, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 })
+  const result = await db.$transaction(work, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000, maxWait: TRANSACTION_MAX_WAIT_MS })
   recordDbSuccess()
   return result
 }
@@ -49,7 +57,7 @@ export async function readTransaction<T>(db: Db, statementTimeoutMs: number, wor
       await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
       return work(tx)
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: transactionTimeout },
+    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: transactionTimeout, maxWait: TRANSACTION_MAX_WAIT_MS },
   )
   recordDbSuccess()
   return result

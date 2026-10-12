@@ -6,6 +6,7 @@ import { ApiError, isOverloadedDatabase, statusOf } from '../src/platform/errors
 describe('isOverloadedDatabase', () => {
   it('recognises P2024, an initialisation error, and Postgres 57014 (statement timeout)', () => {
     expect(isOverloadedDatabase({ code: 'P2024' })).toBe(true)
+    expect(isOverloadedDatabase({ code: 'P2028', meta: { error: 'Unable to start a transaction in the given time.' } })).toBe(true)
     expect(isOverloadedDatabase({ name: 'PrismaClientInitializationError' })).toBe(true)
     expect(isOverloadedDatabase({ code: 'P2010', meta: { code: '57014', message: 'canceling statement due to statement timeout' } })).toBe(true)
     expect(isOverloadedDatabase(new Error('canceling statement due to statement timeout'))).toBe(true)
