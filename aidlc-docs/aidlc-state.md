@@ -7,11 +7,14 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Code Generation Part 1: `construction/plans/worker-area-code-
-  generation-plan.md` (Parts 0-G, about 30 steps, PR 1 on `feat/worker-area`) awaits the user's approval; then Part 2
-  generation. **Session saved 2026-10-09**: the whole record is on branch `aidlc/worker-profile-api` (pushed); no code
-  branch exists yet; `main` is untouched. To resume: check out `aidlc/worker-profile-api`, read this file, present the
-  code generation plan for approval, then execute Part 0 onwards.
+- **Current Stage**: CONSTRUCTION -- U1 `worker-area`, Code Generation **done** (2026-10-12): PR 1's code is on
+  **`feat/worker-area`** (pushed, `2e8ecd5`, 4 commits, 52 files; summary and deviations in
+  `construction/worker-area/code/U1-summary.md`). **Next: Build and Test** -- the user opens the PR from
+  `https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fworker-area?expand=1` (expect 4 commits,
+  52 files); CI proves the database-gated suites and `semgrep --test`; after the merge deploys staging, the checklist in
+  `docs/worker/README.md` §7 (health, a worker token, the read 200/304, the backfill dry run and `--apply` on staging,
+  the load test with its report committed under `construction/worker-area/code/`, the two drills, the Neon values in
+  `infra/README.md`, the A$300 budget), then the promotion and the production backfill. `main` is untouched so far.
 
 ## Previous cycles (archived, read-only)
 
@@ -159,7 +162,7 @@
 - [ ] Units Generation -- SKIP (the four units are fixed in the execution plan)
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
-- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (approved 2026-10-09) · NFR Design (approved 2026-10-09) · Infrastructure Design (approved 2026-10-09) · Code Generation (PR 1; plan written, awaiting approval) · Build and Test
+- [ ] U1 `worker-area`: Functional Design (plan approved 2026-10-09, Q1-Q6 A; approved 2026-10-09) · NFR Requirements (approved 2026-10-09) · NFR Design (approved 2026-10-09) · Infrastructure Design (approved 2026-10-09) · Code Generation (plan approved 2026-10-12; **executed 2026-10-12** on `feat/worker-area`, pushed; `code/U1-summary.md`) · **Build and Test (next: PR 1 open, CI, staging checklist, promotion)**
 - [ ] U2 `edit-profile`: Functional Design (full) · Code Generation (PRs 2-4) · Build and Test
 - [ ] U3 `services-documents`: Functional Design (full) · NFR Requirements · NFR Design · Code Generation (PRs 5-7) · Build and Test
 - [ ] U4 `dashboard-jobs`: Functional Design (short) · Infrastructure Design · Code Generation (PRs 8-10) · Build and Test
