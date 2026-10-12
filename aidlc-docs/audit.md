@@ -3786,3 +3786,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 **AI action (2026-10-12):** U2 functional design approved. Code Generation (U2, PRs 2-4) started: Part 1 planning.
 
 **AI action (2026-10-12, U2 Code Generation -- Part 1 plan):** Wrote `aidlc-docs/construction/plans/edit-profile-code-generation-plan.md`: PR 2 `feat/edit-profile-api` (Part A the migration; B `packages/schemas` option lists and the ABN rule with its property test, plus an equality test against the app's arrays; C the section schemas in their own file and the 16 entries; D `replaceSection`, the six section files, the addresses, the photos reusing the registration path with the handler repointing whichever column, the redaction, the unit and database-gated property suites P1-P9, the checklist runner's `--writes`; E docs; F gates, the staging checklist with the load test's write share, the promotion with the full sha, the migration's production step), PR 3 `feat/edit-profile-app` (G the engine's section mode, ten kinds, `submitSection`, the agreement test; H the app's worker feature, 18 definitions, the pages and redirects, the menu, the admin block, the privacy negative test; the preview checklist and production verification), PR 4 the clean-up. Story traceability. Gate: awaiting approval.
+
+**User input (verbatim, 2026-10-12):**
+> approved
+
+**AI action (2026-10-12):** U2 code generation plan approved with option A (the deploy workflow gains a `prisma migrate deploy` step per stage). Executing PR 2 from Part 0.
