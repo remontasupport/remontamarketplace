@@ -35,6 +35,26 @@ Branch from `main` `67fef1d` (PR 2 live) with `chore/load-test-writes` folded in
    `select` would return the street line without naming it), with a test proving the check fails.
 8. **The job-apply banner** moved from the old profile layout into the shell, its readiness check now on the read.
 
+## Changes after review (user, 2026-10-12; all on PR #57)
+
+| Commit | Change |
+|---|---|
+| `c0f6c25` | sidebar labels: Edit Profile -> **My Profile** (Edit Services -> My Services, then superseded) |
+| `f5fbcd0` | one **Services** group after My Profile: Edit Services, then each service's setup step |
+| `5c20ff8` | CI fix: the completion property's R3.6 detector also sees a SERVICE_QUALIFICATION row named after a training (counterexample seed -647976850; test-only, the api was right) |
+| `a09505a` | My Profile rearranged; the personal-info write split into three pages (Date of Birth, Gender, Vehicle), each carrying the other two answers (`carried` fields, shown while still empty); `/profile/personal-info` redirects to date-of-birth |
+| `65c2130` | **Personal Information** sub-group |
+| `3735cd8` | **Professional Information** sub-group; Vehicle renamed **Vehicle Access** (URL stays `/profile/vehicle`) |
+
+My Profile now: **Personal Information** (Name, Profile Photo, Bio, Address, Date of Birth, Gender, Language) ·
+**Professional Information** (Experience, Work History, Education, Preferred Hours, Vehicle Access) · **Other
+Personal Info** (Good to Know, Cultural Background, Religion, Interests, About Me, Preferences, Personality) · Bank
+Account. Sub-groups are declared once (`PROFILE_GROUPS` in `workerMenu.ts`); the sidebar and the index render any
+of them. Preview check added: change Gender, then Date of Birth and Vehicle Access are unchanged.
+
+Status at the end of 2026-10-12: CI 13/13 and both previews green at `3735cd8`; preview
+https://remonta-9x0kufc2v-remontas-projects.vercel.app; **not merged, by the user's choice** (no production yet).
+
 ## Gates (local)
 
 | Gate | Result |

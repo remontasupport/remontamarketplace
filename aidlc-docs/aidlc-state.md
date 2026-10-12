@@ -7,12 +7,16 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: CONSTRUCTION -- U1 `worker-area` **live in production** (2026-10-12 03:38Z): PRs #50-#54 merged
-  (`main` = `5b2057d`); prod api revision `remonta-api-00008-dq4` on image `b9ff6f4…` (maxScale 10); the 14 api checks
-  pass on staging and production; the completion backfill applied on both (prod: 422 written, idempotent). Write-up:
-  `construction/worker-area/code/pr1-staging-checklist.md` §1-8. **Next:** the U1 clean-up PR (CLAUDE.md rollback rows
-  and "the full sha" wording, the runbook corrections, the pool design note), then **U2 `edit-profile`** Functional
-  Design (full). Deferred: the Neon compute/pooler rows in `infra/README.md` (the pooler flag is verified).
+- **Current Stage**: CONSTRUCTION, U2 `edit-profile` PR 3 **on hold by the user** (2026-10-12): PR #57
+  `feat/edit-profile-app` is open, head `3735cd8`, all checks and both Vercel previews green; latest app preview
+  https://remonta-9x0kufc2v-remontas-projects.vercel.app (staging api + data). The user does **not** want it in
+  production yet: leave the PR open, do not merge (a merge to `main` is the production release of the new sidebar,
+  pages and redirects). Production: U1 and U2 PR 2 live (api revision `remonta-api-00009-gct`, image `67fef1d…`).
+  **Resume here:** ask the user whether the go-live date is set; if `main` has moved, merge `main` into the
+  branch and re-run the gates; the user runs the preview checklist (`construction/edit-profile/code/PR3-summary.md`
+  "Still to do"); then merge, the load-test re-run on staging, the api promotion (full sha), production checks, the
+  CLAUDE.md rollback rows; then PR 4 (clean-up). Today's menu changes: PR3-summary "Changes after review".
+  Untracked `apps/api/scripts/_u2-staging-writes.ts` on the developer machine: never commit it.
 
 ## Previous cycles (archived, read-only)
 
@@ -161,7 +165,7 @@
 
 ### CONSTRUCTION (per unit; stages per the execution plan)
 - [x] U1 `worker-area`: Functional Design · NFR Requirements · NFR Design · Infrastructure Design (all approved 2026-10-09) · Code Generation (2026-10-12, PRs #50-#52) · Build and Test (2026-10-12: staging checklist, promotion `b9ff6f4`, production checks and backfill) -- **live**; clean-up PR pending
-- [ ] U2 `edit-profile`: Functional Design (plan approved 2026-10-12, Q1-Q10 A; **approved 2026-10-12**) · Code Generation (plan approved 2026-10-12, option A; **PR 2 generated** on `feat/edit-profile-api` `8a66496`, `code/PR2-summary.md`; PRs 3-4 next) · Build and Test (**PR 2 live** 2026-10-12: #56 merged `67fef1d`, migrated and promoted, prod revision `00009-gct`; staging 18+12 checks, load test with writes recorded; **PR 3 generated** on `feat/edit-profile-app` `2965ec3`, `code/PR3-summary.md`; next: CI, the preview checklist, merge, the load-test re-run, promotion)
+- [ ] U2 `edit-profile`: Functional Design (plan approved 2026-10-12, Q1-Q10 A; **approved 2026-10-12**) · Code Generation (plan approved 2026-10-12, option A; **PR 2 generated** on `feat/edit-profile-api` `8a66496`, `code/PR2-summary.md`; PRs 3-4 next) · Build and Test (**PR 2 live** 2026-10-12: #56 merged `67fef1d`, migrated and promoted, prod revision `00009-gct`; staging 18+12 checks, load test with writes recorded; **PR 3 generated** on `feat/edit-profile-app` `2965ec3`, `code/PR3-summary.md`; PR #57 green at `3735cd8` after the user's menu changes; **held open by the user** 2026-10-12; next: the preview checklist, merge when the user says, the load-test re-run, promotion)
 - [ ] U3 `services-documents`: Functional Design (full) · NFR Requirements · NFR Design · Code Generation (PRs 5-7) · Build and Test
 - [ ] U4 `dashboard-jobs`: Functional Design (short) · Infrastructure Design · Code Generation (PRs 8-10) · Build and Test
 

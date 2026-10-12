@@ -3879,3 +3879,9 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "Professional Information instead, and move the Vehicle inside it, maybe rename the Vehicle as well, something that makes sense"
 **AI response**: commit 3735cd8: a Professional Information sub-group (Experience, Work History, Education, Preferred Hours, Vehicle Access). Vehicle renamed "Vehicle Access" in the menu and on its page ("Vehicle access"), matching its question "Do you have access to a vehicle?"; the URL stays /profile/vehicle. Personal Information is now Name, Profile Photo, Bio, Address, Date of Birth, Gender, Language. Tests 63 pass, typecheck at the 139 baseline, docs updated.
+
+**User input**: "should I merge it now? but I dont want to take effect in prod yet"
+**AI response**: not yet: a merge to `main` is the production release (sidebar, pages, redirects within minutes; the prod api already has the write entries). Options: leave PR #57 open (recommended), or merge behind a Vercel flag (old sidebar restored, redirects gated). Asked for the go-live date.
+
+**User input**: "leave it open for now, make sure what we work on today will update to the dlc so we can go back tomorrow"
+**AI response**: PR #57 left open at `3735cd8`. aidlc-state.md "Current Stage" rewritten with the hold and a "Resume here" list; the U2 checklist line updated; PR3-summary.md gains "Changes after review" (today's six commits, the final menu, the status).
