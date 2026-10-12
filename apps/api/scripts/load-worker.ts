@@ -33,6 +33,8 @@ export interface LoadOptions {
   burst: number
   warmupSeconds: number
   report?: string
+  /** --reads-only: U1's mix (no writes). */
+  readsOnly: boolean
 }
 
 export function parseArgs(argv: readonly string[]): LoadOptions {
@@ -58,6 +60,7 @@ export function parseArgs(argv: readonly string[]): LoadOptions {
     burst: num('burst', 1, 1, 20),
     warmupSeconds: num('warmup-seconds', 60, 0, 600),
     report: flag('report'),
+    readsOnly: argv.includes('--reads-only'),
   }
 }
 
@@ -165,6 +168,8 @@ interface Worker {
   mintedAt: number
   etag: string | null
   backoffUntil: number
+  /** The worker's own preferred hours, read once at the start: the write share saves them back unchanged (U2). */
+  hoursBody: string | null
 }
 
 function secret(name: string): string {
@@ -245,7 +250,9 @@ async function runPhase(name: string, opts: LoadOptions, workers: Worker[], key:
           context.sentAt = performance.now()
           const headers: Record<string, string> = { authorization: `Bearer ${w.token}` }
           if (kind === 'read-conditional' && w.etag) headers['if-none-match'] = w.etag
-          return { ...req, headers }
+          // The write share (U2): the worker's current hours saved back -- a real write transaction, data unchanged.
+          if (kind === 'write' && w.hoursBody) return { ...req, method: 'PUT', path: '/v1/worker/availability', headers: { ...headers, 'content-type': 'application/json' }, body: w.hoursBody }
+          return { ...req, method: 'GET', path: '/v1/worker/profile', headers }
         },
         onResponse: (status, _body, ctx: object, headers: IncomingHttpHeaders | undefined) => {
           const context = ctx as Record<string, unknown>
@@ -298,11 +305,16 @@ async function main(): Promise<void> {
   await db.$disconnect()
   if (rows.length === 0) throw new Error('staging has no active worker with a profile')
   const workers: Worker[] = []
-  for (const r of rows) workers.push({ id: r.id, token: await mint(r.id, key), mintedAt: Date.now(), etag: null, backoffUntil: 0 })
-  const writesAvailable = false // U2 adds the section writes; the report states the mix.
-  console.log(`load-worker: ${opts.baseUrl}, ${workers.length} workers, rate ${opts.rate}/s for ${opts.minutes} min, burst x${opts.burst}; mix: reads only (U1; the write share becomes section writes in U2)`)
+  for (const r of rows) workers.push({ id: r.id, token: await mint(r.id, key), mintedAt: Date.now(), etag: null, backoffUntil: 0, hoursBody: null })
+  // Each worker's own hours, so a write saves back exactly what is stored (idempotent: staging data unchanged).
+  for (const w of workers) {
+    const res = await fetch(`${opts.baseUrl}/v1/worker/profile`, { headers: { authorization: `Bearer ${w.token}` } })
+    if (res.ok) w.hoursBody = JSON.stringify({ slots: ((await res.json()) as { sections: { availability: unknown[] } }).sections.availability })
+  }
+  const writesAvailable = !opts.readsOnly && workers.some((w) => w.hoursBody !== null)
+  console.log(`load-worker: ${opts.baseUrl}, ${workers.length} workers, rate ${opts.rate}/s for ${opts.minutes} min, burst x${opts.burst}; mix: ${writesAvailable ? '70 % reads (half conditional), 30 % PUT availability (each worker’s own hours saved back)' : 'reads only'}`)
 
-  const report: Record<string, unknown> = { startedAt: new Date().toISOString(), baseUrl: opts.baseUrl, workers: workers.length, options: opts, mix: 'reads-only (U1)', phases: {} as Record<string, unknown> }
+  const report: Record<string, unknown> = { startedAt: new Date().toISOString(), baseUrl: opts.baseUrl, workers: workers.length, options: opts, mix: writesAvailable ? '70/30 read/write (PUT availability, idempotent)' : 'reads-only', phases: {} as Record<string, unknown> }
   const phases = report.phases as Record<string, unknown>
   if (opts.warmupSeconds > 0) phases.warmup = (await runPhase('warm-up (not counted)', opts, workers, key, Math.max(1, Math.round(opts.rate / 2)), opts.warmupSeconds, writesAvailable)).stats
   const sustained = (await runPhase('phase A sustained', opts, workers, key, opts.rate, Math.round(opts.minutes * 60), writesAvailable)).stats
