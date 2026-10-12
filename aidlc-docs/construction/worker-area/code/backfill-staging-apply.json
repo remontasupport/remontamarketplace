@@ -1,0 +1,193 @@
+{
+  "apply": true,
+  "now": "2026-10-12T02:00:40.368Z",
+  "examined": 1790,
+  "changed": 240,
+  "unchanged": 1550,
+  "byFlag": {
+    "accountDetails": {
+      "on": 20,
+      "off": 0
+    },
+    "compliance": {
+      "on": 11,
+      "off": 44
+    },
+    "trainings": {
+      "on": 30,
+      "off": 27
+    },
+    "services": {
+      "on": 20,
+      "off": 23
+    },
+    "profileCompleted": {
+      "on": 132,
+      "off": 1
+    }
+  },
+  "verificationMoved": 8,
+  "sample": [
+    {
+      "workerProfileId": "cmj698w8u0000l504vu6w47vf",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmj6ceua10012kz04lyq2ljja",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmj6wu7gh0000l104oiph0c73",
+      "from": {
+        "accountDetails": true,
+        "compliance": true,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": true,
+        "trainings": false,
+        "services": true
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmjaph9yx0001l704wzvh3lhl",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmjaqcsnt0003l704my0mnlku",
+      "from": {
+        "accountDetails": true,
+        "compliance": true,
+        "trainings": true,
+        "services": true
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": true,
+        "trainings": true,
+        "services": true
+      },
+      "profileCompleted": true
+    },
+    {
+      "workerProfileId": "cmjb3okb20001ji045nrmbsme",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmjchu0jg0001l404w4nid51h",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmjdt9off0001ic04y3jrl68s",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmjgmd1je0001kv048019z33u",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    },
+    {
+      "workerProfileId": "cmjgol3ko0001jl04dgx81ayx",
+      "from": {
+        "accountDetails": false,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "to": {
+        "accountDetails": true,
+        "compliance": false,
+        "trainings": false,
+        "services": false
+      },
+      "profileCompleted": false
+    }
+  ],
+  "failed": []
+}
