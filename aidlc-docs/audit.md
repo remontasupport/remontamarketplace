@@ -3724,3 +3724,5 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > In the Neon console, record the connection values in infra/README.md "Database connections", and create the A$300 budget in Cloud Billing. how to do this
+
+**AI action (2026-10-12, the operator's items, what the session could do):** Read the two stages' database secrets (hosts and parameters only): prod's api URL is the pooled host with `pgbouncer=true`; **staging's lacked `pgbouncer=true`** -- added as secret version 2 (no trailing newline), a staging revision rolled (`00027-sn2`), the 14 api checks re-run: ALL PASS. The app's `AUTH_DATABASE_URL` uses the same pooled host with no `connection_limit` (Prisma's default per Vercel instance). Those rows are filled in `infra/README.md` on `docs/drills-ipv6` (`pushed`); the compute size, `max_connections` and the pooler limit need the Neon console. The budget cannot be created from this machine: `support@remontaservices.com.au` has no access to the billing account (`015891-69B448-F58A35`) and the Budget API is not enabled on the project -- console steps given to the user.
