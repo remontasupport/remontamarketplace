@@ -124,11 +124,12 @@ design §2); fill the placeholders in and keep them current:
 
 | | Production | `rehearse-w1` (staging) |
 |---|---|---|
-| Pooled host (`-pooler`) in the latest `AUTH_DATABASE_URL` secret version | _to record_ | _to record_ |
-| `?pgbouncer=true` present | _to record_ | _to record_ |
+| Pooled host (`-pooler`) in the latest `AUTH_DATABASE_URL` secret version | `ep-delicate-recipe-a7mbt4ef-pooler` (2026-10-12) | `ep-wandering-shadow-a7pxwb8o-pooler` (2026-10-12) |
+| `?pgbouncer=true` present | yes (2026-10-12) | yes: added as secret version 2 on 2026-10-12 (it was missing), revision `00027-sn2` reads it |
 | Compute size (CU) and autoscaling range | _to record_ | _to record_ |
 | Neon `max_connections` for that size | _to record_ | _to record_ |
 | Pooler limit (`default_pool_size`) vs 50 + the app's pool | _to record_ | _to record_ |
+| The app's pool on the same database | `apps/app/.env`'s `AUTH_DATABASE_URL` points at the same pooled host with no `connection_limit`: Prisma's default per serverless instance (2 × CPUs + 1), one pool per warm Vercel function | n/a |
 | Verified on | _date_ | _date_ |
 
 A pool wait past `DB_POOL_TIMEOUT_S` is a 503 (`reason: pool`) and a statement past its timeout a 503
