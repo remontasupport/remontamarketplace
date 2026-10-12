@@ -3822,3 +3822,18 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 **AI action (2026-10-12, U2 PR 2 in production):** `deploy-api` dispatch run 38208873378 (05:39Z) green: the promote job migrated production first (`_prisma_migrations` newest = `20261012120000_u2_worker_home_address`, finished 05:40:19Z; `worker_profiles.homeStreetLine`/`homeLocalityId` present), then deployed revision `remonta-api-00009-gct` on image `67fef1d97abea84593b03661617c2ba5a82c2ac9`. The 14 read-only production checks: ALL PASS; the new write routes answer 401 without a token. Nothing in the app calls the writes yet (PR 3). Rollback: revision `00008-dq4` / image `b9ff6f4…` (the migration is expand-only; nothing to reverse). Next: PR 3 (form engine + pages), carrying the slimmer completion recompute and the load-test re-run (user decision); `chore/load-test-writes` folds into PR 3.
 
 **AI action (2026-10-12, U2 Code Generation -- PR 3 generated):** `feat/edit-profile-app` from `main` `67fef1d` with `chore/load-test-writes` folded in; pushed `2965ec3`, 5 commits, 38 files. The completion recompute now runs only for the six writes that can change a stored flag (`5fff3f1`); the completion property de-flaked (`b4dc809`); the engine's section mode and the 19 definitions (`3cc5fd1`); the app side (`2965ec3`): the worker client, the shared profile query, `useSection`, the section page and field components, the photo page, `/dashboard/worker/profile` and `/profile/[section]`, the old URLs redirected, `WORKER_MENU` rendered by the sidebar, the admin page's private block above the downloadable card, the mask copy with an equality test, the privacy test. Deviations in `code/PR3-summary.md` (no provider: one query key; 18 menu children with work history and education; ABN page outside the menu; seed from the write's answer then reload). Gates: form-engine 73, app 186 passed with baselines tightened (typecheck 142 -> 139, lint 471 -> 470), build green. Gate: the user opens PR 3, CI, the preview checklist.
+
+**User input (verbatim, 2026-10-12):**
+> should I merge it?
+
+**AI action (2026-10-12):** PR 3 head `2965ec3`: all 13 checks and both Vercel previews green. Advised not to merge before the preview checklist (eight checks listed).
+
+**User input (verbatim, 2026-10-12):**
+> I dont see the changes, the preview id is fb1418fd
+
+**AI action (2026-10-12):** `fb418fd` is the record commit on `aidlc/worker-profile-api` (docs only, the app as in production). PR 3's app preview given: `https://remonta-f43t79aab-remontas-projects.vercel.app` (deployment `CBQoYwbBiNPYBeS8dCZijWdW1dWZ`).
+
+**User input (verbatim, 2026-10-12):**
+> I want to make some changes, instead of Edit Profile, make it My Profile, and Edit Services to My Services
+
+**AI action (2026-10-12):** Sidebar labels changed on `feat/edit-profile-app` (deviation from D11/R8.1 labels, user decision): "Edit Profile" -> "My Profile", "Edit Services" -> "My Services"; order, links and ids unchanged; `workerMenu.test.ts` updated. Flagged: the existing "My Services" group (the per-service setup steps) now shares its label with the renamed item; awaiting the user's choice of a name for one of them.
