@@ -3752,3 +3752,8 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (verbatim, 2026-10-12):**
 > continue
+
+**AI action (2026-10-12, the production backfill):** Dry run on production (231 s, `backfill-prod-dry.json`): 1,842 examined, **422 would change**, 0 failed; 154 would become profileCompleted, 135 move NOT_STARTED -> IN_PROGRESS -- the staging copy's shape. A first apply command never ran (a file copy at its start failed on the `main` checkout, where the notes folder does not exist; the chain stopped; the idempotency step then hit the local database): nothing written. The apply re-issued at 03:16Z with the production URL from Secret Manager, `--allow-production --apply`, then the idempotency pass.
+
+**User input (verbatim, 2026-10-12):**
+> continue
