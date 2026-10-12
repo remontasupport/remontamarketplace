@@ -3873,3 +3873,9 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "bEFORE i MERGED, can we store the Name, Profile Photo, Bio, Address, Date of Birth, Gender, and Language to another parent name \"Personal Information\""
 **AI response**: commit 65c2130 on feat/edit-profile-app: My Profile's sub-groups are declared once (`PROFILE_GROUPS` in workerMenu.ts); Name, Profile Photo, Bio, Address, Date of Birth, Gender, Vehicle and Language form "Personal Information", then Experience, Work History, Education, Preferred Hours, Other Personal Info, Bank Account. Vehicle (not named in the request) stays between Gender and Language, so inside the group. The sidebar and the index render any sub-group already; menu test updated (9 pass), typecheck at the 139 baseline, docs/worker/README.md updated.
+
+**User input**: "No, I want also to store the Experience, Work History, Education and Preferred Hours, what is the name of the parent folder should be?"
+**AI response**: recommended "Work Details" (fits Preferred Hours, which is availability rather than background); alternatives Work Experience, Professional Background, Experience & Availability. Asked for the choice.
+
+**User input**: "Professional Information instead, and move the Vehicle inside it, maybe rename the Vehicle as well, something that makes sense"
+**AI response**: commit 3735cd8: a Professional Information sub-group (Experience, Work History, Education, Preferred Hours, Vehicle Access). Vehicle renamed "Vehicle Access" in the menu and on its page ("Vehicle access"), matching its question "Do you have access to a vehicle?"; the URL stays /profile/vehicle. Personal Information is now Name, Profile Photo, Bio, Address, Date of Birth, Gender, Language. Tests 63 pass, typecheck at the 139 baseline, docs updated.
