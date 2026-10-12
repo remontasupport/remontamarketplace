@@ -43,17 +43,23 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
         }
         expect(got.profileCompleted).toBe(got.accountDetails && got.compliance && got.trainings && got.services)
       }),
-      { numRuns: 600 },
+      { numRuns: Number(process.env.FC_RUNS ?? 600) },
     )
-    expect(seen.plain).toBeGreaterThan(50)
-    expect(seen.fixed).toBeGreaterThan(50)
-  })
+  }, 30_000)
 
   // Coverage of the partition (R3.12: every [fix] kind must be exercised) is measured on a fixed-seed sample large
   // enough for the rarest kind, so it is deterministic; the equality above stays random on every run.
   it('the generator exercises every [fix] kind (fixed seed, 5,000 inputs)', () => {
     const counts = new Map<FixCase, number>()
-    for (const input of fc.sample(completionInput, { numRuns: 5000, seed: 20261012 })) for (const k of fixCasesOf(input)) counts.set(k, (counts.get(k) ?? 0) + 1)
+    let plain = 0
+    for (const input of fc.sample(completionInput, { numRuns: 5000, seed: 20261012 })) {
+      const fixes = fixCasesOf(input)
+      if (fixes.length === 0) plain++
+      for (const k of fixes) counts.set(k, (counts.get(k) ?? 0) + 1)
+    }
+    // Both partitions are large: the equality is tested on many plain inputs, the fixes on many fixed ones.
+    expect(plain).toBeGreaterThan(500)
+    expect(5000 - plain).toBeGreaterThan(500)
     for (const k of ['whitespace', 'link-optional-or-conditional', 'abn-counts', 'status-compliance', 'trainings-status', 'no-offerings', 'service-title-case', 'service-status'] as FixCase[]) {
       expect(counts.get(k) ?? 0, k).toBeGreaterThan(5)
     }
@@ -72,9 +78,9 @@ describe('P3: the percentage (R3.10)', () => {
         expect(percentOf(filled)).toBeGreaterThanOrEqual(before)
         expect(percentOf(fullyFilledInput(input))).toBe(100)
       }),
-      { numRuns: 300 },
+      { numRuns: Number(process.env.FC_RUNS ?? 300) },
     )
-  })
+  }, 30_000)
 
   it('is the sidebar formula: round(100 × filled / 13)', () => {
     const empty: CompletionInput = { profile: { firstName: '', lastName: '', photos: null, introduction: null, city: null, state: null, postalCode: null, age: null, dateOfBirth: null, gender: null, hasVehicle: null, languages: [], abn: null }, services: [], requirements: [], catalogue: { categories: [] }, hasHome: false, availabilityCount: 0, experienceCount: 0, jobHistoryCount: 0, educationCount: 0, additionalInfo: null }
