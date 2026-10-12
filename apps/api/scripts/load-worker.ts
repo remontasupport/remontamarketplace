@@ -151,6 +151,14 @@ export function formatRows(rows: ThresholdRow[]): string {
 
 // ---- The run -----------------------------------------------------------------------------
 
+/** Tokens are minted for five minutes; refresh after four (R7.2). */
+export const TOKEN_REFRESH_AFTER_MS = 240_000
+
+/** The workers whose token is older than the refresh age (pure, tested). */
+export function staleTokens<W extends { mintedAt: number }>(workers: readonly W[], now: number): W[] {
+  return workers.filter((w) => now - w.mintedAt > TOKEN_REFRESH_AFTER_MS)
+}
+
 interface Worker {
   id: string
   token: string
@@ -202,7 +210,23 @@ async function runPhase(name: string, opts: LoadOptions, workers: Worker[], key:
     return workers[cursor]!
   }
   process.stdout.write(`${name}: ${durationS} s at ${rate} req/s ...\n`)
-  const result = await autocannon({
+  // Tokens live five minutes and a phase may run ten: refresh the stale ones every 10 s, off the
+  // request path (setupRequest is synchronous). The first run (2026-10-12) re-minted only between
+  // phases and collected 1,800 × 401 in the second half of the sustained phase.
+  const refresher = setInterval(() => {
+    void (async () => {
+      const now = Date.now()
+      for (const w of staleTokens(workers, now)) Object.assign(w, { token: await mint(w.id, key), mintedAt: Date.now() })
+    })()
+  }, 10_000)
+  let result
+  try {
+    result = await runAutocannon()
+  } finally {
+    clearInterval(refresher)
+  }
+  async function runAutocannon() {
+  return autocannon({
     url: opts.baseUrl,
     connections: Math.min(100, Math.max(4, Math.ceil(rate / 2))),
     overallRate: rate,
@@ -242,9 +266,7 @@ async function runPhase(name: string, opts: LoadOptions, workers: Worker[], key:
       },
     ],
   })
-  // Re-mint tokens older than four minutes before the next phase.
-  const now = Date.now()
-  for (const w of workers) if (now - w.mintedAt > 240_000) Object.assign(w, { token: await mint(w.id, key), mintedAt: now })
+  }
   const sorted = [...rec.admitted].sort((a, b) => a - b)
   const pct = (p: number) => (sorted.length ? Math.round(sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))]!) : 0)
   const stats: PhaseStats = {

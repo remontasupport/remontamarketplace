@@ -106,3 +106,46 @@ export async function readProfileRows(db: Db, userId: string): Promise<ProfileRo
     return { profile, catalogue }
   })
 }
+
+/**
+ * The same selection as readProfileRows's catalogue query, applied in memory to the whole
+ * catalogue: the categories matched by id or name, and -- as today -- their chosen
+ * sub-categories, or every sub-category when none is chosen. Pure; used by the page read.
+ */
+export function selectCatalogueFor(all: readonly CatalogueRecord[], services: readonly { categoryId: string; categoryName: string; subcategoryIds: readonly string[]; subcategoryNames: readonly string[] }[]): CatalogueRecord[] {
+  if (services.length === 0) return []
+  const f = catalogueFilter(services)
+  const ids = new Set(f.categoryIds)
+  const names = new Set(f.categoryNames)
+  const subIds = new Set(f.subIds)
+  const subNames = new Set(f.subNames)
+  const filterSubs = subIds.size > 0 || subNames.size > 0
+  return all
+    .filter((c) => ids.has(c.id) || names.has(c.name))
+    .map((c) => ({ ...c, subcategories: filterSubs ? c.subcategories.filter((s) => subIds.has(s.id) || subNames.has(s.name)) : c.subcategories }))
+}
+
+/**
+ * A page of profiles with the same rows as readProfileRows, in one transaction: the
+ * page's profiles with their relations (one statement per relation for the whole page,
+ * none per row) and the catalogue once, selected per worker in memory. For the backfill
+ * (U1 worker-area, P14): one transaction per worker from a machine far from the database
+ * is a round trip per statement, hours for the whole table; a page is seconds.
+ */
+export const PAGE_READ_STATEMENT_TIMEOUT_MS = 15_000
+export const PAGE_READ_TRANSACTION_TIMEOUT_MS = 90_000
+
+export async function readProfileRowsPage(db: Db, afterId: string, take: number): Promise<ProfileRows[]> {
+  return readTransaction(
+    db,
+    PAGE_READ_STATEMENT_TIMEOUT_MS,
+    async (tx) => {
+    const profiles = await tx.workerProfile.findMany({ where: { id: { gt: afterId } }, orderBy: { id: 'asc' }, take, select: PROFILE_SELECT })
+    if (profiles.length === 0) return []
+    const anyServices = profiles.some((p) => p.workerServices.length > 0)
+    const all = anyServices ? await tx.category.findMany({ select: CATALOGUE_SELECT, orderBy: { id: 'asc' } }) : []
+    return profiles.map((profile) => ({ profile, catalogue: selectCatalogueFor(all, profile.workerServices) }))
+    },
+    { transactionTimeoutMs: PAGE_READ_TRANSACTION_TIMEOUT_MS },
+  )
+}

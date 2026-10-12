@@ -37,8 +37,11 @@ export async function unitOfWork<T>(db: Db, work: (tx: Tx) => Promise<T>): Promi
  * timeout is a clamped integer constant from the caller, never input; a statement it
  * cancels surfaces as Postgres 57014, which errors.ts maps to 503 + Retry-After.
  */
-export async function readTransaction<T>(db: Db, statementTimeoutMs: number, work: (tx: Tx) => Promise<T>): Promise<T> {
+export async function readTransaction<T>(db: Db, statementTimeoutMs: number, work: (tx: Tx) => Promise<T>, opts: { transactionTimeoutMs?: number } = {}): Promise<T> {
   const timeout = Math.max(100, Math.min(60_000, Math.trunc(statementTimeoutMs)))
+  // The whole transaction's deadline: 10 s for a request; a backfill page (many statements, each a
+  // round trip from wherever the script runs) may ask for more, never above two minutes.
+  const transactionTimeout = Math.max(1_000, Math.min(120_000, Math.trunc(opts.transactionTimeoutMs ?? 10_000)))
   const result = await db.$transaction(
     async (tx) => {
       // set_config(..., true) is SET LOCAL with a bind parameter (SET itself takes none), so the
@@ -46,7 +49,7 @@ export async function readTransaction<T>(db: Db, statementTimeoutMs: number, wor
       await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
       return work(tx)
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 },
+    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: transactionTimeout },
   )
   recordDbSuccess()
   return result
