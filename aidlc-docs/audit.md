@@ -3744,3 +3744,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > there is an error on deploy-api
 
 **AI action (2026-10-12, the failed promotion):** `deploy-api` dispatch run 38198294656 (03:04Z, stage prod, imageTag `b9ff6f4`) failed at the guard step "The image must already exist (no build on a promotion)": Artifact Registry tags images with the **full 40-character sha** (`api:b9ff6f4156923c89ae49ec0af59056e7cda71762` exists; `api:b9ff6f4` does not), and the session had given the short sha. Nothing was applied: the "Apply" and health steps were skipped; prod is still revision `remonta-api-00007-j7w` on image `024596f…`. Also noted: `main` moved to `5b2057d` by PRs #53 and #54 (the docs branch, merged twice; README only, 1 file). The verified image stays `b9ff6f4156923c89ae49ec0af59056e7cda71762`. Follow-up for the U1 clean-up PR: say "the full sha" in CLAUDE.md's Promote line and in `docs/worker/README.md` §7 / the checklist note.
+
+**User input (verbatim, 2026-10-12):**
+> sucessed
