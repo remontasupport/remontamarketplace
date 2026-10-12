@@ -3847,3 +3847,22 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 > ther is an error  in Feat/edit profile app- #57, can you check
 
 **AI action (2026-10-12, PR #57 CI on `f5fbcd0`):** Two failures. (1) API Quality Node 22: the U1 completion property found a counterexample (seed -647976850): trainings api true, oracle false, for a PENDING `Personal Trainer:medication-training` SERVICE_QUALIFICATION row with no file beside a SUBMITTED training row. Not an api bug: R3.6 [fix] (count by status) gives true; the test's fix-case detector skipped SERVICE_QUALIFICATION rows before its training check. Fixed in the detector, the case added as a regression test, 30,000 random runs agree, the plain-partition floor on the fixed sample lowered 500 -> 400 (494). api gate locally 564 passed / 167 database-gated skipped. (2) Vercel `remontamarketplace` preview failed on `f5fbcd0` only (green on `2965ec3` and `c0f6c25`; the commit touched only apps/app and docs; the web build passes locally): treated as transient, re-triggered by the push. No log access (the Vercel CLI is not signed in here).
+
+**User input (verbatim, 2026-10-12):**
+> Perfect now. I am going to rearrange the nav side bars. In this order:
+>
+> Name
+> Bio
+> Address
+> Date of Birth (from Other Personal Info)
+> Gender (from Other Personal Info)
+> Language
+> Experience
+> Work History
+> Education
+> Other Personal Info (the Good to know, Cultural Background, Religion, Interests, About me, Preferences, and Personality)
+
+**User input (2026-10-12, AskUserQuestion):**
+> Missing items: "Keep them (Recommended)" · Vehicle: "Its own item after Gender (Recommended)" · Grouping: "A sub-group that opens (Recommended)"
+
+**AI action (2026-10-12):** My Profile rearranged on `feat/edit-profile-app` (deviation from R8.2, user decision): Name, Profile Photo, Bio, Address, Date of Birth, Gender, Vehicle, Language, Experience, Work History, Education, Preferred Hours, Other Personal Info (sub-group of the seven additional-details sections), Bank Account. The personal-info write (`putPersonalInfo`, all three answers) became three pages; form-engine gained `carried` fields (seeded from the read, sent back unchanged; shown while empty or in error so no page can block a save). Old `?step=personal-info` redirects to `date-of-birth`. Gates: form-engine 74, app 191 passed (baselines unchanged), build green.
