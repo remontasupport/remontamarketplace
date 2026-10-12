@@ -18,7 +18,8 @@
     "backfill:onboarding": "node --env-file=.env --import tsx scripts/backfill-worker-onboarding.ts",
     "parity:admin-search": "tsx scripts/parity-admin-search.ts",
     "load:worker": "tsx scripts/load-worker.ts",
-    "backfill:completion": "node --env-file=.env --import tsx scripts/backfill-completion.ts"
+    "backfill:completion": "node --env-file=.env --import tsx scripts/backfill-completion.ts",
+    "check:worker": "node --import tsx scripts/worker-check.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",

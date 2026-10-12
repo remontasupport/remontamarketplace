@@ -26,7 +26,7 @@ git checkout -b <type>/<short-name>      # fix/… feat/… u9/…
 ### 2. Verify locally, before pushing
 
 ```bash
-pnpm --filter @remonta/app run quality     # 144 type · 488 lint known · 83 tests (2026-10-02)
+pnpm --filter @remonta/app run quality     # 142 type · 471 lint known · 122 tests (2026-10-12)
 pnpm --filter @remonta/web run quality     # 76 lint · strict tsc
 pnpm --filter @remonta/schemas run quality # P-1..P-5 boundaries
 pnpm --filter @remonta/api-contract run quality  # contract checks, openapi.json drift
@@ -142,7 +142,8 @@ prepares a fresh project once. Guide: `infra/README.md`; decisions: the code-gen
 ```
 Quality:   pnpm --filter @remonta/infra run quality   (lint · tsc · tests · render:check, no credentials)
 Deploy:    merge to main touching apps/api, packages, infra, lockfile → Actions "deploy-api" → STAGING only
-Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<sha that passed the preview checklist>
+Promote:   Actions → deploy-api → Run workflow → stage=prod, imageTag=<the FULL 40-character sha that passed the preview checklist>
+           (images are tagged with the full sha; a short sha fails the "image must already exist" guard and deploys nothing)
 Rollback:  the same dispatch with a previous sha; or Cloud Run → service → Revisions → route traffic back
 URL:       https://remonta-api[-staging]-<project number>.australia-southeast1.run.app  (no custom hostname yet)
 Health:    <url>/v1/health   (a contract `probe`: never shed, plain HTTP allowed -- Cloud Run's probes hit it)
@@ -180,6 +181,7 @@ Promote the last known-good deployment in Vercel. Seconds, no rebuild.
 |---|---|
 | `remonta-app` | `2ewmXaYfTHuo6fBcNpNoKS13yBhY` — https://vercel.com/remontas-projects/remonta-app/2ewmXaYfTHuo6fBcNpNoKS13yBhY (the `main` `48a8a7e` build, verified live 2026-10-09) |
 | `remontamarketplace` | `5y5Ffr8mtJgmE2pg12GviLo4Rz72` — https://vercel.com/remontas-projects/remontamarketplace/5y5Ffr8mtJgmE2pg12GviLo4Rz72 (the same merge, 2026-10-09) |
+| `remonta-api` (Cloud Run) | revision `remonta-api-00008-dq4` = image `b9ff6f4156923c89ae49ec0af59056e7cda71762` (worker-profile-api U1, promoted 2026-10-12); the previous known-good is `remonta-api-00007-j7w` = `024596f5ba2ba5b796eb88002b011a4bdc289a38` (2026-10-09). Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
 
 Re-record these before any unit that changes deployment settings. **Promote a
 deployment; do not redeploy a commit** — a rebuild can fail, an existing build cannot.
