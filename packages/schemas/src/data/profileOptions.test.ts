@@ -17,7 +17,7 @@ describe('the profile option lists (U2 R7)', () => {
     expect(UNIQUE_SERVICES).toHaveLength(42)
     expect(MONTHS).toHaveLength(12)
     expect(DAYS).toHaveLength(7)
-    expect(ADDITIONAL_INFO_GROUPS).toHaveLength(8)
+    expect(ADDITIONAL_INFO_GROUPS).toHaveLength(9)
   })
   it('monthIndex', () => {
     expect(monthIndex('January')).toBe(0)

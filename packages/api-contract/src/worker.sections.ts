@@ -206,10 +206,11 @@ export const languagesSchema = z.strictObject({ group: z.literal('languages'), l
 export const culturalBackgroundSchema = z.strictObject({ group: z.literal('cultural-background'), culturalBackground: uniqueList(z.enum(CULTURAL_BACKGROUNDS), 20) })
 export const religionSchema = z.strictObject({ group: z.literal('religion'), religion: uniqueList(z.enum(RELIGIONS), 20) })
 export const interestsSchema = z.strictObject({ group: z.literal('interests'), interests: uniqueList(listedOrOwn(INTERESTS, 60), 20) })
-export const aboutMeSchema = z.strictObject({ group: z.literal('about-me'), uniqueService: uniqueList(z.enum(UNIQUE_SERVICES), 10, 1), funFact: plainText(50, 1000) })
+export const supportActivitiesSchema = z.strictObject({ group: z.literal('support-activities'), uniqueService: uniqueList(z.enum(UNIQUE_SERVICES), 10, 1) })
+export const funFactSchema = z.strictObject({ group: z.literal('fun-fact'), funFact: plainText(50, 1000) })
 export const preferencesSchema = z.strictObject({ group: z.literal('preferences'), workPreferences: uniqueList(z.enum(WORK_PREFERENCES), 20) })
 export const personalitySchema = z.strictObject({ group: z.literal('personality'), personality: z.enum(PERSONALITIES), nonSmoker: z.boolean(), petFriendly: z.boolean() })
-export const additionalInfoBodySchema = z.discriminatedUnion('group', [goodToKnowSchema, languagesSchema, culturalBackgroundSchema, religionSchema, interestsSchema, aboutMeSchema, preferencesSchema, personalitySchema])
+export const additionalInfoBodySchema = z.discriminatedUnion('group', [goodToKnowSchema, languagesSchema, culturalBackgroundSchema, religionSchema, interestsSchema, supportActivitiesSchema, funFactSchema, preferencesSchema, personalitySchema])
 export type AdditionalInfoBody = z.output<typeof additionalInfoBodySchema>
 export const additionalInfoParamsSchema = z.strictObject({ group: additionalInfoGroupSchema })
 
