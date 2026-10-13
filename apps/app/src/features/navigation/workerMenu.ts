@@ -4,9 +4,9 @@
 // order and the links are tested without rendering.
 import type { Profile } from "@remonta/api-contract";
 
-export type MenuIcon = "dashboard" | "editProfile" | "mandatory" | "trainings" | "myServices" | "credentials" | "jobs" | "account";
+export type MenuIcon = "dashboard" | "editProfile" | "compliance" | "myServices" | "credentials" | "jobs" | "account";
 /** Where a group's children come from (R8.4): the Edit Profile sections, or the profile read's lists. */
-export type ChildrenSource = "editProfile" | "services" | "mandatory" | "trainings";
+export type ChildrenSource = "editProfile" | "services" | "compliance";
 
 export interface MenuItem {
   id: string;
@@ -25,13 +25,13 @@ export interface MenuLink {
   children?: MenuLink[];
 }
 
-/** R8.1: D11's order, with Edit Services and My Services merged into one Services group (user, 2026-10-12). */
+/** R8.1: D11's order, with Edit Services and My Services merged into one Services group (user, 2026-10-12), Mandatory and Trainings into Compliance (2026-10-13). */
 export const WORKER_MENU: readonly MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "dashboard", href: "/dashboard/worker" },
   { id: "edit-profile", label: "My Profile", icon: "editProfile", children: "editProfile" },
   { id: "services", label: "Services", icon: "myServices", children: "services" },
-  { id: "mandatory", label: "Mandatory", icon: "mandatory", children: "mandatory" },
-  { id: "trainings", label: "Trainings", icon: "trainings", children: "trainings" },
+  // Mandatory and Trainings are one Compliance group (user, 2026-10-13): the mandatory steps, then the trainings.
+  { id: "compliance", label: "Compliance", icon: "compliance", children: "compliance" },
   { id: "additional-credentials", label: "Additional Credentials", icon: "credentials", href: "/dashboard/worker/additional-documents" },
   { id: "my-jobs", label: "My Jobs", icon: "jobs", href: "/dashboard/worker/my-jobs" },
   { id: "account", label: "Account", icon: "account", href: "/dashboard/worker/account" },
@@ -138,8 +138,7 @@ export const serviceNamesOf = (profile: Profile | undefined) => profile?.service
 export function groupOfPath(path: string): string | null {
   if (path === SERVICE_AREA_LINK.href) return "services";
   if (path.startsWith(PROFILE_BASE)) return "edit-profile";
-  if (path.includes("/requirements/")) return "mandatory";
-  if (path.includes("/trainings/")) return "trainings";
+  if (path.includes("/requirements/") || path.includes("/trainings/")) return "compliance";
   if (path.includes("/services/")) return "services";
   return null;
 }

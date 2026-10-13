@@ -10,7 +10,6 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
-  AcademicCapIcon,
   BriefcaseIcon,
   CheckCircleIcon,
   ChevronDownIcon,
@@ -43,8 +42,7 @@ import { useWorkerProfile } from '@/features/worker/profile'
 const ICONS: Record<MenuIcon, React.ComponentType<{ className?: string }>> = {
   dashboard: HomeIcon,
   editProfile: PencilIcon,
-  mandatory: ClipboardDocumentCheckIcon,
-  trainings: AcademicCapIcon,
+  compliance: ClipboardDocumentCheckIcon,
   myServices: HandRaisedIcon,
   credentials: DocumentTextIcon,
   jobs: BriefcaseIcon,
@@ -105,13 +103,15 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
 
   // R8.2-R8.4: every group's children from the one read; null while it loads (a skeleton).
   const children = useMemo<Record<ChildrenSource, MenuLink[] | null>>(() => {
-    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: servicesChildren([]), mandatory: null, trainings: null }
+    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: servicesChildren([]), compliance: null }
     const reqs = requirementsForSteps(profile) as unknown as WorkerRequirements | undefined
     const names = serviceNamesOf(profile)
     return {
       editProfile: editProfileChildren(profile),
-      mandatory: generateComplianceSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getComplianceStepUrl(s.slug) })),
-      trainings: generateTrainingSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getTrainingStepUrl(s.slug) })),
+      compliance: [
+        ...generateComplianceSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getComplianceStepUrl(s.slug) })),
+        ...generateTrainingSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getTrainingStepUrl(s.slug) })),
+      ],
       services: servicesChildren((names.length ? generateServicesSetupSteps(names) : []).map((s) => ({ id: s.slug, label: s.title, href: getServicesStepUrl(s.slug) })), profile),
     }
   }, [profile, isLoading])

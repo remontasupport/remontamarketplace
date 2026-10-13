@@ -34,7 +34,7 @@ const base: Profile = profileSchema.parse({
 
 describe("WORKER_MENU", () => {
   it("R8.1: D11's order", () => {
-    expect(WORKER_MENU.map((m) => m.label)).toEqual(["Dashboard", "My Profile", "Services", "Mandatory", "Trainings", "Additional Credentials", "My Jobs", "Account"]);
+    expect(WORKER_MENU.map((m) => m.label)).toEqual(["Dashboard", "My Profile", "Services", "Compliance", "Additional Credentials", "My Jobs", "Account"]);
   });
 
   it("R8.5: every static href is a page file", () => {
@@ -82,7 +82,8 @@ describe("WORKER_MENU", () => {
   it("R8.4: the requirement groups reach the step generators as id and name", () => {
     expect(requirementsForSteps(base)).toEqual({ requirements: { baseCompliance: [{ id: "police-check", name: "Police check" }], trainings: [] } });
     expect(groupOfPath("/dashboard/worker/profile/bio")).toBe("edit-profile");
-    expect(groupOfPath("/dashboard/worker/requirements/setup")).toBe("mandatory");
+    expect(groupOfPath("/dashboard/worker/requirements/setup")).toBe("compliance");
+    expect(groupOfPath("/dashboard/worker/trainings/setup")).toBe("compliance"); // one group since 2026-10-13
   });
 
   it("Services: Modify Services (each service, then the chooser), then Service Area; the service pages open the group", () => {
