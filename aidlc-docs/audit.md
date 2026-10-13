@@ -3957,3 +3957,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "actually, delete all that says, Choose up to 20, or choose up to 10 etc"
 **AI response**: commit 5462701 on feat/edit-profile-app: `MultiSelectField` no longer adds the default "Choose up to N." hint (it showed on Languages, Cultural Background, Religion, Interests, Preferences, Support & Activities, Other areas); the `hint: ""` workaround removed; Support & Activities' label "What you can offer" (was "... (1 to 10)"). The limits are the api's and unchanged (at the limit the remaining options are disabled). Left as they are (descriptions, not the "Choose up to" hint): Preferred Hours "Up to 4 slots a day" and the photo page's "up to 2 more photos". App 139 / 470 known, 196 tests.
+
+**User input**: "what's the new preview link?"
+**AI response**: https://remonta-ef18krr06-remontas-projects.vercel.app (the remonta-app preview of `5462701`, built; staging api + data, which since `be8c66a` has both api changes).
