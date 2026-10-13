@@ -41,6 +41,8 @@ export function useSection(def: SectionDefinition) {
   const [values, setValues] = useState<SectionValues | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
   const [touched, setTouched] = useState(false);
+  /** Edited since the seed or the last save (a restored draft counts): a two-section page saves only these. */
+  const [changed, setChanged] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
   const seededFor = useRef<string | null>(null);
@@ -54,6 +56,7 @@ export function useSection(def: SectionDefinition) {
     if (draft) {
       setValues({ ...seeded, ...draft.values });
       setDraftRestored(true);
+      setChanged(true);
     } else {
       setValues(seeded);
     }
@@ -73,6 +76,7 @@ export function useSection(def: SectionDefinition) {
         saveDraft(store, draftId, { step: 0, values: next }, neverSaved);
         return next;
       });
+      setChanged(true);
       setServerErrors((e) => (Object.keys(e).length ? Object.fromEntries(Object.entries(e).filter(([k]) => k !== path && !k.startsWith(`${path}.`))) : e));
       setSave((s) => (s.kind === "saved" || s.kind === "failed" ? { kind: "idle" } : s));
     },
@@ -82,16 +86,25 @@ export function useSection(def: SectionDefinition) {
   const discardDraft = useCallback(() => {
     clearDraft(store, draftId);
     setDraftRestored(false);
+    setChanged(false);
     if (profile) setValues(seedSection(def, profile));
   }, [store, draftId, profile, def]);
 
-  const submit = useCallback(async () => {
-    if (!values || save.kind === "saving") return;
+  /** Shows the errors and says whether the values pass (a two-section page checks both before saving either). */
+  const validate = useCallback((): boolean => {
+    if (!values) return false;
     setTouched(true);
-    if (Object.keys(validateSection(def, values)).length) return;
+    return Object.keys(validateSection(def, values)).length === 0;
+  }, [def, values]);
+
+  /** Saves the section; true once it is stored. */
+  const submit = useCallback(async (): Promise<boolean> => {
+    if (!values || save.kind === "saving") return false;
+    setTouched(true);
+    if (Object.keys(validateSection(def, values)).length) return false;
     if (!workerApi.baseUrl) {
       setSave({ kind: "failed", message: UNAVAILABLE_MESSAGE });
-      return;
+      return false;
     }
     setSave({ kind: "saving", retrying: false, offline: false });
     const r = await saveSection(def, values, {
@@ -109,19 +122,21 @@ export function useSection(def: SectionDefinition) {
       setDraftRestored(false);
       setServerErrors({});
       setTouched(false);
+      setChanged(false);
       // R9.5: the section as stored, not as typed.
       setValues(seedFromSaved(def, r.body));
       setSave({ kind: "saved" });
       void reload();
-      return;
+      return true;
     }
     if (r.kind === "invalid") {
       setServerErrors(r.fields);
       setSave({ kind: "idle" });
-      return;
+      return false;
     }
     setSave({ kind: "failed", message: r.kind === "unauthenticated" ? SESSION_ENDED_MESSAGE : r.message });
+    return false;
   }, [values, save.kind, def, store, draftId, reload]);
 
-  return { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft };
+  return { profile, isLoading, readError, values, errors, setValue, validate, submit, save, changed, draftRestored, discardDraft };
 }

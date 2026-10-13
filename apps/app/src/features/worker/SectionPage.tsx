@@ -4,7 +4,7 @@
 // kind, the restored-draft notice, Save with its states, and the unreachable-api notice
 // (NFR-07). Rules come from the contract through useSection; the components are
 // presentational (components/ui/form-wizard).
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { MAX_SLOTS_PER_DAY } from "@remonta/api-contract";
 import { emptyValuesOf, errorFor, pickPath, type SectionDefinition, type SectionFieldDef, type SectionValues } from "@remonta/form-engine";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/form-wizard/sectionFields";
 import { useLocalitySearch } from "@/features/forms/adapters/useLocalitySearch";
 import { workerApi } from "./api";
+import { savePair } from "./pair";
 import { UNAVAILABLE_MESSAGE, useSection, type SaveState } from "./useSection";
 
 const choices = (options: readonly (string | { value: string; label?: string })[]): ChoiceOption[] =>
@@ -172,18 +173,95 @@ export function SectionSkeleton() {
   );
 }
 
+function DraftNotice({ onDiscard }: { onDiscard: () => void }) {
+  return (
+    <Notice tone="info">
+      We kept what you typed last time on this device.{" "}
+      <button type="button" className="underline" onClick={onDiscard}>
+        Discard it
+      </button>
+    </Notice>
+  );
+}
+
+type Section = ReturnType<typeof useSection>;
+
+/** One section's description and fields, without a Save of its own (a two-section page). */
+function SectionFields({ def, s }: { def: SectionDefinition; s: Section }) {
+  const picked = pickPath(s.profile, def.pick);
+  return (
+    <>
+      {def.description && <p className="text-sm text-gray-600 font-poppins">{def.description}</p>}
+      {def.fields
+        .filter((f) => !f.carried || needsShowing(f, picked, s.errors))
+        .map((f) => (
+          <FieldSlot key={f.name} field={f} path={f.name} row={s.values!} errors={s.errors} setValue={s.setValue} picked={picked} />
+        ))}
+      {s.errors._?.[0] && <p className="text-red-500 text-sm font-poppins">{s.errors._[0]}</p>}
+    </>
+  );
+}
+
+/** One Save state for two sections: saving first, then a failure, then saved. */
+function pairState(a: SaveState, b: SaveState): SaveState {
+  for (const k of ["saving", "failed", "saved"] as const) {
+    if (a.kind === k) return a;
+    if (b.kind === k) return b;
+  }
+  return a;
+}
+
 /**
- * A section's form. The page's own title is for screen readers only (the sidebar names the page; user, 2026-10-13);
- * `embedded` shows the title as a visible sub-heading when two sections share a page (the address, interests).
+ * Two sections on one page with one Save (user, 2026-10-13: the address, interests with good to know, the bio with
+ * the fun fact). Both are checked before either is saved; then the edited ones are saved in order, each through its
+ * own write (no api change), both when neither was edited. A failed save stops the second.
  */
-export default function SectionPage({ def, embedded = false }: { def: SectionDefinition; embedded?: boolean }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft } = useSection(def);
-  const Heading = embedded ? "h2" : "h1";
+export function SectionPair({ title, first, second, notice }: { title: string; first: SectionDefinition; second: SectionDefinition; notice?: ReactNode }) {
+  const a = useSection(first);
+  const b = useSection(second);
+  const onSave = () => savePair([a, b]);
 
   return (
     <section className="space-y-5">
-      <header className={embedded || def.description ? undefined : "sr-only"}>
-        <Heading className={embedded ? "text-xl font-poppins font-semibold text-gray-900" : "sr-only"}>{def.title}</Heading>
+      <h1 className="sr-only">{title}</h1>
+      {notice}
+      {a.readError && !a.profile ? (
+        <Notice tone="warn">{a.readError.kind === "unauthenticated" ? "Your session has ended. Please sign in again." : UNAVAILABLE_MESSAGE}</Notice>
+      ) : a.isLoading || !a.values || !b.values ? (
+        <SectionSkeleton />
+      ) : (
+        <form
+          className="space-y-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void onSave();
+          }}
+        >
+          {(a.draftRestored || b.draftRestored) && (
+            <DraftNotice
+              onDiscard={() => {
+                a.discardDraft();
+                b.discardDraft();
+              }}
+            />
+          )}
+          <SectionFields def={first} s={a} />
+          <SectionFields def={second} s={b} />
+          <SaveBar save={pairState(a.save, b.save)} onSave={() => void onSave()} disabled={false} />
+        </form>
+      )}
+    </section>
+  );
+}
+
+/** A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13). */
+export default function SectionPage({ def }: { def: SectionDefinition }) {
+  const { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft } = useSection(def);
+
+  return (
+    <section className="space-y-5">
+      <header className={def.description ? undefined : "sr-only"}>
+        <h1 className="sr-only">{def.title}</h1>
         {def.description && <p className="text-sm text-gray-600 font-poppins mt-1">{def.description}</p>}
       </header>
       {readError && !profile ? (
@@ -198,14 +276,7 @@ export default function SectionPage({ def, embedded = false }: { def: SectionDef
             void submit();
           }}
         >
-          {draftRestored && (
-            <Notice tone="info">
-              We kept what you typed last time on this device.{" "}
-              <button type="button" className="underline" onClick={discardDraft}>
-                Discard it
-              </button>
-            </Notice>
-          )}
+          {draftRestored && <DraftNotice onDiscard={discardDraft} />}
           {def.fields
             .filter((f) => !f.carried || needsShowing(f, pickPath(profile, def.pick), errors))
             .map((f) => (
