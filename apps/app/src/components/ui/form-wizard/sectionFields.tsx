@@ -5,7 +5,7 @@
 // engine's section mode), the wiring is features/worker/SectionPage.tsx. The text and
 // locality kinds reuse fields.tsx.
 import { useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,8 +68,12 @@ export function SelectField({ label, hint, value, options, onChange, error, plac
 
 // ---- multiSelect -------------------------------------------------------------------
 
-export function MultiSelectField({ label, hint, value, options, onChange, max, allowOwn, error }: { label: string; hint?: string; value: readonly string[]; options: readonly string[]; onChange: (v: string[]) => void; max?: number; allowOwn?: boolean; error?: string }) {
+/** `collapseAfter`: only the first N options show until "Show all" is pressed; a chosen option always shows. */
+export function MultiSelectField({ label, hint, value, options, onChange, max, allowOwn, collapseAfter, error }: { label: string; hint?: string; value: readonly string[]; options: readonly string[]; onChange: (v: string[]) => void; max?: number; allowOwn?: boolean; collapseAfter?: number; error?: string }) {
   const [own, setOwn] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const collapsible = collapseAfter !== undefined && options.length > collapseAfter;
+  const shown = collapsible && !expanded ? options.filter((o, i) => i < collapseAfter || value.includes(o)) : options;
   const full = max !== undefined && value.length >= max;
   const toggle = (o: string) => onChange(value.includes(o) ? value.filter((x) => x !== o) : full ? [...value] : [...value, o]);
   const extra = value.filter((v) => !options.includes(v));
@@ -82,7 +86,7 @@ export function MultiSelectField({ label, hint, value, options, onChange, max, a
     <div>
       <Heading label={label} hint={hint ?? (max !== undefined ? `Choose up to ${max}.` : undefined)} />
       <div className="mt-2 flex flex-wrap gap-2">
-        {[...options, ...extra].map((o) => {
+        {[...shown, ...extra].map((o) => {
           const on = value.includes(o);
           return (
             <button
@@ -99,6 +103,12 @@ export function MultiSelectField({ label, hint, value, options, onChange, max, a
           );
         })}
       </div>
+      {collapsible && (
+        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-3 inline-flex items-center gap-1 text-sm font-poppins font-medium text-indigo-600 hover:text-indigo-800">
+          {expanded ? "Show fewer" : `Show all ${options.length} options`}
+          {expanded ? <ChevronUp className="w-4 h-4" aria-hidden /> : <ChevronDown className="w-4 h-4" aria-hidden />}
+        </button>
+      )}
       {allowOwn && (
         <div className="mt-3 flex gap-2">
           <Input className="text-base font-poppins" placeholder="Add your own" value={own} onChange={(e) => setOwn(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addOwn())} disabled={full} />

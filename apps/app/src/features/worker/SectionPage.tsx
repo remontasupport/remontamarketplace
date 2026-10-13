@@ -80,7 +80,7 @@ function FieldSlot({ field, path, row, errors, setValue, picked }: SlotProps) {
     case "multiSelect": {
       // Experience: the specific areas depend on the row's care domain.
       const options = field.name === "specificAreas" && typeof row.domain === "string" ? experienceAreasOf(row.domain) : field.options;
-      return <MultiSelectField label={label} hint={field.hint} value={(v as string[]) ?? []} options={options} onChange={set} max={field.max} allowOwn={field.allowOwn} error={error} />;
+      return <MultiSelectField label={label} hint={field.hint} value={(v as string[]) ?? []} options={options} onChange={set} max={field.max} allowOwn={field.allowOwn} collapseAfter={field.collapseAfter} error={error} />;
     }
     case "checkbox":
       return <CheckboxField id={`f-${path}`} label={label} hint={field.hint} checked={v === true} onChange={set} error={error} />;

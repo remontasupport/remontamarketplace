@@ -40,7 +40,7 @@ export type SectionFieldDef =
   | (SectionFieldBase & { kind: "textarea"; rows?: number; maxLength?: number })
   /** `nullable`: no choice is sent as null; `numeric`: the body takes the value as a number (a year). */
   | (SectionFieldBase & { kind: "select"; options: readonly SelectOption[] | readonly string[]; nullable?: boolean; numeric?: boolean })
-  | (SectionFieldBase & { kind: "multiSelect"; options: readonly string[]; max?: number; allowOwn?: boolean })
+  | (SectionFieldBase & { kind: "multiSelect"; options: readonly string[]; max?: number; allowOwn?: boolean; /** Show this many options, the rest behind a "show all" toggle (presentation only). */ collapseAfter?: number })
   | (SectionFieldBase & { kind: "checkbox" })
   | (SectionFieldBase & { kind: "date" })
   | (SectionFieldBase & { kind: "number"; min?: number; max?: number; unit?: string })

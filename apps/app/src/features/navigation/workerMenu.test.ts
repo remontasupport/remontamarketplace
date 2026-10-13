@@ -53,7 +53,7 @@ describe("WORKER_MENU", () => {
     expect(work.children!.map((l) => l.label)).toEqual(["Experience", "Work History", "Education", "Preferred Hours", "Vehicle Access"]);
     expect(personal.href).toBe("/dashboard/worker/profile/name");
     const group = links.find((l) => l.id === "additional-information")!;
-    expect(group.children!.map((l) => l.label)).toEqual(["Cultural Background", "Religion", "Interests", "About Me", "Preferences", "Personality"]);
+    expect(group.children!.map((l) => l.label)).toEqual(["Cultural Background", "Religion", "Interests", "What I Offer", "Preferences", "Personality"]);
     expect(group.done).toBe(false);
     expect(pageExists("/dashboard/worker/profile/[section]")).toBe(true);
     expect(pageExists("/dashboard/worker/profile")).toBe(true);
@@ -92,7 +92,7 @@ describe("WORKER_MENU", () => {
   });
 
   it("the job-apply check names what is missing", () => {
-    expect(applyReadiness(base)).toEqual({ canApply: false, missing: ["Experience", "Fun Fact", "Languages", "Interests & Hobbies", "About Me"] });
+    expect(applyReadiness(base)).toEqual({ canApply: false, missing: ["Experience", "Fun Fact", "Languages", "Interests & Hobbies", "What I Offer"] });
   });
 });
 

@@ -228,8 +228,8 @@ export const languagesSection = group("languages", "Languages", "languages", [{ 
 export const culturalBackgroundSection = group("cultural-background", "Cultural background", "cultural-background", [{ name: "culturalBackground", kind: "multiSelect", label: "Your cultural background", options: CULTURAL_BACKGROUNDS, max: 20 }]);
 export const religionSection = group("religion", "Religion", "religion", [{ name: "religion", kind: "multiSelect", label: "Your religion", options: RELIGIONS, max: 20 }]);
 export const interestsSection = group("interests", "Interests and hobbies", "interests", [{ name: "interests", kind: "multiSelect", label: "Your interests", options: INTERESTS, allowOwn: true, max: 20 }]);
-export const aboutMeSection = group("about-me", "About me", "about-me", [
-  { name: "uniqueService", kind: "multiSelect", label: "What you can offer (1 to 10)", options: UNIQUE_SERVICES, max: 10 },
+export const aboutMeSection = group("about-me", "What I offer", "about-me", [
+  { name: "uniqueService", kind: "multiSelect", label: "What you can offer (1 to 10)", options: UNIQUE_SERVICES, max: 10, collapseAfter: 10 },
   { name: "funFact", kind: "textarea", label: "A fun fact about you", hint: "50 characters or more", rows: 4, maxLength: 1000 },
 ]);
 export const preferencesSection = group("preferences", "My preferences", "preferences", [{ name: "workPreferences", kind: "multiSelect", label: "Who you prefer to work with", options: WORK_PREFERENCES, max: 20 }]);
