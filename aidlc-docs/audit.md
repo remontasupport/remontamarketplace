@@ -3896,3 +3896,11 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 **AI response**: offered: 1 prepare PR 4 stacked on `feat/edit-profile-app` (unmerged), 2 further changes to PR #57 on the preview, 3 a backlog item independent of PR #57 (follow-up 17 or 4), 4 stop.
 
 **User input**: "2"
+
+**AI response**: listed the current sidebar and asked for the changes.
+
+**User input**: "what is the preview link again"
+**AI response**: https://remonta-9x0kufc2v-remontas-projects.vercel.app (the remonta-app preview of `3735cd8`, staging api + data).
+
+**User input**: "Can you change the Other Personal Info to \"Additional Information\""
+**AI response**: commit 2b02162 on feat/edit-profile-app: the sub-group's label and id (`additional-information`) in `PROFILE_GROUPS`, the menu test, the Sidebar comment and docs/worker/README.md. Its pages and URLs are unchanged. The legacy setup and document steps' "Other Personal Info" (the old account-setup step that uploads the vehicle licence) were left as they are: they name that step, not the menu. Gates: app 139 type / 470 lint known, 191 tests passed (after a local, uncommitted `db:generate`: the local client predated the home-address columns).
