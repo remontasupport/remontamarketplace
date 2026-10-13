@@ -195,9 +195,12 @@ describe('R7 additional info', () => {
     ok(additionalInfoBodySchema, { group: 'cultural-background', culturalBackground: [CULTURAL_BACKGROUNDS[0]] })
     bad(additionalInfoBodySchema, { group: 'cultural-background', culturalBackground: ['Martian'] }, 'culturalBackground.0')
     ok(additionalInfoBodySchema, { group: 'interests', interests: [INTERESTS[0], 'Beekeeping'] })
-    ok(additionalInfoBodySchema, { group: 'about-me', uniqueService: [UNIQUE_SERVICES[0]], funFact: 'f'.repeat(50) })
-    bad(additionalInfoBodySchema, { group: 'about-me', uniqueService: [], funFact: 'f'.repeat(50) }, 'uniqueService')
-    bad(additionalInfoBodySchema, { group: 'about-me', uniqueService: [UNIQUE_SERVICES[0]], funFact: 'short' }, 'funFact')
+    ok(additionalInfoBodySchema, { group: 'support-activities', uniqueService: [UNIQUE_SERVICES[0]] })
+    bad(additionalInfoBodySchema, { group: 'support-activities', uniqueService: [] }, 'uniqueService')
+    bad(additionalInfoBodySchema, { group: 'support-activities', uniqueService: [UNIQUE_SERVICES[0]], funFact: 'f'.repeat(50) }) // each saves alone
+    ok(additionalInfoBodySchema, { group: 'fun-fact', funFact: 'f'.repeat(50) })
+    bad(additionalInfoBodySchema, { group: 'fun-fact', funFact: 'short' }, 'funFact')
+    bad(additionalInfoBodySchema, { group: 'about-me', uniqueService: [UNIQUE_SERVICES[0]], funFact: 'f'.repeat(50) }) // split 2026-10-13
     ok(additionalInfoBodySchema, { group: 'preferences', workPreferences: [WORK_PREFERENCES[0]] })
     ok(additionalInfoBodySchema, { group: 'personality', personality: PERSONALITIES[0], nonSmoker: true, petFriendly: false })
     bad(additionalInfoBodySchema, { group: 'personality', personality: 'Shy', nonSmoker: true, petFriendly: false }, 'personality')

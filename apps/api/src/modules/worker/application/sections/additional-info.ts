@@ -16,7 +16,8 @@ export const GROUP_COLUMNS: Readonly<Record<Group, readonly string[]>> = {
   'cultural-background': ['culturalBackground'],
   religion: ['religion'],
   interests: ['interests'],
-  'about-me': ['uniqueService', 'funFact'],
+  'support-activities': ['uniqueService'],
+  'fun-fact': ['funFact'],
   preferences: ['workPreferences'],
   personality: ['personality', 'nonSmoker', 'petFriendly'],
 }

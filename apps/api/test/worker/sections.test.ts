@@ -84,6 +84,8 @@ describe('additional info columns (R7.3)', () => {
   it('a group writes exactly its own columns', () => {
     expect(columnsOf({ group: 'personality', personality: 'Calm and relaxed', nonSmoker: true, petFriendly: false })).toEqual({ personality: 'Calm and relaxed', nonSmoker: true, petFriendly: false })
     expect(columnsOf({ group: 'languages', languages: ['English'] })).toEqual({ languages: ['English'] })
+    expect(columnsOf({ group: 'fun-fact', funFact: 'f'.repeat(50) })).toEqual({ funFact: 'f'.repeat(50) }) // the activities are untouched (2026-10-13)
+    expect(columnsOf({ group: 'support-activities', uniqueService: ['Fishing trips'] })).toEqual({ uniqueService: ['Fishing trips'] })
     const all = Object.values(GROUP_COLUMNS).flat()
     expect(new Set(all).size).toBe(all.length) // no column belongs to two groups
     expect(all).not.toContain('bankAccount')
