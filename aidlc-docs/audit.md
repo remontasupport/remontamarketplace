@@ -3973,3 +3973,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "perfect. Now can you remove all the items from the Mandatory and Trainings folders and place it to a new folder name Compliance and delete the 2 folders"
 **AI response**: commit 6239210 on feat/edit-profile-app: `WORKER_MENU` has one Compliance group (icon the old Mandatory one) in place of Mandatory and Trainings; its links are the mandatory steps then the training steps, from the same read and generators (step URLs unchanged; `/requirements/` and `/trainings/` both open Compliance). Menu order: Dashboard, My Profile, Services, Compliance, Additional Credentials, My Jobs, Account. Test and docs updated; app 139 / 470 known, 196 tests.
+
+**User input**: "Perfect. Now can you move the Bank Account page to the Account instead"
+**AI response**: commit 85360d8 on feat/edit-profile-app: Account (a single link before) is a group: "Account Settings" (`/dashboard/worker/account`, the existing page) then "Bank Account" (`/profile/bank-account`, unchanged page and write, with its done state); Bank Account leaves My Profile (now Personal / Professional / Additional Information). `groupOfPath` opens Account for both. Test added; app 139 / 470 known, 197 tests.
