@@ -60,7 +60,7 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
                 disabled={!canApply}
                 title={canApply ? undefined : `Still to complete: ${missing.join(", ")}`}
                 onClick={() => router.push(`/dashboard/worker?apply=${apply.applyJobId}`)}
-                className="px-4 py-2 rounded-lg text-sm font-poppins font-medium bg-green-600 text-white disabled:bg-gray-100 disabled:text-gray-400"
+                className="px-4 py-2 rounded-lg text-sm font-poppins font-medium bg-[#0C1628] hover:bg-[#1a2740] text-white disabled:bg-gray-100 disabled:text-gray-400"
               >
                 Review application
               </button>
@@ -75,14 +75,14 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
         {(prev || next) && (
           <nav className="mt-4 flex justify-between text-sm font-poppins" aria-label="Sections">
             {prev ? (
-              <Link href={sectionHref(prev.slug)} className="inline-flex items-center gap-1 text-indigo-600 hover:underline">
+              <Link href={sectionHref(prev.slug)} className="inline-flex items-center gap-1 text-[#0C1628] hover:underline">
                 <ChevronLeft className="w-4 h-4" /> {prev.label}
               </Link>
             ) : (
               <span />
             )}
             {next && (
-              <Link href={sectionHref(next.slug)} className="inline-flex items-center gap-1 text-indigo-600 hover:underline">
+              <Link href={sectionHref(next.slug)} className="inline-flex items-center gap-1 text-[#0C1628] hover:underline">
                 {next.label} <ChevronRight className="w-4 h-4" />
               </Link>
             )}

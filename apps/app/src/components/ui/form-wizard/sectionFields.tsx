@@ -49,7 +49,7 @@ export function SelectField({ label, hint, value, options, onChange, error, plac
     <div>
       <Heading label={label} hint={hint} />
       <select
-        className="mt-2 w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-base font-poppins focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="mt-2 w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-base font-poppins focus:outline-none focus:ring-2 focus:ring-[#0C1628]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={!!error}
@@ -95,7 +95,7 @@ export function MultiSelectField({ label, hint, value, options, onChange, max, a
               aria-pressed={on}
               disabled={!on && full}
               onClick={() => toggle(o)}
-              className={`px-3 py-1.5 rounded-full border text-sm font-poppins transition-colors ${on ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-gray-300 text-gray-800 hover:border-indigo-400"} disabled:opacity-40`}
+              className={`px-3 py-1.5 rounded-full border text-sm font-poppins transition-colors ${on ? "bg-[#0C1628] border-[#0C1628] text-white" : "bg-white border-gray-300 text-gray-800 hover:border-[#0C1628]"} disabled:opacity-40`}
             >
               {o}
               {on && <X className="inline w-3.5 h-3.5 ml-1 -mt-0.5" aria-hidden />}
@@ -104,7 +104,7 @@ export function MultiSelectField({ label, hint, value, options, onChange, max, a
         })}
       </div>
       {collapsible && (
-        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-3 inline-flex items-center gap-1 text-sm font-poppins font-medium text-indigo-600 hover:text-indigo-800">
+        <button type="button" aria-expanded={expanded} onClick={() => setExpanded(!expanded)} className="mt-3 inline-flex items-center gap-1 text-sm font-poppins font-medium text-[#0C1628] hover:text-[#1a2740]">
           {expanded ? "Show fewer" : `Show all ${options.length} options`}
           {expanded ? <ChevronUp className="w-4 h-4" aria-hidden /> : <ChevronDown className="w-4 h-4" aria-hidden />}
         </button>
@@ -237,7 +237,7 @@ export function TimeRangesField({ label, hint, days, value, onChange, maxPerDay,
                   </div>
                 ))}
                 {rows.length < maxPerDay && (
-                  <button type="button" onClick={() => onChange([...value, { day, startMinute: 540, endMinute: 1020 }])} className="text-sm font-poppins text-indigo-600 hover:underline inline-flex items-center gap-1">
+                  <button type="button" onClick={() => onChange([...value, { day, startMinute: 540, endMinute: 1020 }])} className="text-sm font-poppins text-[#0C1628] hover:underline inline-flex items-center gap-1">
                     <Plus className="w-4 h-4" /> Add hours
                   </button>
                 )}
@@ -291,7 +291,7 @@ export function OrderedListField({ label, hint, count, titleOf, addLabel, onAdd,
           </div>
         ))}
         {canAdd && (
-          <button type="button" onClick={onAdd} className="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-sm font-poppins text-indigo-600 hover:border-indigo-400 inline-flex items-center justify-center gap-1">
+          <button type="button" onClick={onAdd} className="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-sm font-poppins text-[#0C1628] hover:border-[#0C1628] inline-flex items-center justify-center gap-1">
             <Plus className="w-4 h-4" /> {addLabel}
           </button>
         )}

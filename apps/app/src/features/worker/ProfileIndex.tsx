@@ -12,7 +12,7 @@ import { UNAVAILABLE_MESSAGE } from "./useSection";
 
 function Card({ link }: { link: MenuLink }) {
   return (
-    <Link href={link.href} className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+    <Link href={link.href} className="flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-[#0C1628] hover:bg-[#EDEFF3] transition-colors">
       {link.done ? <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" aria-label="Done" /> : <Circle className="w-5 h-5 text-gray-300 shrink-0" aria-label="To do" />}
       <span className="font-poppins text-gray-900">{link.label}</span>
     </Link>

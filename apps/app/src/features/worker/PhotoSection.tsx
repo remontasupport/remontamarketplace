@@ -78,7 +78,7 @@ export default function PhotoSection() {
   return (
     <section className="space-y-5">
       <header>
-        <h1 className="text-2xl font-poppins font-semibold text-gray-900">Profile photo</h1>
+        <h1 className="sr-only">Profile photo</h1>
         <p className="text-sm text-gray-600 font-poppins mt-1">A clear, friendly photo of your face. You can add up to {MAX_ADDITIONAL_PHOTOS} more photos clients see on your profile.</p>
       </header>
       {readError && !profile ? (
@@ -104,7 +104,7 @@ export default function PhotoSection() {
               {photos.main ? <img src={photos.main} alt="Your main photo" className="w-full h-full object-cover" /> : <span className="text-sm text-gray-500 font-poppins">No photo</span>}
             </div>
             <div className="space-y-2">
-              <button type="button" disabled={!idle} onClick={() => pick("main")} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-poppins text-sm disabled:opacity-50">
+              <button type="button" disabled={!idle} onClick={() => pick("main")} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0C1628] text-white font-poppins text-sm disabled:opacity-50">
                 {busy.kind === "uploading" && busy.slot === "main" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {busy.kind === "uploading" && busy.slot === "main" ? `Uploading ${busy.percent}%` : photos.main ? "Replace photo" : "Upload a photo"}
               </button>
@@ -124,7 +124,7 @@ export default function PhotoSection() {
                   {/* eslint-disable-next-line @next/next/no-img-element -- as above */}
                   <img src={url} alt="An additional photo" className="w-36 h-36 object-cover rounded-lg border border-gray-200" />
                   <div className="mt-2 flex justify-between">
-                    <button type="button" disabled={!idle} onClick={() => void act(() => workerApi.makeMainPhoto(url))} className="inline-flex items-center gap-1 text-xs font-poppins text-indigo-600 disabled:opacity-50">
+                    <button type="button" disabled={!idle} onClick={() => void act(() => workerApi.makeMainPhoto(url))} className="inline-flex items-center gap-1 text-xs font-poppins text-[#0C1628] disabled:opacity-50">
                       <Star className="w-3.5 h-3.5" /> Make main
                     </button>
                     <button type="button" disabled={!idle} aria-label="Remove this photo" onClick={() => void act(() => workerApi.removePhoto(url))} className="text-gray-500 hover:text-red-600 disabled:opacity-50">
@@ -134,7 +134,7 @@ export default function PhotoSection() {
                 </div>
               ))}
               {photos.main && photos.additional.length < MAX_ADDITIONAL_PHOTOS && (
-                <button type="button" disabled={!idle} onClick={() => pick("additional")} className="w-36 h-36 rounded-lg border-2 border-dashed border-gray-300 text-sm font-poppins text-indigo-600 flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                <button type="button" disabled={!idle} onClick={() => pick("additional")} className="w-36 h-36 rounded-lg border-2 border-dashed border-gray-300 text-sm font-poppins text-[#0C1628] flex flex-col items-center justify-center gap-1 disabled:opacity-50">
                   {busy.kind === "uploading" && busy.slot === "additional" ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
                   {busy.kind === "uploading" && busy.slot === "additional" ? `${busy.percent}%` : "Add a photo"}
                 </button>

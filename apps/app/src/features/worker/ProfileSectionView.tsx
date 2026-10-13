@@ -13,7 +13,7 @@ function AddressPage() {
   const { profile } = useWorkerProfile();
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-poppins font-semibold text-gray-900">Address</h1>
+      <h1 className="sr-only">Address</h1>
       {profile && profile.serviceArea === null && (
         <Notice tone="warn">Clients cannot find you until you set the suburb you work around. Set your service area below.</Notice>
       )}
@@ -28,7 +28,7 @@ function AddressPage() {
 function InterestsPage() {
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-poppins font-semibold text-gray-900">Interests</h1>
+      <h1 className="sr-only">Interests</h1>
       <SectionPage def={interestsSection} embedded />
       <hr className="border-gray-200" />
       <SectionPage def={goodToKnowSection} embedded />

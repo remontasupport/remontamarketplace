@@ -130,7 +130,7 @@ function SaveBar({ save, onSave, disabled }: { save: SaveState; onSave: () => vo
   const saving = save.kind === "saving";
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
-      <button type="button" onClick={onSave} disabled={disabled || saving} className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-indigo-600 text-white font-poppins font-medium hover:bg-indigo-700 disabled:opacity-50">
+      <button type="button" onClick={onSave} disabled={disabled || saving} className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#0C1628] text-white font-poppins font-medium hover:bg-[#1a2740] disabled:opacity-50">
         {saving && <Loader2 className="w-4 h-4 animate-spin" />}
         {saving ? (save.retrying ? "Still saving..." : "Saving...") : "Save"}
       </button>
@@ -155,7 +155,7 @@ function needsShowing(f: SectionFieldDef, picked: unknown, errors: Record<string
 
 export function Notice({ tone, children }: { tone: "info" | "warn"; children: React.ReactNode }) {
   return (
-    <div className={`flex items-start gap-2 rounded-lg border px-4 py-3 text-sm font-poppins ${tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-indigo-200 bg-indigo-50 text-indigo-800"}`}>
+    <div className={`flex items-start gap-2 rounded-lg border px-4 py-3 text-sm font-poppins ${tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-[#B1C3CD] bg-[#EDEFF3] text-[#0C1628]"}`}>
       <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
       <div>{children}</div>
     </div>
@@ -172,15 +172,18 @@ export function SectionSkeleton() {
   );
 }
 
-/** A section's form. `embedded` drops the outer heading when two sections share a page (the address). */
+/**
+ * A section's form. The page's own title is for screen readers only (the sidebar names the page; user, 2026-10-13);
+ * `embedded` shows the title as a visible sub-heading when two sections share a page (the address, interests).
+ */
 export default function SectionPage({ def, embedded = false }: { def: SectionDefinition; embedded?: boolean }) {
   const { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft } = useSection(def);
   const Heading = embedded ? "h2" : "h1";
 
   return (
     <section className="space-y-5">
-      <header>
-        <Heading className={`${embedded ? "text-xl" : "text-2xl"} font-poppins font-semibold text-gray-900`}>{def.title}</Heading>
+      <header className={embedded || def.description ? undefined : "sr-only"}>
+        <Heading className={embedded ? "text-xl font-poppins font-semibold text-gray-900" : "sr-only"}>{def.title}</Heading>
         {def.description && <p className="text-sm text-gray-600 font-poppins mt-1">{def.description}</p>}
       </header>
       {readError && !profile ? (
