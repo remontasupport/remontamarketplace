@@ -3976,3 +3976,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "Perfect. Now can you move the Bank Account page to the Account instead"
 **AI response**: commit 85360d8 on feat/edit-profile-app: Account (a single link before) is a group: "Account Settings" (`/dashboard/worker/account`, the existing page) then "Bank Account" (`/profile/bank-account`, unchanged page and write, with its done state); Bank Account leaves My Profile (now Personal / Professional / Additional Information). `groupOfPath` opens Account for both. Test added; app 139 / 470 known, 197 tests.
+
+**User input**: "actually, you can place it next to the Username & password, no need to place this to a folder"
+**AI response**: commit 503932d on feat/edit-profile-app: 85360d8's Account group reverted (Account is a single link again); `AccountSettingsPanel` takes `extraTabs` (only the worker's account page passes one), so the worker sees "Username & password" then "Bank Account", which renders the same `bankAccountSection` (same write, masked). `?tab=bank-account` opens it; `/profile/bank-account` (and the old `?section=bank-account` redirect) replace to it. Bank Account stays out of My Profile. App 139 / 470 known, 196 tests.
