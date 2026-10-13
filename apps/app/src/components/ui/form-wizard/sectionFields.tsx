@@ -84,7 +84,7 @@ export function MultiSelectField({ label, hint, value, options, onChange, max, a
   };
   return (
     <div>
-      <Heading label={label} hint={hint ?? (max !== undefined ? `Choose up to ${max}.` : undefined)} />
+      <Heading label={label} hint={hint} />
       <div className="mt-2 flex flex-wrap gap-2">
         {[...shown, ...extra].map((o) => {
           const on = value.includes(o);

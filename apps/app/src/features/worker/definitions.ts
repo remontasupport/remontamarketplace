@@ -166,9 +166,9 @@ export const experienceSection = defineSection({
         { name: "isProfessional", kind: "checkbox", label: "Professional experience" },
         { name: "isPersonal", kind: "checkbox", label: "Personal experience" },
         // The options depend on the row's domain: SectionPage reads them from experienceAreasOf(domain). Any of them
-        // (no limit since 2026-10-13); neither list says "Choose up to" (user: it misled; hint "" drops the default).
+        // (no limit since 2026-10-13).
         { name: "specificAreas", kind: "multiSelect", label: "Specific areas", options: [] },
-        { name: "otherAreas", kind: "multiSelect", label: "Other areas", hint: "", options: [], allowOwn: true, max: 10 },
+        { name: "otherAreas", kind: "multiSelect", label: "Other areas", options: [], allowOwn: true, max: 10 },
         { name: "description", kind: "textarea", label: "Tell us more", rows: 3, maxLength: 1000 },
       ],
     },
@@ -231,7 +231,7 @@ export const religionSection = group("religion", "Religion", "religion", [{ name
 export const interestsSection = group("interests", "Interests and hobbies", "interests", [{ name: "interests", kind: "multiSelect", label: "Your interests", options: INTERESTS, allowOwn: true, max: 20 }]);
 // The old about-me group is two writes (user, 2026-10-13): the activities on Support & Activities (its URL stays
 // /profile/about-me), the fun fact on the Bio page. Each saves alone.
-export const aboutMeSection = group("about-me", "Support & activities", "support-activities", [{ name: "uniqueService", kind: "multiSelect", label: "What you can offer (1 to 10)", options: UNIQUE_SERVICES, max: 10, collapseAfter: 10 }]);
+export const aboutMeSection = group("about-me", "Support & activities", "support-activities", [{ name: "uniqueService", kind: "multiSelect", label: "What you can offer", options: UNIQUE_SERVICES, max: 10, collapseAfter: 10 }]);
 export const funFactSection = group("fun-fact", "Fun fact", "fun-fact", [{ name: "funFact", kind: "textarea", label: "A fun fact about you", hint: "50 characters or more", rows: 4, maxLength: 1000 }]);
 export const preferencesSection = group("preferences", "My preferences", "preferences", [{ name: "workPreferences", kind: "multiSelect", label: "Who you prefer to work with", options: WORK_PREFERENCES, max: 20 }]);
 export const personalitySection = group("personality", "Personality", "personality", [
