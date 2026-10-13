@@ -6,7 +6,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
 import { PROFILE_REDIRECTS, profileRedirects } from "@/config/profileRedirects";
 import { isProfilePage } from "@/features/worker/definitions";
-import { applyReadiness, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
+import { accountChildren, applyReadiness, BANK_ACCOUNT_LINK, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
 
 const APP = join(__dirname, "../../app");
 const pageExists = (href: string) => existsSync(join(APP, ...href.split("/").filter(Boolean), "page.tsx"));
@@ -45,8 +45,8 @@ describe("WORKER_MENU", () => {
   it("R8.2 as rearranged (2026-10-12): My Profile's order, the two sub-groups, each a profile page", () => {
     const links = editProfileChildren(base);
     expect(links.map((l) => l.label)).toEqual([
-      "Personal Information", "Professional Information", "Additional Information", "Bank Account",
-    ]);
+      "Personal Information", "Professional Information", "Additional Information",
+    ]); // the bank account is in Account since 2026-10-13
     const personal = links.find((l) => l.id === "personal-information")!;
     expect(personal.children!.map((l) => l.label)).toEqual(["Name", "Profile Photo", "Bio", "Address", "Date of Birth", "Gender", "Language"]);
     const work = links.find((l) => l.id === "professional-information")!;
@@ -66,7 +66,7 @@ describe("WORKER_MENU", () => {
 
   it("done states follow the read", () => {
     const done = (p: Profile) => Object.fromEntries(editProfileChildren(p).flatMap((l) => l.children ?? [l]).map((l) => [l.id, l.done]));
-    expect(done(base)).toMatchObject({ name: true, photo: false, bio: false, address: false, "bank-account": false });
+    expect(done(base)).toMatchObject({ name: true, photo: false, bio: false, address: false });
     const filled = { ...base, bio: "x".repeat(50), photos: { main: "https://x.test/a.jpg", additional: [] } };
     expect(done(filled)).toMatchObject({ photo: true, bio: true });
     expect(editProfileChildren(undefined).every((l) => l.done === undefined)).toBe(true);
@@ -101,6 +101,15 @@ describe("WORKER_MENU", () => {
     expect(servicesChildren([], { ...base, serviceArea: { localityId: 1, label: "Parramatta, NSW 2150", travelRadiusKm: 20, precision: "LOCALITY" } } as Profile)[1]!.done).toBe(true);
     expect(groupOfPath("/dashboard/worker/services/manage")).toBe("services");
     expect(groupOfPath("/dashboard/worker/services/setup")).toBe("services");
+  });
+
+  it("Account: the settings page, then the bank account (moved out of My Profile, user 2026-10-13)", () => {
+    expect(accountChildren(base).map((l) => [l.label, l.done])).toEqual([["Account Settings", undefined], ["Bank Account", false]]);
+    expect(accountChildren({ ...base, sections: { ...base.sections, bankAccount: { accountName: "M", bankName: "CBA", bsbLast3: "917", accountNumberLast3: "321" } } } as Profile)[1]!.done).toBe(true);
+    expect(pageExists(accountChildren()[0]!.href)).toBe(true);
+    expect(isProfilePage(profileSlug(BANK_ACCOUNT_LINK.href) ?? "")).toBe(true);
+    expect(groupOfPath(BANK_ACCOUNT_LINK.href)).toBe("account");
+    expect(groupOfPath("/dashboard/worker/account")).toBe("account");
   });
 
   it("the job-apply check names what is missing", () => {

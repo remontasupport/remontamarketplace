@@ -32,6 +32,7 @@ import {
   requirementsForSteps,
   serviceNamesOf,
   servicesChildren,
+  accountChildren,
   WORKER_MENU,
   type ChildrenSource,
   type MenuIcon,
@@ -103,11 +104,12 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
 
   // R8.2-R8.4: every group's children from the one read; null while it loads (a skeleton).
   const children = useMemo<Record<ChildrenSource, MenuLink[] | null>>(() => {
-    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: servicesChildren([]), compliance: null }
+    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: servicesChildren([]), compliance: null, account: accountChildren() }
     const reqs = requirementsForSteps(profile) as unknown as WorkerRequirements | undefined
     const names = serviceNamesOf(profile)
     return {
       editProfile: editProfileChildren(profile),
+      account: accountChildren(profile),
       compliance: [
         ...generateComplianceSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getComplianceStepUrl(s.slug) })),
         ...generateTrainingSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getTrainingStepUrl(s.slug) })),

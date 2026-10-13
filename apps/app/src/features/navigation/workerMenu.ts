@@ -6,7 +6,7 @@ import type { Profile } from "@remonta/api-contract";
 
 export type MenuIcon = "dashboard" | "editProfile" | "compliance" | "myServices" | "credentials" | "jobs" | "account";
 /** Where a group's children come from (R8.4): the Edit Profile sections, or the profile read's lists. */
-export type ChildrenSource = "editProfile" | "services" | "compliance";
+export type ChildrenSource = "editProfile" | "services" | "compliance" | "account";
 
 export interface MenuItem {
   id: string;
@@ -34,7 +34,7 @@ export const WORKER_MENU: readonly MenuItem[] = [
   { id: "compliance", label: "Compliance", icon: "compliance", children: "compliance" },
   { id: "additional-credentials", label: "Additional Credentials", icon: "credentials", href: "/dashboard/worker/additional-documents" },
   { id: "my-jobs", label: "My Jobs", icon: "jobs", href: "/dashboard/worker/my-jobs" },
-  { id: "account", label: "Account", icon: "account", href: "/dashboard/worker/account" },
+  { id: "account", label: "Account", icon: "account", children: "account" },
 ];
 
 export const PROFILE_BASE = "/dashboard/worker/profile";
@@ -76,7 +76,6 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
   { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService) },
   { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences) },
   { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality },
-  { slug: "bank-account", label: "Bank Account", done: (p) => !!p.sections.bankAccount },
 ];
 
 /** My Profile's links: a group's sections fold into one entry with `children` (done when all of them are). */
@@ -131,12 +130,21 @@ export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile):
   ];
 };
 
+/** The Account group (user, 2026-10-13): the account settings, and the bank account moved out of My Profile. */
+export const ACCOUNT_SETTINGS_LINK: MenuLink = { id: "account-settings", label: "Account Settings", href: "/dashboard/worker/account" };
+export const BANK_ACCOUNT_LINK: MenuLink = { id: "bank-account", label: "Bank Account", href: sectionHref("bank-account") };
+export const accountChildren = (profile?: Profile): MenuLink[] => [
+  ACCOUNT_SETTINGS_LINK,
+  { ...BANK_ACCOUNT_LINK, done: profile ? !!profile.sections.bankAccount : undefined },
+];
+
 /** The service names the services steps are generated from. */
 export const serviceNamesOf = (profile: Profile | undefined) => profile?.services.map((s) => s.categoryName) ?? [];
 
 /** Which group a path belongs to, so the sidebar opens it. */
 export function groupOfPath(path: string): string | null {
   if (path === SERVICE_AREA_LINK.href) return "services";
+  if (path === BANK_ACCOUNT_LINK.href || path.startsWith(ACCOUNT_SETTINGS_LINK.href)) return "account";
   if (path.startsWith(PROFILE_BASE)) return "edit-profile";
   if (path.includes("/requirements/") || path.includes("/trainings/")) return "compliance";
   if (path.includes("/services/")) return "services";
