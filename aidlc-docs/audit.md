@@ -3943,3 +3943,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "what's the new preview link"
 **AI response**: https://remonta-ook96j42q-remontas-projects.vercel.app (the remonta-app preview of `894a6ff`, built; staging api + data).
+
+**User input**: "Lastly, can you remove the Suburb you work around to the address and place it to the Services instead"
+**AI response**: commit be410e8 on feat/edit-profile-app, no api change (same `putServiceArea`): the Address page is the home address alone (done once it is saved); a Service Area page (`/profile/service-area`, the suburb clients find the worker at + the travel radius, the not-set warning) is the second item of the Services group (Edit Services, Service Area, the setup steps; `groupOfPath` opens Services for it); the orange not-set dot moved from My Profile to Services; the profile index's notice links to the new page. `SectionPair` now serves Interests and Bio only. Gates: app 139 / 470 known, 196 tests passed (the services test extended).
