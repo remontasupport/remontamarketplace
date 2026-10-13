@@ -3940,3 +3940,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "perfect, now in the Bio section, I want the save button to be only 1 for both the 2 field question, is that possible, also remove the horizontal line between them. Apply these changes to all the pages that has 2 questions."
 **AI response**: commit 894a6ff on feat/edit-profile-app, no api change: `SectionPair` (SectionPage.tsx) renders two sections as one form with one Save on Address (home address + service area), Interests (+ Good to Know) and Bio (+ fun fact); no `<hr>`, no sub-headings (descriptions stay). The rule (`pair.ts`, 4 tests): both due sections are checked before either is saved; the edited ones are saved in page order through their own writes, both when neither was edited; a failed save stops the second. `useSection` gains `changed` and `validate`; `submit` returns whether it stored. `/profile/home-address` and `/service-area` now show the Address page. Gates: app 139 / 470 known, 196 tests passed.
+
+**User input**: "what's the new preview link"
+**AI response**: https://remonta-ook96j42q-remontas-projects.vercel.app (the remonta-app preview of `894a6ff`, built; staging api + data).
