@@ -6,7 +6,7 @@
 // picks them up from the contract, so a page refuses before sending); the api re-runs
 // them on the normalised body.
 import { CARE_DOMAINS } from './admin.contract'
-import { experienceAreasOf } from '@remonta/schemas/data/experienceAreas'
+import { EXPERIENCE_DOMAINS, experienceAreasOf } from '@remonta/schemas/data/experienceAreas'
 import {
   ADDITIONAL_INFO_GROUPS,
   CULTURAL_BACKGROUNDS,
@@ -145,7 +145,8 @@ export type AvailabilityBody = z.output<typeof availabilitySchema>
 
 // ---- Experience (R2.8) ------------------------------------------------------------------------------
 
-export const MAX_SPECIFIC_AREAS = 3
+/** Any of a domain's own areas (was 3 until 2026-10-13, user): the bound is the longest domain's list; the refine below keeps each to its domain. */
+export const MAX_SPECIFIC_AREAS = Math.max(...EXPERIENCE_DOMAINS.map((d) => d.areas.length))
 const domainSchema = z
   .strictObject({
     domain: z.enum(CARE_DOMAINS),
