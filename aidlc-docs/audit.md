@@ -3885,3 +3885,10 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "leave it open for now, make sure what we work on today will update to the dlc so we can go back tomorrow"
 **AI response**: PR #57 left open at `3735cd8`. aidlc-state.md "Current Stage" rewritten with the hold and a "Resume here" list; the U2 checklist line updated; PR3-summary.md gains "Changes after review" (today's six commits, the final menu, the status).
+
+## 2026-10-13: session resume, PR #57 still on hold
+**User input**: "Hey Claude, let's continue the dlc"
+**AI response**: checked refs: `main` still `67fef1d` (not moved, no merge needed), `feat/edit-profile-app` `3735cd8`, record `e9b6a4f`. Asked how to proceed with PR #57.
+
+**User input (AskUserQuestion):**
+> PR #57: "Still on hold"
