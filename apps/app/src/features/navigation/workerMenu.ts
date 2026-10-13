@@ -113,18 +113,23 @@ export function requirementsForSteps(profile: Profile | undefined) {
   return { requirements: { baseCompliance: profile.requirements.mandatory.map(asDoc), trainings: profile.requirements.trainings.map(asDoc) } };
 }
 
-/** The Services group's first child: choosing services (the old "Edit Services" item). */
-export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "Edit Services", href: "/dashboard/worker/services/manage" };
+/** Choosing services (the old "Edit Services" item): the last link of Update My Service. */
+export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "+ Add or remove services", href: "/dashboard/worker/services/manage" };
 
 /** The suburb clients find the worker at and how far they travel: in Services, not the address (user, 2026-10-13). */
 export const SERVICE_AREA_LINK: MenuLink = { id: "service-area", label: "Service Area", href: sectionHref("service-area") };
 
-/** The Services group: Edit Services, Service Area, then one setup step per chosen service (hrefs unchanged until U3). */
-export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => [
-  EDIT_SERVICES_LINK,
-  { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
-  ...steps,
-];
+/**
+ * The Services group (user, 2026-10-13): Update My Service, a sub-group of one setup step per chosen service (hrefs
+ * unchanged until U3) then the chooser, and Service Area. Like every sub-group its own href is its first link.
+ */
+export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => {
+  const mine = [...steps, EDIT_SERVICES_LINK];
+  return [
+    { id: "update-my-service", label: "Update My Service", href: mine[0]!.href, children: mine },
+    { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
+  ];
+};
 
 /** The service names the services steps are generated from. */
 export const serviceNamesOf = (profile: Profile | undefined) => profile?.services.map((s) => s.categoryName) ?? [];

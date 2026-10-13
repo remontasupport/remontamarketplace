@@ -85,8 +85,14 @@ describe("WORKER_MENU", () => {
     expect(groupOfPath("/dashboard/worker/requirements/setup")).toBe("mandatory");
   });
 
-  it("Services: Edit Services first (a page), Service Area, then the setup steps; the service pages open the group", () => {
-    expect(servicesChildren([{ id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" }]).map((l) => l.label)).toEqual(["Edit Services", "Service Area", "Nursing"]);
+  it("Services: Update My Service (each service, then the chooser), then Service Area; the service pages open the group", () => {
+    const nursing = { id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" };
+    const [mine, area] = servicesChildren([nursing]);
+    expect([mine!.label, area!.label]).toEqual(["Update My Service", "Service Area"]);
+    expect(mine!.children!.map((l) => l.label)).toEqual(["Nursing", "+ Add or remove services"]);
+    expect(mine!.href).toBe(nursing.href);
+    expect(servicesChildren([])[0]!.children).toEqual([EDIT_SERVICES_LINK]); // no service yet: only the chooser
+    expect(servicesChildren([])[0]!.href).toBe(EDIT_SERVICES_LINK.href);
     expect(pageExists(EDIT_SERVICES_LINK.href)).toBe(true);
     expect(isProfilePage(profileSlug(SERVICE_AREA_LINK.href) ?? "")).toBe(true);
     expect(groupOfPath(SERVICE_AREA_LINK.href)).toBe("services"); // a profile URL, in the Services group (user, 2026-10-13)
