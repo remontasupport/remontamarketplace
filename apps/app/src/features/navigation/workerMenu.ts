@@ -73,7 +73,7 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
   { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground) },
   { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion) },
   { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests) },
-  { slug: "about-me", label: "What I Offer", group: "additional-information", done: (p) => filled(info(p)?.uniqueService) && !!info(p)?.funFact },
+  { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService) },
   { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences) },
   { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality },
   { slug: "bank-account", label: "Bank Account", done: (p) => !!p.sections.bankAccount },
@@ -142,7 +142,7 @@ export function applyReadiness(profile: Profile | undefined): { canApply: boolea
     ["Fun Fact", !!i?.funFact?.trim()],
     ["Languages", filled(i?.languages)],
     ["Interests & Hobbies", filled(i?.interests)],
-    ["What I Offer", filled(i?.uniqueService)],
+    ["Support & Activities", filled(i?.uniqueService)],
   ]
     .filter(([, ok]) => !ok)
     .map(([name]) => name as string);
