@@ -61,7 +61,7 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
   { slug: "name", label: "Name", group: "personal-information", done: (p) => !!p.names.firstName && !!p.names.lastName },
   { slug: "photo", label: "Profile Photo", group: "personal-information", done: (p) => !!p.photos.main },
   { slug: "bio", label: "Bio", group: "personal-information", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
-  { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress && !!p.serviceArea },
+  { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress },
   { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth },
   { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender },
   { slug: "languages", label: "Language", group: "personal-information", done: (p) => filled(info(p)?.languages) },
@@ -96,7 +96,7 @@ export function editProfileChildren(profile: Profile | undefined): MenuLink[] {
   return out;
 }
 
-/** R8.3: the percent while below 80, and the reminder dot while the worker has no service area (Q10). */
+/** R8.3: the percent while below 80 (My Profile), and the reminder dot while the worker has no service area (Q10; on Services). */
 export function editProfileBadge(profile: Profile | undefined): { percent: number | null; unplaced: boolean } {
   if (!profile) return { percent: null, unplaced: false };
   const pct = profile.completion.percent;
@@ -116,14 +116,22 @@ export function requirementsForSteps(profile: Profile | undefined) {
 /** The Services group's first child: choosing services (the old "Edit Services" item). */
 export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "Edit Services", href: "/dashboard/worker/services/manage" };
 
-/** The Services group: Edit Services, then one setup step per chosen service (hrefs unchanged until U3). */
-export const servicesChildren = (steps: readonly MenuLink[]): MenuLink[] => [EDIT_SERVICES_LINK, ...steps];
+/** The suburb clients find the worker at and how far they travel: in Services, not the address (user, 2026-10-13). */
+export const SERVICE_AREA_LINK: MenuLink = { id: "service-area", label: "Service Area", href: sectionHref("service-area") };
+
+/** The Services group: Edit Services, Service Area, then one setup step per chosen service (hrefs unchanged until U3). */
+export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => [
+  EDIT_SERVICES_LINK,
+  { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
+  ...steps,
+];
 
 /** The service names the services steps are generated from. */
 export const serviceNamesOf = (profile: Profile | undefined) => profile?.services.map((s) => s.categoryName) ?? [];
 
 /** Which group a path belongs to, so the sidebar opens it. */
 export function groupOfPath(path: string): string | null {
+  if (path === SERVICE_AREA_LINK.href) return "services";
   if (path.startsWith(PROFILE_BASE)) return "edit-profile";
   if (path.includes("/requirements/")) return "mandatory";
   if (path.includes("/trainings/")) return "trainings";

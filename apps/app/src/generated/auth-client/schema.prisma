@@ -174,6 +174,7 @@ model User {
   @@index([createdAt])
   @@index([email], map: "idx_users_email")
   @@index([email, status, accountLockedUntil], map: "idx_users_email_status_locked")
+  @@index([lastLoginAt]) // S1 step 9b: onboarding reconciler
   @@map("users")
 }
 
@@ -209,6 +210,10 @@ model VerificationRequirement {
   @@index([workerProfileId, requirementName])
   @@index([workerProfileId, status])
   @@index([workerProfileId], map: "idx_verification_requirements_worker_profile")
+  @@index([updatedAt]) // S1 step 9b: onboarding reconciler
+  @@index([submittedAt]) // S1 step 9b: onboarding reconciler
+  @@index([reviewedAt]) // S1 step 9b: onboarding reconciler
+  @@index([expiresAt]) // S1 step 9b: onboarding reconciler
   @@map("verification_requirements")
 }
 
@@ -274,6 +279,13 @@ model WorkerProfile {
   consentWordingVersion String?
   zohoLeadId            String?
 
+  // worker-profile-api U2 (D8, FR-PI-04) — the private home address: a street line and a
+  // suburb of ours. Never a client-facing column; never geocoded; never written to the
+  // legacy location columns above (those stay the service area's).
+  homeStreetLine String?
+  homeLocalityId Int?
+  homeLocality   AuLocality? @relation("WorkerHomeLocality", fields: [homeLocalityId], references: [id], onDelete: Restrict)
+
   // S1 — location and onboarding marker (S1-data-model.md)
   locations             WorkerLocation[]
   onboarding            WorkerOnboarding?
@@ -298,6 +310,8 @@ model WorkerProfile {
   @@index([isPublished, gender])
   @@index([isPublished, verificationStatus])
   @@index([createdAt])
+  @@index([updatedAt]) // S1 step 9b: onboarding reconciler
+  @@index([homeLocalityId]) // worker-profile-api U2: the FK's lookup side
   @@map("worker_profiles")
 }
 
@@ -722,19 +736,21 @@ model WorkerExperience {
 /// (packages/db/data/au_localities.csv). Rows are never deleted: a locality
 /// dropped by a release is retired, so worker locations that point at it stay valid.
 model AuLocality {
-  id              Int                                    @id @default(autoincrement())
-  gnafLocalityPid String
-  suburb          String
+  id             Int                                    @id @default(autoincrement())
+  /// G-NAF LOCALITY.LOCALITY_PID ("loc…" or a legacy number) -- the key LOCALITY_POINT
+  /// joins on. NOT G-NAF's GNAF_LOCALITY_PID column, which is often empty.
+  localityPid    String
+  suburb         String
   /// Lower-case, single-spaced suburb name; what the search box matches on.
-  searchName      String
-  state           String
-  postcode        String
-  latitude        Float
-  longitude       Float
-  point           Unsupported("geography(Point, 4326)")?
-  sourceVersion   String
-  retiredAt       DateTime?
-  supersededById  Int?
+  searchName     String
+  state          String
+  postcode       String
+  latitude       Float
+  longitude      Float
+  point          Unsupported("geography(Point, 4326)")?
+  sourceVersion  String
+  retiredAt      DateTime?
+  supersededById Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -742,12 +758,34 @@ model AuLocality {
   supersededBy    AuLocality?      @relation("LocalitySuccession", fields: [supersededById], references: [id])
   supersedes      AuLocality[]     @relation("LocalitySuccession")
   workerLocations WorkerLocation[]
+  /// worker-profile-api U2: the workers whose private home address names this suburb.
+  workerHomes     WorkerProfile[]  @relation("WorkerHomeLocality")
 
-  @@unique([gnafLocalityPid, postcode])
+  @@unique([localityPid, postcode])
   @@index([searchName])
   @@index([postcode])
   @@index([point], type: Gist)
   @@map("au_localities")
+}
+
+/// One row per applied localities:refresh run -- the audit trail for au_localities.
+/// A dry run writes nothing; an --apply with nothing to change writes nothing.
+model AuLocalityRefresh {
+  id            Int      @id @default(autoincrement())
+  sourceVersion String
+  /// planHash() of what was applied; matches the --expect value that was reviewed.
+  planHash      String
+  inserted      Int
+  updated       Int
+  restored      Int
+  retired       Int
+  unchanged     Int
+  /// Keys of every changed row, and the workers placed at each retired one.
+  details       Json
+  appliedBy     String
+  appliedAt     DateTime @default(now())
+
+  @@map("au_locality_refreshes")
 }
 
 /// Where a worker is. Exactly one HOME row per worker (partial unique index,
@@ -808,6 +846,19 @@ model WorkerOnboarding {
 }
 
 /// Append-only history of stage changes. Rows are never updated or deleted.
+/// Scheduled jobs (onboarding reconciler, photo purge): the lease that makes only
+/// one instance run a job, its last run, and the reconciler's watermark.
+model ScheduledJob {
+  name           String    @id
+  lockedUntil    DateTime?
+  lastStartedAt  DateTime?
+  lastFinishedAt DateTime?
+  lastResult     Json?
+  watermark      DateTime?
+
+  @@map("scheduled_jobs")
+}
+
 model WorkerOnboardingTransition {
   id              BigInt                     @id @default(autoincrement())
   workerProfileId String
@@ -841,6 +892,7 @@ model OutboxEvent {
   processedAt   DateTime?
 
   @@index([status, nextAttemptAt])
+  @@index([type, createdAt])
   @@map("outbox_events")
 }
 
@@ -849,6 +901,8 @@ model OutboxEvent {
 model RegistrationPhotoUpload {
   id                       String    @id @default(uuid()) @db.Uuid
   blobKey                  String    @unique
+  /// The public URL the store returned; copied to worker_profiles.photos on claim.
+  url                      String
   contentType              String
   sizeBytes                Int
   ipHash                   String

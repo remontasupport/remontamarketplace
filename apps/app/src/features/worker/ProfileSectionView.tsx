@@ -9,16 +9,19 @@ import ProfileShell from "./ProfileShell";
 import { useWorkerProfile } from "./profile";
 import SectionPage, { Notice, SectionPair } from "./SectionPage";
 
-function AddressPage() {
+/** In the Services group (user, 2026-10-13): the suburb clients find the worker at, and how far they travel. */
+function ServiceAreaPage() {
   const { profile } = useWorkerProfile();
-  const notice = profile && profile.serviceArea === null && (
-    <Notice tone="warn">Clients cannot find you until you set the suburb you work around. Set your service area below.</Notice>
+  return (
+    <div className="space-y-5">
+      {profile && profile.serviceArea === null && <Notice tone="warn">Clients cannot find you until you set the suburb you work around.</Notice>}
+      <SectionPage def={serviceAreaSection} />
+    </div>
   );
-  return <SectionPair title="Address" first={homeAddressSection} second={serviceAreaSection} notice={notice} />;
 }
 
-/** The slugs another page shows. Address, Interests (with Good to Know) and Bio (with the fun fact) are two sections with one Save (user, 2026-10-13). */
-const HOST_PAGE: Record<string, string> = { "home-address": "address", "service-area": "address", "good-to-know": "interests", "fun-fact": "bio" };
+/** The slugs another page shows. Interests (with Good to Know) and Bio (with the fun fact) are two sections with one Save (user, 2026-10-13). */
+const HOST_PAGE: Record<string, string> = { "home-address": "address", "good-to-know": "interests", "fun-fact": "bio" };
 
 export default function ProfileSectionView({ slug }: { slug: string }) {
   const def = sectionBySlug(slug);
@@ -28,7 +31,9 @@ export default function ProfileSectionView({ slug }: { slug: string }) {
       {page === "photo" ? (
         <PhotoSection />
       ) : page === "address" ? (
-        <AddressPage />
+        <SectionPage def={homeAddressSection} />
+      ) : page === "service-area" ? (
+        <ServiceAreaPage />
       ) : page === "interests" ? (
         <SectionPair title="Interests" first={interestsSection} second={goodToKnowSection} />
       ) : page === "bio" ? (

@@ -6,7 +6,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
 import { PROFILE_REDIRECTS, profileRedirects } from "@/config/profileRedirects";
 import { isProfilePage } from "@/features/worker/definitions";
-import { applyReadiness, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, servicesChildren, WORKER_MENU } from "./workerMenu";
+import { applyReadiness, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
 
 const APP = join(__dirname, "../../app");
 const pageExists = (href: string) => existsSync(join(APP, ...href.split("/").filter(Boolean), "page.tsx"));
@@ -85,9 +85,13 @@ describe("WORKER_MENU", () => {
     expect(groupOfPath("/dashboard/worker/requirements/setup")).toBe("mandatory");
   });
 
-  it("Services: Edit Services first (a page), then the setup steps; both service pages open the group", () => {
-    expect(servicesChildren([{ id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" }]).map((l) => l.label)).toEqual(["Edit Services", "Nursing"]);
+  it("Services: Edit Services first (a page), Service Area, then the setup steps; the service pages open the group", () => {
+    expect(servicesChildren([{ id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" }]).map((l) => l.label)).toEqual(["Edit Services", "Service Area", "Nursing"]);
     expect(pageExists(EDIT_SERVICES_LINK.href)).toBe(true);
+    expect(isProfilePage(profileSlug(SERVICE_AREA_LINK.href) ?? "")).toBe(true);
+    expect(groupOfPath(SERVICE_AREA_LINK.href)).toBe("services"); // a profile URL, in the Services group (user, 2026-10-13)
+    expect(servicesChildren([], base)[1]!.done).toBe(false);
+    expect(servicesChildren([], { ...base, serviceArea: { localityId: 1, label: "Parramatta, NSW 2150", travelRadiusKm: 20, precision: "LOCALITY" } } as Profile)[1]!.done).toBe(true);
     expect(groupOfPath("/dashboard/worker/services/manage")).toBe("services");
     expect(groupOfPath("/dashboard/worker/services/setup")).toBe("services");
   });

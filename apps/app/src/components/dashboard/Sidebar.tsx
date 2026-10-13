@@ -27,7 +27,6 @@ import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicCo
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
 import type { WorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
 import {
-  EDIT_SERVICES_LINK,
   editProfileBadge,
   editProfileChildren,
   groupOfPath,
@@ -106,14 +105,14 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
 
   // R8.2-R8.4: every group's children from the one read; null while it loads (a skeleton).
   const children = useMemo<Record<ChildrenSource, MenuLink[] | null>>(() => {
-    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: [EDIT_SERVICES_LINK], mandatory: null, trainings: null }
+    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: servicesChildren([]), mandatory: null, trainings: null }
     const reqs = requirementsForSteps(profile) as unknown as WorkerRequirements | undefined
     const names = serviceNamesOf(profile)
     return {
       editProfile: editProfileChildren(profile),
       mandatory: generateComplianceSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getComplianceStepUrl(s.slug) })),
       trainings: generateTrainingSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getTrainingStepUrl(s.slug) })),
-      services: servicesChildren((names.length ? generateServicesSetupSteps(names) : []).map((s) => ({ id: s.slug, label: s.title, href: getServicesStepUrl(s.slug) }))),
+      services: servicesChildren((names.length ? generateServicesSetupSteps(names) : []).map((s) => ({ id: s.slug, label: s.title, href: getServicesStepUrl(s.slug) })), profile),
     }
   }, [profile, isLoading])
   const badge = editProfileBadge(profile)
@@ -202,7 +201,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
                   <Icon className="nav-dropdown-badge-icon" />
                   <span>{item.label}</span>
                   {isEditProfile && badge.percent !== null && <span className="sidebar-edit-profile__badge">{badge.percent}%</span>}
-                  {isEditProfile && badge.unplaced && <span className="ml-1 inline-block w-2 h-2 rounded-full bg-orange-500" title="Set your service area so clients can find you" aria-label="Service area not set" />}
+                  {item.children === 'services' && badge.unplaced && <span className="ml-1 inline-block w-2 h-2 rounded-full bg-orange-500" title="Set your service area so clients can find you" aria-label="Service area not set" />}
                 </div>
                 {isOpen ? <ChevronUpIcon className="nav-dropdown-icon" /> : <ChevronDownIcon className="nav-dropdown-icon" />}
               </button>

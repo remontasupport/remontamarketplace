@@ -4,7 +4,7 @@
 // kind, the restored-draft notice, Save with its states, and the unreachable-api notice
 // (NFR-07). Rules come from the contract through useSection; the components are
 // presentational (components/ui/form-wizard).
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { MAX_SLOTS_PER_DAY } from "@remonta/api-contract";
 import { emptyValuesOf, errorFor, pickPath, type SectionDefinition, type SectionFieldDef, type SectionValues } from "@remonta/form-engine";
@@ -212,11 +212,11 @@ function pairState(a: SaveState, b: SaveState): SaveState {
 }
 
 /**
- * Two sections on one page with one Save (user, 2026-10-13: the address, interests with good to know, the bio with
+ * Two sections on one page with one Save (user, 2026-10-13: interests with good to know, the bio with
  * the fun fact). Both are checked before either is saved; then the edited ones are saved in order, each through its
  * own write (no api change), both when neither was edited. A failed save stops the second.
  */
-export function SectionPair({ title, first, second, notice }: { title: string; first: SectionDefinition; second: SectionDefinition; notice?: ReactNode }) {
+export function SectionPair({ title, first, second }: { title: string; first: SectionDefinition; second: SectionDefinition }) {
   const a = useSection(first);
   const b = useSection(second);
   const onSave = () => savePair([a, b]);
@@ -224,7 +224,6 @@ export function SectionPair({ title, first, second, notice }: { title: string; f
   return (
     <section className="space-y-5">
       <h1 className="sr-only">{title}</h1>
-      {notice}
       {a.readError && !a.profile ? (
         <Notice tone="warn">{a.readError.kind === "unauthenticated" ? "Your session has ended. Please sign in again." : UNAVAILABLE_MESSAGE}</Notice>
       ) : a.isLoading || !a.values || !b.values ? (

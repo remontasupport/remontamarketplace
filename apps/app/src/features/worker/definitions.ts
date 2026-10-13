@@ -287,7 +287,7 @@ export const sectionBySlug = (slug: string): SectionDefinition | undefined => SE
 
 export { DAYS };
 
-/** The pages that are not one definition: the photo flow, and the address page's two forms (Interests also shows Good to Know, Bio the fun fact). */
+/** The pages that are not one definition: the photo flow; the address is the home address (the service area is in Services). */
 export const SPECIAL_PAGES = ["photo", "address"] as const;
 
 /** Every slug `/dashboard/worker/profile/<slug>` serves; anything else is a 404. */

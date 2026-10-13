@@ -39,7 +39,7 @@ export default function ProfileIndex() {
               <div className="mb-4">
                 <Notice tone="warn">
                   Clients cannot find you until you set your service area.{" "}
-                  <Link href="/dashboard/worker/profile/address" className="underline">
+                  <Link href="/dashboard/worker/profile/service-area" className="underline">
                     Set it now
                   </Link>
                 </Notice>

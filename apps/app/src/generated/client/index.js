@@ -200,7 +200,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Toton\\Desktop\\Remonta\\remontamarketplace\\apps\\app\\src\\generated\\client",
+      "value": "C:\\Users\\floil\\OneDrive\\Documents\\Projects\\Remonta\\remontamarketplace\\apps\\app\\src\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -218,7 +218,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Toton\\Desktop\\Remonta\\remontamarketplace\\apps\\app\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\floil\\OneDrive\\Documents\\Projects\\Remonta\\remontamarketplace\\apps\\app\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
