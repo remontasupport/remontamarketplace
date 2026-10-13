@@ -6189,7 +6189,8 @@
                 "cultural-background",
                 "religion",
                 "interests",
-                "about-me",
+                "support-activities",
+                "fun-fact",
                 "preferences",
                 "personality"
               ]
@@ -6417,7 +6418,7 @@
                     "properties": {
                       "group": {
                         "type": "string",
-                        "const": "about-me"
+                        "const": "support-activities"
                       },
                       "uniqueService": {
                         "minItems": 1,
@@ -6470,6 +6471,20 @@
                             "Support with social anxiety in public spaces"
                           ]
                         }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "uniqueService"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "type": "string",
+                        "const": "fun-fact"
                       },
                       "funFact": {
                         "type": "string",
@@ -6480,7 +6495,6 @@
                     },
                     "required": [
                       "group",
-                      "uniqueService",
                       "funFact"
                     ],
                     "additionalProperties": false
@@ -6770,7 +6784,7 @@
                       "properties": {
                         "group": {
                           "type": "string",
-                          "const": "about-me"
+                          "const": "support-activities"
                         },
                         "uniqueService": {
                           "minItems": 1,
@@ -6823,6 +6837,20 @@
                               "Support with social anxiety in public spaces"
                             ]
                           }
+                        }
+                      },
+                      "required": [
+                        "group",
+                        "uniqueService"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "group": {
+                          "type": "string",
+                          "const": "fun-fact"
                         },
                         "funFact": {
                           "type": "string",
@@ -6833,7 +6861,6 @@
                       },
                       "required": [
                         "group",
-                        "uniqueService",
                         "funFact"
                       ],
                       "additionalProperties": false

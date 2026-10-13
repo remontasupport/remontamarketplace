@@ -84,7 +84,7 @@ completion flag recompute and persist it in the same transaction. After a save t
 | `PUT /v1/worker/availability` | `{slots: [{day, startMinute, endMinute}]}` | minutes 0-1440, start < end, at most 4 a day, no overlap; stored in week order |
 | `PUT /v1/worker/experience` | `{domains: [...]}` | one entry per care area, professional or personal or both, at most 3 specific areas from that area's list, 10 other areas |
 | `PUT /v1/worker/job-history`, `/education` | `{entries: [...]}` | 0-20 entries, month names, years 1950-now, "currently" means no end date, otherwise the end not before the start; the order kept |
-| `PUT /v1/worker/additional-info/:group` | `{group, ...}` | eight groups (`good-to-know`, `languages`, `cultural-background`, `religion`, `interests`, `about-me`, `preferences`, `personality`); the path and the body's `group` agree; values from `packages/schemas/src/data/profileOptions.ts` (languages and interests also accept a worker's own label); a group write changes only its own columns |
+| `PUT /v1/worker/additional-info/:group` | `{group, ...}` | nine groups (`good-to-know`, `languages`, `cultural-background`, `religion`, `interests`, `support-activities`, `fun-fact`, `preferences`, `personality`; `about-me` was split into the two on 2026-10-13 so each saves alone); the path and the body's `group` agree; values from `packages/schemas/src/data/profileOptions.ts` (languages and interests also accept a worker's own label); a group write changes only its own columns |
 | `PUT /v1/worker/bank-account` | `{accountName, bankName, bsb, accountNumber}` | all four; BSB 6 digits (one dash allowed), number 6-10 digits; stored as today's JSON; the answer and every read are masked to the last three digits |
 
 ## 3. Caching

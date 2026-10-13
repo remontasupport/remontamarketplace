@@ -161,8 +161,11 @@ export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', '
 /** packages/db's DayOfWeek, in week order. */
 export const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const
 
-/** The additional-details groups, one write entry each (R7.2). */
-export const ADDITIONAL_INFO_GROUPS = ['good-to-know', 'languages', 'cultural-background', 'religion', 'interests', 'about-me', 'preferences', 'personality'] as const
+/**
+ * The additional-details groups, one write entry each (R7.2). The old about-me group is two since 2026-10-13 (user):
+ * the activities and the fun fact are asked on different pages, so each saves alone.
+ */
+export const ADDITIONAL_INFO_GROUPS = ['good-to-know', 'languages', 'cultural-background', 'religion', 'interests', 'support-activities', 'fun-fact', 'preferences', 'personality'] as const
 
 export type Language = (typeof LANGUAGES)[number]
 export type CulturalBackground = (typeof CULTURAL_BACKGROUNDS)[number]

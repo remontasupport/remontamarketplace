@@ -71,6 +71,16 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await put('/v1/worker/additional-info/religion', { group: 'languages', languages: [] })).statusCode).toBe(400) // path and body must agree
   })
 
+  it('the activities and the fun fact save alone, each leaving the other as it was (2026-10-13: about-me split in two)', async () => {
+    const fact = 'I once cycled from Brisbane to the Gold Coast for a fundraiser.'
+    expect((await put('/v1/worker/additional-info/fun-fact', { group: 'fun-fact', funFact: fact })).json()).toEqual({ group: 'fun-fact', funFact: fact })
+    await put('/v1/worker/additional-info/support-activities', { group: 'support-activities', uniqueService: ['Fishing trips'] })
+    expect((await profile()).sections.additionalInfo).toMatchObject({ funFact: fact, uniqueService: ['Fishing trips'] })
+    await put('/v1/worker/additional-info/fun-fact', { group: 'fun-fact', funFact: fact.replace('cycled', 'walked') })
+    expect((await profile()).sections.additionalInfo).toMatchObject({ uniqueService: ['Fishing trips'] })
+    expect((await put('/v1/worker/additional-info/about-me', { group: 'about-me', uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(400)
+  })
+
   it('P4: the bank account is stored whole and every response and log line shows only the last three digits', async () => {
     h.logs.length = 0
     const res = await put('/v1/worker/bank-account', { accountName: 'M Lee', bankName: 'CBA', bsb: '062-917', accountNumber: '87654321' })
