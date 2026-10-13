@@ -3916,3 +3916,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "what's the new preview link"
 **AI response**: https://remonta-cp482cr1n-remontas-projects.vercel.app (the remonta-app preview of `7c16d23`, built; staging api + data).
+
+**User input**: "Remove the My Profile string as well. Also enclose the word most recent first to a parenthesis, so it should be (Most recent first)"
+**AI response**: commit 468aba2 on feat/edit-profile-app: ProfileShell's "My profile" heading link removed (the Preview profile and Review application buttons stay, right-aligned); Work History's label "Your jobs (Most recent first)", Education's "Your qualifications (Most recent first)". Gates: app 139 / 470 known, 191 tests passed.
