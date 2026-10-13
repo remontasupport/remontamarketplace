@@ -61,7 +61,7 @@ function ChildLink({ link, active, onNavigate }: { link: MenuLink; active: boole
   )
 }
 
-/** A sub-group inside a group (My Profile's Other Personal Info): open while one of its pages is showing. */
+/** A sub-group inside a group (My Profile's Personal Information, Professional Information, Additional Information): open while one of its pages is showing. */
 function SubGroup({ link, pathname, onNavigate }: { link: MenuLink; pathname: string; onNavigate: () => void }) {
   const inside = link.children!.some((c) => c.href === pathname)
   const [open, setOpen] = useState(inside)

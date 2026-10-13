@@ -21,7 +21,7 @@ export interface MenuLink {
   label: string;
   href: string;
   done?: boolean;
-  /** A sub-group's links (Personal Information, Professional Information, Other Personal Info); its own href is its first link. */
+  /** A sub-group's links (Personal Information, Professional Information, Additional Information); its own href is its first link. */
   children?: MenuLink[];
 }
 
@@ -47,7 +47,7 @@ const info = (p: Profile) => p.sections.additionalInfo;
 export const PROFILE_GROUPS = {
   "personal-information": "Personal Information",
   "professional-information": "Professional Information",
-  "other-personal-info": "Other Personal Info",
+  "additional-information": "Additional Information",
 } as const;
 export type ProfileGroup = keyof typeof PROFILE_GROUPS;
 
@@ -55,7 +55,7 @@ export type ProfileGroup = keyof typeof PROFILE_GROUPS;
  * R8.2 as rearranged by the user (2026-10-12): My Profile's sections in order, each with its done state from the
  * read. Name to Language sit in the Personal Information sub-group; Experience to Preferred Hours and Vehicle Access in
  * Professional Information (the personal-info write is three pages: date of birth, gender, vehicle access); the
- * additional-details sections in Other Personal Info. The photo, preferred hours and bank account keep a place (user choice).
+ * additional-details sections in Additional Information. The photo, preferred hours and bank account keep a place (user choice).
  */
 export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup }[] = [
   { slug: "name", label: "Name", group: "personal-information", done: (p) => !!p.names.firstName && !!p.names.lastName },
@@ -70,13 +70,13 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
   { slug: "education", group: "professional-information", label: "Education", done: (p) => filled(p.sections.education) },
   { slug: "preferred-hours", group: "professional-information", label: "Preferred Hours", done: (p) => filled(p.sections.availability) },
   { slug: "vehicle", group: "professional-information", label: "Vehicle Access", done: (p) => !!p.personalInfo.hasVehicle },
-  { slug: "good-to-know", label: "Good to Know", group: "other-personal-info", done: (p) => info(p)?.lgbtqiaSupport !== null && info(p)?.lgbtqiaSupport !== undefined },
-  { slug: "cultural-background", label: "Cultural Background", group: "other-personal-info", done: (p) => filled(info(p)?.culturalBackground) },
-  { slug: "religion", label: "Religion", group: "other-personal-info", done: (p) => filled(info(p)?.religion) },
-  { slug: "interests", label: "Interests", group: "other-personal-info", done: (p) => filled(info(p)?.interests) },
-  { slug: "about-me", label: "About Me", group: "other-personal-info", done: (p) => filled(info(p)?.uniqueService) && !!info(p)?.funFact },
-  { slug: "preferences", label: "Preferences", group: "other-personal-info", done: (p) => filled(info(p)?.workPreferences) },
-  { slug: "personality", label: "Personality", group: "other-personal-info", done: (p) => !!info(p)?.personality },
+  { slug: "good-to-know", label: "Good to Know", group: "additional-information", done: (p) => info(p)?.lgbtqiaSupport !== null && info(p)?.lgbtqiaSupport !== undefined },
+  { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground) },
+  { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion) },
+  { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests) },
+  { slug: "about-me", label: "About Me", group: "additional-information", done: (p) => filled(info(p)?.uniqueService) && !!info(p)?.funFact },
+  { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences) },
+  { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality },
   { slug: "bank-account", label: "Bank Account", done: (p) => !!p.sections.bankAccount },
 ];
 

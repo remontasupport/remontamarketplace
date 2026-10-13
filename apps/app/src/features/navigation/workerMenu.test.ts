@@ -45,14 +45,14 @@ describe("WORKER_MENU", () => {
   it("R8.2 as rearranged (2026-10-12): My Profile's order, the two sub-groups, each a profile page", () => {
     const links = editProfileChildren(base);
     expect(links.map((l) => l.label)).toEqual([
-      "Personal Information", "Professional Information", "Other Personal Info", "Bank Account",
+      "Personal Information", "Professional Information", "Additional Information", "Bank Account",
     ]);
     const personal = links.find((l) => l.id === "personal-information")!;
     expect(personal.children!.map((l) => l.label)).toEqual(["Name", "Profile Photo", "Bio", "Address", "Date of Birth", "Gender", "Language"]);
     const work = links.find((l) => l.id === "professional-information")!;
     expect(work.children!.map((l) => l.label)).toEqual(["Experience", "Work History", "Education", "Preferred Hours", "Vehicle Access"]);
     expect(personal.href).toBe("/dashboard/worker/profile/name");
-    const group = links.find((l) => l.id === "other-personal-info")!;
+    const group = links.find((l) => l.id === "additional-information")!;
     expect(group.children!.map((l) => l.label)).toEqual(["Good to Know", "Cultural Background", "Religion", "Interests", "About Me", "Preferences", "Personality"]);
     expect(group.done).toBe(false);
     expect(pageExists("/dashboard/worker/profile/[section]")).toBe(true);
