@@ -228,12 +228,10 @@ export const languagesSection = group("languages", "Languages", "languages", [{ 
 export const culturalBackgroundSection = group("cultural-background", "Cultural background", "cultural-background", [{ name: "culturalBackground", kind: "multiSelect", label: "Your cultural background", options: CULTURAL_BACKGROUNDS, max: 20 }]);
 export const religionSection = group("religion", "Religion", "religion", [{ name: "religion", kind: "multiSelect", label: "Your religion", options: RELIGIONS, max: 20 }]);
 export const interestsSection = group("interests", "Interests and hobbies", "interests", [{ name: "interests", kind: "multiSelect", label: "Your interests", options: INTERESTS, allowOwn: true, max: 20 }]);
-// The about-me write takes both answers (user, 2026-10-13): the activities on Support & Activities, the fun fact
-// on the Bio page; each page carries the other answer, shown while still empty so a new worker can always save.
-const UNIQUE_SERVICE: SectionFieldDef = { name: "uniqueService", kind: "multiSelect", label: "What you can offer (1 to 10)", options: UNIQUE_SERVICES, max: 10, collapseAfter: 10 };
-const FUN_FACT: SectionFieldDef = { name: "funFact", kind: "textarea", label: "A fun fact about you", hint: "50 characters or more", rows: 4, maxLength: 1000 };
-export const aboutMeSection = group("about-me", "Support & activities", "about-me", [UNIQUE_SERVICE, { ...FUN_FACT, carried: true }]);
-export const funFactSection = group("fun-fact", "Fun fact", "about-me", [FUN_FACT, { ...UNIQUE_SERVICE, carried: true }]);
+// The old about-me group is two writes (user, 2026-10-13): the activities on Support & Activities (its URL stays
+// /profile/about-me), the fun fact on the Bio page. Each saves alone.
+export const aboutMeSection = group("about-me", "Support & activities", "support-activities", [{ name: "uniqueService", kind: "multiSelect", label: "What you can offer (1 to 10)", options: UNIQUE_SERVICES, max: 10, collapseAfter: 10 }]);
+export const funFactSection = group("fun-fact", "Fun fact", "fun-fact", [{ name: "funFact", kind: "textarea", label: "A fun fact about you", hint: "50 characters or more", rows: 4, maxLength: 1000 }]);
 export const preferencesSection = group("preferences", "My preferences", "preferences", [{ name: "workPreferences", kind: "multiSelect", label: "Who you prefer to work with", options: WORK_PREFERENCES, max: 20 }]);
 export const personalitySection = group("personality", "Personality", "personality", [
   { name: "personality", kind: "select", label: "Your personality", options: PERSONALITIES },

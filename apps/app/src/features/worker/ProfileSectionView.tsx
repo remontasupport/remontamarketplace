@@ -36,7 +36,7 @@ function InterestsPage() {
   );
 }
 
-/** Bio, with the fun fact below it (user, 2026-10-13): the fun fact saves through the about-me write. */
+/** Bio, with the fun fact below it (user, 2026-10-13): two forms, each saving its own write. */
 function BioPage() {
   return (
     <div className="space-y-8">

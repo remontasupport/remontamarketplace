@@ -150,7 +150,7 @@ function SaveBar({ save, onSave, disabled }: { save: SaveState; onSave: () => vo
 /** A carried field is shown while the read has no value for it, or it has an error: a hidden field must never block a save. */
 function needsShowing(f: SectionFieldDef, picked: unknown, errors: Record<string, string[]>): boolean {
   const stored = picked && typeof picked === "object" ? (picked as Record<string, unknown>)[f.name] : undefined;
-  return stored === null || stored === undefined || stored === "" || (Array.isArray(stored) && stored.length === 0) || !!errorFor(errors, f.name);
+  return stored === null || stored === undefined || stored === "" || !!errorFor(errors, f.name);
 }
 
 export function Notice({ tone, children }: { tone: "info" | "warn"; children: React.ReactNode }) {
