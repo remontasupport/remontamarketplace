@@ -3919,3 +3919,11 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "Remove the My Profile string as well. Also enclose the word most recent first to a parenthesis, so it should be (Most recent first)"
 **AI response**: commit 468aba2 on feat/edit-profile-app: ProfileShell's "My profile" heading link removed (the Preview profile and Review application buttons stay, right-aligned); Work History's label "Your jobs (Most recent first)", Education's "Your qualifications (Most recent first)". Gates: app 139 / 470 known, 191 tests passed.
+
+**User input**: "can you change the What I offer to \"Support & Activities\" also remove the fun fact question and save it to the Bio"
+**AI response**: the about-me write takes `uniqueService` and `funFact` together, both required; asked how to move the fun fact.
+
+**User input (AskUserQuestion):**
+> Fun fact: "No api change (Recommended)"
+
+**AI action**: commit d6891e7 on feat/edit-profile-app: the page renamed Support & Activities (menu, sr-only title, job-apply list); `aboutMeSection` shows the activities and carries the fun fact; a new `funFactSection` (slug `fun-fact`, same `about-me` write) shows the fun fact and carries the activities, rendered below the bio on the Bio page (`/profile/fun-fact` shows the Bio page). A carried field also shows when its stored list is empty. Support & Activities' done state = activities chosen. Gates: form-engine 74, app 139 / 470 known, 192 tests passed (the new definition's round-trip against the contract included).
