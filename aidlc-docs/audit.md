@@ -3960,3 +3960,10 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "what's the new preview link?"
 **AI response**: https://remonta-ef18krr06-remontas-projects.vercel.app (the remonta-app preview of `5462701`, built; staging api + data, which since `be8c66a` has both api changes).
+
+**User input**: "Perfect. Now on the Services, can you rename it to Update Services, and place the actual services items in this folder, so it should look like Update Services, then Support Worker, Cleaning, etc"
+**AI response**: asked where the service chooser (Edit Services) goes; the user chose to clarify.
+
+**User input**: "I want it Services (Update My Service (Support Worker, Cleaning, etc)), Service Area"
+**AI response**: commit 7f16b81 on feat/edit-profile-app: Services = "Update My Service" (a sub-group: one link per chosen service, then "+ Add or remove services" = the chooser `/services/manage`, kept so a worker can still change services; the only link before any is chosen) and "Service Area". The sidebar's sub-group opens on a service step (`?step=` ignored in the match). Menu test rewritten; app 139 / 470 known, 196 tests.
+**AI action**: the first push failed (github.com did not resolve) and the chained record step then ran in the app worktree: a local commit `9951a2e` of the regenerated Prisma clients only. Never pushed; removed with a soft reset (files kept, unstaged). The push retried: origin `7f16b81`; PR #57 touches no generated file.
