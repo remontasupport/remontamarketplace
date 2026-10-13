@@ -165,9 +165,10 @@ export const experienceSection = defineSection({
         { name: "domain", kind: "select", label: "Area", options: CARE_DOMAINS.map((d) => ({ value: d, label: EXPERIENCE_DOMAINS.find((x) => x.domain === d)?.label ?? d })) },
         { name: "isProfessional", kind: "checkbox", label: "Professional experience" },
         { name: "isPersonal", kind: "checkbox", label: "Personal experience" },
-        // The options depend on the row's domain: SectionPage reads them from experienceAreasOf(domain).
-        { name: "specificAreas", kind: "multiSelect", label: "Specific areas (up to 3)", options: [], max: 3 },
-        { name: "otherAreas", kind: "multiSelect", label: "Other areas", options: [], allowOwn: true, max: 10 },
+        // The options depend on the row's domain: SectionPage reads them from experienceAreasOf(domain). Any of them
+        // (no limit since 2026-10-13); neither list says "Choose up to" (user: it misled; hint "" drops the default).
+        { name: "specificAreas", kind: "multiSelect", label: "Specific areas", options: [] },
+        { name: "otherAreas", kind: "multiSelect", label: "Other areas", hint: "", options: [], allowOwn: true, max: 10 },
         { name: "description", kind: "textarea", label: "Tell us more", rows: 3, maxLength: 1000 },
       ],
     },
