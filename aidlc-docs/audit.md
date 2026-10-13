@@ -3970,3 +3970,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "rename the Update My Service to Modify Services"
 **AI response**: commit fe61971 on feat/edit-profile-app: the Services sub-group is "Modify Services" (id `modify-services`) in the menu, its test, the Sidebar comment and docs/worker/README.md. App 139 / 470 known, 196 tests.
+
+**User input**: "perfect. Now can you remove all the items from the Mandatory and Trainings folders and place it to a new folder name Compliance and delete the 2 folders"
+**AI response**: commit 6239210 on feat/edit-profile-app: `WORKER_MENU` has one Compliance group (icon the old Mandatory one) in place of Mandatory and Trainings; its links are the mandatory steps then the training steps, from the same read and generators (step URLs unchanged; `/requirements/` and `/trainings/` both open Compliance). Menu order: Dashboard, My Profile, Services, Compliance, Additional Credentials, My Jobs, Account. Test and docs updated; app 139 / 470 known, 196 tests.
