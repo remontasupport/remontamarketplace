@@ -1,7 +1,7 @@
 "use client";
 
-// The frame of every Edit Profile page (U2 H4): the dashboard layout, the "My profile"
-// header with the preview button, the job-apply banner the old profile layout carried (the
+// The frame of every Edit Profile page (U2 H4): the dashboard layout, the preview button
+// (no "My profile" heading: the sidebar names the page; user, 2026-10-13), the job-apply banner the old profile layout carried (the
 // apply context from the URL or this tab's storage), and links to the previous and next
 // section in the sidebar's order.
 import { useLayoutEffect, useState, type ReactNode } from "react";
@@ -49,10 +49,7 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
             Applying for: <strong>{apply.applyJobTitle}</strong>. Update your profile, review it and press Apply Now when ready.
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <Link href="/dashboard/worker/profile" className="text-2xl font-poppins font-semibold text-gray-900">
-            My profile
-          </Link>
+        <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
           <div className="flex items-center gap-2">
             {apply && (
               <button

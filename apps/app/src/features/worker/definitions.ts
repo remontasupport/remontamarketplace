@@ -192,7 +192,7 @@ export const jobHistorySection = defineSection({
     {
       name: "entries",
       kind: "orderedList",
-      label: "Your jobs, most recent first",
+      label: "Your jobs (Most recent first)",
       addLabel: "Add a job",
       itemTitle: (item, i) => (item.jobTitle ? String(item.jobTitle) : `Job ${i + 1}`),
       itemFields: [{ name: "jobTitle", kind: "text", label: "Job title" }, { name: "company", kind: "text", label: "Company" }, ...datesOf("currentlyWorking")],
@@ -210,7 +210,7 @@ export const educationSection = defineSection({
     {
       name: "entries",
       kind: "orderedList",
-      label: "Your qualifications, most recent first",
+      label: "Your qualifications (Most recent first)",
       addLabel: "Add a qualification",
       itemTitle: (item, i) => (item.qualification ? String(item.qualification) : `Qualification ${i + 1}`),
       itemFields: [{ name: "qualification", kind: "text", label: "Qualification" }, { name: "institution", kind: "text", label: "Institution or provider" }, ...datesOf("currentlyStudying")],
