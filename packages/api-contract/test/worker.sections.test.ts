@@ -1,6 +1,7 @@
 // The section bodies (U2 edit-profile, rules R2-R7): one accept and one refuse case per rule,
 // and a property per body that a generated valid body parses and an extra key is rejected.
 import { CULTURAL_BACKGROUNDS, DAYS, INTERESTS, LANGUAGES, MONTHS, PERSONALITIES, UNIQUE_SERVICES, WORK_PREFERENCES } from '@remonta/schemas/data/profileOptions'
+import { experienceAreasOf } from '@remonta/schemas/data/experienceAreas'
 import { EXAMPLE_ABN } from '@remonta/schemas/validations/abn'
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
@@ -164,6 +165,8 @@ describe('R2.8 experience', () => {
   it('areas from the domain\'s list, at most 3, one entry per domain, professional or personal', () => {
     ok(experienceSchema, { domains: [dom(), dom({ domain: 'DISABILITY', specificAreas: [] })] })
     bad(experienceSchema, { domains: [dom({ specificAreas: ['Not an area'] })] }, 'domains.0.specificAreas.0')
+    ok(experienceSchema, { domains: [dom({ specificAreas: [...experienceAreasOf('AGED_CARE')] })] }) // every one of the area's options (no 3 limit since 2026-10-13)
+    bad(experienceSchema, { domains: [dom({ specificAreas: ['Dementia', 'Dementia'] })] }, 'domains.0.specificAreas')
     bad(experienceSchema, { domains: [dom({ isProfessional: false })] }, 'domains.0.isProfessional')
     bad(experienceSchema, { domains: [dom(), dom()] }, 'domains')
     bad(experienceSchema, { domains: [dom({ otherAreas: ['x'.repeat(61)] })] }, 'domains.0.otherAreas.0')
