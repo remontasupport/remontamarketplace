@@ -55,6 +55,48 @@ of them. Preview check added: change Gender, then Date of Birth and Vehicle Acce
 Status at the end of 2026-10-12: CI 13/13 and both previews green at `3735cd8`; preview
 https://remonta-9x0kufc2v-remontas-projects.vercel.app; **not merged, by the user's choice** (no production yet).
 
+## Changes after review, 2026-10-13 (user; all on PR #57 unless marked)
+
+| Commit | Change |
+|---|---|
+| `2b02162` | Other Personal Info renamed **Additional Information** |
+| `12b59cc` | Good to Know moved into the **Interests** page; its menu item gone; old URLs land on Interests |
+| `0d19ff3` | About Me renamed (later Support & Activities); multi-select `collapseAfter`: first 10 options, then "Show all" |
+| `7c16d23` | the pages in the brand navy `#0C1628` (hover `#1a2740`); page titles visible to screen readers only |
+| `468aba2` | the "My profile" heading removed; "(Most recent first)" on Work History and Education |
+| `d6891e7`, `2b95e71` | **Support & Activities**; the fun fact asked only on the **Bio** page |
+| `0556e85` (api, **PR #58**, merged `abd73c5`) | the `about-me` group split into `support-activities` and `fun-fact`, each saving alone |
+| `894a6ff` | Interests and Bio (and then Address): **one Save** for their two sections, no dividing line (`SectionPair`, `pair.ts`) |
+| `be410e8`, `fdbff45` | **Service Area** leaves Address for the Services group; `fdbff45` reverts generated clients committed by mistake |
+| `b4661aa` (api, **PR #59**, merged `be8c66a`) | a care area takes any of its own specific areas (was 3) |
+| `8c42522`, `5462701` | no limit of 3 on Experience; no "Choose up to N" text anywhere; "What you can offer" without "(1 to 10)" |
+| `7f16b81`, `fe61971` | Services = **Modify Services** (each chosen service, then "+ Add or remove services") and Service Area |
+| `6239210` | Mandatory and Trainings merged into one **Compliance** group |
+| `85360d8`, `503932d` | Bank Account out of My Profile; after a folder attempt, a **tab of the Account page** beside Username & password |
+
+The sidebar at `503932d`:
+
+```
+Dashboard
+My Profile
+  Personal Information      Name, Profile Photo, Bio (+ fun fact, one Save), Address (home address), Date of Birth, Gender, Language
+  Professional Information  Experience, Work History, Education, Preferred Hours, Vehicle Access
+  Additional Information    Cultural Background, Religion, Interests (+ Good to Know, one Save), Support & Activities, Preferences, Personality
+Services
+  Modify Services           each chosen service's setup step, then "+ Add or remove services" (/services/manage)
+  Service Area              /profile/service-area (the suburb clients find the worker at, the travel radius)
+Compliance                  the mandatory steps, then the trainings
+Additional Credentials
+My Jobs
+Account                     tabs: Username & password, Bank Account (?tab=bank-account; /profile/bank-account lands here)
+```
+
+Status at the end of 2026-10-13: 13/13 checks green at `503932d`; preview
+https://remonta-24a2umxum-remontas-projects.vercel.app; **not merged, by the user's choice**. Before the merge, the
+api promotion of `be8c66a3fac6c80bd909bf708357955e634cf523` to prod (PRs #58 and #59). Preview re-checks added:
+Support & Activities and the fun fact save alone; Experience with 4+ areas; one Save on Bio and Interests; the
+Service Area page; the Account page's Bank Account tab.
+
 ## Gates (local)
 
 | Gate | Result |
@@ -69,6 +111,7 @@ https://remonta-9x0kufc2v-remontas-projects.vercel.app; **not merged, by the use
 - CI on the PR; the preview checklist (H9) against staging: every section opens with its values, edits, saves,
   "Saved", the sidebar updates; a draft survives a reload; offline pauses and resumes; the photo flow; the address
   page's two forms and the reminder; the admin page block; the old URLs redirect.
+- Promote `be8c66a3fac6c80bd909bf708357955e634cf523` (PRs #58, #59) to prod first: the pages need its two groups.
 - After merge (staging gets `5fff3f1`): the load test with writes re-run, reads p95 expected <= 300 ms.
 - Promote the api image (full sha) only after that; the app goes live with the merge, so the api change must be
   in production first or at the same time: the pages work against PR 2's api (the completion change is internal).

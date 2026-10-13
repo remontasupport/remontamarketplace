@@ -7,17 +7,37 @@
   api of the worker profile to `apps/api`, starting with Edit Profile; reorder the sidebar navigation; the api to serve
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
-- **Current Stage**: CONSTRUCTION, U2 `edit-profile` PR 3 **on hold by the user** (2026-10-12): PR #57
-  `feat/edit-profile-app` is open, head `503932d` (2026-10-13: Bank Account a tab of the Account page; Compliance group; Services = Modify Services + Service Area; no Choose up to texts; Experience areas unlimited, needs the api PR `feat/experience-areas-api` merged and promoted too; Service Area moved to Services; one Save on the two-section pages; api PR #58 merged `abd73c5`, on staging, prod promotion pending; Support & Activities, fun fact only on the Bio page, through the new api groups of `feat/about-me-split-api` `0556e85`, which must be merged and promoted to prod BEFORE PR #57; My profile heading removed, (Most recent first); brand navy, page titles hidden; Other Personal Info renamed Additional Information; Good to Know moved into the Interests page; About Me renamed What I Offer, its options collapsed after 10), all checks and both Vercel previews green; latest app preview
-  https://remonta-9x0kufc2v-remontas-projects.vercel.app (staging api + data). The user does **not** want it in
-  production yet: leave the PR open, do not merge (a merge to `main` is the production release of the new sidebar,
-  pages and redirects). Production: U1 and U2 PR 2 live (api revision `remonta-api-00009-gct`, image `67fef1d…`).
-  **Resume here:** ask the user whether the go-live date is set; if `main` has moved, merge `main` into the
-  branch and re-run the gates; the user runs the preview checklist (`construction/edit-profile/code/PR3-summary.md`
-  "Still to do"); then merge, the load-test re-run on staging, the api promotion (full sha), production checks, the
-  CLAUDE.md rollback rows; then PR 4 (clean-up). Today's menu changes: PR3-summary "Changes after review".
-  Untracked `apps/api/scripts/_u2-staging-writes.ts` on the developer machine: never commit it.
-
+- **Current Stage**: CONSTRUCTION, U2 `edit-profile` PR 3 **on hold by the user** (since 2026-10-12; still on hold
+  2026-10-13). End of 2026-10-13:
+  - **PR #57** `feat/edit-profile-app`, head `503932d`, open, **not to merge until the user sets a go-live**; all 13
+    checks green, preview https://remonta-24a2umxum-remontas-projects.vercel.app (staging api + data). Today's 19
+    commits (the menu and page changes the user asked for): `construction/edit-profile/code/PR3-summary.md`
+    "Changes after review, 2026-10-13", with the final sidebar.
+  - **Two api changes PR #57 depends on, both merged to `main` and on staging, NOT yet on production:** PR #58
+    (`abd73c5`: the about-me group split into `support-activities` + `fun-fact`) and PR #59 (`be8c66a`: a care area
+    takes any of its own specific areas, was 3). **One promotion covers both:** Actions -> deploy-api -> Run workflow,
+    stage `prod`, imageTag `be8c66a3fac6c80bd909bf708357955e634cf523`. It must run BEFORE PR #57 merges (the new pages
+    use the two new groups and 4+ areas; production's api still has `about-me`). Production today: U1 + U2 PR 2 (api
+    revision `remonta-api-00009-gct`, image `67fef1d…`).
+  - **Branch `test/my-profile-columns`** (`6fc4354`, from `main`, test-only): `apps/api/test/worker/columns.int.test.ts`,
+    22 database cases, every My Profile write checked in its table and columns (and nothing else moved, the audit row,
+    the other worker untouched). It has **not run yet** (skips locally, no Docker): the user opens the PR
+    https://github.com/remontasupport/remontamarketplace/compare/main...test%2Fmy-profile-columns?expand=1 and CI's API
+    Quality runs it; fix whatever fails, then merge (test-only; it redeploys staging, nothing else).
+  - **Open question to the user (2026-10-13, unanswered: they asked to clarify, then to save the day):** how to test
+    Services, Compliance and Account. Their saves are not on `apps/api` but ~20 `apps/app` server actions and route
+    handlers (inventory in audit.md 2026-10-13; follow-ups 21-26). Options put: (a) an app database harness in CI (a
+    PostGIS service in ci-app, faked session / Blob / Next cache / Upstash) with the My Profile style checks; (b) move
+    those writes to `apps/api` first (the U3 unit) and test them with the api harness; (c) a written report only.
+  - **Resume here:** 1. `git ls-remote origin main feat/edit-profile-app test/my-profile-columns`; if `main` moved,
+    merge it into the branches and re-run the gates. 2. Ask about the column-test PR (opened? CI result?) and answer
+    the Services/Compliance/Account testing question. 3. Ask whether the go-live is set; when it is: the preview
+    checklist (PR3-summary "Still to do"), the promotion of `be8c66a…` to prod, production api checks, then merge
+    PR #57 ("Merge pull request"), production app checks, CLAUDE.md rollback rows, then PR 4 (clean-up).
+  - Developer-machine rules learned today: never `git add apps/app/src` or `commit -a` on an app branch (the locally
+    regenerated Prisma client is modified and must not be committed: `be410e8` did, `fdbff45` reverted it); edit
+    the record only in `../remonta-record`, never chained after a push that can fail. Untracked
+    `apps/api/scripts/_u2-staging-writes.ts`: never commit it.
 ## Previous cycles (archived, read-only)
 
 | Cycle | Archive | Outcome |
@@ -106,12 +126,29 @@
     `source = 'ADMIN'` and the legacy columns + a picker on the worker's admin page); and city-name help in the suburb
     autocomplete (Hervey Bay, Gold Coast, Sunshine Coast, Toowoomba have no locality row: offer their suburbs).
     Recommended as the next cycle.
-18. **Experience sub-areas, options**: also match `otherAreas` (a toggle); show the matched areas on the result row;
+18. **Experience sub-areas, options**: (the profile page's limit of 3 went on 2026-10-13, PR #59) also match `otherAreas` (a toggle); show the matched areas on the result row;
     the profile page's 3-per-domain limit hides a fourth condition from the search.
 19. **This machine**: repair WSL (`wsl --install` as admin, reboot) so the local PostGIS and the database-gated tests
     run again; re-login `gcloud`.
 20. **The local client-side error** (2026-10-09, the local app against the staging copy): not reproduced on the preview
     or production; if it returns, the browser console's first line is the lead.
+
+21. **Admin contractor page reads legacy columns** (found 2026-10-13): `/api/admin/contractors/[id]` and its page show
+    `worker_profiles.languages` / `hobbies` / `uniqueService`; the worker pages (old and new) write
+    `worker_additional_info`, so the admin view can be stale. Read the additional-info row (as the api's read does).
+22. **The services setup page's Next saves nothing** (verified 2026-10-13): it sends `update-step` `step: 100 + n` with
+    `{qualificationsByService, nursingRegistration}`; the route writes nothing for those steps (101 needs `services`,
+    102 `selectedQualifications`, 103+ default) and answers "Step N saved successfully". Check on the preview whether
+    the ticked qualifications survive a reload (they may be derived from the uploaded documents).
+23. **`verification_requirements` has no unique (workerProfileId, requirementType)**: the find-then-create upserts of
+    the compliance and service-document uploads can race into duplicates (subagent finding, to verify).
+24. **Two service-document upload paths** (`uploadServiceDocument` and `POST /api/upload/service-documents`) with
+    different `requirementType` keys, Blob paths and fields; some deletes (`identity-documents`, the service-document
+    ones) leave the Blob file (subagent finding, to verify).
+25. **Account**: the password change asks no current password and invalidates no session server-side; the email change
+    does not lower-case and needs no re-verification (subagent finding, to verify; SECURITY baseline).
+26. **No test covers the `apps/app` writes** of Services, Compliance and Account, and CI (app) has no database: see the
+    open question in Current Stage.
 
 ## Workspace State
 - **Existing Code**: Yes
