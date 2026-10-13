@@ -8,7 +8,7 @@
   many requests at once ("10,000+ users at the same time", "worker servers"); easy to maintain; review the current api
   structure first. Record branch `aidlc/worker-profile-api` (from `main` `c51d430`).
 - **Current Stage**: CONSTRUCTION, U2 `edit-profile` PR 3 **on hold by the user** (2026-10-12): PR #57
-  `feat/edit-profile-app` is open, head `2b02162` (2026-10-13: Other Personal Info renamed Additional Information), all checks and both Vercel previews green; latest app preview
+  `feat/edit-profile-app` is open, head `12b59cc` (2026-10-13: Other Personal Info renamed Additional Information; Good to Know moved into the Interests page), all checks and both Vercel previews green; latest app preview
   https://remonta-9x0kufc2v-remontas-projects.vercel.app (staging api + data). The user does **not** want it in
   production yet: leave the PR open, do not merge (a merge to `main` is the production release of the new sidebar,
   pages and redirects). Production: U1 and U2 PR 2 live (api revision `remonta-api-00009-gct`, image `67fef1d…`).
