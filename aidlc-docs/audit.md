@@ -3892,3 +3892,7 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input (AskUserQuestion):**
 > PR #57: "Still on hold"
+
+**AI response**: offered: 1 prepare PR 4 stacked on `feat/edit-profile-app` (unmerged), 2 further changes to PR #57 on the preview, 3 a backlog item independent of PR #57 (follow-up 17 or 4), 4 stop.
+
+**User input**: "2"
