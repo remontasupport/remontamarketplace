@@ -5311,7 +5311,7 @@
                         },
                         "specificAreas": {
                           "minItems": 0,
-                          "maxItems": 3,
+                          "maxItems": 14,
                           "type": "array",
                           "items": {
                             "type": "string",
@@ -5393,7 +5393,7 @@
                           },
                           "specificAreas": {
                             "minItems": 0,
-                            "maxItems": 3,
+                            "maxItems": 14,
                             "type": "array",
                             "items": {
                               "type": "string",
