@@ -275,9 +275,7 @@ exports.Prisma.WorkerProfileScalarFieldEnum = {
   updatedAt: 'updatedAt',
   consentProfileShareAt: 'consentProfileShareAt',
   consentWordingVersion: 'consentWordingVersion',
-  zohoLeadId: 'zohoLeadId',
-  homeStreetLine: 'homeStreetLine',
-  homeLocalityId: 'homeLocalityId'
+  zohoLeadId: 'zohoLeadId'
 };
 
 exports.Prisma.DocumentScalarFieldEnum = {
@@ -454,7 +452,7 @@ exports.Prisma.WorkerExperienceScalarFieldEnum = {
 
 exports.Prisma.AuLocalityScalarFieldEnum = {
   id: 'id',
-  localityPid: 'localityPid',
+  gnafLocalityPid: 'gnafLocalityPid',
   suburb: 'suburb',
   searchName: 'searchName',
   state: 'state',
@@ -466,20 +464,6 @@ exports.Prisma.AuLocalityScalarFieldEnum = {
   supersededById: 'supersededById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
-};
-
-exports.Prisma.AuLocalityRefreshScalarFieldEnum = {
-  id: 'id',
-  sourceVersion: 'sourceVersion',
-  planHash: 'planHash',
-  inserted: 'inserted',
-  updated: 'updated',
-  restored: 'restored',
-  retired: 'retired',
-  unchanged: 'unchanged',
-  details: 'details',
-  appliedBy: 'appliedBy',
-  appliedAt: 'appliedAt'
 };
 
 exports.Prisma.WorkerLocationScalarFieldEnum = {
@@ -516,15 +500,6 @@ exports.Prisma.WorkerOnboardingScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.ScheduledJobScalarFieldEnum = {
-  name: 'name',
-  lockedUntil: 'lockedUntil',
-  lastStartedAt: 'lastStartedAt',
-  lastFinishedAt: 'lastFinishedAt',
-  lastResult: 'lastResult',
-  watermark: 'watermark'
-};
-
 exports.Prisma.WorkerOnboardingTransitionScalarFieldEnum = {
   id: 'id',
   workerProfileId: 'workerProfileId',
@@ -552,7 +527,6 @@ exports.Prisma.OutboxEventScalarFieldEnum = {
 exports.Prisma.RegistrationPhotoUploadScalarFieldEnum = {
   id: 'id',
   blobKey: 'blobKey',
-  url: 'url',
   contentType: 'contentType',
   sizeBytes: 'sizeBytes',
   ipHash: 'ipHash',
@@ -750,10 +724,8 @@ exports.Prisma.ModelName = {
   WorkerAvailability: 'WorkerAvailability',
   WorkerExperience: 'WorkerExperience',
   AuLocality: 'AuLocality',
-  AuLocalityRefresh: 'AuLocalityRefresh',
   WorkerLocation: 'WorkerLocation',
   WorkerOnboarding: 'WorkerOnboarding',
-  ScheduledJob: 'ScheduledJob',
   WorkerOnboardingTransition: 'WorkerOnboardingTransition',
   OutboxEvent: 'OutboxEvent',
   RegistrationPhotoUpload: 'RegistrationPhotoUpload',
