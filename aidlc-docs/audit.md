@@ -3913,3 +3913,6 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "can you make sure the buttons are the same color with the brand color, also remove the title of each page, for example, the \"What I Offer\", \"My Preferences\", Personality, and so on,"
 **AI response**: commit 7c16d23 on feat/edit-profile-app: the profile pages' indigo (and the green Review application button) replaced by the brand navy used across the dashboard (`#0C1628`, hover `#1a2740`; the info notice `#EDEFF3` / `#B1C3CD`): Save, the multi-select chips, Show all, the add buttons, previous/next links, the photo buttons, the index cards. Page titles (each section's `h1`, the Address, Interests and Profile photo pages) are now `sr-only`: hidden on screen, kept for screen readers; the section descriptions stay. The two-form pages keep their visible sub-headings (Home address / Service area; Interests and hobbies / Good to know) so the two Save buttons are told apart. The index page's "Edit your profile" heading is unchanged. Gates: app 139 / 470 known, 191 tests passed.
+
+**User input**: "what's the new preview link"
+**AI response**: https://remonta-cp482cr1n-remontas-projects.vercel.app (the remonta-app preview of `7c16d23`, built; staging api + data).
