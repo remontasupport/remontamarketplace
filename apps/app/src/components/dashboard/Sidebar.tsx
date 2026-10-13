@@ -60,7 +60,7 @@ function ChildLink({ link, active, onNavigate }: { link: MenuLink; active: boole
   )
 }
 
-/** A sub-group inside a group (My Profile's three, Services' Update My Service): open while one of its pages is showing (a service step's `?step=` aside). */
+/** A sub-group inside a group (My Profile's three, Services' Modify Services): open while one of its pages is showing (a service step's `?step=` aside). */
 function SubGroup({ link, pathname, onNavigate }: { link: MenuLink; pathname: string; onNavigate: () => void }) {
   const inside = link.children!.some((c) => c.href.split('?')[0] === pathname)
   const [open, setOpen] = useState(inside)

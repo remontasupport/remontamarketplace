@@ -85,10 +85,10 @@ describe("WORKER_MENU", () => {
     expect(groupOfPath("/dashboard/worker/requirements/setup")).toBe("mandatory");
   });
 
-  it("Services: Update My Service (each service, then the chooser), then Service Area; the service pages open the group", () => {
+  it("Services: Modify Services (each service, then the chooser), then Service Area; the service pages open the group", () => {
     const nursing = { id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" };
     const [mine, area] = servicesChildren([nursing]);
-    expect([mine!.label, area!.label]).toEqual(["Update My Service", "Service Area"]);
+    expect([mine!.label, area!.label]).toEqual(["Modify Services", "Service Area"]);
     expect(mine!.children!.map((l) => l.label)).toEqual(["Nursing", "+ Add or remove services"]);
     expect(mine!.href).toBe(nursing.href);
     expect(servicesChildren([])[0]!.children).toEqual([EDIT_SERVICES_LINK]); // no service yet: only the chooser
