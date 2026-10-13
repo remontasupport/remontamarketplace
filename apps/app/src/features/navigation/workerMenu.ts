@@ -70,7 +70,6 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
   { slug: "education", group: "professional-information", label: "Education", done: (p) => filled(p.sections.education) },
   { slug: "preferred-hours", group: "professional-information", label: "Preferred Hours", done: (p) => filled(p.sections.availability) },
   { slug: "vehicle", group: "professional-information", label: "Vehicle Access", done: (p) => !!p.personalInfo.hasVehicle },
-  { slug: "good-to-know", label: "Good to Know", group: "additional-information", done: (p) => info(p)?.lgbtqiaSupport !== null && info(p)?.lgbtqiaSupport !== undefined },
   { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground) },
   { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion) },
   { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests) },

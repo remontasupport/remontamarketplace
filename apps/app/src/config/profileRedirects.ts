@@ -16,7 +16,7 @@ export const PROFILE_REDIRECTS: readonly (readonly [string, string, string, stri
   ['/dashboard/worker/profile-building', 'section', 'bank-account', 'bank-account'],
   ['/dashboard/worker/profile-building', 'section', 'work-history', 'work-history'],
   ['/dashboard/worker/profile-building', 'section', 'education-training', 'education'],
-  ['/dashboard/worker/profile-building', 'section', 'good-to-know', 'good-to-know'],
+  ['/dashboard/worker/profile-building', 'section', 'good-to-know', 'interests'],
   ['/dashboard/worker/profile-building', 'section', 'languages', 'languages'],
   ['/dashboard/worker/profile-building', 'section', 'cultural-background', 'cultural-background'],
   ['/dashboard/worker/profile-building', 'section', 'religion', 'religion'],
