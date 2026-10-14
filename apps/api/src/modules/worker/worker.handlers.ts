@@ -46,7 +46,7 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     getProfile: async (_req, ctx) => {
       const started = Date.now()
       // The pipeline admits WORKER principals only (R1.5); ctx.principal is never null here.
-      const body = await getProfile({ db: deps.db, read: deps.read }, ctx.principal!, ctx.log)
+      const body = await getProfile({ db: deps.db, read: deps.read, now: deps.clock }, ctx.principal!, ctx.log)
       ctx.log.info({ entry: 'worker.getProfile', durationMs: Date.now() - started, userId: ctx.principal!.userId, percent: body.completion.percent }, 'worker profile read')
       return { status: 200, body }
     },
