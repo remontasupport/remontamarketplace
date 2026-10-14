@@ -139,7 +139,7 @@ describe.each(entries)('$id', ({ entry: e }) => {
       t.captcha.outcome = { ok: true, score: 0.9 }
       // A discriminated body (U2's additional-info groups) needs its discriminator to reach the unknown-key check; the path's values supply it.
       const body = expectErrorShape(await send(e, { body: { ...VALID_TOKEN, ...pathValues(e), notAField: 1 }, headers: signedInAdmin }), 400)
-      expect(JSON.stringify(body.error.fields)).toMatch(/Unrecognized key/)
+      expect(JSON.stringify(body.error.fields)).toMatch(/not accepted here: [^"]*notAField/) // the plain-English message names the field
     })
   }
 
