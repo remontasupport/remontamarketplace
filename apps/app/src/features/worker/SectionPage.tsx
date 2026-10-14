@@ -25,9 +25,11 @@ import {
   type ChoiceOption,
   type TimeSlot,
 } from "@/components/ui/form-wizard/sectionFields";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useLocalitySearch } from "@/features/forms/adapters/useLocalitySearch";
 import { workerApi } from "./api";
 import { savePair } from "./pair";
+import { ROW_DELETES } from "./rowDeletes";
 import { UNAVAILABLE_MESSAGE, useSection, type SaveState } from "./useSection";
 
 const choices = (options: readonly (string | { value: string; label?: string })[]): ChoiceOption[] =>
@@ -42,6 +44,8 @@ interface SlotProps {
   setValue: (path: string, v: unknown) => void;
   /** The section as read, for a masked value (`maskedFrom`). */
   picked: unknown;
+  /** A list whose delete icon asks first and may delete the stored row (ROW_DELETES); otherwise the row leaves the form. */
+  onDeleteRow?: (path: string, index: number) => void;
 }
 
 function LocalitySlot({ field, value, onPick, error }: { field: SectionFieldDef; value: LocalityOption | null; onPick: (l: LocalityOption) => void; error?: string }) {
@@ -65,7 +69,7 @@ function LocalitySlot({ field, value, onPick, error }: { field: SectionFieldDef;
   );
 }
 
-function FieldSlot({ field, path, row, errors, setValue, picked }: SlotProps) {
+function FieldSlot({ field, path, row, errors, setValue, picked, onDeleteRow }: SlotProps) {
   if (isHidden(field, row)) return null;
   const v = row[field.name];
   const error = errorFor(errors, path);
@@ -115,7 +119,7 @@ function FieldSlot({ field, path, row, errors, setValue, picked }: SlotProps) {
           titleOf={(i) => field.itemTitle?.(rows[i]!, i) ?? `${i + 1}`}
           addLabel={field.addLabel}
           onAdd={() => set([...rows, emptyValuesOf(field.itemFields)])}
-          onRemove={(i) => set(rows.filter((_, j) => j !== i))}
+          onRemove={(i) => (onDeleteRow ? onDeleteRow(path, i) : set(rows.filter((_, j) => j !== i)))}
           onMove={move}
           error={errors[path]?.[0]}
           renderRow={(i) =>
@@ -247,7 +251,25 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
 
 /** A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13). */
 export default function SectionPage({ def }: { def: SectionDefinition }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft } = useSection(def);
+  const { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft, deleteRow } = useSection(def);
+  const rowDelete = ROW_DELETES[def.name];
+  const [pending, setPending] = useState<{ path: string; index: number } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const pendingRow = pending && values ? ((pickPath(values, pending.path) as SectionValues[] | undefined)?.[pending.index] ?? null) : null;
+  const pendingStored = !!(pendingRow && profile && rowDelete?.isStored(pendingRow, profile));
+
+  async function confirmDelete() {
+    if (!pending || !pendingRow || !rowDelete) return;
+    const { path, index } = pending;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      setDeleteError(await deleteRow(path, index, pendingStored ? () => rowDelete.remove(pendingRow) : undefined));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <section className="space-y-5">
@@ -269,11 +291,39 @@ export default function SectionPage({ def }: { def: SectionDefinition }) {
         >
           {draftRestored && <DraftNotice onDiscard={discardDraft} />}
           {def.fields.map((f) => (
-            <FieldSlot key={f.name} field={f} path={f.name} row={values} errors={errors} setValue={setValue} picked={pickPath(profile, def.pick)} />
+            <FieldSlot
+              key={f.name}
+              field={f}
+              path={f.name}
+              row={values}
+              errors={errors}
+              setValue={setValue}
+              picked={pickPath(profile, def.pick)}
+              onDeleteRow={rowDelete && rowDelete.field === f.name && !deleting ? (path, index) => setPending({ path, index }) : undefined}
+            />
           ))}
           {errors._?.[0] && <p className="text-red-500 text-sm font-poppins">{errors._[0]}</p>}
-          <SaveBar save={save} onSave={() => void submit()} disabled={!values} />
+          <div role="status" aria-live="polite">
+            {deleting && <p className="text-sm text-gray-600 font-poppins">Deleting…</p>}
+            {deleteError && <p className="text-sm text-red-600 font-poppins">{deleteError}</p>}
+          </div>
+          <SaveBar save={save} onSave={() => void submit()} disabled={!values || deleting} />
         </form>
+      )}
+      {rowDelete && (
+        <ConfirmDialog
+          isOpen={pending !== null}
+          onClose={() => setPending(null)}
+          onConfirm={() => void confirmDelete()}
+          title={pendingStored ? "Delete this area?" : "Remove this new area?"}
+          message={
+            pendingStored
+              ? `${pendingRow ? rowDelete.describe(pendingRow) : "This area"} will be deleted from your profile straight away.`
+              : "It has not been saved yet, so nothing on your profile changes."
+          }
+          confirmText={pendingStored ? "Delete" : "Remove"}
+          cancelText="Cancel"
+        />
       )}
     </section>
   );

@@ -14,12 +14,14 @@ import {
   sectionNeverSaved,
   seedFromSaved,
   seedSection,
+  pickPath,
   setPath,
   validateSection,
   type SectionDefinition,
   type SectionValues,
 } from "@remonta/form-engine";
 import { browserStore, isOnline, waitUntilOnline } from "@/features/forms/adapters/browser";
+import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi } from "./api";
 import { useWorkerProfile } from "./profile";
 
@@ -138,5 +140,36 @@ export function useSection(def: SectionDefinition) {
     return false;
   }, [values, save.kind, def, store, draftId, reload]);
 
-  return { profile, isLoading, readError, values, errors, setValue, validate, submit, save, changed, draftRestored, discardDraft };
+  /**
+   * Removes row `index` of the list at `path` (2026-10-14: the Experience delete). With `request`, the stored row is
+   * deleted through the api first and the row leaves the form only once that succeeded; without, the row was never
+   * saved and simply leaves the form. Other unsaved edits stay as typed; a form with none stays unchanged (the
+   * stored list now equals it). Resolves to an error message, or null.
+   */
+  const deleteRow = useCallback(
+    async (path: string, index: number, request?: () => Promise<ApiOutcome<unknown>>): Promise<string | null> => {
+      if (request) {
+        const r = await request();
+        if (r.kind !== "ok") {
+          if (r.kind === "unauthenticated") return SESSION_ENDED_MESSAGE;
+          if (r.kind === "rateLimited") return "Too many changes at once. Please wait a moment and try again.";
+          return UNAVAILABLE_MESSAGE;
+        }
+      }
+      setValues((prev) => {
+        if (!prev) return prev;
+        const rows = (pickPath(prev, path) as unknown[] | undefined) ?? [];
+        const next = setPath(prev, path, rows.filter((_, j) => j !== index));
+        if (changed || !request) saveDraft(store, draftId, { step: 0, values: next }, neverSaved);
+        return next;
+      });
+      if (!request) setChanged(true);
+      setServerErrors((e) => (Object.keys(e).length ? Object.fromEntries(Object.entries(e).filter(([k]) => !k.startsWith(`${path}.`))) : e));
+      if (request) void reload();
+      return null;
+    },
+    [changed, store, draftId, neverSaved, reload],
+  );
+
+  return { profile, isLoading, readError, values, errors, setValue, validate, submit, save, changed, draftRestored, discardDraft, deleteRow };
 }

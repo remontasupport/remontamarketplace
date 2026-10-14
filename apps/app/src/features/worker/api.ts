@@ -23,6 +23,8 @@ export interface WorkerApi {
   createPhotoTicket(body: { contentType: "image/jpeg" | "image/png" | "image/webp"; sizeBytes: number }): Promise<ApiOutcome<PhotoTicket>>;
   confirmPhoto(body: { uploadId: string }): Promise<ApiOutcome<Photos>>;
   removePhoto(url: string): Promise<ApiOutcome<Photos>>;
+  /** DELETE /v1/worker/experience/:domain (2026-10-14): one care area; the answer is the areas left. */
+  deleteExperience(domain: Profile["sections"]["experience"][number]["domain"]): Promise<ApiOutcome<{ domains: Profile["sections"]["experience"] }>>;
 }
 
 export interface WorkerApiDeps {
@@ -31,13 +33,13 @@ export interface WorkerApiDeps {
   fetch?: typeof globalThis.fetch;
 }
 
-type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "removePhoto";
+type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "removePhoto" | "deleteExperience";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
   let warned = false;
 
-  async function call<T>(name: EntryName, input: { body?: unknown }, opts?: { cache?: "default" | "reload"; signal?: AbortSignal }): Promise<ApiOutcome<T>> {
+  async function call<T>(name: EntryName, input: { body?: unknown; params?: Record<string, string> }, opts?: { cache?: "default" | "reload"; signal?: AbortSignal }): Promise<ApiOutcome<T>> {
     if (!deps.baseUrl) {
       if (!warned) {
         warned = true;
@@ -82,6 +84,7 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     createPhotoTicket: (body) => call("createPhotoTicket", { body }),
     confirmPhoto: (body) => call("confirmPhoto", { body }),
     removePhoto: (url) => call("removePhoto", { body: { url } }),
+    deleteExperience: (domain) => call("deleteExperience", { params: { domain } }),
   };
 }
 
