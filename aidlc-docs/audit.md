@@ -4178,3 +4178,9 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "I think just remove the notice entirely"
 **AI response**: PR #57 `83901ea`: the DraftNotice removed from SectionPage (single and paired pages); the draft itself kept (restored silently, cleared on save); draftRestored/discardDraft removed from useSection (no other user). App 139/470 known, 210 tests. Pushed.
+
+**User input**: "I think there is a misuse of a term in the education page, you used Qualification word, can you rename it, suggest first the words"
+**AI response**: "qualification" elsewhere means a service's required certificates (ServiceQualificationStep); offered Course / Study / Education / Course or degree.
+
+**User input** (answer): "Course or degree"
+**AI response**: PR #57 `f2c1f23`: list "Your courses and degrees (Most recent first)", "Add a course or degree", field "Course or degree", empty row "Course N", delete dialog noun "course or degree". Wording only; the field `qualification` keeps its name (no api/data change). App 139/470 known, 210 tests. Pushed.
