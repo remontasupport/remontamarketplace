@@ -25,17 +25,19 @@ import {
   bankAccountSchema,
   bioSchema,
   confirmPhotoSchema,
+  dateOfBirthSchema,
   educationSchema,
   educationViewSchema,
   experienceSchema,
+  genderSchema,
   homeAddressInputSchema,
   jobHistorySchema,
   jobHistoryViewSchema,
   nameSchema,
-  personalInfoSchema,
   photosSchema,
   photoUrlSchema,
   serviceAreaInputSchema,
+  vehicleSchema,
 } from './worker.sections'
 
 export const WORKER_READ_LIMITS = { user: 120, ip: 300 } as const
@@ -253,7 +255,9 @@ export const workerContract = defineContract('worker', {
   // ---- U2 edit-profile: whole-section writes (R1), each returning the section as stored.
   putName: { method: 'PUT', path: '/v1/worker/profile/name', summary: 'Replace the first, middle and last name.', body: json(nameSchema), responses: { 200: nameSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putBio: { method: 'PUT', path: '/v1/worker/profile/bio', summary: 'Replace the bio (1-2,000 characters).', body: json(bioSchema), responses: { 200: bioSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
-  putPersonalInfo: { method: 'PUT', path: '/v1/worker/profile/personal-info', summary: 'Replace the date of birth, gender and vehicle answer.', body: json(personalInfoSchema), responses: { 200: personalInfoSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  putDateOfBirth: { method: 'PUT', path: '/v1/worker/profile/date-of-birth', summary: 'Replace the date of birth (16-100 years old); nothing else.', body: json(dateOfBirthSchema), responses: { 200: dateOfBirthSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  putGender: { method: 'PUT', path: '/v1/worker/profile/gender', summary: 'Replace the gender; nothing else.', body: json(genderSchema), responses: { 200: genderSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  putVehicle: { method: 'PUT', path: '/v1/worker/profile/vehicle', summary: 'Replace the vehicle-access answer; nothing else.', body: json(vehicleSchema), responses: { 200: vehicleSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putAbn: { method: 'PUT', path: '/v1/worker/profile/abn', summary: 'Record the ABN (11 digits, ATO checksum); a TFN record is replaced (D17).', body: json(abnBodySchema), responses: { 200: abnViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putHomeAddress: { method: 'PUT', path: '/v1/worker/profile/home-address', summary: 'Replace the private home address: a street line and a suburb of ours. Never a client-facing value.', body: json(homeAddressInputSchema), responses: { 200: homeAddressSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putServiceArea: { method: 'PUT', path: '/v1/worker/profile/service-area', summary: 'Move the service area: the suburb clients find the worker at, and the travel radius.', body: json(serviceAreaInputSchema), responses: { 200: serviceAreaSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
