@@ -4016,3 +4016,9 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input** (answers): local DB -- "can we test it on the real data from DB without using the docker and wsl?"; reset -- "Park, then new cycle (Recommended)"
 **AI response**: real data via a personal Neon branch of production (never production itself). Found that a local run on real data could email workers (the api's Resend key, pending outbox rows on a copy) and delete production photos (the copied rows point at production Blob files). Built on `feat/local-dev-real-data` (`257bb53`): `scripts/local/dev-env.sh` (DEV_DATABASE_URL, fallback rehearse-w1, production hosts refused; proved), the api's `EMAIL_MODE=log` + `LogMailer` (config refuses it in production and on Cloud Run; tests), dead outbound values for the app, CLAUDE.md "Local development on real data". A `set -euo pipefail` bug in the first version (grep on a missing variable stopped the script silently) found by running it, fixed. Checked: api gate passes; api on rehearse-w1 health 200 and suburb search rows; app /login and sign-up 200. The cycle worker-profile-api parked into `archive/worker-profile-api/` (PARKED.md lists the open work); new cycle `api-review` on branch `aidlc/api-review`.
+
+**User input**: "should I create a new branch?"
+**AI response**: a Neon branch (not git): the steps to branch the production project and put the pooled URL in `apps/api/.env` as `DEV_DATABASE_URL`.
+
+**User input**: "DONE, i ALREADY CREATED THE DEV_DATABSE URL"
+**AI response**: dev-env.sh picks it (host `ep-royal-night-a70rehk3-pooler`, not production). Local api restarted on it: health 200, suburb search rows; 0 emails printed and none sent (no pending outbox rows on the copy); app /login and sign-up 200. Note: stopping a background task left the node servers listening on Windows; stopped by PID after checking their command lines.
