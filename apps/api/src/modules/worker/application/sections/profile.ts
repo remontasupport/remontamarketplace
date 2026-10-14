@@ -1,6 +1,6 @@
-// The column sections on worker_profiles (U2 R2.1-R2.3, R5; L2): name, bio, personal info,
-// ABN. Each runs inside replaceSection's transaction and returns the section as stored.
-import { AGE_MAX, AGE_MIN, ageOn, type AbnBody, type AbnView, type BioBody, type NameBody, type PersonalInfoBody } from '@remonta/api-contract'
+// The column sections on worker_profiles (U2 R2.1-R2.3, R5; L2): name, bio, date of birth,
+// gender, vehicle, ABN. Each runs inside replaceSection's transaction and returns the section as stored.
+import { AGE_MAX, AGE_MIN, ageOn, type AbnBody, type AbnView, type BioBody, type DateOfBirthBody, type GenderBody, type NameBody, type VehicleBody } from '@remonta/api-contract'
 import { abnChecksum } from '@remonta/schemas/validations/abn'
 import { ApiError } from '../../../../platform/errors'
 import type { Tx } from '../../../../platform/persistence/db'
@@ -19,15 +19,21 @@ export async function writeBio(tx: Tx, profileId: string, body: BioBody): Promis
 }
 
 /** R2.3: the age window re-checked with the api's clock; `age` is never written (readers compute from the date). */
-export async function writePersonalInfo(tx: Tx, profileId: string, body: PersonalInfoBody, now: Date): Promise<PersonalInfoBody> {
+export async function writeDateOfBirth(tx: Tx, profileId: string, body: DateOfBirthBody, now: Date): Promise<DateOfBirthBody> {
   const age = ageOn(body.dateOfBirth, now)
   if (age < AGE_MIN || age > AGE_MAX) throw new ApiError(400, 'date of birth outside the window', { dateOfBirth: [`Between ${AGE_MIN} and ${AGE_MAX} years old`] })
-  const row = await tx.workerProfile.update({
-    where: { id: profileId },
-    data: { dateOfBirth: body.dateOfBirth, gender: body.gender, hasVehicle: body.hasVehicle },
-    select: { dateOfBirth: true, gender: true, hasVehicle: true },
-  })
-  return row as PersonalInfoBody
+  const row = await tx.workerProfile.update({ where: { id: profileId }, data: { dateOfBirth: body.dateOfBirth }, select: { dateOfBirth: true } })
+  return row as DateOfBirthBody
+}
+
+export async function writeGender(tx: Tx, profileId: string, body: GenderBody): Promise<GenderBody> {
+  const row = await tx.workerProfile.update({ where: { id: profileId }, data: { gender: body.gender }, select: { gender: true } })
+  return row as GenderBody
+}
+
+export async function writeVehicle(tx: Tx, profileId: string, body: VehicleBody): Promise<VehicleBody> {
+  const row = await tx.workerProfile.update({ where: { id: profileId }, data: { hasVehicle: body.hasVehicle }, select: { hasVehicle: true } })
+  return row as VehicleBody
 }
 
 /** R5: the ATO check re-run; `signed` kept when the stored engagement is an ABN, else false (a TFN is replaced, D17). */

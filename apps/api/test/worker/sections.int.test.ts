@@ -31,7 +31,9 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
   const cases: [string, string, unknown, (p: any) => unknown][] = [
     ['name', '/v1/worker/profile/name', { firstName: 'Zoë', middleName: null, lastName: "O'Neil" }, (p) => p.names],
     ['bio', '/v1/worker/profile/bio', { bio: 'A bio with\na second line.' }, (p) => ({ bio: p.bio })],
-    ['personal info', '/v1/worker/profile/personal-info', { dateOfBirth: '1991-04-02', gender: 'Male', hasVehicle: 'No' }, (p) => ({ dateOfBirth: p.personalInfo.dateOfBirth, gender: p.personalInfo.gender, hasVehicle: p.personalInfo.hasVehicle })],
+    ['date of birth', '/v1/worker/profile/date-of-birth', { dateOfBirth: '1991-04-02' }, (p) => ({ dateOfBirth: p.personalInfo.dateOfBirth })],
+    ['gender', '/v1/worker/profile/gender', { gender: 'Male' }, (p) => ({ gender: p.personalInfo.gender })],
+    ['vehicle', '/v1/worker/profile/vehicle', { hasVehicle: 'No' }, (p) => ({ hasVehicle: p.personalInfo.hasVehicle })],
     ['availability', '/v1/worker/availability', { slots: [{ day: 'TUESDAY', startMinute: 600, endMinute: 720 }, { day: 'MONDAY', startMinute: 540, endMinute: 600 }] }, (p) => ({ slots: p.sections.availability })],
     ['job history', '/v1/worker/job-history', { entries: [{ jobTitle: 'Lead', company: 'B', startMonth: 'May', startYear: 2022, endMonth: null, endYear: null, currentlyWorking: true }, { jobTitle: 'Carer', company: 'A', startMonth: 'January', startYear: 2019, endMonth: 'April', endYear: 2022, currentlyWorking: false }] }, (p) => ({ entries: p.sections.jobHistory.map(({ id: _id, ...e }: any) => e) })],
     ['education', '/v1/worker/education', { entries: [] }, (p) => ({ entries: p.sections.education })],
@@ -79,6 +81,20 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     await put('/v1/worker/additional-info/fun-fact', { group: 'fun-fact', funFact: fact.replace('cycled', 'walked') })
     expect((await profile()).sections.additionalInfo).toMatchObject({ uniqueService: ['Fishing trips'] })
     expect((await put('/v1/worker/additional-info/about-me', { group: 'about-me', uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(400)
+  })
+
+  it('the date of birth, the gender and the vehicle answer save alone, each leaving the other two as they were (2026-10-14: personal-info split in three)', async () => {
+    // A worker with none of the three answers can save any one of them first: no page needs the others.
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { dateOfBirth: null, gender: null, hasVehicle: null } })
+    expect((await put('/v1/worker/profile/gender', { gender: 'Female' })).json()).toEqual({ gender: 'Female' })
+    expect((await profile()).personalInfo).toMatchObject({ dateOfBirth: null, gender: 'Female', hasVehicle: null })
+    expect((await put('/v1/worker/profile/vehicle', { hasVehicle: 'Yes' })).json()).toEqual({ hasVehicle: 'Yes' })
+    expect((await put('/v1/worker/profile/date-of-birth', { dateOfBirth: '1988-11-30' })).json()).toEqual({ dateOfBirth: '1988-11-30' })
+    expect((await profile()).personalInfo).toMatchObject({ dateOfBirth: '1988-11-30', gender: 'Female', hasVehicle: 'Yes' })
+    await put('/v1/worker/profile/vehicle', { hasVehicle: 'No' })
+    expect((await profile()).personalInfo).toMatchObject({ dateOfBirth: '1988-11-30', gender: 'Female', hasVehicle: 'No' })
+    expect((await put('/v1/worker/profile/gender', { gender: 'Male', hasVehicle: 'Yes' })).statusCode).toBe(400) // one answer per write
+    expect((await put('/v1/worker/profile/personal-info', { dateOfBirth: '1988-11-30', gender: 'Female', hasVehicle: 'No' })).statusCode).toBe(404) // the combined write is gone
   })
 
   it('P4: the bank account is stored whole and every response and log line shows only the last three digits', async () => {

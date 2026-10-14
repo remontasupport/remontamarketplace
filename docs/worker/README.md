@@ -73,7 +73,9 @@ completion flag recompute and persist it in the same transaction. After a save t
 |---|---|---|
 | `PUT /v1/worker/profile/name` | `{firstName, middleName | null, lastName}` | 1-100 characters, letters of any script, spaces, hyphens, apostrophes |
 | `PUT /v1/worker/profile/bio` | `{bio}` | 1-2,000 characters, plain text (newlines allowed) |
-| `PUT /v1/worker/profile/personal-info` | `{dateOfBirth, gender, hasVehicle}` | a real `YYYY-MM-DD` date, 16-100 years old on the api's clock; `Male`/`Female`; `Yes`/`No`. `age` is not written. Languages are the Languages group |
+| `PUT /v1/worker/profile/date-of-birth` | `{dateOfBirth}` | a real `YYYY-MM-DD` date, 16-100 years old on the api's clock. `age` is not written |
+| `PUT /v1/worker/profile/gender` | `{gender}` | `Male`/`Female` |
+| `PUT /v1/worker/profile/vehicle` | `{hasVehicle}` | `Yes`/`No`; decides whether the licence documents are required. Each of these three writes its own column only (split from one `personal-info` write, 2026-10-14). Languages are the Languages group |
 | `PUT /v1/worker/profile/abn` | `{abn}` | 11 digits (spaces allowed) passing the ATO checksum; stored `{workerEngagementType: {type: 'abn', value, signed}}`, `signed` kept from an ABN record, false after a TFN one (D17) |
 | `PUT /v1/worker/profile/home-address` | `{streetLine, localityId}` | one line of 1-120 characters; a current suburb of ours. Writes `homeStreetLine`/`homeLocalityId` only: never the legacy location columns, never `worker_locations`; never in a client-facing response |
 | `PUT /v1/worker/profile/service-area` | `{localityId, travelRadiusKm}` | a current suburb; 1-500 km. Upserts the HOME `worker_locations` row (`source ONBOARDING`) and writes the legacy columns as the sign-up does, so the admin and client searches follow; an unplaced worker becomes placed |

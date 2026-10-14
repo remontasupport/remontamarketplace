@@ -135,6 +135,16 @@ describe('the write entries through the pipeline (no database)', () => {
     const res = await a.fastify.inject({ method: 'PUT', url: '/v1/worker/additional-info/nope', headers: workerToken('u1'), payload: { group: 'nope' } })
     expect(res.statusCode).toBe(400)
   })
+  it('the date of birth, gender and vehicle writes take their own answer only; the combined personal-info write is gone (2026-10-14)', async () => {
+    const a = await app()
+    const put = (url: string, payload: object) => a.fastify.inject({ method: 'PUT', url, headers: workerToken('u1'), payload })
+    expect((await put('/v1/worker/profile/gender', { gender: 'Male', hasVehicle: 'Yes' })).statusCode).toBe(400)
+    expect((await put('/v1/worker/profile/vehicle', { hasVehicle: 'Yes', dateOfBirth: '1990-01-01' })).statusCode).toBe(400)
+    const dob = await put('/v1/worker/profile/date-of-birth', { dateOfBirth: '2020-01-01' })
+    expect(dob.statusCode).toBe(400)
+    expect(dob.json().error.fields).toHaveProperty('dateOfBirth')
+    expect((await put('/v1/worker/profile/personal-info', { dateOfBirth: '1990-01-01', gender: 'Male', hasVehicle: 'Yes' })).statusCode).toBe(404)
+  })
   it('another role is 403; no token is 401', async () => {
     const a = await app()
     expect((await a.fastify.inject({ method: 'PUT', url: '/v1/worker/profile/bio', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { bio: 'x' } })).statusCode).toBe(403)

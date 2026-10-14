@@ -21,7 +21,7 @@ import { claimIntoSlot, deleteStoredPhoto, makeMain, removeOne } from './applica
 import { replaceSection } from './application/replace-section'
 import { writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
-import { writeAbn, writeBio, writeName, writePersonalInfo } from './application/sections/profile'
+import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
   db: Db
@@ -49,7 +49,10 @@ export function workerHandlers(deps: WorkerModuleDeps) {
 
     putName: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putName', completion: true }, (tx, p) => writeName(tx, p.id, req.body)) }),
     putBio: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBio', completion: true }, (tx, p) => writeBio(tx, p.id, req.body)) }),
-    putPersonalInfo: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putPersonalInfo', completion: true }, (tx, p) => writePersonalInfo(tx, p.id, req.body, deps.clock())) }),
+    // The vehicle answer also decides whether the licence documents are required: all three recompute completion.
+    putDateOfBirth: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putDateOfBirth', completion: true }, (tx, p) => writeDateOfBirth(tx, p.id, req.body, deps.clock())) }),
+    putGender: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putGender', completion: true }, (tx, p) => writeGender(tx, p.id, req.body)) }),
+    putVehicle: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putVehicle', completion: true }, (tx, p) => writeVehicle(tx, p.id, req.body)) }),
     putAbn: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putAbn', completion: true }, (tx, p) => writeAbn(tx, p.id, req.body)) }),
     putHomeAddress: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putHomeAddress', completion: false }, (tx, p) => writeHomeAddress(tx, p.id, req.body)) }),
     putServiceArea: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putServiceArea', completion: true }, (tx, p) => writeServiceArea(tx, p.id, req.body)) }),
