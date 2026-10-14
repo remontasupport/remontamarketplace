@@ -4,6 +4,7 @@ import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } fr
 import { saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
 import { previewKeyOf } from "./photoPreview";
+import { wizardResolver } from "./resolver";
 import { verificationError } from "./useEmailCode";
 
 const filled = {
@@ -18,6 +19,23 @@ const filled = {
   photoUploadId: "https://blob.example/workers/x.jpg",
   consentProfileShare: true,
 };
+
+describe("the sign-up form's messages are plain English (2026-10-14)", () => {
+  const resolve = (values: Record<string, unknown>) =>
+    wizardResolver(formSchemaFor(workerRegistrationForm) as never)(values, undefined, { fields: {}, shouldUseNativeValidation: false, criteriaMode: "all" } as never) as Promise<{ errors: Record<string, { message?: string }> }>;
+  it("an untouched form: each field it does not word itself reads 'This field is required.', through the resolver's own Zod copy", async () => {
+    const { errors } = await resolve({});
+    for (const f of ["localityId", "firstName", "lastName", "mobile", "email", "password", "services", "photoUploadId"]) expect(errors[f]?.message, f).toBe("This field is required.");
+    expect(JSON.stringify(errors)).not.toMatch(/Too small|Invalid input|expected (string|number|object|array)/);
+  });
+  it("the contract's own messages are kept; a wrong kind of value reads plainly", async () => {
+    const { errors } = await resolve({ ...filled, firstName: "", localityId: "Parramatta", services: "x" });
+    expect(errors.firstName?.message).toBe("First name is required");
+    expect(errors.emailVerification?.message).toBe("Please verify your email address");
+    expect(errors.localityId?.message).toBe("Please choose from the list.");
+    expect(errors.services?.message).toBe("Please choose from the list.");
+  });
+});
 
 describe("the worker sign-up definition", () => {
   it("is a valid definition of the registration contract entry (defineForm checked it at import)", () => {
