@@ -59,6 +59,34 @@ describe("seed, body, validation", () => {
   });
 });
 
+describe("validation messages are plain English (2026-10-14)", () => {
+  it("an empty job title and a year left unchosen read 'This field is required.', not Zod's wording", () => {
+    const jobs = defineSection({
+      ...base,
+      name: "jobs",
+      title: "Jobs",
+      writeEntry: "putJobHistory",
+      pick: "sections.jobHistory",
+      fields: [{
+        name: "entries", kind: "orderedList", label: "Jobs", addLabel: "Add",
+        itemFields: [
+          { name: "jobTitle", kind: "text", label: "t" },
+          { name: "company", kind: "text", label: "c" },
+          { name: "startMonth", kind: "select", label: "m", options: ["January"] },
+          { name: "startYear", kind: "select", label: "y", options: ["2019"], numeric: true },
+          { name: "endMonth", kind: "select", label: "m", options: ["January"], nullable: true },
+          { name: "endYear", kind: "select", label: "y", options: ["2020"], numeric: true, nullable: true },
+          { name: "currentlyWorking", kind: "checkbox", label: "c" },
+        ],
+      }],
+    });
+    const errors = validateSection(jobs, { entries: [{ jobTitle: "", company: "Acme", startMonth: "January", startYear: "", endMonth: "", endYear: "", currentlyWorking: true }] });
+    expect(errors["entries.0.jobTitle"]).toEqual(["This field is required."]);
+    expect(errors["entries.0.startYear"]).toEqual(["This field is required."]);
+    expect(JSON.stringify(errors)).not.toMatch(/Too small|Invalid input|expected/);
+  });
+});
+
 describe("a list's rowKey (2026-10-14: the row delete)", () => {
   const jobs = defineSection({
     ...base,

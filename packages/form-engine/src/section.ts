@@ -4,7 +4,7 @@
 // the body the section would send -- field rules and the cross-field ones (overlapping
 // slots, an end before a start) alike -- so the page and apps/api cannot disagree (P11).
 // No UI framework here (P-7): apps/app renders a definition and wires it to React.
-import { createClient, type Contract, type ContractDef, type EntryDef } from "@remonta/api-contract";
+import { createClient, friendlyError, type Contract, type ContractDef, type EntryDef } from "@remonta/api-contract";
 import * as z from "zod";
 import { isRetryableStatus, withRetry, type RetryOptions } from "./retry";
 
@@ -261,7 +261,8 @@ export function sectionBody(def: SectionDefinition, values: SectionValues): Reco
 
 /** Field errors keyed by the body path (`firstName`, `slots.2.startMinute`, `entries.0.endMonth`); empty when the body is valid. */
 export function validateSection(def: SectionDefinition, values: SectionValues): Record<string, string[]> {
-  const r = sectionBodySchema(def).safeParse(sectionBody(def, values));
+  // Plain-English messages where the contract names none (2026-10-14), the same wording the api returns.
+  const r = sectionBodySchema(def).safeParse(sectionBody(def, values), { error: friendlyError });
   if (r.success) return {};
   const out: Record<string, string[]> = {};
   for (const issue of r.error.issues) (out[issue.path.map(String).join(".") || "_"] ??= []).push(issue.message);
