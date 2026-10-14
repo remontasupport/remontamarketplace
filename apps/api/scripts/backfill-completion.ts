@@ -8,7 +8,7 @@
 import { backfillCompletion, formatCompletionReport } from '../src/modules/worker/backfill'
 import { runBackfill } from './backfill-cli'
 
-/** The production Neon hosts (scripts/local/rehearsal-env.sh, CLAUDE.md). */
+/** The production Neon hosts (scripts/local/dev-env.sh, CLAUDE.md). */
 export const PRODUCTION_HOST_PATTERNS = [/ep-delicate-recipe/, /ep-polished-thunder/]
 
 export function isProductionHost(url: string): boolean {

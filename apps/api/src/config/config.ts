@@ -36,6 +36,13 @@ const envSchema = z.object({
   RECAPTCHA_MIN_SCORE: z.coerce.number().min(0).max(1).default(0.5),
 
   RESEND_API_KEY: z.string().min(10, 'missing or too short'),
+  /**
+   * `resend` sends. `log` prints each email (codes included) to this terminal and sends nothing: local development
+   * on a copy of real data, where a send would reach a real worker. Refused in production and on Cloud Run.
+   */
+  EMAIL_MODE: z.enum(['resend', 'log']).default('resend'),
+  /** Set by Cloud Run on every instance; read only to refuse local-only settings there. */
+  K_SERVICE: z.string().optional(),
   /** Sender for Remonta's emails, e.g. "Remonta <noreply@remontaservices.com.au>" (a Resend-verified domain). */
   EMAIL_FROM: z.string().min(3),
   /** apps/app's origin, for the links in emails (/login, /forgot-password). */
@@ -122,6 +129,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
   const e = parsed.data
   const extra: string[] = []
   if (e.NODE_ENV === 'production' && e.GCS_API_ENDPOINT) extra.push('GCS_API_ENDPOINT: a fake storage server is not allowed in production')
+  if (e.EMAIL_MODE === 'log' && (e.NODE_ENV === 'production' || e.K_SERVICE)) extra.push('EMAIL_MODE: log is for local development only (not production, not Cloud Run)')
   if (extra.length) throw new ConfigError(extra)
   return {
     ...e,

@@ -201,6 +201,27 @@ The three secret files (`apps/app/.env`, `apps/app/.env.local`, `apps/api/.env`)
 them from the backup. Everything else, the AI-DLC record included (`aidlc-docs/`, `.aidlc-rule-details/`,
 `.brd/`), is in the repository. Then open Claude Code here and say "continue the AI-DLC".
 
+## Local development on real data (no Docker, no preview)
+
+Try a change on this machine, against a copy of real data, before any preview:
+
+```bash
+bash scripts/local/run-api.sh     # terminal 1: apps/api on http://127.0.0.1:4000 (builds first; --no-build to skip)
+bash scripts/local/run-app.sh     # terminal 2: apps/app on http://localhost:3000, calling that api
+```
+
+- **The database is a copy, never production.** `DEV_DATABASE_URL` in `apps/api/.env` is your own Neon branch of
+  the production auth database (Neon console → the production project → Branches → New branch from `main`, then its
+  connection string). "Reset from parent" refreshes it to today's data in seconds; break it freely. Without it the
+  scripts fall back to `REHEARSAL_DATABASE_URL` (rehearse-w1, shared with staging and every preview). Optional
+  `DEV_MAIN_DATABASE_URL`: a branch of the jobs database for the app's `DATABASE_URL`. The scripts refuse production hosts.
+- **Nothing leaves the machine.** The rows belong to real people, so `scripts/local/dev-env.sh` switches every outbound
+  path off: the api prints emails (sign-up codes included) in terminal 1 instead of sending them (`EMAIL_MODE=log`,
+  refused by the config in production and on Cloud Run); Blob, SMS, Zoho, n8n, Pusher and Upstash get dead values, so a
+  photo delete can never remove a production file. Photo uploads fail locally (no bucket).
+- **The database tests** (`*.int.test.ts`) still need a local PostGIS (below) or CI: they empty tables, so they refuse
+  any database that is not on localhost, a Neon branch included.
+
 ## apps/api: the backend service (local and CI only until deployed)
 
 ```bash
