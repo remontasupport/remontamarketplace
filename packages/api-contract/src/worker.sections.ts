@@ -197,6 +197,8 @@ const jobSchema = jobBase.superRefine((e, ctx) => dateIssues(e, e.currentlyWorki
 export const MAX_LIST_ENTRIES = 20
 export const jobHistorySchema = z.strictObject({ entries: z.array(jobSchema).max(MAX_LIST_ENTRIES) })
 export type JobHistoryBody = z.output<typeof jobHistorySchema>
+/** DELETE /v1/worker/job-history/:entryId (2026-10-14): one work-history row by its id (as the read and the PUT return it); `entryId`, never a bare `id` (R1.1's guard). */
+export const jobHistoryRowParamsSchema = z.strictObject({ entryId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'A row id') })
 export const jobHistoryViewSchema = z.strictObject({ entries: z.array(jobBase.extend({ id: z.string().max(40) })).max(MAX_LIST_ENTRIES) })
 
 const courseBase = z.strictObject({ institution: trimmed(1, 100), qualification: trimmed(1, 100), startMonth: monthSchema, startYear: yearSchema, endMonth: monthSchema.nullable(), endYear: yearSchema.nullable(), currentlyStudying: z.boolean() })

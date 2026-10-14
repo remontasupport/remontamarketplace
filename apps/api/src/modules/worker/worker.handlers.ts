@@ -16,7 +16,7 @@ import { getProfile, type GetProfileDeps } from './application/get-profile'
 import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos'
 import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
-import { deleteExperienceArea, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
+import { deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
@@ -81,6 +81,7 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     // Experience never changes a stored completion flag (the percentage is computed on read).
     deleteExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: `deleteExperience.${req.params.domain}`, completion: false }, (tx, p) => deleteExperienceArea(tx, p.id, req.params.domain)) }),
     putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: true }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
+    deleteJobHistoryEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteJobHistoryEntry', completion: false }, (tx, p) => deleteJobHistoryEntry(tx, p.id, req.params.entryId)) }),
     putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: true }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
     putAdditionalInfo: async (req, ctx) => ({
       status: 200,
