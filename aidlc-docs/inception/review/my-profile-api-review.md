@@ -78,3 +78,22 @@ The groups `good-to-know` and `fun-fact` have entries but no page in the new men
    whether impersonation may write the bank account (recommended: refuse).
 4. **F4**: application-level encryption of the bank account (a key in Secret Manager), with a backfill.
 5. F6-F10 as small items.
+
+## 5. Layers and helpers (asked 2026-10-14)
+
+| Layer | Where | Shared helpers | Owns |
+|---|---|---|---|
+| Declaration | `packages/api-contract` | `defineContract`, `meta()`, `workerRead()`, `workerWrite(audit)`, strict Zod primitives (`trimmed`, `plainText`, `uniqueList`) | method, path, bodies, responses, every security setting |
+| Binding | `platform/contract/binder.ts` | `planBindings`, `defineHandlers` | one route per entry; boot refused if an entry is unbound or a stray route exists |
+| Pipeline | `platform/pipeline/pipeline.ts` | `buildRouteHandler`, `enforceLimits`, `parse` | limits, captcha, token, role, validation, output check, audit check, private cache |
+| Handler | `modules/<area>/<area>.handlers.ts` | one line per entry | picks the use case; no security code |
+| Application | `modules/<area>/application/` | `replaceSection` (ownership + transaction + completion + audit) | the use case |
+| Domain | `modules/<area>/domain/` | pure functions (`completionOf`, `maskBankAccount`, `placePhoto`) | rules, tested without a database |
+| Persistence | `modules/<area>/persistence/`, `platform/persistence/db.ts` | `writeTransaction`, Prisma | SQL and transactions |
+| Platform | `platform/*` | `ApiError`, `RequestAudit`, rate limiter, JWT verifier, outbox, logger redaction, load shedder | cross-cutting services |
+
+Security layers, outermost first: Cloud Run TLS -> load shedder -> security headers + HSTS + HTTPS only -> CORS
+allow-list (no credentials) -> body size -> per-IP limit (fails closed) -> captcha (public entries) -> JWT -> role ->
+per-user limit -> strict input -> ownership by token subject (`replaceSection`) -> transaction + audit row -> output
+schema -> generic errors -> redacted logs. In the app, before the api: the NextAuth session -> the token minter
+(account ACTIVE, role unchanged, 30/min).
