@@ -205,6 +205,8 @@ const courseBase = z.strictObject({ institution: trimmed(1, 100), qualification:
 const courseSchema = courseBase.superRefine((e, ctx) => dateIssues(e, e.currentlyStudying, ctx, 'currently studying'))
 export const educationSchema = z.strictObject({ entries: z.array(courseSchema).max(MAX_LIST_ENTRIES) })
 export type EducationBody = z.output<typeof educationSchema>
+/** DELETE /v1/worker/education/:entryId (2026-10-14): one education row by its id, as for work history. */
+export const educationRowParamsSchema = z.strictObject({ entryId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'A row id') })
 export const educationViewSchema = z.strictObject({ entries: z.array(courseBase.extend({ id: z.string().max(40) })).max(MAX_LIST_ENTRIES) })
 
 // ---- Additional info (R7.2) ---------------------------------------------------------------------------------

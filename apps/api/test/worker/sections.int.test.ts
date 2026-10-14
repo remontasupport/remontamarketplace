@@ -109,6 +109,21 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await put('/v1/worker/additional-info/about-me', { uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(404)
   })
 
+  it("deleting an education row removes that row only; another worker's row or a gone one is 404 (2026-10-14)", async () => {
+    const del = (id: string) => h.t.fastify.inject({ method: 'DELETE', url: `/v1/worker/education/${id}`, headers: { 'x-test-principal': `${h.a.userId}:WORKER` } })
+    const course = (qualification: string) => ({ institution: 'TAFE', qualification, startMonth: 'February', startYear: 2018, endMonth: 'November', endYear: 2018, currentlyStudying: false })
+    const mine = (await put('/v1/worker/education', { entries: [course('Cert III'), course('Cert IV'), course('Diploma')] })).json().entries as { id: string }[]
+    const theirs = (await put('/v1/worker/education', { entries: [course('Theirs')] }, () => h.b.userId)).json().entries as { id: string }[]
+    const res = await del(mine[0]!.id)
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json().entries.map((e: { qualification: string }) => e.qualification)).toEqual(['Cert IV', 'Diploma'])
+    expect((await del(mine[0]!.id)).statusCode).toBe(404) // already gone
+    expect((await del(theirs[0]!.id)).statusCode).toBe(404) // another worker's row: not revealed, not deleted
+    expect(await h.db.workerEducation.count({ where: { id: theirs[0]!.id } })).toBe(1)
+    expect(await h.db.auditLog.count({ where: { userId: h.a.userId, action: 'PROFILE_UPDATE', metadata: { path: ['section'], equals: 'deleteEducationEntry' } } })).toBeGreaterThan(0)
+    expect((await profile()).sections.education.map((e: { qualification: string }) => e.qualification)).toEqual(['Cert IV', 'Diploma'])
+  })
+
   it("deleting a work-history row removes that row only; another worker's row or a gone one is 404 (2026-10-14)", async () => {
     const del = (id: string, user = () => h.a.userId) => h.t.fastify.inject({ method: 'DELETE', url: `/v1/worker/job-history/${id}`, headers: { 'x-test-principal': `${user()}:WORKER` } })
     const job = (jobTitle: string) => ({ jobTitle, company: 'Co', startMonth: 'January', startYear: 2019, endMonth: 'March', endYear: 2020, currentlyWorking: false })

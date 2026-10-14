@@ -26,6 +26,7 @@ import {
   culturalBackgroundSchema,
   dateOfBirthSchema,
   educationSchema,
+  educationRowParamsSchema,
   educationViewSchema,
   experienceDomainParamsSchema,
   experienceSchema,
@@ -279,6 +280,7 @@ export const workerContract = defineContract('worker', {
   putJobHistory: { method: 'PUT', path: '/v1/worker/job-history', summary: 'Replace the ordered work history.', body: json(jobHistorySchema), responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
   deleteJobHistoryEntry: { method: 'DELETE', path: '/v1/worker/job-history/:entryId', summary: "Delete one work-history row by its id; returns the rows left in order. A row that is not the caller's, or is already gone, is 404 (never revealed).", pathParams: jobHistoryRowParamsSchema, responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putEducation: { method: 'PUT', path: '/v1/worker/education', summary: 'Replace the ordered education list.', body: json(educationSchema), responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  deleteEducationEntry: { method: 'DELETE', path: '/v1/worker/education/:entryId', summary: "Delete one education row by its id; returns the rows left in order. A row that is not the caller's, or is already gone, is 404 (never revealed).", pathParams: educationRowParamsSchema, responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   // The additional details: one entry per group (user, 2026-10-14; was one :group entry). Each writes its own columns only.
   putGoodToKnow: { method: 'PUT', path: '/v1/worker/additional-info/good-to-know', summary: 'Replace the LGBTQIA+ support answer.', body: json(goodToKnowSchema), responses: { 200: goodToKnowSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putLanguages: { method: 'PUT', path: '/v1/worker/additional-info/languages', summary: 'Replace the languages spoken.', body: json(languagesSchema), responses: { 200: languagesSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },

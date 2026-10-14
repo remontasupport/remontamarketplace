@@ -84,3 +84,11 @@ export async function writeEducation(tx: Tx, profileId: string, body: EducationB
   const rows = await tx.workerEducation.findMany({ where: { workerProfileId: profileId }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: COURSE_SELECT })
   return { entries: rows as WithIds<EducationBody>['entries'] }
 }
+
+/** One education row out (2026-10-14), as deleteJobHistoryEntry: the caller's row or 404 (R1.3); the rows left keep their order. */
+export async function deleteEducationEntry(tx: Tx, profileId: string, id: string): Promise<WithIds<EducationBody>> {
+  const { count } = await tx.workerEducation.deleteMany({ where: { id, workerProfileId: profileId } })
+  if (count === 0) throw new ApiError(404, 'education row not found for this profile')
+  const rows = await tx.workerEducation.findMany({ where: { workerProfileId: profileId }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: COURSE_SELECT })
+  return { entries: rows as WithIds<EducationBody>['entries'] }
+}
