@@ -181,7 +181,8 @@ export const jobHistorySection = defineSection({
       kind: "orderedList",
       label: "Your jobs (Most recent first)",
       addLabel: "Add a job",
-      itemTitle: (item, i) => (item.jobTitle ? String(item.jobTitle) : `Job ${i + 1}`),
+      // The typed title, or nothing: no numbered "Job 1" placeholder (user, 2026-10-14).
+      itemTitle: (item) => (item.jobTitle ? String(item.jobTitle) : ""),
       // Each stored job keeps its id on the row (never sent): the delete names it (2026-10-14).
       rowKey: "id",
       itemFields: [{ name: "jobTitle", kind: "text", label: "Job title" }, { name: "company", kind: "text", label: "Company" }, ...datesOf("currentlyWorking")],
@@ -203,7 +204,8 @@ export const educationSection = defineSection({
       // the stored field keeps its name.
       label: "Your courses and degrees (Most recent first)",
       addLabel: "Add a course or degree",
-      itemTitle: (item, i) => (item.qualification ? String(item.qualification) : `Course ${i + 1}`),
+      // The typed course, or nothing: no numbered "Course 1" placeholder (user, 2026-10-14).
+      itemTitle: (item) => (item.qualification ? String(item.qualification) : ""),
       // Each stored course keeps its id on the row (never sent): the delete names it (2026-10-14).
       rowKey: "id",
       itemFields: [{ name: "qualification", kind: "text", label: "Course or degree" }, { name: "institution", kind: "text", label: "Institution or provider" }, ...datesOf("currentlyStudying")],

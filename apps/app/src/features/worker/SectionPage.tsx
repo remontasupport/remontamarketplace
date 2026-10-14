@@ -116,7 +116,7 @@ function FieldSlot({ field, path, row, errors, setValue, picked, onDeleteRow }: 
           label={label}
           hint={field.hint}
           count={rows.length}
-          titleOf={(i) => field.itemTitle?.(rows[i]!, i) ?? `${i + 1}`}
+          titleOf={(i) => field.itemTitle?.(rows[i]!, i) ?? ""}
           addLabel={field.addLabel}
           onAdd={() => set([...rows, emptyValuesOf(field.itemFields)])}
           onRemove={(i) => (onDeleteRow ? onDeleteRow(path, i) : set(rows.filter((_, j) => j !== i)))}

@@ -274,8 +274,9 @@ export function OrderedListField({ label, hint, count, titleOf, addLabel, onAdd,
         {Array.from({ length: count }, (_, i) => (
           <div key={i} className="border border-gray-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-poppins font-semibold text-gray-900">{titleOf(i)}</h4>
-              <div className="flex items-center gap-1">
+              {/* A row with no title yet shows none: the buttons stay on the right. */}
+              {titleOf(i) && <h4 className="font-poppins font-semibold text-gray-900">{titleOf(i)}</h4>}
+              <div className="flex items-center gap-1 ml-auto">
                 <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => onMove(i, i - 1)} className="p-1.5 text-gray-500 disabled:opacity-30">
                   <ArrowUp className="w-4 h-4" />
                 </button>
