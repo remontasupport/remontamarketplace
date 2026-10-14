@@ -4184,3 +4184,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input** (answer): "Course or degree"
 **AI response**: PR #57 `f2c1f23`: list "Your courses and degrees (Most recent first)", "Add a course or degree", field "Course or degree", empty row "Course N", delete dialog noun "course or degree". Wording only; the field `qualification` keeps its name (no api/data change). App 139/470 known, 210 tests. Pushed.
+
+**User input**: "Can you remove the Job 1, and so on, as well as the Job 1 and so on labels?"
+**AI response**: read as the numbered placeholder titles on Work History ("Job N") and Education ("Course N"). PR #57 `33e0680`: itemTitle returns the typed title or nothing; SectionPage's number fallback removed; OrderedListField renders no title when empty and keeps the buttons right. Typed titles still head their rows. App 139/470 known, 210 tests. Pushed.
