@@ -4028,3 +4028,18 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "why are all the changes to the sidebar not being seen to the local development?"
 **AI response**: the local servers ran the checked-out branch (`main`); the sidebar is on PR #57's branch, held. New worktree `../remonta-pr57` on `feat/edit-profile-app` with `main` merged in (`26fbb12`, pushed: PR #57 updated, not merged), env files copied (gitignored), installed; api + app started there on the dev branch (`ep-royal-night`): health 200, the three new writes 401, /login 200. Found: PR #57 also carries an api change (`5fff3f1`, completion recompute skipped on writes that cannot change a stored flag), so after PR #57 merges production needs a second api promotion.
+
+## 2026-10-14: api-review scoped to My Profile
+
+**User input**: "start ai dlc, I want to review the structure and security of all the APIs in the My Profile section"
+**AI response**: cycle api-review resumed (unit 0 local-dev merged, PR #61 `4434787`). Scope narrowed to the My Profile
+section's api entries (Personal / Professional / Additional Information, as on PR #57's sidebar): an inventory of each
+entry (method, path, access, limits, body, handler, tables) and a structure and security review of the path from the
+app's token to the table.
+**AI action**: read the worker contract, section schemas, handlers, `replaceSection`, the section writes, photos,
+addresses, the pipeline, the JWT verifier, logging, errors and CORS (api, `main` `4434787`); the token minter, the
+worker menu and the legacy profile server actions (app, PR #57 worktree `26fbb12`). Wrote
+`inception/review/my-profile-api-review.md`: 20 entries mapped page -> entry -> columns; the structure's guarantees;
+10 findings, two High: F1 cross-worker photo deletion (the legacy `updateWorkerPhoto` action accepts any URL, the
+api's `removePhoto` then deletes it from Blob; traced, not reproduced) and F2 the legacy `"use server"` profile writes
+still callable beside the api. Asked the user which findings to take into construction.
