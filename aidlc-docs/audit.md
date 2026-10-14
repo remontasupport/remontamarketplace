@@ -4004,3 +4004,15 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 **User input**: "Done, merged"
 **AI response**: verified by ref: `main` = `182f94f` (PR #60, `feat/personal-info-split-api`); `bdff4d5` in main; the column-test branch (`e23df59`) not merged. CI on `182f94f`: app, web, CodeQL, Semgrep green; api, supply chain and deploy-api (staging) running at check time.
 **AI action**: CI on `182f94f` all green (app, web, api incl. the database tests, supply chain, CodeQL, Semgrep) and deploy-api (staging) success. Staging probe, no token: `/v1/health` 200; PUT `/v1/worker/profile/date-of-birth`, `/gender`, `/vehicle` 401 (routes exist); `/personal-info` 404 (removed). Production promotion for PR #57 is now imageTag `182f94f757551997d5c75843e01524b221db5281`.
+
+**User input**: "if I promote the imagEtag, will all the sidebar changes applies to production?"
+**AI response**: no: the promotion moves only the api; the sidebar and pages ship when PR #57 merges. Promoting first is safe (production's app calls none of the removed writes).
+
+**User input**: "Ok, should I run to production now?"
+**AI response**: not yet: run the preview checks of the new pages first (the rule: a promotion only of an image that passed them), then deploy-api stage prod imageTag `182f94f...`; rollback revision `remonta-api-00009-gct`.
+
+**User input**: "Can we reset the ai dlc now, I want to check all the APIs in order and the structure of the api on how I built it, but before that, I want the test on the dvelopment or local first, I don't want to test it on every preview so less hassle, can you set up that first"
+**AI response**: checked the machine (Docker 500, WSL "Class not registered", no native PostgreSQL); asked how to get a local database and what "reset" does.
+
+**User input** (answers): local DB -- "can we test it on the real data from DB without using the docker and wsl?"; reset -- "Park, then new cycle (Recommended)"
+**AI response**: real data via a personal Neon branch of production (never production itself). Found that a local run on real data could email workers (the api's Resend key, pending outbox rows on a copy) and delete production photos (the copied rows point at production Blob files). Built on `feat/local-dev-real-data` (`257bb53`): `scripts/local/dev-env.sh` (DEV_DATABASE_URL, fallback rehearse-w1, production hosts refused; proved), the api's `EMAIL_MODE=log` + `LogMailer` (config refuses it in production and on Cloud Run; tests), dead outbound values for the app, CLAUDE.md "Local development on real data". A `set -euo pipefail` bug in the first version (grep on a missing variable stopped the script silently) found by running it, fixed. Checked: api gate passes; api on rehearse-w1 health 200 and suburb search rows; app /login and sign-up 200. The cycle worker-profile-api parked into `archive/worker-profile-api/` (PARKED.md lists the open work); new cycle `api-review` on branch `aidlc/api-review`.
