@@ -41,7 +41,6 @@ export function useSection(def: SectionDefinition) {
   const store = useMemo(() => browserStore(draftId), [draftId]);
 
   const [values, setValues] = useState<SectionValues | null>(null);
-  const [draftRestored, setDraftRestored] = useState(false);
   const [touched, setTouched] = useState(false);
   /** Edited since the seed or the last save (a restored draft counts): a two-section page saves only these. */
   const [changed, setChanged] = useState(false);
@@ -49,7 +48,7 @@ export function useSection(def: SectionDefinition) {
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
   const seededFor = useRef<string | null>(null);
 
-  // Seed once per section when the profile arrives; a kept draft wins and is announced (R9.3).
+  // Seed once per section when the profile arrives; a kept draft wins, silently (the notice was removed 2026-10-14, user).
   useEffect(() => {
     if (!profile || seededFor.current === def.name) return;
     seededFor.current = def.name;
@@ -57,7 +56,6 @@ export function useSection(def: SectionDefinition) {
     const draft = loadDraft(store, draftId, neverSaved);
     if (draft) {
       setValues({ ...seeded, ...draft.values });
-      setDraftRestored(true);
       setChanged(true);
     } else {
       setValues(seeded);
@@ -84,13 +82,6 @@ export function useSection(def: SectionDefinition) {
     },
     [store, draftId, neverSaved],
   );
-
-  const discardDraft = useCallback(() => {
-    clearDraft(store, draftId);
-    setDraftRestored(false);
-    setChanged(false);
-    if (profile) setValues(seedSection(def, profile));
-  }, [store, draftId, profile, def]);
 
   /** Shows the errors and says whether the values pass (a two-section page checks both before saving either). */
   const validate = useCallback((): boolean => {
@@ -121,7 +112,6 @@ export function useSection(def: SectionDefinition) {
     });
     if (r.ok) {
       clearDraft(store, draftId);
-      setDraftRestored(false);
       setServerErrors({});
       setTouched(false);
       setChanged(false);
@@ -171,5 +161,5 @@ export function useSection(def: SectionDefinition) {
     [changed, store, draftId, neverSaved, reload],
   );
 
-  return { profile, isLoading, readError, values, errors, setValue, validate, submit, save, changed, draftRestored, discardDraft, deleteRow };
+  return { profile, isLoading, readError, values, errors, setValue, validate, submit, save, changed, deleteRow };
 }

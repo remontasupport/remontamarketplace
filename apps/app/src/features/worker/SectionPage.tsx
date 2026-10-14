@@ -171,17 +171,6 @@ export function SectionSkeleton() {
   );
 }
 
-function DraftNotice({ onDiscard }: { onDiscard: () => void }) {
-  return (
-    <Notice tone="info">
-      We kept what you typed last time on this device.{" "}
-      <button type="button" className="underline" onClick={onDiscard}>
-        Discard it
-      </button>
-    </Notice>
-  );
-}
-
 type Section = ReturnType<typeof useSection>;
 
 /** One section's description and fields, without a Save of its own (a two-section page). */
@@ -232,14 +221,6 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
             void onSave();
           }}
         >
-          {(a.draftRestored || b.draftRestored) && (
-            <DraftNotice
-              onDiscard={() => {
-                a.discardDraft();
-                b.discardDraft();
-              }}
-            />
-          )}
           <SectionFields def={first} s={a} />
           <SectionFields def={second} s={b} />
           <SaveBar save={pairState(a.save, b.save)} onSave={() => void onSave()} disabled={false} />
@@ -251,7 +232,7 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
 
 /** A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13). */
 export default function SectionPage({ def }: { def: SectionDefinition }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit, save, draftRestored, discardDraft, deleteRow } = useSection(def);
+  const { profile, isLoading, readError, values, errors, setValue, submit, save, deleteRow } = useSection(def);
   const rowDelete = ROW_DELETES[def.name];
   const [pending, setPending] = useState<{ path: string; index: number } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -289,7 +270,6 @@ export default function SectionPage({ def }: { def: SectionDefinition }) {
             void submit();
           }}
         >
-          {draftRestored && <DraftNotice onDiscard={discardDraft} />}
           {def.fields.map((f) => (
             <FieldSlot
               key={f.name}
