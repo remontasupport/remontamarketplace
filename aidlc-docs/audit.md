@@ -4136,3 +4136,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "it changed now, cancel"
 **AI response**: investigation closed; the age fix verified locally.
+
+**User input**: "can you make sure the changes we will change from the local changes will also save to the PR 57 so that once I merge it to ptod, this will take effect"
+**AI response**: verified `origin/feat/edit-profile-app` = `5f65e44` contains e1aa0ea, c2282ad, 47bc4a3, 252f089, 0979b2a, 223736f and all of `main` `6dbc65b`; nothing uncommitted in the worktree (bar the regenerated Prisma clients). Production api probed: still the old version (POST /v1/worker/photos/main 401); staging has the one-photo api. Rule saved to memory: every local change lands on PR #57 the same turn; api parts also as their own PR from `main`, promoted before PR #57 merges.
