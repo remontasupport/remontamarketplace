@@ -103,4 +103,12 @@ describe('RATE_LIMIT_EXEMPT_IPS (U1 worker-area, staging drills only)', () => {
     expect(() => loadConfig({ ...complete, RATE_LIMIT_EXEMPT_IPS: 'office' })).toThrow(ConfigError)
     expect(() => loadConfig({ ...complete, RATE_LIMIT_EXEMPT_IPS: '*' })).toThrow(/RATE_LIMIT_EXEMPT_IPS/)
   })
+
+  it('EMAIL_MODE=log is local only: refused in production and on Cloud Run (K_SERVICE)', () => {
+    expect(loadConfig(complete).EMAIL_MODE).toBe('resend')
+    expect(loadConfig({ ...complete, EMAIL_MODE: 'log' }).EMAIL_MODE).toBe('log')
+    expect(problems({ ...complete, EMAIL_MODE: 'log', NODE_ENV: 'production' })).toEqual(['EMAIL_MODE: log is for local development only (not production, not Cloud Run)'])
+    expect(problems({ ...complete, EMAIL_MODE: 'log', K_SERVICE: 'remonta-api-staging' })).toEqual(['EMAIL_MODE: log is for local development only (not production, not Cloud Run)'])
+    expect(problems({ ...complete, EMAIL_MODE: 'smtp' })[0]).toMatch(/^EMAIL_MODE:/)
+  })
 })
