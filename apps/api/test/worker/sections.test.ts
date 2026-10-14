@@ -17,6 +17,10 @@ import { testApp, unreachableHandlers, workerToken, type TestApp } from '../help
 const A = 'https://x.public.blob.vercel-storage.com/workers/p/a.jpg'
 const B = 'https://x.public.blob.vercel-storage.com/workers/p/b.jpg'
 const C = 'https://x.public.blob.vercel-storage.com/workers/p/c.jpg'
+const OWNER = 'cmowner0000000000000000a'
+const OTHER = 'cmother0000000000000000b'
+const UPLOAD = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b'
+const OWN = `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}.jpg`
 
 describe('photo slots (R4)', () => {
   it('main replaces; additional appends up to two, then refuses', () => {
@@ -65,9 +69,37 @@ describe('photo slots (R4)', () => {
   it('deletes a processed Blob copy and its thumbnail, never a bucket object', async () => {
     const deleted: string[] = []
     const blob = { delete: async (u: string) => void deleted.push(u) }
-    await deleteStoredPhoto(blob, A, { warn: () => {} })
-    await deleteStoredPhoto(blob, 'https://storage.googleapis.com/remonta-api-photos/staging/x', { warn: () => {} })
-    expect(deleted).toEqual([A, A.replace('.jpg', '-256.jpg')])
+    await deleteStoredPhoto(blob, OWN, OWNER, { warn: () => {} })
+    await deleteStoredPhoto(blob, 'https://storage.googleapis.com/remonta-api-photos/staging/x', OWNER, { warn: () => {} })
+    expect(deleted).toEqual([OWN, OWN.replace('.jpg', '-256.jpg')])
+  })
+
+  // F1 (api-review 2026-10-14): a URL in the caller's columns is not proof the file is theirs -- the legacy
+  // `updateWorkerPhoto` action stores any URL. Only the caller's own folder, `workers/<their profile id>/<upload id>`, is deleted.
+  it("never deletes another worker's file, or one outside the api's own keys", async () => {
+    const deleted: string[] = []
+    const blob = { delete: async (u: string) => void deleted.push(u) }
+    const others = [
+      `https://x.public.blob.vercel-storage.com/workers/${OTHER}/${UPLOAD}.jpg`, // another worker's photo
+      `https://x.public.blob.vercel-storage.com/workers/${OTHER}/${UPLOAD}-256.jpg`,
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/../${OTHER}/${UPLOAD}.jpg`, // dot segments
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}%2F..%2F${OTHER}/${UPLOAD}.jpg`, // encoded
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}/x.jpg`, // deeper
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/not-an-id.jpg`,
+      `https://x.public.blob.vercel-storage.com/workers/registration/${UPLOAD}.jpg`, // the multipart era
+      'https://x.public.blob.vercel-storage.com/workers/john/photo-123.jpg', // the app's legacy uploads
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}.jpg?x=1`,
+    ]
+    for (const url of others) await deleteStoredPhoto(blob, url, OWNER, { warn: () => {} })
+    expect(deleted).toEqual([])
+  })
+
+  it('deletes a stored-as-uploaded copy (no thumbnail) in the owner\'s folder', async () => {
+    const deleted: string[] = []
+    const blob = { delete: async (u: string) => void deleted.push(u) }
+    const png = `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}.png`
+    await deleteStoredPhoto(blob, png, OWNER, { warn: () => {} })
+    expect(deleted).toEqual([png])
   })
 })
 
