@@ -17,7 +17,7 @@ import { confirmPhotoUpload } from '../registration/application/photo-confirm'
 import { createPhotoTicket } from '../registration/application/photo-ticket'
 import { writeHomeAddress, writeServiceArea } from './application/addresses'
 import { getProfile, type GetProfileDeps } from './application/get-profile'
-import { claimIntoSlot, deleteStoredPhoto, makeMain, removeOne } from './application/photos'
+import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos'
 import { replaceSection } from './application/replace-section'
 import { writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
@@ -66,13 +66,17 @@ export function workerHandlers(deps: WorkerModuleDeps) {
       const p = photoDeps()
       // Inspect what landed and create the upload row (idempotent); then claim it for this profile.
       await confirmPhotoUpload(req.body.uploadId, ctx.ip, { db: deps.db, bucket: p.bucket, publicBaseUrl: p.publicBaseUrl, ipHashSecret: p.ipHashSecret, now: deps.clock }, ctx.log)
-      const body = await replaceSection(s, ctx, { section: 'confirmPhoto', completion: true }, (tx, prof) => claimIntoSlot(tx, prof.id, req.body.uploadId, req.body.slot, deps.clock()))
+      const body = await replaceSection(s, ctx, { section: 'confirmPhoto', completion: true }, (tx, prof) => claimAsPhoto(tx, prof.id, req.body.uploadId, deps.clock()))
       return { status: 201, body }
     },
-    makeMainPhoto: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'makeMainPhoto', completion: true }, (tx, p) => makeMain(tx, p.id, req.body.url)) }),
     removePhoto: async (req, ctx) => {
-      const body = await replaceSection(s, ctx, { section: 'removePhoto', completion: true }, (tx, p) => removeOne(tx, p.id, req.body.url))
-      if (deps.photos) await deleteStoredPhoto(deps.photos.blob, req.body.url, ctx.log)
+      let profileId = ''
+      const body = await replaceSection(s, ctx, { section: 'removePhoto', completion: true }, (tx, p) => {
+        profileId = p.id
+        return removeOne(tx, p.id, req.body.url)
+      })
+      // Only a file in the caller's own folder is deleted (F1): the URL being in their columns proves nothing.
+      if (deps.photos) await deleteStoredPhoto(deps.photos.blob, req.body.url, profileId, ctx.log)
       return { status: 200, body }
     },
 

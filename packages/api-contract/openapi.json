@@ -2480,19 +2480,10 @@
                               "type": "null"
                             }
                           ]
-                        },
-                        "additional": {
-                          "maxItems": 10,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "maxLength": 2048
-                          }
                         }
                       },
                       "required": [
-                        "main",
-                        "additional"
+                        "main"
                       ],
                       "additionalProperties": false
                     },
@@ -4854,7 +4845,7 @@
     "/v1/worker/photos": {
       "post": {
         "operationId": "worker.confirmPhoto",
-        "summary": "Confirm an uploaded photo into the main or an additional slot; the clean copy follows by outbox.",
+        "summary": "Confirm an uploaded photo as the profile photo (it replaces the current one); the clean copy follows by outbox.",
         "requestBody": {
           "required": true,
           "content": {
@@ -4866,18 +4857,10 @@
                     "type": "string",
                     "format": "uuid",
                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                  },
-                  "slot": {
-                    "type": "string",
-                    "enum": [
-                      "main",
-                      "additional"
-                    ]
                   }
                 },
                 "required": [
-                  "uploadId",
-                  "slot"
+                  "uploadId"
                 ],
                 "additionalProperties": false
               }
@@ -4902,19 +4885,10 @@
                           "type": "null"
                         }
                       ]
-                    },
-                    "additional": {
-                      "maxItems": 2,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "maxLength": 2048
-                      }
                     }
                   },
                   "required": [
-                    "main",
-                    "additional"
+                    "main"
                   ],
                   "additionalProperties": false
                 }
@@ -5016,167 +4990,10 @@
         }
       }
     },
-    "/v1/worker/photos/main": {
-      "post": {
-        "operationId": "worker.makeMainPhoto",
-        "summary": "Swap an additional photo (by its URL) with the main one.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "url": {
-                    "type": "string",
-                    "maxLength": 2048,
-                    "format": "uri"
-                  }
-                },
-                "required": [
-                  "url"
-                ],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "main": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "maxLength": 2048
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "additional": {
-                      "maxItems": 2,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "maxLength": 2048
-                      }
-                    }
-                  },
-                  "required": [
-                    "main",
-                    "additional"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "UNAUTHENTICATED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "FORBIDDEN",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "PAYLOAD_TOO_LARGE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "RATE_LIMITED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "INTERNAL",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "x-remonta-security": {
-          "access": {
-            "roles": [
-              "WORKER"
-            ]
-          },
-          "bot": "none",
-          "rateLimit": [
-            {
-              "per": "user",
-              "limit": 60,
-              "window": "1m"
-            },
-            {
-              "per": "ip",
-              "limit": 120,
-              "window": "1m"
-            }
-          ],
-          "maxBodyKb": 4,
-          "audit": "PROFILE_UPDATE"
-        }
-      }
-    },
     "/v1/worker/photos/remove": {
       "post": {
         "operationId": "worker.removePhoto",
-        "summary": "Remove a photo by its URL (the main only when no additional photo is left).",
+        "summary": "Remove the profile photo, named by its URL.",
         "requestBody": {
           "required": true,
           "content": {
@@ -5216,19 +5033,10 @@
                           "type": "null"
                         }
                       ]
-                    },
-                    "additional": {
-                      "maxItems": 2,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "maxLength": 2048
-                      }
                     }
                   },
                   "required": [
-                    "main",
-                    "additional"
+                    "main"
                   ],
                   "additionalProperties": false
                 }

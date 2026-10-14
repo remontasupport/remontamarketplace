@@ -30,7 +30,7 @@ export interface WorkerHarness {
   close(): Promise<void>
 }
 
-export async function workerHarness(domain: string, opts: { read?: WorkerModuleDeps['read']; pool?: { poolSize: number; poolTimeoutS: number } } = {}): Promise<WorkerHarness> {
+export async function workerHarness(domain: string, opts: { read?: WorkerModuleDeps['read']; photos?: WorkerModuleDeps['photos']; pool?: { poolSize: number; poolTimeoutS: number } } = {}): Promise<WorkerHarness> {
   const url = process.env.TEST_DATABASE_URL!
   const db = createDb(url, opts.pool ?? { poolSize: 4, poolTimeoutS: 5 }, { queryEvents: true })
   const queries: string[] = []
@@ -113,7 +113,7 @@ export async function workerHarness(domain: string, opts: { read?: WorkerModuleD
     contracts,
     handlerSets: [
       platformHandlers({ db, clock: () => new Date() }),
-      workerHandlers({ db, clock: () => new Date(), read: opts.read }),
+      workerHandlers({ db, clock: () => new Date(), read: opts.read, photos: opts.photos }),
       ...contracts.filter((c) => c !== platformContract && c !== workerContract).map(unreachableHandlers),
     ],
     publicEndpoints: publicEndpoints as PublicEndpoint[],

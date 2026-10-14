@@ -1,4 +1,4 @@
-// U2's pure pieces: the photo slot rules (R4.2-R4.4), the handler's repoint (R4.2), the
+// U2's pure pieces: the one-photo rule (R4.4), the handler's repoint (R4.2), the
 // additional-info column selection (R7.3, P7's mechanism), the bank account's stored and
 // masked shapes (R6, P4), and the HTTP path through the pipeline without a database.
 import { contracts, platformContract, workerContract, type PublicEndpoint } from '@remonta/api-contract'
@@ -7,7 +7,7 @@ import fc from 'fast-check'
 import { afterEach, describe, expect, it } from 'vitest'
 import { repoint } from '../../src/modules/registration/application/photo-process'
 import { platformHandlers } from '../../src/modules/platform/platform.handlers'
-import { deleteStoredPhoto, isBlobUrl, placePhoto, swapMain, withoutPhoto } from '../../src/modules/worker/application/photos'
+import { deleteStoredPhoto, isBlobUrl, withoutPhoto } from '../../src/modules/worker/application/photos'
 import { columnsOf, GROUP_COLUMNS, toStoredBankAccount } from '../../src/modules/worker/application/sections/additional-info'
 import { maskBankAccount } from '../../src/modules/worker/domain/bank-account'
 import { workerHandlers } from '../../src/modules/worker/worker.handlers'
@@ -17,39 +17,25 @@ import { testApp, unreachableHandlers, workerToken, type TestApp } from '../help
 const A = 'https://x.public.blob.vercel-storage.com/workers/p/a.jpg'
 const B = 'https://x.public.blob.vercel-storage.com/workers/p/b.jpg'
 const C = 'https://x.public.blob.vercel-storage.com/workers/p/c.jpg'
+const OWNER = 'cmowner0000000000000000a'
+const OTHER = 'cmother0000000000000000b'
+const UPLOAD = '3f2b8c1e-9a4d-4e6f-8b7a-1c2d3e4f5a6b'
+const OWN = `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}.jpg`
 
-describe('photo slots (R4)', () => {
-  it('main replaces; additional appends up to two, then refuses', () => {
-    expect(placePhoto({ main: A, additional: [] }, B, 'main')).toEqual({ main: B, additional: [] })
-    expect(placePhoto({ main: A, additional: [] }, B, 'additional')).toEqual({ main: A, additional: [B] })
-    expect(placePhoto({ main: A, additional: [B, C] }, 'https://n', 'additional')).toEqual({ refused: expect.stringMatching(/At most 2/) })
-    expect(placePhoto({ main: null, additional: [] }, B, 'additional')).toEqual({ main: B, additional: [] }) // no main yet: it becomes the main
+describe('one photo (R4; user 2026-10-14: no additional photos)', () => {
+  it("remove takes the photo only when it is the worker's own", () => {
+    expect(withoutPhoto({ main: A }, A)).toEqual({ main: null })
+    expect(withoutPhoto({ main: A }, B)).toEqual({ refused: expect.any(String) })
+    expect(withoutPhoto({ main: null }, A)).toEqual({ refused: expect.any(String) })
   })
-  it('make main swaps with the main (or moves up when there is no main); only an additional photo qualifies', () => {
-    expect(swapMain({ main: A, additional: [B, C] }, C)).toEqual({ main: C, additional: [B, A] })
-    expect(swapMain({ main: null, additional: [B] }, B)).toEqual({ main: B, additional: [] })
-    expect(swapMain({ main: A, additional: [B] }, A)).toEqual({ refused: expect.any(String) })
-  })
-  it('remove takes an additional photo, or the main only when it is the last one', () => {
-    expect(withoutPhoto({ main: A, additional: [B, C] }, B)).toEqual({ main: A, additional: [C] })
-    expect(withoutPhoto({ main: A, additional: [B] }, A)).toEqual({ refused: 'Make another photo the main photo first' })
-    expect(withoutPhoto({ main: A, additional: [] }, A)).toEqual({ main: null, additional: [] })
-    expect(withoutPhoto({ main: A, additional: [] }, 'https://elsewhere')).toEqual({ refused: expect.any(String) })
-  })
-  it('a sequence of valid operations never leaves additional photos without a main, nor more than two', () => {
-    const op = fc.oneof(
-      fc.record({ k: fc.constant('place' as const), url: fc.constantFrom(A, B, C), slot: fc.constantFrom('main' as const, 'additional' as const) }),
-      fc.record({ k: fc.constant('swap' as const), url: fc.constantFrom(A, B, C) }),
-      fc.record({ k: fc.constant('remove' as const), url: fc.constantFrom(A, B, C) }),
-    )
+  it('any sequence of removes leaves the photo or nothing, never another URL', () => {
     fc.assert(
-      fc.property(fc.array(op, { maxLength: 20 }), (ops) => {
-        let p: { main: string | null; additional: string[] } = { main: null, additional: [] }
-        for (const o of ops) {
-          const r = o.k === 'place' ? placePhoto(p, o.url, o.slot) : o.k === 'swap' ? swapMain(p, o.url) : withoutPhoto(p, o.url)
+      fc.property(fc.constantFrom<string | null>(A, null), fc.array(fc.constantFrom(A, B, C), { maxLength: 10 }), (start, urls) => {
+        let p = { main: start }
+        for (const u of urls) {
+          const r = withoutPhoto(p, u)
           if (!('refused' in r)) p = r
-          expect(p.additional.length).toBeLessThanOrEqual(2)
-          expect(p.additional.length === 0 || p.main !== null).toBe(true)
+          expect([start, null]).toContain(p.main)
         }
       }),
     )
@@ -65,9 +51,37 @@ describe('photo slots (R4)', () => {
   it('deletes a processed Blob copy and its thumbnail, never a bucket object', async () => {
     const deleted: string[] = []
     const blob = { delete: async (u: string) => void deleted.push(u) }
-    await deleteStoredPhoto(blob, A, { warn: () => {} })
-    await deleteStoredPhoto(blob, 'https://storage.googleapis.com/remonta-api-photos/staging/x', { warn: () => {} })
-    expect(deleted).toEqual([A, A.replace('.jpg', '-256.jpg')])
+    await deleteStoredPhoto(blob, OWN, OWNER, { warn: () => {} })
+    await deleteStoredPhoto(blob, 'https://storage.googleapis.com/remonta-api-photos/staging/x', OWNER, { warn: () => {} })
+    expect(deleted).toEqual([OWN, OWN.replace('.jpg', '-256.jpg')])
+  })
+
+  // F1 (api-review 2026-10-14): a URL in the caller's columns is not proof the file is theirs -- the legacy
+  // `updateWorkerPhoto` action stores any URL. Only the caller's own folder, `workers/<their profile id>/<upload id>`, is deleted.
+  it("never deletes another worker's file, or one outside the api's own keys", async () => {
+    const deleted: string[] = []
+    const blob = { delete: async (u: string) => void deleted.push(u) }
+    const others = [
+      `https://x.public.blob.vercel-storage.com/workers/${OTHER}/${UPLOAD}.jpg`, // another worker's photo
+      `https://x.public.blob.vercel-storage.com/workers/${OTHER}/${UPLOAD}-256.jpg`,
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/../${OTHER}/${UPLOAD}.jpg`, // dot segments
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}%2F..%2F${OTHER}/${UPLOAD}.jpg`, // encoded
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}/x.jpg`, // deeper
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/not-an-id.jpg`,
+      `https://x.public.blob.vercel-storage.com/workers/registration/${UPLOAD}.jpg`, // the multipart era
+      'https://x.public.blob.vercel-storage.com/workers/john/photo-123.jpg', // the app's legacy uploads
+      `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}.jpg?x=1`,
+    ]
+    for (const url of others) await deleteStoredPhoto(blob, url, OWNER, { warn: () => {} })
+    expect(deleted).toEqual([])
+  })
+
+  it('deletes a stored-as-uploaded copy (no thumbnail) in the owner\'s folder', async () => {
+    const deleted: string[] = []
+    const blob = { delete: async (u: string) => void deleted.push(u) }
+    const png = `https://x.public.blob.vercel-storage.com/workers/${OWNER}/${UPLOAD}.png`
+    await deleteStoredPhoto(blob, png, OWNER, { warn: () => {} })
+    expect(deleted).toEqual([png])
   })
 })
 

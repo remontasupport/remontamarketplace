@@ -106,11 +106,11 @@ export type ServiceAreaInput = z.output<typeof serviceAreaInputSchema>
 
 // ---- Photos (R4) -------------------------------------------------------------------------------
 
-export const PHOTO_SLOTS = ['main', 'additional'] as const
-export const MAX_ADDITIONAL_PHOTOS = 2
-export const photosSchema = z.strictObject({ main: z.string().max(2048).nullable(), additional: z.array(z.string().max(2048)).max(MAX_ADDITIONAL_PHOTOS) })
+// One photo per worker (user, 2026-10-14: the additional photos removed). `worker_profiles.additionalPhotos` keeps what
+// is stored; no worker entry reads or writes it (the admin pages still show it).
+export const photosSchema = z.strictObject({ main: z.string().max(2048).nullable() })
 export type Photos = z.output<typeof photosSchema>
-export const confirmPhotoSchema = z.strictObject({ uploadId: z.uuid(), slot: z.enum(PHOTO_SLOTS) })
+export const confirmPhotoSchema = z.strictObject({ uploadId: z.uuid() })
 export const photoUrlSchema = z.strictObject({ url: z.url().max(2048) })
 
 // ---- Preferred hours (R2.7) -----------------------------------------------------------------------

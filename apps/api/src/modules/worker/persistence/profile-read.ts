@@ -21,7 +21,6 @@ const PROFILE_SELECT = {
   lastName: true,
   mobile: true,
   photos: true,
-  additionalPhotos: true,
   introduction: true,
   city: true,
   state: true,
