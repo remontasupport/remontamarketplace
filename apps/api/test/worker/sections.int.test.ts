@@ -17,12 +17,15 @@ const LEGACY = { location: true, city: true, state: true, postalCode: true, lati
 
 describe.skipIf(!local)('the section writes on PostGIS', () => {
   let h: WorkerHarness
+  // The Blob store: deletes are recorded, never sent (F1). The bucket is never reached by these tests.
+  const blobDeletes: string[] = []
+  const photos = { bucket: {} as never, publicBaseUrl: 'https://storage.test', ipHashSecret: 'x'.repeat(32), blob: { delete: async (u: string) => void blobDeletes.push(u) } }
   const put = (path: string, body: unknown, user = () => h.a.userId) => h.t.fastify.inject({ method: 'PUT', url: path, headers: { 'x-test-principal': `${user()}:WORKER` }, payload: body as object })
-  const post = (path: string, body: unknown) => h.t.fastify.inject({ method: 'POST', url: path, headers: { 'x-test-principal': `${h.a.userId}:WORKER` }, payload: body as object })
+  const post = (path: string, body: unknown, user = () => h.a.userId) => h.t.fastify.inject({ method: 'POST', url: path, headers: { 'x-test-principal': `${user()}:WORKER` }, payload: body as object })
   const profile = async (user = () => h.a.userId) => (await h.get(user())).json()
 
   beforeAll(async () => {
-    h = await workerHarness('worker-sections.test')
+    h = await workerHarness('worker-sections.test', { photos })
   }, 60_000)
   afterAll(async () => {
     await h.close()
@@ -178,5 +181,22 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect(removed.json()).toEqual({ main: `https://storage.test/staging/${id}`, additional: [] })
     await h.db.outboxEvent.deleteMany({ where: { type: 'PhotoUploaded', payload: { path: ['photoUploadId'], equals: id } } })
     await h.db.registrationPhotoUpload.delete({ where: { id } })
+  })
+
+  it("F1: removing a photo deletes the file only from the caller's own folder; another worker's URL in their columns is cleared, never deleted", async () => {
+    const upload = crypto.randomUUID()
+    const blobOf = (profileId: string) => `https://x.public.blob.vercel-storage.com/workers/${profileId}/${upload}.jpg`
+    // A's columns hold B's file, as the legacy updateWorkerPhoto action allows.
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { photos: blobOf(h.b.profileId), additionalPhotos: null } })
+    blobDeletes.length = 0
+    const res = await post('/v1/worker/photos/remove', { url: blobOf(h.b.profileId) })
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toEqual({ main: null, additional: [] })
+    expect(blobDeletes).toEqual([])
+    // B's own file in B's folder: deleted with its thumbnail.
+    await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { photos: blobOf(h.b.profileId), additionalPhotos: null } })
+    const own = await post('/v1/worker/photos/remove', { url: blobOf(h.b.profileId) }, () => h.b.userId)
+    expect(own.statusCode, own.body).toBe(200)
+    expect(blobDeletes).toEqual([blobOf(h.b.profileId), blobOf(h.b.profileId).replace(/\.jpg$/, '-256.jpg')])
   })
 })

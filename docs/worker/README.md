@@ -82,7 +82,7 @@ completion flag recompute and persist it in the same transaction. After a save t
 | `POST /v1/worker/photos/tickets` | `{contentType, sizeBytes}` | the sign-up's ticket (JPEG/PNG/WebP, 5 MB) |
 | `POST /v1/worker/photos` | `{uploadId, slot: 'main' | 'additional'}` | the sign-up's confirm (the object inspected), then the upload claimed by this profile into the slot (at most 2 additional; with no main photo the upload becomes the main); `PhotoUploaded` makes the clean copy and repoints that slot. 201 with `{main, additional}` |
 | `POST /v1/worker/photos/main` | `{url}` | an additional photo swaps with the main |
-| `POST /v1/worker/photos/remove` | `{url}` | an additional photo, or the main when it is the last; the processed Blob copy and its thumbnail are deleted after the commit |
+| `POST /v1/worker/photos/remove` | `{url}` | an additional photo, or the main when it is the last; the processed Blob copy and its thumbnail are deleted after the commit, only when the file is in the caller's own folder (`workers/<their profile id>/<upload id>.<ext>`); any other URL is cleared from the column and the file left |
 | `PUT /v1/worker/availability` | `{slots: [{day, startMinute, endMinute}]}` | minutes 0-1440, start < end, at most 4 a day, no overlap; stored in week order |
 | `PUT /v1/worker/experience` | `{domains: [...]}` | one entry per care area, professional or personal or both, any of that area's specific areas (its own list; the limit of 3 went on 2026-10-13), 10 other areas |
 | `PUT /v1/worker/job-history`, `/education` | `{entries: [...]}` | 0-20 entries, month names, years 1950-now, "currently" means no end date, otherwise the end not before the start; the order kept |

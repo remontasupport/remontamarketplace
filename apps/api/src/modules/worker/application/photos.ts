@@ -11,6 +11,7 @@ import type { Tx } from '../../../platform/persistence/db'
 import { parseAdditionalPhotos } from './get-profile'
 import { attachPhoto, claimPhoto } from '../../registration/application/photo-claim'
 import { PHOTO_UPLOADED, type PhotoUploadedPayload } from '../../registration/domain/events'
+import { PROCESSED_PREFIX } from '../../registration/domain/photo-upload'
 
 export function photosOf(row: { photos: string | null; additionalPhotos: string | null }): Photos {
   return { main: row.photos || null, additional: parseAdditionalPhotos(row.additionalPhotos).slice(0, MAX_ADDITIONAL_PHOTOS) }
@@ -95,9 +96,31 @@ export function isBlobUrl(url: string): boolean {
   }
 }
 
-/** After commit, best-effort (R4.4): a processed Blob copy and its thumbnail; a staged bucket object is the purge job's. */
-export async function deleteStoredPhoto(blob: { delete(urlOrKey: string): Promise<void> }, url: string, log: { warn(o: object, m: string): void }): Promise<void> {
-  if (!isBlobUrl(url)) return
+const UPLOAD_FILE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[a-z]{3,4}$/
+
+/**
+ * Is `url` a file the api itself wrote for this profile: `workers/<profileId>/<upload id>.<ext>` (processedKey,
+ * asIsKey), on Blob's host, nothing after the path? Being in the caller's columns is not enough: the legacy
+ * `updateWorkerPhoto` action stores any URL, so another worker's would otherwise be deleted (F1, api-review 2026-10-14).
+ */
+export function isOwnStoredPhoto(url: string, profileId: string): boolean {
+  if (!isBlobUrl(url)) return false
+  const u = new URL(url)
+  if (u.search || u.hash) return false
+  const prefix = `/${PROCESSED_PREFIX}${profileId}/`
+  return u.pathname.startsWith(prefix) && UPLOAD_FILE.test(u.pathname.slice(prefix.length))
+}
+
+/**
+ * After commit, best-effort (R4.4): the processed Blob copy and its thumbnail, only in the caller's own folder
+ * (isOwnStoredPhoto). Anything else -- another worker's file, the app's legacy uploads -- leaves the column and stays
+ * in the store; a staged bucket object is the purge job's.
+ */
+export async function deleteStoredPhoto(blob: { delete(urlOrKey: string): Promise<void> }, url: string, profileId: string, log: { warn(o: object, m: string): void }): Promise<void> {
+  if (!isOwnStoredPhoto(url, profileId)) {
+    if (isBlobUrl(url)) log.warn({ profileId, reason: 'not-own-folder' }, 'photo delete skipped')
+    return
+  }
   const targets = [url, ...(url.endsWith('.jpg') ? [url.replace(/\.jpg$/, '-256.jpg')] : [])]
   for (const t of targets) await blob.delete(t).catch((err: unknown) => log.warn({ err: err instanceof Error ? err.message : String(err) }, 'photo delete failed'))
 }
