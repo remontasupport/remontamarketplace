@@ -169,6 +169,8 @@ const domainSchema = z
   })
 export const experienceSchema = z.strictObject({ domains: z.array(domainSchema).max(CARE_DOMAINS.length) }).refine((b) => new Set(b.domains.map((d) => d.domain)).size === b.domains.length, { message: 'One entry per area', path: ['domains'] })
 export type ExperienceBody = z.output<typeof experienceSchema>
+/** DELETE /v1/worker/experience/:domain (2026-10-14): one care area, named by its domain (one row per worker per domain). */
+export const experienceDomainParamsSchema = z.strictObject({ domain: z.enum(CARE_DOMAINS) })
 
 // ---- Work history and education (R2.9, R2.10) ------------------------------------------------------------
 
