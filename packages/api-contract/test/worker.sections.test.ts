@@ -14,15 +14,17 @@ import {
   bankAccountSchema,
   bioSchema,
   confirmPhotoSchema,
+  dateOfBirthSchema,
   educationSchema,
   experienceSchema,
+  genderSchema,
   homeAddressInputSchema,
   jobHistorySchema,
   nameSchema,
-  personalInfoSchema,
   serviceAreaInputSchema,
   slotIssues,
   sortSlots,
+  vehicleSchema,
   workerContract,
 } from '../src/index'
 
@@ -39,9 +41,9 @@ const yearsAgo = (n: number) => {
 }
 
 describe('the entries (E2)', () => {
-  it('declares the 16 U2 writes beside the read, every write with an audit action, a body limit and both rate limits', () => {
+  it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(17)
+    expect(names).toHaveLength(19)
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
       expect(e.meta.audit, name).toBe('PROFILE_UPDATE')
@@ -78,12 +80,18 @@ describe('R2.2 bio', () => {
 
 describe('R2.3 personal info', () => {
   it('a real date, 16-100 years old, the two genders, a vehicle answer', () => {
-    ok(personalInfoSchema, { dateOfBirth: yearsAgo(30), gender: 'Female', hasVehicle: 'Yes' })
-    bad(personalInfoSchema, { dateOfBirth: yearsAgo(15), gender: 'Female', hasVehicle: 'Yes' }, 'dateOfBirth')
-    bad(personalInfoSchema, { dateOfBirth: yearsAgo(101), gender: 'Female', hasVehicle: 'Yes' }, 'dateOfBirth')
-    bad(personalInfoSchema, { dateOfBirth: '1990-02-30', gender: 'Female', hasVehicle: 'Yes' }, 'dateOfBirth')
-    bad(personalInfoSchema, { dateOfBirth: yearsAgo(30), gender: 'Other', hasVehicle: 'Yes' }, 'gender')
-    bad(personalInfoSchema, { dateOfBirth: yearsAgo(30), gender: 'Male' }, 'hasVehicle')
+    ok(dateOfBirthSchema, { dateOfBirth: yearsAgo(30) })
+    bad(dateOfBirthSchema, { dateOfBirth: yearsAgo(15) }, 'dateOfBirth')
+    bad(dateOfBirthSchema, { dateOfBirth: yearsAgo(101) }, 'dateOfBirth')
+    bad(dateOfBirthSchema, { dateOfBirth: '1990-02-30' }, 'dateOfBirth')
+    ok(genderSchema, { gender: 'Female' })
+    bad(genderSchema, { gender: 'Other' }, 'gender')
+    ok(vehicleSchema, { hasVehicle: 'No' })
+    bad(vehicleSchema, { hasVehicle: 'Maybe' }, 'hasVehicle')
+    // Each saves alone (split 2026-10-14): a body carrying another answer is refused.
+    bad(dateOfBirthSchema, { dateOfBirth: yearsAgo(30), gender: 'Female' })
+    bad(genderSchema, { gender: 'Male', hasVehicle: 'Yes' })
+    bad(vehicleSchema, { hasVehicle: 'Yes', dateOfBirth: yearsAgo(30) })
     expect(ageOn('1990-06-15', new Date('2026-06-14T00:00:00Z'))).toBe(35)
     expect(ageOn('1990-06-15', new Date('2026-06-15T00:00:00Z'))).toBe(36)
   })

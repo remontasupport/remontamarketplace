@@ -69,15 +69,19 @@ export function ageOn(dateOfBirth: string, on: Date): number {
 export const AGE_MIN = 16
 export const AGE_MAX = 100
 
-export const personalInfoSchema = z.strictObject({
+// R2.3: the three personal answers are three writes, each saving its own column only (user, 2026-10-14: each is
+// asked on its own page; one write of all three made every page re-send the other two).
+export const dateOfBirthSchema = z.strictObject({
   dateOfBirth: isoDateSchema.refine((s) => {
     const a = ageOn(s, new Date())
     return a >= AGE_MIN && a <= AGE_MAX
   }, `Between ${AGE_MIN} and ${AGE_MAX} years old`),
-  gender: z.enum(GENDERS),
-  hasVehicle: z.enum(VEHICLE_ANSWERS),
 })
-export type PersonalInfoBody = z.output<typeof personalInfoSchema>
+export type DateOfBirthBody = z.output<typeof dateOfBirthSchema>
+export const genderSchema = z.strictObject({ gender: z.enum(GENDERS) })
+export type GenderBody = z.output<typeof genderSchema>
+export const vehicleSchema = z.strictObject({ hasVehicle: z.enum(VEHICLE_ANSWERS) })
+export type VehicleBody = z.output<typeof vehicleSchema>
 
 /** R5.1: spaces allowed while typing; stored as the eleven digits. */
 export const abnBodySchema = z.strictObject({

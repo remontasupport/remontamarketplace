@@ -3744,10 +3744,10 @@
         }
       }
     },
-    "/v1/worker/profile/personal-info": {
+    "/v1/worker/profile/date-of-birth": {
       "put": {
-        "operationId": "worker.putPersonalInfo",
-        "summary": "Replace the date of birth, gender and vehicle answer.",
+        "operationId": "worker.putDateOfBirth",
+        "summary": "Replace the date of birth (16-100 years old); nothing else.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3758,26 +3758,10 @@
                   "dateOfBirth": {
                     "type": "string",
                     "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                  },
-                  "gender": {
-                    "type": "string",
-                    "enum": [
-                      "Male",
-                      "Female"
-                    ]
-                  },
-                  "hasVehicle": {
-                    "type": "string",
-                    "enum": [
-                      "Yes",
-                      "No"
-                    ]
                   }
                 },
                 "required": [
-                  "dateOfBirth",
-                  "gender",
-                  "hasVehicle"
+                  "dateOfBirth"
                 ],
                 "additionalProperties": false
               }
@@ -3795,14 +3779,292 @@
                     "dateOfBirth": {
                       "type": "string",
                       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                    },
+                    }
+                  },
+                  "required": [
+                    "dateOfBirth"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/profile/gender": {
+      "put": {
+        "operationId": "worker.putGender",
+        "summary": "Replace the gender; nothing else.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "gender": {
+                    "type": "string",
+                    "enum": [
+                      "Male",
+                      "Female"
+                    ]
+                  }
+                },
+                "required": [
+                  "gender"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
                     "gender": {
                       "type": "string",
                       "enum": [
                         "Male",
                         "Female"
                       ]
-                    },
+                    }
+                  },
+                  "required": [
+                    "gender"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/profile/vehicle": {
+      "put": {
+        "operationId": "worker.putVehicle",
+        "summary": "Replace the vehicle-access answer; nothing else.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hasVehicle": {
+                    "type": "string",
+                    "enum": [
+                      "Yes",
+                      "No"
+                    ]
+                  }
+                },
+                "required": [
+                  "hasVehicle"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
                     "hasVehicle": {
                       "type": "string",
                       "enum": [
@@ -3812,8 +4074,6 @@
                     }
                   },
                   "required": [
-                    "dateOfBirth",
-                    "gender",
                     "hasVehicle"
                   ],
                   "additionalProperties": false
@@ -3911,7 +4171,7 @@
               "window": "1m"
             }
           ],
-          "maxBodyKb": 4,
+          "maxBodyKb": 1,
           "audit": "PROFILE_UPDATE"
         }
       }
