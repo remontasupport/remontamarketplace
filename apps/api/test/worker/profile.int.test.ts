@@ -13,11 +13,11 @@ const url = process.env.TEST_DATABASE_URL
 const local = !!url && /@(localhost|127\.0\.0\.1)[:/]/.test(url)
 
 /**
- * Statements the handler's transaction issues, BEGIN/COMMIT and the timeout excluded: the profile, its nine
- * relations (the HOME row's suburb nested), the catalogue category and its five nested relations -- 17 on
- * CI's first run, one per relation, none per row (U1-PRF-01; summary deviation 3).
+ * Statements the handler's transaction issues, BEGIN/COMMIT and the timeout excluded. Since 2026-10-14 the read uses
+ * relationLoadStrategy 'join': the profile with all its relations is one statement, the catalogue another (it was 17,
+ * one per relation, and every statement is a round trip). None per row (U1-PRF-01).
  */
-export const MAX_READ_STATEMENTS = 20
+export const MAX_READ_STATEMENTS = 2
 
 describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
   let h: WorkerHarness
