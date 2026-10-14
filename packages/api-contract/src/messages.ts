@@ -17,7 +17,8 @@ export const friendlyError: z.core.$ZodErrorMap = (iss) => {
       if (isEmpty(iss.input)) return REQUIRED
       if (iss.expected === 'number' || iss.expected === 'int') return 'Please enter a number.'
       if (iss.expected === 'boolean') return 'Please choose yes or no.'
-      if (iss.expected === 'array') return 'Please choose from the list.'
+      // A list, or a picked item (a suburb from the search): chosen, not typed.
+      if (iss.expected === 'array' || iss.expected === 'object') return 'Please choose from the list.'
       if (iss.expected === 'string') return 'Please enter text.'
       return 'This value is not valid.'
     case 'too_small': {

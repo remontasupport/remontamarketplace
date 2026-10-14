@@ -24,6 +24,9 @@ describe('friendlyError', () => {
     expect(messages(jobHistorySchema, { entries: Array.from({ length: 21 }, () => job) })['entries']).toBe('Please choose no more than 20.')
     expect(messages(jobHistorySchema, { entries: [{ ...job, startYear: 1900 }] })['entries.0.startYear']).toBe('Please enter 1950 or more.')
   })
+  it('a picker given something that is not a pick reads as a choice', () => {
+    expect(friendlyError({ code: 'invalid_type', expected: 'object', input: 'Parramatta', path: [], message: '' } as never)).toBe('Please choose from the list.')
+  })
   it('an empty required list, an unknown field', () => {
     expect(messages(supportActivitiesSchema, { uniqueService: [] })['uniqueService']).toBe('Please choose at least one.')
     expect(messages(nameSchema, { firstName: 'A', middleName: null, lastName: 'B', nickname: 'x' })['']).toBe('This is not accepted here: nickname.')
