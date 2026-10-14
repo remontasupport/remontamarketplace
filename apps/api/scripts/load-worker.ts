@@ -64,7 +64,7 @@ export function parseArgs(argv: readonly string[]): LoadOptions {
   }
 }
 
-/** The production Neon hosts (scripts/local/rehearsal-env.sh). */
+/** The production Neon hosts (scripts/local/dev-env.sh). */
 const PRODUCTION_DB_HOSTS = [/ep-delicate-recipe/, /ep-polished-thunder/]
 
 /** R7.1: the problems that stop the run; empty when staging is the target. */

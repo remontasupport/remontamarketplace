@@ -48,3 +48,18 @@ export class ResendMailer implements Mailer {
     throw new Error(`resend unavailable: ${e.kind}${e.kind === 'status' ? ` ${e.status}${said}` : ''}`)
   }
 }
+
+/**
+ * Local development only (EMAIL_MODE=log; config refuses it in production and on Cloud Run): prints the email,
+ * codes included, and sends nothing, so a copy of real data can be used without emailing real people.
+ */
+export class LogMailer implements Mailer {
+  constructor(private readonly print: (line: string) => void = (line) => process.stdout.write(`${line}
+`)) {}
+
+  async send(email: Email): Promise<{ id: string }> {
+    this.print(`[EMAIL_MODE=log] not sent -- to: ${email.to} | subject: ${email.subject}
+${email.text}`)
+    return { id: `logged-${email.idempotencyKey}` }
+  }
+}

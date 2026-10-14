@@ -1,7 +1,7 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { escapeHtml, existingAccountNotice, registrationConfirmation } from '../../src/modules/notifications/templates'
-import { ResendMailer } from '../../src/platform/email/mailer'
+import { LogMailer, ResendMailer } from '../../src/platform/email/mailer'
 import { SafeHttpClient } from '../../src/platform/http/safe-http-client'
 import { PermanentFailure } from '../../src/platform/errors'
 import { afterFailure, backoffMs, MAX_ATTEMPTS } from '../../src/platform/outbox/outbox'
@@ -58,6 +58,17 @@ describe('ResendMailer', () => {
       expect(err).toBeInstanceOf(Error)
       expect(err).not.toBeInstanceOf(PermanentFailure)
     }
+  })
+})
+
+describe('LogMailer (EMAIL_MODE=log, local only)', () => {
+  it('prints the email with its text and sends nothing', async () => {
+    const lines: string[] = []
+    const res = await new LogMailer((l) => lines.push(l)).send({ to: 'a@example.test', subject: 'Your code', html: '<p>123456</p>', text: 'Your code is 123456', idempotencyKey: 'evt-1' })
+    expect(res).toEqual({ id: 'logged-evt-1' })
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toContain('a@example.test')
+    expect(lines[0]).toContain('123456')
   })
 })
 

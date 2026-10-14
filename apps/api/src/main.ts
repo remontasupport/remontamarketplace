@@ -28,7 +28,7 @@ import { WorkerPoolHasher } from './platform/security/password-hasher'
 import { notificationHandlers } from './modules/notifications/notification.handlers'
 import { onboardingReconcilerJob } from './modules/onboarding/reconciler'
 import { purgeUnclaimedPhotosJob } from './modules/registration/jobs/purge-photos'
-import { ResendMailer } from './platform/email/mailer'
+import { LogMailer, ResendMailer, type Mailer } from './platform/email/mailer'
 import { Scheduler, type Job } from './platform/jobs/scheduler'
 import { outboxRetentionJob } from './platform/outbox/retention'
 
@@ -39,7 +39,8 @@ async function main() {
   const rateLimiter = new PostgresRateLimiter(db)
 
   const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
-  const mailer = new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
+  // EMAIL_MODE=log (local development on a copy of real data): nothing is sent, the email is printed.
+  const mailer: Mailer = config.EMAIL_MODE === 'log' ? new LogMailer() : new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
   // The bucket (U3): the browser uploads straight to it under a ticket; private, upload-only.
   // Vercel Blob: where every photo lives and is served from -- the clean copies go there.
   const bucket = new GcsPhotoStore({ bucket: config.PHOTO_BUCKET, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, apiEndpoint: config.GCS_API_ENDPOINT, timeoutMs: config.GCS_TIMEOUT_MS })
