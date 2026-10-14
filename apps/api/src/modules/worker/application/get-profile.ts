@@ -26,17 +26,6 @@ export async function getProfile(deps: GetProfileDeps, principal: Principal, log
   return shapeProfile(rows)
 }
 
-/** R2.6: today's `additionalPhotos` is a JSON array of URLs (profile.service.ts); anything else is empty. */
-export function parseAdditionalPhotos(stored: string | null): string[] {
-  if (!stored) return []
-  try {
-    const v: unknown = JSON.parse(stored)
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.length > 0).slice(0, 10) : []
-  } catch {
-    return []
-  }
-}
-
 /** E5 from the read's rows. Exported for the backfill (P14), which runs the same computation. */
 export function completionInputOf(rows: ProfileRows): CompletionInput {
   const p = rows.profile
@@ -70,7 +59,7 @@ export function shapeProfile(rows: ProfileRows): Profile {
     id: p.id,
     names: { firstName: p.firstName, middleName: p.middleName, lastName: p.lastName },
     mobile: p.mobile,
-    photos: { main: p.photos || null, additional: parseAdditionalPhotos(p.additionalPhotos) },
+    photos: { main: p.photos || null },
     bio: p.introduction,
     personalInfo: {
       dateOfBirth: p.dateOfBirth,

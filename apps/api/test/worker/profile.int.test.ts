@@ -36,7 +36,7 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
       id: h.a.profileId,
       names: { firstName: 'Mary', middleName: null, lastName: "O'Connor" },
       mobile: '0412345678',
-      photos: { main: 'https://blob.test/a.jpg', additional: ['https://blob.test/a2.jpg'] },
+      photos: { main: 'https://blob.test/a.jpg' }, // the seeded additionalPhotos are kept in the column, never read (2026-10-14)
       personalInfo: { dateOfBirth: '1990-01-01', age: null, gender: 'Female', hasVehicle: 'Yes', languages: ['English'] },
       abn: { type: 'abn', value: null, signed: true },
       homeAddress: null,

@@ -4,7 +4,7 @@
 import { EXAMPLE_ABN } from '@remonta/schemas/validations/abn'
 import pino from 'pino'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { claimIntoSlot } from '../../src/modules/worker/application/photos'
+import { claimAsPhoto } from '../../src/modules/worker/application/photos'
 import { parseStoredFlags } from '../../src/modules/worker/domain/persist-completion'
 import { onboardingReconcilerJob } from '../../src/modules/onboarding/reconciler'
 import { writeTransaction } from '../../src/platform/persistence/db'
@@ -166,19 +166,22 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     for (const [, path, body] of cases) expect((await put(path, body, () => h.orphan.userId)).statusCode, path).toBe(404)
   })
 
-  it('photos: a confirmed upload is claimed into a slot once, by its first claimer only', async () => {
+  it('photos: a confirmed upload becomes the one photo, claimed once by its first claimer only; the additionalPhotos column is left as stored', async () => {
     const id = crypto.randomUUID()
+    const old = 'https://x.public.blob.vercel-storage.com/workers/a/main.jpg'
+    const kept = '["https://blob.test/a2.jpg"]'
     await h.db.registrationPhotoUpload.create({ data: { id, blobKey: `staging/${id}`, url: `https://storage.test/staging/${id}`, contentType: 'image/jpeg', sizeBytes: 10, ipHash: 'x' } })
-    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { photos: 'https://x.public.blob.vercel-storage.com/workers/a/main.jpg', additionalPhotos: null } })
-    const photos = await writeTransaction(h.db, (tx) => claimIntoSlot(tx, h.a.profileId, id, 'additional', new Date()))
-    expect(photos).toEqual({ main: 'https://x.public.blob.vercel-storage.com/workers/a/main.jpg', additional: [`https://storage.test/staging/${id}`] })
-    expect(await writeTransaction(h.db, (tx) => claimIntoSlot(tx, h.a.profileId, id, 'additional', new Date()))).toEqual(photos) // idempotent
-    await expect(writeTransaction(h.db, (tx) => claimIntoSlot(tx, h.b.profileId, id, 'main', new Date()))).rejects.toMatchObject({ status: 404 })
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { photos: old, additionalPhotos: kept } })
+    const photos = await writeTransaction(h.db, (tx) => claimAsPhoto(tx, h.a.profileId, id, new Date()))
+    expect(photos).toEqual({ main: `https://storage.test/staging/${id}` })
+    expect(await writeTransaction(h.db, (tx) => claimAsPhoto(tx, h.a.profileId, id, new Date()))).toEqual(photos) // idempotent
+    await expect(writeTransaction(h.db, (tx) => claimAsPhoto(tx, h.b.profileId, id, new Date()))).rejects.toMatchObject({ status: 404 })
     expect(await h.db.outboxEvent.count({ where: { type: 'PhotoUploaded', payload: { path: ['photoUploadId'], equals: id } } })).toBe(1)
-    const main = await post('/v1/worker/photos/main', { url: `https://storage.test/staging/${id}` })
-    expect(main.json()).toEqual({ main: `https://storage.test/staging/${id}`, additional: ['https://x.public.blob.vercel-storage.com/workers/a/main.jpg'] })
-    const removed = await post('/v1/worker/photos/remove', { url: 'https://x.public.blob.vercel-storage.com/workers/a/main.jpg' })
-    expect(removed.json()).toEqual({ main: `https://storage.test/staging/${id}`, additional: [] })
+    expect((await post('/v1/worker/photos/main', { url: old })).statusCode).toBe(404) // make-main is gone
+    expect((await post('/v1/worker/photos/remove', { url: old })).statusCode).toBe(400) // no longer this worker's photo
+    const removed = await post('/v1/worker/photos/remove', { url: `https://storage.test/staging/${id}` })
+    expect(removed.json()).toEqual({ main: null })
+    expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { photos: true, additionalPhotos: true } })).toEqual({ photos: null, additionalPhotos: kept })
     await h.db.outboxEvent.deleteMany({ where: { type: 'PhotoUploaded', payload: { path: ['photoUploadId'], equals: id } } })
     await h.db.registrationPhotoUpload.delete({ where: { id } })
   })
@@ -191,7 +194,7 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     blobDeletes.length = 0
     const res = await post('/v1/worker/photos/remove', { url: blobOf(h.b.profileId) })
     expect(res.statusCode, res.body).toBe(200)
-    expect(res.json()).toEqual({ main: null, additional: [] })
+    expect(res.json()).toEqual({ main: null })
     expect(blobDeletes).toEqual([])
     // B's own file in B's folder: deleted with its thumbnail.
     await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { photos: blobOf(h.b.profileId), additionalPhotos: null } })

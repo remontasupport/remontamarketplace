@@ -3,7 +3,7 @@
 import { profileSchema } from '@remonta/api-contract'
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { parseAdditionalPhotos, shapeProfile } from '../../src/modules/worker/application/get-profile'
+import { shapeProfile } from '../../src/modules/worker/application/get-profile'
 import { assertOwned } from '../../src/modules/worker/application/own-profile'
 import { maskBankAccount } from '../../src/modules/worker/domain/bank-account'
 import { DEFAULT_DISPLAY_ROLE, displayRoleOf } from '../../src/modules/worker/domain/display-role'
@@ -49,16 +49,6 @@ describe('the stored flags (R3.9)', () => {
   })
 })
 
-describe('parseAdditionalPhotos (R2.6)', () => {
-  it('reads the JSON array the app stores; anything else is empty', () => {
-    expect(parseAdditionalPhotos('["https://a/1.jpg","https://a/2.jpg"]')).toEqual(['https://a/1.jpg', 'https://a/2.jpg'])
-    expect(parseAdditionalPhotos(null)).toEqual([])
-    expect(parseAdditionalPhotos('not json')).toEqual([])
-    expect(parseAdditionalPhotos('{"a":1}')).toEqual([])
-    expect(parseAdditionalPhotos('[1, "", "https://a/3.jpg"]')).toEqual(['https://a/3.jpg'])
-  })
-})
-
 describe('assertOwned (R1.3)', () => {
   it('404 for a missing row and for another owner; passes for the owner', () => {
     const owner = { profileId: 'p1', userId: 'u1' }
@@ -80,7 +70,6 @@ export function sampleRows(patch: Partial<ProfileRows['profile']> = {}): Profile
       lastName: "O'Connor",
       mobile: '0412345678',
       photos: 'https://blob.test/main.jpg',
-      additionalPhotos: '["https://blob.test/2.jpg"]',
       introduction: 'I have supported people for ten years and love what I do.',
       city: 'Parramatta',
       state: 'NSW',
@@ -119,7 +108,7 @@ describe('shapeProfile (L2 step 4, E1)', () => {
     expect(body).toMatchObject({
       id: 'wp_1',
       names: { firstName: 'Mary', middleName: null, lastName: "O'Connor" },
-      photos: { main: 'https://blob.test/main.jpg', additional: ['https://blob.test/2.jpg'] },
+      photos: { main: 'https://blob.test/main.jpg' },
       personalInfo: { hasVehicle: 'Yes', dateOfBirth: '1990-01-01', age: null, languages: ['English'] },
       abn: { type: 'abn', value: null, signed: true },
       homeAddress: null,
