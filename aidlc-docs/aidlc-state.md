@@ -8,16 +8,58 @@
   first"). Record branch `aidlc/api-review` (from `aidlc/worker-profile-api` `b217341`). The previous cycle,
   worker-profile-api, is **parked** with open work: `aidlc-docs/archive/worker-profile-api/PARKED.md` (PR #57 held,
   the prod promotion of `182f94f...`, the column tests).
-- **Current Stage**: unit 0 `local-dev` built: branch `feat/local-dev-real-data` (`257bb53`), PR to open. Run the api
-  and the app on this machine against a copy of real data (`DEV_DATABASE_URL`, a personal Neon branch of production;
-  rehearse-w1 as the fallback), every outbound path off (the api's new `EMAIL_MODE=log`; dead Blob/Resend/Twilio/Zoho/
-  n8n/Pusher/Upstash values in the app). Checked locally on rehearse-w1: api health 200, suburb search rows, app /login
-  and sign-up pages 200. **Waiting on the user:** create the Neon branch and put its URL in `apps/api/.env` as
-  `DEV_DATABASE_URL`; open and merge the PR (an api path change: staging redeploys; production unaffected until a
-  promotion, and `EMAIL_MODE` defaults to `resend`).
-  - **Next:** the api review: an inventory of every `apps/api` endpoint in order (contract by contract: method, path,
-    access, limits, handler, tables) and of the api's structure (pipeline, platform, modules, persistence, jobs,
-    outbox), then the user's walk-through and the questions it raises.
+- **Current Stage** (saved 2026-10-14 end of day, for the resume): the review is scoped to **My Profile**
+  (`inception/review/my-profile-api-review.md`: 20 entries, layers, findings F1-F11). Unit 0 `local-dev` is merged
+  (PR #61). Today's work, in order, all tested locally on the user's dev Neon branch:
+
+  **On `main` (merged, on staging, NOT on production):** PR #62 F1 photo-delete ownership (`521e455`); PR #63 one
+  photo per worker (`6dbc65b`); PR #65 profile read by join, saves faster (`f66cb6c`). Production api is still the
+  old image (POST /v1/worker/photos/main answers 401 there, 404 on staging); rollback revision `remonta-api-00009-gct`.
+
+  **Open api PRs, NOT merged, every one already inside PR #57** (merge in this order; the deletes and the message
+  PRs are stacked, so each shows only its own commit once the one before is merged):
+  1. `feat/additional-info-split-api` `252f089` -- nine additional-info entries (was one `:group` entry)
+  2. `fix/dob-age` `223736f` -- the age follows the date of birth (write + computed read)
+  3. `feat/gender-prefer-not-to-say` `405790f` -- "Prefer not to say"
+  4. `feat/delete-experience-api` `bc83ebd` -- DELETE /v1/worker/experience/:domain; the pipeline refuses a body on a body-less entry
+  5. `feat/delete-job-history-api` `07c7740` -- DELETE /v1/worker/job-history/:entryId (on 4)
+  6. `feat/delete-education-api` `4620077` -- DELETE /v1/worker/education/:entryId (on 5)
+  7. `fix/friendly-validation-messages` `cea8497` -- plain-English messages (api-contract `friendlyError`)
+  8. `fix/friendly-messages-signup` `833f6fa` -- the same on the live sign-up form (on 7; changes a live page on merge)
+  9. `fix/suburb-field-clear` `997168a` -- the suburb box can be cleared (app; fixes My Profile, sign-up unaffected)
+  1-3 overlap each other (docs, openapi.json, sections.int.test): merging them one by one conflicts. **Proposed and
+  not yet answered:** one combined api PR (`main` + 1-9, conflicts resolved as on PR #57).
+
+  **PR #57** (`feat/edit-profile-app`, head `22d82b3`, worktree `../remonta-pr57`, where the local servers run):
+  held, **do not merge before the api is promoted** -- the app's contract client refuses the old api's shapes, so
+  every My Profile page would read "temporarily unavailable" for real workers. It contains all of the above plus
+  app-only work: one-photo page, the nine additional-info pages, the delete confirm (ConfirmDialog) on Experience,
+  Work History, Education (ROW_DELETES, form-engine `rowKey`), the kept-draft notice removed, "Course or degree"
+  wording on Education, no numbered row titles, no row title on Work History, list rows without move arrows
+  (trash then pen on the left; a saved row is a summary until the pen opens it; form-engine `identity` +
+  `itemSummary`). Gates on PR #57 at `22d82b3`: app 139 type / 470 lint known, 213 tests; form-engine 76;
+  api-contract 84; api 650 (database tests skip locally, CI runs them).
+
+  **Go-live order:** merge 1-9 (or the combined PR) -> CI + deploy-api (staging) -> check the PR #57 preview ->
+  Actions -> deploy-api -> stage `prod`, imageTag = the FULL 40-character sha of the last merge -> production probes
+  -> merge PR #57 -> production checks.
+
+  **Resume here:**
+  1. `git ls-remote origin main feat/edit-profile-app`; ask what was merged since.
+  2. Ask: build the combined api PR? (recommended)
+  3. Open answers owed by the user: the existing home addresses (0 new, 571 street-looking `location`s: leave empty /
+     dry-run copy / remind workers) and whether admins see the home address; sort jobs and courses by start date now
+     that reordering is gone (offered); drop the draft entirely or keep it silent (kept silent); Education's typed
+     course as its row title (kept); the sign-up form's own draft notice (untouched).
+  4. Local api: `bash scripts/local/run-api.sh` from `../remonta-pr57` (with a build after any api change; stop it
+     before `pnpm --filter @remonta/api run quality`, `prisma generate` hits EPERM while it runs). Uploads fail
+     locally (no Google credentials) and a read can pass the 10 s transaction limit on the slow link (~0.3 s a round
+     trip): both local only; a local-only longer limit and a local photo folder were offered, not built.
+  5. Follow-ups found today: the completion property test ("both partitions are large") fails at random about once
+     in ten runs -- make its generator guarantee both partitions; F2 the legacy `"use server"` profile writes still
+     callable (retire with PR #57); F3-F5 bank account (notify, encryption, impersonation policy); F11 street-level
+     coordinates from the old address page; `test/my-profile-columns` (`e23df59`) never opened as a PR and is behind
+     the new entries.
 
 ## Previous cycles (archived, read-only)
 

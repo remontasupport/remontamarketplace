@@ -4196,3 +4196,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input** (answers): "Summary, pen opens (Recommended)"; "All three (Recommended)"
 **AI response**: PR #57 `22d82b3`: OrderedListField without move arrows, trash then pen on the left, a closed row shows RowSummary; form engine orderedList `identity` + `itemSummary`; SectionPage OrderedListSlot (open rows by identity; new or erroring rows always open; a fresh read closes all); summaries for jobs, courses, experience areas; tests. App 139/470 known 213, form-engine 76. Pushed.
+
+**User input**: "can you save this to ai dlc so I can go back tomorrow"
+**AI response**: refs checked (main `f66cb6c`, PR #57 `22d82b3`, the nine open api/app branches all in PR #57 and none on main, production api still old, staging has the one-photo api but not the deletes). aidlc-state.md "Current Stage" rewritten for the resume: what is on main/staging/production, the nine open PRs in merge order, PR #57 contents and gates, the go-live order, a numbered "Resume here" (the combined api PR question, the open answers, the local api notes, today's follow-ups incl. the flaky completion test). The review gains F11 and a status section (F1 fixed, F9 corrected). Memory updated.

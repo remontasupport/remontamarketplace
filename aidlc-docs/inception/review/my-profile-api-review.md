@@ -66,6 +66,7 @@ The groups `good-to-know` and `fun-fact` have entries but no page in the new men
 | F8 | Low | **The token minter's limiter fails open** and is off without Upstash (local, possibly Preview). The api's per-user limits still apply, so the impact is small. | `apps/app/src/lib/ratelimit.ts` |
 | F9 | Info | `putAbn` has no page: an unused entry is attack surface. Keep (U3 needs the ABN) or remove. (Corrected 2026-10-14: `good-to-know` is on the Interests page and `fun-fact` on the Bio page; both now have their own entries.) | contract |
 | F10 | Info | `TRUST_PROXY=1` on Cloud Run: per-IP limits count the address Google's front end appends. Correct by design; confirm once on staging that a forged `X-Forwarded-For` does not change the counted IP. | `infra/lib/stages.ts` |
+| F11 | Low | **Street-level coordinates from the old Address page.** `updateWorkerAddress` geocodes the full street address into `worker_profiles.latitude/longitude`, which the client search filters and sorts by (never returned). Repeated searches could narrow a home. New saves (Service Area) store the suburb centre; retiring the old page (F2) ends it. | `apps/app/src/services/worker/profile.service.ts` `updateWorkerAddress` |
 
 ## 4. Recommended order
 
@@ -97,3 +98,12 @@ allow-list (no credentials) -> body size -> per-IP limit (fails closed) -> captc
 per-user limit -> strict input -> ownership by token subject (`replaceSection`) -> transaction + audit row -> output
 schema -> generic errors -> redacted logs. In the app, before the api: the NextAuth session -> the token minter
 (account ACTIVE, role unchanged, 30/min).
+
+## 6. Status (2026-10-14, end of day)
+
+- **F1 fixed and merged** (PR #62, `521e455`): a removed photo's file is deleted only from the caller's own folder.
+  On staging; production still needs the promotion.
+- **F9 corrected:** Good to know and Fun fact do have pages (Interests, Bio); they now have their own entries.
+- Also done today, beyond the findings: one photo per worker (PR #63), the profile read by join (PR #65), and the
+  open PRs listed in `aidlc-state.md` (split, age, gender, three deletes, plain-English messages, suburb box).
+- Open: F2 (with PR #57), F3-F5 (bank account), F6-F8, F10, F11.
