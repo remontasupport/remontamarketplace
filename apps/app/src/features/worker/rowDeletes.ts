@@ -1,5 +1,5 @@
 // The list rows whose delete icon removes the stored row through apps/api at once (user, 2026-10-14: the
-// Experience page's delete, after a confirm; then Work History). Keyed by the section's name and its list field; a section not
+// Experience page's delete, after a confirm; then Work History and Education). Keyed by the section's name and its list field; a section not
 // listed here keeps the plain behaviour (the row leaves the form, the next Save stores the list).
 import type { Profile } from "@remonta/api-contract";
 import type { SectionValues } from "@remonta/form-engine";
@@ -43,5 +43,12 @@ export const ROW_DELETES: Readonly<Record<string, RowDelete>> = {
     isStored: (row, profile) => typeof row.id === "string" && profile.sections.jobHistory.some((e) => e.id === row.id),
     describe: (row) => (row.jobTitle ? `"${String(row.jobTitle)}"${row.company ? ` at ${String(row.company)}` : ""}` : "This job"),
     remove: (row) => goneIsDone(workerApi.deleteJobHistoryEntry(String(row.id))),
+  },
+  education: {
+    field: "entries",
+    noun: "qualification",
+    isStored: (row, profile) => typeof row.id === "string" && profile.sections.education.some((e) => e.id === row.id),
+    describe: (row) => (row.qualification ? `"${String(row.qualification)}"${row.institution ? ` from ${String(row.institution)}` : ""}` : "This qualification"),
+    remove: (row) => goneIsDone(workerApi.deleteEducationEntry(String(row.id))),
   },
 };

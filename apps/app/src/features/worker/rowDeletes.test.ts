@@ -38,6 +38,34 @@ describe("ROW_DELETES.work-history", () => {
   });
 });
 
+describe("ROW_DELETES.education", () => {
+  const d = ROW_DELETES.education!;
+  const profile = { sections: { education: [{ id: "cmedu1" }] } } as unknown as Profile;
+  it("sits on the entries list; a row is stored when its id is in the profile; a new row has none", () => {
+    expect(d.field).toBe("entries");
+    expect(d.noun).toBe("qualification");
+    expect(d.isStored({ id: "cmedu1" }, profile)).toBe(true);
+    expect(d.isStored({ qualification: "New" }, profile)).toBe(false);
+  });
+  it("names the qualification and where it is from", () => {
+    expect(d.describe({ qualification: "Cert III", institution: "TAFE" })).toBe('"Cert III" from TAFE');
+    expect(d.describe({})).toBe("This qualification");
+  });
+  it("sends DELETE /v1/worker/education/<id>", async () => {
+    const seen: string[] = [];
+    const api = createWorkerApi({
+      baseUrl: "https://api.test",
+      tokenSource: { getToken: async () => "tkn", invalidate: () => {} },
+      fetch: async (input, init) => {
+        seen.push(`${init?.method} ${String(input)}`);
+        return new Response(JSON.stringify({ entries: [] }), { status: 200, headers: { "content-type": "application/json" } });
+      },
+    });
+    expect(await api.deleteEducationEntry("cmedu1")).toEqual({ kind: "ok", body: { entries: [] } });
+    expect(seen).toEqual(["DELETE https://api.test/v1/worker/education/cmedu1"]);
+  });
+});
+
 describe("workerApi.deleteJobHistoryEntry", () => {
   it("sends DELETE /v1/worker/job-history/<id>; a 404 on the row delete counts as gone", async () => {
     const seen: string[] = [];

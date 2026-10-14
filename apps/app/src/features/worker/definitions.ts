@@ -202,6 +202,8 @@ export const educationSection = defineSection({
       label: "Your qualifications (Most recent first)",
       addLabel: "Add a qualification",
       itemTitle: (item, i) => (item.qualification ? String(item.qualification) : `Qualification ${i + 1}`),
+      // Each stored qualification keeps its id on the row (never sent): the delete names it (2026-10-14).
+      rowKey: "id",
       itemFields: [{ name: "qualification", kind: "text", label: "Qualification" }, { name: "institution", kind: "text", label: "Institution or provider" }, ...datesOf("currentlyStudying")],
     },
   ],
