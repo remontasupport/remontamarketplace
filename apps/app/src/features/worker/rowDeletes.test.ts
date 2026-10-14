@@ -23,6 +23,38 @@ describe("ROW_DELETES.experience", () => {
   });
 });
 
+describe("ROW_DELETES.work-history", () => {
+  const d = ROW_DELETES["work-history"]!;
+  const profile = { sections: { jobHistory: [{ id: "cmjob1" }] } } as unknown as Profile;
+  it("sits on the entries list; a row is stored when its id is in the profile; a new row has none", () => {
+    expect(d.field).toBe("entries");
+    expect(d.isStored({ id: "cmjob1", jobTitle: "Carer" }, profile)).toBe(true);
+    expect(d.isStored({ jobTitle: "New" }, profile)).toBe(false);
+    expect(d.isStored({ id: "cmother" }, profile)).toBe(false);
+  });
+  it("names the job by title and company", () => {
+    expect(d.describe({ jobTitle: "Carer", company: "Acme" })).toBe('"Carer" at Acme');
+    expect(d.describe({})).toBe("This job");
+  });
+});
+
+describe("workerApi.deleteJobHistoryEntry", () => {
+  it("sends DELETE /v1/worker/job-history/<id>; a 404 on the row delete counts as gone", async () => {
+    const seen: string[] = [];
+    const api = createWorkerApi({
+      baseUrl: "https://api.test",
+      tokenSource: { getToken: async () => "tkn", invalidate: () => {} },
+      fetch: async (input, init) => {
+        seen.push(`${init?.method} ${String(input)}`);
+        return new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "Not found.", requestId: "r1" } }), { status: 404, headers: { "content-type": "application/json" } });
+      },
+    });
+    const r = await api.deleteJobHistoryEntry("cmjob1");
+    expect(seen).toEqual(["DELETE https://api.test/v1/worker/job-history/cmjob1"]);
+    expect(r).toMatchObject({ kind: "failed", status: 404 });
+  });
+});
+
 describe("workerApi.deleteExperience", () => {
   it("sends DELETE /v1/worker/experience/<domain> with no body and the token; the answer is the areas left", async () => {
     const seen: { url: string; init?: RequestInit }[] = [];

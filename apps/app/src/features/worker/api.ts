@@ -25,6 +25,8 @@ export interface WorkerApi {
   removePhoto(url: string): Promise<ApiOutcome<Photos>>;
   /** DELETE /v1/worker/experience/:domain (2026-10-14): one care area; the answer is the areas left. */
   deleteExperience(domain: Profile["sections"]["experience"][number]["domain"]): Promise<ApiOutcome<{ domains: Profile["sections"]["experience"] }>>;
+  /** DELETE /v1/worker/job-history/:entryId (2026-10-14): one job; the answer is the jobs left. 404: not the caller's or already gone. */
+  deleteJobHistoryEntry(entryId: string): Promise<ApiOutcome<{ entries: Profile["sections"]["jobHistory"] }>>;
 }
 
 export interface WorkerApiDeps {
@@ -33,7 +35,7 @@ export interface WorkerApiDeps {
   fetch?: typeof globalThis.fetch;
 }
 
-type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "removePhoto" | "deleteExperience";
+type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "removePhoto" | "deleteExperience" | "deleteJobHistoryEntry";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -85,6 +87,7 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     confirmPhoto: (body) => call("confirmPhoto", { body }),
     removePhoto: (url) => call("removePhoto", { body: { url } }),
     deleteExperience: (domain) => call("deleteExperience", { params: { domain } }),
+    deleteJobHistoryEntry: (entryId) => call("deleteJobHistoryEntry", { params: { entryId } }),
   };
 }
 

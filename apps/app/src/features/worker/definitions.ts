@@ -182,6 +182,8 @@ export const jobHistorySection = defineSection({
       label: "Your jobs (Most recent first)",
       addLabel: "Add a job",
       itemTitle: (item, i) => (item.jobTitle ? String(item.jobTitle) : `Job ${i + 1}`),
+      // Each stored job keeps its id on the row (never sent): the delete names it (2026-10-14).
+      rowKey: "id",
       itemFields: [{ name: "jobTitle", kind: "text", label: "Job title" }, { name: "company", kind: "text", label: "Company" }, ...datesOf("currentlyWorking")],
     },
   ],

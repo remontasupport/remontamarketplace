@@ -59,6 +59,25 @@ describe("seed, body, validation", () => {
   });
 });
 
+describe("a list's rowKey (2026-10-14: the row delete)", () => {
+  const jobs = defineSection({
+    ...base,
+    name: "jobs",
+    title: "Jobs",
+    writeEntry: "putJobHistory",
+    pick: "sections.jobHistory",
+    fields: [{ name: "entries", kind: "orderedList", label: "Jobs", addLabel: "Add", rowKey: "id", itemFields: [{ name: "jobTitle", kind: "text", label: "t" }, { name: "company", kind: "text", label: "c" }] }],
+  });
+  it("keeps the read's id on each row and never sends it", () => {
+    const values = seedSection(jobs, { sections: { jobHistory: [{ id: "cm1", jobTitle: "Carer", company: "Acme" }] } });
+    expect(values).toEqual({ entries: [{ id: "cm1", jobTitle: "Carer", company: "Acme" }] });
+    expect(JSON.stringify(sectionBody(jobs, values))).not.toContain("cm1");
+  });
+  it("a save's answer refreshes the ids (a replace assigns new ones)", () => {
+    expect(seedFromSaved(jobs, { entries: [{ id: "cm2", jobTitle: "Carer", company: "Acme" }] })).toEqual({ entries: [{ id: "cm2", jobTitle: "Carer", company: "Acme" }] });
+  });
+});
+
 describe("seedFromSaved", () => {
   it("a write's answer seeds the same values as the read it replaces", () => {
     const name = defineSection({ ...base, name: "name", title: "Name", fields: [...nameFields] });

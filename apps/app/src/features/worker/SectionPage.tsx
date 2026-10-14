@@ -315,10 +315,10 @@ export default function SectionPage({ def }: { def: SectionDefinition }) {
           isOpen={pending !== null}
           onClose={() => setPending(null)}
           onConfirm={() => void confirmDelete()}
-          title={pendingStored ? "Delete this area?" : "Remove this new area?"}
+          title={pendingStored ? `Delete this ${rowDelete.noun}?` : `Remove this new ${rowDelete.noun}?`}
           message={
             pendingStored
-              ? `${pendingRow ? rowDelete.describe(pendingRow) : "This area"} will be deleted from your profile straight away.`
+              ? `${pendingRow ? rowDelete.describe(pendingRow) : `This ${rowDelete.noun}`} will be deleted from your profile straight away.`
               : "It has not been saved yet, so nothing on your profile changes."
           }
           confirmText={pendingStored ? "Delete" : "Remove"}

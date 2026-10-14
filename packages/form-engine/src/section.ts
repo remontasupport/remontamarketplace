@@ -38,7 +38,17 @@ export type SectionFieldDef =
   | (SectionFieldBase & { kind: "number"; min?: number; max?: number; unit?: string })
   | (SectionFieldBase & { kind: "locality"; placeholder?: string })
   | (SectionFieldBase & { kind: "timeRanges" })
-  | (SectionFieldBase & { kind: "orderedList"; itemFields: SectionFieldDef[]; addLabel: string; itemTitle?: (item: Record<string, unknown>, index: number) => string })
+  | (SectionFieldBase & {
+      kind: "orderedList";
+      itemFields: SectionFieldDef[];
+      addLabel: string;
+      itemTitle?: (item: Record<string, unknown>, index: number) => string;
+      /**
+       * A key the read carries on each row (e.g. `id`) kept on the row, never shown and never sent: the body is built from
+       * itemFields only. A row added on the page has none. Lets the page name a stored row (2026-10-14: the row delete).
+       */
+      rowKey?: string;
+    })
   /** A value entered in full and never shown back: the read carries a mask, shown as a placeholder. */
   | (SectionFieldBase & { kind: "maskedSecret"; maskedFrom?: string })
   | (SectionFieldBase & { kind: "abn" });
@@ -203,10 +213,12 @@ export function seedFromSaved(def: SectionDefinition, picked: unknown): SectionV
 function fromRead(f: SectionFieldDef, v: unknown): unknown {
   if (v === undefined || v === null) return emptyOf(f);
   if (f.kind === "orderedList" && Array.isArray(v)) {
-    // Rows carry their id on the read; a replace assigns new ids, so the section works without them.
+    // Rows carry their id on the read; a replace assigns new ids, so the section works without them -- unless the list
+    // names a rowKey, which is kept (from the read, or from a save's answer) and never sent.
     return v.map((row) => {
       const r = row as Record<string, unknown>;
-      return Object.fromEntries(f.itemFields.map((i) => [i.name, fromRead(i, r[i.name])]));
+      const fields = Object.fromEntries(f.itemFields.map((i) => [i.name, fromRead(i, r[i.name])]));
+      return f.rowKey && typeof r[f.rowKey] === "string" ? { [f.rowKey]: r[f.rowKey], ...fields } : fields;
     });
   }
   if (f.kind === "maskedSecret") return ""; // never shown back
