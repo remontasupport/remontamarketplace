@@ -54,7 +54,7 @@ export type ProfileGroup = keyof typeof PROFILE_GROUPS;
 /**
  * R8.2 as rearranged by the user (2026-10-12): My Profile's sections in order, each with its done state from the
  * read. Name to Language sit in the Personal Information sub-group; Experience to Preferred Hours and Vehicle Access in
- * Professional Information (the personal-info write is three pages: date of birth, gender, vehicle access); the
+ * Professional Information (date of birth, gender and vehicle access: a page and a write each); the
  * additional-details sections in Additional Information. The photo, preferred hours and bank account keep a place (user choice).
  */
 export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup }[] = [

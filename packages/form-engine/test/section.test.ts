@@ -3,7 +3,7 @@
 // token once on 401, and maps the server's field errors.
 import { workerContract } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
-import { defineSection, emptyValuesOf, errorFor, saveSection, shownFields, sectionBody, seedFromSaved, seedSection, setPath, validateSection } from "../src/section";
+import { defineSection, emptyValuesOf, errorFor, saveSection, sectionBody, seedFromSaved, seedSection, setPath, validateSection } from "../src/section";
 
 const base = { contract: workerContract, readEntry: "getProfile", writeEntry: "putName", pick: "names" } as const;
 const nameFields = [
@@ -118,20 +118,5 @@ describe("saveSection", () => {
 describe("emptyValuesOf", () => {
   it("gives each kind its empty value", () => {
     expect(emptyValuesOf([{ name: "a", kind: "text", label: "a" }, { name: "b", kind: "multiSelect", label: "b", options: [] }, { name: "c", kind: "checkbox", label: "c" }, { name: "d", kind: "select", label: "d", options: [], nullable: true }])).toEqual({ a: "", b: [], c: false, d: null });
-  });
-});
-
-describe("carried fields", () => {
-  it("are seeded from the read and sent back unchanged, so one field of a multi-field write can have its own page", () => {
-    const dob = defineSection({ ...base, name: "dob", title: "Date of birth", writeEntry: "putPersonalInfo", pick: "personalInfo", fields: [
-      { name: "dateOfBirth", kind: "date", label: "Date of birth" },
-      { name: "gender", kind: "select", label: "Gender", options: ["Male", "Female"], carried: true },
-      { name: "hasVehicle", kind: "select", label: "Vehicle", options: ["Yes", "No"], carried: true },
-    ] });
-    const values = seedSection(dob, { personalInfo: { dateOfBirth: "1990-01-01", gender: "Female", hasVehicle: "Yes" } });
-    expect(sectionBody(dob, { ...values, dateOfBirth: "1991-02-02" })).toEqual({ dateOfBirth: "1991-02-02", gender: "Female", hasVehicle: "Yes" });
-    expect(shownFields(dob.fields).map((f) => f.name)).toEqual(["dateOfBirth"]);
-    // A carried value the contract refuses is an error on that field: the page must say so, the field being hidden.
-    expect(Object.keys(validateSection(dob, { ...values, gender: "" }))).toEqual(["gender"]);
   });
 });

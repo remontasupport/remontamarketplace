@@ -64,28 +64,14 @@ export const bioSection = defineSection({
   fields: [{ name: "bio", kind: "textarea", label: "About you", rows: 8, maxLength: 2000 }],
 });
 
-// The personal-info write takes all three answers; each has its own page (user, 2026-10-12) and carries the other
-// two along unchanged. A carried answer still empty is shown on the page, so a new worker can always save.
-const PERSONAL_INFO = {
-  dateOfBirth: { name: "dateOfBirth", kind: "date", label: "Date of birth" },
-  gender: { name: "gender", kind: "select", label: "Gender", options: GENDERS },
-  hasVehicle: { name: "hasVehicle", kind: "select", label: "Do you have access to a vehicle?", options: VEHICLE_ANSWERS },
-} as const satisfies Record<string, SectionFieldDef>;
+// Date of birth, gender and vehicle access: one page and one write each, saving that answer alone (the api split
+// the personal-info write in three, 2026-10-14). They read from the profile's personalInfo.
+const personalInfoPage = (name: string, title: string, writeEntry: "putDateOfBirth" | "putGender" | "putVehicle", field: SectionFieldDef, description?: string) =>
+  defineSection({ ...READ, name, title, description, pick: "personalInfo", writeEntry, fields: [field] });
 
-const personalInfoPage = (name: string, title: string, shown: keyof typeof PERSONAL_INFO, description?: string) =>
-  defineSection({
-    ...READ,
-    name,
-    title,
-    description,
-    pick: "personalInfo",
-    writeEntry: "putPersonalInfo",
-    fields: (Object.keys(PERSONAL_INFO) as (keyof typeof PERSONAL_INFO)[]).map((k) => (k === shown ? PERSONAL_INFO[k] : { ...PERSONAL_INFO[k], carried: true })),
-  });
-
-export const dateOfBirthSection = personalInfoPage("date-of-birth", "Date of birth", "dateOfBirth");
-export const genderSection = personalInfoPage("gender", "Gender", "gender");
-export const vehicleSection = personalInfoPage("vehicle", "Vehicle access", "hasVehicle", "Some jobs need you to drive to the client or take them out.");
+export const dateOfBirthSection = personalInfoPage("date-of-birth", "Date of birth", "putDateOfBirth", { name: "dateOfBirth", kind: "date", label: "Date of birth" });
+export const genderSection = personalInfoPage("gender", "Gender", "putGender", { name: "gender", kind: "select", label: "Gender", options: GENDERS });
+export const vehicleSection = personalInfoPage("vehicle", "Vehicle access", "putVehicle", { name: "hasVehicle", kind: "select", label: "Do you have access to a vehicle?", options: VEHICLE_ANSWERS }, "Some jobs need you to drive to the client or take them out.");
 
 export const abnSection = defineSection({
   ...READ,

@@ -77,13 +77,13 @@ describe("the section definitions", () => {
     expect(sectionBody(nameSection, seedSection(nameSection, profile))).toEqual({ firstName: "Mary", middleName: null, lastName: "O'Connor" });
   });
 
-  it("date of birth, gender and vehicle each change only their own answer and send the other two as stored", () => {
-    const stored = { dateOfBirth: "1990-01-01", gender: "Female", hasVehicle: "Yes" };
+  it("date of birth, gender and vehicle each send their own answer only, to their own write (2026-10-14)", () => {
     const edit = (def: typeof genderSection, field: string, v: string) => sectionBody(def, { ...seedSection(def, profile), [field]: v });
-    expect(edit(dateOfBirthSection, "dateOfBirth", "1991-02-02")).toEqual({ ...stored, dateOfBirth: "1991-02-02" });
-    expect(edit(genderSection, "gender", "Male")).toEqual({ ...stored, gender: "Male" });
-    expect(edit(vehicleSection, "hasVehicle", "No")).toEqual({ ...stored, hasVehicle: "No" });
-    expect(genderSection.fields.filter((f) => !f.carried).map((f) => f.name)).toEqual(["gender"]);
+    expect(edit(dateOfBirthSection, "dateOfBirth", "1991-02-02")).toEqual({ dateOfBirth: "1991-02-02" });
+    expect(edit(genderSection, "gender", "Male")).toEqual({ gender: "Male" });
+    expect(edit(vehicleSection, "hasVehicle", "No")).toEqual({ hasVehicle: "No" });
+    expect([dateOfBirthSection, genderSection, vehicleSection].map((d) => d.writeEntry)).toEqual(["putDateOfBirth", "putGender", "putVehicle"]);
+    expect([dateOfBirthSection, genderSection, vehicleSection].map((d) => d.fields.length)).toEqual([1, 1, 1]);
   });
 
   it("a TFN record seeds an empty ABN form (D17)", () => {
