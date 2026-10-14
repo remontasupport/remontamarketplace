@@ -4190,3 +4190,9 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "for the Job, remove it entirely, there should not be any title there"
 **AI response**: PR #57 `e1e5bd8`: Work History's itemTitle removed (no row title, typed or numbered); Education keeps its typed course. App 139/470 known, 210 tests. Pushed.
+
+**User input**: "Perfect. Now can you remove the arrows up and down? and place the delete icon to the left and add a pen to edit it"
+**AI response**: asked what the pen does and which lists.
+
+**User input** (answers): "Summary, pen opens (Recommended)"; "All three (Recommended)"
+**AI response**: PR #57 `22d82b3`: OrderedListField without move arrows, trash then pen on the left, a closed row shows RowSummary; form engine orderedList `identity` + `itemSummary`; SectionPage OrderedListSlot (open rows by identity; new or erroring rows always open; a fresh read closes all); summaries for jobs, courses, experience areas; tests. App 139/470 known 213, form-engine 76. Pushed.
