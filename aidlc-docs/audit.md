@@ -4096,3 +4096,28 @@ Neon branch so the page can be tried locally. PR #57 now also carries F1 and the
 
 **User input**: "still has this error Editing your profile is temporarily unavailable. Please try again in a few minutes."
 **AI response**: PR #63 merged (`6dbc65b`); CI all green incl. the database tests; deploy-api was still running. Waited: staging switched (POST /v1/worker/photos/main 404, profile 401 without a token, health 200). Production api unchanged; promotion of `6dbc65b` (F1 + one photo) pending the preview check.
+
+**User input**: "Ok, the preview has been fixed now. But the local server still has the error, is it normal?"
+**AI response**: from the local api log: the upload ticket 503 (no Google credentials locally, by design) and two
+profile reads that outlived the 10 s transaction limit ("Transaction not found"): ~0.31 s per round trip to the dev
+Neon branch (measured), a few dozen queries per read. Not a code fault; offered a local-only longer transaction limit
+and a local photo folder (not built).
+
+**User input**: "OK, LET US CONTINUE THE API audit, could you confirm that all the APIs in the My Profile has it's own file or code? for example, for the Name, it has an api/name, for the bio, api/bio and so on"
+**AI response**: each page has its own endpoint, body schema and write function, but not its own file (CLAUDE.md
+"Dynamic by default": entries in one contract, one handler line each); table page -> endpoint -> contract line ->
+schema -> write function. Exception: the seven Additional Information pages shared one entry
+`PUT /v1/worker/additional-info/:group` and one write function.
+
+**User input**: "yes split them into seven"
+**AI response**: nine, not seven: Good to know (on the Interests page) and Fun fact (on the Bio page) were in the
+same entry; review finding F9 ("no page") corrected. Branch `feat/additional-info-split-api` from `main` `6dbc65b`,
+commit `252f089`: nine entries at the same addresses (putGoodToKnow, putLanguages, putCulturalBackground, putReligion,
+putInterests, putSupportActivities, putFunFact, putPreferences, putPersonality), each its own strict body without a
+`group` field (sent, it is 400), rate-limit counter and audit section; an unknown group 404; GROUP_COLUMNS kept as the
+second guard; `ADDITIONAL_INFO_ENTRIES` maps group -> entry -> schema. Gates: api-contract 79, api 627, form-engine 58;
+openapi.json and docs regenerated. Merged into PR #57 (`0979b2a`): conflicts in the api resolved keeping PR #57's
+no-recompute rule (`5fff3f1`) and the nine entries; the pages' helper uses each group's entry; the form engine's
+path-parameter and union-body guards now proved on a test-only contract. PR #57 gates: app 139/470 known, 196 tests;
+api lint, tsc, 628 tests (its `prisma generate` step hits EPERM while the local api runs from that worktree);
+form-engine 73; api-contract 79. PR #57 not merged.

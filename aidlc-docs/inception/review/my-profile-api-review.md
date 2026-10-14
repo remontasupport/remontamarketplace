@@ -64,7 +64,7 @@ The groups `good-to-know` and `fun-fact` have entries but no page in the new men
 | F6 | Low | **Free text not uniformly cleaned.** `plainText` (bio, fun fact, street) refuses control characters; job title, company, institution, qualification, other areas, own language/interest labels, account and bank name only trim. None refuse invisible or bidi characters (U+200B, U+202E), which can spoof names and text shown to admins and clients. | `packages/api-contract/src/worker.sections.ts` |
 | F7 | Low | **The profile read is cached in the browser** (`private, max-age=60`): date of birth, ABN and home address stay in the disk cache of a shared computer after sign-out. A choice between `no-store` and the 304 saving. | `workerRead()` |
 | F8 | Low | **The token minter's limiter fails open** and is off without Upstash (local, possibly Preview). The api's per-user limits still apply, so the impact is small. | `apps/app/src/lib/ratelimit.ts` |
-| F9 | Info | `putAbn`, `good-to-know` and `fun-fact` have no page: unused entries are attack surface. Keep (U3 needs the ABN) or remove. | contract |
+| F9 | Info | `putAbn` has no page: an unused entry is attack surface. Keep (U3 needs the ABN) or remove. (Corrected 2026-10-14: `good-to-know` is on the Interests page and `fun-fact` on the Bio page; both now have their own entries.) | contract |
 | F10 | Info | `TRUST_PROXY=1` on Cloud Run: per-IP limits count the address Google's front end appends. Correct by design; confirm once on staging that a forged `X-Forwarded-For` does not change the counted IP. | `infra/lib/stages.ts` |
 
 ## 4. Recommended order
