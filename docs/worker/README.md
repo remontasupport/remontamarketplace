@@ -40,7 +40,7 @@ Response: the `Profile` object (`profileSchema`, strict: nothing unlisted leaves
 |---|---|---|
 | `id` | `worker_profiles.id` | used by no request (ownership is the token) |
 | `names { firstName, middleName, lastName }`, `mobile` | columns | |
-| `photos { main, additional[] }` | `photos`, `additionalPhotos` (a JSON array of URLs) | malformed JSON reads as `[]` |
+| `photos { main }` | `photos` | one photo per worker (2026-10-14); `additionalPhotos` is kept as stored and read only by the admin pages |
 | `bio` | `introduction` | |
 | `personalInfo { dateOfBirth, age, gender, hasVehicle, languages }` | columns | `hasVehicle` is `Yes`, `No` or null |
 | `abn { type, value, signed }` or null | the `abn` JSON (`workerEngagementType`) | `type` is `abn` or `tfn`; `value` only for an ABN that stored its number (a few legacy rows); a TFN never reports a number |
@@ -80,9 +80,8 @@ completion flag recompute and persist it in the same transaction. After a save t
 | `PUT /v1/worker/profile/home-address` | `{streetLine, localityId}` | one line of 1-120 characters; a current suburb of ours. Writes `homeStreetLine`/`homeLocalityId` only: never the legacy location columns, never `worker_locations`; never in a client-facing response |
 | `PUT /v1/worker/profile/service-area` | `{localityId, travelRadiusKm}` | a current suburb; 1-500 km. Upserts the HOME `worker_locations` row (`source ONBOARDING`) and writes the legacy columns as the sign-up does, so the admin and client searches follow; an unplaced worker becomes placed |
 | `POST /v1/worker/photos/tickets` | `{contentType, sizeBytes}` | the sign-up's ticket (JPEG/PNG/WebP, 5 MB) |
-| `POST /v1/worker/photos` | `{uploadId, slot: 'main' | 'additional'}` | the sign-up's confirm (the object inspected), then the upload claimed by this profile into the slot (at most 2 additional; with no main photo the upload becomes the main); `PhotoUploaded` makes the clean copy and repoints that slot. 201 with `{main, additional}` |
-| `POST /v1/worker/photos/main` | `{url}` | an additional photo swaps with the main |
-| `POST /v1/worker/photos/remove` | `{url}` | an additional photo, or the main when it is the last; the processed Blob copy and its thumbnail are deleted after the commit, only when the file is in the caller's own folder (`workers/<their profile id>/<upload id>.<ext>`); any other URL is cleared from the column and the file left |
+| `POST /v1/worker/photos` | `{uploadId}` | the sign-up's confirm (the object inspected), then the upload claimed by this profile as its photo, replacing the current one; `PhotoUploaded` makes the clean copy and repoints the column. 201 with `{main}` |
+| `POST /v1/worker/photos/remove` | `{url}` | the photo, when the URL is the worker's own (else 400); the processed Blob copy and its thumbnail are deleted after the commit, only when the file is in the caller's own folder (`workers/<their profile id>/<upload id>.<ext>`); any other URL is cleared from the column and the file left |
 | `PUT /v1/worker/availability` | `{slots: [{day, startMinute, endMinute}]}` | minutes 0-1440, start < end, at most 4 a day, no overlap; stored in week order |
 | `PUT /v1/worker/experience` | `{domains: [...]}` | one entry per care area, professional or personal or both, any of that area's specific areas (its own list; the limit of 3 went on 2026-10-13), 10 other areas |
 | `PUT /v1/worker/job-history`, `/education` | `{entries: [...]}` | 0-20 entries, month names, years 1950-now, "currently" means no end date, otherwise the end not before the start; the order kept |

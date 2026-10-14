@@ -14,6 +14,7 @@ import {
   bankAccountSchema,
   bioSchema,
   confirmPhotoSchema,
+  photosSchema,
   dateOfBirthSchema,
   educationSchema,
   experienceSchema,
@@ -43,7 +44,8 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(19)
+    expect(names).toHaveLength(18) // makeMainPhoto removed 2026-10-14 (one photo per worker)
+    expect(names).not.toContain('makeMainPhoto')
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
       expect(e.meta.audit, name).toBe('PROFILE_UPDATE')
@@ -120,10 +122,14 @@ describe('R3 the addresses', () => {
 })
 
 describe('R4 photos', () => {
-  it('confirm needs a uuid and a slot', () => {
-    ok(confirmPhotoSchema, { uploadId: '6f1c2c1e-6d8a-4b7e-9f3d-2b0e1d4c5a6b', slot: 'main' })
-    bad(confirmPhotoSchema, { uploadId: 'nope', slot: 'main' }, 'uploadId')
-    bad(confirmPhotoSchema, { uploadId: '6f1c2c1e-6d8a-4b7e-9f3d-2b0e1d4c5a6b', slot: 'third' }, 'slot')
+  it('confirm needs a uuid and nothing else: one photo, no slot (2026-10-14)', () => {
+    ok(confirmPhotoSchema, { uploadId: '6f1c2c1e-6d8a-4b7e-9f3d-2b0e1d4c5a6b' })
+    bad(confirmPhotoSchema, { uploadId: 'nope' }, 'uploadId')
+    bad(confirmPhotoSchema, { uploadId: '6f1c2c1e-6d8a-4b7e-9f3d-2b0e1d4c5a6b', slot: 'main' })
+  })
+  it('the photos are the main photo only', () => {
+    ok(photosSchema, { main: null })
+    bad(photosSchema, { main: null, additional: [] })
   })
 })
 

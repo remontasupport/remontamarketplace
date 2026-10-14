@@ -97,7 +97,7 @@ export const profileArb: fc.Arbitrary<Profile> = fc.record({
   id: str(40),
   names: fc.record({ firstName: str(100), middleName: nstr(100), lastName: str(100) }),
   mobile: str(40),
-  photos: fc.record({ main: nstr(2048), additional: fc.array(str(2048), { maxLength: 10 }) }),
+  photos: fc.record({ main: nstr(2048) }),
   bio: nstr(2000),
   personalInfo: fc.record({
     dateOfBirth: nstr(20),
