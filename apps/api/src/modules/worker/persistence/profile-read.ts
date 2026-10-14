@@ -96,12 +96,14 @@ export async function readProfileRows(db: Db, userId: string): Promise<ProfileRo
 /** The same rows inside a caller's transaction (a section write recomputing completion, U2 L1). */
 export async function readProfileRowsTx(tx: Tx, userId: string): Promise<ProfileRows | null> {
   {
-    const profile = await tx.workerProfile.findUnique({ where: { userId }, select: PROFILE_SELECT })
+    // 'join' (relationJoins, the api's client only): the profile and every relation in one statement, not one per relation.
+    const profile = await tx.workerProfile.findUnique({ where: { userId }, select: PROFILE_SELECT, relationLoadStrategy: 'join' })
     if (!profile) return null
     if (profile.workerServices.length === 0) return { profile, catalogue: [] }
     const f = catalogueFilter(profile.workerServices)
     // As today: with no sub-category chosen, every sub-category of the matched categories is read (U3 revisits).
     const catalogue = await tx.category.findMany({
+      relationLoadStrategy: 'join',
       where: { OR: [{ id: { in: f.categoryIds } }, { name: { in: f.categoryNames } }] },
       select: {
         ...CATALOGUE_SELECT,
@@ -146,10 +148,10 @@ export async function readProfileRowsPage(db: Db, afterId: string, take: number)
     db,
     PAGE_READ_STATEMENT_TIMEOUT_MS,
     async (tx) => {
-    const profiles = await tx.workerProfile.findMany({ where: { id: { gt: afterId } }, orderBy: { id: 'asc' }, take, select: PROFILE_SELECT })
+    const profiles = await tx.workerProfile.findMany({ where: { id: { gt: afterId } }, orderBy: { id: 'asc' }, take, select: PROFILE_SELECT, relationLoadStrategy: 'join' })
     if (profiles.length === 0) return []
     const anyServices = profiles.some((p) => p.workerServices.length > 0)
-    const all = anyServices ? await tx.category.findMany({ select: CATALOGUE_SELECT, orderBy: { id: 'asc' } }) : []
+    const all = anyServices ? await tx.category.findMany({ select: CATALOGUE_SELECT, orderBy: { id: 'asc' }, relationLoadStrategy: 'join' }) : []
     return profiles.map((profile) => ({ profile, catalogue: selectCatalogueFor(all, profile.workerServices) }))
     },
     { transactionTimeoutMs: PAGE_READ_TRANSACTION_TIMEOUT_MS },
