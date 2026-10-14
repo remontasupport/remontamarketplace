@@ -4003,3 +4003,4 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "Done, merged"
 **AI response**: verified by ref: `main` = `182f94f` (PR #60, `feat/personal-info-split-api`); `bdff4d5` in main; the column-test branch (`e23df59`) not merged. CI on `182f94f`: app, web, CodeQL, Semgrep green; api, supply chain and deploy-api (staging) running at check time.
+**AI action**: CI on `182f94f` all green (app, web, api incl. the database tests, supply chain, CodeQL, Semgrep) and deploy-api (staging) success. Staging probe, no token: `/v1/health` 200; PUT `/v1/worker/profile/date-of-birth`, `/gender`, `/vehicle` 401 (routes exist); `/personal-info` 404 (removed). Production promotion for PR #57 is now imageTag `182f94f757551997d5c75843e01524b221db5281`.
