@@ -4022,3 +4022,9 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "DONE, i ALREADY CREATED THE DEV_DATABSE URL"
 **AI response**: dev-env.sh picks it (host `ep-royal-night-a70rehk3-pooler`, not production). Local api restarted on it: health 200, suburb search rows; 0 emails printed and none sent (no pending outbox rows on the copy); app /login and sign-up 200. Note: stopping a background task left the node servers listening on Windows; stopped by PID after checking their command lines.
+
+**User input**: "Merged" (PR #61)
+**AI response**: verified `main` = `4434787` (PR #61); CI and deploy-api (staging) green, staging health 200. Inventory started: the 31 entries generated from the contracts; two read-only agents tracing handlers to tables and mapping the structure.
+
+**User input**: "why are all the changes to the sidebar not being seen to the local development?"
+**AI response**: the local servers ran the checked-out branch (`main`); the sidebar is on PR #57's branch, held. New worktree `../remonta-pr57` on `feat/edit-profile-app` with `main` merged in (`26fbb12`, pushed: PR #57 updated, not merged), env files copied (gitignored), installed; api + app started there on the dev branch (`ep-royal-night`): health 200, the three new writes 401, /login 200. Found: PR #57 also carries an api change (`5fff3f1`, completion recompute skipped on writes that cannot change a stored flag), so after PR #57 merges production needs a second api promotion.
