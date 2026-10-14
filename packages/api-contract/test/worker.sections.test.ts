@@ -44,7 +44,10 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(20) // makeMainPhoto removed, deleteExperience and deleteJobHistoryEntry added (2026-10-14)
+    expect(names).toHaveLength(21) // makeMainPhoto removed, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14)
+    expect(workerContract.entries.deleteEducationEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/education/:entryId' })
+    expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
+    expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: '../x' }).success).toBe(false)
     expect(workerContract.entries.deleteJobHistoryEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/job-history/:entryId' })
     expect(workerContract.entries.deleteJobHistoryEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
     expect(workerContract.entries.deleteJobHistoryEntry.pathParams.safeParse({ entryId: "x' OR 1=1" }).success).toBe(false)

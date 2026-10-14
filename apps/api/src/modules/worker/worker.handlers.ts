@@ -16,7 +16,7 @@ import { getProfile, type GetProfileDeps } from './application/get-profile'
 import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos'
 import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
-import { deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
+import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
@@ -83,6 +83,7 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: true }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
     deleteJobHistoryEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteJobHistoryEntry', completion: false }, (tx, p) => deleteJobHistoryEntry(tx, p.id, req.params.entryId)) }),
     putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: true }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
+    deleteEducationEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteEducationEntry', completion: false }, (tx, p) => deleteEducationEntry(tx, p.id, req.params.entryId)) }),
     putAdditionalInfo: async (req, ctx) => ({
       status: 200,
       body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${req.params.group}`, completion: GROUPS_WITH_COMPLETION.has(req.params.group) }, (tx, p) => writeAdditionalInfo(tx, p.id, req.params.group, req.body)),

@@ -27,6 +27,7 @@ import {
   confirmPhotoSchema,
   dateOfBirthSchema,
   educationSchema,
+  educationRowParamsSchema,
   educationViewSchema,
   experienceDomainParamsSchema,
   experienceSchema,
@@ -272,6 +273,7 @@ export const workerContract = defineContract('worker', {
   putJobHistory: { method: 'PUT', path: '/v1/worker/job-history', summary: 'Replace the ordered work history.', body: json(jobHistorySchema), responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
   deleteJobHistoryEntry: { method: 'DELETE', path: '/v1/worker/job-history/:entryId', summary: "Delete one work-history row by its id; returns the rows left in order. A row that is not the caller's, or is already gone, is 404 (never revealed).", pathParams: jobHistoryRowParamsSchema, responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putEducation: { method: 'PUT', path: '/v1/worker/education', summary: 'Replace the ordered education list.', body: json(educationSchema), responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  deleteEducationEntry: { method: 'DELETE', path: '/v1/worker/education/:entryId', summary: "Delete one education row by its id; returns the rows left in order. A row that is not the caller's, or is already gone, is 404 (never revealed).", pathParams: educationRowParamsSchema, responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putAdditionalInfo: { method: 'PUT', path: '/v1/worker/additional-info/:group', summary: 'Replace one additional-details group; the others are untouched.', pathParams: additionalInfoParamsSchema, body: json(additionalInfoBodySchema), responses: { 200: additionalInfoBodySchema }, meta: workerWrite(PROFILE_UPDATE) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 })
