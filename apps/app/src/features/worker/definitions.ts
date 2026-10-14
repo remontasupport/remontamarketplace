@@ -181,8 +181,7 @@ export const jobHistorySection = defineSection({
       kind: "orderedList",
       label: "Your jobs (Most recent first)",
       addLabel: "Add a job",
-      // The typed title, or nothing: no numbered "Job 1" placeholder (user, 2026-10-14).
-      itemTitle: (item) => (item.jobTitle ? String(item.jobTitle) : ""),
+      // No row title at all, typed or numbered (user, 2026-10-14): the job title is the first field of the row.
       // Each stored job keeps its id on the row (never sent): the delete names it (2026-10-14).
       rowKey: "id",
       itemFields: [{ name: "jobTitle", kind: "text", label: "Job title" }, { name: "company", kind: "text", label: "Company" }, ...datesOf("currentlyWorking")],
