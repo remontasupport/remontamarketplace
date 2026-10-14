@@ -35,6 +35,7 @@ import {
   homeAddressInputSchema,
   interestsSchema,
   jobHistorySchema,
+  jobHistoryRowParamsSchema,
   jobHistoryViewSchema,
   languagesSchema,
   nameSchema,
@@ -276,6 +277,7 @@ export const workerContract = defineContract('worker', {
   putExperience: { method: 'PUT', path: '/v1/worker/experience', summary: 'Replace the experience per care area.', body: json(experienceSchema), responses: { 200: experienceSchema }, meta: workerWrite(PROFILE_UPDATE) },
   deleteExperience: { method: 'DELETE', path: '/v1/worker/experience/:domain', summary: "Delete one care area from the worker's experience; returns the areas left. Deleting an area that is not there is a 200 (a retry).", pathParams: experienceDomainParamsSchema, responses: { 200: experienceSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putJobHistory: { method: 'PUT', path: '/v1/worker/job-history', summary: 'Replace the ordered work history.', body: json(jobHistorySchema), responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  deleteJobHistoryEntry: { method: 'DELETE', path: '/v1/worker/job-history/:entryId', summary: "Delete one work-history row by its id; returns the rows left in order. A row that is not the caller's, or is already gone, is 404 (never revealed).", pathParams: jobHistoryRowParamsSchema, responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putEducation: { method: 'PUT', path: '/v1/worker/education', summary: 'Replace the ordered education list.', body: json(educationSchema), responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
   // The additional details: one entry per group (user, 2026-10-14; was one :group entry). Each writes its own columns only.
   putGoodToKnow: { method: 'PUT', path: '/v1/worker/additional-info/good-to-know', summary: 'Replace the LGBTQIA+ support answer.', body: json(goodToKnowSchema), responses: { 200: goodToKnowSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },

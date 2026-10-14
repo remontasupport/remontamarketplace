@@ -66,6 +66,18 @@ export async function writeJobHistory(tx: Tx, profileId: string, body: JobHistor
   return { entries: rows as WithIds<JobHistoryBody>['entries'] }
 }
 
+/**
+ * One work-history row out (2026-10-14: the page's delete, after its confirm). Scoped to the caller's profile: a row
+ * that is not theirs, or no longer exists, deletes nothing and is 404 -- the same answer for both, so another worker's
+ * row is never revealed (R1.3). The rows left keep their order.
+ */
+export async function deleteJobHistoryEntry(tx: Tx, profileId: string, id: string): Promise<WithIds<JobHistoryBody>> {
+  const { count } = await tx.workerJobHistory.deleteMany({ where: { id, workerProfileId: profileId } })
+  if (count === 0) throw new ApiError(404, 'job history row not found for this profile')
+  const rows = await tx.workerJobHistory.findMany({ where: { workerProfileId: profileId }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: JOB_SELECT })
+  return { entries: rows as WithIds<JobHistoryBody>['entries'] }
+}
+
 export async function writeEducation(tx: Tx, profileId: string, body: EducationBody): Promise<WithIds<EducationBody>> {
   await tx.workerEducation.deleteMany({ where: { workerProfileId: profileId } })
   if (body.entries.length) await tx.workerEducation.createMany({ data: body.entries.map((e, i) => ({ workerProfileId: profileId, ...e, sortOrder: i })) })
