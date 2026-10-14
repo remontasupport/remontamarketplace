@@ -8,12 +8,21 @@ import { describe, expect, it } from 'vitest'
 import type * as z from 'zod'
 import {
   abnBodySchema,
-  additionalInfoBodySchema,
+  ADDITIONAL_INFO_ENTRIES,
   ageOn,
   availabilitySchema,
   bankAccountSchema,
   bioSchema,
   confirmPhotoSchema,
+  culturalBackgroundSchema,
+  funFactSchema,
+  goodToKnowSchema,
+  interestsSchema,
+  languagesSchema,
+  personalitySchema,
+  preferencesSchema,
+  religionSchema,
+  supportActivitiesSchema,
   photosSchema,
   dateOfBirthSchema,
   educationSchema,
@@ -44,7 +53,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(18) // makeMainPhoto removed 2026-10-14 (one photo per worker)
+    expect(names).toHaveLength(26) // makeMainPhoto removed, the additional-info entry split in nine (2026-10-14)
     expect(names).not.toContain('makeMainPhoto')
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
@@ -54,7 +63,8 @@ describe('the entries (E2)', () => {
       expect((e.meta as { privateCacheSeconds?: number }).privateCacheSeconds, name).toBeUndefined()
     }
     expect(workerContract.entries.createPhotoTicket.meta.rateLimit[0]).toEqual({ per: 'user', limit: 10, window: '1m' })
-    expect(workerContract.entries.putAdditionalInfo.path).toBe('/v1/worker/additional-info/:group')
+    for (const [group, { entry }] of Object.entries(ADDITIONAL_INFO_ENTRIES)) expect(workerContract.entries[entry].path, entry).toBe(`/v1/worker/additional-info/${group}`)
+    expect(names).not.toContain('putAdditionalInfo') // one entry per group since 2026-10-14
   })
 })
 
@@ -206,23 +216,22 @@ describe('R2.9 / R2.10 work history and education', () => {
 
 describe('R7 additional info', () => {
   it('each group its own fields; list values from the lists (languages and interests also free labels); the group must match', () => {
-    ok(additionalInfoBodySchema, { group: 'good-to-know', lgbtqiaSupport: true })
-    ok(additionalInfoBodySchema, { group: 'languages', languages: [LANGUAGES[0], 'Klingon'] })
-    bad(additionalInfoBodySchema, { group: 'languages', languages: ['English', 'English'] }, 'languages')
-    ok(additionalInfoBodySchema, { group: 'cultural-background', culturalBackground: [CULTURAL_BACKGROUNDS[0]] })
-    bad(additionalInfoBodySchema, { group: 'cultural-background', culturalBackground: ['Martian'] }, 'culturalBackground.0')
-    ok(additionalInfoBodySchema, { group: 'interests', interests: [INTERESTS[0], 'Beekeeping'] })
-    ok(additionalInfoBodySchema, { group: 'support-activities', uniqueService: [UNIQUE_SERVICES[0]] })
-    bad(additionalInfoBodySchema, { group: 'support-activities', uniqueService: [] }, 'uniqueService')
-    bad(additionalInfoBodySchema, { group: 'support-activities', uniqueService: [UNIQUE_SERVICES[0]], funFact: 'f'.repeat(50) }) // each saves alone
-    ok(additionalInfoBodySchema, { group: 'fun-fact', funFact: 'f'.repeat(50) })
-    bad(additionalInfoBodySchema, { group: 'fun-fact', funFact: 'short' }, 'funFact')
-    bad(additionalInfoBodySchema, { group: 'about-me', uniqueService: [UNIQUE_SERVICES[0]], funFact: 'f'.repeat(50) }) // split 2026-10-13
-    ok(additionalInfoBodySchema, { group: 'preferences', workPreferences: [WORK_PREFERENCES[0]] })
-    ok(additionalInfoBodySchema, { group: 'personality', personality: PERSONALITIES[0], nonSmoker: true, petFriendly: false })
-    bad(additionalInfoBodySchema, { group: 'personality', personality: 'Shy', nonSmoker: true, petFriendly: false }, 'personality')
-    bad(additionalInfoBodySchema, { group: 'good-to-know', lgbtqiaSupport: true, languages: [] })
-    bad(additionalInfoBodySchema, { group: 'nope' })
+    ok(goodToKnowSchema, { lgbtqiaSupport: true })
+    ok(languagesSchema, { languages: [LANGUAGES[0], 'Klingon'] })
+    bad(languagesSchema, { languages: ['English', 'English'] }, 'languages')
+    ok(culturalBackgroundSchema, { culturalBackground: [CULTURAL_BACKGROUNDS[0]] })
+    bad(culturalBackgroundSchema, { culturalBackground: ['Martian'] }, 'culturalBackground.0')
+    ok(interestsSchema, { interests: [INTERESTS[0], 'Beekeeping'] })
+    ok(supportActivitiesSchema, { uniqueService: [UNIQUE_SERVICES[0]] })
+    bad(supportActivitiesSchema, { uniqueService: [] }, 'uniqueService')
+    bad(supportActivitiesSchema, { uniqueService: [UNIQUE_SERVICES[0]], funFact: 'f'.repeat(50) }) // each saves alone
+    ok(funFactSchema, { funFact: 'f'.repeat(50) })
+    bad(funFactSchema, { funFact: 'short' }, 'funFact')
+    ok(preferencesSchema, { workPreferences: [WORK_PREFERENCES[0]] })
+    ok(personalitySchema, { personality: PERSONALITIES[0], nonSmoker: true, petFriendly: false })
+    bad(personalitySchema, { personality: 'Shy', nonSmoker: true, petFriendly: false }, 'personality')
+    bad(goodToKnowSchema, { lgbtqiaSupport: true, languages: [] }) // another group's field
+    bad(religionSchema, { group: 'religion', religion: [] }) // the group is the address, not a field (2026-10-14)
   })
 })
 
