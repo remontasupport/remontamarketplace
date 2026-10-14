@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } from "@remonta/form-engine";
-import { saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
+import { localityInputText, saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
 import { previewKeyOf } from "./photoPreview";
 import { verificationError } from "./useEmailCode";
@@ -18,6 +18,19 @@ const filled = {
   photoUploadId: "https://blob.example/workers/x.jpg",
   consentProfileShare: true,
 };
+
+describe("the suburb box (fix 2026-10-14: a chosen suburb jumped back when its text was deleted)", () => {
+  const parramatta = { id: 5410, name: "Parramatta", state: "NSW", postcode: "2150" };
+  it("while typing it shows exactly what was typed, empty included, even with a suburb chosen", () => {
+    expect(localityInputText({ editing: true, query: "", value: parramatta })).toBe("");
+    expect(localityInputText({ editing: true, query: "Bla", value: parramatta })).toBe("Bla");
+  });
+  it("otherwise the chosen suburb, or the search text when none is chosen (the sign-up un-picks on typing)", () => {
+    expect(localityInputText({ editing: false, query: "", value: parramatta })).toBe("Parramatta, NSW 2150");
+    expect(localityInputText({ editing: false, query: "Par", value: null })).toBe("Par");
+    expect(localityInputText({ editing: false, query: "", value: null })).toBe("");
+  });
+});
 
 describe("the worker sign-up definition", () => {
   it("is a valid definition of the registration contract entry (defineForm checked it at import)", () => {

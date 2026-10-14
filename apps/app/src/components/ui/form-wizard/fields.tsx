@@ -112,6 +112,16 @@ export interface LocalityOption {
 
 export const localityLabel = (l: LocalityOption) => `${l.name}, ${l.state} ${l.postcode}`;
 
+/**
+ * What the suburb box shows (fix 2026-10-14): while the person is typing, exactly what they typed -- empty
+ * included, so a chosen suburb can be cleared to search again (it used to jump back the moment the text was
+ * empty); otherwise the chosen suburb, or the search text when none is chosen. Pure, tested.
+ */
+export function localityInputText(state: { editing: boolean; query: string; value: LocalityOption | null }): string {
+  if (state.editing) return state.query;
+  return state.value ? localityLabel(state.value) : state.query;
+}
+
 export interface LocalityFieldProps {
   label: string;
   /** The picked suburb, or null. */
@@ -127,20 +137,32 @@ export interface LocalityFieldProps {
 
 export function LocalityField({ label, value, query, onQueryChange, suggestions, loading, onPick, error, placeholder = "Search" }: LocalityFieldProps) {
   const [open, setOpen] = useState(false);
+  /** Typing since the last pick or since the box was left: the box shows the typed text, not the chosen suburb. */
+  const [editing, setEditing] = useState(false);
   return (
     <div>
       <Label className="text-lg font-poppins font-medium">
         {label}
         <span className="text-red-500">*</span>
       </Label>
-      <div className="relative mt-2" onBlur={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setOpen(false)}>
+      <div
+        className="relative mt-2"
+        onBlur={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setOpen(false);
+          // Left without picking: the chosen suburb stands (nothing changed), and the next search starts empty.
+          if (editing && value) onQueryChange("");
+          setEditing(false);
+        }}
+      >
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
         {loading && <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin z-10" />}
         <Input
           placeholder={placeholder}
           className="text-lg font-poppins pl-10 pr-10"
-          value={query || (value ? localityLabel(value) : "")}
+          value={localityInputText({ editing, query, value })}
           onChange={(e) => {
+            setEditing(true);
             onQueryChange(e.target.value);
             setOpen(true);
           }}
@@ -161,6 +183,7 @@ export function LocalityField({ label, value, query, onQueryChange, suggestions,
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setOpen(false);
+                  setEditing(false);
                   onPick(s);
                 }}
               >
