@@ -13,7 +13,7 @@ const url = process.env.TEST_DATABASE_URL
 const local = !!url && /@(localhost|127\.0\.0\.1)[:/]/.test(url)
 
 /**
- * Statements the handler's transaction issues, BEGIN/COMMIT and the timeout excluded. Since 2026-10-14 the read uses
+ * Data statements the handler's transaction issues (BEGIN/COMMIT, the isolation level and the timeout excluded). Since 2026-10-14 the read uses
  * relationLoadStrategy 'join': the profile with all its relations is one statement, the catalogue another (it was 17,
  * one per relation, and every statement is a round trip). None per row (U1-PRF-01).
  */
@@ -100,7 +100,8 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
   it('U1-PRF-01: one transaction, a bounded number of statements, none per row', async () => {
     h.queries.length = 0
     await h.get(h.a.userId)
-    const isPlumbing = (q: string) => /^(BEGIN|COMMIT|ROLLBACK|DEALLOCATE)/i.test(q.trim()) || /set_config\('statement_timeout'/.test(q)
+    // Transaction plumbing is not a read: BEGIN/COMMIT, the isolation level Prisma sets, the statement timeout.
+    const isPlumbing = (q: string) => /^(BEGIN|COMMIT|ROLLBACK|DEALLOCATE|SET TRANSACTION)/i.test(q.trim()) || /set_config\('statement_timeout'/.test(q)
     const statements = h.queries.filter((q) => !isPlumbing(q))
     expect(h.queries.filter((q) => /^BEGIN/i.test(q)).length).toBe(1)
     expect(h.queries.some((q) => /set_config\('statement_timeout'/.test(q))).toBe(true)
