@@ -4175,3 +4175,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "I noticed this some kind of a warning \"We kept what you typed last time on this device. Discard it\" where did you save the draft? in localstorage?"
 **AI response**: no: sessionStorage (features/forms/adapters/browser.ts browserStore, decided 2026-10-02), key `remonta.form.section:<name>.draft.v1`, per tab, gone when the tab or browser closes, ignored after 23 h (draft.ts DRAFT_MAX_AGE_MS); any old localStorage copy is removed on load; neverSaved fields (the bank account) are stripped before saving. Saved on every edit, cleared on a successful save or Discard. Offered to reword "on this device" to "in this tab". No change made.
+
+**User input**: "I think just remove the notice entirely"
+**AI response**: PR #57 `83901ea`: the DraftNotice removed from SectionPage (single and paired pages); the draft itself kept (restored silently, cleared on save); draftRestored/discardDraft removed from useSection (no other user). App 139/470 known, 210 tests. Pushed.
