@@ -16,7 +16,7 @@ const base: Profile = profileSchema.parse({
   id: "wp_1",
   names: { firstName: "Mary", middleName: null, lastName: "Lee" },
   mobile: "0412345678",
-  photos: { main: null, additional: [] },
+  photos: { main: null },
   bio: null,
   personalInfo: { dateOfBirth: null, age: null, gender: null, hasVehicle: null, languages: [] },
   abn: null,
@@ -67,7 +67,7 @@ describe("WORKER_MENU", () => {
   it("done states follow the read", () => {
     const done = (p: Profile) => Object.fromEntries(editProfileChildren(p).flatMap((l) => l.children ?? [l]).map((l) => [l.id, l.done]));
     expect(done(base)).toMatchObject({ name: true, photo: false, bio: false, address: false });
-    const filled = { ...base, bio: "x".repeat(50), photos: { main: "https://x.test/a.jpg", additional: [] } };
+    const filled = { ...base, bio: "x".repeat(50), photos: { main: "https://x.test/a.jpg" } };
     expect(done(filled)).toMatchObject({ photo: true, bio: true });
     expect(editProfileChildren(undefined).every((l) => l.done === undefined)).toBe(true);
   });

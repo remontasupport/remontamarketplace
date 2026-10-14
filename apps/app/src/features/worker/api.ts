@@ -21,8 +21,7 @@ export interface WorkerApi {
   /** `reload` skips the browser's private cache (after a save, R9.5). */
   getProfile(opts?: { cache?: "default" | "reload"; signal?: AbortSignal }): Promise<ApiOutcome<Profile>>;
   createPhotoTicket(body: { contentType: "image/jpeg" | "image/png" | "image/webp"; sizeBytes: number }): Promise<ApiOutcome<PhotoTicket>>;
-  confirmPhoto(body: { uploadId: string; slot: "main" | "additional" }): Promise<ApiOutcome<Photos>>;
-  makeMainPhoto(url: string): Promise<ApiOutcome<Photos>>;
+  confirmPhoto(body: { uploadId: string }): Promise<ApiOutcome<Photos>>;
   removePhoto(url: string): Promise<ApiOutcome<Photos>>;
 }
 
@@ -32,7 +31,7 @@ export interface WorkerApiDeps {
   fetch?: typeof globalThis.fetch;
 }
 
-type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "makeMainPhoto" | "removePhoto";
+type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "removePhoto";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -82,7 +81,6 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     getProfile: (opts) => call("getProfile", {}, opts),
     createPhotoTicket: (body) => call("createPhotoTicket", { body }),
     confirmPhoto: (body) => call("confirmPhoto", { body }),
-    makeMainPhoto: (url) => call("makeMainPhoto", { body: { url } }),
     removePhoto: (url) => call("removePhoto", { body: { url } }),
   };
 }

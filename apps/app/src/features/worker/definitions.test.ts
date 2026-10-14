@@ -17,7 +17,7 @@ const profile: Profile = profileSchema.parse({
   id: "wp_1",
   names: { firstName: "Mary", middleName: null, lastName: "O'Connor" },
   mobile: "0412345678",
-  photos: { main: null, additional: [] },
+  photos: { main: null },
   bio: "I have supported people for ten years.",
   personalInfo: { dateOfBirth: "1990-01-01", age: null, gender: "Female", hasVehicle: "Yes", languages: ["English"] },
   abn: { type: "abn", value: "51824753556", signed: true },
