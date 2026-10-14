@@ -4043,3 +4043,21 @@ worker menu and the legacy profile server actions (app, PR #57 worktree `26fbb12
 10 findings, two High: F1 cross-worker photo deletion (the legacy `updateWorkerPhoto` action accepts any URL, the
 api's `removePhoto` then deletes it from Blob; traced, not reproduced) and F2 the legacy `"use server"` profile writes
 still callable beside the api. Asked the user which findings to take into construction.
+
+**User input**: "yes lets fix the F1, after that, review the code structure and layer for the APIs, are they using helpers? what security layers?"
+**AI response**: branch `fix/photo-delete-ownership` from `main` `4434787`. Reproduced first: a unit test calling
+`deleteStoredPhoto` with another worker's Blob URL failed on the current code (it deleted that file and its thumbnail,
+and the legacy and multipart-era files too). Fix: `isOwnStoredPhoto(url, profileId)` -- Blob host, no query or hash,
+path exactly `workers/<caller's profile id>/<upload uuid>.<ext>`; `removePhoto` passes the profile id found from the
+token inside the transaction; anything else is cleared from the column and left in the store (one warn line). Database
+test added (A's column holding B's URL: 200, column cleared, nothing deleted; B's own file deleted with its thumbnail);
+the worker harness takes a recording photo store.
+
+**User input** (interrupting the gate run): "actually, can we delete the entire feature of adding a more photos? I want it be only 1 photo"
+**AI response**: mapped the reach (api: contract photo shapes, the `additional` slot, makeMainPhoto, the read, the
+processing repoint; app: PR #57's PhotoSection and api client, the setup Step2Photo, AdditionalPhotosModal, the admin
+contractor page and its picker, the profile route, the legacy actions). Asked three questions.
+
+**User input** (answers): existing data -- "Hide, keep data (Recommended)"; order -- "F1 first, then removal (Recommended)"; admin picker -- "Keep for admins".
+**AI response**: F1 finishes as its own api-only PR; then a separate change removes additional photos for workers
+(column and files kept, unread by worker paths; the admin page and picker keep showing stored ones).
