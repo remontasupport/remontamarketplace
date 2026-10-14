@@ -3988,3 +3988,15 @@ Q12 = a (entry PR, page PR, clean-up PR); Q13 = a (shared routes stay, out of sc
 
 **User input**: "can you update the ai dlc now so I can go back to this tomorrow"
 **AI response**: aidlc-state.md "Current Stage" rewritten for the resume (PR #57 at `503932d`, 13/13 green, still on hold; the prod promotion of `be8c66a…` for PRs #58 and #59 before any merge; the unrun column-test branch `test/my-profile-columns`; the open Services/Compliance/Account testing question; a numbered "Resume here"; the two developer-machine rules learned today); follow-ups 21-26 added (admin page legacy columns, the services setup no-op, the uniqueness gap, the two upload paths and orphaned Blobs, the account checks, the untested app writes), follow-up 18 noted; PR3-summary.md gains "Changes after review, 2026-10-13" with the final sidebar.
+
+## 2026-10-14: resume
+
+**User input**: "let's continue the dlc"
+**AI response**: refs checked: `main` `be8c66a` (already in `feat/edit-profile-app`), PR #57 head `503932d` (held), `test/my-profile-columns` `6fc4354` (no PR yet), record `016b37b`; nothing moved. `gcloud` needs a re-login (production revision not re-read). Asked about the column-test PR and the Services/Compliance/Account testing question.
+
+**User input** (answers): column tests -- "I'll open the PR now (Recommended)"; testing approach -- "we can do this on the later part, let's fix the personal information apis for now."
+
+**AI response**: "fix" pinned down with the user: the three pages Date of Birth, Gender, Vehicle Access each re-sent the other two answers (carried fields) to one `putPersonalInfo` write, so a worker missing one answer could not save another alone.
+
+**User input** (answer): "Split DOB / Gender / Vehicle (Recommended)"
+**AI response**: (1) New branch `feat/personal-info-split-api` from `main`, commit `bdff4d5`: `PUT /v1/worker/profile/{date-of-birth,gender,vehicle}` (`putDateOfBirth`, `putGender`, `putVehicle`), strict one-answer bodies, each writing its own column; all three recompute completion (the vehicle answer decides the licence documents). `putPersonalInfo` removed (no client on `main` calls it; the old path is 404). No migration. Tests: contract cases; pipeline (a second answer is 400, the old path 404; runs locally, passes); a database test (a worker with none of the three saves any one first; each leaves the other two). openapi.json regenerated (only these entries), docs/worker/README.md. Gates: api-contract pass (entry count 17 -> 19), api pass (database files skipped locally; one unrelated failure in one run did not recur), schemas, form-engine pass. (2) Merged into `feat/edit-profile-app` (`5ca9b92`), then `652c414`: the three pages use their own writes, one field each; the form engine's `carried` option and SectionPage's show-while-empty rule removed (no other user; both new in PR #57). App 139 / 470 known, 196 tests; form-engine 73; app build green. (3) `test/my-profile-columns`: merged the split (`01f17f7`) and `e23df59`: the personal-info case becomes three cases, each checking its own column only (24 cases). The column PR now contains the api split too.

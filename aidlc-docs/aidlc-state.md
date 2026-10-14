@@ -13,6 +13,12 @@
     checks green, preview https://remonta-24a2umxum-remontas-projects.vercel.app (staging api + data). Today's 19
     commits (the menu and page changes the user asked for): `construction/edit-profile/code/PR3-summary.md`
     "Changes after review, 2026-10-13", with the final sidebar.
+  - **2026-10-14: the personal-info write split** (user request): branch `feat/personal-info-split-api` (`bdff4d5`, from
+    `main`) replaces `putPersonalInfo` with `putDateOfBirth` / `putGender` / `putVehicle`; merged into PR #57 (`652c414`:
+    one field per page, the `carried` mechanism removed) and into `test/my-profile-columns` (`e23df59`). **PR #57's
+    Date of Birth, Gender and Vehicle Access pages 404 on the preview until this api branch is merged and on staging.**
+    The production promotion therefore becomes the merge commit of this api PR (it contains `be8c66a`), not `be8c66a`.
+    Order: api PR (or the column PR, which carries it) -> staging -> preview checks -> promote that sha -> PR #57.
   - **Two api changes PR #57 depends on, both merged to `main` and on staging, NOT yet on production:** PR #58
     (`abd73c5`: the about-me group split into `support-activities` + `fun-fact`) and PR #59 (`be8c66a`: a care area
     takes any of its own specific areas, was 3). **One promotion covers both:** Actions -> deploy-api -> Run workflow,
