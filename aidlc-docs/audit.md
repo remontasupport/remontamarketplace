@@ -4078,3 +4078,15 @@ tests rewritten (unit, property, database: the column left as stored, make-main 
 Gates: api-contract 79, api 571 (one run had a flaky completion property failure, "both partitions are large";
 passed 3/3 alone and on the re-run), form-engine 58. The app on `main` uses none of the removed parts; PR #57's
 `features/worker/api.ts` and `PhotoSection.tsx` do (Part 2). Not pushed to PR #57.
+
+**User input**: "in the preview link, I can still see the Upload more photos and replace photo button"
+**AI response**: expected with the api-only PR: those buttons are on the old account-setup step (`Step2Photo.tsx`,
+legacy server actions), unchanged on `main`. Offered to remove "Upload More Photos" there and keep "Replace Photo".
+
+**User input**: "ahh for now, let us continue the development. In the Profile photo , I want to remove the add pphoto entirely, use the apps/api already"
+**AI response**: read as PR #57's Profile Photo page (`features/worker/PhotoSection.tsx`, already on apps/api).
+`feat/one-photo-api` merged into `feat/edit-profile-app` (`d1c4429`); commit `47bc4a3`: the page has one photo
+(Upload/Replace, Remove); "More photos", "Add a photo" and "Make main" removed; the worker client loses
+`makeMainPhoto`, confirm sends `{uploadId}`; two test fixtures updated. App gate: 139 type / 470 lint known,
+196 tests. Pushed (PR #57 updated, not merged; still held). Local api restarted from the PR #57 worktree on the dev
+Neon branch so the page can be tried locally. PR #57 now also carries F1 and the one-photo api.
