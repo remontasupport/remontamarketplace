@@ -48,6 +48,13 @@ export type SectionFieldDef =
        * itemFields only. A row added on the page has none. Lets the page name a stored row (2026-10-14: the row delete).
        */
       rowKey?: string;
+      /**
+       * The value that names a stored row: the rowKey when there is one (a job's id), else this item field (an
+       * experience row's domain). With itemSummary, a stored row shows as its summary until opened (2026-10-14).
+       */
+      identity?: string;
+      /** A stored row, closed: one line and an optional second (2026-10-14: the pen opens the row's fields). */
+      itemSummary?: (item: Record<string, unknown>) => { title: string; detail?: string };
     })
   /** A value entered in full and never shown back: the read carries a mask, shown as a placeholder. */
   | (SectionFieldBase & { kind: "maskedSecret"; maskedFrom?: string })

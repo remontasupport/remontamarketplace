@@ -4,7 +4,7 @@
 // kind, the restored-draft notice, Save with its states, and the unreachable-api notice
 // (NFR-07). Rules come from the contract through useSection; the components are
 // presentational (components/ui/form-wizard).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { MAX_SLOTS_PER_DAY } from "@remonta/api-contract";
 import { emptyValuesOf, errorFor, pickPath, type SectionDefinition, type SectionFieldDef, type SectionValues } from "@remonta/form-engine";
@@ -103,32 +103,72 @@ function FieldSlot({ field, path, row, errors, setValue, picked, onDeleteRow }: 
       return <LocalitySlot field={field} value={(v as LocalityOption | null) ?? null} onPick={set} error={error} />;
     case "timeRanges":
       return <TimeRangesField label={label} hint={field.hint} days={DAYS} value={(v as TimeSlot[]) ?? []} onChange={set} maxPerDay={MAX_SLOTS_PER_DAY} error={error} />;
-    case "orderedList": {
-      const rows = (v as SectionValues[]) ?? [];
-      const move = (from: number, to: number) => {
-        const next = [...rows];
-        const [it] = next.splice(from, 1);
-        next.splice(to, 0, it!);
-        set(next);
-      };
-      return (
-        <OrderedListField
-          label={label}
-          hint={field.hint}
-          count={rows.length}
-          titleOf={(i) => field.itemTitle?.(rows[i]!, i) ?? ""}
-          addLabel={field.addLabel}
-          onAdd={() => set([...rows, emptyValuesOf(field.itemFields)])}
-          onRemove={(i) => (onDeleteRow ? onDeleteRow(path, i) : set(rows.filter((_, j) => j !== i)))}
-          onMove={move}
-          error={errors[path]?.[0]}
-          renderRow={(i) =>
-            field.itemFields.map((f) => <FieldSlot key={f.name} field={f} path={`${path}.${i}.${f.name}`} row={rows[i]!} errors={errors} setValue={setValue} picked={picked} />)
-          }
-        />
-      );
-    }
+    case "orderedList":
+      return <OrderedListSlot field={field} path={path} rows={(v as SectionValues[]) ?? []} set={set} errors={errors} setValue={setValue} picked={picked} onDeleteRow={onDeleteRow} label={label} />;
   }
+}
+
+/**
+ * A list's rows (2026-10-14): a stored row -- its identity (rowKey or identity) is in the list as read -- shows its
+ * summary until the pen opens it; a new row, or a row with an error, is always open. Open rows are remembered by
+ * identity, so a delete or an add does not open the wrong row.
+ */
+function OrderedListSlot({ field, path, rows, set, errors, setValue, picked, onDeleteRow, label }: {
+  field: Extract<SectionFieldDef, { kind: "orderedList" }>;
+  path: string;
+  rows: SectionValues[];
+  set: (v: unknown) => void;
+  errors: Record<string, string[]>;
+  setValue: (path: string, v: unknown) => void;
+  picked: unknown;
+  onDeleteRow?: (path: string, index: number) => void;
+  label: string;
+}) {
+  const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
+  // A fresh read (after a save or a delete) closes every row again: what is stored is shown as stored.
+  useEffect(() => setOpened(new Set()), [picked]);
+  const idField = field.rowKey ?? field.identity;
+  const stored = Array.isArray(picked) ? (picked as Record<string, unknown>[]) : [];
+  const idOf = (i: number) => {
+    const id = idField ? rows[i]?.[idField] : undefined;
+    return typeof id === "string" && id !== "" ? id : null;
+  };
+  const isStored = (i: number) => {
+    const id = idOf(i);
+    return !!id && !!idField && stored.some((r) => r[idField] === id);
+  };
+  const hasError = (i: number) => Object.keys(errors).some((k) => k.startsWith(`${path}.${i}.`));
+  const collapsible = !!field.itemSummary && !!idField;
+  const isOpen = (i: number) => !collapsible || !isStored(i) || hasError(i) || opened.has(idOf(i)!);
+  return (
+    <OrderedListField
+      label={label}
+      hint={field.hint}
+      count={rows.length}
+      titleOf={(i) => field.itemTitle?.(rows[i]!, i) ?? ""}
+      addLabel={field.addLabel}
+      onAdd={() => set([...rows, emptyValuesOf(field.itemFields)])}
+      onRemove={(i) => (onDeleteRow ? onDeleteRow(path, i) : set(rows.filter((_, j) => j !== i)))}
+      isOpen={isOpen}
+      onToggle={
+        collapsible
+          ? (i) => {
+              const id = idOf(i);
+              if (!id || !isStored(i)) return; // a new row stays open until it is saved
+              setOpened((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              });
+            }
+          : undefined
+      }
+      summaryOf={(i) => field.itemSummary?.(rows[i]!) ?? null}
+      error={errors[path]?.[0]}
+      renderRow={(i) => field.itemFields.map((f) => <FieldSlot key={f.name} field={f} path={`${path}.${i}.${f.name}`} row={rows[i]!} errors={errors} setValue={setValue} picked={picked} />)}
+    />
+  );
 }
 
 function SaveBar({ save, onSave, disabled }: { save: SaveState; onSave: () => void; disabled: boolean }) {

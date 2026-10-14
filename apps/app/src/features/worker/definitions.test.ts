@@ -11,7 +11,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { sectionBody, sectionBodySchema, seedSection, validateSection } from "@remonta/form-engine";
 import { CULTURAL_BACKGROUNDS, LANGUAGES, RELIGIONS, WORK_PREFERENCES } from "@remonta/schemas/data/profileOptions";
 import { describe, expect, it } from "vitest";
-import { bankAccountSection, dateOfBirthSection, educationSection, genderSection, vehicleSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
+import { bankAccountSection, dateOfBirthSection, educationSection, experienceSection, genderSection, vehicleSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
 
 const profile: Profile = profileSchema.parse({
   id: "wp_1",
@@ -105,5 +105,21 @@ describe("the shared option lists equal the old components' arrays (deleted in P
     ["MyPreferencesSection.tsx", "PREFERENCES", WORK_PREFERENCES],
   ] as const)("%s", (file, name, list) => {
     expect(arrayIn(read(file), name)).toEqual([...list]);
+  });
+});
+
+describe("closed list rows read as a summary (2026-10-14: the pen opens a row)", () => {
+  const summaryOf = (def: { fields: readonly unknown[] }) => (def.fields[0] as { itemSummary: (i: Record<string, unknown>) => { title: string; detail?: string } }).itemSummary;
+  it("a job: title and company, then the period", () => {
+    expect(summaryOf(jobHistorySection)({ jobTitle: "Support Worker", company: "Acme Care", startMonth: "January", startYear: 2019, endMonth: "March", endYear: 2020, currentlyWorking: false })).toEqual({ title: "Support Worker · Acme Care", detail: "Jan 2019 – Mar 2020" });
+    expect(summaryOf(jobHistorySection)({ jobTitle: "Carer", company: "", startMonth: "May", startYear: 2020, currentlyWorking: true })).toEqual({ title: "Carer", detail: "May 2020 – Present" });
+  });
+  it("a course or degree: course and provider, then the period", () => {
+    expect(summaryOf(educationSection)({ qualification: "Cert III", institution: "TAFE", startMonth: "February", startYear: 2018, endMonth: "November", endYear: 2018, currentlyStudying: false })).toEqual({ title: "Cert III · TAFE", detail: "Feb 2018 – Nov 2018" });
+  });
+  it("an experience area: its label, then the kinds and areas", () => {
+    const s = summaryOf(experienceSection)({ domain: "DISABILITY", isProfessional: true, isPersonal: true, specificAreas: [], otherAreas: ["Sign language"] });
+    expect(s.title).not.toBe("DISABILITY");
+    expect(s.detail).toBe("Professional · Personal · Sign language");
   });
 });

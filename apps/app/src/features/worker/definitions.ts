@@ -147,6 +147,13 @@ export const experienceSection = defineSection({
       label: "Areas you have experience in",
       addLabel: "Add an area",
       itemTitle: (item) => EXPERIENCE_DOMAINS.find((d) => d.domain === item.domain)?.label ?? "New area",
+      // A stored area is named by its domain (one per worker); closed, it reads as its kinds and areas.
+      identity: "domain",
+      itemSummary: (item) => {
+        const kinds = joined(item.isProfessional === true ? "Professional" : "", item.isPersonal === true ? "Personal" : "");
+        const areas = [...((item.specificAreas as string[] | undefined) ?? []), ...((item.otherAreas as string[] | undefined) ?? [])];
+        return { title: EXPERIENCE_DOMAINS.find((d) => d.domain === item.domain)?.label ?? "An area", detail: joined(kinds, areas.length ? areas.join(", ") : "") || undefined };
+      },
       itemFields: [
         { name: "domain", kind: "select", label: "Area", options: CARE_DOMAINS.map((d) => ({ value: d, label: EXPERIENCE_DOMAINS.find((x) => x.domain === d)?.label ?? d })) },
         { name: "isProfessional", kind: "checkbox", label: "Professional experience" },
@@ -160,6 +167,15 @@ export const experienceSection = defineSection({
     },
   ],
 });
+
+/** "Jan 2019 – Mar 2020", "May 2020 – Present" for a closed row's second line. */
+const periodOf = (item: Record<string, unknown>, currently: string): string | undefined => {
+  const at = (m: unknown, y: unknown) => [typeof m === "string" ? m.slice(0, 3) : "", y ? String(y) : ""].filter(Boolean).join(" ");
+  const start = at(item.startMonth, item.startYear);
+  const end = item[currently] === true ? "Present" : at(item.endMonth, item.endYear);
+  return start || end ? `${start || "?"} – ${end || "?"}` : undefined;
+};
+const joined = (...parts: unknown[]) => parts.filter((p) => typeof p === "string" && p.trim() !== "").join(" · ");
 
 const datesOf = (currently: string): SectionFieldDef[] => [
   { name: "startMonth", kind: "select", label: "Start month", options: MONTH_OPTIONS },
@@ -184,6 +200,7 @@ export const jobHistorySection = defineSection({
       // No row title at all, typed or numbered (user, 2026-10-14): the job title is the first field of the row.
       // Each stored job keeps its id on the row (never sent): the delete names it (2026-10-14).
       rowKey: "id",
+      itemSummary: (item) => ({ title: joined(item.jobTitle, item.company) || "A job", detail: periodOf(item, "currentlyWorking") }),
       itemFields: [{ name: "jobTitle", kind: "text", label: "Job title" }, { name: "company", kind: "text", label: "Company" }, ...datesOf("currentlyWorking")],
     },
   ],
@@ -207,6 +224,7 @@ export const educationSection = defineSection({
       itemTitle: (item) => (item.qualification ? String(item.qualification) : ""),
       // Each stored course keeps its id on the row (never sent): the delete names it (2026-10-14).
       rowKey: "id",
+      itemSummary: (item) => ({ title: joined(item.qualification, item.institution) || "A course or degree", detail: periodOf(item, "currentlyStudying") }),
       itemFields: [{ name: "qualification", kind: "text", label: "Course or degree" }, { name: "institution", kind: "text", label: "Institution or provider" }, ...datesOf("currentlyStudying")],
     },
   ],

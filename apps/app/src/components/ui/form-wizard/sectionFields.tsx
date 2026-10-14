@@ -5,7 +5,7 @@
 // engine's section mode), the wiring is features/worker/SectionPage.tsx. The text and
 // locality kinds reuse fields.tsx.
 import { useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -253,8 +253,21 @@ export function TimeRangesField({ label, hint, days, value, onChange, maxPerDay,
 
 // ---- orderedList -------------------------------------------------------------------
 
-/** Rows of sub-fields with add, remove and move; each row's fields are rendered by the caller. */
-export function OrderedListField({ label, hint, count, titleOf, addLabel, onAdd, onRemove, onMove, renderRow, canAdd = true, error }: {
+function RowSummary({ summary }: { summary: { title: string; detail?: string } | null }) {
+  if (!summary) return null;
+  return (
+    <div className="font-poppins">
+      <p className="text-gray-900 font-medium">{summary.title}</p>
+      {summary.detail && <p className="text-sm text-gray-600 mt-0.5">{summary.detail}</p>}
+    </div>
+  );
+}
+
+/**
+ * Rows of sub-fields with add and remove; each row's fields are rendered by the caller (2026-10-14: no reordering;
+ * delete then edit on the left). A row the caller marks closed shows its summary; the pen opens or closes it.
+ */
+export function OrderedListField({ label, hint, count, titleOf, addLabel, onAdd, onRemove, renderRow, isOpen = () => true, onToggle, summaryOf, canAdd = true, error }: {
   label: string;
   hint?: string;
   count: number;
@@ -262,8 +275,12 @@ export function OrderedListField({ label, hint, count, titleOf, addLabel, onAdd,
   addLabel: string;
   onAdd: () => void;
   onRemove: (index: number) => void;
-  onMove: (from: number, to: number) => void;
   renderRow: (index: number) => ReactNode;
+  /** Whether row `index` shows its fields (default: every row); a closed row shows summaryOf. */
+  isOpen?: (index: number) => boolean;
+  /** The pen: open or close row `index`. Without it there is no pen. */
+  onToggle?: (index: number) => void;
+  summaryOf?: (index: number) => { title: string; detail?: string } | null;
   canAdd?: boolean;
   error?: string;
 }) {
@@ -273,22 +290,24 @@ export function OrderedListField({ label, hint, count, titleOf, addLabel, onAdd,
       <div className="mt-3 space-y-4">
         {Array.from({ length: count }, (_, i) => (
           <div key={i} className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              {/* A row with no title yet shows none: the buttons stay on the right. */}
-              {titleOf(i) && <h4 className="font-poppins font-semibold text-gray-900">{titleOf(i)}</h4>}
-              <div className="flex items-center gap-1 ml-auto">
-                <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => onMove(i, i - 1)} className="p-1.5 text-gray-500 disabled:opacity-30">
-                  <ArrowUp className="w-4 h-4" />
-                </button>
-                <button type="button" aria-label="Move down" disabled={i === count - 1} onClick={() => onMove(i, i + 1)} className="p-1.5 text-gray-500 disabled:opacity-30">
-                  <ArrowDown className="w-4 h-4" />
-                </button>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-1 -ml-1.5">
                 <button type="button" aria-label="Remove" onClick={() => onRemove(i)} className="p-1.5 text-gray-500 hover:text-red-600">
                   <Trash2 className="w-4 h-4" />
                 </button>
+                {onToggle && (
+                  <button type="button" aria-label={isOpen(i) ? "Close" : "Edit"} aria-pressed={isOpen(i)} onClick={() => onToggle(i)} className={`p-1.5 hover:text-[#0C1628] ${isOpen(i) ? "text-[#0C1628]" : "text-gray-500"}`}>
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
               </div>
+              {isOpen(i) && titleOf(i) && <h4 className="font-poppins font-semibold text-gray-900">{titleOf(i)}</h4>}
             </div>
-            <div className="space-y-4">{renderRow(i)}</div>
+            {isOpen(i) ? (
+              <div className="space-y-4">{renderRow(i)}</div>
+            ) : (
+              <RowSummary summary={summaryOf?.(i) ?? null} />
+            )}
           </div>
         ))}
         {canAdd && (
