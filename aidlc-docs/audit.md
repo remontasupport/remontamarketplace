@@ -4090,3 +4090,9 @@ legacy server actions), unchanged on `main`. Offered to remove "Upload More Phot
 `makeMainPhoto`, confirm sends `{uploadId}`; two test fixtures updated. App gate: 139 type / 470 lint known,
 196 tests. Pushed (PR #57 updated, not merged; still held). Local api restarted from the PR #57 worktree on the dev
 Neon branch so the page can be tried locally. PR #57 now also carries F1 and the one-photo api.
+
+**User input**: "In the preview, it says Editing your profile is temporarily unavailable. Please try again in a few minutes."
+**AI response**: cause: the preview (PR #57, one-photo contract) read the staging api still on the old shape (`photos.additional`); the contract client refuses a response that does not match and the page reports unavailable. Fix: the one-photo api merged first. F1 had merged as PR #62 (`521e455`).
+
+**User input**: "still has this error Editing your profile is temporarily unavailable. Please try again in a few minutes."
+**AI response**: PR #63 merged (`6dbc65b`); CI all green incl. the database tests; deploy-api was still running. Waited: staging switched (POST /v1/worker/photos/main 404, profile 401 without a token, health 200). Production api unchanged; promotion of `6dbc65b` (F1 + one photo) pending the preview check.
