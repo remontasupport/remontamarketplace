@@ -4061,3 +4061,20 @@ contractor page and its picker, the profile route, the legacy actions). Asked th
 **User input** (answers): existing data -- "Hide, keep data (Recommended)"; order -- "F1 first, then removal (Recommended)"; admin picker -- "Keep for admins".
 **AI response**: F1 finishes as its own api-only PR; then a separate change removes additional photos for workers
 (column and files kept, unread by worker paths; the admin page and picker keep showing stored ones).
+
+**AI action**: F1 committed `e1aa0ea` on `fix/photo-delete-ownership` (api gate: lint, strict tsc, 582 tests; database
+tests skipped locally, CI runs them); docs/worker/README.md updated. Review gained section 5 (layers and helpers).
+
+**User input**: "PR opened, if we start the one photo changed now, will the sidebar changes implemented to the production? I don't want the sidebar deploy yet since we are still in progress"
+**AI response**: no: only a merge to `main` deploys; the sidebar is only on PR #57's branch (held). Proposed Part 1 (a PR
+from `main`: the api, plus optionally the live pages' extra-photo UI) and Part 2 (PR #57's photo page, on its branch).
+
+**User input**: "with the api-only version of Part 1"
+**AI response**: branch `feat/one-photo-api` from `fix/photo-delete-ownership`, commit `c2282ad`: confirm takes
+`{uploadId}` and replaces the photo; remove takes the worker's own photo; `makeMainPhoto` removed (18 worker entries);
+every photos body `{main}`; the read no longer selects `additionalPhotos` (column and files kept; admin pages still
+read it); the processing repoint of an additional slot kept for events already queued. openapi.json regenerated;
+tests rewritten (unit, property, database: the column left as stored, make-main 404, another URL 400); docs updated.
+Gates: api-contract 79, api 571 (one run had a flaky completion property failure, "both partitions are large";
+passed 3/3 alone and on the re-run), form-engine 58. The app on `main` uses none of the removed parts; PR #57's
+`features/worker/api.ts` and `PhotoSection.tsx` do (Part 2). Not pushed to PR #57.
