@@ -91,12 +91,14 @@ describe('R2.2 bio', () => {
 })
 
 describe('R2.3 personal info', () => {
-  it('a real date, 16-100 years old, the two genders, a vehicle answer', () => {
+  it('a real date, 16-100 years old, the genders (Male, Female, Prefer not to say), a vehicle answer', () => {
     ok(dateOfBirthSchema, { dateOfBirth: yearsAgo(30) })
     bad(dateOfBirthSchema, { dateOfBirth: yearsAgo(15) }, 'dateOfBirth')
     bad(dateOfBirthSchema, { dateOfBirth: yearsAgo(101) }, 'dateOfBirth')
     bad(dateOfBirthSchema, { dateOfBirth: '1990-02-30' }, 'dateOfBirth')
     ok(genderSchema, { gender: 'Female' })
+    ok(genderSchema, { gender: 'Prefer not to say' }) // 2026-10-14
+    bad(genderSchema, { gender: 'prefer not to say' }, 'gender') // the exact stored label only
     bad(genderSchema, { gender: 'Other' }, 'gender')
     ok(vehicleSchema, { hasVehicle: 'No' })
     bad(vehicleSchema, { hasVehicle: 'Maybe' }, 'hasVehicle')
