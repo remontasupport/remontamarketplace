@@ -43,13 +43,13 @@ describe("ROW_DELETES.education", () => {
   const profile = { sections: { education: [{ id: "cmedu1" }] } } as unknown as Profile;
   it("sits on the entries list; a row is stored when its id is in the profile; a new row has none", () => {
     expect(d.field).toBe("entries");
-    expect(d.noun).toBe("qualification");
+    expect(d.noun).toBe("course or degree");
     expect(d.isStored({ id: "cmedu1" }, profile)).toBe(true);
     expect(d.isStored({ qualification: "New" }, profile)).toBe(false);
   });
-  it("names the qualification and where it is from", () => {
+  it("names the course or degree and where it is from", () => {
     expect(d.describe({ qualification: "Cert III", institution: "TAFE" })).toBe('"Cert III" from TAFE');
-    expect(d.describe({})).toBe("This qualification");
+    expect(d.describe({})).toBe("This course or degree");
   });
   it("sends DELETE /v1/worker/education/<id>", async () => {
     const seen: string[] = [];

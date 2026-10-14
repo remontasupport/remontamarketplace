@@ -199,12 +199,14 @@ export const educationSection = defineSection({
     {
       name: "entries",
       kind: "orderedList",
-      label: "Your qualifications (Most recent first)",
-      addLabel: "Add a qualification",
-      itemTitle: (item, i) => (item.qualification ? String(item.qualification) : `Qualification ${i + 1}`),
-      // Each stored qualification keeps its id on the row (never sent): the delete names it (2026-10-14).
+      // "Course or degree", not "qualification" (user, 2026-10-14): a qualification is what a service requires (Services);
+      // the stored field keeps its name.
+      label: "Your courses and degrees (Most recent first)",
+      addLabel: "Add a course or degree",
+      itemTitle: (item, i) => (item.qualification ? String(item.qualification) : `Course ${i + 1}`),
+      // Each stored course keeps its id on the row (never sent): the delete names it (2026-10-14).
       rowKey: "id",
-      itemFields: [{ name: "qualification", kind: "text", label: "Qualification" }, { name: "institution", kind: "text", label: "Institution or provider" }, ...datesOf("currentlyStudying")],
+      itemFields: [{ name: "qualification", kind: "text", label: "Course or degree" }, { name: "institution", kind: "text", label: "Institution or provider" }, ...datesOf("currentlyStudying")],
     },
   ],
 });

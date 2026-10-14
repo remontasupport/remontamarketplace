@@ -46,9 +46,9 @@ export const ROW_DELETES: Readonly<Record<string, RowDelete>> = {
   },
   education: {
     field: "entries",
-    noun: "qualification",
+    noun: "course or degree",
     isStored: (row, profile) => typeof row.id === "string" && profile.sections.education.some((e) => e.id === row.id),
-    describe: (row) => (row.qualification ? `"${String(row.qualification)}"${row.institution ? ` from ${String(row.institution)}` : ""}` : "This qualification"),
+    describe: (row) => (row.qualification ? `"${String(row.qualification)}"${row.institution ? ` from ${String(row.institution)}` : ""}` : "This course or degree"),
     remove: (row) => goneIsDone(workerApi.deleteEducationEntry(String(row.id))),
   },
 };
