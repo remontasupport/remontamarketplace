@@ -131,13 +131,18 @@ describe.skipIf(!local)('My Profile writes land in their tables and columns', ()
     expect(await h.db.workerLocation.findFirst({ where: { workerProfileId: h.a.profileId, kind: 'HOME' } })).toEqual(home0)
   })
 
-  it('Date of Birth, Gender, Vehicle Access -> worker_profiles.dateOfBirth, gender, hasVehicle (age is never written)', async () => {
+  // Date of birth, gender, vehicle: three writes since 2026-10-14, each moving its own column only.
+  it.each([
+    ['putDateOfBirth', 'date-of-birth', { dateOfBirth: '1988-07-15' }],
+    ['putGender', 'gender', { gender: 'Male' }],
+    ['putVehicle', 'vehicle', { hasVehicle: 'No' }],
+  ] as const)('%s -> worker_profiles, its one column', async (section, slug, body) => {
     await write({
-      section: 'putPersonalInfo',
-      path: '/v1/worker/profile/personal-info',
-      body: { dateOfBirth: '1988-07-15', gender: 'Male', hasVehicle: 'No' },
-      profileCols: ['dateOfBirth', 'gender', 'hasVehicle'],
-      check: async () => expect(await profileRow()).toMatchObject({ dateOfBirth: '1988-07-15', gender: 'Male', hasVehicle: 'No' }),
+      section,
+      path: `/v1/worker/profile/${slug}`,
+      body,
+      profileCols: Object.keys(body),
+      check: async () => expect(await profileRow()).toMatchObject(body),
     })
   })
 
