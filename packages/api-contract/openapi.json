@@ -6240,392 +6240,25 @@
         }
       }
     },
-    "/v1/worker/additional-info/{group}": {
+    "/v1/worker/additional-info/good-to-know": {
       "put": {
-        "operationId": "worker.putAdditionalInfo",
-        "summary": "Replace one additional-details group; the others are untouched.",
-        "parameters": [
-          {
-            "name": "group",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "good-to-know",
-                "languages",
-                "cultural-background",
-                "religion",
-                "interests",
-                "support-activities",
-                "fun-fact",
-                "preferences",
-                "personality"
-              ]
-            }
-          }
-        ],
+        "operationId": "worker.putGoodToKnow",
+        "summary": "Replace the LGBTQIA+ support answer.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "good-to-know"
-                      },
-                      "lgbtqiaSupport": {
-                        "type": "boolean"
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "lgbtqiaSupport"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "languages"
-                      },
-                      "languages": {
-                        "minItems": 0,
-                        "maxItems": 20,
-                        "type": "array",
-                        "items": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "English",
-                                "Arabic",
-                                "Cantonese",
-                                "Croatian",
-                                "French",
-                                "German",
-                                "Greek",
-                                "Hebrew",
-                                "Hindi",
-                                "Hungarian",
-                                "Indonesian",
-                                "Italian",
-                                "Japanese",
-                                "Korean",
-                                "Macedonian",
-                                "Maltese",
-                                "Mandarin",
-                                "Nepali",
-                                "Netherlandic (Dutch)",
-                                "Persian",
-                                "Polish",
-                                "Portugese",
-                                "Russian",
-                                "Samoan",
-                                "Serbian",
-                                "Sinhalese",
-                                "Spanish",
-                                "Tagalog (Filipino)",
-                                "Tamil",
-                                "Turkish",
-                                "Vietnamese",
-                                "Auslan (Australian sign language)"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 40
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "languages"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "cultural-background"
-                      },
-                      "culturalBackground": {
-                        "minItems": 0,
-                        "maxItems": 20,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "Australian",
-                            "Other Oceanian",
-                            "North American",
-                            "Australian Aboriginal",
-                            "Western European",
-                            "South American",
-                            "Australian South East Islan...",
-                            "Northern European",
-                            "Central American",
-                            "Torres Strait Islander",
-                            "Southern & Eastern European",
-                            "Carribean Islander",
-                            "New Zealander",
-                            "Middle Eastern",
-                            "South African",
-                            "Maori",
-                            "Jewish",
-                            "Other African",
-                            "Polynesian",
-                            "Asian",
-                            "Other"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "culturalBackground"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "religion"
-                      },
-                      "religion": {
-                        "minItems": 0,
-                        "maxItems": 20,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "Anglican",
-                            "Hindu",
-                            "Russian Orthodox",
-                            "Buddhist",
-                            "Islamic",
-                            "Sikh",
-                            "Catholic",
-                            "Jewish",
-                            "Spiritual",
-                            "Christian - other",
-                            "None",
-                            "Uniting Church",
-                            "Greek Orthodox",
-                            "Presbyterian",
-                            "Other"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "religion"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "interests"
-                      },
-                      "interests": {
-                        "minItems": 0,
-                        "maxItems": 20,
-                        "type": "array",
-                        "items": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "Cooking",
-                                "Movies",
-                                "Pets",
-                                "Sports",
-                                "Gardening",
-                                "Music",
-                                "Photography / Art",
-                                "Travel",
-                                "Indoor Games / Puzzles",
-                                "Cultural Festivities",
-                                "Reading"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 60
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "interests"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "support-activities"
-                      },
-                      "uniqueService": {
-                        "minItems": 1,
-                        "maxItems": 10,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "Camping & overnight trips",
-                            "Bushwalking & nature outings",
-                            "Beach days & water-based activities",
-                            "Fishing trips",
-                            "National park excursions",
-                            "Adventure parks / low-risk outdoor challenges",
-                            "Yoga (gentle, chair-based, or adaptive)",
-                            "Fitness training (NDIS-appropriate, non-clinical)",
-                            "Walking programs",
-                            "Stretching & mobility sessions",
-                            "Mindfulness & meditation",
-                            "Breathwork & relaxation techniques",
-                            "Concerts & live music events",
-                            "Sporting events (NRL, AFL, soccer, etc.)",
-                            "Movies & cinema outings",
-                            "Community festivals & markets",
-                            "Comedy shows or theatre",
-                            "Museum & gallery visits",
-                            "Art & painting sessions",
-                            "Music practice or jam sessions",
-                            "Photography outings",
-                            "Cooking & meal prep as a hobby",
-                            "Gardening projects",
-                            "DIY / basic handyman activities (where appropriate)",
-                            "Public transport training",
-                            "Confidence building & social skills",
-                            "Money handling & budgeting practice",
-                            "Routine building & planning",
-                            "Communication support in community settings",
-                            "Support with hobbies and personal goals",
-                            "ASD-experienced support workers",
-                            "Mental health lived-experience workers",
-                            "Youth mentoring",
-                            "Male-only support",
-                            "Female-only support",
-                            "Cultural or language-specific supports",
-                            "LGBTQIA+ inclusive supports",
-                            "Gym buddy / workout partner",
-                            "Running or cycling partner",
-                            "Sports coaching (casual, non-therapeutic)",
-                            "Meal planning & healthy lifestyle coaching",
-                            "Support with social anxiety in public spaces"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "uniqueService"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "fun-fact"
-                      },
-                      "funFact": {
-                        "type": "string",
-                        "minLength": 50,
-                        "maxLength": 1000,
-                        "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "funFact"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "preferences"
-                      },
-                      "workPreferences": {
-                        "minItems": 0,
-                        "maxItems": 20,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "Female",
-                            "Male",
-                            "Non-smoker",
-                            "No pets",
-                            "No preferences"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "workPreferences"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "group": {
-                        "type": "string",
-                        "const": "personality"
-                      },
-                      "personality": {
-                        "type": "string",
-                        "enum": [
-                          "Outgoing and engaging",
-                          "Calm and relaxed"
-                        ]
-                      },
-                      "nonSmoker": {
-                        "type": "boolean"
-                      },
-                      "petFriendly": {
-                        "type": "boolean"
-                      }
-                    },
-                    "required": [
-                      "group",
-                      "personality",
-                      "nonSmoker",
-                      "petFriendly"
-                    ],
-                    "additionalProperties": false
+                "type": "object",
+                "properties": {
+                  "lgbtqiaSupport": {
+                    "type": "boolean"
                   }
-                ]
+                },
+                "required": [
+                  "lgbtqiaSupport"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -6636,362 +6269,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "good-to-know"
-                        },
-                        "lgbtqiaSupport": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "lgbtqiaSupport"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "languages"
-                        },
-                        "languages": {
-                          "minItems": 0,
-                          "maxItems": 20,
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "English",
-                                  "Arabic",
-                                  "Cantonese",
-                                  "Croatian",
-                                  "French",
-                                  "German",
-                                  "Greek",
-                                  "Hebrew",
-                                  "Hindi",
-                                  "Hungarian",
-                                  "Indonesian",
-                                  "Italian",
-                                  "Japanese",
-                                  "Korean",
-                                  "Macedonian",
-                                  "Maltese",
-                                  "Mandarin",
-                                  "Nepali",
-                                  "Netherlandic (Dutch)",
-                                  "Persian",
-                                  "Polish",
-                                  "Portugese",
-                                  "Russian",
-                                  "Samoan",
-                                  "Serbian",
-                                  "Sinhalese",
-                                  "Spanish",
-                                  "Tagalog (Filipino)",
-                                  "Tamil",
-                                  "Turkish",
-                                  "Vietnamese",
-                                  "Auslan (Australian sign language)"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 40
-                              }
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "languages"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "cultural-background"
-                        },
-                        "culturalBackground": {
-                          "minItems": 0,
-                          "maxItems": 20,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "enum": [
-                              "Australian",
-                              "Other Oceanian",
-                              "North American",
-                              "Australian Aboriginal",
-                              "Western European",
-                              "South American",
-                              "Australian South East Islan...",
-                              "Northern European",
-                              "Central American",
-                              "Torres Strait Islander",
-                              "Southern & Eastern European",
-                              "Carribean Islander",
-                              "New Zealander",
-                              "Middle Eastern",
-                              "South African",
-                              "Maori",
-                              "Jewish",
-                              "Other African",
-                              "Polynesian",
-                              "Asian",
-                              "Other"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "culturalBackground"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "religion"
-                        },
-                        "religion": {
-                          "minItems": 0,
-                          "maxItems": 20,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "enum": [
-                              "Anglican",
-                              "Hindu",
-                              "Russian Orthodox",
-                              "Buddhist",
-                              "Islamic",
-                              "Sikh",
-                              "Catholic",
-                              "Jewish",
-                              "Spiritual",
-                              "Christian - other",
-                              "None",
-                              "Uniting Church",
-                              "Greek Orthodox",
-                              "Presbyterian",
-                              "Other"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "religion"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "interests"
-                        },
-                        "interests": {
-                          "minItems": 0,
-                          "maxItems": 20,
-                          "type": "array",
-                          "items": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "Cooking",
-                                  "Movies",
-                                  "Pets",
-                                  "Sports",
-                                  "Gardening",
-                                  "Music",
-                                  "Photography / Art",
-                                  "Travel",
-                                  "Indoor Games / Puzzles",
-                                  "Cultural Festivities",
-                                  "Reading"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 60
-                              }
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "interests"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "support-activities"
-                        },
-                        "uniqueService": {
-                          "minItems": 1,
-                          "maxItems": 10,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "enum": [
-                              "Camping & overnight trips",
-                              "Bushwalking & nature outings",
-                              "Beach days & water-based activities",
-                              "Fishing trips",
-                              "National park excursions",
-                              "Adventure parks / low-risk outdoor challenges",
-                              "Yoga (gentle, chair-based, or adaptive)",
-                              "Fitness training (NDIS-appropriate, non-clinical)",
-                              "Walking programs",
-                              "Stretching & mobility sessions",
-                              "Mindfulness & meditation",
-                              "Breathwork & relaxation techniques",
-                              "Concerts & live music events",
-                              "Sporting events (NRL, AFL, soccer, etc.)",
-                              "Movies & cinema outings",
-                              "Community festivals & markets",
-                              "Comedy shows or theatre",
-                              "Museum & gallery visits",
-                              "Art & painting sessions",
-                              "Music practice or jam sessions",
-                              "Photography outings",
-                              "Cooking & meal prep as a hobby",
-                              "Gardening projects",
-                              "DIY / basic handyman activities (where appropriate)",
-                              "Public transport training",
-                              "Confidence building & social skills",
-                              "Money handling & budgeting practice",
-                              "Routine building & planning",
-                              "Communication support in community settings",
-                              "Support with hobbies and personal goals",
-                              "ASD-experienced support workers",
-                              "Mental health lived-experience workers",
-                              "Youth mentoring",
-                              "Male-only support",
-                              "Female-only support",
-                              "Cultural or language-specific supports",
-                              "LGBTQIA+ inclusive supports",
-                              "Gym buddy / workout partner",
-                              "Running or cycling partner",
-                              "Sports coaching (casual, non-therapeutic)",
-                              "Meal planning & healthy lifestyle coaching",
-                              "Support with social anxiety in public spaces"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "uniqueService"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "fun-fact"
-                        },
-                        "funFact": {
-                          "type": "string",
-                          "minLength": 50,
-                          "maxLength": 1000,
-                          "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "funFact"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "preferences"
-                        },
-                        "workPreferences": {
-                          "minItems": 0,
-                          "maxItems": 20,
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "enum": [
-                              "Female",
-                              "Male",
-                              "Non-smoker",
-                              "No pets",
-                              "No preferences"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "workPreferences"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "group": {
-                          "type": "string",
-                          "const": "personality"
-                        },
-                        "personality": {
-                          "type": "string",
-                          "enum": [
-                            "Outgoing and engaging",
-                            "Calm and relaxed"
-                          ]
-                        },
-                        "nonSmoker": {
-                          "type": "boolean"
-                        },
-                        "petFriendly": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": [
-                        "group",
-                        "personality",
-                        "nonSmoker",
-                        "petFriendly"
-                      ],
-                      "additionalProperties": false
+                  "type": "object",
+                  "properties": {
+                    "lgbtqiaSupport": {
+                      "type": "boolean"
                     }
-                  ]
+                  },
+                  "required": [
+                    "lgbtqiaSupport"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -7018,16 +6305,6 @@
           },
           "403": {
             "description": "FORBIDDEN",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "NOT_FOUND",
             "content": {
               "application/json": {
                 "schema": {
@@ -7096,7 +6373,1513 @@
               "window": "1m"
             }
           ],
-          "maxBodyKb": 16,
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/languages": {
+      "put": {
+        "operationId": "worker.putLanguages",
+        "summary": "Replace the languages spoken.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "languages": {
+                    "minItems": 0,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "English",
+                            "Arabic",
+                            "Cantonese",
+                            "Croatian",
+                            "French",
+                            "German",
+                            "Greek",
+                            "Hebrew",
+                            "Hindi",
+                            "Hungarian",
+                            "Indonesian",
+                            "Italian",
+                            "Japanese",
+                            "Korean",
+                            "Macedonian",
+                            "Maltese",
+                            "Mandarin",
+                            "Nepali",
+                            "Netherlandic (Dutch)",
+                            "Persian",
+                            "Polish",
+                            "Portugese",
+                            "Russian",
+                            "Samoan",
+                            "Serbian",
+                            "Sinhalese",
+                            "Spanish",
+                            "Tagalog (Filipino)",
+                            "Tamil",
+                            "Turkish",
+                            "Vietnamese",
+                            "Auslan (Australian sign language)"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 40
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "languages"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "languages": {
+                      "minItems": 0,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "English",
+                              "Arabic",
+                              "Cantonese",
+                              "Croatian",
+                              "French",
+                              "German",
+                              "Greek",
+                              "Hebrew",
+                              "Hindi",
+                              "Hungarian",
+                              "Indonesian",
+                              "Italian",
+                              "Japanese",
+                              "Korean",
+                              "Macedonian",
+                              "Maltese",
+                              "Mandarin",
+                              "Nepali",
+                              "Netherlandic (Dutch)",
+                              "Persian",
+                              "Polish",
+                              "Portugese",
+                              "Russian",
+                              "Samoan",
+                              "Serbian",
+                              "Sinhalese",
+                              "Spanish",
+                              "Tagalog (Filipino)",
+                              "Tamil",
+                              "Turkish",
+                              "Vietnamese",
+                              "Auslan (Australian sign language)"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "languages"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/cultural-background": {
+      "put": {
+        "operationId": "worker.putCulturalBackground",
+        "summary": "Replace the cultural background.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "culturalBackground": {
+                    "minItems": 0,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Australian",
+                        "Other Oceanian",
+                        "North American",
+                        "Australian Aboriginal",
+                        "Western European",
+                        "South American",
+                        "Australian South East Islan...",
+                        "Northern European",
+                        "Central American",
+                        "Torres Strait Islander",
+                        "Southern & Eastern European",
+                        "Carribean Islander",
+                        "New Zealander",
+                        "Middle Eastern",
+                        "South African",
+                        "Maori",
+                        "Jewish",
+                        "Other African",
+                        "Polynesian",
+                        "Asian",
+                        "Other"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "culturalBackground"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "culturalBackground": {
+                      "minItems": 0,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "Australian",
+                          "Other Oceanian",
+                          "North American",
+                          "Australian Aboriginal",
+                          "Western European",
+                          "South American",
+                          "Australian South East Islan...",
+                          "Northern European",
+                          "Central American",
+                          "Torres Strait Islander",
+                          "Southern & Eastern European",
+                          "Carribean Islander",
+                          "New Zealander",
+                          "Middle Eastern",
+                          "South African",
+                          "Maori",
+                          "Jewish",
+                          "Other African",
+                          "Polynesian",
+                          "Asian",
+                          "Other"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "culturalBackground"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/religion": {
+      "put": {
+        "operationId": "worker.putReligion",
+        "summary": "Replace the religion.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "religion": {
+                    "minItems": 0,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Anglican",
+                        "Hindu",
+                        "Russian Orthodox",
+                        "Buddhist",
+                        "Islamic",
+                        "Sikh",
+                        "Catholic",
+                        "Jewish",
+                        "Spiritual",
+                        "Christian - other",
+                        "None",
+                        "Uniting Church",
+                        "Greek Orthodox",
+                        "Presbyterian",
+                        "Other"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "religion"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "religion": {
+                      "minItems": 0,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "Anglican",
+                          "Hindu",
+                          "Russian Orthodox",
+                          "Buddhist",
+                          "Islamic",
+                          "Sikh",
+                          "Catholic",
+                          "Jewish",
+                          "Spiritual",
+                          "Christian - other",
+                          "None",
+                          "Uniting Church",
+                          "Greek Orthodox",
+                          "Presbyterian",
+                          "Other"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "religion"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/interests": {
+      "put": {
+        "operationId": "worker.putInterests",
+        "summary": "Replace the interests.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "interests": {
+                    "minItems": 0,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "Cooking",
+                            "Movies",
+                            "Pets",
+                            "Sports",
+                            "Gardening",
+                            "Music",
+                            "Photography / Art",
+                            "Travel",
+                            "Indoor Games / Puzzles",
+                            "Cultural Festivities",
+                            "Reading"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        }
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "interests"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "interests": {
+                      "minItems": 0,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "Cooking",
+                              "Movies",
+                              "Pets",
+                              "Sports",
+                              "Gardening",
+                              "Music",
+                              "Photography / Art",
+                              "Travel",
+                              "Indoor Games / Puzzles",
+                              "Cultural Festivities",
+                              "Reading"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "interests"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/support-activities": {
+      "put": {
+        "operationId": "worker.putSupportActivities",
+        "summary": "Replace the support activities offered (at least one).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uniqueService": {
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Camping & overnight trips",
+                        "Bushwalking & nature outings",
+                        "Beach days & water-based activities",
+                        "Fishing trips",
+                        "National park excursions",
+                        "Adventure parks / low-risk outdoor challenges",
+                        "Yoga (gentle, chair-based, or adaptive)",
+                        "Fitness training (NDIS-appropriate, non-clinical)",
+                        "Walking programs",
+                        "Stretching & mobility sessions",
+                        "Mindfulness & meditation",
+                        "Breathwork & relaxation techniques",
+                        "Concerts & live music events",
+                        "Sporting events (NRL, AFL, soccer, etc.)",
+                        "Movies & cinema outings",
+                        "Community festivals & markets",
+                        "Comedy shows or theatre",
+                        "Museum & gallery visits",
+                        "Art & painting sessions",
+                        "Music practice or jam sessions",
+                        "Photography outings",
+                        "Cooking & meal prep as a hobby",
+                        "Gardening projects",
+                        "DIY / basic handyman activities (where appropriate)",
+                        "Public transport training",
+                        "Confidence building & social skills",
+                        "Money handling & budgeting practice",
+                        "Routine building & planning",
+                        "Communication support in community settings",
+                        "Support with hobbies and personal goals",
+                        "ASD-experienced support workers",
+                        "Mental health lived-experience workers",
+                        "Youth mentoring",
+                        "Male-only support",
+                        "Female-only support",
+                        "Cultural or language-specific supports",
+                        "LGBTQIA+ inclusive supports",
+                        "Gym buddy / workout partner",
+                        "Running or cycling partner",
+                        "Sports coaching (casual, non-therapeutic)",
+                        "Meal planning & healthy lifestyle coaching",
+                        "Support with social anxiety in public spaces"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "uniqueService"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uniqueService": {
+                      "minItems": 1,
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "Camping & overnight trips",
+                          "Bushwalking & nature outings",
+                          "Beach days & water-based activities",
+                          "Fishing trips",
+                          "National park excursions",
+                          "Adventure parks / low-risk outdoor challenges",
+                          "Yoga (gentle, chair-based, or adaptive)",
+                          "Fitness training (NDIS-appropriate, non-clinical)",
+                          "Walking programs",
+                          "Stretching & mobility sessions",
+                          "Mindfulness & meditation",
+                          "Breathwork & relaxation techniques",
+                          "Concerts & live music events",
+                          "Sporting events (NRL, AFL, soccer, etc.)",
+                          "Movies & cinema outings",
+                          "Community festivals & markets",
+                          "Comedy shows or theatre",
+                          "Museum & gallery visits",
+                          "Art & painting sessions",
+                          "Music practice or jam sessions",
+                          "Photography outings",
+                          "Cooking & meal prep as a hobby",
+                          "Gardening projects",
+                          "DIY / basic handyman activities (where appropriate)",
+                          "Public transport training",
+                          "Confidence building & social skills",
+                          "Money handling & budgeting practice",
+                          "Routine building & planning",
+                          "Communication support in community settings",
+                          "Support with hobbies and personal goals",
+                          "ASD-experienced support workers",
+                          "Mental health lived-experience workers",
+                          "Youth mentoring",
+                          "Male-only support",
+                          "Female-only support",
+                          "Cultural or language-specific supports",
+                          "LGBTQIA+ inclusive supports",
+                          "Gym buddy / workout partner",
+                          "Running or cycling partner",
+                          "Sports coaching (casual, non-therapeutic)",
+                          "Meal planning & healthy lifestyle coaching",
+                          "Support with social anxiety in public spaces"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "uniqueService"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/fun-fact": {
+      "put": {
+        "operationId": "worker.putFunFact",
+        "summary": "Replace the fun fact (50-1,000 characters).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "funFact": {
+                    "type": "string",
+                    "minLength": 50,
+                    "maxLength": 1000,
+                    "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                  }
+                },
+                "required": [
+                  "funFact"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "funFact": {
+                      "type": "string",
+                      "minLength": 50,
+                      "maxLength": 1000,
+                      "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                    }
+                  },
+                  "required": [
+                    "funFact"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/preferences": {
+      "put": {
+        "operationId": "worker.putPreferences",
+        "summary": "Replace the work preferences.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "workPreferences": {
+                    "minItems": 0,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Female",
+                        "Male",
+                        "Non-smoker",
+                        "No pets",
+                        "No preferences"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "workPreferences"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workPreferences": {
+                      "minItems": 0,
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "Female",
+                          "Male",
+                          "Non-smoker",
+                          "No pets",
+                          "No preferences"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "workPreferences"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/additional-info/personality": {
+      "put": {
+        "operationId": "worker.putPersonality",
+        "summary": "Replace the personality, the non-smoker and the pet-friendly answers.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "personality": {
+                    "type": "string",
+                    "enum": [
+                      "Outgoing and engaging",
+                      "Calm and relaxed"
+                    ]
+                  },
+                  "nonSmoker": {
+                    "type": "boolean"
+                  },
+                  "petFriendly": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "personality",
+                  "nonSmoker",
+                  "petFriendly"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "personality": {
+                      "type": "string",
+                      "enum": [
+                        "Outgoing and engaging",
+                        "Calm and relaxed"
+                      ]
+                    },
+                    "nonSmoker": {
+                      "type": "boolean"
+                    },
+                    "petFriendly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "personality",
+                    "nonSmoker",
+                    "petFriendly"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
           "audit": "PROFILE_UPDATE"
         }
       }

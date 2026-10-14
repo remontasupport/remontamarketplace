@@ -8,9 +8,9 @@
 // sections that only move the percentage (hours, experience, history, education, the groups, the
 // bank account) skip the recompute -- half the connection time of a write (the U2 load test). One info line per request with ids and
 // timing, never a name, a value or a row (U1-SEC-06).
-import { workerContract } from '@remonta/api-contract'
+import { workerContract, type AdditionalInfoBody, type AdditionalInfoGroup } from '@remonta/api-contract'
 import type { Clock } from '../../platform/clock'
-import { defineHandlers } from '../../platform/contract/handlers'
+import { defineHandlers, type HandlerContext } from '../../platform/contract/handlers'
 import type { Db } from '../../platform/persistence/db'
 import type { PhotoStore } from '../registration/adapters/photo-store'
 import { confirmPhotoUpload } from '../registration/application/photo-confirm'
@@ -38,6 +38,10 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     if (!deps.photos) throw new Error('worker photos: the photo store is not configured')
     return deps.photos
   }
+  const group = async <G extends AdditionalInfoGroup>(g: G, body: AdditionalInfoBody<G>, ctx: HandlerContext) => ({
+    status: 200 as const,
+    body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${g}`, completion: false }, (tx, p) => writeAdditionalInfo(tx, p.id, g, body)),
+  })
   return defineHandlers(workerContract, {
     getProfile: async (_req, ctx) => {
       const started = Date.now()
@@ -84,10 +88,16 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     putExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putExperience', completion: false }, (tx, p) => writeExperience(tx, p.id, req.body)) }),
     putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: false }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
     putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: false }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
-    putAdditionalInfo: async (req, ctx) => ({
-      status: 200,
-      body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${req.params.group}`, completion: false }, (tx, p) => writeAdditionalInfo(tx, p.id, req.params.group, req.body)),
-    }),
+    // The additional details, one entry per group (2026-10-14); each writes its own columns only.
+    putGoodToKnow: (req, ctx) => group('good-to-know', req.body, ctx),
+    putLanguages: (req, ctx) => group('languages', req.body, ctx),
+    putCulturalBackground: (req, ctx) => group('cultural-background', req.body, ctx),
+    putReligion: (req, ctx) => group('religion', req.body, ctx),
+    putInterests: (req, ctx) => group('interests', req.body, ctx),
+    putSupportActivities: (req, ctx) => group('support-activities', req.body, ctx),
+    putFunFact: (req, ctx) => group('fun-fact', req.body, ctx),
+    putPreferences: (req, ctx) => group('preferences', req.body, ctx),
+    putPersonality: (req, ctx) => group('personality', req.body, ctx),
     putBankAccount: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBankAccount', completion: false }, (tx, p) => writeBankAccount(tx, p.id, req.body)) }),
   })
 }

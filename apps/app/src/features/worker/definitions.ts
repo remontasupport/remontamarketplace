@@ -4,7 +4,7 @@
 // worker.sections.ts); the option lists are packages/schemas'. Nothing here renders.
 // The photo section is not a definition: it uploads files rather than saving a body
 // (features/worker/PhotoSection.tsx).
-import { CARE_DOMAINS, workerContract } from "@remonta/api-contract";
+import { ADDITIONAL_INFO_ENTRIES, CARE_DOMAINS, workerContract, type AdditionalInfoGroup } from "@remonta/api-contract";
 import { defineSection, type SectionDefinition, type SectionFieldDef } from "@remonta/form-engine";
 import { EXPERIENCE_DOMAINS } from "@remonta/schemas/data/experienceAreas";
 import {
@@ -207,8 +207,9 @@ export const educationSection = defineSection({
 
 // ---- Additional details: one group per definition (R7.2) ------------------------------------
 
-const group = (name: string, title: string, groupId: string, fields: SectionFieldDef[], description?: string) =>
-  defineSection({ ...READ, name, title, description, pick: "sections.additionalInfo", writeEntry: "putAdditionalInfo", constants: { group: groupId }, pathParams: { group: groupId }, fields });
+// Each group saves through its own entry (2026-10-14: one api per page; was one :group entry with a `group` field).
+const group = (name: string, title: string, groupId: AdditionalInfoGroup, fields: SectionFieldDef[], description?: string) =>
+  defineSection({ ...READ, name, title, description, pick: "sections.additionalInfo", writeEntry: ADDITIONAL_INFO_ENTRIES[groupId].entry, fields });
 
 export const goodToKnowSection = group("good-to-know", "Good to know", "good-to-know", [{ name: "lgbtqiaSupport", kind: "checkbox", label: "I'm experienced supporting LGBTQIA+ people" }]);
 export const languagesSection = group("languages", "Languages", "languages", [{ name: "languages", kind: "multiSelect", label: "Languages you speak", options: LANGUAGES, allowOwn: true, max: 20 }], "Clients often look for someone who speaks their language. Type a language that is not listed to add it.");

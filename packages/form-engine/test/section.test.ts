@@ -1,11 +1,22 @@
 // The section mode (U2 R9): the import-time checks reject (a check that never fails may be
 // unenforceable), seed and body are inverses, and the save path retries, refreshes the
 // token once on 401, and maps the server's field errors.
-import { workerContract } from "@remonta/api-contract";
+import { defineContract, workerContract } from "@remonta/api-contract";
+import * as z from "zod";
 import { describe, expect, it } from "vitest";
 import { defineSection, emptyValuesOf, errorFor, saveSection, sectionBody, seedFromSaved, seedSection, setPath, validateSection } from "../src/section";
 
 const base = { contract: workerContract, readEntry: "getProfile", writeEntry: "putName", pick: "names" } as const;
+
+// The worker contract has no path parameter and no union body since 2026-10-14 (one entry per additional-details
+// group); the engine still supports both, so its guards are proved on a test-only contract with one entry of each.
+const groupA = z.strictObject({ group: z.literal("a"), a: z.string() });
+const groupB = z.strictObject({ group: z.literal("b"), b: z.string() });
+const testContract = defineContract("test", {
+  ...workerContract.entries,
+  putGroup: { ...workerContract.entries.putName, path: "/v1/test/:group", pathParams: z.strictObject({ group: z.enum(["a", "b"]) }), body: { kind: "json", schema: z.discriminatedUnion("group", [groupA, groupB]) }, responses: { 200: groupA } },
+});
+const groupBase = { contract: testContract, readEntry: "getProfile", writeEntry: "putGroup", pick: "names" } as const;
 const nameFields = [
   { name: "firstName", kind: "text", label: "First" },
   { name: "middleName", kind: "text", label: "Middle", nullable: true },
@@ -18,8 +29,8 @@ describe("defineSection refuses", () => {
     ["a field twice", { ...base, name: "x", title: "x", fields: [...nameFields, { name: "lastName", kind: "text", label: "again" }] }, /lastName appears twice/],
     ["a pick not in the read", { ...base, name: "x", title: "x", pick: "names.nope", fields: [...nameFields] }, /pick names\.nope is not in the getProfile response/],
     ["an entry not in the contract", { ...base, name: "x", title: "x", writeEntry: "putNope", fields: [...nameFields] }, /putNope is not in the worker contract/],
-    ["a missing path parameter", { ...base, name: "x", title: "x", writeEntry: "putAdditionalInfo", pick: "sections.additionalInfo", constants: { group: "religion" }, fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] }, /path parameter group has no value/],
-    ["constants that match no union member", { ...base, name: "x", title: "x", writeEntry: "putAdditionalInfo", pick: "sections.additionalInfo", constants: { group: "nope" }, pathParams: { group: "nope" }, fields: [] }, /no member/],
+    ["a missing path parameter", { ...groupBase, name: "x", title: "x", constants: { group: "a" }, fields: [{ name: "a", kind: "text", label: "x" }] }, /path parameter group has no value/],
+    ["constants that match no union member", { ...groupBase, name: "x", title: "x", constants: { group: "nope" }, pathParams: { group: "nope" }, fields: [] }, /no member/],
   ])("%s", (_l, def, problem) => {
     expect(() => defineSection(def as never)).toThrow(problem);
   });
@@ -40,10 +51,11 @@ describe("seed, body, validation", () => {
     expect(Object.keys(errors).sort()).toEqual(["firstName", "lastName"]);
     expect(errorFor({ "slots.2.startMinute": ["Overlaps"] }, "slots")).toBe("Overlaps");
   });
-  it("a union body resolves to the member the constants pick", () => {
-    const religion = defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putAdditionalInfo", pick: "sections.additionalInfo", constants: { group: "religion" }, pathParams: { group: "religion" }, fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] });
-    expect(sectionBody(religion, { religion: ["Buddhist"] })).toEqual({ group: "religion", religion: ["Buddhist"] });
+  it("an additional-details group saves through its own entry, its body only its own field (2026-10-14: one entry per group)", () => {
+    const religion = defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putReligion", pick: "sections.additionalInfo", fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] });
+    expect(sectionBody(religion, { religion: ["Buddhist"] })).toEqual({ religion: ["Buddhist"] });
     expect(validateSection(religion, { religion: ["Martian"] })).toHaveProperty("religion.0");
+    expect(() => defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putReligion", pick: "sections.additionalInfo", fields: [{ name: "languages", kind: "multiSelect", label: "x", options: [] }] })).toThrow(/not in the putReligion body/);
   });
 });
 
@@ -53,8 +65,8 @@ describe("seedFromSaved", () => {
     expect(seedFromSaved(name, { firstName: "Mary", middleName: null, lastName: "Lee" })).toEqual(seedSection(name, { names: { firstName: "Mary", middleName: null, lastName: "Lee" } }));
     const bio = defineSection({ ...base, name: "bio", title: "Bio", writeEntry: "putBio", pick: "bio", fields: [{ name: "bio", kind: "textarea", label: "x" }] });
     expect(seedFromSaved(bio, { bio: "Ten years" })).toEqual(seedSection(bio, { bio: "Ten years" }));
-    const religion = defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putAdditionalInfo", pick: "sections.additionalInfo", constants: { group: "religion" }, pathParams: { group: "religion" }, fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] });
-    expect(seedFromSaved(religion, { group: "religion", religion: ["Buddhist"] })).toEqual({ religion: ["Buddhist"] });
+    const religion = defineSection({ ...base, name: "religion", title: "Religion", writeEntry: "putReligion", pick: "sections.additionalInfo", fields: [{ name: "religion", kind: "multiSelect", label: "x", options: [] }] });
+    expect(seedFromSaved(religion, { religion: ["Buddhist"] })).toEqual({ religion: ["Buddhist"] });
   });
 });
 
