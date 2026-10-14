@@ -27,6 +27,7 @@ import {
   dateOfBirthSchema,
   educationSchema,
   educationViewSchema,
+  experienceDomainParamsSchema,
   experienceSchema,
   funFactSchema,
   genderSchema,
@@ -273,6 +274,7 @@ export const workerContract = defineContract('worker', {
   removePhoto: { method: 'POST', path: '/v1/worker/photos/remove', summary: 'Remove the profile photo, named by its URL.', body: json(photoUrlSchema), responses: { 200: photosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putAvailability: { method: 'PUT', path: '/v1/worker/availability', summary: 'Replace the week\'s preferred hours (no overlaps, at most 4 slots a day).', body: json(availabilitySchema), responses: { 200: availabilitySchema }, meta: workerWrite(PROFILE_UPDATE) },
   putExperience: { method: 'PUT', path: '/v1/worker/experience', summary: 'Replace the experience per care area.', body: json(experienceSchema), responses: { 200: experienceSchema }, meta: workerWrite(PROFILE_UPDATE) },
+  deleteExperience: { method: 'DELETE', path: '/v1/worker/experience/:domain', summary: "Delete one care area from the worker's experience; returns the areas left. Deleting an area that is not there is a 200 (a retry).", pathParams: experienceDomainParamsSchema, responses: { 200: experienceSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putJobHistory: { method: 'PUT', path: '/v1/worker/job-history', summary: 'Replace the ordered work history.', body: json(jobHistorySchema), responses: { 200: jobHistoryViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
   putEducation: { method: 'PUT', path: '/v1/worker/education', summary: 'Replace the ordered education list.', body: json(educationSchema), responses: { 200: educationViewSchema }, meta: workerWrite(PROFILE_UPDATE) },
   // The additional details: one entry per group (user, 2026-10-14; was one :group entry). Each writes its own columns only.

@@ -42,6 +42,18 @@ export async function writeExperience(tx: Tx, profileId: string, body: Experienc
   return { domains: rows.sort((a, b) => order(a.domain) - order(b.domain)) }
 }
 
+/**
+ * One care area out (2026-10-14: the page's delete, after its confirm). The row is the caller's profile's row for the
+ * domain (unique per worker and domain), so another worker's row cannot be named. Idempotent: an area already gone
+ * deletes nothing and the answer is the same list, so a retried request is not an error.
+ */
+export async function deleteExperienceArea(tx: Tx, profileId: string, domain: ExperienceBody['domains'][number]['domain']): Promise<ExperienceBody> {
+  await tx.workerExperience.deleteMany({ where: { workerProfileId: profileId, domain } })
+  const rows = await tx.workerExperience.findMany({ where: { workerProfileId: profileId }, select: { domain: true, isProfessional: true, isPersonal: true, specificAreas: true, otherAreas: true, description: true } })
+  const order = (d: string) => (CARE_DOMAINS as readonly string[]).indexOf(d)
+  return { domains: rows.sort((a, b) => order(a.domain) - order(b.domain)) }
+}
+
 const JOB_SELECT = { id: true, jobTitle: true, company: true, startMonth: true, startYear: true, endMonth: true, endYear: true, currentlyWorking: true } as const
 const COURSE_SELECT = { id: true, institution: true, qualification: true, startMonth: true, startYear: true, endMonth: true, endYear: true, currentlyStudying: true } as const
 

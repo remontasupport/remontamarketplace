@@ -154,6 +154,14 @@ describe('the write entries through the pipeline (no database)', () => {
     expect((await put('/v1/worker/additional-info/nope', {})).statusCode).toBe(404)
     expect((await put('/v1/worker/additional-info/about-me', { uniqueService: ['Fishing trips'] })).statusCode).toBe(404)
   })
+  it('deleting an experience area takes a known care domain in the address and no body (2026-10-14)', async () => {
+    const a = await app()
+    const del = (url: string, payload?: object) => a.fastify.inject({ method: 'DELETE', url, headers: workerToken('u1'), ...(payload ? { payload } : {}) })
+    expect((await del('/v1/worker/experience/NOPE')).statusCode).toBe(400)
+    expect((await del('/v1/worker/experience/disability')).statusCode).toBe(400) // the enum value, exactly
+    expect((await del('/v1/worker/experience/DISABILITY', { domain: 'AGED_CARE' })).statusCode).toBe(400) // no body
+    expect((await a.fastify.inject({ method: 'DELETE', url: '/v1/worker/experience/DISABILITY' })).statusCode).toBe(401) // no token
+  })
   it('the date of birth, gender and vehicle writes take their own answer only; the combined personal-info write is gone (2026-10-14)', async () => {
     const a = await app()
     const put = (url: string, payload: object) => a.fastify.inject({ method: 'PUT', url, headers: workerToken('u1'), payload })

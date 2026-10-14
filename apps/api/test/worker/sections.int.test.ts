@@ -109,6 +109,21 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await put('/v1/worker/additional-info/about-me', { uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(404)
   })
 
+  it("deleting an experience area removes that row only, the caller's own; a repeat is a 200 (2026-10-14)", async () => {
+    const del = (domain: string, user = () => h.a.userId) => h.t.fastify.inject({ method: 'DELETE', url: `/v1/worker/experience/${domain}`, headers: { 'x-test-principal': `${user()}:WORKER` } })
+    const area = (domain: string) => ({ domain, isProfessional: true, isPersonal: false, specificAreas: [], otherAreas: [], description: null })
+    expect((await put('/v1/worker/experience', { domains: [area('AGED_CARE'), area('DISABILITY')] })).statusCode).toBe(200)
+    expect((await put('/v1/worker/experience', { domains: [area('DISABILITY')] }, () => h.b.userId)).statusCode).toBe(200)
+    const res = await del('DISABILITY')
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toEqual({ domains: [area('AGED_CARE')] })
+    expect(await h.db.workerExperience.findMany({ where: { workerProfileId: h.a.profileId }, select: { domain: true } })).toEqual([{ domain: 'AGED_CARE' }])
+    expect(await h.db.workerExperience.count({ where: { workerProfileId: h.b.profileId, domain: 'DISABILITY' } })).toBe(1) // worker B untouched
+    expect((await del('DISABILITY')).json()).toEqual({ domains: [area('AGED_CARE')] }) // already gone: same answer
+    expect(await h.db.auditLog.count({ where: { userId: h.a.userId, action: 'PROFILE_UPDATE', metadata: { path: ['section'], equals: 'deleteExperience.DISABILITY' } } })).toBeGreaterThan(0)
+    expect((await profile()).sections.experience).toEqual([area('AGED_CARE')])
+  })
+
   it('the date of birth, the gender and the vehicle answer save alone, each leaving the other two as they were (2026-10-14: personal-info split in three)', async () => {
     // A worker with none of the three answers can save any one of them first: no page needs the others.
     await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { dateOfBirth: null, gender: null, hasVehicle: null } })
