@@ -4187,3 +4187,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "Can you remove the Job 1, and so on, as well as the Job 1 and so on labels?"
 **AI response**: read as the numbered placeholder titles on Work History ("Job N") and Education ("Course N"). PR #57 `33e0680`: itemTitle returns the typed title or nothing; SectionPage's number fallback removed; OrderedListField renders no title when empty and keeps the buttons right. Typed titles still head their rows. App 139/470 known, 210 tests. Pushed.
+
+**User input**: "for the Job, remove it entirely, there should not be any title there"
+**AI response**: PR #57 `e1e5bd8`: Work History's itemTitle removed (no row title, typed or numbered); Education keeps its typed course. App 139/470 known, 210 tests. Pushed.
