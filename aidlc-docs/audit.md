@@ -4130,3 +4130,9 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "the age still not changed, by the way I am testing at the local server"
 **AI response**: the local api ran from the PR #57 worktree, which did not have `fix/dob-age`. Merged it into `feat/edit-profile-app` (`5f65e44`; one import-line conflict in sections.int.test.ts, both kept), pushed (PR #57 updated, not merged); local api stopped and rebuilt (health 200; the build contains `ageOf`). The test worker on the dev copy (read-only): dateOfBirth 2000-06-15, stored age 59 after 8 saves on the old build; one save on the new build sets 26. No worker page displays the age; asked where the user reads it.
+
+**User input**: "it didnt change still"
+**AI response**: local api log: the save reached the fixed build (first attempt 503 after 11.9 s, the transaction limit on the slow local link; the automatic retry saved in 8.7 s). Dev copy, read-only: age 59 -> 26, updatedAt 04:55:52; the following profile reads 200. Asked which screen shows the old age (different Neon branch, an open page, the 60 s admin cache).
+
+**User input**: "it changed now, cancel"
+**AI response**: investigation closed; the age fix verified locally.
