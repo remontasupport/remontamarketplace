@@ -36,6 +36,7 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     ['bio', '/v1/worker/profile/bio', { bio: 'A bio with\na second line.' }, (p) => ({ bio: p.bio })],
     ['date of birth', '/v1/worker/profile/date-of-birth', { dateOfBirth: '1991-04-02' }, (p) => ({ dateOfBirth: p.personalInfo.dateOfBirth })],
     ['gender', '/v1/worker/profile/gender', { gender: 'Male' }, (p) => ({ gender: p.personalInfo.gender })],
+    ['gender, prefer not to say (2026-10-14)', '/v1/worker/profile/gender', { gender: 'Prefer not to say' }, (p) => ({ gender: p.personalInfo.gender })],
     ['vehicle', '/v1/worker/profile/vehicle', { hasVehicle: 'No' }, (p) => ({ hasVehicle: p.personalInfo.hasVehicle })],
     ['availability', '/v1/worker/availability', { slots: [{ day: 'TUESDAY', startMinute: 600, endMinute: 720 }, { day: 'MONDAY', startMinute: 540, endMinute: 600 }] }, (p) => ({ slots: p.sections.availability })],
     ['job history', '/v1/worker/job-history', { entries: [{ jobTitle: 'Lead', company: 'B', startMonth: 'May', startYear: 2022, endMonth: null, endYear: null, currentlyWorking: true }, { jobTitle: 'Carer', company: 'A', startMonth: 'January', startYear: 2019, endMonth: 'April', endYear: 2022, currentlyWorking: false }] }, (p) => ({ entries: p.sections.jobHistory.map(({ id: _id, ...e }: any) => e) })],
