@@ -18,11 +18,15 @@ export async function writeBio(tx: Tx, profileId: string, body: BioBody): Promis
   return { bio: row.introduction ?? '' }
 }
 
-/** R2.3: the age window re-checked with the api's clock; `age` is never written (readers compute from the date). */
+/**
+ * R2.3: the age window re-checked with the api's clock. The `age` column is written beside the date (fix 2026-10-14:
+ * it was left as stored, so every reader of the column -- the old profile route, the old setup checks -- showed the
+ * previous age); the api's own reads compute the age from the date (shapeProfile, the admin search).
+ */
 export async function writeDateOfBirth(tx: Tx, profileId: string, body: DateOfBirthBody, now: Date): Promise<DateOfBirthBody> {
   const age = ageOn(body.dateOfBirth, now)
   if (age < AGE_MIN || age > AGE_MAX) throw new ApiError(400, 'date of birth outside the window', { dateOfBirth: [`Between ${AGE_MIN} and ${AGE_MAX} years old`] })
-  const row = await tx.workerProfile.update({ where: { id: profileId }, data: { dateOfBirth: body.dateOfBirth }, select: { dateOfBirth: true } })
+  const row = await tx.workerProfile.update({ where: { id: profileId }, data: { dateOfBirth: body.dateOfBirth, age }, select: { dateOfBirth: true } })
   return row as DateOfBirthBody
 }
 
