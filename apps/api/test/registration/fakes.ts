@@ -52,6 +52,12 @@ export class InMemoryPhotoStore implements PhotoStore {
     if (!o) throw Object.assign(new Error('not found'), { code: 404 })
     return new Uint8Array(o.data.subarray(0, bytes))
   }
+  /** One call, as the adapter's single ranged read (audit P8); fails and counts as 'inspect'. */
+  async inspectWithPrefix(key: string, bytes: number): Promise<{ info: ObjectInfo; head: Uint8Array } | null> {
+    this.hit('inspect')
+    const o = this.objects.get(key)
+    return o ? { info: { sizeBytes: o.data.byteLength, contentType: o.contentType }, head: new Uint8Array(o.data.subarray(0, bytes)) } : null
+  }
   async read(key: string): Promise<Buffer> {
     this.hit('read')
     const o = this.objects.get(key)

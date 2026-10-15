@@ -63,6 +63,11 @@ describe.skipIf(!localDb || !endpoint)('the direct photo upload against the fake
     expect(url).toBe(`${publicBaseUrl}/${key}`)
     expect(await store.inspect(key)).toEqual({ sizeBytes: TINY_JPEG.byteLength, contentType: 'image/jpeg' })
     expect(Buffer.from(await store.readPrefix(key, 4))).toEqual(TINY_JPEG.subarray(0, 4))
+    // audit P8: the same answers from one call
+    const both = await store.inspectWithPrefix(key, 4)
+    expect(both?.info).toEqual({ sizeBytes: TINY_JPEG.byteLength, contentType: 'image/jpeg' })
+    expect(Buffer.from(both!.head)).toEqual(TINY_JPEG.subarray(0, 4))
+    expect(await store.inspectWithPrefix(`staging/${randomUUID()}`, 4)).toBeNull()
     expect(await store.read(key)).toEqual(TINY_JPEG)
     await store.delete(key)
     expect(await store.inspect(key)).toBeNull()

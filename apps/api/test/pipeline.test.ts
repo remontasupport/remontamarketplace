@@ -172,19 +172,21 @@ describe('RATE_LIMIT_EXEMPT_IPS (U1 worker-area, the load test on staging)', () 
     const res = await t.fastify.inject({ method: 'POST', url: '/v1/test/admin-thing/x1', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { name: 'a' } })
     expect(res.statusCode).toBe(429)
     expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:user:u1:5/1m'])
-    // Another IP is counted on the ip rule first.
+    // Another IP is counted on both rules (one round trip since audit P1); the ip rule, declared first, answers.
     t.rateLimiter.keys.length = 0
     const other = await t.fastify.inject({ method: 'POST', url: '/v1/test/admin-thing/x1', remoteAddress: '10.0.0.9', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { name: 'a' } })
     expect(other.statusCode).toBe(429)
-    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:ip:10.0.0.9:10/1m'])
+    expect(other.json().error).toBeDefined()
+    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:ip:10.0.0.9:10/1m', 'testPrivate.adminThing:user:u1:5/1m'])
     await t.close()
   })
 
-  it('without the set, every rule is counted (the default)', async () => {
+  it('without the set, every rule is counted (the default), all in one limiter call (audit P1)', async () => {
     const t = await testApp({ contracts: [privateContract], handlerSets: [unreachableHandlers(privateContract)] })
     t.rateLimiter.mode = 'deny'
     await t.fastify.inject({ method: 'POST', url: '/v1/test/admin-thing/x1', headers: { 'x-test-principal': 'u1:ADMIN' }, payload: { name: 'a' } })
-    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:ip:127.0.0.1:10/1m'])
+    expect(t.rateLimiter.keys).toEqual(['testPrivate.adminThing:ip:127.0.0.1:10/1m', 'testPrivate.adminThing:user:u1:5/1m'])
+    expect(t.rateLimiter.batches).toBe(1)
     await t.close()
   })
 })
