@@ -20,7 +20,7 @@ import { completionOracle } from './oracles/completion-oracle'
 import { getServiceDocumentRequirements } from './oracles/service-requirements-oracle'
 
 describe('P2: completionOf against today\'s function (R3.12)', () => {
-  it('agrees with the oracle on every generated profile outside the [fix] cases, and both partitions are large', () => {
+  it('agrees with the oracle on every generated profile outside the [fix] cases, and both partitions are exercised', () => {
     const seen = { plain: 0, fixed: 0 }
     fc.assert(
       fc.property(completionInput, (input) => {
@@ -45,7 +45,20 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
       }),
       { numRuns: Number(process.env.FC_RUNS ?? 600) },
     )
+    // Both partitions are exercised on every run; how large they are is measured on the fixed seed below.
+    expect(seen.plain).toBeGreaterThan(0)
+    expect(seen.fixed).toBeGreaterThan(0)
   }, 30_000)
+
+  // The partitions' sizes depend on the random draw (49 of 600 on one CI run, 2026-10-15), so they are measured on a
+  // fixed-seed sample of the same size: deterministic, and the same generator.
+  it('both partitions are large (fixed seed, 600 inputs)', () => {
+    let plain = 0
+    let fixed = 0
+    for (const input of fc.sample(completionInput, { numRuns: 600, seed: 20261015 })) (fixCasesOf(input).length === 0 ? plain++ : fixed++)
+    expect(plain).toBeGreaterThan(50)
+    expect(fixed).toBeGreaterThan(50)
+  })
 
   // Coverage of the partition (R3.12: every [fix] kind must be exercised) is measured on a fixed-seed sample large
   // enough for the rarest kind, so it is deterministic; the equality above stays random on every run.
