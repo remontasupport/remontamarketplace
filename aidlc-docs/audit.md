@@ -4262,3 +4262,7 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "Perfect, I think it is good now. Now can we move to the Compliance APIs? is the Services passed all the tests?"
 **AI response**: Services: api CI green (#66, merged, staging); U3c local gate and browser check passed; U3c CI not run (PR not opened); a real upload on the preview and the staging script not yet confirmed. Compliance inventory started (pages, operations, document kinds, what the api covers, security, size, units).
+
+**User input**: "what PR should I opened?" / "Si is merged, should I merge u3c now?"
+**AI response**: listed U3c (base feat/edit-profile-app), S1 (main), the optional staging script PR. Verified S1 merged (#67, main `4a03dfd`). U3c: PR not opened, so no CI; merge after CI and one preview upload; merging only adds it to PR #57's branch.
+**AI response (cont.)**: Compliance inventory back; C1-C3 verified in code; recorded `inception/review/compliance-inventory.md` (findings C1-C9, units C1 fix, U4a-U4f).
