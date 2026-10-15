@@ -264,7 +264,6 @@ model WorkerProfile {
   workerAdditionalInfo     WorkerAdditionalInfo?
   user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workerServices           WorkerService[]
-  serviceArchive           WorkerServiceArchive[]
 
   // W1 — every promoted child keys on the canonical worker id
   availability WorkerAvailability[]
@@ -401,19 +400,6 @@ model WorkerService {
   @@index([workerProfileId, categoryName], map: "worker_services_workerprofileid_categoryname_idx")
   @@index([workerProfileId], map: "worker_services_workerprofileid_idx")
   @@map("worker_services")
-}
-
-/// U3a (D2): the registration of a service the worker removed, set aside until the service is chosen again
-/// (then restored to the worker_services row's metadata and this row deleted). Written only by the api.
-model WorkerServiceArchive {
-  workerProfileId String
-  categoryId      String
-  metadata        Json
-  archivedAt      DateTime      @default(now())
-  workerProfile   WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([workerProfileId, categoryId])
-  @@map("worker_service_archive")
 }
 
 model Job {

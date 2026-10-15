@@ -247,7 +247,7 @@ export const profileSchema = z.strictObject({
   completion: completionSchema,
   requirements: z.strictObject({ mandatory: z.array(requirementItemSchema).max(100), trainings: z.array(requirementItemSchema).max(100) }),
   services: z.array(workerServiceSchema).max(50),
-  /** U3a: the registrations of the chosen services that carry one (nursing, therapeutic); a removed service's is set aside, not shown. */
+  /** U3a: the registrations of the chosen services that carry one (nursing, therapeutic). */
   serviceRegistrations: z.array(serviceRegistrationViewSchema).max(2),
   sections: z.strictObject({
     availability: z.array(availabilitySlotSchema).max(100),
@@ -300,7 +300,7 @@ export const workerContract = defineContract('worker', {
   putPreferences: { method: 'PUT', path: '/v1/worker/additional-info/preferences', summary: 'Replace the work preferences.', body: json(preferencesSchema), responses: { 200: preferencesSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putPersonality: { method: 'PUT', path: '/v1/worker/additional-info/personality', summary: 'Replace the personality, the non-smoker and the pet-friendly answers.', body: json(personalitySchema), responses: { 200: personalitySchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   // ---- U3a services: the chosen services and their registrations.
-  putServices: { method: 'PUT', path: '/v1/worker/services', summary: 'Replace the chosen services and sub-categories (checked against the catalogue). The registration of a removed service is set aside and returns if the service is chosen again.', body: json(servicesBodySchema), responses: { 200: servicesViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 8 }) },
+  putServices: { method: 'PUT', path: '/v1/worker/services', summary: 'Replace the chosen services and sub-categories (checked against the catalogue). A removed service is deleted entirely: its registration, its documents and their files.', body: json(servicesBodySchema), responses: { 200: servicesViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 8 }) },
   putServiceRegistration: { method: 'PUT', path: '/v1/worker/services/:categoryId/registration', summary: 'Replace the registration of a chosen nursing or therapeutic service; 404 when the service is not chosen.', pathParams: serviceRegistrationParamsSchema, body: json(serviceRegistrationBodySchema), responses: { 200: serviceRegistrationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 })

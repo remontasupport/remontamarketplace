@@ -21,7 +21,7 @@ import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos
 import { replaceSection } from './application/replace-section'
 import { writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
-import { writeServiceRegistration, writeServices } from './application/sections/services'
+import { deleteServiceFiles, writeServiceRegistration, writeServices } from './application/sections/services'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
@@ -104,7 +104,12 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     putPreferences: (req, ctx) => group('preferences', req.body, ctx),
     putPersonality: (req, ctx) => group('personality', req.body, ctx),
     // U3a: the services decide the requirement groups and the services flag; a registration can complete a service.
-    putServices: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putServices', completion: true }, (tx, p) => writeServices(tx, p.id, req.body, deps.clock())) }),
+    putServices: async (req, ctx) => {
+      const out = await replaceSection(s, ctx, { section: 'putServices', completion: true }, (tx, p) => writeServices(tx, p.id, req.body, deps.clock()))
+      // A removed service's documents went with it (D2); their files follow after the commit, own folders only.
+      if (out.files.length) await deleteServiceFiles(deps.photos?.blob, out.files, ctx.principal!.userId, ctx.log)
+      return { status: 200, body: out.body }
+    },
     putServiceRegistration: async (req, ctx) => ({
       status: 200,
       body: await replaceSection(s, ctx, { section: `putServiceRegistration.${req.params.categoryId}`, completion: true }, (tx, p) => writeServiceRegistration(tx, p.id, req.params.categoryId, req.body)),
