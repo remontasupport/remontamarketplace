@@ -16,6 +16,13 @@ import { documentPath, fileOf, type DocumentFile, type StagedDocument } from './
 
 const metaOf = (m: Prisma.JsonValue | null | undefined): Record<string, unknown> => (m && typeof m === 'object' && !Array.isArray(m) ? (m as Record<string, unknown>) : {})
 
+/**
+ * "Not a service document", null categories included: most compliance rows have no category, and in SQL
+ * `NOT (category = 'SERVICE_QUALIFICATION')` is not true for a NULL -- such rows were never found (CI, PR #70: a
+ * re-upload made a second row, a delete answered 404).
+ */
+export const NOT_A_SERVICE_DOCUMENT = { OR: [{ documentCategory: null }, { documentCategory: { not: 'SERVICE_QUALIFICATION' as const } }] }
+
 export const COMPLIANCE_ROW_SELECT = { id: true, requirementType: true, requirementName: true, status: true, documentCategory: true, documentUrl: true, documentUploadedAt: true, expiresAt: true, metadata: true } as const
 
 export function complianceView(row: {
@@ -73,7 +80,7 @@ export async function recordComplianceDocument(
   now: Date,
 ): Promise<{ view: ComplianceDocument; replaced: DocumentFile | null }> {
   const existing = await tx.verificationRequirement.findFirst({
-    where: { workerProfileId: target.profileId, requirementType: target.type, NOT: { documentCategory: 'SERVICE_QUALIFICATION' } },
+    where: { workerProfileId: target.profileId, requirementType: target.type, ...NOT_A_SERVICE_DOCUMENT },
     select: { id: true, documentUrl: true, metadata: true },
     orderBy: { updatedAt: 'desc' },
   })
@@ -116,7 +123,7 @@ export async function recordComplianceDocument(
 /** A retry of a confirm already recorded (the staging object has moved): its row, or null. */
 export async function complianceAlreadyRecorded(db: Tx | Prisma.TransactionClient, profileId: string, uploadId: string): Promise<ComplianceDocument | null> {
   const row = await db.verificationRequirement.findFirst({
-    where: { workerProfileId: profileId, NOT: { documentCategory: 'SERVICE_QUALIFICATION' }, metadata: { path: ['uploadId'], equals: uploadId } },
+    where: { workerProfileId: profileId, ...NOT_A_SERVICE_DOCUMENT, metadata: { path: ['uploadId'], equals: uploadId } },
     select: COMPLIANCE_ROW_SELECT,
   })
   return row ? complianceView(row) : null
@@ -125,7 +132,7 @@ export async function complianceAlreadyRecorded(db: Tx | Prisma.TransactionClien
 /** Deletes one of the worker's compliance rows (never a service document: those have their own entry). */
 export async function removeComplianceDocument(tx: Tx, profileId: string, documentId: string): Promise<DocumentFile> {
   const row = await tx.verificationRequirement.findFirst({
-    where: { id: documentId, workerProfileId: profileId, NOT: { documentCategory: 'SERVICE_QUALIFICATION' } },
+    where: { id: documentId, workerProfileId: profileId, ...NOT_A_SERVICE_DOCUMENT },
     select: { id: true, documentUrl: true, metadata: true },
   })
   if (!row) throw new ApiError(404, 'compliance document not found') // another worker's is never revealed
