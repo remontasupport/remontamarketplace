@@ -53,10 +53,10 @@ describe.skipIf(!local)('U3a services on PostGIS', () => {
   it('refuses a service outside the catalogue and a sub-category of a service not chosen, naming the field', async () => {
     const unknown = await put('/v1/worker/services', { services: ['no-such-service'], subcategoryIds: [] })
     expect(unknown.statusCode).toBe(400)
-    expect(unknown.json().fields).toHaveProperty('services')
+    expect(unknown.json().error.fields).toHaveProperty('services')
     const stray = await put('/v1/worker/services', { services: ['nursing-services'], subcategoryIds: [sub()] })
     expect(stray.statusCode).toBe(400)
-    expect(stray.json().fields).toHaveProperty('subcategoryIds')
+    expect(stray.json().error.fields).toHaveProperty('subcategoryIds')
   })
 
   it('S4: a registration for a service not chosen is 404 and creates nothing; a body for another service is 400', async () => {
