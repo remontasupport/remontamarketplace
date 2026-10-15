@@ -65,3 +65,12 @@ No IDOR found in the deletes (both scoped to the caller's profile).
 - **U3c app** (stacked on `feat/edit-profile-app`): the Services pages on the api through `features/worker/`; retire the
   actions, routes, orphan page and dead code above.
 - **S1** as a one-line app fix PR from `main` (independent).
+
+## Decisions (user, 2026-10-15)
+
+- **D1** service documents on private storage (the photo pattern: private bucket, signed links for the worker and
+  admins); existing public files stay until a separate migration.
+- **D2** removing a service keeps its documents and registration, hidden; they return if the service is added again.
+- **D3** S1 fixed on its own: `fix/private-cache-worker-routes` `36e0d24` (also `other-requirements`, which returned
+  document links); merged into PR #57.
+- **D4** an uploaded file is the tick: no stored ticks (S9 closes by removing the no-op save).

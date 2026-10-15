@@ -4210,3 +4210,9 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "let us continue the dlc which is migrating the server actions to the new api backend, and let us work on with the apis on the Services. are we going to create a new pr for this? or continue the PR57? THIS is a seperate section"
 **AI response**: new PRs, not PR #57: an api PR from main (new worker.contract.ts entries + handlers; staging image, promoted on its own) and an app PR stacked on `feat/edit-profile-app` (reuses its section machinery), merged after PR #57 and after the api promotion. Targeted inventory of the Services section started.
+
+**User input**: "ok go ahead"
+**AI response**: inventory recorded (`inception/review/services-inventory.md`, findings S1-S9, units U3a-U3c); four decisions asked.
+
+**User input** (answers): "Private (Recommended)"; "Keep, hide (Recommended)"; "Small PR now (Recommended)"; "Upload = the tick (Recommended)"
+**AI response**: decisions D1 service documents on private storage (signed links for worker and admin; existing files stay until a separate migration); D2 removing a service keeps its documents and registration, hidden, back on re-add; D3 S1 as its own PR now; D4 an upload is the tick, no stored ticks. S1: `fix/private-cache-worker-routes` `36e0d24` (requirements + other-requirements: `private, no-store`; other-requirements carried document links too); app gate 122 tests; pushed; merged into PR #57 (`6fb385b`). Next: U3a services on the api.
