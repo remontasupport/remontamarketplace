@@ -45,8 +45,13 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
   return async (request: FastifyRequest, reply: FastifyReply) => {
     // 3. Rate limit, before anything costly. Per-user rules wait for step 5. A probe
     //    (the health check) never pays the limiter (U1 worker-area R6.1): its liveness
-    //    path has no database dependency of its own.
-    if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per !== 'user'), request, null, deps)
+    //    path has no database dependency of its own. A signed-in entry without a CAPTCHA
+    //    (every worker and admin entry) checks all its rules in one round trip after the
+    //    token check, which is local (audit P1): the IP rules still answer first.
+    const oneTrip = !m.probe && m.bot === 'none' && m.access !== 'public'
+    const ipRules = m.rateLimit.filter((r) => r.per !== 'user')
+    const userRules = m.rateLimit.filter((r) => r.per === 'user')
+    if (!m.probe && !oneTrip) await enforceLimits(id, ipRules, request, null, deps)
 
     // 4. Bot check. The token is read from the raw body before validation, so an
     //    automated request is turned away without its payload being examined.
@@ -64,6 +69,11 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
     let principal: Principal | null = null
     if (m.access !== 'public') {
       principal = await deps.authenticator.authenticate(request.headers)
+      if (oneTrip) {
+        // The per-user rules count only an admitted caller, as when they ran after the role check.
+        const admitted = principal !== null && (m.access.roles as readonly string[]).includes(principal.role)
+        await enforceLimits(id, admitted ? [...ipRules, ...userRules] : ipRules, request, admitted ? principal : null, deps)
+      }
       if (!principal) {
         request.log.warn({ entry: id, auth: 'rejected' }, 'auth rejected')
         throw new ApiError(401)
@@ -72,7 +82,7 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
       // handler's lines, the response line. Ids only, never a name or an email.
       request.log = request.log.child({ userId: principal.userId, ...(principal.impersonatorId ? { impersonatorId: principal.impersonatorId } : {}) })
       if (!m.access.roles.includes(principal.role)) throw new ApiError(403, `role ${principal.role} not in ${m.access.roles.join(',')}`)
-      if (!m.probe) await enforceLimits(id, m.rateLimit.filter((r) => r.per === 'user'), request, principal, deps)
+      if (!m.probe && !oneTrip) await enforceLimits(id, userRules, request, principal, deps)
     }
 
     // 7. Input validation.
@@ -133,19 +143,27 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
 }
 
 async function enforceLimits(id: string, rules: readonly RateLimitRule[], request: FastifyRequest, principal: Principal | null, deps: Pick<PipelineDeps, 'rateLimiter' | 'exemptIps'>) {
-  for (const r of rules) {
-    // An exempt IP (a staging drill's load generator) skips the per-IP rules only; its per-user and global rules run as for anyone.
-    if (r.per === 'ip' && deps.exemptIps?.has(request.ip)) continue
+  // An exempt IP (a staging drill's load generator) skips the per-IP rules only; its per-user and global rules run as for anyone.
+  const applied = rules.filter((r) => !(r.per === 'ip' && deps.exemptIps?.has(request.ip)))
+  if (applied.length === 0) return
+  const hits = applied.map((r) => {
     const who = r.per === 'ip' ? request.ip : r.per === 'user' ? (principal?.userId ?? 'anonymous') : '*'
-    let decision
-    try {
-      decision = await deps.rateLimiter.hit(`${id}:${r.per}:${who}:${r.limit}/${r.window}`, r.limit, r.window)
-    } catch (err) {
-      // Fails closed: without the counter we cannot know the caller is within limits.
-      request.log.error({ err, entry: id, reason: 'limiter' }, 'rate limiter unavailable')
-      throw new ApiError(503, 'rate limiter unavailable', undefined, undefined, 'limiter')
-    }
-    if (!decision.allowed) throw new ApiError(429, `rate limit ${r.per} ${r.limit}/${r.window}`, undefined, { 'retry-after': String(decision.retryAfter) })
+    return { key: `${id}:${r.per}:${who}:${r.limit}/${r.window}`, limit: r.limit, window: r.window }
+  })
+  let decisions
+  try {
+    // Every rule in one round trip (audit P1).
+    decisions = await deps.rateLimiter.hitMany(hits)
+  } catch (err) {
+    // Fails closed: without the counter we cannot know the caller is within limits.
+    request.log.error({ err, entry: id, reason: 'limiter' }, 'rate limiter unavailable')
+    throw new ApiError(503, 'rate limiter unavailable', undefined, undefined, 'limiter')
+  }
+  // The first rule refused, in the declared order, answers (as when they ran one by one).
+  const denied = applied.findIndex((_r, i) => !decisions[i]?.allowed)
+  if (denied >= 0) {
+    const r = applied[denied]!
+    throw new ApiError(429, `rate limit ${r.per} ${r.limit}/${r.window}`, undefined, { 'retry-after': String(decisions[denied]!.retryAfter) })
   }
 }
 

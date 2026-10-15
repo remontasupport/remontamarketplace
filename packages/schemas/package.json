@@ -10,6 +10,7 @@
     ".": "./src/index.ts",
     "./schema/*": "./src/schema/*.ts",
     "./image-type": "./src/image-type.ts",
+    "./document-type": "./src/document-type.ts",
     "./types": "./src/types/index.ts",
     "./types/*": "./src/types/*.ts",
     "./validations/*": "./src/validations/*.ts",

@@ -9,6 +9,7 @@ import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import type { PublicEndpoint } from '@remonta/api-contract'
 import { platformHandlers } from '../../src/modules/platform/platform.handlers'
 import { workerHandlers, type WorkerModuleDeps } from '../../src/modules/worker/worker.handlers'
+import { clearCatalogueCache } from '../../src/modules/worker/persistence/profile-read'
 import { createDb, type Db } from '../../src/platform/persistence/db'
 import { testApp, unreachableHandlers, type TestApp } from '../helpers'
 
@@ -108,6 +109,8 @@ export async function workerHarness(domain: string, opts: { read?: WorkerModuleD
   const b = await createUser(`b@${domain}`, { firstName: 'Ben', lastName: 'Nguyen', mobile: '0499999999', updatedAt: new Date() })
   const orphan = await createUser(`orphan@${domain}`, undefined)
 
+  // The catalogue is cached per process (audit P3): forget anything read before this harness seeded its own.
+  clearCatalogueCache()
   const logs: Record<string, unknown>[] = []
   const t = await testApp({
     contracts,

@@ -6,7 +6,7 @@
 import { PROFILE_UPDATE } from '@remonta/api-contract'
 import type { Clock } from '../../../platform/clock'
 import type { HandlerContext } from '../../../platform/contract/handlers'
-import { writeTransaction, type Db, type Tx } from '../../../platform/persistence/db'
+import { statementTimeoutSetting, unitOfWork, type Db, type Tx } from '../../../platform/persistence/db'
 import { completionOf } from '../domain/completion'
 import { persistCompletion } from '../domain/persist-completion'
 import { readProfileRowsTx } from '../persistence/profile-read'
@@ -17,6 +17,9 @@ export interface SectionDeps {
   db: Db
   clock: Clock
 }
+
+/** A section write's statement timeout, as writeTransaction's default. */
+export const SECTION_STATEMENT_TIMEOUT_MS = 5000
 
 export interface OwnProfile {
   id: string
@@ -31,18 +34,24 @@ export async function replaceSection<T>(
 ): Promise<T> {
   const principal = ctx.principal!
   const started = Date.now()
-  const result = await writeTransaction(deps.db, async (tx) => {
-    const profile = await tx.workerProfile.findUnique({ where: { userId: principal.userId }, select: { id: true, userId: true } })
+  const result = await unitOfWork(deps.db, async (tx) => {
+    // The statement timeout (as writeTransaction sets it) and the ownership lookup in one statement (audit P5). With
+    // no profile there is no row, set_config never runs, and the transaction ends in the 404 below.
+    const [profile] = await tx.$queryRaw<OwnProfile[]>`
+      SELECT set_config('statement_timeout', ${statementTimeoutSetting(SECTION_STATEMENT_TIMEOUT_MS)}, true) AS "timeout", id, "userId"
+        FROM worker_profiles WHERE "userId" = ${principal.userId}`
     if (!profile) throw profileNotFound(principal, ctx.log)
-    const out = await work(tx, profile)
+    const own: OwnProfile = { id: profile.id, userId: profile.userId }
+    const out = await work(tx, own)
     if (opts.completion) {
       const rows = await readProfileRowsTx(tx, principal.userId)
-      if (rows) await persistCompletion(tx, profile.id, completionOf(completionInputOf(rows)))
+      // The stored flags come with the re-read: persistCompletion does not read them again (audit P4).
+      if (rows) await persistCompletion(tx, own.id, completionOf(completionInputOf(rows)), rows.profile)
     }
     await ctx.audit.record(tx, {
       action: PROFILE_UPDATE,
       userId: principal.userId,
-      metadata: { section: opts.section, profileId: profile.id, ...(principal.impersonatorId ? { impersonatorId: principal.impersonatorId } : {}) },
+      metadata: { section: opts.section, profileId: own.id, ...(principal.impersonatorId ? { impersonatorId: principal.impersonatorId } : {}) },
     })
     return out
   })

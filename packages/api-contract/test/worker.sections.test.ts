@@ -23,6 +23,10 @@ import {
   jobHistorySchema,
   nameSchema,
   serviceAreaInputSchema,
+  serviceRegistrationBodySchema,
+  servicesBodySchema,
+  confirmServiceDocumentSchema,
+  serviceDocumentTicketRequestSchema,
   slotIssues,
   sortSlots,
   vehicleSchema,
@@ -44,7 +48,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(18) // makeMainPhoto removed 2026-10-14 (one photo per worker)
+    expect(names).toHaveLength(24) // makeMainPhoto removed 2026-10-14 (one photo per worker); U3a adds putServices, putServiceRegistration; U3b the four document entries
     expect(names).not.toContain('makeMainPhoto')
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
@@ -265,5 +269,56 @@ describe('every body: generated valid values parse, an extra key does not', () =
       }),
       { numRuns: 60 },
     )
+  })
+})
+
+describe('U3a services', () => {
+  it('at least one service, no repeats; sub-categories may be empty', () => {
+    ok(servicesBodySchema, { services: ['support-worker'], subcategoryIds: [] })
+    ok(servicesBodySchema, { services: ['support-worker', 'nursing-services'], subcategoryIds: ['a', 'b'] })
+    bad(servicesBodySchema, { services: [], subcategoryIds: [] }, 'services')
+    bad(servicesBodySchema, { services: ['x', 'x'], subcategoryIds: [] }, 'services')
+    bad(servicesBodySchema, { services: ['x'], subcategoryIds: ['a', 'a'] }, 'subcategoryIds')
+    bad(servicesBodySchema, { services: ['x'], subcategoryIds: [], extra: 1 })
+  })
+
+  const nextYear = `${new Date().getUTCFullYear() + 1}-05-31`
+  it('a registered nurse gives a number and a current expiry; an enrolled nurse gives neither', () => {
+    ok(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: false, registrationNumber: 'NMW0001234567', expiryDate: nextYear })
+    ok(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'enrolled', hasExperience: true, registrationNumber: null, expiryDate: null })
+    bad(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: false, registrationNumber: null, expiryDate: nextYear }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'enrolled', hasExperience: false, registrationNumber: 'NMW1', expiryDate: null }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: false, registrationNumber: 'NMW0001234567', expiryDate: '2020-01-01' }, 'expiryDate')
+  })
+
+  it('a therapeutic registration: number and expiry; dates must be real; stored junk is refused on write', () => {
+    ok(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: 'PSY 0001-23', expiryDate: nextYear })
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: '12', expiryDate: nextYear }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: 'ABC123', expiryDate: '-01-00' }, 'expiryDate')
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: 'ABC123', expiryDate: `${new Date().getUTCFullYear() + 1}-02-30` }, 'expiryDate')
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: '<b>x</b>', expiryDate: nextYear }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'cleaning-services', registrationNumber: 'ABC123', expiryDate: nextYear })
+  })
+})
+
+describe('U3b service documents', () => {
+  it('a ticket: the six document types, 1 byte to 50 MB', () => {
+    for (const t of ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']) ok(serviceDocumentTicketRequestSchema, { contentType: t, sizeBytes: 1000 })
+    bad(serviceDocumentTicketRequestSchema, { contentType: 'application/zip', sizeBytes: 1000 }, 'contentType')
+    bad(serviceDocumentTicketRequestSchema, { contentType: 'application/pdf', sizeBytes: 50 * 1024 * 1024 + 1 }, 'sizeBytes')
+    bad(serviceDocumentTicketRequestSchema, { contentType: 'application/pdf', sizeBytes: 0 }, 'sizeBytes')
+  })
+  it('a confirm: a type id, a file name without a path', () => {
+    const base = { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', categoryId: 'nursing-services', requirementType: 'ahpra-registration', fileName: 'AHPRA 2026.pdf' }
+    ok(confirmServiceDocumentSchema, base)
+    bad(confirmServiceDocumentSchema, { ...base, requirementType: 'Nursing Services:ahpra' }, 'requirementType')
+    bad(confirmServiceDocumentSchema, { ...base, fileName: '../../etc/passwd' }, 'fileName')
+    bad(confirmServiceDocumentSchema, { ...base, fileName: 'C:\\Users\\x.pdf' }, 'fileName')
+    bad(confirmServiceDocumentSchema, { ...base, uploadId: 'staging/x' }, 'uploadId')
+  })
+  it('the document id in a path: an id, never a path', () => {
+    const p = workerContract.entries.deleteServiceDocument.pathParams
+    expect(p.safeParse({ documentId: 'cm12abc_9-Z' }).success).toBe(true)
+    expect(p.safeParse({ documentId: '../x' }).success).toBe(false)
   })
 })

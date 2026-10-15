@@ -6,7 +6,7 @@ import { createApp, type AppOptions } from '../src/app'
 import type { Authenticator, Principal } from '../src/platform/auth/authenticator'
 import type { CaptchaOutcome, CaptchaVerifier } from '../src/platform/captcha/captcha'
 import type { HandlerSet } from '../src/platform/contract/handlers'
-import type { RateDecision, RateLimiter } from '../src/platform/rate-limit/rate-limiter'
+import type { RateDecision, RateHit, RateLimiter } from '../src/platform/rate-limit/rate-limiter'
 
 export class FakeRateLimiter implements RateLimiter {
   mode: 'allow' | 'deny' | 'down' = 'allow'
@@ -15,6 +15,14 @@ export class FakeRateLimiter implements RateLimiter {
     this.keys.push(key)
     if (this.mode === 'down') throw new Error('store unreachable')
     return { allowed: this.mode === 'allow', retryAfter: 42 }
+  }
+  /** Calls made through hitMany (one per request): proves the rules go in one round trip. */
+  batches = 0
+  async hitMany(hits: readonly RateHit[]): Promise<RateDecision[]> {
+    this.batches++
+    const out: RateDecision[] = []
+    for (const h of hits) out.push(await this.hit(h.key, h.limit, h.window))
+    return out
   }
 }
 

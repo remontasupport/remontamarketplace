@@ -22,6 +22,7 @@ import {
   VEHICLE_ANSWERS,
   WORK_PREFERENCES,
 } from '@remonta/schemas/data/profileOptions'
+import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from '@remonta/schemas/document-type'
 import { abnChecksum, normaliseAbn } from '@remonta/schemas/validations/abn'
 import * as z from 'zod'
 
@@ -231,3 +232,108 @@ export const bankAccountSchema = z.strictObject({
   accountNumber: z.string().trim().regex(/^\d{6,10}$/, '6 to 10 digits'),
 })
 export type BankAccountBody = z.output<typeof bankAccountSchema>
+
+// ---- Services (U3a, services-inventory.md) ---------------------------------------------------------------------
+
+/** The services a worker chooses: catalogue category ids, and sub-category ids each belonging to one of them (checked by the api). */
+export const servicesBodySchema = z.strictObject({
+  services: uniqueList(trimmed(1, 80), 20, 1),
+  subcategoryIds: uniqueList(trimmed(1, 80), 100),
+})
+export type ServicesBody = z.output<typeof servicesBodySchema>
+
+/** The two services that carry a registration (stored on the worker_services row's metadata, as the pages write it today). */
+export const REGISTRATION_SERVICES = ['nursing-services', 'therapeutic-supports'] as const
+export type RegistrationService = (typeof REGISTRATION_SERVICES)[number]
+export const NURSING_TYPES = ['registered', 'enrolled'] as const
+
+const registrationNumber = trimmed(3, 30).regex(/^[A-Za-z0-9][A-Za-z0-9 -]*$/, 'Letters, digits, spaces and hyphens only')
+/** A registration still in force: a real date, today or later (the api's clock). */
+const expiryDate = isoDateSchema.refine((s) => s >= new Date().toISOString().slice(0, 10), 'This registration has expired')
+
+export const nursingRegistrationSchema = z
+  .strictObject({
+    categoryId: z.literal('nursing-services'),
+    nursingType: z.enum(NURSING_TYPES),
+    hasExperience: z.boolean(),
+    // A registered nurse gives the AHPRA number and its expiry; an enrolled nurse gives neither.
+    registrationNumber: registrationNumber.nullable(),
+    expiryDate: expiryDate.nullable(),
+  })
+  .superRefine((b, ctx) => {
+    const registered = b.nursingType === 'registered'
+    for (const k of ['registrationNumber', 'expiryDate'] as const) {
+      if (registered && b[k] === null) ctx.addIssue({ code: 'custom', path: [k], message: 'Required for a registered nurse' })
+      if (!registered && b[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'Only for a registered nurse' })
+    }
+  })
+export const therapeuticRegistrationSchema = z.strictObject({ categoryId: z.literal('therapeutic-supports'), registrationNumber, expiryDate })
+export const serviceRegistrationBodySchema = z.discriminatedUnion('categoryId', [nursingRegistrationSchema, therapeuticRegistrationSchema])
+export type ServiceRegistrationBody = z.output<typeof serviceRegistrationBodySchema>
+export const serviceRegistrationParamsSchema = z.strictObject({ categoryId: z.enum(REGISTRATION_SERVICES) })
+
+/**
+ * A registration as stored. Stored rows predate any rule (numbers of 0-2 characters, expiries such as "-01-00"), so
+ * every field is nullable and a value that is not a real date reads as null; a write always stores the strict body.
+ */
+export const serviceRegistrationViewSchema = z.strictObject({
+  categoryId: z.enum(REGISTRATION_SERVICES),
+  nursingType: z.enum(NURSING_TYPES).nullable(),
+  hasExperience: z.boolean().nullable(),
+  registrationNumber: z.string().max(60).nullable(),
+  expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+})
+export type ServiceRegistrationView = z.output<typeof serviceRegistrationViewSchema>
+
+// ---- Service documents (U3b, u3b-service-documents-design.md) ---------------------------------------------------
+
+export const serviceDocumentTicketRequestSchema = z.strictObject({
+  contentType: z.enum(DOCUMENT_TYPES),
+  sizeBytes: z.int().min(1).max(DOCUMENT_MAX_BYTES),
+})
+export type ServiceDocumentTicketRequest = z.output<typeof serviceDocumentTicketRequestSchema>
+
+export const serviceDocumentTicketResponseSchema = z.strictObject({
+  uploadId: z.uuid(),
+  upload: z.strictObject({
+    url: z.url(),
+    method: z.literal('POST'),
+    /** The signed policy's form fields, sent before the file. */
+    fields: z.record(z.string(), z.string()),
+    fileField: z.literal('file'),
+  }),
+  expiresAt: z.iso.datetime(),
+})
+export type ServiceDocumentTicketResponse = z.output<typeof serviceDocumentTicketResponseSchema>
+
+/** A type id of the requirement table (`qualification-certificate`, `cert3-aged-care`, ...); the api checks it against the service. */
+const documentTypeId = z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Not a document type')
+/** The file's own name, for the worker and the reviewer to recognise it: a plain line, no path. */
+const fileName = trimmed(1, 200).regex(/^[^\p{Cc}/\\]+$/u, 'A file name only')
+
+export const confirmServiceDocumentSchema = z.strictObject({
+  uploadId: z.uuid(),
+  categoryId: trimmed(1, 80),
+  requirementType: documentTypeId,
+  fileName,
+})
+export type ConfirmServiceDocumentBody = z.output<typeof confirmServiceDocumentSchema>
+
+export const serviceDocumentParamsSchema = z.strictObject({ documentId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a document id') })
+
+/** One SERVICE_QUALIFICATION row as the worker sees it. `url` is what the row stores: an app path for a private file, a public URL for a legacy one. */
+export const serviceDocumentSchema = z.strictObject({
+  id: z.string().max(40),
+  /** The service's name as the row names it (the part before the first colon of the requirement type). */
+  serviceName: z.string().max(120),
+  requirementType: z.string().max(80),
+  name: z.string().max(200),
+  status: z.string().max(20),
+  url: z.string().max(2048).nullable(),
+  fileName: z.string().max(200).nullable(),
+  uploadedAt: z.iso.datetime({ offset: true }).nullable(),
+})
+export type ServiceDocument = z.output<typeof serviceDocumentSchema>
+
+export const documentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
+export type DocumentLink = z.output<typeof documentLinkSchema>

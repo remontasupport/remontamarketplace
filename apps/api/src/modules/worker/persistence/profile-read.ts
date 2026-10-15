@@ -38,8 +38,8 @@ const PROFILE_SELECT = {
   updatedAt: true,
   homeStreetLine: true,
   homeLocality: { select: { id: true, suburb: true, state: true, postcode: true } },
-  workerServices: { select: { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true, createdAt: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
-  verificationRequirements: { select: { id: true, requirementType: true, requirementName: true, status: true, documentCategory: true, documentUrl: true, expiresAt: true } },
+  workerServices: { select: { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true, metadata: true, createdAt: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+  verificationRequirements: { select: { id: true, requirementType: true, requirementName: true, status: true, documentCategory: true, documentUrl: true, expiresAt: true, documentUploadedAt: true, metadata: true } },
   availability: { select: { dayOfWeek: true, startMinute: true, endMinute: true }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
   careExperience: { select: { domain: true, isProfessional: true, isPersonal: true, specificAreas: true, otherAreas: true, description: true }, orderBy: { domain: 'asc' } },
   jobHistoryEntries: { select: { id: true, jobTitle: true, company: true, startMonth: true, startYear: true, endMonth: true, endYear: true, currentlyWorking: true }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
@@ -86,6 +86,26 @@ export function catalogueFilter(services: readonly { categoryId: string; categor
 }
 
 /**
+ * The whole catalogue (categories, their documents, their sub-categories), kept per process for a minute (audit P3,
+ * 2026-10-15). It changes only when an admin edits the services; until then every read and every write that recomputes
+ * completion re-read it. A change shows within CATALOGUE_CACHE_MS.
+ */
+export const CATALOGUE_CACHE_MS = 60_000
+let catalogueCache: { at: number; rows: CatalogueRecord[] } | null = null
+
+export async function wholeCatalogue(tx: Tx, now = Date.now()): Promise<CatalogueRecord[]> {
+  if (catalogueCache && now - catalogueCache.at < CATALOGUE_CACHE_MS) return catalogueCache.rows
+  const rows = await tx.category.findMany({ select: CATALOGUE_SELECT, orderBy: { id: 'asc' }, relationLoadStrategy: 'join' })
+  catalogueCache = { at: now, rows }
+  return rows
+}
+
+/** Tests (and a seed that edits the catalogue): forget the cached catalogue. */
+export function clearCatalogueCache(): void {
+  catalogueCache = null
+}
+
+/**
  * L1 + L2 step 1. `null` when the principal has no profile (R1.2). Runs
  * `recordDbSuccess` on commit through readTransaction (P4).
  */
@@ -100,18 +120,8 @@ export async function readProfileRowsTx(tx: Tx, userId: string): Promise<Profile
     const profile = await tx.workerProfile.findUnique({ where: { userId }, select: PROFILE_SELECT, relationLoadStrategy: 'join' })
     if (!profile) return null
     if (profile.workerServices.length === 0) return { profile, catalogue: [] }
-    const f = catalogueFilter(profile.workerServices)
-    // As today: with no sub-category chosen, every sub-category of the matched categories is read (U3 revisits).
-    const catalogue = await tx.category.findMany({
-      relationLoadStrategy: 'join',
-      where: { OR: [{ id: { in: f.categoryIds } }, { name: { in: f.categoryNames } }] },
-      select: {
-        ...CATALOGUE_SELECT,
-        subcategories: { ...CATALOGUE_SELECT.subcategories, where: f.subIds.length > 0 || f.subNames.length > 0 ? { OR: [{ id: { in: f.subIds } }, { name: { in: f.subNames } }] } : undefined },
-      },
-      orderBy: { id: 'asc' },
-    })
-    return { profile, catalogue }
+    // The same selection the catalogue query made, from the cached catalogue (audit P3): one round trip less per read.
+    return { profile, catalogue: selectCatalogueFor(await wholeCatalogue(tx), profile.workerServices) }
   }
 }
 
