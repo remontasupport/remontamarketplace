@@ -76,6 +76,37 @@ export class GcsPhotoStore implements PhotoStore {
     return new Uint8Array(Buffer.concat(chunks).subarray(0, bytes))
   }
 
+  /**
+   * One ranged GET: the bytes, and the size and content type from the same response's headers (Content-Range's total,
+   * Content-Type: the object's stored type). A response without them falls back to the metadata call, so the answer is
+   * never a guess (audit P8).
+   */
+  async inspectWithPrefix(key: string, bytes: number): Promise<{ info: ObjectInfo; head: Uint8Array } | null> {
+    const chunks: Buffer[] = []
+    let headers: Record<string, string | string[] | undefined> = {}
+    try {
+      await this.bounded('inspect-read', () => {
+        return new Promise<void>((resolve, reject) => {
+          this.bucket
+            .file(key)
+            .createReadStream({ start: 0, end: bytes - 1, validation: false })
+            .on('response', (res: { headers?: Record<string, string | string[] | undefined> }) => {
+              headers = res.headers ?? {}
+            })
+            .on('data', (c: Buffer) => chunks.push(c))
+            .on('end', resolve)
+            .on('error', reject)
+        })
+      })
+    } catch (err) {
+      if (isNotFound(err)) return null
+      throw err
+    }
+    const head = new Uint8Array(Buffer.concat(chunks).subarray(0, bytes))
+    const info = infoFromHeaders(headers) ?? (await this.inspect(key))
+    return info ? { info, head } : null
+  }
+
   async read(key: string): Promise<Buffer> {
     const [data] = await this.bounded('read', () => this.bucket.file(key).download())
     return data
@@ -105,6 +136,20 @@ export class GcsPhotoStore implements PhotoStore {
       clearTimeout(timer)
     }
   }
+}
+
+/** Size and content type from a ranged download's headers, or null when they do not say. */
+export function infoFromHeaders(headers: Record<string, string | string[] | undefined>): ObjectInfo | null {
+  const one = (k: string) => {
+    const v = headers[k]
+    return Array.isArray(v) ? v[0] : v
+  }
+  const contentType = one('content-type')?.split(';')[0]?.trim()
+  const range = one('content-range')?.match(/^bytes \d+-\d+\/(\d+)$/)
+  const stored = one('x-goog-stored-content-length')
+  const sizeBytes = range ? Number(range[1]) : stored && /^\d+$/.test(stored) ? Number(stored) : Number.NaN
+  if (!contentType || !Number.isFinite(sizeBytes)) return null
+  return { sizeBytes, contentType }
 }
 
 export function isNotFound(err: unknown): boolean {

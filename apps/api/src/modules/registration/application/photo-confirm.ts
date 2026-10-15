@@ -39,16 +39,16 @@ export async function confirmPhotoUpload(photoUploadId: string, ip: string, deps
   }
 
   const key = stagingKey(photoUploadId)
-  let info, head
   try {
-    info = await deps.bucket.inspect(key)
-    if (!info) {
-      log.info({ photoUploadId, outcome: 'missing', inspectMs: Date.now() - started }, 'photo-confirm')
+    // Size, content type and the first bytes in one storage call (audit P8; it was inspect, then a ranged read).
+    const found = await deps.bucket.inspectWithPrefix(key, IMAGE_HEADER_BYTES)
+    if (!found) {
+      log.info({ photoUploadId, outcome: 'missing', storeMs: Date.now() - started }, 'photo-confirm')
       throw new ApiError(409, 'photo upload incomplete', { photo: [PHOTO_UPLOAD_INCOMPLETE] })
     }
+    const { info, head } = found
+    const storeMs = Date.now() - started
     if (info.sizeBytes > PHOTO_MAX_BYTES) await reject(deps, log, photoUploadId, key, 'too-large', 413, PHOTO_TOO_LARGE)
-    const readStarted = Date.now()
-    head = await deps.bucket.readPrefix(key, IMAGE_HEADER_BYTES)
     const type = detectImageType(head)
     if (!type || !isAcceptedImageType(type)) await reject(deps, log, photoUploadId, key, 'not-image', 415, PHOTO_NOT_ACCEPTED)
     if (type !== info.contentType) await reject(deps, log, photoUploadId, key, 'wrong-type', 415, PHOTO_NOT_ACCEPTED)
@@ -61,7 +61,7 @@ export async function confirmPhotoUpload(photoUploadId: string, ip: string, deps
     } catch (err) {
       if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002')) throw err
     }
-    log.info({ photoUploadId, outcome: 'staged', sizeBytes: info.sizeBytes, contentType: type, inspectMs: readStarted - started, readMs: Date.now() - readStarted }, 'photo-confirm')
+    log.info({ photoUploadId, outcome: 'staged', sizeBytes: info.sizeBytes, contentType: type, storeMs }, 'photo-confirm')
     return { photoUploadId }
   } catch (err) {
     if (err instanceof StoreUnavailable) {
