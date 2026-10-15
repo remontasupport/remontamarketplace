@@ -7171,7 +7171,7 @@
     "/v1/worker/services": {
       "put": {
         "operationId": "worker.putServices",
-        "summary": "Replace the chosen services and sub-categories (checked against the catalogue). The registration of a removed service is set aside and returns if the service is chosen again.",
+        "summary": "Replace the chosen services and sub-categories (checked against the catalogue). A removed service is deleted entirely: its registration, its documents and their files.",
         "requestBody": {
           "required": true,
           "content": {

@@ -1,4 +1,4 @@
-// U3a services on PostGIS (services-inventory.md, D2): the chosen services and their registrations, through the real
+// U3a services on PostGIS (services-inventory.md; D2: a removed service is deleted entirely): the chosen services and their registrations, through the real
 // pipeline and transactions on the seeded worker harness. Runs only when TEST_DATABASE_URL points at localhost (CI's
 // API Quality job).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -17,6 +17,9 @@ const REG_CATEGORIES = [
 describe.skipIf(!local)('U3a services on PostGIS', () => {
   let h: WorkerHarness
   const created: string[] = []
+  // The Blob store: deletes are recorded, never sent. The bucket is never reached by these tests.
+  const blobDeletes: string[] = []
+  const photos = { bucket: {} as never, publicBaseUrl: 'https://storage.test', ipHashSecret: 'x'.repeat(32), blob: { delete: async (u: string) => void blobDeletes.push(u) } }
   const nextYear = `${new Date().getUTCFullYear() + 1}-05-31`
   const put = (path: string, body: unknown, user = () => h.b.userId) => h.t.fastify.inject({ method: 'PUT', url: path, headers: { 'x-test-principal': `${user()}:WORKER` }, payload: body as object })
   const profile = async (user = () => h.b.userId) => (await h.get(user())).json()
@@ -25,7 +28,7 @@ describe.skipIf(!local)('U3a services on PostGIS', () => {
   const nurse = { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: true, registrationNumber: 'NMW0001234567', expiryDate: nextYear }
 
   beforeAll(async () => {
-    h = await workerHarness('worker-services.test')
+    h = await workerHarness('worker-services.test', { photos })
     for (const c of REG_CATEGORIES) {
       if (await h.db.category.findUnique({ where: { id: c.id }, select: { id: true } })) continue
       await h.db.category.create({ data: c })
@@ -71,16 +74,31 @@ describe.skipIf(!local)('U3a services on PostGIS', () => {
     expect((await profile()).serviceRegistrations).toEqual([nurse])
   })
 
-  it('D2: removing a service sets its registration aside, hidden; choosing it again brings it back', async () => {
+  it('D2: removing a service deletes it entirely: the row, its registration, its documents; own files only, after the commit', async () => {
+    const blob = 'https://abc.public.blob.vercel-storage.com'
+    const doc = (requirementType: string, documentUrl: string) =>
+      ({ workerProfileId: h.b.profileId, requirementType, requirementName: 'x', status: 'SUBMITTED' as const, documentCategory: 'SERVICE_QUALIFICATION' as const, documentUrl, updatedAt: new Date() })
+    const own = `${blob}/workers/${h.b.userId}/service-documents/nursing-services/ahpra/1-a.pdf`
+    const old = `${blob}/service-documents/${h.b.userId}/nursing-services/cert-2-b.pdf`
+    const foreign = `${blob}/workers/someone-else/service-documents/nursing-services/x/3-c.pdf`
+    await h.db.verificationRequirement.createMany({
+      data: [doc('Nursing Services:ahpra', own), doc('Nursing Services:cert', old), doc('Nursing Services:odd', foreign), doc('Other Documents:misc', `${blob}/workers/${h.b.userId}/other.pdf`), doc(`Harness Care worker-services.test:qual`, `${blob}/workers/${h.b.userId}/service-documents/care/q.pdf`)],
+    })
+    blobDeletes.length = 0
+
     const removed = await put('/v1/worker/services', { services: [care()], subcategoryIds: [] })
     expect(removed.statusCode, removed.body).toBe(200)
     expect((await profile()).serviceRegistrations).toEqual([])
-    expect(await h.db.workerServiceArchive.count({ where: { workerProfileId: h.b.profileId, categoryId: 'nursing-services' } })).toBe(1)
+    const left = await h.db.verificationRequirement.findMany({ where: { workerProfileId: h.b.profileId, documentCategory: 'SERVICE_QUALIFICATION' }, select: { requirementType: true } })
+    expect(left.map((r) => r.requirementType).sort()).toEqual(['Harness Care worker-services.test:qual', 'Other Documents:misc'])
+    expect(blobDeletes.sort()).toEqual([old, own].sort()) // another worker's file is never deleted
 
+    // Chosen again: a fresh service, nothing comes back.
     const back = await put('/v1/worker/services', { services: [care(), 'nursing-services'], subcategoryIds: [] })
     expect(back.statusCode, back.body).toBe(200)
-    expect((await profile()).serviceRegistrations).toEqual([nurse])
-    expect(await h.db.workerServiceArchive.count({ where: { workerProfileId: h.b.profileId } })).toBe(0)
+    expect((await profile()).serviceRegistrations).toEqual([])
+    const r = await put('/v1/worker/services/nursing-services/registration', nurse)
+    expect(r.statusCode).toBe(200)
   })
 
   it('a kept service keeps its row (and its first-chosen place) when the list is re-sent in another order', async () => {

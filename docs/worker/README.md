@@ -97,7 +97,7 @@ and the four registration server actions (the app moves onto them in U3c). Same 
 
 | Entry | Body | Rules |
 |---|---|---|
-| `PUT /v1/worker/services` | `{services: [categoryId], subcategoryIds: [id]}` | 1-20 services, no repeats; each a catalogue category, each sub-category belonging to a chosen one (400 naming `services` / `subcategoryIds`). A kept service keeps its row, its place (creation order) and its registration; a new one is added in the order given. A **removed** service's row is deleted (the search, the admin pages and the lists read these rows) after its metadata is set aside in `worker_service_archive`; choosing the service again restores it and deletes the archive row (D2). Its documents on `verification_requirements` are untouched. 200 with `{services}` as stored |
+| `PUT /v1/worker/services` | `{services: [categoryId], subcategoryIds: [id]}` | 1-20 services, no repeats; each a catalogue category, each sub-category belonging to a chosen one (400 naming `services` / `subcategoryIds`). A kept service keeps its row, its place (creation order) and its registration; a new one is added in the order given. A **removed** service is deleted entirely (D2): its row with the registration, and its documents (the `SERVICE_QUALIFICATION` rows keyed `"<service name>:<type>"`) in the same transaction; after the commit their files, only those in the worker's own folders (`workers/<userId>/service-documents/`, `service-documents/<userId>/`), any other URL left and logged. Choosing it again starts afresh. 200 with `{services}` as stored |
 | `PUT /v1/worker/services/:categoryId/registration` | nursing: `{categoryId, nursingType, hasExperience, registrationNumber, expiryDate}`; therapeutic: `{categoryId, registrationNumber, expiryDate}` | `:categoryId` is `nursing-services` or `therapeutic-supports` and equals the body's. A registered nurse and a therapeutic worker give a number (3-30 letters, digits, spaces, hyphens) and an expiry (a real date, today or later); an enrolled nurse gives neither (null). 404 when the service is not chosen: today's action created the service row instead (S4). Stored as the row's metadata in today's shape; 200 with the registration as read |
 
 ## 3. Caching
@@ -220,7 +220,7 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
 `worker_profiles` (columns above, plus `setupProgress`, `profileCompleted`, `verificationStatus`),
 `worker_services`, `verification_requirements` (`requirementType`, `status`, `documentCategory`, `documentUrl`),
 `worker_availability`, `worker_experience`, `worker_job_history`, `worker_education`, `worker_additional_info`,
-`worker_locations` (kind `HOME`) + `au_localities`, `worker_service_archive` (written only by `PUT /v1/worker/services`, never read by the profile), and the catalogue `Category` → `CategoryDocument` → `Document`
+`worker_locations` (kind `HOME`) + `au_localities`, and the catalogue `Category` → `CategoryDocument` → `Document`
 and `Subcategory` → `SubcategoryDocument` → `Document`. One transaction issues one statement per relation (17 for
 a worker with services: the profile, its nine relations, the catalogue and its five), none per row; a test holds
 the count at 20 at most. The statement timeout is set with `set_config('statement_timeout', $1, true)`, a bound

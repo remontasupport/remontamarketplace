@@ -1,10 +1,9 @@
 // The services section (api-review U3a, services-inventory.md): the chosen services and the registrations two of them
 // carry. Replaces the app's step-101 save, deleteWorkerService and the four registration actions.
 //
-// Removing a service (D2, user 2026-10-15): worker_services rows are read by the search, the admin pages and the
-// lists, so a removed service is deleted as today -- but its registration (the row's metadata) is first set aside in
-// worker_service_archive, and put back when the service is chosen again. Its documents live on
-// verification_requirements and are untouched: hidden while the service is not chosen, there again when it is.
+// Removing a service deletes it entirely (D2, user 2026-10-15): its worker_services row with the registration in its
+// metadata, and its documents -- the SERVICE_QUALIFICATION rows keyed "<service name>:<type>" -- in the same
+// transaction; their files after the commit, only from the worker's own folders (ownServiceDocument).
 import {
   REGISTRATION_SERVICES,
   type RegistrationService,
@@ -15,50 +14,71 @@ import {
 import { ApiError } from '../../../../platform/errors'
 import { Prisma, type Tx } from '../../../../platform/persistence/db'
 import { resolveServices } from '../../../registration/application/resolve-services'
+import { isBlobUrl } from '../photos'
 
 const SERVICE_SELECT = { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true } as const
 
 type Metadata = Prisma.JsonValue | null | undefined
 const isObject = (m: Metadata): m is Prisma.JsonObject => typeof m === 'object' && m !== null && !Array.isArray(m)
 
-export async function writeServices(tx: Tx, profileId: string, body: ServicesBody, now: Date) {
+export interface ServicesWrite {
+  body: { services: { categoryId: string; categoryName: string; subcategoryIds: string[]; subcategoryNames: string[] }[] }
+  /** The removed services' document files, to delete after the commit (deleteServiceFiles). */
+  files: string[]
+}
+
+export async function writeServices(tx: Tx, profileId: string, body: ServicesBody, now: Date): Promise<ServicesWrite> {
   const chosen = await resolveServices(tx, body.services, body.subcategoryIds).catch((e: unknown) => {
     // The sign-up names the sub-category field supportWorkerCategories; this body calls it subcategoryIds.
     if (e instanceof ApiError && e.fields?.supportWorkerCategories) throw new ApiError(400, e.cause_, { subcategoryIds: e.fields.supportWorkerCategories })
     throw e
   })
-  const existing = await tx.workerService.findMany({ where: { workerProfileId: profileId }, select: { id: true, categoryId: true, metadata: true } })
+  const existing = await tx.workerService.findMany({ where: { workerProfileId: profileId }, select: { id: true, categoryId: true, categoryName: true } })
   const keep = new Set(chosen.map((c) => c.categoryId))
 
   const removed = existing.filter((r) => !keep.has(r.categoryId))
-  for (const r of removed) {
-    if (!isObject(r.metadata) || Object.keys(r.metadata).length === 0) continue
-    await tx.workerServiceArchive.upsert({
-      where: { workerProfileId_categoryId: { workerProfileId: profileId, categoryId: r.categoryId } },
-      create: { workerProfileId: profileId, categoryId: r.categoryId, metadata: r.metadata },
-      update: { metadata: r.metadata, archivedAt: now },
-    })
+  let files: string[] = []
+  if (removed.length) {
+    const docs = { workerProfileId: profileId, documentCategory: 'SERVICE_QUALIFICATION' as const, OR: removed.map((r) => ({ requirementType: { startsWith: `${r.categoryName}:` } })) }
+    const rows = await tx.verificationRequirement.findMany({ where: docs, select: { documentUrl: true } })
+    files = rows.flatMap((r) => (r.documentUrl ? [r.documentUrl] : []))
+    await tx.verificationRequirement.deleteMany({ where: docs })
+    await tx.workerService.deleteMany({ where: { id: { in: removed.map((r) => r.id) } } })
   }
-  if (removed.length) await tx.workerService.deleteMany({ where: { id: { in: removed.map((r) => r.id) } } })
 
   // New rows get distinct, increasing createdAt values so the read (createdAt order) shows them in the order chosen.
   let added = 0
   for (const c of chosen) {
     const row = existing.find((r) => r.categoryId === c.categoryId)
-    if (row) {
-      await tx.workerService.update({ where: { id: row.id }, data: { categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames } })
-      continue
-    }
-    const key = { workerProfileId_categoryId: { workerProfileId: profileId, categoryId: c.categoryId } }
-    const archived = await tx.workerServiceArchive.findUnique({ where: key, select: { metadata: true } })
-    await tx.workerService.create({
-      data: { workerProfileId: profileId, ...c, ...(archived ? { metadata: archived.metadata as Prisma.InputJsonValue } : {}), createdAt: new Date(now.getTime() + added++) },
-    })
-    if (archived) await tx.workerServiceArchive.delete({ where: key })
+    if (row) await tx.workerService.update({ where: { id: row.id }, data: { categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames } })
+    else await tx.workerService.create({ data: { workerProfileId: profileId, ...c, createdAt: new Date(now.getTime() + added++) } })
   }
 
   const services = await tx.workerService.findMany({ where: { workerProfileId: profileId }, select: SERVICE_SELECT, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })
-  return { services }
+  return { body: { services }, files }
+}
+
+/**
+ * Is `url` a service document the app stored for this user: on Blob's host, under `workers/<userId>/service-documents/`
+ * (the upload action) or `service-documents/<userId>/` (the old route), nothing after the path. Being on the worker's
+ * row is not enough: a row's URL was never checked when it was written (F1's lesson).
+ */
+export function ownServiceDocument(url: string, userId: string): boolean {
+  if (!isBlobUrl(url)) return false
+  const u = new URL(url)
+  if (u.search || u.hash || u.pathname.includes('..') || u.pathname.includes('%2')) return false
+  return u.pathname.startsWith(`/workers/${userId}/service-documents/`) || u.pathname.startsWith(`/service-documents/${userId}/`)
+}
+
+/** After the commit, best-effort: each file in the worker's own folders is deleted; anything else is left and logged. */
+export async function deleteServiceFiles(blob: { delete(urlOrKey: string): Promise<void> } | undefined, files: readonly string[], userId: string, log: { warn(o: object, m: string): void }): Promise<void> {
+  for (const f of files) {
+    if (!blob || !ownServiceDocument(f, userId)) {
+      log.warn({ userId, reason: blob ? 'not-own-folder' : 'no-store' }, 'service document file left')
+      continue
+    }
+    await blob.delete(f).catch((err: unknown) => log.warn({ userId, err: err instanceof Error ? err.message : String(err) }, 'service document file delete failed'))
+  }
 }
 
 export async function writeServiceRegistration(tx: Tx, profileId: string, categoryId: RegistrationService, body: ServiceRegistrationBody): Promise<ServiceRegistrationView> {

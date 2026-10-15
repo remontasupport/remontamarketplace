@@ -2,7 +2,7 @@
 // any rule: numbers of 0-2 characters, expiries such as "-01-00").
 import { serviceRegistrationViewSchema } from '@remonta/api-contract'
 import { describe, expect, it } from 'vitest'
-import { registrationOf, registrationsOf } from '../../src/modules/worker/application/sections/services'
+import { deleteServiceFiles, ownServiceDocument, registrationOf, registrationsOf } from '../../src/modules/worker/application/sections/services'
 
 describe('registrationOf', () => {
   it('reads a registered nurse as stored', () => {
@@ -52,5 +52,40 @@ describe('registrationsOf', () => {
     ]
     expect(registrationsOf(rows).map((r) => r.categoryId)).toEqual(['nursing-services', 'therapeutic-supports'])
     expect(registrationsOf([{ categoryId: 'support-worker', metadata: null }])).toEqual([])
+  })
+})
+
+describe('ownServiceDocument (removed services: files deleted from the own folders only)', () => {
+  const blob = 'https://abc.public.blob.vercel-storage.com'
+  it('the two folders the app writes, for this user', () => {
+    expect(ownServiceDocument(`${blob}/workers/u1/service-documents/nursing-services/ahpra/1-a.pdf`, 'u1')).toBe(true)
+    expect(ownServiceDocument(`${blob}/service-documents/u1/nursing-services/cert-2-b.pdf`, 'u1')).toBe(true)
+  })
+  it('anything else is not: another user, another folder, another host, a query, traversal, an encoded slash, junk', () => {
+    for (const u of [
+      `${blob}/workers/u2/service-documents/x.pdf`,
+      `${blob}/workers/u1/other.pdf`,
+      `${blob}/workers/u10/service-documents/x.pdf`,
+      `https://evil.example/workers/u1/service-documents/x.pdf`,
+      `http://abc.public.blob.vercel-storage.com/workers/u1/service-documents/x.pdf`,
+      `${blob}/workers/u1/service-documents/x.pdf?download=1`,
+      `${blob}/workers/u1/service-documents/../../u2/x.pdf`,
+      `${blob}/workers/u1/service-documents/..%2F..%2Fu2%2Fx.pdf`,
+      'not a url',
+    ])
+      expect(ownServiceDocument(u, 'u1'), u).toBe(false)
+  })
+  it('deleteServiceFiles deletes own files, logs and leaves the rest, survives a failing store', async () => {
+    const deleted: string[] = []
+    const warns: string[] = []
+    const log = { warn: (_o: object, m: string) => void warns.push(m) }
+    const own = `${blob}/workers/u1/service-documents/a.pdf`
+    await deleteServiceFiles({ delete: async (u) => void deleted.push(u) }, [own, `${blob}/workers/u2/service-documents/b.pdf`], 'u1', log)
+    expect(deleted).toEqual([own])
+    expect(warns).toEqual(['service document file left'])
+    await deleteServiceFiles({ delete: async () => { throw new Error('down') } }, [own], 'u1', log)
+    expect(warns.at(-1)).toBe('service document file delete failed')
+    await deleteServiceFiles(undefined, [own], 'u1', log)
+    expect(warns.at(-1)).toBe('service document file left')
   })
 })
