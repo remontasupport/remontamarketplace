@@ -17,7 +17,9 @@ import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos
 import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
-import { deleteServiceFiles, writeServiceRegistration, writeServices } from './application/sections/services'
+import { ApiError } from '../../platform/errors'
+import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
+import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
@@ -31,6 +33,8 @@ export interface WorkerModuleDeps {
 
 export function workerHandlers(deps: WorkerModuleDeps) {
   const s = { db: deps.db, clock: deps.clock }
+  // The bucket (documents, U3b) and the Blob store (legacy files): absent in a test or a local run without them.
+  const stores = () => ({ bucket: deps.photos?.bucket, blob: deps.photos?.blob })
   const photoDeps = () => {
     if (!deps.photos) throw new Error('worker photos: the photo store is not configured')
     return deps.photos
@@ -89,13 +93,68 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     putServices: async (req, ctx) => {
       const out = await replaceSection(s, ctx, { section: 'putServices', completion: true }, (tx, p) => writeServices(tx, p.id, req.body, deps.clock()))
       // A removed service's documents went with it (D2); their files follow after the commit, own folders only.
-      if (out.files.length) await deleteServiceFiles(deps.photos?.blob, out.files, ctx.principal!.userId, ctx.log)
+      if (out.files.length) await deleteDocumentFiles(stores(), out.files, { userId: ctx.principal!.userId, profileId: out.profileId }, ownServiceDocument, ctx.log)
       return { status: 200, body: out.body }
     },
     putServiceRegistration: async (req, ctx) => ({
       status: 200,
       body: await replaceSection(s, ctx, { section: `putServiceRegistration.${req.params.categoryId}`, completion: true }, (tx, p) => writeServiceRegistration(tx, p.id, req.params.categoryId, req.body)),
     }),
+    // U3b service documents (u3b-service-documents-design.md).
+    createServiceDocumentTicket: async (req, ctx) => {
+      // Nothing is stored at ticket time (the photo's rule): there is nothing to audit yet.
+      ctx.audit.skip('a ticket stores nothing')
+      return { status: 201, body: await createDocumentTicket(req.body, { bucket: photoDeps().bucket, now: deps.clock() }, ctx.log) }
+    },
+    confirmServiceDocument: async (req, ctx) => {
+      const bucket = photoDeps().bucket
+      // The service and the type first (no bucket call for a request that cannot be recorded), then the file.
+      const target = await confirmTargetOf(deps.db, ctx.principal!.userId, req.body)
+      const staged = await stageDocument(bucket, req.body.uploadId, target.profileId, ctx.log)
+      if (!staged) {
+        // Nothing at the ticket's key: a retry of a confirm already recorded answers the same row; otherwise the upload never finished.
+        const done = await alreadyRecorded(deps.db, target.profileId, req.body.uploadId)
+        if (done) {
+          ctx.audit.skip('a repeat of a recorded confirm')
+          return { status: 201, body: done }
+        }
+        throw new ApiError(409, 'document upload incomplete', { file: [DOCUMENT_UPLOAD_INCOMPLETE] })
+      }
+      let replaced: DocumentFile | null = null
+      let view
+      try {
+        view = await replaceSection(s, ctx, { section: 'confirmServiceDocument', completion: true }, async (tx) => {
+          const out = await recordDocument(tx, target, req.body, staged, deps.clock())
+          replaced = out.replaced
+          return out.view
+        })
+      } catch (err) {
+        // Not recorded: the copy is nobody's file.
+        await bucket.delete(staged.key).catch(() => undefined)
+        throw err
+      }
+      if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownServiceDocument, ctx.log)
+      return { status: 201, body: view }
+    },
+    deleteServiceDocument: async (req, ctx) => {
+      let profileId = ''
+      const file = await replaceSection(s, ctx, { section: 'deleteServiceDocument', completion: true }, (tx, p) => {
+        profileId = p.id
+        return removeDocument(tx, p.id, req.params.documentId)
+      })
+      await deleteDocumentFiles(stores(), [file], { userId: ctx.principal!.userId, profileId }, ownServiceDocument, ctx.log)
+      return { status: 200, body: { documentId: req.params.documentId } }
+    },
+    getServiceDocumentLink: async (req, ctx) => {
+      // Ownership in the query: a row of another worker is the same 404 as no row.
+      const row = await deps.db.verificationRequirement.findFirst({
+        where: { id: req.params.documentId, documentCategory: 'SERVICE_QUALIFICATION', workerProfile: { userId: ctx.principal!.userId } },
+        select: { workerProfileId: true, documentUrl: true, metadata: true },
+      })
+      if (!row) throw new ApiError(404, 'service document not found')
+      return { status: 200, body: await linkFor(deps.photos?.bucket, row, deps.clock()) }
+    },
+
     putBankAccount: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBankAccount', completion: false }, (tx, p) => writeBankAccount(tx, p.id, req.body)) }),
   })
 }

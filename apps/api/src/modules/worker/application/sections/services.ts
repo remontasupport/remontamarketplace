@@ -3,7 +3,8 @@
 //
 // Removing a service deletes it entirely (D2, user 2026-10-15): its worker_services row with the registration in its
 // metadata, and its documents -- the SERVICE_QUALIFICATION rows keyed "<service name>:<type>" -- in the same
-// transaction; their files after the commit, only from the worker's own folders (ownServiceDocument).
+// transaction; their files after the commit, only the worker's own (deleteDocumentFiles: the api's bucket key, or a
+// legacy Blob URL in the worker's own folder, ownServiceDocument).
 import {
   REGISTRATION_SERVICES,
   type RegistrationService,
@@ -15,6 +16,7 @@ import { ApiError } from '../../../../platform/errors'
 import { Prisma, type Tx } from '../../../../platform/persistence/db'
 import { resolveServices } from '../../../registration/application/resolve-services'
 import { isBlobUrl } from '../photos'
+import { fileOf, type DocumentFile } from '../service-documents'
 
 const SERVICE_SELECT = { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true } as const
 
@@ -23,8 +25,9 @@ const isObject = (m: Metadata): m is Prisma.JsonObject => typeof m === 'object' 
 
 export interface ServicesWrite {
   body: { services: { categoryId: string; categoryName: string; subcategoryIds: string[]; subcategoryNames: string[] }[] }
-  /** The removed services' document files, to delete after the commit (deleteServiceFiles). */
-  files: string[]
+  /** The removed services' document files, to delete after the commit (deleteDocumentFiles). */
+  files: DocumentFile[]
+  profileId: string
 }
 
 export async function writeServices(tx: Tx, profileId: string, body: ServicesBody, now: Date): Promise<ServicesWrite> {
@@ -38,11 +41,11 @@ export async function writeServices(tx: Tx, profileId: string, body: ServicesBod
   const keep = new Set(chosen.map((c) => c.categoryId))
 
   const removed = existing.filter((r) => !keep.has(r.categoryId))
-  let files: string[] = []
+  let files: DocumentFile[] = []
   if (removed.length) {
     const docs = { workerProfileId: profileId, documentCategory: 'SERVICE_QUALIFICATION' as const, OR: removed.map((r) => ({ requirementType: { startsWith: `${r.categoryName}:` } })) }
-    const rows = await tx.verificationRequirement.findMany({ where: docs, select: { documentUrl: true } })
-    files = rows.flatMap((r) => (r.documentUrl ? [r.documentUrl] : []))
+    const rows = await tx.verificationRequirement.findMany({ where: docs, select: { documentUrl: true, metadata: true } })
+    files = rows.map(fileOf)
     await tx.verificationRequirement.deleteMany({ where: docs })
     await tx.workerService.deleteMany({ where: { id: { in: removed.map((r) => r.id) } } })
   }
@@ -65,7 +68,7 @@ export async function writeServices(tx: Tx, profileId: string, body: ServicesBod
     await tx.workerService.create({ data: { workerProfileId: profileId, ...c, createdAt: new Date(now.getTime() + added.length) }, select: { id: true } })
     added.push({ categoryId: c.categoryId, categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames })
   }
-  return { body: { services: [...services, ...added] }, files }
+  return { body: { services: [...services, ...added] }, files, profileId }
 }
 
 /**
@@ -78,17 +81,6 @@ export function ownServiceDocument(url: string, userId: string): boolean {
   const u = new URL(url)
   if (u.search || u.hash || u.pathname.includes('..') || u.pathname.includes('%2')) return false
   return u.pathname.startsWith(`/workers/${userId}/service-documents/`) || u.pathname.startsWith(`/service-documents/${userId}/`)
-}
-
-/** After the commit, best-effort: each file in the worker's own folders is deleted; anything else is left and logged. */
-export async function deleteServiceFiles(blob: { delete(urlOrKey: string): Promise<void> } | undefined, files: readonly string[], userId: string, log: { warn(o: object, m: string): void }): Promise<void> {
-  for (const f of files) {
-    if (!blob || !ownServiceDocument(f, userId)) {
-      log.warn({ userId, reason: blob ? 'not-own-folder' : 'no-store' }, 'service document file left')
-      continue
-    }
-    await blob.delete(f).catch((err: unknown) => log.warn({ userId, err: err instanceof Error ? err.message : String(err) }, 'service document file delete failed'))
-  }
 }
 
 export async function writeServiceRegistration(tx: Tx, profileId: string, categoryId: RegistrationService, body: ServiceRegistrationBody): Promise<ServiceRegistrationView> {

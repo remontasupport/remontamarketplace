@@ -7,6 +7,7 @@
 // failure means. The SDK talks to Google's fixed hosts on its own -- not through
 // SafeHttpClient, like the Blob SDK; no caller-supplied URL is involved.
 import { Storage, type Bucket } from '@google-cloud/storage'
+import type { DocumentType } from '@remonta/schemas/document-type'
 import type { ImageType } from '@remonta/schemas/image-type'
 import { StoreUnavailable, type ObjectInfo, type PhotoStore, type UploadTicket } from './photo-store'
 
@@ -37,7 +38,7 @@ export class GcsPhotoStore implements PhotoStore {
     this.timeoutMs = opts.timeoutMs
   }
 
-  async createUploadTicket(key: string, contentType: ImageType, maxBytes: number, expiresAt: Date): Promise<UploadTicket> {
+  async createUploadTicket(key: string, contentType: ImageType | DocumentType, maxBytes: number, expiresAt: Date): Promise<UploadTicket> {
     const [policy] = await this.bounded('sign', () =>
       this.bucket.file(key).generateSignedPostPolicyV4({
         expires: expiresAt,
@@ -117,6 +118,23 @@ export class GcsPhotoStore implements PhotoStore {
     return `${this.base}/${key}`
   }
 
+  async copy(fromKey: string, toKey: string): Promise<void> {
+    await this.bounded('copy', () => this.bucket.file(fromKey).copy(this.bucket.file(toKey)))
+  }
+
+  async signedReadUrl(key: string, expiresAt: Date, opts: { fileName: string; contentType: string }): Promise<string> {
+    const [url] = await this.bounded('sign-read', () =>
+      this.bucket.file(key).getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: expiresAt,
+        responseDisposition: inlineDisposition(opts.fileName),
+        responseType: opts.contentType,
+      }),
+    )
+    return url
+  }
+
   async delete(key: string): Promise<void> {
     await this.bounded('delete', () => this.bucket.file(key).delete({ ignoreNotFound: true }))
   }
@@ -150,6 +168,15 @@ export function infoFromHeaders(headers: Record<string, string | string[] | unde
   const sizeBytes = range ? Number(range[1]) : stored && /^\d+$/.test(stored) ? Number(stored) : Number.NaN
   if (!contentType || !Number.isFinite(sizeBytes)) return null
   return { sizeBytes, contentType }
+}
+
+/**
+ * `Content-Disposition: inline` with the file's own name (U3b): a plain ASCII form with control characters, quotes,
+ * backslashes and anything non-ASCII replaced, and the exact name as RFC 5987 UTF-8.
+ */
+export function inlineDisposition(fileName: string): string {
+  const plain = [...fileName].map((c) => (c < ' ' || c > '~' || c === '"' || c === '\\' ? '_' : c)).join('')
+  return `inline; filename="${plain}"; filename*=UTF-8''${encodeURIComponent(fileName)}`
 }
 
 export function isNotFound(err: unknown): boolean {
