@@ -118,6 +118,23 @@ They replace the app's `uploadServiceDocument` / `deleteServiceDocument` actions
 uploadedAt}`, newest first, every SERVICE_QUALIFICATION row: "Other Documents" included). Removing a service deletes its
 documents' files from both stores.
 
+### Compliance documents (U4a, api-review)
+
+Identity, the screening checks, right to work, trainings, the contract and the Code of Conduct, in the same private
+bucket through the same ticket (`POST /v1/worker/service-documents/tickets`). They replace the app's
+`uploadComplianceDocument`, `POST /api/compliance/upload`, `deleteComplianceDocument`, the identity-documents delete
+and the citizenship PATCH (the app moves onto them in U4b). Design: `aidlc-docs/inception/review/u4a-compliance-documents-design.md`.
+
+| Entry | Body | Rules |
+|---|---|---|
+| `POST /v1/worker/compliance-documents` | `{uploadId, requirementType, fileName, expiryDate?, acknowledgement?}` | the type: a key of `worker/domain/compliance-documents.ts` (the app's table: identity with its PRIMARY / SECONDARY / WORKING_RIGHTS category, police, WWC, the screening keys, right to work, the NDIS modules, infection control, the contract, the Code of Conduct) or a catalogue `Document` of category COMPLIANCE or TRAINING (named as the catalogue names it); anything else 400 (C4). Right to work needs `expiryDate`; the Code of Conduct needs `acknowledgement {workerName, signatureDate}` (stored with `acknowledgedAt`), no other type takes one. An expiry is a real date, today or later. The file checked and copied as a service document. One row per type, found then updated or created: `SUBMITTED`, `submittedAt`, `expiresAt`, the review fields cleared, metadata `{storageKey, fileName, contentType, sizeBytes, uploadId}`; the worker's `verificationStatus` becomes `PENDING_REVIEW` (as today); completion recomputed; the replaced file deleted after the commit. 201 with the document |
+| `DELETE /v1/worker/compliance-documents/:documentId` | -- | the caller's row that is not a service document (404 otherwise); the file after the commit: its own key, or a legacy Blob URL under `<legacy folder>/<userId>/` (C5) |
+| `PUT /v1/worker/compliance/right-to-work/citizenship` | `{isCitizen}` | the C1 rule: yes is SUBMITTED (no file needed); no leaves an uploaded document alone and takes back a claim without a file |
+| `GET /v1/worker/documents/:documentId/link` | -- | any of the caller's own rows: a 5-minute signed link, or a legacy row's stored URL |
+
+`GET /v1/worker/profile` gains `complianceDocuments[]` (`{id, requirementType, name, status, documentCategory, url,
+fileName, uploadedAt, expiresAt, isCitizen}`, every row that is not a service document, newest first).
+
 ## 3. Caching
 
 Each 200 carries `Cache-Control: private, max-age=60`, `Vary: Authorization` and a strong `ETag` (a hash of the
