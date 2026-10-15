@@ -21,7 +21,6 @@
 1	src/app/api/upload/certificates/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/identity-documents/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/other-requirements/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/upload/service-documents/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/vehicle-photo/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/worker-photo/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/worker/compliance-documents/route.ts::@typescript-eslint/no-explicit-any
@@ -30,9 +29,8 @@
 1	src/app/api/worker/other-requirements/[id]/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/worker/other-requirements/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/worker/profile/[userId]/route.ts::@typescript-eslint/no-explicit-any
-6	src/app/api/worker/profile/update-step/route.ts::@typescript-eslint/no-explicit-any
+3	src/app/api/worker/profile/update-step/route.ts::@typescript-eslint/no-explicit-any
 4	src/app/api/worker/requirements/route.ts::@typescript-eslint/no-explicit-any
-3	src/app/api/worker/service-documents/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/worker/vehicle-photo/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/apply/page.tsx::react/no-unescaped-entities
 2	src/app/dashboard/client/request-service/edit/[participantId]/page.tsx::@typescript-eslint/no-explicit-any
@@ -43,7 +41,6 @@
 1	src/app/dashboard/worker/additional-documents/page.tsx::@typescript-eslint/no-explicit-any
 3	src/app/dashboard/worker/profile-preview/page.tsx::@typescript-eslint/no-explicit-any
 9	src/app/dashboard/worker/requirements/setup/page.tsx::@typescript-eslint/no-explicit-any
-2	src/app/dashboard/worker/services/[serviceName]/documents/page.tsx::@typescript-eslint/no-explicit-any
 1	src/app/dashboard/worker/services/manage/page.tsx::@typescript-eslint/no-explicit-any
 4	src/app/dashboard/worker/services/setup/page.tsx::@typescript-eslint/no-explicit-any
 1	src/app/dashboard/worker/trainings/setup/page.tsx::@typescript-eslint/no-explicit-any
@@ -71,7 +68,6 @@
 2	src/components/dashboard/client/request-service/sections/PreviewSection.tsx::react/no-unescaped-entities
 2	src/components/dashboard/client/request-service/sections/WhenSection.tsx::react/no-unescaped-entities
 1	src/components/dashboard/ProfileCompletionReminder.tsx::react/no-unescaped-entities
-1	src/components/dashboard/Sidebar.tsx::@typescript-eslint/no-explicit-any
 2	src/components/forms/clientRegistration/Step5AccountSetup.tsx::@typescript-eslint/no-explicit-any
 1	src/components/forms/fields/PhotoUpload.tsx::@typescript-eslint/no-explicit-any
 6	src/components/pdf/WorkerProfilePDF.tsx::react/no-unescaped-entities
@@ -111,13 +107,10 @@
 4	src/components/requirements-setup/steps/StepRightToWork.tsx::react/no-unescaped-entities
 3	src/components/services-setup/AddServiceDialog.tsx::@typescript-eslint/no-explicit-any
 1	src/components/services-setup/AddServiceDialog.tsx::react/no-unescaped-entities
-1	src/components/services-setup/ServiceDocumentsDialog.tsx::@typescript-eslint/no-explicit-any
 8	src/components/services-setup/steps/ServiceQualificationStep.tsx::@typescript-eslint/no-explicit-any
 2	src/components/services-setup/steps/ServiceQualificationStep.tsx::react/no-unescaped-entities
 9	src/components/services-setup/steps/Step1ServicesOffer.tsx::@typescript-eslint/no-explicit-any
 6	src/components/services-setup/steps/Step1ServicesOffer.tsx::react/no-unescaped-entities
-1	src/components/services-setup/steps/Step2AdditionalTraining.tsx::@typescript-eslint/no-explicit-any
-9	src/components/services-setup/steps/Step2AdditionalTraining.tsx::react/no-unescaped-entities
 7	src/components/services-setup/steps/Step2OtherDocuments.tsx::@typescript-eslint/no-explicit-any
 4	src/components/services-setup/steps/Step2OtherDocuments.tsx::react/no-unescaped-entities
 1	src/components/ui/command.tsx::@typescript-eslint/no-empty-object-type
@@ -129,8 +122,6 @@
 1	src/config/servicesSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
 2	src/hooks/queries/useComplianceDocuments.ts::@typescript-eslint/no-explicit-any
-4	src/hooks/queries/useServiceDocuments.ts::@typescript-eslint/no-explicit-any
-1	src/hooks/queries/useServiceSubcategories.ts::@typescript-eslint/no-require-imports
 2	src/hooks/queries/useWorkerProfile.ts::@typescript-eslint/no-explicit-any
 3	src/lib/auth.config.ts::@typescript-eslint/no-explicit-any
 5	src/lib/backgroundUploadQueue.ts::@typescript-eslint/no-explicit-any
@@ -148,7 +139,6 @@
 15	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
 6	src/services/worker/serviceDocuments.service.ts::@typescript-eslint/no-explicit-any
 20	src/services/worker/setupProgress.service.ts::@typescript-eslint/no-explicit-any
-11	src/services/worker/workerServices.service.ts::@typescript-eslint/no-explicit-any
 2	src/store/onboardingStore.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicComplianceSteps.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicTrainingSteps.ts::@typescript-eslint/no-explicit-any

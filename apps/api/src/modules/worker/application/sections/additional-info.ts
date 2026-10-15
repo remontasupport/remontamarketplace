@@ -2,15 +2,12 @@
 // R7.2-R7.3). A group write touches only that group's columns (property P7); the row is
 // created on the first write. The bank account is stored as today's JSON and only ever
 // leaves masked (R6.3).
-import type { AdditionalInfoBody, BankAccountBody, MaskedBankAccount } from '@remonta/api-contract'
-import { ApiError } from '../../../../platform/errors'
+import type { AdditionalInfoBody, AdditionalInfoGroup, BankAccountBody, MaskedBankAccount } from '@remonta/api-contract'
 import type { Tx } from '../../../../platform/persistence/db'
 import { maskBankAccount } from '../../domain/bank-account'
 
-type Group = AdditionalInfoBody['group']
-
-/** The columns each group owns (R7.2); a write sets these and nothing else. */
-export const GROUP_COLUMNS: Readonly<Record<Group, readonly string[]>> = {
+/** The columns each group owns (R7.2): a write sets these and nothing else, whatever the body holds (a second guard behind the strict body). */
+export const GROUP_COLUMNS: Readonly<Record<AdditionalInfoGroup, readonly string[]>> = {
   'good-to-know': ['lgbtqiaSupport'],
   languages: ['languages'],
   'cultural-background': ['culturalBackground'],
@@ -22,27 +19,23 @@ export const GROUP_COLUMNS: Readonly<Record<Group, readonly string[]>> = {
   personality: ['personality', 'nonSmoker', 'petFriendly'],
 }
 
-/** The groups the completion percent reads (U1 R3.10: languages, personality); the others never change a flag. */
-export const GROUPS_WITH_COMPLETION: ReadonlySet<Group> = new Set(['languages', 'personality'])
-
 /** The body's columns for its group (pure, tested). */
-export function columnsOf(body: AdditionalInfoBody): Record<string, unknown> {
-  const { group, ...rest } = body
+export function columnsOf(group: AdditionalInfoGroup, body: Record<string, unknown>): Record<string, unknown> {
   const allowed = GROUP_COLUMNS[group]
-  return Object.fromEntries(Object.entries(rest).filter(([k]) => allowed.includes(k)))
+  return Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
 }
 
-export async function writeAdditionalInfo(tx: Tx, profileId: string, pathGroup: Group, body: AdditionalInfoBody): Promise<AdditionalInfoBody> {
-  if (body.group !== pathGroup) throw new ApiError(400, 'group mismatch', { group: ['Does not match the address'] })
-  const data = columnsOf(body)
-  const select = Object.fromEntries(GROUP_COLUMNS[body.group].map((c) => [c, true]))
+/** One group's write (its own entry since 2026-10-14): the row is created on the first write; the group's columns come back as stored. */
+export async function writeAdditionalInfo<G extends AdditionalInfoGroup>(tx: Tx, profileId: string, group: G, body: AdditionalInfoBody<G>): Promise<AdditionalInfoBody<G>> {
+  const data = columnsOf(group, body)
+  const select = Object.fromEntries(GROUP_COLUMNS[group].map((c) => [c, true]))
   const row = await tx.workerAdditionalInfo.upsert({
     where: { workerProfileId: profileId },
     create: { workerProfileId: profileId, ...data },
     update: data,
     select,
   })
-  return { group: body.group, ...row } as AdditionalInfoBody
+  return row as AdditionalInfoBody<G>
 }
 
 /** R6.2: today's JSON shape. */

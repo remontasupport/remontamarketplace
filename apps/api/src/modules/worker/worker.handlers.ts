@@ -2,11 +2,15 @@
 // edit-profile, U3a services). The pipeline has already verified the token, checked the WORKER role,
 // applied the per-user and per-IP limits and parsed the body strictly; the private-cache
 // headers and the 304 are its job too. Every section write runs through replaceSection
-// (ownership, one transaction, completion, audit). One info line per request with ids and
+// (ownership, one transaction, audit). Only the writes that can change a STORED flag recompute
+// completion (name, bio, personal info, ABN, photos, service area): the stored value is the four
+// flags and profileCompleted; the percentage is computed on every read and never stored, so the
+// sections that only move the percentage (hours, experience, history, education, the groups, the
+// bank account) skip the recompute -- half the connection time of a write (the U2 load test). One info line per request with ids and
 // timing, never a name, a value or a row (U1-SEC-06).
-import { workerContract } from '@remonta/api-contract'
+import { workerContract, type AdditionalInfoBody, type AdditionalInfoGroup } from '@remonta/api-contract'
 import type { Clock } from '../../platform/clock'
-import { defineHandlers } from '../../platform/contract/handlers'
+import { defineHandlers, type HandlerContext } from '../../platform/contract/handlers'
 import type { Db } from '../../platform/persistence/db'
 import type { PhotoStore } from '../registration/adapters/photo-store'
 import { confirmPhotoUpload } from '../registration/application/photo-confirm'
@@ -15,9 +19,9 @@ import { writeHomeAddress, writeServiceArea } from './application/addresses'
 import { getProfile, type GetProfileDeps } from './application/get-profile'
 import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos'
 import { replaceSection } from './application/replace-section'
-import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
-import { writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { ApiError } from '../../platform/errors'
+import { writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
+import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
@@ -39,11 +43,15 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     if (!deps.photos) throw new Error('worker photos: the photo store is not configured')
     return deps.photos
   }
+  const group = async <G extends AdditionalInfoGroup>(g: G, body: AdditionalInfoBody<G>, ctx: HandlerContext) => ({
+    status: 200 as const,
+    body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${g}`, completion: false }, (tx, p) => writeAdditionalInfo(tx, p.id, g, body)),
+  })
   return defineHandlers(workerContract, {
     getProfile: async (_req, ctx) => {
       const started = Date.now()
       // The pipeline admits WORKER principals only (R1.5); ctx.principal is never null here.
-      const body = await getProfile({ db: deps.db, read: deps.read }, ctx.principal!, ctx.log)
+      const body = await getProfile({ db: deps.db, read: deps.read, now: deps.clock }, ctx.principal!, ctx.log)
       ctx.log.info({ entry: 'worker.getProfile', durationMs: Date.now() - started, userId: ctx.principal!.userId, percent: body.completion.percent }, 'worker profile read')
       return { status: 200, body }
     },
@@ -81,14 +89,24 @@ export function workerHandlers(deps: WorkerModuleDeps) {
       return { status: 200, body }
     },
 
-    putAvailability: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putAvailability', completion: true }, (tx, p) => writeAvailability(tx, p.id, req.body)) }),
-    putExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putExperience', completion: true }, (tx, p) => writeExperience(tx, p.id, req.body)) }),
-    putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: true }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
-    putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: true }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
-    putAdditionalInfo: async (req, ctx) => ({
-      status: 200,
-      body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${req.params.group}`, completion: GROUPS_WITH_COMPLETION.has(req.params.group) }, (tx, p) => writeAdditionalInfo(tx, p.id, req.params.group, req.body)),
-    }),
+    putAvailability: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putAvailability', completion: false }, (tx, p) => writeAvailability(tx, p.id, req.body)) }),
+    putExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putExperience', completion: false }, (tx, p) => writeExperience(tx, p.id, req.body)) }),
+    // Experience never changes a stored completion flag (the percentage is computed on read).
+    deleteExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: `deleteExperience.${req.params.domain}`, completion: false }, (tx, p) => deleteExperienceArea(tx, p.id, req.params.domain)) }),
+    putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: false }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
+    deleteJobHistoryEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteJobHistoryEntry', completion: false }, (tx, p) => deleteJobHistoryEntry(tx, p.id, req.params.entryId)) }),
+    putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: false }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
+    deleteEducationEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteEducationEntry', completion: false }, (tx, p) => deleteEducationEntry(tx, p.id, req.params.entryId)) }),
+    // The additional details, one entry per group (2026-10-14); each writes its own columns only.
+    putGoodToKnow: (req, ctx) => group('good-to-know', req.body, ctx),
+    putLanguages: (req, ctx) => group('languages', req.body, ctx),
+    putCulturalBackground: (req, ctx) => group('cultural-background', req.body, ctx),
+    putReligion: (req, ctx) => group('religion', req.body, ctx),
+    putInterests: (req, ctx) => group('interests', req.body, ctx),
+    putSupportActivities: (req, ctx) => group('support-activities', req.body, ctx),
+    putFunFact: (req, ctx) => group('fun-fact', req.body, ctx),
+    putPreferences: (req, ctx) => group('preferences', req.body, ctx),
+    putPersonality: (req, ctx) => group('personality', req.body, ctx),
     // U3a: the services decide the requirement groups and the services flag; a registration can complete a service.
     putServices: async (req, ctx) => {
       const out = await replaceSection(s, ctx, { section: 'putServices', completion: true }, (tx, p) => writeServices(tx, p.id, req.body, deps.clock()))

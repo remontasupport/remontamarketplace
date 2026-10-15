@@ -15,7 +15,7 @@
 //   10b private caching (privateCacheSeconds): ETag, 304, and the response memo (U2)
 //   11 error mapping                                            (error handler, app.ts)
 import { createHash } from 'node:crypto'
-import { serializeCanonical, type EntryDef, type RateLimitRule } from '@remonta/api-contract'
+import { friendlyError, serializeCanonical, type EntryDef, type RateLimitRule } from '@remonta/api-contract'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type * as z from 'zod'
 import { RequestAudit } from '../audit'
@@ -92,6 +92,8 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
     let files: Record<string, UploadedFile> | undefined
     if (entry.body?.kind === 'json') body = parse(entry.body.schema, request.body, 'body')
     else if (entry.body?.kind === 'multipart') files = await readFiles(request, entry.body.files)
+    // An entry that declares no body refuses one, as for params and query (2026-10-14: the first body-less write, DELETE).
+    else parse(undefined, request.body ?? {}, 'body')
 
     // 7b. The memo (U2, R8.3): the same valid question within the window is answered
     //     from memory. `Cache-Control: no-cache` on the request bypasses the lookup; the
@@ -172,7 +174,8 @@ function parse(schema: z.ZodType | undefined, input: unknown, where: string): un
     if (input && typeof input === 'object' && Object.keys(input).length > 0) throw new ApiError(400, `unexpected ${where}`, { [where]: ['Not accepted here'] })
     return undefined
   }
-  const r = schema.safeParse(input)
+  // Plain-English messages where the schema names none (2026-10-14): the same wording the page shows.
+  const r = schema.safeParse(input, { error: friendlyError })
   if (r.success) return r.data
   const fields: Record<string, string[]> = {}
   for (const issue of r.error.issues) {

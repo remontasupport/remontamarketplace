@@ -42,6 +42,18 @@ export async function writeExperience(tx: Tx, profileId: string, body: Experienc
   return { domains: rows.sort((a, b) => order(a.domain) - order(b.domain)) }
 }
 
+/**
+ * One care area out (2026-10-14: the page's delete, after its confirm). The row is the caller's profile's row for the
+ * domain (unique per worker and domain), so another worker's row cannot be named. Idempotent: an area already gone
+ * deletes nothing and the answer is the same list, so a retried request is not an error.
+ */
+export async function deleteExperienceArea(tx: Tx, profileId: string, domain: ExperienceBody['domains'][number]['domain']): Promise<ExperienceBody> {
+  await tx.workerExperience.deleteMany({ where: { workerProfileId: profileId, domain } })
+  const rows = await tx.workerExperience.findMany({ where: { workerProfileId: profileId }, select: { domain: true, isProfessional: true, isPersonal: true, specificAreas: true, otherAreas: true, description: true } })
+  const order = (d: string) => (CARE_DOMAINS as readonly string[]).indexOf(d)
+  return { domains: rows.sort((a, b) => order(a.domain) - order(b.domain)) }
+}
+
 const JOB_SELECT = { id: true, jobTitle: true, company: true, startMonth: true, startYear: true, endMonth: true, endYear: true, currentlyWorking: true } as const
 const COURSE_SELECT = { id: true, institution: true, qualification: true, startMonth: true, startYear: true, endMonth: true, endYear: true, currentlyStudying: true } as const
 
@@ -54,9 +66,29 @@ export async function writeJobHistory(tx: Tx, profileId: string, body: JobHistor
   return { entries: rows as WithIds<JobHistoryBody>['entries'] }
 }
 
+/**
+ * One work-history row out (2026-10-14: the page's delete, after its confirm). Scoped to the caller's profile: a row
+ * that is not theirs, or no longer exists, deletes nothing and is 404 -- the same answer for both, so another worker's
+ * row is never revealed (R1.3). The rows left keep their order.
+ */
+export async function deleteJobHistoryEntry(tx: Tx, profileId: string, id: string): Promise<WithIds<JobHistoryBody>> {
+  const { count } = await tx.workerJobHistory.deleteMany({ where: { id, workerProfileId: profileId } })
+  if (count === 0) throw new ApiError(404, 'job history row not found for this profile')
+  const rows = await tx.workerJobHistory.findMany({ where: { workerProfileId: profileId }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: JOB_SELECT })
+  return { entries: rows as WithIds<JobHistoryBody>['entries'] }
+}
+
 export async function writeEducation(tx: Tx, profileId: string, body: EducationBody): Promise<WithIds<EducationBody>> {
   await tx.workerEducation.deleteMany({ where: { workerProfileId: profileId } })
   if (body.entries.length) await tx.workerEducation.createMany({ data: body.entries.map((e, i) => ({ workerProfileId: profileId, ...e, sortOrder: i })) })
+  const rows = await tx.workerEducation.findMany({ where: { workerProfileId: profileId }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: COURSE_SELECT })
+  return { entries: rows as WithIds<EducationBody>['entries'] }
+}
+
+/** One education row out (2026-10-14), as deleteJobHistoryEntry: the caller's row or 404 (R1.3); the rows left keep their order. */
+export async function deleteEducationEntry(tx: Tx, profileId: string, id: string): Promise<WithIds<EducationBody>> {
+  const { count } = await tx.workerEducation.deleteMany({ where: { id, workerProfileId: profileId } })
+  if (count === 0) throw new ApiError(404, 'education row not found for this profile')
   const rows = await tx.workerEducation.findMany({ where: { workerProfileId: profileId }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }], select: COURSE_SELECT })
   return { entries: rows as WithIds<EducationBody>['entries'] }
 }

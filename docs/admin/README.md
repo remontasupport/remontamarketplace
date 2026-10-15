@@ -158,3 +158,10 @@ The old Next.js routes (`/api/admin/contractors`, `/api/admin/users`, `/api/admi
 `/api/admin/filters`) and `src/lib/worker-search.ts` were deleted once no screen called them (the clean-up PR);
 the Redis response cache they kept (`admin:contractors:v1:*`) went with them. The per-contractor routes
 (`/api/admin/contractors/[id]`, `.../status`) remain: the dashboard's status toggle and Reactivate still use them.
+
+**The worker's private details (U2).** `/api/admin/contractors/[id]` also returns the home address (`homeAddress`:
+street line, suburb, state, postcode, or null) and the bank account masked to the last three digits
+(`src/lib/bankAccount.ts`, the api's mask, a test proving the two agree). The page shows them in a "Home address
+(private)" block **above** the profile card, never inside it: the "Download JPEG Profile" button captures only
+`.profile-card`, which is sent to clients. No client-facing route or page reads the home address
+(`src/lib/privacy.test.ts` checks every client-facing worker read selects named columns and none names it).

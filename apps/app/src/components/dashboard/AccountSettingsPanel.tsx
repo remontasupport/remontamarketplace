@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useSession, signOut } from "next-auth/react";
 import QueryProvider from "@/providers/QueryProvider";
 import { updateUserEmail, updateUserPassword } from "@/services/user/account.service";
 import "@/app/styles/account-settings.css";
 
-type Tab = "username" | "personal";
+type Tab = string;
 
-function AccountSettingsPanelContent() {
+/** A tab a page adds after Username & password (the worker's Bank Account, user 2026-10-13); `?tab=<id>` opens it. */
+export interface ExtraTab {
+  id: string;
+  label: string;
+  content: ReactNode;
+}
+
+function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly ExtraTab[] }) {
   const { data: session, update } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>("username");
   const [email, setEmail] = useState("");
@@ -40,6 +47,12 @@ function AccountSettingsPanelContent() {
       setActiveTab("personal");
     }
   }, [session]);
+
+  // A link straight to an added tab (the old bank-account page sends workers here).
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("tab");
+    if (wanted && extraTabs.some((t) => t.id === wanted)) setActiveTab(wanted);
+  }, [extraTabs]);
 
   // Fetch coordinator profile on mount
   useEffect(() => {
@@ -76,6 +89,7 @@ function AccountSettingsPanelContent() {
   const tabs = [
     ...(isCoordinator ? [{ id: "personal" as Tab, label: "Personal Details" }] : []),
     { id: "username" as Tab, label: "Username & password" },
+    ...extraTabs.map((t) => ({ id: t.id, label: t.label })),
   ];
 
   const handlePersonalSave = async () => {
@@ -313,15 +327,22 @@ function AccountSettingsPanelContent() {
           </div>
         )}
 
+        {extraTabs.map((t) =>
+          activeTab === t.id ? (
+            <div key={t.id} className="tab-panel">
+              {t.content}
+            </div>
+          ) : null,
+        )}
       </div>
     </div>
   );
 }
 
-export default function AccountSettingsPanel() {
+export default function AccountSettingsPanel({ extraTabs }: { extraTabs?: readonly ExtraTab[] }) {
   return (
     <QueryProvider>
-      <AccountSettingsPanelContent />
+      <AccountSettingsPanelContent extraTabs={extraTabs} />
     </QueryProvider>
   );
 }
