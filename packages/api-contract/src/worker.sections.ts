@@ -231,3 +231,55 @@ export const bankAccountSchema = z.strictObject({
   accountNumber: z.string().trim().regex(/^\d{6,10}$/, '6 to 10 digits'),
 })
 export type BankAccountBody = z.output<typeof bankAccountSchema>
+
+// ---- Services (U3a, services-inventory.md) ---------------------------------------------------------------------
+
+/** The services a worker chooses: catalogue category ids, and sub-category ids each belonging to one of them (checked by the api). */
+export const servicesBodySchema = z.strictObject({
+  services: uniqueList(trimmed(1, 80), 20, 1),
+  subcategoryIds: uniqueList(trimmed(1, 80), 100),
+})
+export type ServicesBody = z.output<typeof servicesBodySchema>
+
+/** The two services that carry a registration (stored on the worker_services row's metadata, as the pages write it today). */
+export const REGISTRATION_SERVICES = ['nursing-services', 'therapeutic-supports'] as const
+export type RegistrationService = (typeof REGISTRATION_SERVICES)[number]
+export const NURSING_TYPES = ['registered', 'enrolled'] as const
+
+const registrationNumber = trimmed(3, 30).regex(/^[A-Za-z0-9][A-Za-z0-9 -]*$/, 'Letters, digits, spaces and hyphens only')
+/** A registration still in force: a real date, today or later (the api's clock). */
+const expiryDate = isoDateSchema.refine((s) => s >= new Date().toISOString().slice(0, 10), 'This registration has expired')
+
+export const nursingRegistrationSchema = z
+  .strictObject({
+    categoryId: z.literal('nursing-services'),
+    nursingType: z.enum(NURSING_TYPES),
+    hasExperience: z.boolean(),
+    // A registered nurse gives the AHPRA number and its expiry; an enrolled nurse gives neither.
+    registrationNumber: registrationNumber.nullable(),
+    expiryDate: expiryDate.nullable(),
+  })
+  .superRefine((b, ctx) => {
+    const registered = b.nursingType === 'registered'
+    for (const k of ['registrationNumber', 'expiryDate'] as const) {
+      if (registered && b[k] === null) ctx.addIssue({ code: 'custom', path: [k], message: 'Required for a registered nurse' })
+      if (!registered && b[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'Only for a registered nurse' })
+    }
+  })
+export const therapeuticRegistrationSchema = z.strictObject({ categoryId: z.literal('therapeutic-supports'), registrationNumber, expiryDate })
+export const serviceRegistrationBodySchema = z.discriminatedUnion('categoryId', [nursingRegistrationSchema, therapeuticRegistrationSchema])
+export type ServiceRegistrationBody = z.output<typeof serviceRegistrationBodySchema>
+export const serviceRegistrationParamsSchema = z.strictObject({ categoryId: z.enum(REGISTRATION_SERVICES) })
+
+/**
+ * A registration as stored. Stored rows predate any rule (numbers of 0-2 characters, expiries such as "-01-00"), so
+ * every field is nullable and a value that is not a real date reads as null; a write always stores the strict body.
+ */
+export const serviceRegistrationViewSchema = z.strictObject({
+  categoryId: z.enum(REGISTRATION_SERVICES),
+  nursingType: z.enum(NURSING_TYPES).nullable(),
+  hasExperience: z.boolean().nullable(),
+  registrationNumber: z.string().max(60).nullable(),
+  expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+})
+export type ServiceRegistrationView = z.output<typeof serviceRegistrationViewSchema>

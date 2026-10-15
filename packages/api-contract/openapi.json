@@ -2874,6 +2874,72 @@
                         "additionalProperties": false
                       }
                     },
+                    "serviceRegistrations": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "categoryId": {
+                            "type": "string",
+                            "enum": [
+                              "nursing-services",
+                              "therapeutic-supports"
+                            ]
+                          },
+                          "nursingType": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "registered",
+                                  "enrolled"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hasExperience": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "registrationNumber": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 60
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "expiryDate": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "categoryId",
+                          "nursingType",
+                          "hasExperience",
+                          "registrationNumber",
+                          "expiryDate"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
                     "sections": {
                       "type": "object",
                       "properties": {
@@ -3319,6 +3385,7 @@
                     "completion",
                     "requirements",
                     "services",
+                    "serviceRegistrations",
                     "sections",
                     "updatedAt"
                   ],
@@ -7097,6 +7164,479 @@
             }
           ],
           "maxBodyKb": 16,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/services": {
+      "put": {
+        "operationId": "worker.putServices",
+        "summary": "Replace the chosen services and sub-categories (checked against the catalogue). The registration of a removed service is set aside and returns if the service is chosen again.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "services": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    }
+                  },
+                  "subcategoryIds": {
+                    "minItems": 0,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    }
+                  }
+                },
+                "required": [
+                  "services",
+                  "subcategoryIds"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "services": {
+                      "maxItems": 50,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "categoryId": {
+                            "type": "string",
+                            "maxLength": 80
+                          },
+                          "categoryName": {
+                            "type": "string",
+                            "maxLength": 120
+                          },
+                          "subcategoryIds": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 80
+                            }
+                          },
+                          "subcategoryNames": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 120
+                            }
+                          }
+                        },
+                        "required": [
+                          "categoryId",
+                          "categoryName",
+                          "subcategoryIds",
+                          "subcategoryNames"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "services"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 8,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/services/{categoryId}/registration": {
+      "put": {
+        "operationId": "worker.putServiceRegistration",
+        "summary": "Replace the registration of a chosen nursing or therapeutic service; 404 when the service is not chosen.",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "nursing-services",
+                "therapeutic-supports"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "categoryId": {
+                        "type": "string",
+                        "const": "nursing-services"
+                      },
+                      "nursingType": {
+                        "type": "string",
+                        "enum": [
+                          "registered",
+                          "enrolled"
+                        ]
+                      },
+                      "hasExperience": {
+                        "type": "boolean"
+                      },
+                      "registrationNumber": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 30,
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9 -]*$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "expiryDate": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "categoryId",
+                      "nursingType",
+                      "hasExperience",
+                      "registrationNumber",
+                      "expiryDate"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "categoryId": {
+                        "type": "string",
+                        "const": "therapeutic-supports"
+                      },
+                      "registrationNumber": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 30,
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9 -]*$"
+                      },
+                      "expiryDate": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      }
+                    },
+                    "required": [
+                      "categoryId",
+                      "registrationNumber",
+                      "expiryDate"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "categoryId": {
+                      "type": "string",
+                      "enum": [
+                        "nursing-services",
+                        "therapeutic-supports"
+                      ]
+                    },
+                    "nursingType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "registered",
+                            "enrolled"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hasExperience": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "registrationNumber": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 60
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "expiryDate": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "categoryId",
+                    "nursingType",
+                    "hasExperience",
+                    "registrationNumber",
+                    "expiryDate"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 2,
           "audit": "PROFILE_UPDATE"
         }
       }

@@ -1,5 +1,5 @@
 // The worker area: one handler per entry of worker.contract.ts (U1 worker-area, U2
-// edit-profile). The pipeline has already verified the token, checked the WORKER role,
+// edit-profile, U3a services). The pipeline has already verified the token, checked the WORKER role,
 // applied the per-user and per-IP limits and parsed the body strictly; the private-cache
 // headers and the 304 are its job too. Every section write runs through replaceSection
 // (ownership, one transaction, completion, audit). One info line per request with ids and
@@ -17,6 +17,7 @@ import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos
 import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
+import { writeServiceRegistration, writeServices } from './application/sections/services'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
@@ -83,6 +84,12 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     putAdditionalInfo: async (req, ctx) => ({
       status: 200,
       body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${req.params.group}`, completion: GROUPS_WITH_COMPLETION.has(req.params.group) }, (tx, p) => writeAdditionalInfo(tx, p.id, req.params.group, req.body)),
+    }),
+    // U3a: the services decide the requirement groups and the services flag; a registration can complete a service.
+    putServices: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putServices', completion: true }, (tx, p) => writeServices(tx, p.id, req.body, deps.clock())) }),
+    putServiceRegistration: async (req, ctx) => ({
+      status: 200,
+      body: await replaceSection(s, ctx, { section: `putServiceRegistration.${req.params.categoryId}`, completion: true }, (tx, p) => writeServiceRegistration(tx, p.id, req.params.categoryId, req.body)),
     }),
     putBankAccount: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBankAccount', completion: false }, (tx, p) => writeBankAccount(tx, p.id, req.body)) }),
   })
