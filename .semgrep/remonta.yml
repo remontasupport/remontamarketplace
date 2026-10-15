@@ -44,6 +44,7 @@ rules:
         - apps/api/src/modules
     pattern-either:
       - pattern: $LIMITER.hit($KEY, $LIMIT, $WINDOW, ...)
+      - pattern: $LIMITER.hitMany($HITS, ...)
       - pattern: $CAPTCHA.verify($TOKEN, $ACTION, $IP)
     metadata:
       category: security

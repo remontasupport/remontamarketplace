@@ -7,15 +7,17 @@ import { persistCompletion } from '../../src/modules/worker/domain/persist-compl
 import { readProfileRows, readProfileRowsPage, type ProfileRows } from '../../src/modules/worker/persistence/profile-read'
 import { statusOf } from '../../src/platform/errors'
 import { createDb, lastDbSuccessAt, Prisma, readTransaction, unitOfWork } from '../../src/platform/persistence/db'
+import { clearCatalogueCache } from '../../src/modules/worker/persistence/profile-read'
 import { workerHarness, type WorkerHarness } from './harness'
 
 const url = process.env.TEST_DATABASE_URL
 const local = !!url && /@(localhost|127\.0\.0\.1)[:/]/.test(url)
 
 /**
- * Data statements the handler's transaction issues (BEGIN/COMMIT, the isolation level and the timeout excluded). Since 2026-10-14 the read uses
+ * Data statements the handler's transaction issues (BEGIN/COMMIT and the timeout excluded). Since 2026-10-14 the read uses
  * relationLoadStrategy 'join': the profile with all its relations is one statement, the catalogue another (it was 17,
- * one per relation, and every statement is a round trip). None per row (U1-PRF-01).
+ * one per relation, and every statement is a round trip). None per row (U1-PRF-01). Since 2026-10-15 the catalogue is
+ * cached per process (audit P3): 2 on a cold cache, 1 on a warm one; no isolation-level statement (audit P2).
  */
 export const MAX_READ_STATEMENTS = 2
 
@@ -98,9 +100,11 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
   })
 
   it('U1-PRF-01: one transaction, a bounded number of statements, none per row', async () => {
+    clearCatalogueCache()
     h.queries.length = 0
     await h.get(h.a.userId)
-    // Transaction plumbing is not a read: BEGIN/COMMIT, the isolation level Prisma sets, the statement timeout.
+    // Transaction plumbing is not a read: BEGIN/COMMIT, the statement timeout. No isolation level is set (audit P2).
+    expect(h.queries.some((q) => /^SET TRANSACTION/i.test(q.trim()))).toBe(false)
     const isPlumbing = (q: string) => /^(BEGIN|COMMIT|ROLLBACK|DEALLOCATE|SET TRANSACTION)/i.test(q.trim()) || /set_config\('statement_timeout'/.test(q)
     const statements = h.queries.filter((q) => !isPlumbing(q))
     expect(h.queries.filter((q) => /^BEGIN/i.test(q)).length).toBe(1)
@@ -109,9 +113,14 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
     // Twice the rows, the same number of statements.
     await h.db.workerJobHistory.create({ data: { workerProfileId: h.a.profileId, jobTitle: 'Second', company: 'Co', sortOrder: 1 } })
     await h.db.verificationRequirement.create({ data: { workerProfileId: h.a.profileId, requirementType: 'working-with-children', requirementName: 'WWC', status: 'SUBMITTED', updatedAt: new Date() } })
+    clearCatalogueCache()
     h.queries.length = 0
     await h.get(h.a.userId)
     expect(h.queries.filter((q) => !isPlumbing(q)).length).toBe(statements.length)
+    // Warm: the catalogue comes from the cache, the profile is the one statement.
+    h.queries.length = 0
+    await h.get(h.a.userId)
+    expect(h.queries.filter((q) => !isPlumbing(q)).length).toBe(statements.length - 1)
   })
 
   it('the page read (the backfill) returns the same rows as the single read, one transaction per page', async () => {

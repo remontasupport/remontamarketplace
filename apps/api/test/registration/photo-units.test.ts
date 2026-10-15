@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { PHOTO_MAX_BYTES } from '@remonta/api-contract'
 import * as fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
+import { infoFromHeaders } from '../../src/modules/registration/adapters/gcs-photo-store'
 import { confirmPhotoUpload } from '../../src/modules/registration/application/photo-confirm'
 import { createPhotoTicket } from '../../src/modules/registration/application/photo-ticket'
 import { PHOTO_CACHE_S, photoUploadedHandler, processPhoto } from '../../src/modules/registration/application/photo-process'
@@ -314,5 +315,20 @@ describe('purge (R5, model-based): the bucket only', () => {
       }),
       { numRuns: 40 },
     )
+  })
+})
+
+describe('infoFromHeaders (audit P8: size and type from the ranged read)', () => {
+  it('the total of Content-Range, else the stored length; the type without parameters', () => {
+    expect(infoFromHeaders({ 'content-type': 'image/jpeg', 'content-range': 'bytes 0-15/123456' })).toEqual({ sizeBytes: 123456, contentType: 'image/jpeg' })
+    expect(infoFromHeaders({ 'content-type': 'image/png; charset=binary', 'x-goog-stored-content-length': '42' })).toEqual({ sizeBytes: 42, contentType: 'image/png' })
+    expect(infoFromHeaders({ 'content-type': ['image/webp'], 'content-range': ['bytes 0-9/10'] })).toEqual({ sizeBytes: 10, contentType: 'image/webp' })
+  })
+  it('null (the adapter then asks for the metadata) when either is missing or unreadable', () => {
+    expect(infoFromHeaders({ 'content-range': 'bytes 0-15/99' })).toBeNull()
+    expect(infoFromHeaders({ 'content-type': 'image/jpeg' })).toBeNull()
+    expect(infoFromHeaders({ 'content-type': 'image/jpeg', 'content-range': 'bytes 0-15/*' })).toBeNull()
+    expect(infoFromHeaders({ 'content-type': 'image/jpeg', 'x-goog-stored-content-length': 'x' })).toBeNull()
+    expect(infoFromHeaders({})).toBeNull()
   })
 })

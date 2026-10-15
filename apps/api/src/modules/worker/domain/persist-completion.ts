@@ -25,8 +25,18 @@ export interface PersistOutcome {
   verificationStatus: string
 }
 
-export async function persistCompletion(tx: Tx, profileId: string, completion: Completion): Promise<PersistOutcome> {
-  const stored = await tx.workerProfile.findUnique({ where: { id: profileId }, select: { setupProgress: true, profileCompleted: true, verificationStatus: true } })
+export interface StoredCompletion {
+  setupProgress: unknown
+  profileCompleted: boolean
+  verificationStatus: string
+}
+
+/**
+ * `known`: the three stored columns when the caller has just read them in the same transaction (a section write's
+ * completion re-read has them): no second read (audit P4). Without it they are read here.
+ */
+export async function persistCompletion(tx: Tx, profileId: string, completion: Completion, known?: StoredCompletion): Promise<PersistOutcome> {
+  const stored = known ?? (await tx.workerProfile.findUnique({ where: { id: profileId }, select: { setupProgress: true, profileCompleted: true, verificationStatus: true } }))
   if (!stored) throw new Error(`persistCompletion: worker profile ${profileId} not found`)
   const next = flagsOf(completion)
   const unchanged = sameFlags(next, parseStoredFlags(stored.setupProgress)) && completion.profileCompleted === stored.profileCompleted

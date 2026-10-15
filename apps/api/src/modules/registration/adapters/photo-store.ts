@@ -35,6 +35,11 @@ export interface PhotoStore {
   inspect(key: string): Promise<ObjectInfo | null>
   /** The first `bytes` bytes (fewer if the object is shorter). */
   readPrefix(key: string, bytes: number): Promise<Uint8Array>
+  /**
+   * inspect and readPrefix in one call where the store allows it (audit P8: the confirm made two): the first `bytes`
+   * bytes with the object's size and content type, or null when the object does not exist.
+   */
+  inspectWithPrefix(key: string, bytes: number): Promise<{ info: ObjectInfo; head: Uint8Array } | null>
   read(key: string): Promise<Buffer>
   /** Stores `data` and returns its public URL (public only where the bucket's prefix allows it). */
   write(key: string, data: Buffer, contentType: string, opts: { cacheControl: string }): Promise<string>
