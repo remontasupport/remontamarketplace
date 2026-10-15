@@ -74,3 +74,12 @@ No IDOR found in the deletes (both scoped to the caller's profile).
 - **D3** S1 fixed on its own: `fix/private-cache-worker-routes` `36e0d24` (also `other-requirements`, which returned
   document links); merged into PR #57.
 - **D4** an uploaded file is the tick: no stored ticks (S9 closes by removing the no-op save).
+
+## Status (2026-10-15)
+
+| Unit | Branch | State |
+|---|---|---|
+| S1 | `fix/private-cache-worker-routes` `36e0d24` | pushed, PR to open; in PR #57 |
+| U3a services | `feat/services-api` `ceff2c5` | pushed, PR to open; in PR #57 (`482d96a`); local end-to-end passed; migration down.sql tested |
+| U3b service documents | -- | next: private bucket (D1), ticket / confirm / delete, keys from `service-requirements.ts`, documents in `getProfile` |
+| U3c app | -- | after U3b, stacked on `feat/edit-profile-app` |
