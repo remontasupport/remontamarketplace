@@ -70,7 +70,8 @@ No IDOR found in the deletes (both scoped to the caller's profile).
 
 - **D1** service documents on private storage (the photo pattern: private bucket, signed links for the worker and
   admins); existing public files stay until a separate migration.
-- **D2** removing a service keeps its documents and registration, hidden; they return if the service is added again.
+- **D2** (changed by the user the same day) removing a service deletes it entirely: its row and registration, its documents, and
+  their files from the worker's own folders. No archive table.
 - **D3** S1 fixed on its own: `fix/private-cache-worker-routes` `36e0d24` (also `other-requirements`, which returned
   document links); merged into PR #57.
 - **D4** an uploaded file is the tick: no stored ticks (S9 closes by removing the no-op save).
@@ -80,6 +81,6 @@ No IDOR found in the deletes (both scoped to the caller's profile).
 | Unit | Branch | State |
 |---|---|---|
 | S1 | `fix/private-cache-worker-routes` `36e0d24` | pushed, PR to open; in PR #57 |
-| U3a services | `feat/services-api` `ceff2c5` | pushed, PR to open; in PR #57 (`482d96a`); local end-to-end passed; migration down.sql tested |
+| U3a services | `feat/services-api` `4a01feb` | pushed, PR to open; in PR #57 (`d50f0ba`); local end-to-end passed; no migration |
 | U3b service documents | -- | next: private bucket (D1), ticket / confirm / delete, keys from `service-requirements.ts`, documents in `getProfile` |
 | U3c app | -- | after U3b, stacked on `feat/edit-profile-app` |
