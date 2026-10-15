@@ -337,3 +337,38 @@ export type ServiceDocument = z.output<typeof serviceDocumentSchema>
 
 export const documentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
 export type DocumentLink = z.output<typeof documentLinkSchema>
+
+// ---- Compliance documents (U4a, u4a-compliance-documents-design.md) ---------------------------------------------
+
+/** A document still in force: a real date, today or later (the api's clock). */
+const expiryInForce = isoDateSchema.refine((s) => s >= new Date().toISOString().slice(0, 10), 'This document has expired')
+
+export const confirmComplianceDocumentSchema = z.strictObject({
+  uploadId: z.uuid(),
+  /** A key of the api's table or a catalogue document id; the api checks it. */
+  requirementType: documentTypeId,
+  fileName,
+  expiryDate: expiryInForce.nullable().default(null),
+  /** The Code of Conduct only: who acknowledged it, and the date on the signature. */
+  acknowledgement: z.strictObject({ workerName: trimmed(1, 200), signatureDate: isoDateSchema }).nullable().default(null),
+})
+export type ConfirmComplianceDocumentBody = z.output<typeof confirmComplianceDocumentSchema>
+
+export const citizenshipSchema = z.strictObject({ isCitizen: z.boolean() })
+export type CitizenshipBody = z.output<typeof citizenshipSchema>
+
+/** One compliance row as its worker sees it (every requirement row that is not a service document). */
+export const complianceDocumentSchema = z.strictObject({
+  id: z.string().max(40),
+  requirementType: z.string().max(120),
+  name: z.string().max(200),
+  status: z.string().max(20),
+  documentCategory: z.string().max(40).nullable(),
+  url: z.string().max(2048).nullable(),
+  fileName: z.string().max(200).nullable(),
+  uploadedAt: z.iso.datetime({ offset: true }).nullable(),
+  expiresAt: z.iso.datetime({ offset: true }).nullable(),
+  /** Right to Work: the worker's citizenship answer, when given. */
+  isCitizen: z.boolean().nullable(),
+})
+export type ComplianceDocument = z.output<typeof complianceDocumentSchema>

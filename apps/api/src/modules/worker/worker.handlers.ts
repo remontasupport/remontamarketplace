@@ -19,6 +19,7 @@ import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from '.
 import { writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { ApiError } from '../../platform/errors'
 import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
+import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
@@ -152,6 +153,55 @@ export function workerHandlers(deps: WorkerModuleDeps) {
         select: { workerProfileId: true, documentUrl: true, metadata: true },
       })
       if (!row) throw new ApiError(404, 'service document not found')
+      return { status: 200, body: await linkFor(deps.photos?.bucket, row, deps.clock()) }
+    },
+
+    // U4a compliance documents (u4a-compliance-documents-design.md): the same ticket, staging check and copy as U3b.
+    confirmComplianceDocument: async (req, ctx) => {
+      const bucket = photoDeps().bucket
+      // The type and its rules first (no bucket call for a request that cannot be recorded), then the file.
+      const target = await complianceTargetOf(deps.db, ctx.principal!.userId, req.body)
+      const staged = await stageDocument(bucket, req.body.uploadId, target.profileId, ctx.log)
+      if (!staged) {
+        const done = await complianceAlreadyRecorded(deps.db, target.profileId, req.body.uploadId)
+        if (done) {
+          ctx.audit.skip('a repeat of a recorded confirm')
+          return { status: 201, body: done }
+        }
+        throw new ApiError(409, 'document upload incomplete', { file: [DOCUMENT_UPLOAD_INCOMPLETE] })
+      }
+      let replaced: DocumentFile | null = null
+      let view
+      try {
+        view = await replaceSection(s, ctx, { section: `confirmComplianceDocument.${target.type}`, completion: true }, async (tx) => {
+          const out = await recordComplianceDocument(tx, target, req.body, staged, deps.clock())
+          replaced = out.replaced
+          return out.view
+        })
+      } catch (err) {
+        await bucket.delete(staged.key).catch(() => undefined)
+        throw err
+      }
+      if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownComplianceBlobUrl, ctx.log)
+      return { status: 201, body: view }
+    },
+    deleteComplianceDocument: async (req, ctx) => {
+      let profileId = ''
+      const file = await replaceSection(s, ctx, { section: 'deleteComplianceDocument', completion: true }, (tx, p) => {
+        profileId = p.id
+        return removeComplianceDocument(tx, p.id, req.params.documentId)
+      })
+      await deleteDocumentFiles(stores(), [file], { userId: ctx.principal!.userId, profileId }, ownComplianceBlobUrl, ctx.log)
+      return { status: 200, body: { documentId: req.params.documentId } }
+    },
+    putCitizenship: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putCitizenship', completion: true }, (tx, p) => writeCitizenship(tx, p.id, req.body.isCitizen, deps.clock())) }),
+    getDocumentLink: async (req, ctx) => {
+      // Any of the worker's own rows; another worker's is the same 404 as no row.
+      const row = await deps.db.verificationRequirement.findFirst({
+        where: { id: req.params.documentId, workerProfile: { userId: ctx.principal!.userId } },
+        select: { workerProfileId: true, documentUrl: true, metadata: true },
+      })
+      if (!row) throw new ApiError(404, 'document not found')
       return { status: 200, body: await linkFor(deps.photos?.bucket, row, deps.clock()) }
     },
 

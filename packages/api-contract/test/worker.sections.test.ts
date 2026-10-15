@@ -26,6 +26,8 @@ import {
   serviceRegistrationBodySchema,
   servicesBodySchema,
   confirmServiceDocumentSchema,
+  confirmComplianceDocumentSchema,
+  citizenshipSchema,
   serviceDocumentTicketRequestSchema,
   slotIssues,
   sortSlots,
@@ -48,7 +50,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(24) // makeMainPhoto removed 2026-10-14 (one photo per worker); U3a adds putServices, putServiceRegistration; U3b the four document entries
+    expect(names).toHaveLength(28) // makeMainPhoto removed 2026-10-14 (one photo per worker); U3a adds putServices, putServiceRegistration; U3b the four document entries; U4a four more
     expect(names).not.toContain('makeMainPhoto')
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
@@ -320,5 +322,26 @@ describe('U3b service documents', () => {
     const p = workerContract.entries.deleteServiceDocument.pathParams
     expect(p.safeParse({ documentId: 'cm12abc_9-Z' }).success).toBe(true)
     expect(p.safeParse({ documentId: '../x' }).success).toBe(false)
+  })
+})
+
+describe('U4a compliance documents', () => {
+  const base = { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', requirementType: 'police-check', fileName: 'Police check.pdf' }
+  const nextYear = `${new Date().getUTCFullYear() + 1}-03-01`
+  it('a confirm: expiry and acknowledgement default to null; an expiry is a real date in force', () => {
+    expect(confirmComplianceDocumentSchema.parse(base)).toMatchObject({ expiryDate: null, acknowledgement: null })
+    ok(confirmComplianceDocumentSchema, { ...base, requirementType: 'right-to-work', expiryDate: nextYear })
+    bad(confirmComplianceDocumentSchema, { ...base, expiryDate: '2020-01-01' }, 'expiryDate')
+    bad(confirmComplianceDocumentSchema, { ...base, expiryDate: '2030-02-30' }, 'expiryDate')
+  })
+  it('the Code of Conduct acknowledgement: a name and a date, nothing else', () => {
+    ok(confirmComplianceDocumentSchema, { ...base, requirementType: 'code-of-conduct', acknowledgement: { workerName: "Mary O'Connor", signatureDate: '2026-10-15' } })
+    bad(confirmComplianceDocumentSchema, { ...base, acknowledgement: { workerName: 'M', signatureDate: '2026-10-15', approved: true } })
+    bad(confirmComplianceDocumentSchema, { ...base, requirementType: 'Police Check' }, 'requirementType')
+  })
+  it('the citizenship answer is a boolean and nothing else (C1)', () => {
+    ok(citizenshipSchema, { isCitizen: true })
+    bad(citizenshipSchema, { isCitizen: 'yes' }, 'isCitizen')
+    bad(citizenshipSchema, { isCitizen: true, documentType: 'police-check' })
   })
 })
