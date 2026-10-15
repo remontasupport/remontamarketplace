@@ -3,7 +3,7 @@
 // a 401 with a fresh token, and a typed outcome instead of a thrown error. The section
 // saves go through the form engine (saveSection); this client holds the read and the
 // photo calls, which upload files rather than save a body.
-import { createClient, workerContract, type Profile } from "@remonta/api-contract";
+import { createClient, workerContract, type ConfirmServiceDocumentBody, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
 import { apiToken } from "@/lib/api/admin";
 import { failure, type ApiOutcome } from "@/lib/api/outcome";
 import { Unauthenticated, type TokenSource } from "@/lib/api/token";
@@ -29,6 +29,18 @@ export interface WorkerApi {
   deleteJobHistoryEntry(entryId: string): Promise<ApiOutcome<{ entries: Profile["sections"]["jobHistory"] }>>;
   /** DELETE /v1/worker/education/:entryId (2026-10-14): one qualification; the answer is the rows left. 404: not the caller's or already gone. */
   deleteEducationEntry(entryId: string): Promise<ApiOutcome<{ entries: Profile["sections"]["education"] }>>;
+  /** U3a: replace the chosen services and sub-categories (catalogue ids). */
+  putServices(body: ServicesBody): Promise<ApiOutcome<{ services: Profile["services"] }>>;
+  /** U3a: the nursing or therapeutic registration of a chosen service; 404 when the service is not chosen. */
+  putServiceRegistration(body: ServiceRegistrationBody): Promise<ApiOutcome<ServiceRegistrationView>>;
+  /** U3b: a ticket to upload one service document straight to the private bucket. */
+  createServiceDocumentTicket(body: ServiceDocumentTicketRequest): Promise<ApiOutcome<ServiceDocumentTicketResponse>>;
+  /** U3b: record an uploaded document for a chosen service and type. */
+  confirmServiceDocument(body: ConfirmServiceDocumentBody): Promise<ApiOutcome<ServiceDocument>>;
+  /** U3b: delete one of the worker's service documents and its file. */
+  deleteServiceDocument(documentId: string): Promise<ApiOutcome<{ documentId: string }>>;
+  /** U3b: a five-minute link to view one of the worker's service documents. */
+  getServiceDocumentLink(documentId: string): Promise<ApiOutcome<DocumentLink>>;
 }
 
 export interface WorkerApiDeps {
@@ -37,7 +49,20 @@ export interface WorkerApiDeps {
   fetch?: typeof globalThis.fetch;
 }
 
-type EntryName = "getProfile" | "createPhotoTicket" | "confirmPhoto" | "removePhoto" | "deleteExperience" | "deleteJobHistoryEntry" | "deleteEducationEntry";
+type EntryName =
+  | "getProfile"
+  | "createPhotoTicket"
+  | "confirmPhoto"
+  | "removePhoto"
+  | "deleteExperience"
+  | "deleteJobHistoryEntry"
+  | "deleteEducationEntry"
+  | "putServices"
+  | "putServiceRegistration"
+  | "createServiceDocumentTicket"
+  | "confirmServiceDocument"
+  | "deleteServiceDocument"
+  | "getServiceDocumentLink";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -91,6 +116,12 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     deleteExperience: (domain) => call("deleteExperience", { params: { domain } }),
     deleteJobHistoryEntry: (entryId) => call("deleteJobHistoryEntry", { params: { entryId } }),
     deleteEducationEntry: (entryId) => call("deleteEducationEntry", { params: { entryId } }),
+    putServices: (body) => call("putServices", { body }),
+    putServiceRegistration: (body) => call("putServiceRegistration", { body, params: { categoryId: body.categoryId } }),
+    createServiceDocumentTicket: (body) => call("createServiceDocumentTicket", { body }),
+    confirmServiceDocument: (body) => call("confirmServiceDocument", { body }),
+    deleteServiceDocument: (documentId) => call("deleteServiceDocument", { params: { documentId } }),
+    getServiceDocumentLink: (documentId) => call("getServiceDocumentLink", { params: { documentId } }),
   };
 }
 

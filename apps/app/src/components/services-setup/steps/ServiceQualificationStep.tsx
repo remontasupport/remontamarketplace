@@ -699,6 +699,12 @@ export default function ServiceQualificationStep({
                   </Select>
                 </div>
               </div>
+              {errors.expiryDate && (
+                <div className="mt-2 flex items-center gap-2">
+                  <InformationCircleIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <p className="text-sm text-red-600 font-poppins">{errors.expiryDate}</p>
+                </div>
+              )}
             </div>
             )}
           </div>

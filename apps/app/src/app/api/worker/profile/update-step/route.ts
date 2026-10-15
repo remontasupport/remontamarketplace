@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { getQualificationsForServices } from "@/config/serviceQualificationRequirements";
-import { invalidateCache, CACHE_KEYS } from "@/lib/redis";
-import { workerServicesCacheTag } from "@/app/api/worker/services/route";
 
 /**
  * POST /api/worker/profile/update-step
@@ -37,75 +34,7 @@ export async function POST(request: Request) {
         break;
 
       // Services Setup Steps (100+)
-      case 101: { // Services Offer
-        if (!data.services) break;
-
-        const workerProfile = await authPrisma.workerProfile.findUnique({
-          where: { userId: session.user.id },
-          select: { id: true },
-        });
-
-        if (!workerProfile) throw new Error("Worker profile not found");
-
-        // Fetch categories and existing services in parallel
-        const [categories, existingServices] = await Promise.all([
-          authPrisma.category.findMany({ include: { subcategories: true } }),
-          authPrisma.workerService.findMany({
-            where: { workerProfileId: workerProfile.id },
-            select: { categoryId: true, metadata: true },
-          }),
-        ]);
-
-        // O(1) lookup maps
-        const categoryByName = new Map(categories.map(c => [c.name, c]));
-        const subcategoryToCategory = new Map(
-          categories.flatMap(c => c.subcategories.map((sub: any) => [sub.id, c] as const))
-        );
-
-        // Preserve first non-null metadata per category
-        const metadataByCategory = existingServices.reduce<Map<string, any>>((acc, { categoryId, metadata }) => {
-          if (!acc.has(categoryId) && metadata !== null) acc.set(categoryId, metadata);
-          return acc;
-        }, new Map());
-
-        const subcategoryIds: string[] = data.supportWorkerCategories || [];
-
-        const workerServiceRecords = (data.services as string[])
-          .map((serviceName) => {
-            const category = categoryByName.get(serviceName);
-            if (!category) return null;
-
-            const subcategoryNameMap = new Map(category.subcategories.map((sub: any) => [sub.id, sub.name]));
-            const validSubIds = subcategoryIds.filter(
-              subId => subcategoryToCategory.get(subId)?.id === category.id && subcategoryNameMap.has(subId)
-            );
-
-            return {
-              workerProfileId: workerProfile.id,
-              categoryId: category.id,
-              categoryName: serviceName,
-              subcategoryIds: validSubIds,
-              subcategoryNames: validSubIds.map(id => subcategoryNameMap.get(id)!),
-              metadata: metadataByCategory.get(category.id) ?? undefined,
-            };
-          })
-          .filter(Boolean);
-
-        // Delete + create in a single transaction
-        await authPrisma.$transaction([
-          authPrisma.workerService.deleteMany({ where: { workerProfileId: workerProfile.id } }),
-          ...workerServiceRecords.map((record) => authPrisma.workerService.create({ data: record })),
-        ]);
-
-        await invalidateCache(
-          CACHE_KEYS.workerProfile(session.user.id),
-          CACHE_KEYS.completionStatus(session.user.id)
-        );
-
-        // Invalidate the Next.js server cache for this worker's services
-        revalidateTag(workerServicesCacheTag(workerProfile.id));
-        break;
-      }
+      // case 101 (the services offer) went with U3c: the services are saved by PUT /v1/worker/services (apps/api).
 
       case 102: // Additional Training / Qualifications
         // Handle selectedQualifications
