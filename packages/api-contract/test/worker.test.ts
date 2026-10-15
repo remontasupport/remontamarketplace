@@ -122,6 +122,16 @@ export const profileArb: fc.Arbitrary<Profile> = fc.record({
   }),
   requirements: fc.record({ mandatory: fc.array(requirementItem, { maxLength: 20 }), trainings: fc.array(requirementItem, { maxLength: 20 }) }),
   services: fc.array(fc.record({ categoryId: str(80), categoryName: str(120), subcategoryIds: fc.array(str(80), { maxLength: 5 }), subcategoryNames: fc.array(str(120), { maxLength: 5 }) }), { maxLength: 10 }),
+  serviceRegistrations: fc.array(
+    fc.record({
+      categoryId: fc.constantFrom('nursing-services' as const, 'therapeutic-supports' as const),
+      nursingType: fc.option(fc.constantFrom('registered' as const, 'enrolled' as const), { nil: null }),
+      hasExperience: fc.option(fc.boolean(), { nil: null }),
+      registrationNumber: nstr(60),
+      expiryDate: fc.option(fc.constantFrom('2027-05-31', '2035-06-22'), { nil: null }),
+    }),
+    { maxLength: 2 },
+  ),
   sections: fc.record({
     availability: fc.array(fc.record({ day: fc.constantFrom(...DAYS_OF_WEEK), startMinute: fc.integer({ min: 0, max: 1440 }), endMinute: fc.integer({ min: 0, max: 1440 }) }), { maxLength: 20 }),
     experience: fc.array(fc.record({ domain: fc.constantFrom(...CARE_DOMAINS), isProfessional: fc.boolean(), isPersonal: fc.boolean(), specificAreas: fc.array(str(120), { maxLength: 5 }), otherAreas: fc.array(str(120), { maxLength: 5 }), description: nstr(2000) }), { maxLength: 5 }),

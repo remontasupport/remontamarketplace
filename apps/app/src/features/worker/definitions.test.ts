@@ -29,6 +29,7 @@ const profile: Profile = profileSchema.parse({
   completion: { accountDetails: false, compliance: false, trainings: false, services: false, profileCompleted: false, percent: 31 },
   requirements: { mandatory: [], trainings: [] },
   services: [],
+  serviceRegistrations: [],
   sections: {
     availability: [{ day: "MONDAY", startMinute: 540, endMinute: 1020 }],
     experience: [{ domain: "AGED_CARE", isProfessional: true, isPersonal: false, specificAreas: ["Dementia"], otherAreas: [], description: null }],

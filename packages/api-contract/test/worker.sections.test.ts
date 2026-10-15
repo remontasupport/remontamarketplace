@@ -32,6 +32,8 @@ import {
   jobHistorySchema,
   nameSchema,
   serviceAreaInputSchema,
+  serviceRegistrationBodySchema,
+  servicesBodySchema,
   slotIssues,
   sortSlots,
   vehicleSchema,
@@ -53,7 +55,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(29) // makeMainPhoto removed, the additional-info split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14)
+    expect(names).toHaveLength(31) // makeMainPhoto removed, the additional-info split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14); U3a adds putServices, putServiceRegistration
     expect(workerContract.entries.deleteEducationEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/education/:entryId' })
     expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
     expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: '../x' }).success).toBe(false)
@@ -286,5 +288,34 @@ describe('every body: generated valid values parse, an extra key does not', () =
       }),
       { numRuns: 60 },
     )
+  })
+})
+
+describe('U3a services', () => {
+  it('at least one service, no repeats; sub-categories may be empty', () => {
+    ok(servicesBodySchema, { services: ['support-worker'], subcategoryIds: [] })
+    ok(servicesBodySchema, { services: ['support-worker', 'nursing-services'], subcategoryIds: ['a', 'b'] })
+    bad(servicesBodySchema, { services: [], subcategoryIds: [] }, 'services')
+    bad(servicesBodySchema, { services: ['x', 'x'], subcategoryIds: [] }, 'services')
+    bad(servicesBodySchema, { services: ['x'], subcategoryIds: ['a', 'a'] }, 'subcategoryIds')
+    bad(servicesBodySchema, { services: ['x'], subcategoryIds: [], extra: 1 })
+  })
+
+  const nextYear = `${new Date().getUTCFullYear() + 1}-05-31`
+  it('a registered nurse gives a number and a current expiry; an enrolled nurse gives neither', () => {
+    ok(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: false, registrationNumber: 'NMW0001234567', expiryDate: nextYear })
+    ok(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'enrolled', hasExperience: true, registrationNumber: null, expiryDate: null })
+    bad(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: false, registrationNumber: null, expiryDate: nextYear }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'enrolled', hasExperience: false, registrationNumber: 'NMW1', expiryDate: null }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'nursing-services', nursingType: 'registered', hasExperience: false, registrationNumber: 'NMW0001234567', expiryDate: '2020-01-01' }, 'expiryDate')
+  })
+
+  it('a therapeutic registration: number and expiry; dates must be real; stored junk is refused on write', () => {
+    ok(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: 'PSY 0001-23', expiryDate: nextYear })
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: '12', expiryDate: nextYear }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: 'ABC123', expiryDate: '-01-00' }, 'expiryDate')
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: 'ABC123', expiryDate: `${new Date().getUTCFullYear() + 1}-02-30` }, 'expiryDate')
+    bad(serviceRegistrationBodySchema, { categoryId: 'therapeutic-supports', registrationNumber: '<b>x</b>', expiryDate: nextYear }, 'registrationNumber')
+    bad(serviceRegistrationBodySchema, { categoryId: 'cleaning-services', registrationNumber: 'ABC123', expiryDate: nextYear })
   })
 })

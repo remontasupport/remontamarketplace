@@ -28,6 +28,7 @@ const base: Profile = profileSchema.parse({
   completion: { accountDetails: false, compliance: false, trainings: false, services: false, profileCompleted: false, percent: 31 },
   requirements: { mandatory: [{ id: "police-check", name: "Police check", requirementType: "BASE", documentType: "REQUIRED", status: "missing" }], trainings: [] },
   services: [],
+  serviceRegistrations: [],
   sections: { availability: [], experience: [], jobHistory: [], education: [], additionalInfo: null, bankAccount: null },
   updatedAt: "2026-10-01T00:00:00.000Z",
 });

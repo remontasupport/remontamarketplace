@@ -9,7 +9,7 @@
 // access, bot, the two limits, the body limit and either the private cache (reads) or
 // the audit action (writes). A write without an audit action does not compile.
 //
-// Added per unit: U1 getProfile · U2 the section writes · U3 services and documents ·
+// Added per unit: U1 getProfile · U2 the section writes · U3a services · U3b service documents ·
 // U4 dashboard and jobs.
 import * as z from 'zod'
 import { CARE_DOMAINS } from './admin.contract'
@@ -46,6 +46,10 @@ import {
   preferencesSchema,
   religionSchema,
   serviceAreaInputSchema,
+  serviceRegistrationBodySchema,
+  serviceRegistrationParamsSchema,
+  serviceRegistrationViewSchema,
+  servicesBodySchema,
   supportActivitiesSchema,
   vehicleSchema,
 } from './worker.sections'
@@ -161,6 +165,8 @@ export const workerServiceSchema = z.strictObject({
   subcategoryIds: z.array(str(80)).max(50),
   subcategoryNames: z.array(str(120)).max(50),
 })
+/** U3a: the chosen services as stored, in the order they were first chosen. */
+export const servicesViewSchema = z.strictObject({ services: z.array(workerServiceSchema).max(50) })
 
 export const availabilitySlotSchema = z.strictObject({
   day: z.enum(DAYS_OF_WEEK),
@@ -241,6 +247,8 @@ export const profileSchema = z.strictObject({
   completion: completionSchema,
   requirements: z.strictObject({ mandatory: z.array(requirementItemSchema).max(100), trainings: z.array(requirementItemSchema).max(100) }),
   services: z.array(workerServiceSchema).max(50),
+  /** U3a: the registrations of the chosen services that carry one (nursing, therapeutic); a removed service's is set aside, not shown. */
+  serviceRegistrations: z.array(serviceRegistrationViewSchema).max(2),
   sections: z.strictObject({
     availability: z.array(availabilitySlotSchema).max(100),
     experience: z.array(experienceRowSchema).max(10),
@@ -291,6 +299,9 @@ export const workerContract = defineContract('worker', {
   putFunFact: { method: 'PUT', path: '/v1/worker/additional-info/fun-fact', summary: 'Replace the fun fact (50-1,000 characters).', body: json(funFactSchema), responses: { 200: funFactSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putPreferences: { method: 'PUT', path: '/v1/worker/additional-info/preferences', summary: 'Replace the work preferences.', body: json(preferencesSchema), responses: { 200: preferencesSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putPersonality: { method: 'PUT', path: '/v1/worker/additional-info/personality', summary: 'Replace the personality, the non-smoker and the pet-friendly answers.', body: json(personalitySchema), responses: { 200: personalitySchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  // ---- U3a services: the chosen services and their registrations.
+  putServices: { method: 'PUT', path: '/v1/worker/services', summary: 'Replace the chosen services and sub-categories (checked against the catalogue). The registration of a removed service is set aside and returns if the service is chosen again.', body: json(servicesBodySchema), responses: { 200: servicesViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 8 }) },
+  putServiceRegistration: { method: 'PUT', path: '/v1/worker/services/:categoryId/registration', summary: 'Replace the registration of a chosen nursing or therapeutic service; 404 when the service is not chosen.', pathParams: serviceRegistrationParamsSchema, body: json(serviceRegistrationBodySchema), responses: { 200: serviceRegistrationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 })
 

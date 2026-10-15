@@ -52,6 +52,7 @@ Response: the `Profile` object (`profileSchema`, strict: nothing unlisted leaves
 | `completion` | computed (§4) | `{ accountDetails, compliance, trainings, services, profileCompleted, percent }` |
 | `requirements { mandatory[], trainings[] }` | catalogue + `verification_requirements` (§5) | `{ id, name, requirementType, documentType, status }` each |
 | `services[]` | `worker_services` | `{ categoryId, categoryName, subcategoryIds, subcategoryNames }`, creation order |
+| `serviceRegistrations[]` | `worker_services.metadata` of `nursing-services` / `therapeutic-supports` (U3a) | `{ categoryId, nursingType, hasExperience, registrationNumber, expiryDate }`, nursing first; every field nullable because stored rows predate any rule: an expiry that is not a real date (`-01-00`) and an empty number read as null; a chosen service without one is left out |
 | `sections.availability[]` | `worker_availability` | `{ day, startMinute, endMinute }`, sort order |
 | `sections.experience[]` | `worker_experience` | the five care domains |
 | `sections.jobHistory[]`, `sections.education[]` | `worker_job_history`, `worker_education` | sort order |
@@ -98,6 +99,17 @@ completion flag recompute and persist it in the same transaction. After a save t
 | `PUT /v1/worker/additional-info/preferences` | `{workPreferences[]}` | one entry per group since 2026-10-14 (was one `:group` entry); writes only its own `worker_additional_info` columns; audit section `putAdditionalInfo.preferences`; used by the Preferences page |
 | `PUT /v1/worker/additional-info/personality` | `{personality, nonSmoker, petFriendly}` | one entry per group since 2026-10-14 (was one `:group` entry); writes only its own `worker_additional_info` columns; audit section `putAdditionalInfo.personality`; used by the Personality page; completion |
 | `PUT /v1/worker/bank-account` | `{accountName, bankName, bsb, accountNumber}` | all four; BSB 6 digits (one dash allowed), number 6-10 digits; stored as today's JSON; the answer and every read are masked to the last three digits |
+
+### Services (U3a, api-review)
+
+The chosen services and the registrations two of them carry. They replace the app's step-101 save, `deleteWorkerService`
+and the four registration server actions (the app moves onto them in U3c). Same limits, transaction, audit
+(`putServices`, `putServiceRegistration.<categoryId>`) and completion recompute as the section writes.
+
+| Entry | Body | Rules |
+|---|---|---|
+| `PUT /v1/worker/services` | `{services: [categoryId], subcategoryIds: [id]}` | 1-20 services, no repeats; each a catalogue category, each sub-category belonging to a chosen one (400 naming `services` / `subcategoryIds`). A kept service keeps its row, its place (creation order) and its registration; a new one is added in the order given. A **removed** service's row is deleted (the search, the admin pages and the lists read these rows) after its metadata is set aside in `worker_service_archive`; choosing the service again restores it and deletes the archive row (D2). Its documents on `verification_requirements` are untouched. 200 with `{services}` as stored |
+| `PUT /v1/worker/services/:categoryId/registration` | nursing: `{categoryId, nursingType, hasExperience, registrationNumber, expiryDate}`; therapeutic: `{categoryId, registrationNumber, expiryDate}` | `:categoryId` is `nursing-services` or `therapeutic-supports` and equals the body's. A registered nurse and a therapeutic worker give a number (3-30 letters, digits, spaces, hyphens) and an expiry (a real date, today or later); an enrolled nurse gives neither (null). 404 when the service is not chosen: today's action created the service row instead (S4). Stored as the row's metadata in today's shape; 200 with the registration as read |
 
 ## 3. Caching
 
@@ -219,7 +231,7 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
 `worker_profiles` (columns above, plus `setupProgress`, `profileCompleted`, `verificationStatus`),
 `worker_services`, `verification_requirements` (`requirementType`, `status`, `documentCategory`, `documentUrl`),
 `worker_availability`, `worker_experience`, `worker_job_history`, `worker_education`, `worker_additional_info`,
-`worker_locations` (kind `HOME`) + `au_localities`, and the catalogue `Category` → `CategoryDocument` → `Document`
+`worker_locations` (kind `HOME`) + `au_localities`, `worker_service_archive` (written only by `PUT /v1/worker/services`, never read by the profile), and the catalogue `Category` → `CategoryDocument` → `Document`
 and `Subcategory` → `SubcategoryDocument` → `Document`. One transaction issues one statement per relation (17 for
 a worker with services: the profile, its nine relations, the catalogue and its five), none per row; a test holds
 the count at 20 at most. The statement timeout is set with `set_config('statement_timeout', $1, true)`, a bound
