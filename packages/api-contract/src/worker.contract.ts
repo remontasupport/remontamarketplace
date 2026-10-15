@@ -22,6 +22,9 @@ import {
   availabilitySchema,
   bankAccountSchema,
   bioSchema,
+  citizenshipSchema,
+  complianceDocumentSchema,
+  confirmComplianceDocumentSchema,
   confirmServiceDocumentSchema,
   confirmPhotoSchema,
   culturalBackgroundSchema,
@@ -257,6 +260,8 @@ export const profileSchema = z.strictObject({
   serviceRegistrations: z.array(serviceRegistrationViewSchema).max(2),
   /** U3b: the worker's SERVICE_QUALIFICATION documents (a removed service's go with it). */
   serviceDocuments: z.array(serviceDocumentSchema).max(200),
+  /** U4a: every other requirement row (identity, checks, trainings, contract, Code of Conduct). */
+  complianceDocuments: z.array(complianceDocumentSchema).max(200),
   sections: z.strictObject({
     availability: z.array(availabilitySlotSchema).max(100),
     experience: z.array(experienceRowSchema).max(10),
@@ -311,10 +316,15 @@ export const workerContract = defineContract('worker', {
   putServices: { method: 'PUT', path: '/v1/worker/services', summary: 'Replace the chosen services and sub-categories (checked against the catalogue). A removed service is deleted entirely: its registration, its documents and their files.', body: json(servicesBodySchema), responses: { 200: servicesViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 8 }) },
   putServiceRegistration: { method: 'PUT', path: '/v1/worker/services/:categoryId/registration', summary: 'Replace the registration of a chosen nursing or therapeutic service; 404 when the service is not chosen.', pathParams: serviceRegistrationParamsSchema, body: json(serviceRegistrationBodySchema), responses: { 200: serviceRegistrationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   // ---- U3b service documents: straight to a private bucket by ticket, confirmed, viewed through a short signed link.
-  createServiceDocumentTicket: { method: 'POST', path: '/v1/worker/service-documents/tickets', summary: 'A ticket to upload one service document (PDF or a photo, 50 MB) straight to the private bucket.', body: json(serviceDocumentTicketRequestSchema), responses: { 201: serviceDocumentTicketResponseSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1, limit: 20 }) },
+  createServiceDocumentTicket: { method: 'POST', path: '/v1/worker/service-documents/tickets', summary: 'A ticket to upload one worker document (PDF or a photo, 50 MB) straight to the private bucket: a service document or (U4a) a compliance document.', body: json(serviceDocumentTicketRequestSchema), responses: { 201: serviceDocumentTicketResponseSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1, limit: 20 }) },
   confirmServiceDocument: { method: 'POST', path: '/v1/worker/service-documents', summary: 'Confirm an uploaded document as one the chosen service calls for: checked, kept privately, recorded (it replaces the previous file of that type).', body: json(confirmServiceDocumentSchema), responses: { 201: serviceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   deleteServiceDocument: { method: 'DELETE', path: '/v1/worker/service-documents/:documentId', summary: "Delete one of the worker's service documents and its file; 404 when it is not theirs.", pathParams: serviceDocumentParamsSchema, responses: { 200: serviceDocumentParamsSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   getServiceDocumentLink: { method: 'GET', path: '/v1/worker/service-documents/:documentId/link', summary: "A five-minute link to view one of the worker's own service documents.", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
+  // ---- U4a compliance documents: the same ticket and bucket; one row per type; viewed through the app's link.
+  confirmComplianceDocument: { method: 'POST', path: '/v1/worker/compliance-documents', summary: 'Confirm an uploaded compliance document (identity, a check, a training, the contract, the Code of Conduct): checked, kept privately, recorded for review (it replaces the previous file of that type).', body: json(confirmComplianceDocumentSchema), responses: { 201: complianceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
+  deleteComplianceDocument: { method: 'DELETE', path: '/v1/worker/compliance-documents/:documentId', summary: "Delete one of the worker's compliance documents and its file; 404 when it is not theirs.", pathParams: serviceDocumentParamsSchema, responses: { 200: serviceDocumentParamsSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  putCitizenship: { method: 'PUT', path: '/v1/worker/compliance/right-to-work/citizenship', summary: 'The Right to Work answer: an Australian citizen needs no document (SUBMITTED); a no takes back a claim with no file.', body: json(citizenshipSchema), responses: { 200: complianceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  getDocumentLink: { method: 'GET', path: '/v1/worker/documents/:documentId/link', summary: "A five-minute link to view any of the worker's own documents (a legacy row answers its stored URL).", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 })
 

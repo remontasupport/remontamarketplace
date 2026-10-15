@@ -14,6 +14,7 @@ import { requirementGroups } from '../domain/requirement-groups'
 import { readProfileRows, type ProfileRows } from '../persistence/profile-read'
 import { profileNotFound } from './own-profile'
 import { registrationsOf } from './sections/services'
+import { complianceView } from './compliance-documents'
 import { documentView } from './service-documents'
 
 export interface GetProfileDeps {
@@ -95,6 +96,12 @@ export function shapeProfile(rows: ProfileRows, now: Date = new Date()): Profile
       .sort((a, b) => (b.documentUploadedAt?.getTime() ?? 0) - (a.documentUploadedAt?.getTime() ?? 0))
       .slice(0, 200)
       .map(documentView),
+    // U4a: every other requirement row (identity, checks, trainings, contract, Code of Conduct), newest first.
+    complianceDocuments: p.verificationRequirements
+      .filter((r) => r.documentCategory !== 'SERVICE_QUALIFICATION')
+      .sort((a, b) => (b.documentUploadedAt?.getTime() ?? 0) - (a.documentUploadedAt?.getTime() ?? 0))
+      .slice(0, 200)
+      .map(complianceView),
     sections: {
       availability: p.availability.map((a) => ({ day: a.dayOfWeek, startMinute: a.startMinute, endMinute: a.endMinute })),
       experience: p.careExperience.map((e) => ({ domain: e.domain, isProfessional: e.isProfessional, isPersonal: e.isPersonal, specificAreas: e.specificAreas, otherAreas: e.otherAreas, description: e.description })),

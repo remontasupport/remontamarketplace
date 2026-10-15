@@ -30,6 +30,7 @@ const base: Profile = profileSchema.parse({
   services: [],
   serviceRegistrations: [],
   serviceDocuments: [],
+  complianceDocuments: [],
   sections: { availability: [], experience: [], jobHistory: [], education: [], additionalInfo: null, bankAccount: null },
   updatedAt: "2026-10-01T00:00:00.000Z",
 });
