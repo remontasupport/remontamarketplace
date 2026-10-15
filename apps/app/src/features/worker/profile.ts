@@ -21,7 +21,8 @@ export class ProfileReadError extends Error {
   }
 }
 
-async function read(cache: "default" | "reload", signal?: AbortSignal): Promise<Profile> {
+/** The profile read itself, for a hook that selects from the same cache entry (the Services pages, U3c). */
+export async function readProfile(cache: "default" | "reload", signal?: AbortSignal): Promise<Profile> {
   const r = await workerApi.getProfile({ cache, signal });
   if (r.kind === "ok") return r.body;
   throw new ProfileReadError(r);
@@ -31,7 +32,7 @@ export function useWorkerProfile() {
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: PROFILE_QUERY_KEY,
-    queryFn: ({ signal }) => read("default", signal),
+    queryFn: ({ signal }) => readProfile("default", signal),
     staleTime: PROFILE_STALE_MS,
     refetchOnWindowFocus: true, // a photo's clean copy arrives within a minute of the upload
     refetchOnMount: true,
@@ -41,7 +42,7 @@ export function useWorkerProfile() {
   /** R9.5: the fresh read after a save; the sidebar's badge and children follow from it. */
   const reload = useCallback(async () => {
     try {
-      qc.setQueryData(PROFILE_QUERY_KEY, await read("reload"));
+      qc.setQueryData(PROFILE_QUERY_KEY, await readProfile("reload"));
     } catch {
       // the saved section is already shown; the next read catches the rest up
     }
