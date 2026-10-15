@@ -418,8 +418,11 @@ function ServicesSetupContent() {
     }
   };
 
-  // Redirect to first step if no step specified or invalid slug
+  // Redirect to first step if no step specified or invalid slug -- only once the profile has said which services
+  // there are: before it answers STEPS is the empty default, and a page opened directly (a refresh, a link) was sent
+  // to Edit Services every time (U3c, seen 2026-10-15).
   useEffect(() => {
+    if (isLoadingProfile || !profileData) return;
     if (!stepSlug && STEPS.length > 0) {
       // No step specified - redirect to first step
       router.push(`/dashboard/worker/services/setup?step=${STEPS[0].slug}`);
@@ -430,7 +433,7 @@ function ServicesSetupContent() {
       // No services selected - redirect to Edit Services page
       router.push("/dashboard/worker/services/manage");
     }
-  }, [currentStepIndex, router, stepSlug, STEPS]);
+  }, [currentStepIndex, router, stepSlug, STEPS, isLoadingProfile, profileData]);
 
   // AUTO-REDIRECT: Set initial view parameter when missing
   // With Suspense mode, component won't render until workerServices exists
