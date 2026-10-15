@@ -4266,3 +4266,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 **User input**: "what PR should I opened?" / "Si is merged, should I merge u3c now?"
 **AI response**: listed U3c (base feat/edit-profile-app), S1 (main), the optional staging script PR. Verified S1 merged (#67, main `4a03dfd`). U3c: PR not opened, so no CI; merge after CI and one preview upload; merging only adds it to PR #57's branch.
 **AI response (cont.)**: Compliance inventory back; C1-C3 verified in code; recorded `inception/review/compliance-inventory.md` (findings C1-C9, units C1 fix, U4a-U4f).
+
+**User input** (answers): "Small PR now (Recommended)"; "Private, as Services (Recommended)"; "Early, ID first (Recommended)"; "U4a api (Recommended)"
+**AI response**: decisions DC1 C1 fixed now on its own; DC2 new compliance uploads private (as D1); DC3 the existing public identity/police files move early, identity first (a migration after U4a); DC4 U4a next. C1: `fix/citizenship-patch` `edaffcc` from main (right-to-work only, `{isCitizen: boolean}` only, rate limited 20/min, metadata merged, a "no" takes back a fileless citizen claim); app gate 142/471 known, 122 tests; checked on the dev copy: every isCitizen row is right-to-work (343 SUBMITTED, 24 PENDING), no other type SUBMITTED without a file (no one used the hole in the copy). Merged into `feat/services-app` (`4021cd9`).

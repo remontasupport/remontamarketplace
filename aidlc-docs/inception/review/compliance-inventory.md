@@ -66,3 +66,10 @@ About 3,900 server lines to retire and 9,000 client lines to rewire (`components
 | U4d | ABN + contract on `putAbn` and a contract confirm; the tax id out of the URL |
 | U4e | Additional Credentials ("Other Documents") on the api |
 | U4f | retire the dead routes; move the legacy public files (identity first) to the private bucket |
+
+## Decisions (user, 2026-10-15)
+
+- **DC1** C1 fixed now on its own: `fix/citizenship-patch` `edaffcc` (no use of the hole on the copy of production).
+- **DC2** new compliance uploads go to the private bucket, viewed through the app link (as D1).
+- **DC3** the existing public identity and police files move to the private bucket early, identity first (after U4a).
+- **DC4** U4a (the compliance document api) next.
