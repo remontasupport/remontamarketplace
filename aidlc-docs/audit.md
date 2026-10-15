@@ -4232,3 +4232,12 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "go ahead, fix them all"
 **AI response**: P6 on `feat/services-api` `606a1b2` (kept rows written only when changed; no re-read). P1-P5, P7, P8 on `perf/api-round-trips` from main `f710641`: hitMany (one multi-row upsert) and one limiter call after the local token check for signed-in entries without CAPTCHA (IP rules still answer first); no explicit isolation level; catalogue cached 60 s per process; persistCompletion takes the stored flags; set_config folded into the ownership lookup; one-statement photo claim; one ranged GET for the confirm (headers, metadata fallback). Semgrep limiter rule covers hitMany (+ test line). New tests: hitMany on PostGIS, write-path statement count, U1-PRF-01 cold/warm, headers parser, adapter on fake GCS. Gates: api 573 (+DB-gated in CI). Both merged into PR #57 `a78754c` (api 675, contract 87, app 213); local api rebuilt; re-measured on the dev copy (bio 10->6, services 18->7, registration 12->7 statements; 2.7 s each locally); end to end through the local api with the real limiter passed, rows restored.
+
+**User input**: "WHAT SHOULD I DO NEXT?"
+**AI response**: main still `f66cb6c`; open PRs only #57 and #64. Order: try locally; open+merge S1; open+merge the perf PR (API Quality runs its DB tests first time); open+merge U3a (conflict fix by me after perf); staging check with a photo upload (P7/P8); the expiry answer; then the combined My Profile api PR or U3b.
+
+**User input**: "DID YOU ALSO FIX THE SERVICES APIS?"
+**AI response**: partly: the new Services api (U3a) is built and got P6 + P1-P5; the Services pages still call the legacy server actions (U3c) and service document uploads still pass through the Next.js function to public Blob (U3b, P10). Offered U3b.
+
+**User input**: "yes start U3b, CAN MERGE LATER RIGHT?"
+**AI response**: yes, no branch depends on a merge first. U3b inventory started (bucket infra, admin and worker document viewing, upload rules, the api's service-requirements port, the photo upload tables).
