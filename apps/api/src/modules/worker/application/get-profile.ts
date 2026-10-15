@@ -14,6 +14,7 @@ import { requirementGroups } from '../domain/requirement-groups'
 import { readProfileRows, type ProfileRows } from '../persistence/profile-read'
 import { profileNotFound } from './own-profile'
 import { registrationsOf } from './sections/services'
+import { documentView } from './service-documents'
 
 export interface GetProfileDeps {
   db: Db
@@ -88,6 +89,12 @@ export function shapeProfile(rows: ProfileRows, now: Date = new Date()): Profile
     requirements,
     services: p.workerServices.map((s) => ({ categoryId: s.categoryId, categoryName: s.categoryName, subcategoryIds: s.subcategoryIds, subcategoryNames: s.subcategoryNames })),
     serviceRegistrations: registrationsOf(p.workerServices),
+    // U3b: the service documents, newest first (a legacy row keeps its public URL; a new one the app path).
+    serviceDocuments: p.verificationRequirements
+      .filter((r) => r.documentCategory === 'SERVICE_QUALIFICATION')
+      .sort((a, b) => (b.documentUploadedAt?.getTime() ?? 0) - (a.documentUploadedAt?.getTime() ?? 0))
+      .slice(0, 200)
+      .map(documentView),
     sections: {
       availability: p.availability.map((a) => ({ day: a.dayOfWeek, startMinute: a.startMinute, endMinute: a.endMinute })),
       experience: p.careExperience.map((e) => ({ domain: e.domain, isProfessional: e.isProfessional, isPersonal: e.isPersonal, specificAreas: e.specificAreas, otherAreas: e.otherAreas, description: e.description })),

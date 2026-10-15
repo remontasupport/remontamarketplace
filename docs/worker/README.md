@@ -111,6 +111,24 @@ and the four registration server actions (the app moves onto them in U3c). Same 
 | `PUT /v1/worker/services` | `{services: [categoryId], subcategoryIds: [id]}` | 1-20 services, no repeats; each a catalogue category, each sub-category belonging to a chosen one (400 naming `services` / `subcategoryIds`). A kept service keeps its row, its place (creation order) and its registration; a new one is added in the order given. A **removed** service is deleted entirely (D2): its row with the registration, and its documents (the `SERVICE_QUALIFICATION` rows keyed `"<service name>:<type>"`) in the same transaction; after the commit their files, only those in the worker's own folders (`workers/<userId>/service-documents/`, `service-documents/<userId>/`), any other URL left and logged. Choosing it again starts afresh. 200 with `{services}` as stored |
 | `PUT /v1/worker/services/:categoryId/registration` | nursing: `{categoryId, nursingType, hasExperience, registrationNumber, expiryDate}`; therapeutic: `{categoryId, registrationNumber, expiryDate}` | `:categoryId` is `nursing-services` or `therapeutic-supports` and equals the body's. A registered nurse and a therapeutic worker give a number (3-30 letters, digits, spaces, hyphens) and an expiry (a real date, today or later); an enrolled nurse gives neither (null). 404 when the service is not chosen: today's action created the service row instead (S4). Stored as the row's metadata in today's shape; 200 with the registration as read |
 
+### Service documents (U3b, api-review)
+
+A worker's qualifications, registrations, licences and insurances for the chosen services, in the private photo bucket.
+They replace the app's `uploadServiceDocument` / `deleteServiceDocument` actions and `/api/upload/service-documents`
+(the app moves onto them in U3c). Design: `aidlc-docs/inception/review/u3b-service-documents-design.md`.
+
+| Entry | Body | Rules |
+|---|---|---|
+| `POST /v1/worker/service-documents/tickets` | `{contentType, sizeBytes}` | PDF, JPEG, PNG, WebP, HEIC/HEIF, at most 50 MB. A signed POST policy for `staging/<uuid>` (the bucket deletes `staging/` after a day). Nothing stored, no audit row. 20 per minute per worker. 201 `{uploadId, upload {url, method, fields, fileField}, expiresAt}` |
+| `POST /v1/worker/service-documents` | `{uploadId, categoryId, requirementType, fileName}` | the service must be chosen (404) and the type one it asks for (`uploadableDocuments`: the requirement table + the Cert III/IV types of the two Support Worker services; 400 naming `requirementType`). One ranged read checks size and the first bytes against the declared type (413/415, the object deleted). Copied to `documents/<profileId>/<uploadId>.<ext>`, the staging object deleted; nothing at the key: a retry of a recorded confirm answers its row, otherwise 409. The row as today (`"<service name>:<type>"`, `SERVICE_QUALIFICATION`, `SUBMITTED`, the service's name for the type), found then updated or created; a re-upload clears the review fields and its old file is deleted after the commit. `documentUrl` = `/api/documents/<id>/<file name>` (an app path ending in the real extension: the admin compliance page picks its viewer by it). `metadata {serviceTitle, category, storageKey, fileName, contentType, sizeBytes, uploadId}`. 201 with the document |
+| `DELETE /v1/worker/service-documents/:documentId` | -- | the caller's SERVICE_QUALIFICATION row (404 otherwise); completion recomputed; the file after the commit (its own `documents/<profileId>/` key, or a legacy Blob URL in the worker's own folder) |
+| `GET /v1/worker/service-documents/:documentId/link` | -- | the caller's document: a 5-minute signed GET (inline, the original file name); a legacy row answers its public URL with `expiresAt: null` |
+| `GET /v1/admin/documents/:documentId/link` (ADMIN) | -- | the same for any worker's document, for the compliance review |
+
+`GET /v1/worker/profile` gains `serviceDocuments[]` (`{id, serviceName, requirementType, name, status, url, fileName,
+uploadedAt}`, newest first, every SERVICE_QUALIFICATION row: "Other Documents" included). Removing a service deletes its
+documents' files from both stores.
+
 ## 3. Caching
 
 Each 200 carries `Cache-Control: private, max-age=60`, `Vary: Authorization` and a strong `ETag` (a hash of the

@@ -2,7 +2,8 @@
 // any rule: numbers of 0-2 characters, expiries such as "-01-00").
 import { serviceRegistrationViewSchema } from '@remonta/api-contract'
 import { describe, expect, it } from 'vitest'
-import { deleteServiceFiles, ownServiceDocument, registrationOf, registrationsOf } from '../../src/modules/worker/application/sections/services'
+import { ownServiceDocument, registrationOf, registrationsOf } from '../../src/modules/worker/application/sections/services'
+import { deleteDocumentFiles } from '../../src/modules/worker/application/service-documents'
 
 describe('registrationOf', () => {
   it('reads a registered nurse as stored', () => {
@@ -75,17 +76,26 @@ describe('ownServiceDocument (removed services: files deleted from the own folde
     ])
       expect(ownServiceDocument(u, 'u1'), u).toBe(false)
   })
-  it('deleteServiceFiles deletes own files, logs and leaves the rest, survives a failing store', async () => {
-    const deleted: string[] = []
+  it('deleteDocumentFiles: the own bucket key and the own Blob URL are deleted; anything else is left and logged; a failing store does not throw', async () => {
+    const blobDeleted: string[] = []
+    const bucketDeleted: string[] = []
     const warns: string[] = []
     const log = { warn: (_o: object, m: string) => void warns.push(m) }
+    const stores = { blob: { delete: async (u: string) => void blobDeleted.push(u) }, bucket: { delete: async (k: string) => void bucketDeleted.push(k) } as never }
+    const owner = { userId: 'u1', profileId: 'p1' }
     const own = `${blob}/workers/u1/service-documents/a.pdf`
-    await deleteServiceFiles({ delete: async (u) => void deleted.push(u) }, [own, `${blob}/workers/u2/service-documents/b.pdf`], 'u1', log)
-    expect(deleted).toEqual([own])
-    expect(warns).toEqual(['service document file left'])
-    await deleteServiceFiles({ delete: async () => { throw new Error('down') } }, [own], 'u1', log)
+    await deleteDocumentFiles(stores, [
+      { storageKey: 'documents/p1/1.pdf', url: '/api/documents/x/a.pdf' },
+      { storageKey: 'documents/p2/1.pdf', url: null },
+      { storageKey: 'documents/p1/../p2/1.pdf', url: null },
+      { storageKey: null, url: own },
+      { storageKey: null, url: `${blob}/workers/u2/service-documents/b.pdf` },
+    ], owner, ownServiceDocument, log)
+    expect(bucketDeleted).toEqual(['documents/p1/1.pdf'])
+    expect(blobDeleted).toEqual([own])
+    expect(warns).toEqual(['service document file left', 'service document file left', 'service document file left'])
+    const failing = { bucket: { delete: async () => { throw new Error('down') } } as never }
+    await deleteDocumentFiles(failing, [{ storageKey: 'documents/p1/1.pdf', url: null }], owner, ownServiceDocument, log)
     expect(warns.at(-1)).toBe('service document file delete failed')
-    await deleteServiceFiles(undefined, [own], 'u1', log)
-    expect(warns.at(-1)).toBe('service document file left')
   })
 })

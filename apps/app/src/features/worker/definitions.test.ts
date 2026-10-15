@@ -30,6 +30,7 @@ const profile: Profile = profileSchema.parse({
   requirements: { mandatory: [], trainings: [] },
   services: [],
   serviceRegistrations: [],
+  serviceDocuments: [],
   sections: {
     availability: [{ day: "MONDAY", startMinute: 540, endMinute: 1020 }],
     experience: [{ domain: "AGED_CARE", isProfessional: true, isPersonal: false, specificAreas: ["Dementia"], otherAreas: [], description: null }],

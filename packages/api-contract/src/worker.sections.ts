@@ -22,6 +22,7 @@ import {
   VEHICLE_ANSWERS,
   WORK_PREFERENCES,
 } from '@remonta/schemas/data/profileOptions'
+import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from '@remonta/schemas/document-type'
 import { abnChecksum, normaliseAbn } from '@remonta/schemas/validations/abn'
 import * as z from 'zod'
 
@@ -302,3 +303,56 @@ export const serviceRegistrationViewSchema = z.strictObject({
   expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
 })
 export type ServiceRegistrationView = z.output<typeof serviceRegistrationViewSchema>
+
+// ---- Service documents (U3b, u3b-service-documents-design.md) ---------------------------------------------------
+
+export const serviceDocumentTicketRequestSchema = z.strictObject({
+  contentType: z.enum(DOCUMENT_TYPES),
+  sizeBytes: z.int().min(1).max(DOCUMENT_MAX_BYTES),
+})
+export type ServiceDocumentTicketRequest = z.output<typeof serviceDocumentTicketRequestSchema>
+
+export const serviceDocumentTicketResponseSchema = z.strictObject({
+  uploadId: z.uuid(),
+  upload: z.strictObject({
+    url: z.url(),
+    method: z.literal('POST'),
+    /** The signed policy's form fields, sent before the file. */
+    fields: z.record(z.string(), z.string()),
+    fileField: z.literal('file'),
+  }),
+  expiresAt: z.iso.datetime(),
+})
+export type ServiceDocumentTicketResponse = z.output<typeof serviceDocumentTicketResponseSchema>
+
+/** A type id of the requirement table (`qualification-certificate`, `cert3-aged-care`, ...); the api checks it against the service. */
+const documentTypeId = z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Not a document type')
+/** The file's own name, for the worker and the reviewer to recognise it: a plain line, no path. */
+const fileName = trimmed(1, 200).regex(/^[^\p{Cc}/\\]+$/u, 'A file name only')
+
+export const confirmServiceDocumentSchema = z.strictObject({
+  uploadId: z.uuid(),
+  categoryId: trimmed(1, 80),
+  requirementType: documentTypeId,
+  fileName,
+})
+export type ConfirmServiceDocumentBody = z.output<typeof confirmServiceDocumentSchema>
+
+export const serviceDocumentParamsSchema = z.strictObject({ documentId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a document id') })
+
+/** One SERVICE_QUALIFICATION row as the worker sees it. `url` is what the row stores: an app path for a private file, a public URL for a legacy one. */
+export const serviceDocumentSchema = z.strictObject({
+  id: z.string().max(40),
+  /** The service's name as the row names it (the part before the first colon of the requirement type). */
+  serviceName: z.string().max(120),
+  requirementType: z.string().max(80),
+  name: z.string().max(200),
+  status: z.string().max(20),
+  url: z.string().max(2048).nullable(),
+  fileName: z.string().max(200).nullable(),
+  uploadedAt: z.iso.datetime({ offset: true }).nullable(),
+})
+export type ServiceDocument = z.output<typeof serviceDocumentSchema>
+
+export const documentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
+export type DocumentLink = z.output<typeof documentLinkSchema>

@@ -132,6 +132,19 @@ export const profileArb: fc.Arbitrary<Profile> = fc.record({
     }),
     { maxLength: 2 },
   ),
+  serviceDocuments: fc.array(
+    fc.record({
+      id: str(40),
+      serviceName: str(120),
+      requirementType: str(80),
+      name: str(200),
+      status: fc.constantFrom('SUBMITTED', 'APPROVED', 'REJECTED'),
+      url: nstr(2048),
+      fileName: nstr(200),
+      uploadedAt: fc.option(fc.constant('2026-10-15T01:02:03.000Z'), { nil: null }),
+    }),
+    { maxLength: 3 },
+  ),
   sections: fc.record({
     availability: fc.array(fc.record({ day: fc.constantFrom(...DAYS_OF_WEEK), startMinute: fc.integer({ min: 0, max: 1440 }), endMinute: fc.integer({ min: 0, max: 1440 }) }), { maxLength: 20 }),
     experience: fc.array(fc.record({ domain: fc.constantFrom(...CARE_DOMAINS), isProfessional: fc.boolean(), isPersonal: fc.boolean(), specificAreas: fc.array(str(120), { maxLength: 5 }), otherAreas: fc.array(str(120), { maxLength: 5 }), description: nstr(2000) }), { maxLength: 5 }),

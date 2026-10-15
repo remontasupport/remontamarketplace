@@ -39,7 +39,7 @@ const PROFILE_SELECT = {
   homeStreetLine: true,
   homeLocality: { select: { id: true, suburb: true, state: true, postcode: true } },
   workerServices: { select: { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true, metadata: true, createdAt: true }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
-  verificationRequirements: { select: { id: true, requirementType: true, requirementName: true, status: true, documentCategory: true, documentUrl: true, expiresAt: true } },
+  verificationRequirements: { select: { id: true, requirementType: true, requirementName: true, status: true, documentCategory: true, documentUrl: true, expiresAt: true, documentUploadedAt: true, metadata: true } },
   availability: { select: { dayOfWeek: true, startMinute: true, endMinute: true }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
   careExperience: { select: { domain: true, isProfessional: true, isPersonal: true, specificAreas: true, otherAreas: true, description: true }, orderBy: { domain: 'asc' } },
   jobHistoryEntries: { select: { id: true, jobTitle: true, company: true, startMonth: true, startYear: true, endMonth: true, endYear: true, currentlyWorking: true }, orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
