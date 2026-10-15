@@ -60,3 +60,17 @@ Locally that is roughly 40-60% less time; in production the same share of a much
 
 - The statement timeout stays (the pooler refuses `options=-c statement_timeout`: tested; the direct host accepts it).
 - The completion recompute stays inside the write's transaction (correctness of the stored flags).
+
+## Done (2026-10-15)
+
+| Fix | Branch | Commit |
+|---|---|---|
+| P6 | `feat/services-api` (U3a) | `606a1b2` |
+| P1-P5, P7, P8 | `perf/api-round-trips` from main | `f710641` |
+
+Both merged into PR #57 (`a78754c`): api 675, contract 87, app 213. Measured again on the dev copy with the real handlers
+(handler statements incl. BEGIN/COMMIT): profile read 6 -> 5 (4 warm), bio 10 -> 6, services 18 -> 7, registration
+12 -> 7; locally bio 4.3 -> 2.7 s, services 6.7 -> 2.7 s, registration 4.3 -> 2.7 s. Through the local api with the
+real limiter (one statement for both rules): a refused body 0.3 s; a services save with a removal 13.5 -> 8.1 s (part of
+it the file deletes failing against the local dead Blob token). The photo confirm is not measurable here (no bucket
+credentials locally): staging after the merge.
